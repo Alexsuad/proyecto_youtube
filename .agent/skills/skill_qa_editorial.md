@@ -14,6 +14,7 @@ Objetivo: auditar el guion asegurando que cumple **exactamente** la arquitectura
 1) **Filtro Técnico Estructural:** Auditar el guion midiendo lo siguiente (si falta, el guion reprueba):
    - [ ] ¿Hay exactamente **3 headers** nivel 2 (`## EVENTO 1`, `## EVENTO 2`, `## EVENTO 3`)?
    - [ ] ¿Aparecen exactamente **3** instancias de `**Presentación de la obra:**` y **3** de `**Mini sinopsis breve:**`?
+   - [ ] ¿Aparecen al menos **3** instancias de cada marcador conversado: `**Pausa:**`, `**Pregunta al espectador:**` y `**Micro-reacción:**`?
    - [ ] ¿Aparecen exactamente **3** instancias de `**Ejemplo:**` y **3** de `**Herramienta:**`?
    - [ ] ¿Existen exactamente **3** instancias de `**Re-hook:**` al final de los bloques?
    - [ ] ¿Existe un **Puente explícito** conectando el Evento 2 con el Evento 3?
@@ -22,6 +23,7 @@ Objetivo: auditar el guion asegurando que cumple **exactamente** la arquitectura
 2) **Filtro de Voz (Poética y Lenguaje):** Revisar si el guion rompió las reglas:
    - [ ] Cero "sonido coaching genérico" y etiquetas psiquiátricas sin matiz.
    - [ ] Cero frases IA cliché ("En resumen", "En conclusión", "Este viaje nos enseña").
+   - [ ] Cero "Frases Prohibidas" definidas en `workspace/05c_voice_profile.md` (Ej: "Aquí me detengo para analizar", "Para concluir").
    - [ ] Tono humano, directo, conversado.
 
 3) **Reportar y Corregir:** 

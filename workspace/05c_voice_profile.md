@@ -8,6 +8,15 @@ Este documento es el repositorio vivo de los aprendizajes de estilo del canal. S
 - **Prohibido:** "En conclusión", "Este video explora", "Viaje emocional", "Espectador", "Usuario".
 - **Preferido:** "Hoy vamos a ver", "Fíjate en esto", "Tú y yo sabemos", "Lo que nos pasa cuando...".
 
+## 1.1 Frases Prohibidas (Anti-Huella)
+Queda terminantemente prohibido el uso de estas frases exactas:
+- "Aquí me detengo para analizar"
+- "Para concluir"
+- "La cruda realidad"
+- "Ahora reflexionemos"
+- "En conclusión"
+Regla: Reemplazar siempre por variantes conversadas y directas.
+
 ## 2. Ritmo y Estructura
 - Mantener las intros en menos de 95 palabras.
 - Los puentes entre películas deben durar máximo 20 segundos de lectura.

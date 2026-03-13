@@ -25,6 +25,9 @@ Objetivo: escribir un guion listo para grabar, siguiendo rígidamente la estruct
      - **Presentación de la obra:** (1–2 líneas que ubiquen al espectador).
      - **Mini sinopsis breve:** (3–5 líneas de contexto narrativo sin spoilers).
      - *Análisis:* 80% de peso en el análisis emocional humano.
+       - **Pausa:** (mínimo 1 por evento, para enfatizar o cambiar ritmo).
+       - **Pregunta al espectador:** (mínimo 1 por evento, para romper la cuarta pared).
+       - **Micro-reacción:** (mínimo 1 por evento, reacción humana y visceral a lo analizado).
      - *Aterrizaje:* Usar el marcador exacto `**Ejemplo:**` seguido de un caso de la vida cotidiana y `**Herramienta:**` para la frase accionable.
      - *Re-hook:* Al final de cada bloque, usar el marcador exacto `**Re-hook:**` seguido del gancho de curiosidad.
    - **Transiciones y Puentes:** Inyectar un "Puente explícito" (1-2 frases) que justifique narrativamente cuando haya salto de contexto entre obras.
