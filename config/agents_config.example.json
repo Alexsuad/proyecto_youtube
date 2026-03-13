@@ -1,0 +1,99 @@
+{
+    "_comment": "Configuración de modelos IA por rol. Hoy todos usan el agente principal (Antigravity). A futuro, cada rol puede tener su propio proveedor y modelo.",
+    "roles": {
+        "orquestador": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Coordina el pipeline y verifica gates.",
+            "posibles_futuros": [
+                "openai/gpt-4o",
+                "google/gemini-1.5-pro"
+            ]
+        },
+        "investigador": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Investiga el tema y propone obras candidatas.",
+            "posibles_futuros": [
+                "openai/gpt-4o-search",
+                "perplexity/sonar-large"
+            ]
+        },
+        "curador": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Selecciona y justifica las obras finales.",
+            "posibles_futuros": [
+                "anthropic/claude-3-5-sonnet"
+            ]
+        },
+        "planner": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Crea el mapa de eventos y outline del episodio.",
+            "posibles_futuros": [
+                "anthropic/claude-3-5-sonnet",
+                "google/gemini-1.5-pro"
+            ]
+        },
+        "analista": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Analiza patrones emocionales, sociales y conductuales.",
+            "posibles_futuros": [
+                "anthropic/claude-3-5-sonnet"
+            ]
+        },
+        "sintetizador": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Genera la tesis central y promesa del episodio.",
+            "posibles_futuros": [
+                "anthropic/claude-3-5-sonnet"
+            ]
+        },
+        "guionista": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Escribe el guion longform completo.",
+            "posibles_futuros": [
+                "google/gemini-1.5-pro",
+                "openai/gpt-4o"
+            ]
+        },
+        "qa_editorial": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Revisa el guion: anti-clichés, coherencia, voz del canal.",
+            "posibles_futuros": [
+                "anthropic/claude-3-5-sonnet"
+            ]
+        },
+        "shorts_writer": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Genera guiones de shorts derivados del guion principal.",
+            "posibles_futuros": [
+                "openai/gpt-4o",
+                "google/gemini-1.5-flash"
+            ]
+        },
+        "packaging": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Genera títulos y conceptos de miniatura.",
+            "posibles_futuros": [
+                "openai/gpt-4o"
+            ]
+        },
+        "seo": {
+            "proveedor": "antigravity",
+            "modelo": "default",
+            "descripcion": "Genera SEO, descripción, timestamps y tags.",
+            "posibles_futuros": [
+                "openai/gpt-4o",
+                "google/gemini-1.5-flash"
+            ]
+        }
+    }
+}

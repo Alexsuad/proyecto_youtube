@@ -1,0 +1,6 @@
+{
+    "vault_root": "C:\\YT_VAULT",
+    "channel_id": "MasAllaDelGuion",
+    "episode_id_format": "ep_{num:04d}",
+    "description": "Example configuration file. Copy this to local_settings.json and adjust paths for your local environment."
+}
