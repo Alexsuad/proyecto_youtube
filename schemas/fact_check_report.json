@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/fact_check_report.json",
+  "title": "FactCheckReport",
+  "type": "object",
+  "required": [
+    "input_version",
+    "output_version",
+    "verified_claims",
+    "status"
+  ],
+  "properties": {
+    "input_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "verified_claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "corrected_claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "interpretations_reclassified": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unresolved_claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_disclosures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "output_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "WARN",
+        "FAIL",
+        "BLOCKED"
+      ]
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/claims_ledger.json",
+  "title": "ClaimsLedger",
+  "type": "object",
+  "required": [
+    "ledger_id",
+    "script_version",
+    "claims"
+  ],
+  "properties": {
+    "ledger_id": {
+      "type": "string"
+    },
+    "script_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "claim_id",
+          "script_location",
+          "claim_text",
+          "claim_type",
+          "source_refs",
+          "verification_status"
+        ],
+        "properties": {
+          "claim_id": {
+            "type": "string"
+          },
+          "script_location": {
+            "type": "string"
+          },
+          "claim_text": {
+            "type": "string"
+          },
+          "claim_type": {
+            "type": "string"
+          },
+          "source_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "evidence_excerpt": {
+            "type": "string"
+          },
+          "attribution_required": {
+            "type": "boolean"
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "VERIFIED",
+              "UNVERIFIED",
+              "REJECTED",
+              "RECLASSIFIED"
+            ]
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "limitations": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

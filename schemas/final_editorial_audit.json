@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/final_editorial_audit.json",
+  "title": "FinalEditorialAudit",
+  "type": "object",
+  "required": [
+    "profile_compliance",
+    "brief_compliance",
+    "packaging_promise_compliance",
+    "evidence_sufficiency",
+    "thesis_quality",
+    "decision",
+    "correction_route"
+  ],
+  "properties": {
+    "profile_compliance": {
+      "type": "string"
+    },
+    "brief_compliance": {
+      "type": "string"
+    },
+    "packaging_promise_compliance": {
+      "type": "string"
+    },
+    "evidence_sufficiency": {
+      "type": "string"
+    },
+    "thesis_quality": {
+      "type": "string"
+    },
+    "viewer_journey": {
+      "type": "string"
+    },
+    "opening_quality": {
+      "type": "string"
+    },
+    "progression": {
+      "type": "string"
+    },
+    "coherence": {
+      "type": "string"
+    },
+    "originality": {
+      "type": "string"
+    },
+    "source_transformation": {
+      "type": "string"
+    },
+    "voice": {
+      "type": "string"
+    },
+    "orality": {
+      "type": "string"
+    },
+    "closing_quality": {
+      "type": "string"
+    },
+    "factual_traceability": {
+      "type": "string"
+    },
+    "platform_risk": {
+      "type": "string"
+    },
+    "production_readiness": {
+      "type": "string"
+    },
+    "system_review": {
+      "type": "string"
+    },
+    "product_review": {
+      "type": "string"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "WARN",
+        "FAIL",
+        "BLOCKED"
+      ]
+    },
+    "correction_route": {
+      "type": "string"
+    }
+  }
+}

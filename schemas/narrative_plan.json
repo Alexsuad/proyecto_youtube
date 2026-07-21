@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/narrative_plan.json",
+  "title": "NarrativePlan",
+  "type": "object",
+  "required": [
+    "script_plan_id",
+    "episode_id",
+    "script_type",
+    "thesis_provisional",
+    "blocks",
+    "word_budget_total"
+  ],
+  "properties": {
+    "script_plan_id": {
+      "type": "string"
+    },
+    "episode_id": {
+      "type": "string"
+    },
+    "script_type": {
+      "type": "string"
+    },
+    "thesis_provisional": {
+      "type": "string"
+    },
+    "thesis_refined": {
+      "type": "string"
+    },
+    "main_objection": {
+      "type": "string"
+    },
+    "nuance": {
+      "type": "string"
+    },
+    "promise": {
+      "type": "string"
+    },
+    "packaging_hypothesis_ref": {
+      "type": "string"
+    },
+    "viewer_journey_ref": {
+      "type": "string"
+    },
+    "opening_design_ref": {
+      "type": "string"
+    },
+    "closing_design_ref": {
+      "type": "string"
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "climax": {
+      "type": "string"
+    },
+    "word_budget_total": {
+      "type": "integer"
+    },
+    "wpm_target": {
+      "type": "integer"
+    }
+  }
+}

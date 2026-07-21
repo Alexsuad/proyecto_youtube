@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/correction_routing_policy.json",
+  "title": "CorrectionRoutingPolicy",
+  "type": "object",
+  "required": [
+    "defect_type",
+    "severity",
+    "origin_artifact",
+    "invalidated_artifacts",
+    "return_state",
+    "required_revalidation",
+    "suggested_role"
+  ],
+  "properties": {
+    "defect_type": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "CRITICAL",
+        "MAJOR",
+        "MINOR"
+      ]
+    },
+    "origin_artifact": {
+      "type": "string"
+    },
+    "invalidated_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "return_state": {
+      "type": "string"
+    },
+    "required_revalidation": {
+      "type": "string"
+    },
+    "suggested_role": {
+      "type": "string"
+    }
+  }
+}

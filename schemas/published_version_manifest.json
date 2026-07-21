@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/published_version_manifest.json",
+  "title": "PublishedVersionManifest",
+  "type": "object",
+  "required": [
+    "video_id",
+    "publication_date",
+    "script_version",
+    "audiovisual_version",
+    "publication_package_version",
+    "change_history",
+    "status"
+  ],
+  "properties": {
+    "video_id": {
+      "type": "string"
+    },
+    "publication_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "script_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "audiovisual_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "title_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "thumbnail_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "description_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "end_screen_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "pinned_comment_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "playlist_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "publication_package_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "change_history": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "IN_REVIEW",
+        "EDITORIAL_SCRIPT_APPROVED",
+        "YOUTUBE_PRODUCTION_READY",
+        "YOUTUBE_READY",
+        "PUBLISHED",
+        "DEPRECATED",
+        "INVALIDATED"
+      ]
+    }
+  }
+}

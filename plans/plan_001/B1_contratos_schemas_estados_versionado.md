@@ -3,7 +3,7 @@
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
 **Versión derivada:** `PLAN-001 v1.3`  
-**Estado inicial:** `PLANNED`  
+**Estado:** `READY_FOR_AUDIT`
 **Dependencia:** `B0`  
 **Siguiente tramo:** `B2 y B3`  
 **Gate resumido:** Contratos canónicos aprobados
@@ -117,7 +117,7 @@ APRENDIZAJES_APROBADOS
 DECISIONES_PENDIENTES
 ```
 
-La aprobación funcional del contenido corresponde al Equipo 01. La validación técnica del contrato, compilación, lineage, versionado, checksum e invalidación corresponde al Equipo 04.
+La aprobación funcional del contenido corresponde a la responsabilidad editorial. La validación técnica del contrato, compilación, lineage, versionado, checksum e invalidación corresponde a la responsabilidad de validación técnica.
 
 ### B1-C2 — EpisodeBrief
 
@@ -208,16 +208,16 @@ La audiencia concreta debe derivarse del `EditorialProfile` aprobado. No puede u
 La autoridad funcional se divide así:
 
 ```text
-Equipo 03
+publicación
 → define o aprueba audiencia concreta, promesa visible
   e hipótesis temprana de packaging.
 
-Equipo 02
+editorial
 → valida que la tesis y la arquitectura puedan cumplir
   honestamente la promesa.
 
-Equipo 02 no aprueba unilateralmente el packaging.
-Equipo 03 no modifica unilateralmente la tesis.
+La responsabilidad editorial no aprueba unilateralmente el packaging.
+La responsabilidad de publicación no modifica unilateralmente la tesis.
 ```
 
 ### B1-C5 — ViewerJourney

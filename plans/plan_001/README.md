@@ -70,7 +70,7 @@ Los archivos de esta carpeta:
 | `B7` | [B7_auditoria_aprobacion_editorial.md](B7_auditoria_aprobacion_editorial.md) | B6 | `PLANNED` | Guion aprobado editorialmente |
 | `B7.5` | [B7_5_adaptacion_youtube.md](B7_5_adaptacion_youtube.md) | B7 | `PLANNED` | Packaging, correspondencia y continuidad aprobados |
 | `B8` | [B8_plataforma_derechos_paquete.md](B8_plataforma_derechos_paquete.md) | B7.5 | `PLANNED` | Paquete completo evaluado y compilado |
-| `B8.5` | [B8_5_aprobacion_youtube_ready.md](B8_5_aprobacion_youtube_ready.md) | B8 | `PLANNED` | Paquete exacto autorizado para producción |
+| `B8.5` | [B8_5_aprobacion_youtube_production_ready.md](B8_5_aprobacion_youtube_production_ready.md) | B8 | `PLANNED` | Paquete exacto autorizado para producción |
 | `B9` | [B9_validacion_tres_episodios.md](B9_validacion_tres_episodios.md) | B2–B8.5 | `PLANNED` | Tres casos aprobados |
 | `B9.5` | [B9_5_aprendizaje_controlado.md](B9_5_aprendizaje_controlado.md) | B9 | `PLANNED` | Ciclo manual de aprendizaje demostrado |
 | `B10` | [B10_lean_portabilidad_cierre.md](B10_lean_portabilidad_cierre.md) | B9.5 | `PLANNED` | Plan cerrado con evidencia |

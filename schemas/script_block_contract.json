@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/script_block_contract.json",
+  "title": "ScriptBlockContract",
+  "type": "object",
+  "required": [
+    "block_id",
+    "plan_version",
+    "required_sources",
+    "word_budget_min",
+    "word_budget_max",
+    "narrative_function",
+    "output_path"
+  ],
+  "properties": {
+    "block_id": {
+      "type": "string"
+    },
+    "plan_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "context_pack_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "required_sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "forbidden_repetitions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_transition": {
+      "type": "string"
+    },
+    "word_budget_min": {
+      "type": "integer"
+    },
+    "word_budget_max": {
+      "type": "integer"
+    },
+    "narrative_function": {
+      "type": "string"
+    },
+    "previous_block_summary": {
+      "type": "string"
+    },
+    "next_block_purpose": {
+      "type": "string"
+    },
+    "output_path": {
+      "type": "string"
+    }
+  }
+}

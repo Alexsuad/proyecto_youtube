@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/performance_snapshot.json",
+  "title": "PerformanceSnapshot",
+  "type": "object",
+  "required": [
+    "published_version",
+    "observation_window",
+    "status"
+  ],
+  "properties": {
+    "published_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "observation_window": {
+      "type": "string"
+    },
+    "active_title_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "active_thumbnail_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "active_description_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "active_end_screen_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "active_pinned_comment_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "active_playlist_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "mixed_version_window": {
+      "type": "boolean"
+    },
+    "attribution_status": {
+      "type": "string"
+    },
+    "impressions": {
+      "type": "integer"
+    },
+    "ctr_with_context": {
+      "type": "number"
+    },
+    "initial_retention": {
+      "type": "number"
+    },
+    "average_view_duration": {
+      "type": "number"
+    },
+    "retention_by_block": {
+      "type": "object"
+    },
+    "traffic_sources": {
+      "type": "object"
+    },
+    "new_and_returning_viewers": {
+      "type": "object"
+    },
+    "end_screen_results": {
+      "type": "object"
+    },
+    "comment_signals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "subscriber_signals": {
+      "type": "object"
+    },
+    "device_context": {
+      "type": "string"
+    },
+    "data_limitations": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "IN_REVIEW",
+        "EDITORIAL_SCRIPT_APPROVED",
+        "YOUTUBE_PRODUCTION_READY",
+        "YOUTUBE_READY",
+        "PUBLISHED",
+        "DEPRECATED",
+        "INVALIDATED"
+      ]
+    }
+  }
+}

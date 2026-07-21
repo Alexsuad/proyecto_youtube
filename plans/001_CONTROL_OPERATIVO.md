@@ -11,25 +11,26 @@
 ```yaml
 plan_id: PLAN-001
 plan_version: "1.3"
-plan_status: READY_FOR_TEAM_REVALIDATION
-implementation_authorized: false
-current_block: null
+plan_status: READY_FOR_AUDIT
+implementation_authorized: true
+authorized_blocks: [B0, B1]
+current_block: B2
 current_mission: null
-next_allowed_action: TARGETED_REVALIDATION_TEAMS_01_02_03
-next_implementation_block_if_approved: B0
+next_allowed_action: B2_START
+next_implementation_block_if_approved: B2
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-Este archivo no autoriza implementación. Mientras `implementation_authorized` sea `false`, ningún agente operativo puede comenzar B0 ni modificar el sistema en nombre del plan.
+Este archivo autoriza la implementación únicamente de B0 y B1. B2 y los bloques posteriores no están autorizados. Ningún agente operativo puede comenzar B2 ni modificar el sistema en nombre del plan.
 
 ## 2. Autoridad documental
 
 ```text
 1. Decisiones explícitas posteriores del propietario
 2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
-3. Decisiones funcionales aprobadas del equipo competente
+3. Decisiones funcionales aprobadas de la responsabilidad competente
 4. Plan 001 v1.3
-5. Auditorías finales vigentes de los equipos 01, 02, 03 y 04
+5. Auditorías finales vigentes de las responsabilidades funcionales
 6. Este control operativo
 7. Archivo del bloque activo
 8. Misión técnica autorizada
@@ -38,7 +39,7 @@ Este archivo no autoriza implementación. Mientras `implementation_authorized` s
 
 Este control resume estado y navegación. No sustituye contratos, criterios ni decisiones del plan rector.
 
-La autoridad se resuelve por especialidad. El Plan 001 y este control operativo no pueden sustituir la aprobación funcional del equipo competente ni permitir que un equipo invada las decisiones de otro.
+La autoridad se resuelve por especialidad. El Plan 001 y este control operativo no pueden sustituir la aprobación funcional de la responsabilidad competente ni permitir que se invadan las decisiones de otra responsabilidad.
 
 ## 3. Lectura mínima por misión
 
@@ -64,8 +65,8 @@ Consultar el plan rector completo solo para resolver contradicciones, autoridad,
 ## 4. Reglas globales no negociables
 
 1. Más Allá del Guion sigue siendo el producto rector.
-2. Cada equipo decide y audita únicamente su especialidad.
-3. Infraestructura y Gobernanza es el único puente hacia agentes operativos.
+2. Cada responsabilidad decide y audita únicamente su especialidad.
+3. La responsabilidad de validación técnica es el único puente hacia agentes operativos.
 4. El agente ejecutor termina en `READY_FOR_AUDIT`, nunca se autoaprueba.
 5. Un input obligatorio ausente o vacío no puede producir `PASS`.
 6. Estados y códigos de salida deben ser coherentes.
@@ -127,9 +128,9 @@ B0
 
 | Bloque | Nombre | Dependencia | Estado | Especificación operativa |
 |---|---|---|---|---|
-| B0 | Gobernanza, baseline y benchmarks editoriales | Ninguna | `PLANNED` | [B0_gobernanza_baseline_benchmarks.md](plan_001/B0_gobernanza_baseline_benchmarks.md) |
-| B1 | Contratos, schemas, estados y versionado | B0 | `PLANNED` | [B1_contratos_schemas_estados_versionado.md](plan_001/B1_contratos_schemas_estados_versionado.md) |
-| B2 | Reparación del arnés y gates críticos | B1 | `PLANNED` | [B2_reparacion_harness_gates.md](plan_001/B2_reparacion_harness_gates.md) |
+| B0 | Gobernanza, baseline y benchmarks editoriales | Ninguna | `PASS` | [B0_gobernanza_baseline_benchmarks.md](plan_001/B0_gobernanza_baseline_benchmarks.md) |
+| B1 | Contratos, schemas, estados y versionado | B0 | `PASS` (auditoría aprobada, 29/29 tests) | [B1_contratos_schemas_estados_versionado.md](plan_001/B1_contratos_schemas_estados_versionado.md) |
+| B2 | Reparación del arnés y gates críticos | B1 | `READY_TO_START` (todavía no iniciado) | [B2_reparacion_harness_gates.md](plan_001/B2_reparacion_harness_gates.md) |
 | B3 | Perfil editorial y frontera del canal | B1–B2 | `PLANNED` | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
 | B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `PLANNED` | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
 | B5 | Profesionalización del diseño editorial | B3–B4 | `PLANNED` | [B5_diseno_editorial.md](plan_001/B5_diseno_editorial.md) |
@@ -138,7 +139,7 @@ B0
 | B7 | Auditoría independiente, correcciones y aprobación editorial | B6 | `PLANNED` | [B7_auditoria_aprobacion_editorial.md](plan_001/B7_auditoria_aprobacion_editorial.md) |
 | B7.5 | Adaptación profesional a YouTube | B7 | `PLANNED` | [B7_5_adaptacion_youtube.md](plan_001/B7_5_adaptacion_youtube.md) |
 | B8 | Plataforma, monetización, copyright y paquete para producción | B7.5 | `PLANNED` | [B8_plataforma_derechos_paquete.md](plan_001/B8_plataforma_derechos_paquete.md) |
-| B8.5 | Aprobación para producción y cierre YOUTUBE_PRODUCTION_READY | B8 | `PLANNED` | [B8_5_aprobacion_youtube_ready.md](plan_001/B8_5_aprobacion_youtube_ready.md) |
+| B8.5 | Aprobación para producción y cierre YOUTUBE_PRODUCTION_READY | B8 | `PLANNED` | [B8_5_aprobacion_youtube_production_ready.md](plan_001/B8_5_aprobacion_youtube_production_ready.md) |
 | B9 | Validación con tres episodios completos | B2–B8.5 | `PLANNED` | [B9_validacion_tres_episodios.md](plan_001/B9_validacion_tres_episodios.md) |
 | B9.5 | Registro publicado y aprendizaje controlado | B9 | `PLANNED` | [B9_5_aprendizaje_controlado.md](plan_001/B9_5_aprendizaje_controlado.md) |
 | B10 | Lean/5S, portabilidad, documentación y cierre | B9.5 | `PLANNED` | [B10_lean_portabilidad_cierre.md](plan_001/B10_lean_portabilidad_cierre.md) |
@@ -174,7 +175,7 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: TARGETED_REVALIDATION_TEAMS_01_02_03
-IMPLEMENTATION_AUTHORIZED: NO
-NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B0
+NEXT_ALLOWED_ACTION: B2_START
+IMPLEMENTATION_AUTHORIZED: YES (solo para B0 y B1)
+NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B2 (todavía no iniciado)
 ```

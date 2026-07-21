@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/episode_brief.json",
+  "title": "EpisodeBrief",
+  "type": "object",
+  "required": [
+    "episode_id",
+    "profile_id",
+    "profile_version",
+    "tema",
+    "pregunta_central",
+    "tesis_provisional",
+    "objetivo",
+    "audiencia_concreta",
+    "salida_esperada"
+  ],
+  "properties": {
+    "episode_id": {
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string"
+    },
+    "profile_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "tema": {
+      "type": "string"
+    },
+    "pregunta_central": {
+      "type": "string"
+    },
+    "conflicto_o_tension": {
+      "type": "string"
+    },
+    "tesis_provisional": {
+      "type": "string"
+    },
+    "objetivo": {
+      "type": "string"
+    },
+    "transformacion_esperada": {
+      "type": "string"
+    },
+    "audiencia_concreta": {
+      "type": "string"
+    },
+    "angulo_diferencial": {
+      "type": "string"
+    },
+    "alcance": {
+      "type": "string"
+    },
+    "fuera_de_alcance": {
+      "type": "string"
+    },
+    "spoilers": {
+      "type": "string"
+    },
+    "tono": {
+      "type": "string"
+    },
+    "duracion_objetivo": {
+      "type": "string"
+    },
+    "ritmo_locucion": {
+      "type": "string"
+    },
+    "nivel_investigacion": {
+      "type": "string"
+    },
+    "fuentes_requeridas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "obra_o_fuente_principal": {
+      "type": "string"
+    },
+    "tipo_de_guion_principal": {
+      "type": "string"
+    },
+    "salida_esperada": {
+      "type": "string"
+    }
+  }
+}

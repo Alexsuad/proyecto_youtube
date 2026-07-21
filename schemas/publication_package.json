@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/publication_package.json",
+  "title": "PublicationPackage",
+  "type": "object",
+  "required": [
+    "package_id",
+    "package_version",
+    "script_version",
+    "approved_title",
+    "approved_thumbnail_or_brief",
+    "description",
+    "status"
+  ],
+  "properties": {
+    "package_id": {
+      "type": "string"
+    },
+    "package_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "script_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "approved_title": {
+      "type": "string"
+    },
+    "approved_thumbnail_or_brief": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "chapters_status": {
+      "type": "string"
+    },
+    "attributions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cta": {
+      "type": "string"
+    },
+    "end_screen": {
+      "type": "string"
+    },
+    "playlist": {
+      "type": "string"
+    },
+    "next_video": {
+      "type": "string"
+    },
+    "pinned_comment": {
+      "type": "string"
+    },
+    "shorts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "promise_correspondence_report_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "platform_risk_report_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "copyright_and_reuse_report_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "audiovisual_rights_brief_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "known_limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "publication_checklist": {
+      "type": "object"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "IN_REVIEW",
+        "EDITORIAL_SCRIPT_APPROVED",
+        "YOUTUBE_PRODUCTION_READY",
+        "YOUTUBE_READY",
+        "PUBLISHED",
+        "DEPRECATED",
+        "INVALIDATED"
+      ]
+    }
+  }
+}

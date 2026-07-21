@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/curation_decision.json",
+  "title": "CurationDecision",
+  "type": "object",
+  "required": [
+    "curation_id",
+    "research_version",
+    "preselected_materials",
+    "selected_materials",
+    "rejected_materials",
+    "decision"
+  ],
+  "properties": {
+    "curation_id": {
+      "type": "string"
+    },
+    "research_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "narrative_human_analysis_ref": {
+      "type": "string"
+    },
+    "preselected_materials": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "selected_materials": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rejected_materials": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "narrative_function_by_material": {
+      "type": "object"
+    },
+    "sequence_rationale": {
+      "type": "string"
+    },
+    "perspective_diversity": {
+      "type": "string"
+    },
+    "context_cost": {
+      "type": "string"
+    },
+    "redundancy_risk": {
+      "type": "string"
+    },
+    "climax_contribution": {
+      "type": "string"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "APPROVED",
+        "REJECTED",
+        "NEEDS_REVISION"
+      ]
+    }
+  }
+}

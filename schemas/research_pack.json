@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/research_pack.json",
+  "title": "ResearchPack",
+  "type": "object",
+  "required": [
+    "research_id",
+    "episode_id",
+    "brief_version",
+    "facts",
+    "interpretations",
+    "hypotheses",
+    "contradictions",
+    "source_registry",
+    "created_at"
+  ],
+  "properties": {
+    "research_id": {
+      "type": "string"
+    },
+    "episode_id": {
+      "type": "string"
+    },
+    "brief_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "interpretations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "contradictions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "alternative_views": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scene_evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_registry": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "claims_candidates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unsupported_claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "narrative_opportunities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "narrative_human_analysis_by_material": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

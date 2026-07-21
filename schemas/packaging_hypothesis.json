@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/packaging_hypothesis.json",
+  "title": "PackagingHypothesis",
+  "type": "object",
+  "required": [
+    "episode_audience",
+    "promesa_de_clic",
+    "titulo_de_trabajo",
+    "concepto_de_miniatura",
+    "functional_owner_role",
+    "authorized_approval_status",
+    "version",
+    "checksum"
+  ],
+  "properties": {
+    "episode_audience": {
+      "type": "string"
+    },
+    "audience_profile_ref": {
+      "type": "string"
+    },
+    "audience_knowledge_assumption": {
+      "type": "string"
+    },
+    "recognized_tension": {
+      "type": "string"
+    },
+    "relevance_reason": {
+      "type": "string"
+    },
+    "expectation_to_avoid": {
+      "type": "string"
+    },
+    "promesa_de_clic": {
+      "type": "string"
+    },
+    "titulo_de_trabajo": {
+      "type": "string"
+    },
+    "concepto_de_miniatura": {
+      "type": "string"
+    },
+    "pregunta_que_el_espectador_espera_resolver": {
+      "type": "string"
+    },
+    "diferenciador_del_video": {
+      "type": "string"
+    },
+    "riesgo_de_sobrepromesa": {
+      "type": "string"
+    },
+    "functional_owner_role": {
+      "type": "string"
+    },
+    "authorized_approval_status": {
+      "type": "string"
+    },
+    "authorized_approved_by": {
+      "type": "string"
+    },
+    "authorized_approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "alignment_with_thesis": {
+      "type": "string"
+    },
+    "alignment_with_opening": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "checksum": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{64}$",
+      "minLength": 64,
+      "maxLength": 64
+    }
+  }
+}

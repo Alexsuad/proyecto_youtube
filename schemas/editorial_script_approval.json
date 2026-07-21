@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/editorial_script_approval.json",
+  "title": "EditorialScriptApproval",
+  "type": "object",
+  "required": [
+    "artifact_id",
+    "script_version",
+    "checksum",
+    "decision",
+    "approved_by",
+    "approved_role",
+    "approved_at"
+  ],
+  "properties": {
+    "artifact_id": {
+      "type": "string"
+    },
+    "script_version": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "checksum": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-fA-F]{64}$"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "APPROVED",
+        "APPROVED_FOR_PRODUCTION",
+        "REQUEST_CHANGES",
+        "REJECT"
+      ]
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approved_role": {
+      "type": "string"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "invalidated_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "invalidation_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

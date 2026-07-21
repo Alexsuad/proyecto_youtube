@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/viewer_journey.json",
+  "title": "ViewerJourney",
+  "type": "object",
+  "required": [
+    "estado_inicial_del_espectador",
+    "creencia_inicial_probable",
+    "pregunta_que_lo_mantiene",
+    "estado_final_del_espectador"
+  ],
+  "properties": {
+    "estado_inicial_del_espectador": {
+      "type": "string"
+    },
+    "creencia_inicial_probable": {
+      "type": "string"
+    },
+    "pregunta_que_lo_mantiene": {
+      "type": "string"
+    },
+    "primer_descubrimiento": {
+      "type": "string"
+    },
+    "complicacion": {
+      "type": "string"
+    },
+    "cambio_de_perspectiva": {
+      "type": "string"
+    },
+    "tension_principal": {
+      "type": "string"
+    },
+    "revelacion_o_payoff": {
+      "type": "string"
+    },
+    "estado_final_del_espectador": {
+      "type": "string"
+    }
+  }
+}

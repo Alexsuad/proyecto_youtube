@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/thesis_artifact.json",
+  "title": "ThesisArtifact",
+  "type": "object",
+  "required": [
+    "thesis_id",
+    "stage",
+    "statement",
+    "supporting_reasoning",
+    "version"
+  ],
+  "properties": {
+    "thesis_id": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "THESIS_PROVISIONAL",
+        "THESIS_REFINED"
+      ]
+    },
+    "statement": {
+      "type": "string"
+    },
+    "supporting_reasoning": {
+      "type": "string"
+    },
+    "main_objection": {
+      "type": "string"
+    },
+    "nuance": {
+      "type": "string"
+    },
+    "simplification_risk": {
+      "type": "string"
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "packaging_alignment": {
+      "type": "string"
+    },
+    "viewer_transformation": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    }
+  }
+}

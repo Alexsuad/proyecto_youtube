@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/final_delivery_manifest.json",
+  "title": "FinalDeliveryManifest",
+  "type": "object",
+  "required": [
+    "final_script_clean",
+    "final_script_annotated",
+    "claims_ledger",
+    "checksums",
+    "approval_record"
+  ],
+  "properties": {
+    "final_script_clean": {
+      "type": "string"
+    },
+    "final_script_annotated": {
+      "type": "string"
+    },
+    "claims_ledger": {
+      "type": "string"
+    },
+    "metrics": {
+      "type": "object"
+    },
+    "known_limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "final_candidate_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "human_approved_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "checksums": {
+      "type": "object"
+    },
+    "approval_record": {
+      "type": "object"
+    }
+  }
+}
