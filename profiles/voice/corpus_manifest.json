@@ -1,8 +1,10 @@
 {
   "manifest_id": "MADG-VOICE-CORPUS-INITIAL",
-  "status": "INCOMPLETE_MISSING_REQUIRED_SAMPLE",
+  "status": "SPECIFICATION_BASED",
+  "voice_evidence_level": "SPECIFICATION_BASED",
+  "authentic_editorial_writing_sample_status": "NOT_AVAILABLE",
   "source_lineage": [{"source_id": "B3-FUNCTIONAL-SPEC-TEAM-01", "locator": "docs/specifications/B3_especificacion_funcional_equipo_01.md", "checksum": "dfe44c02b04094eef85e88d9dad77db5bf53bbda19adb1c69f9381011fea6317"}],
   "voice_samples": [],
-  "pending_required_samples": ["Muestra real principal: texto personal anterior al uso generalizado de IA, aportado por el propietario."],
+  "pending_optional_samples": ["Muestra futura de escritura editorial auténtica, si el Equipo 01 decide aportarla y autorizarla."],
   "exclusion_rules": ["Guiones íntegramente generados por IA", "Transcripciones completas de referentes", "Correcciones aisladas", "Frases sin autoría clara", "Listas de muletillas", "Primer guion producido sin aprobación", "Textos cuya representatividad no haya sido evaluada"]
 }

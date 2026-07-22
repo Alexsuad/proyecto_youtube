@@ -11,7 +11,7 @@
     "checksum": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
     "authorship": {"type": "string", "minLength": 1},
     "text_type": {"type": "string", "minLength": 1},
-    "classification": {"type": "string", "enum": ["CANONICAL", "COMPLEMENTARY", "EXCLUDED"]},
+    "classification": {"type": "string", "enum": ["AUTHENTIC", "COMPLEMENTARY", "EXCLUDED"]},
     "usage_authorization": {"type": "string", "enum": ["AUTHORIZED", "NOT_AUTHORIZED"]},
     "representativeness": {"type": "string", "enum": ["HIGH", "MEDIUM", "LOW", "NOT_EVALUATED"]},
     "recorded_at": {"type": "string", "format": "date-time"},
@@ -21,7 +21,7 @@
   },
   "allOf": [
     {
-      "if": {"properties": {"classification": {"enum": ["CANONICAL", "COMPLEMENTARY"]}}},
+      "if": {"properties": {"classification": {"enum": ["AUTHENTIC", "COMPLEMENTARY"]}}},
       "then": {"required": ["inclusion_reason"]}
     },
     {

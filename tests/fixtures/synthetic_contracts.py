@@ -16,7 +16,7 @@ VALID_EDITORIAL_PROFILE: Dict[str, Any] = {
     "source_lineage": [{"source_id": "B3-FUNCTIONAL-SPEC", "locator": "docs/specifications/B3_especificacion_funcional_equipo_01.md", "checksum": VALID_CHECKSUM, "role": "FUNCTIONAL_SPECIFICATION"}],
     "identity_stable": {"identity": "Videoensayos narrativos", "purpose": ["Comprender historias"], "positioning": "Reflexión narrativa", "primary_promise": "Comprender cómo vivimos", "differentiator": ["Interpretación propia"], "editorial_pillars": ["Individuo e identidad"], "territories": [{"name": "Cultura", "classification": "ACTIVE"}], "permanent_limits": ["No inventar"], "authorial_persona": {"acts_as": "Observador con criterio", "does_not_act_as": ["Terapeuta"], "voice_traits": ["Claridad"]}, "first_person_rule": "FIRST_PERSON_ALLOWED_WHEN_TRUE_AND_EDITORIALLY_RELEVANT"},
     "audience_hypotheses": [{"classification": "AUDIENCE_HYPOTHESIS_INITIAL", "statement": "Audiencia inicial", "status": "HYPOTHESIS"}],
-    "voice_profile": {"corpus_status": "INCOMPLETE_MISSING_REQUIRED_SAMPLE", "approved_sample_ids": [], "initial_authorized_patterns": ["Observación concreta"], "anti_imitation_rules": ["No copiar referentes"]},
+    "voice_profile": {"corpus_status": "INCOMPLETE_MISSING_REQUIRED_SAMPLE", "approved_sample_ids": [], "initial_authorized_patterns": ["Observación concreta"], "anti_imitation_rules": ["No copiar referentes"], "approved_positive_examples": ["Ejemplo editorial compatible derivado de la especificación."], "approved_negative_examples": ["Ejemplo editorial incompatible derivado de la especificación."]},
     "supported_delivery_formats": ["VIDEO_ESSAY", "NARRATIVE_PODCAST", "AUDIO_CONTENT"],
     "external_policy_references": [],
     "pending_decisions": ["Muestra real principal"],

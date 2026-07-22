@@ -38,12 +38,14 @@
     {"classification": "AUDIENCE_HYPOTHESIS_INITIAL", "statement": "Audiencia aproximada de 25 a 45 años; revisable mediante aprendizaje del canal, evidencia de audiencia, evolución editorial, formatos y consumo real.", "status": "HYPOTHESIS"}
   ],
   "voice_profile": {
-    "corpus_status": "INCOMPLETE_MISSING_REQUIRED_SAMPLE",
+    "corpus_status": "SPECIFICATION_BASED",
     "approved_sample_ids": [],
     "initial_authorized_patterns": ["pensamiento asociativo", "memoria concreta", "reflexión generacional", "objetos cotidianos", "contraste entre pasado y presente", "paso de experiencia individual a lectura colectiva", "crítica sin academicismo", "ironía suave", "cierre paradójico", "autoconciencia", "claridad directa", "orientación práctica", "rechazo de duplicación", "detección de desviaciones", "preferencia por lenguaje sencillo", "separación de responsabilidades", "prioridad del resultado útil"],
-    "anti_imitation_rules": ["La voz real del propietario es el núcleo", "Los referentes externos son recursos parciales, nunca un modelo total de imitación", "Los errores de digitación y escritura rápida no son rasgos de voz"]
+    "anti_imitation_rules": ["La voz editorial se rige por la especificación aprobada hasta que exista evidencia auténtica autorizada", "Los referentes externos son recursos parciales, nunca un modelo total de imitación", "Los errores de digitación y escritura rápida no son rasgos de voz"],
+    "approved_positive_examples": ["Ejemplo editorial compatible derivado de la especificación: partir de un conflicto de una obra, investigarlo y conectarlo con una pregunta humana, social o cultural mediante interpretación propia y matiz."],
+    "approved_negative_examples": ["Ejemplo editorial incompatible derivado de la especificación: resumir una obra como producto principal, presentar hipótesis como hechos o usar una fórmula de coaching para sustituir el argumento."]
   },
   "supported_delivery_formats": ["VIDEO_ESSAY", "AUDIOVISUAL_NARRATION", "NARRATIVE_PODCAST", "REFLECTIVE_PODCAST", "AUDIO_CONTENT", "COMPATIBLE_DERIVATIVE"],
   "external_policy_references": [],
-  "pending_decisions": ["Incorporar la muestra real principal autorizada con checksum, autoría, autorización, representatividad y lineage.", "Definir referencias versionadas para políticas editoriales, de plataforma y preferencias de formato fuera de la identidad estable.", "No activar este perfil hasta disponer de aprobación funcional y validación técnica sobre el checksum externo exacto."]
+  "pending_decisions": ["Una muestra futura de escritura editorial auténtica es evidencia opcional y, si se incorpora, requerirá checksum, autoría, autorización, representatividad y lineage.", "Definir referencias versionadas para políticas editoriales, de plataforma y preferencias de formato fuera de la identidad estable.", "No activar este perfil hasta disponer de aprobación funcional y validación técnica sobre el checksum externo exacto."]
 }

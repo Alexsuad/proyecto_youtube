@@ -15,7 +15,7 @@ plan_status: READY_FOR_EXTERNAL_AUDIT
 implementation_authorized: true
 authorized_blocks: [B0, B1, B2]
 current_block: B3
-current_mission: B3-I4-PREFLIGHT
+current_mission: B3-I4-VALIDATION
 b3_i1_implementation: COMPLETED
 b3_i1_technical_audit: PASS
 b3_profile_status: DRAFT
@@ -27,23 +27,28 @@ b3_i3_implementation: COMPLETED
 b3_i3_external_technical_audit: PASS
 b3_i3_commit: ad306fe46a9d58546369308be10716eea656afae
 b3_i4_authorization: CONDITIONAL
-b3_i4_primary_voice_sample: REQUIRED_AND_NOT_VERIFIED
+b3_i4_primary_voice_sample: DEPRECATED
 b3_i4_team_01_functional_approval: REQUIRED
-b3_authorized_missions: [B3-I4-PREFLIGHT]
-b3_not_authorized_missions: [B3-I4-IMPLEMENTATION]
+b3_i4_functional_blocker: REMOVED
+team_01_clarification: APPROVED
+voice_evidence_level: SPECIFICATION_BASED
+authentic_editorial_writing_sample_status: NOT_AVAILABLE
+editorial_writing_reference_corpus_mechanism: AVAILABLE
+b3_authorized_missions: [B3-I4-VALIDATION]
+b3_not_authorized_missions: [B4]
 b3_i4_preflight_implementation: COMPLETED
 b3_i4_preflight_external_audit: PASS
-b3_i4_primary_sample_available: NO
+b3_i4_primary_sample_available: NOT_REQUIRED
 b3_i4_authorized_complementary_samples: 0
 b3_i4_invalid_or_incomplete_samples: 0
-b3_i4_corpus_ready: NO
-b3_i4_execution: BLOCKED_MISSING_PRIMARY_REAL_VOICE_SAMPLE
-next_allowed_action: PROVIDE_AUTHORIZED_PRIMARY_REAL_VOICE_SAMPLE
-next_implementation_block_if_approved: B3-I4-PREFLIGHT
+b3_i4_corpus_ready: YES
+b3_i4_execution: IN_PROGRESS
+next_allowed_action: COMPLETE_B3-I4_VALIDATION
+next_implementation_block_if_approved: B3-I4-VALIDATION
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-El preflight de B3-I4 ha confirmado que el corpus real no está disponible. B3-I4 está bloqueada hasta que el propietario proporcione una muestra principal real autorizada. El perfil editorial real continúa en `DRAFT`. No existe activación real, no hay aprobación del Equipo 01, no hay validación técnica final y B4 no está autorizado.
+La aclaración aprobada del Equipo 01 establece evidencia de voz `SPECIFICATION_BASED`; una muestra auténtica futura es opcional. B3-I4 continúa en validación. El perfil editorial real continúa en `DRAFT`. No existe activación real, no hay aprobación del Equipo 01, no hay validación técnica final y B4 no está autorizado.
 
 ## 2. Autoridad documental
 
@@ -197,13 +202,12 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: PROVIDE_AUTHORIZED_PRIMARY_REAL_VOICE_SAMPLE
+NEXT_ALLOWED_ACTION: COMPLETE_B3-I4_VALIDATION
 B3-I4_PREFLIGHT_IMPLEMENTATION: COMPLETED
 B3-I4_PREFLIGHT_EXTERNAL_AUDIT: PASS
-PRIMARY_SAMPLE_AVAILABLE: NO
-B3-I4_EXECUTION: BLOCKED_MISSING_PRIMARY_REAL_VOICE_SAMPLE
-B3_IMPLEMENTATION_STATUS: BLOCKED
+B3-I4_FUNCTIONAL_BLOCKER: REMOVED
+B3_IMPLEMENTATION_STATUS: IN_PROGRESS
 B4_AUTHORIZED: NO
 ```
 
-B3-I4 está bloqueada hasta que el propietario proporcione una muestra principal real autorizada. B4 no está autorizado.
+B3-I4 continúa con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura es opcional. B4 no está autorizado.

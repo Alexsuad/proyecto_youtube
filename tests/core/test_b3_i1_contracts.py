@@ -18,7 +18,7 @@ def test_initial_profile_payload_is_a_valid_draft_without_activation():
     payload = load_json("profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json")
     assert validate_against_schema(payload, "editorial_profile") == []
     assert payload["status"] == "DRAFT"
-    assert payload["voice_profile"]["corpus_status"] == "INCOMPLETE_MISSING_REQUIRED_SAMPLE"
+    assert payload["voice_profile"]["corpus_status"] == "SPECIFICATION_BASED"
     assert payload["voice_profile"]["approved_sample_ids"] == []
 
 
@@ -36,12 +36,15 @@ def test_profile_rejects_rigid_audience_and_platform_policy_in_stable_identity()
 def test_voice_sample_requires_authorship_authorization_and_checksum():
     sample = {
         "sample_id": "SAMPLE-001", "locator": "secure://sample", "checksum": "a" * 64,
-        "authorship": "OWNER", "text_type": "PERSONAL_TEXT", "classification": "CANONICAL",
+        "authorship": "OWNER", "text_type": "PERSONAL_TEXT", "classification": "AUTHENTIC",
         "usage_authorization": "AUTHORIZED", "representativeness": "HIGH",
         "recorded_at": "2026-07-22T20:00:00Z", "lineage": ["OWNER_PROVIDED"],
         "inclusion_reason": "Muestra autorizada",
     }
     assert validate_against_schema(sample, "voice_sample") == []
+    canonical = copy.deepcopy(sample)
+    canonical["classification"] = "CANONICAL"
+    assert validate_against_schema(canonical, "voice_sample")
     for field in ("authorship", "usage_authorization", "checksum"):
         invalid = copy.deepcopy(sample)
         invalid.pop(field)

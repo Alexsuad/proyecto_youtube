@@ -14,21 +14,26 @@ B3-I3_IMPLEMENTATION: COMPLETED
 B3-I3_EXTERNAL_TECHNICAL_AUDIT: PASS
 B3-I3_COMMIT: ad306fe46a9d58546369308be10716eea656afae
 B3_PROFILE_STATUS: DRAFT
-B3_IMPLEMENTATION_STATUS: BLOCKED
+B3_IMPLEMENTATION_STATUS: IN_PROGRESS
 B3-I4_AUTHORIZATION: CONDITIONAL
-B3-I4_PRIMARY_VOICE_SAMPLE: REQUIRED_AND_NOT_VERIFIED
+B3-I4_PRIMARY_VOICE_SAMPLE: DEPRECATED
 B3-I4_TEAM_01_FUNCTIONAL_APPROVAL: REQUIRED
+B3-I4_FUNCTIONAL_BLOCKER: REMOVED
+TEAM_01_CLARIFICATION: APPROVED
+VOICE_EVIDENCE_LEVEL: SPECIFICATION_BASED
+AUTHENTIC_EDITORIAL_WRITING_SAMPLE_STATUS: NOT_AVAILABLE
+EDITORIAL_WRITING_REFERENCE_CORPUS_MECHANISM: AVAILABLE
 B3-I4_PREFLIGHT_IMPLEMENTATION: COMPLETED
 B3-I4_PREFLIGHT_EXTERNAL_AUDIT: PASS
-B3-I4_PRIMARY_SAMPLE_AVAILABLE: NO
+B3-I4_PRIMARY_SAMPLE_AVAILABLE: NOT_REQUIRED
 B3-I4_AUTHORIZED_COMPLEMENTARY_SAMPLES: 0
 B3-I4_INVALID_OR_INCOMPLETE_SAMPLES: 0
-B3-I4_CORPUS_READY: NO
-B3-I4_EXECUTION: BLOCKED_MISSING_PRIMARY_REAL_VOICE_SAMPLE
+B3-I4_CORPUS_READY: YES
+B3-I4_EXECUTION: IN_PROGRESS
 REAL_PROFILE_ACTIVATION: NOT_AUTHORIZED
 TEAM_01_PROFILE_APPROVAL: NOT_REQUESTED
 TECHNICAL_PROFILE_VALIDATION: NOT_EXECUTED
-NEXT_ALLOWED_ACTION: PROVIDE_AUTHORIZED_PRIMARY_REAL_VOICE_SAMPLE
+NEXT_ALLOWED_ACTION: COMPLETE_B3-I4_VALIDATION
 ```
 
 Este archivo es la única sede operativa del bloque B3 dentro del Plan 001. No crea autoridad funcional nueva ni sustituye el plan rector. La especificación del Equipo 01 define qué necesita el producto; este plan define cómo materializarlo técnicamente. Ante una contradicción, prevalecen, en este orden, las decisiones posteriores expresas del propietario, el documento rector de equipos, la especificación funcional aprobada del Equipo 01 y el Plan 001. Si la contradicción afecta alcance, autoridad, estados, contratos, gates o ejecución, la misión debe bloquearse hasta resolverla.
@@ -376,7 +381,7 @@ autoría;
 
 tipo de texto;
 
-clasificación CANONICAL | COMPLEMENTARY | EXCLUDED;
+clasificación AUTHENTIC | COMPLEMENTARY | EXCLUDED;
 
 autorización de uso;
 
@@ -683,11 +688,11 @@ Dependencia: infraestructura y consumidores aprobados.
 
 Trabajo:
 
-Incorporar la muestra real principal y muestras complementarias autorizadas.
+Incorporar, si existen, muestras futuras de escritura editorial auténtica autorizadas.
 
-Clasificarlas con lineage y checksum.
+Clasificar cualquier muestra futura con lineage y checksum.
 
-Producir patrones candidatos con ejemplos y contraejemplos.
+Producir patrones candidatos a partir de la especificación aprobada y de evidencia auténtica futura cuando exista.
 
 Compilar el perfil real 1.0.0.
 
@@ -699,7 +704,7 @@ Activar únicamente tras autorización expresa.
 
 Ejecutar smoke del consumo canónico.
 
-Bloqueo conocido: la muestra real principal mencionada por el Equipo 01 no está presente actualmente en el repositorio. Su ausencia no bloquea B3-I1–I3, pero sí impide cerrar B3-I4 y el gate completo.
+La ausencia de una muestra auténtica inicial no bloquea B3-I4: la evidencia de voz inicial es `SPECIFICATION_BASED`. Una muestra futura, si se incorpora, debe ser auténtica, autorizada, trazable y validable.
 
 7. Pruebas obligatorias
 
@@ -831,7 +836,7 @@ PASS si:
 - existe EditorialProfile versionado;
 - el perfil diferencia núcleo estable, políticas, preferencias, decisiones e hipótesis;
 - los territorios activos, experimentales, excluidos y pendientes están clasificados;
-- existe corpus inicial aprobado con lineage, checksum y nivel de confianza;
+- existe evidencia inicial `SPECIFICATION_BASED` o corpus auténtico con lineage, checksum y nivel de confianza;
 - el VoiceProfile contiene patrones aprobados o candidatos controlados con ejemplos y contraejemplos;
 - TEAM_01_PROFILE_APPROVAL = PASS;
 - TECHNICAL_PROFILE_VALIDATION = PASS;
@@ -847,7 +852,7 @@ PASS si:
 - tests y smoke de B3 pasan.
 
 BLOCKED si:
-- falta la muestra real principal necesaria para cerrar el corpus;
+- una muestra auténtica presente carece de autoría, autorización, checksum, lineage o conformidad contractual;
 - falta aprobación funcional del Equipo 01;
 - falta validación técnica;
 - checksums no coinciden;
@@ -860,17 +865,18 @@ BLOCKED si:
 
 B3_FUNCTIONAL_SPECIFICATION: AVAILABLE_AND_CANONICALIZED
 B3_EXECUTION_PLAN_STATUS: READY_FOR_EXTERNAL_AUDIT
-B3_IMPLEMENTATION_STATUS: BLOCKED
+B3_IMPLEMENTATION_STATUS: IN_PROGRESS
 B3-I4_PREFLIGHT_IMPLEMENTATION: COMPLETED
 B3-I4_PREFLIGHT_EXTERNAL_AUDIT: PASS
-PRIMARY_SAMPLE_AVAILABLE: NO
+PRIMARY_SAMPLE_AVAILABLE: NOT_REQUIRED
 AUTHORIZED_COMPLEMENTARY_SAMPLES: 0
 INVALID_OR_INCOMPLETE_SAMPLES: 0
-CORPUS_READY_FOR_B3-I4: NO
-B3-I4_EXECUTION: BLOCKED_MISSING_PRIMARY_REAL_VOICE_SAMPLE
+CORPUS_READY_FOR_B3-I4: YES
+B3-I4_EXECUTION: IN_PROGRESS
 B3_PROFILE_STATUS: DRAFT
 TEAM_01_PROFILE_APPROVAL: NOT_REQUESTED
 TECHNICAL_PROFILE_VALIDATION: NOT_EXECUTED
 REAL_PROFILE_ACTIVATION: NOT_AUTHORIZED
-B3_KNOWN_CLOSURE_BLOCKER: PRIMARY_REAL_VOICE_SAMPLE_NOT_IN_REPOSITORY
-NEXT_ALLOWED_ACTION: PROVIDE_AUTHORIZED_PRIMARY_REAL_VOICE_SAMPLE
+B3-I4_FUNCTIONAL_BLOCKER: REMOVED
+VOICE_EVIDENCE_LEVEL: SPECIFICATION_BASED
+NEXT_ALLOWED_ACTION: COMPLETE_B3-I4_VALIDATION
