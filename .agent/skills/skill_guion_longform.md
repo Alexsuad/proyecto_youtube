@@ -9,12 +9,12 @@ Objetivo: escribir un guion listo para grabar, siguiendo rígidamente la estruct
 - `<EP_PATH>/03_mapa_eventos.md`
 - `<EP_PATH>/05_outline_escenas.md` (si existe, integrarlo)
 - `<EP_PATH>/05_sintesis_tesis.md`
+- `profile_id`, `profile_version`, `profile_checksum` del perfil editorial activo
 
 ---
 
 ## Pasos
-1) **Apropiación de Reglas (Gate de Lectura OBLIGATORIO):**
-   - Leer exhaustivamente: `workspace/02_reglas_editoriales.md`, `workspace/03_formato_longform.md`, `workspace/05_estilo_y_voz.md`, `workspace/05c_voice_profile.md` (Aprendizajes acumulados).
+1) **Gate de perfil (obligatorio):** resolver y registrar el perfil editorial exacto. Si está ausente o no activo, devolver `BLOCKED`; no leer documentos históricos de identidad o voz.
 
 2) **Escritura Estructurada Estricta del Guion:**
    Debes redactar el guion cumpliendo rigurosamente este checklist arquitectónico:

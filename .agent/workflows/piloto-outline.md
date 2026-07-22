@@ -1,5 +1,5 @@
 ---
-description:  Genera mapa de eventos y outline del episodio usando el brief y las fuentes de verdad (sin inventar). scope: workspace
+description: Genera mapa de eventos y outline con una referencia editorial canónica explícita (sin inventar).
 ---
 
 
@@ -10,18 +10,16 @@ Crear el plan del episodio (mapa de eventos + outline con tiempos) sin escribir 
 ## Entradas obligatorias (leer antes de actuar)
 - `<EP_PATH>/00_brief_episodio.md` ← **Fuente primaria (Vault V1.2)**
 - `input/brief_capitulo.md` ← Fuente legado (usar solo si no hay EP_PATH activo)
-- workspace/01_canal_identidad.md
-- workspace/02_reglas_editoriales.md
-- workspace/03_formato_longform.md
-- workspace/04_politica_spoilers.md
-- workspace/05_estilo_y_voz.md
+- `profile_id`, `profile_version`, `profile_checksum` del perfil editorial activo
 - workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md
 - templates/evento_template_v2.md
+
+Si la referencia canónica no existe o no corresponde a un perfil activo válido, devolver `BLOCKED`. No sustituirla con fuentes históricas de identidad, voz o formato.
 
 ## Reglas duras
 - No inventar datos (obras, años, directores, actores, detalles de trama).
 - Si falta información: escribir "PENDIENTE" y listar preguntas concretas al final.
-- Cumplir estructura longform y reglas editoriales.
+- Cumplir las reglas del perfil editorial exacto referenciado.
 - Re-hook obligatorio entre eventos (solo planificado, no guion).
 
 ## Salidas (crear en Vault)

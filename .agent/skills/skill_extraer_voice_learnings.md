@@ -8,6 +8,9 @@ Objetivo: Identificar discrepancias entre el guion generado por IA y el guion fi
 ## Entrada mínima OBLIGATORIA
 - `<EP_PATH>/06_guion_longform.md` (IA)
 - `<EP_PATH>/06_guion_longform_FINAL.md` (Humano - Opcional)
+- `profile_id`, `profile_version`, `profile_checksum` del perfil objetivo
+
+Si la referencia no corresponde a un perfil activo válido, devolver `BLOCKED`; no usar fuentes históricas como sustituto.
 
 ---
 
@@ -18,20 +21,11 @@ Objetivo: Identificar discrepancias entre el guion generado por IA y el guion fi
    - **Ritmo:** ¿Se acortaron o alargaron las intros/cierres?
    - **Muletillas:** ¿Qué frases "IA-casas" fueron eliminadas repetidamente?
 3) **Refinamiento de Reglas:** Traducir los hallazgos en instrucciones negativas (No usar X) o positivas (Preferir Y).
-4) **Gate de Aprobación Humana (OBLIGATORIO):**
-   - El sistema NO puede actualizar el perfil global automáticamente.
-   - El archivo generado siempre debe terminar con el bloque de estado:
-     `APROBACION_HUMANA: PENDIENTE`
-     `MIGRADO_A_PERFIL_GLOBAL: NO`
-   - El humano debe cambiar PENDIENTE por OK para permitir el paso 5.
-5) **Sincronización:**
-   - **SI APROBACION_HUMANA != OK:** Solo crear/actualizar `<EP_PATH>/12_voice_learnings.md` con estado PENDIENTE. Prohibido tocar el perfil global.
-   - **SI APROBACION_HUMANA == OK:** 
-     - Actualizar `workspace/05c_voice_profile.md` con los nuevos patrones.
-     - Cambiar marcador a `MIGRADO_A_PERFIL_GLOBAL: SI`.
+4) **Salida gobernada (obligatoria):** producir exclusivamente un `EditorialLearningCandidate` JSON validado contra `schemas/editorial_learning_candidate.json`. Incluir los campos obligatorios `learning_id`, `target_profile_id`, `target_profile_version`, `observed_change`, `scope`, `lineage`, `evidence_items`, `confidence`, `examples`, `counterexamples`, `exceptions`, `functional_decision` y `status_history`; cada evidencia incluye `source_id`, `locator`, `checksum` y `observation`.
+5) **Estado inicial:** toda salida nueva usa `functional_decision.status: PENDING`; no puede aprobarse ni integrarse desde esta skill.
+6) **No integración:** nunca escribir un perfil editorial ni fuentes históricas de voz. La aprobación e integración se realizan en una misión posterior.
 
 ---
 
 ## Salida
-- `<EP_PATH>/12_voice_learnings.md`
-- `workspace/05c_voice_profile.md`
+- `<EP_PATH>/12_editorial_learning_candidate.json`

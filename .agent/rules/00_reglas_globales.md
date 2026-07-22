@@ -9,16 +9,10 @@ Objetivo: Asegurar consistencia, evitar improvisación y mantener entregables li
 
 ---
 
-## 1) Fuente de verdad (obligatorio)
-Antes de escribir cualquier cosa, el agente debe leer primero:
+## 1) Perfil editorial canónico (obligatorio)
+Todo consumidor productivo debe recibir o resolver una referencia explícita con `profile_id`, `profile_version` y `profile_checksum`. La ausencia de una configuración activa válida devuelve `BLOCKED` y bloquea controladamente la producción; está prohibido inferir identidad o voz desde `workspace/` o seleccionar automáticamente la versión más reciente.
 
-- workspace/01_canal_identidad.md
-- workspace/02_reglas_editoriales.md
-- workspace/03_formato_longform.md
-- workspace/05_estilo_y_voz.md
-- workspace/00_sistema_agentes_v1.md
-
-Si hay conflicto entre lo que el usuario pide y lo que dice workspace/, se debe avisar y pedir confirmación.
+Los documentos `workspace/` son fuentes históricas o de migración, no identidad activa.
 
 ---
 
@@ -62,7 +56,7 @@ Si el usuario pide “solo el guion”, igual se deja nota de los 5 outputs requ
 - lenguaje claro, sin jerga innecesaria
 - evitar frases genéricas tipo “en conclusión” repetitivas
 - evitar tono de “coach motivacional”
-- mantener voz y ética del canal según workspace/05_estilo_y_voz.md
+- mantener voz y ética según el perfil editorial exacto referenciado
 
 ---
 

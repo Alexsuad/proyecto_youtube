@@ -16,6 +16,9 @@ Antigravity debe tener disponibles:
 - `config/local_settings.json` con `vault_root` y `channel_id`
 - El **tema** del episodio y su **slug** confirmados por el usuario
 - El **número** de episodio (siguiente al último registrado)
+- La referencia editorial explícita: `profile_id`, `profile_version`, `profile_checksum`.
+
+**Gate editorial:** si no hay perfil editorial activo válido que coincida exactamente con la referencia, devolver `BLOCKED` y detener. No inferir identidad, voz o formato desde `workspace/` ni seleccionar automáticamente la versión más reciente.
 
 ---
 
@@ -70,7 +73,7 @@ python src/scripts/iniciar_episodio.py --num <NUM> --slug <SLUG>
 
 ### Paso 2.1 — Ejecutar skill
 - Skill: `skill_crear_brief_episodio.md`
-- Leer: `workspace/01_canal_identidad.md`, `workspace/05_estilo_y_voz.md`
+- Entrada editorial: referencia exacta de perfil (`profile_id`, `profile_version`, `profile_checksum`)
 - Crear: `<EP_PATH>/00_brief_episodio.md`
 
 ---
@@ -185,7 +188,7 @@ python src/scripts/qa_lenguaje_youtube_ultra.py --ep_path <EP_PATH> --ep-id <EP_
 ### Paso 8.1 — Ejecutar skill
 - Skill: `skill_guion_longform.md`
 - Entradas: `<EP_PATH>/03_mapa_eventos.md`, `<EP_PATH>/05_sintesis_tesis.md`
-- Leer: `workspace/02_reglas_editoriales.md`, `workspace/03_formato_longform.md`, `workspace/05_estilo_y_voz.md`
+- Entrada editorial: referencia exacta de perfil (`profile_id`, `profile_version`, `profile_checksum`)
 - Crear: `<EP_PATH>/06_guion_longform.md`
 
 ### Paso 8.2 — Revisión inicial del usuario
