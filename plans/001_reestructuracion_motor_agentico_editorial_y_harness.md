@@ -2,10 +2,10 @@
 
 **Proyecto:** Más Allá del Guion / Proyecto YouTube  
 **Repositorio de referencia:** `proyecto_youtube_2026-07-21_10-00-29.zip`  
-**Versión del plan:** 1.3  
-**Fecha de revisión:** 2026-07-21  
-**Estado:** `READY_FOR_TEAM_REVALIDATION`  
-**Auditorías funcionales incorporadas:** `TEAM_01_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_02_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_03_APPROVED_WITH_REQUIRED_AMENDMENTS`  
+**Versión del plan:** 1.4
+**Fecha de revisión:** 2026-07-22
+**Estado:** `READY_FOR_EXTERNAL_AUDIT`
+**Auditorías funcionales incorporadas:** `TEAM_01_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_02_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_03_APPROVED_WITH_REQUIRED_AMENDMENTS` + `PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT`
 **Implementación autorizada:** `NO`  
 **Progreso global inicial:** `0 %`  
 **Ruta objetivo en el repositorio:** `plans/001_reestructuracion_motor_agentico_editorial_y_harness.md`
@@ -260,7 +260,7 @@ El plan parte del inventario auditado:
 SYSTEM_REVIEW: FAIL
 PRODUCT_REVIEW: BLOCKED
 PLAN_STATUS_PREVIOUS: REVISION_REQUIRED
-PLAN_STATUS_CURRENT: READY_FOR_TEAM_REVALIDATION
+PLAN_STATUS_CURRENT: READY_FOR_EXTERNAL_AUDIT
 IMPLEMENTATION_AUTHORIZED: NO
 ```
 
@@ -418,6 +418,17 @@ Cualquier cambio posterior invalida la aprobación y obliga a repetir los gates 
 ### 7.17 Una corrección humana no se convierte automáticamente en regla
 
 Los aprendizajes de voz pasan por evidencia, clasificación y aprobación.
+
+### 7.18 El sistema es evolutivo, no cerrado
+
+El núcleo técnico permanece separado de decisiones editoriales variables.
+Identidad, políticas de YouTube, proveedores de IA, canales de entrada, formatos y auditorías deben poder cambiar por configuración, contratos versionados o adaptadores.
+
+Añadir una nueva capacidad no debe obligar a reconstruir el motor.
+Los cambios deben invalidar únicamente artefactos dependientes.
+Debe conservarse historial, lineage, razón del cambio y posibilidad de rollback cuando aplique.
+
+Las decisiones editoriales, las políticas de plataforma, los canales de entrada, las auditorías y los proveedores de IA son componentes versionados y reemplazables.
 
 ---
 
@@ -866,7 +877,7 @@ Congelar el comportamiento actual, reproducir los fallos conocidos, crear el sis
 **Acciones:**
 
 - crear `plans/` si no existe;
-- incorporar este Plan 001 v1.3;
+- incorporar la versión vigente del Plan 001;
 - crear o actualizar `plans/plan_001/README.md`;
 - marcar el borrador 1.0 como sustituido, si se conserva;
 - registrar estados y jerarquía documental;
@@ -2103,7 +2114,28 @@ La matriz debe identificar:
 - duplicaciones;
 - migración necesaria.
 
-### B3-M2 — Compilador de EditorialProfile
+### B3-M2 — EditorialProfile extensible
+
+El perfil debe diferenciar explícitamente:
+
+- núcleo estable de identidad;
+- decisiones editoriales modificables;
+- territorios activos;
+- territorios experimentales;
+- territorios excluidos;
+- territorios pendientes;
+- promesa principal;
+- audiencia prioritaria;
+- personalidad y persona autoral;
+- voz y tono;
+- uso permitido de primera persona;
+- límites de humanización;
+- decisiones pendientes;
+- referencias a políticas externas versionadas.
+
+La lista de territorios no debe quedar cerrada de forma rígida. Debe ser posible incorporar en el futuro, mediante nueva versión aprobada, territorios como economía, tecnología, historia, instituciones, cultura, actualidad u otros compatibles con la identidad. No activar automáticamente ningún territorio nuevo sin aprobación funcional.
+
+### B3-M2A — Compilador de EditorialProfile
 
 Crear un proceso reproducible que:
 
@@ -2175,6 +2207,23 @@ Debe indicar qué episodios o artefactos requieren revisión.
 - acumular evidencia;
 - aprobar o rechazar;
 - crear nueva versión solo con aprobación funcional del Equipo 01 y validación técnica del Equipo 04.
+
+### B3-M8 — Corpus y voz inicial
+
+El alcance mínimo de B3 debe incluir:
+
+- registro de muestras reales del usuario;
+- origen de la muestra;
+- tipo de texto;
+- autorización de uso;
+- versión;
+- lineage;
+- extracción de patrones como candidatos;
+- nivel de confianza;
+- ejemplos y contraejemplos;
+- aprobación humana antes de incorporarlos al VoiceProfile.
+
+Los textos actuales son un punto de partida, no una definición definitiva de voz. Una corrección aislada no se convierte automáticamente en regla. El perfil de voz debe poder mejorar con nuevas muestras y correcciones. No se entrenará un modelo propio en B3.
 
 ## 16.3 Gate B3
 
@@ -2298,6 +2347,33 @@ permissions
 ```
 
 El cambio de proveedor debe ocurrir por configuración.
+
+### B4-M8 — Puntos de extensión
+
+La arquitectura debe poder incorporar, sin modificar el core:
+
+- nuevo proveedor de IA;
+- nuevo modelo;
+- nuevo canal de entrada;
+- nueva skill;
+- nueva auditoría;
+- nueva política de plataforma;
+- nuevo formato;
+- nuevo territorio editorial;
+- nuevo mecanismo de verificación.
+
+Definir conceptualmente interfaces o adapters, sin diseñar todavía implementación concreta. Ejemplos válidos:
+
+```text
+AIProvider o equivalente
+InputAdapter o equivalente
+ReviewModule o equivalente
+PolicyPack o equivalente
+```
+
+No imponer nombres técnicos definitivos si el bloque aún no los ha decidido.
+
+Antigravity, Codex y OpenCode son agentes operativos de desarrollo, no dependencias obligatorias del producto. Los proveedores deben seleccionarse por configuración. Telegram, voz, web o API serán futuras entradas que normalicen hacia un contrato canónico. No implementar esos adaptadores en B4 si están fuera del MVP.
 
 ### B4-M7 — Política de subagentes
 
@@ -2485,9 +2561,21 @@ Planificar el cambio de conocimiento, emoción y pregunta en cada bloque.
 
 No se usa para fabricar retención artificial, sino para comprobar avance real.
 
-### B5-M9 — Diseño de apertura
+### B5-M9 — OPENING_UNIT y diseño de apertura
 
-Debe revisar:
+La apertura se trata como unidad prioritaria con diseño propio. OpeningDesign actúa como antecedente o parte de OPENING_UNIT con funciones obligatorias, no duración rígida.
+
+Debe cumplir:
+
+- confirmación del clic;
+- tensión;
+- sustancia temprana;
+- contexto mínimo;
+- promesa del recorrido;
+- transición al primer bloque;
+- contribución autoral.
+
+Además debe revisar:
 
 - punto de máximo interés;
 - pregunta central;
@@ -2497,6 +2585,8 @@ Debe revisar:
 - ausencia de introducción larga;
 - suspensión no artificial;
 - primera transición.
+
+No exigir siempre exactamente 90 segundos. La estructura narrativa puede variar; el diseño debe compararse contra patrones repetidos para evitar aperturas mecánicas.
 
 ### B5-M10 — Diseño de cierre
 
@@ -2664,7 +2754,9 @@ Cada bloque recibe:
 - repeticiones prohibidas;
 - función del bloque siguiente.
 
-### B6-M3 — Redacción por bloques
+### B6-M3 — Redacción por bloques con edición separada
+
+La redacción de apertura se realiza separadamente y se revalida después del ensamblaje. Cada bloque recibe contexto global. El editor está separado del redactor.
 
 Antes de redactar el bloque de apertura debe ejecutarse un preflight contra `OpeningDesign`. Una apertura que contradiga la promesa, retrase el interés o carezca de sustancia temprana no puede continuar al ensamblaje.
 
@@ -2706,6 +2798,31 @@ escena
 ```
 
 La cantidad de contexto narrativo debe ser suficiente para comprender el argumento sin convertir el guion en un resumen extenso de la obra.
+
+Tras el ensamblaje debe ejecutarse:
+
+- revalidación de apertura;
+- revisión de oralidad;
+- alineación con VoiceProfile;
+- reducción de señales de escritura artificial;
+- prohibición de inventar experiencias personales.
+
+Se permiten múltiples iteraciones limitadas.
+
+Señales de artificialidad a revisar:
+
+- frases intercambiables;
+- solemnidad artificial;
+- falsa profundidad;
+- preguntas retóricas automáticas;
+- transiciones formularias;
+- simetría excesiva;
+- ritmo uniforme;
+- conclusión predecible;
+- metáforas decorativas;
+- entusiasmo no ganado.
+
+No prometer detección infalible de texto de IA.
 
 ### B6-M4 — Ensamblaje determinista
 
@@ -2850,7 +2967,20 @@ Evaluar el candidato final sin mezclar edición y aprobación, enrutar correctam
 
 ## 21.2 Misiones
 
-### B7-M1 — Auditoría editorial final independiente
+### B7-M1 — Auditorías separadas
+
+Mantener separadas:
+
+- auditoría editorial profunda;
+- alineación de voz;
+- auditoría antiartificialidad;
+- oralidad;
+- verificación factual;
+- riesgo de plataforma.
+
+Un guion puede aprobar una revisión y fallar otra. El redactor no debe autoaprobarse como único auditor. Se debe permitir auditoría cruzada o ciega en fases posteriores. No es obligatorio activar todas las auditorías avanzadas en el MVP.
+
+### B7-M1A — Auditoría editorial final independiente
 
 El auditor:
 
@@ -2979,7 +3109,13 @@ Debe incluir:
 
 No se implementa todavía la miniatura física.
 
-### B7.5-M3 — Adecuación de apertura y duración
+### B7.5-M3 — Políticas de YouTube versionadas
+
+Apertura, packaging, riesgo publicitario, copyright, contenido sintético, duración, Shorts, metadatos y continuidad pueden estar gobernados por políticas versionadas. Los cambios de YouTube no deben requerir reconstruir el motor editorial. Una OpeningPolicy futura podrá evolucionar independientemente del EditorialProfile. Packaging, apertura y guion deben mantener correspondencia. El Equipo 03 conserva autoridad funcional sobre estas políticas.
+
+No incorporar como verdad permanente afirmaciones no verificadas sobre el algoritmo.
+
+### B7.5-M3A — Adecuación de apertura y duración
 
 Validar:
 
@@ -3264,6 +3400,20 @@ Demostrar que el nuevo sistema mejora guiones reales y que el arnés bloquea cie
 
 ## 25.2 Casos obligatorios
 
+### Cobertura de validación del sistema vivo
+
+Los episodios de prueba deben validar, además de calidad:
+
+- más de un territorio editorial;
+- al menos una estructura narrativa diferente;
+- variedad de aperturas;
+- ausencia de repetición mecánica;
+- uso correcto de VoiceProfile;
+- cambio de configuración o política sin reconstrucción del core;
+- compatibilidad con proveedor simulado o alternativo cuando corresponda.
+
+No ampliar innecesariamente el número de episodios exigidos.
+
 ### Caso 1 — Episodio representativo del canal
 
 - tema emocional;
@@ -3481,17 +3631,35 @@ No modificar automáticamente:
 
 Mover aquí el contenido anteriormente previsto en `B7-M7 — Aprendizaje editorial gobernado`.
 
-Conservar el flujo:
+El aprendizaje contempla fuentes desde:
+
+- correcciones humanas;
+- comparación entre borrador y versión aprobada;
+- versión producida y publicada;
+- resultados de apertura;
+- packaging;
+- métricas de YouTube;
+- cambios de perfil;
+- nuevas políticas;
+- resultados inconclusos.
+
+Flujo de aprendizaje:
 
 ```text
-versión generada
-→ edición humana
-→ comparación
-→ aprendizaje candidato
-→ evidencia acumulada
-→ aprobación humana
-→ nueva versión de perfil
+evidencia
+→ candidato
+→ acumulación
+→ revisión humana
+→ aprobación
+→ nueva versión
 ```
+
+Prohibido:
+
+- actualizar automáticamente la identidad;
+- convertir una sola corrección en regla;
+- mezclar hallazgos de plataforma con identidad sin aprobación;
+- generalizar desde muestras pequeñas.
 
 Una sola corrección no se convierte en regla estable.
 
@@ -3753,6 +3921,7 @@ READY_FOR_EXTERNAL_AUDIT: YES/NO
 | 1.1 | 2026-07-21 | Reescritura integral con auditoría de Producto | Completar el producto editorial y evitar generalización prematura | Cambia arquitectura funcional, contratos y bloques | `READY_FOR_FINAL_APPROVAL` |
 | 1.2 | 2026-07-21 | Incorporación de Adaptación profesional a YouTube | Completar packaging, correspondencia, plataforma, derechos, publicación y aprendizaje | Amplía contratos y tramo final sin cambiar el producto rector | `READY_FOR_FINAL_APPROVAL` |
 | 1.3 | 2026-07-21 | Incorporación consolidada de auditorías finales de los equipos 01, 02 y 03 | Corregir autoridad funcional, EditorialProfile, análisis narrativo y humano, oficio de escritura, interfaz 02–03, aprobación para producción, reserva de YOUTUBE_READY y trazabilidad pospublicación | Modifica contratos y estados sin cambiar bloques ni autorizar implementación | `READY_FOR_TEAM_REVALIDATION` |
+| 1.4 | 2026-07-22 | PRE-B3 evolutionary architecture alignment | Principio de evolucionabilidad, EditorialProfile extensible, corpus y voz, puntos de extensión en B4, OPENING_UNIT en B5, antiartificialidad en B6, auditorías separadas en B7, políticas YouTube versionadas en B7.5, validación de sistema vivo en B9, aprendizaje extendido en B9.5, MVP/post-MVP | Documentación exclusiva; no cambia bloques, contratos, schemas ni autorización | `READY_FOR_EXTERNAL_AUDIT` |
 
 ### 29.1 Regla de modificación
 
@@ -3819,6 +3988,37 @@ Cualquier incorporación requiere cambio formal del plan.
 
 ---
 
+## 31A. MVP y post-MVP
+
+### MVP (alcance validado por B9)
+
+- EditorialProfile versionado;
+- territorios extensibles;
+- corpus inicial;
+- VoiceProfile inicial;
+- patrones candidatos;
+- redacción por bloques;
+- editor separado;
+- auditoría antiartificialidad básica;
+- aprobación humana;
+- proveedor configurable al menos por contrato;
+- entrada canónica única.
+
+### Post-MVP (no implementar ahora)
+
+- Telegram;
+- voz;
+- aplicación web;
+- múltiples proveedores reales;
+- auditoría cruzada entre modelos;
+- evaluación ciega avanzada;
+- análisis estadístico de estilo;
+- aprendizaje automatizado supervisado;
+- métricas avanzadas de YouTube;
+- experimentación A/B.
+
+---
+
 ## 32. Definition of Done global
 
 El Plan 001 se considera completado solo cuando:
@@ -3881,15 +4081,20 @@ El Plan 001 se considera completado solo cuando:
 
 ---
 
-## 33. Próximo paso tras la aprobación del plan
+## 33. Próximo paso tras la auditoría externa
 
-La primera ejecución autorizable será únicamente:
+B0, B1 y B2 están cerrados.
 
-```text
-BLOQUE B0
-```
+La siguiente acción permitida es:
 
-B1 solo podrá comenzar después del Gate B0. No se deben reescribir skills, mover carpetas ni reducir roles físicamente antes de congelar baseline, benchmarks y rubric.
+PREPARE_B3_EXECUTION_PLAN
+
+B3 permanece sin autorización de implementación.
+
+La preparación de B3 debe definir alcance, archivos, contratos,
+pruebas y criterios de aceptación antes de autorizar cualquier cambio.
+
+No iniciar B3 automáticamente.
 
 ---
 
@@ -3897,16 +4102,17 @@ B1 solo podrá comenzar después del Gate B0. No se deben reescribir skills, mov
 
 ```text
 PLAN_ID: PLAN-001
-PLAN_VERSION: 1.3
-PLAN_STATUS: READY_FOR_TEAM_REVALIDATION
+PLAN_VERSION: 1.4
+PLAN_STATUS: READY_FOR_EXTERNAL_AUDIT
 FUNCTIONAL_AUDIT_SOURCES:
 - TEAM_01_APPROVED_WITH_REQUIRED_AMENDMENTS
 - TEAM_02_APPROVED_WITH_REQUIRED_AMENDMENTS
 - TEAM_03_APPROVED_WITH_REQUIRED_AMENDMENTS
+- PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT
 CONSOLIDATION_OWNER: TEAM_04_INFRASTRUCTURE_AND_GOVERNANCE
 REQUIRED_AMENDMENTS_INCORPORATED: YES
 IMPLEMENTATION_AUTHORIZED: NO
 CURRENT_BLOCK: NONE
-NEXT_ALLOWED_ACTION: TARGETED_REVALIDATION_TEAMS_01_02_03
-NEXT_BLOCK_IF_APPROVED: B0
+NEXT_ALLOWED_ACTION: PREPARE_B3_EXECUTION_PLAN
+NEXT_BLOCK_IF_APPROVED: B3
 ```

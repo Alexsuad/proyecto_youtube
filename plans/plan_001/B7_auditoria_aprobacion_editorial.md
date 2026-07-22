@@ -2,7 +2,7 @@
 
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
-**Versión derivada:** `PLAN-001 v1.3`  
+**Versión derivada:** `PLAN-001 v1.4`
 **Estado inicial:** `PLANNED`  
 **Dependencia:** `B6`  
 **Siguiente tramo:** `B7.5`  
@@ -36,7 +36,20 @@ Evaluar el candidato final sin mezclar edición y aprobación, enrutar correctam
 
 ## 2. Misiones
 
-### B7-M1 — Auditoría editorial final independiente
+### B7-M1 — Auditorías separadas
+
+Mantener separadas:
+
+- auditoría editorial profunda;
+- alineación de voz;
+- auditoría antiartificialidad;
+- oralidad;
+- verificación factual;
+- riesgo de plataforma.
+
+Un guion puede aprobar una revisión y fallar otra. El redactor no debe autoaprobarse como único auditor. Se debe permitir auditoría cruzada o ciega en fases posteriores. No es obligatorio activar todas las auditorías avanzadas en el MVP.
+
+### B7-M1A — Auditoría editorial final independiente
 
 El auditor:
 

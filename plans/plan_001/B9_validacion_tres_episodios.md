@@ -2,7 +2,7 @@
 
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
-**Versión derivada:** `PLAN-001 v1.3`  
+**Versión derivada:** `PLAN-001 v1.4`
 **Estado inicial:** `PLANNED`  
 **Dependencia:** `B2–B8.5`  
 **Siguiente tramo:** `B9.5`  
@@ -35,6 +35,20 @@ No leer por defecto el Plan 001 completo, otros bloques, todo `workspace/` ni re
 Demostrar que el nuevo sistema mejora guiones reales y que el arnés bloquea cierres inválidos.
 
 ## 2. Casos obligatorios
+
+### Cobertura de validación del sistema vivo
+
+Los episodios de prueba deben validar, además de calidad:
+
+- más de un territorio editorial;
+- al menos una estructura narrativa diferente;
+- variedad de aperturas;
+- ausencia de repetición mecánica;
+- uso correcto de VoiceProfile;
+- cambio de configuración o política sin reconstrucción del core;
+- compatibilidad con proveedor simulado o alternativo cuando corresponda.
+
+No ampliar innecesariamente el número de episodios exigidos.
 
 ### Caso 1 — Episodio representativo del canal
 

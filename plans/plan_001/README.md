@@ -2,7 +2,7 @@
 
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
-**Versión:** `1.3`  
+**Versión:** `1.4`
 **Implementación autorizada:** `NO`
 
 ## 1. Propósito
@@ -75,7 +75,11 @@ Los archivos de esta carpeta:
 | `B9.5` | [B9_5_aprendizaje_controlado.md](B9_5_aprendizaje_controlado.md) | B9 | `PLANNED` | Ciclo manual de aprendizaje demostrado |
 | `B10` | [B10_lean_portabilidad_cierre.md](B10_lean_portabilidad_cierre.md) | B9.5 | `PLANNED` | Plan cerrado con evidencia |
 
-## 4. Regla de sincronización
+## 4. Versiones derivadas
+
+La versión derivada de cada bloque indica la última versión del plan que modificó materialmente su contenido. Un bloque puede conservar v1.3 si v1.4 no lo afectó.
+
+## 5. Regla de sincronización
 
 Cuando cambie el Plan 001:
 
@@ -88,12 +92,12 @@ Cuando cambie el Plan 001:
 
 Una modificación aislada de un archivo de bloque no cambia el plan rector.
 
-## 5. Estado actual
+## 6. Estado actual
 
 ```text
-PLAN_STATUS: READY_FOR_TEAM_REVALIDATION
+PLAN_STATUS: READY_FOR_EXTERNAL_AUDIT
 IMPLEMENTATION_AUTHORIZED: NO
 CURRENT_BLOCK: NONE
-NEXT_ALLOWED_ACTION: TARGETED_REVALIDATION_TEAMS_01_02_03
-NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B0
+NEXT_ALLOWED_ACTION: PREPARE_B3_EXECUTION_PLAN
+NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B3
 ```

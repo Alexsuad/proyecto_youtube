@@ -2,7 +2,7 @@
 
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
-**Versión derivada:** `PLAN-001 v1.3`  
+**Versión derivada:** `PLAN-001 v1.4`
 **Estado inicial:** `PLANNED`  
 **Dependencia:** `B9`  
 **Siguiente tramo:** `B10`  
@@ -97,17 +97,35 @@ No modificar automáticamente:
 
 Mover aquí el contenido anteriormente previsto en `B7-M7 — Aprendizaje editorial gobernado`.
 
-Conservar el flujo:
+El aprendizaje contempla fuentes desde:
+
+- correcciones humanas;
+- comparación entre borrador y versión aprobada;
+- versión producida y publicada;
+- resultados de apertura;
+- packaging;
+- métricas de YouTube;
+- cambios de perfil;
+- nuevas políticas;
+- resultados inconclusos.
+
+Flujo de aprendizaje:
 
 ```text
-versión generada
-→ edición humana
-→ comparación
-→ aprendizaje candidato
-→ evidencia acumulada
-→ aprobación humana
-→ nueva versión de perfil
+evidencia
+→ candidato
+→ acumulación
+→ revisión humana
+→ aprobación
+→ nueva versión
 ```
+
+Prohibido:
+
+- actualizar automáticamente la identidad;
+- convertir una sola corrección en regla;
+- mezclar hallazgos de plataforma con identidad sin aprobación;
+- generalizar desde muestras pequeñas.
 
 Una sola corrección no se convierte en regla estable.
 

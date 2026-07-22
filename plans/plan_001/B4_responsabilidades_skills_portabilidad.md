@@ -2,7 +2,7 @@
 
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
-**Versión derivada:** `PLAN-001 v1.3`  
+**Versión derivada:** `PLAN-001 v1.4`
 **Estado inicial:** `PLANNED`  
 **Dependencia:** `B3`  
 **Siguiente tramo:** `B5`  
@@ -157,6 +157,24 @@ permissions
 
 El cambio de proveedor debe ocurrir por configuración.
 
+### B4-M8 — Puntos de extensión
+
+La arquitectura debe poder incorporar, sin modificar el core:
+
+- nuevo proveedor de IA;
+- nuevo modelo;
+- nuevo canal de entrada;
+- nueva skill;
+- nueva auditoría;
+- nueva política de plataforma;
+- nuevo formato;
+- nuevo territorio editorial;
+- nuevo mecanismo de verificación.
+
+Definir conceptualmente interfaces o adapters, sin diseñar todavía implementación concreta. Ejemplos válidos: AIProvider, InputAdapter, ReviewModule, PolicyPack o equivalentes.
+
+Antigravity, Codex y OpenCode son agentes operativos de desarrollo, no dependencias obligatorias del producto. Los proveedores deben seleccionarse por configuración. Telegram, voz, web o API serán futuras entradas que normalicen hacia un contrato canónico. No implementar esos adaptadores en B4 si están fuera del MVP.
+
 ### B4-M7 — Política de subagentes
 
 Mantener `0` subagentes reales hasta que exista evidencia de necesidad.
@@ -174,7 +192,10 @@ PASS si:
 - prompts oficiales están versionados;
 - el sistema funciona en modo single-agent;
 - la arquitectura no depende de una marca de IDE o modelo;
-- no se crearon subagentes sin justificación.
+- los puntos de extensión para proveedor, entrada, auditoría y política están definidos conceptualmente;
+- Antigravity, Codex y OpenCode no son dependencias obligatorias del producto;
+- no se crearon subagentes sin justificación;
+- los adaptadores de entrada adicionales (Telegram, voz, web, API) no se implementaron en MVP.
 ```
 
 ---

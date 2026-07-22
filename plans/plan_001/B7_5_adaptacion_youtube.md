@@ -2,7 +2,7 @@
 
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
-**Versión derivada:** `PLAN-001 v1.3`  
+**Versión derivada:** `PLAN-001 v1.4`
 **Estado inicial:** `PLANNED`  
 **Dependencia:** `B7`  
 **Siguiente tramo:** `B8`  
@@ -95,7 +95,13 @@ Debe incluir:
 
 No se implementa todavía la miniatura física.
 
-### B7.5-M3 — Adecuación de apertura y duración
+### B7.5-M3 — Políticas de YouTube versionadas
+
+Apertura, packaging, riesgo publicitario, copyright, contenido sintético, duración, Shorts, metadatos y continuidad pueden estar gobernados por políticas versionadas. Los cambios de YouTube no deben requerir reconstruir el motor editorial. Una OpeningPolicy futura podrá evolucionar independientemente del EditorialProfile. Packaging, apertura y guion deben mantener correspondencia. El Equipo 03 conserva autoridad funcional sobre estas políticas.
+
+No incorporar como verdad permanente afirmaciones no verificadas sobre el algoritmo.
+
+### B7.5-M3A — Adecuación de apertura y duración
 
 Validar:
 
@@ -180,6 +186,7 @@ PASS si:
 - packaging recomendado no es engañoso;
 - apertura confirma la expectativa;
 - duración está justificada;
+- las políticas de YouTube aplicables están versionadas;
 - continuidad está definida o su ausencia justificada;
 - derivados tienen función explícita;
 - metadatos son correctos;

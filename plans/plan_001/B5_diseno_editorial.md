@@ -2,7 +2,7 @@
 
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
-**Versión derivada:** `PLAN-001 v1.3`  
+**Versión derivada:** `PLAN-001 v1.4`
 **Estado inicial:** `PLANNED`  
 **Dependencia:** `B3–B4`  
 **Siguiente tramo:** `B5.5`  
@@ -192,9 +192,21 @@ Planificar el cambio de conocimiento, emoción y pregunta en cada bloque.
 
 No se usa para fabricar retención artificial, sino para comprobar avance real.
 
-### B5-M9 — Diseño de apertura
+### B5-M9 — OPENING_UNIT y diseño de apertura
 
-Debe revisar:
+La apertura se trata como unidad prioritaria con diseño propio. OpeningDesign actúa como antecedente o parte de OPENING_UNIT con funciones obligatorias, no duración rígida.
+
+Debe cumplir:
+
+- confirmación del clic;
+- tensión;
+- sustancia temprana;
+- contexto mínimo;
+- promesa del recorrido;
+- transición al primer bloque;
+- contribución autoral.
+
+Además debe revisar:
 
 - punto de máximo interés;
 - pregunta central;
@@ -204,6 +216,8 @@ Debe revisar:
 - ausencia de introducción larga;
 - suspensión no artificial;
 - primera transición.
+
+No exigir siempre exactamente 90 segundos. La estructura narrativa puede variar; el diseño debe compararse contra patrones repetidos para evitar aperturas mecánicas.
 
 ### B5-M10 — Diseño de cierre
 
@@ -265,7 +279,8 @@ PASS si:
 - Producto Guion confirmó que la tesis y la arquitectura pueden cumplir la promesa;
 - PackagingHypothesis no sobrepromete;
 - ViewerJourney muestra transformación;
-- apertura y cierre tienen contrato;
+- apertura (OPENING_UNIT) y cierre tienen contrato;
+- la apertura cumple funciones obligatorias sin duración rígida;
 - outline y presupuesto están aprobados;
 - Producto considera que el diseño puede producir un buen guion.
 ```

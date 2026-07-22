@@ -2,7 +2,7 @@
 
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
-**Versión derivada:** `PLAN-001 v1.3`  
+**Versión derivada:** `PLAN-001 v1.4`
 **Estado inicial:** `PLANNED`  
 **Dependencia:** `B5.5`  
 **Siguiente tramo:** `B7`  
@@ -69,7 +69,9 @@ Cada bloque recibe:
 - repeticiones prohibidas;
 - función del bloque siguiente.
 
-### B6-M3 — Redacción por bloques
+### B6-M3 — Redacción por bloques con edición separada
+
+La redacción de apertura se realiza separadamente y se revalida después del ensamblaje. Cada bloque recibe contexto global. El editor está separado del redactor.
 
 Antes de redactar el bloque de apertura debe ejecutarse un preflight contra `OpeningDesign`. Una apertura que contradiga la promesa, retrase el interés o carezca de sustancia temprana no puede continuar al ensamblaje.
 
@@ -111,6 +113,31 @@ escena
 ```
 
 La cantidad de contexto narrativo debe ser suficiente para comprender el argumento sin convertir el guion en un resumen extenso de la obra.
+
+Tras el ensamblaje debe ejecutarse:
+
+- revalidación de apertura;
+- revisión de oralidad;
+- alineación con VoiceProfile;
+- reducción de señales de escritura artificial;
+- prohibición de inventar experiencias personales.
+
+Se permiten múltiples iteraciones limitadas.
+
+Señales de artificialidad a revisar:
+
+- frases intercambiables;
+- solemnidad artificial;
+- falsa profundidad;
+- preguntas retóricas automáticas;
+- transiciones formularias;
+- simetría excesiva;
+- ritmo uniforme;
+- conclusión predecible;
+- metáforas decorativas;
+- entusiasmo no ganado.
+
+No prometer detección infalible de texto de IA.
 
 ### B6-M4 — Ensamblaje determinista
 
