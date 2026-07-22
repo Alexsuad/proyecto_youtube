@@ -31,12 +31,19 @@ b3_i4_primary_voice_sample: REQUIRED_AND_NOT_VERIFIED
 b3_i4_team_01_functional_approval: REQUIRED
 b3_authorized_missions: [B3-I4-PREFLIGHT]
 b3_not_authorized_missions: [B3-I4-IMPLEMENTATION]
-next_allowed_action: EXECUTE_B3-I4_PREFLIGHT
+b3_i4_preflight_implementation: COMPLETED
+b3_i4_preflight_external_audit: PASS
+b3_i4_primary_sample_available: NO
+b3_i4_authorized_complementary_samples: 0
+b3_i4_invalid_or_incomplete_samples: 0
+b3_i4_corpus_ready: NO
+b3_i4_execution: BLOCKED_MISSING_PRIMARY_REAL_VOICE_SAMPLE
+next_allowed_action: PROVIDE_AUTHORIZED_PRIMARY_REAL_VOICE_SAMPLE
 next_implementation_block_if_approved: B3-I4-PREFLIGHT
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-Este archivo autoriza B3 únicamente para ejecutar el preflight de B3-I4. La implementación de B3-I4, así como los bloques posteriores, sigue condicionada y no está autorizada. El perfil editorial real continúa en `DRAFT` y no existe activación real.
+El preflight de B3-I4 ha confirmado que el corpus real no está disponible. B3-I4 está bloqueada hasta que el propietario proporcione una muestra principal real autorizada. El perfil editorial real continúa en `DRAFT`. No existe activación real, no hay aprobación del Equipo 01, no hay validación técnica final y B4 no está autorizado.
 
 ## 2. Autoridad documental
 
@@ -146,7 +153,7 @@ B0
 | B0 | Gobernanza, baseline y benchmarks editoriales | Ninguna | `PASS` | [B0_gobernanza_baseline_benchmarks.md](plan_001/B0_gobernanza_baseline_benchmarks.md) |
 | B1 | Contratos, schemas, estados y versionado | B0 | `PASS` (auditoría aprobada, 29/29 tests) | [B1_contratos_schemas_estados_versionado.md](plan_001/B1_contratos_schemas_estados_versionado.md) |
 | B2 | Reparación del arnés y gates críticos | B1 | `PASS` | [B2_reparacion_harness_gates.md](plan_001/B2_reparacion_harness_gates.md) |
-| B3 | Perfil editorial y frontera del canal | B1–B2 | `IN_PROGRESS` (B3-I3 `COMPLETED`, auditoría técnica externa `PASS`; B3-I4 condicionado a corpus real y aprobaciones) | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
+| B3 | Perfil editorial y frontera del canal | B1–B2 | `BLOCKED` (B3-I3 `COMPLETED`, preflight `PASS`; B3-I4 bloqueado por falta de muestra principal real) | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
 | B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `PLANNED` | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
 | B5 | Profesionalización del diseño editorial | B3–B4 | `PLANNED` | [B5_diseno_editorial.md](plan_001/B5_diseno_editorial.md) |
 | B5.5 | Prototipo editorial controlado | B5 | `PLANNED` | [B5_5_prototipo_editorial.md](plan_001/B5_5_prototipo_editorial.md) |
@@ -190,7 +197,13 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: EXECUTE_B3-I4_PREFLIGHT
-IMPLEMENTATION_AUTHORIZED: CONDITIONAL (solo preflight B3-I4)
-NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B3-I4-PREFLIGHT
+NEXT_ALLOWED_ACTION: PROVIDE_AUTHORIZED_PRIMARY_REAL_VOICE_SAMPLE
+B3-I4_PREFLIGHT_IMPLEMENTATION: COMPLETED
+B3-I4_PREFLIGHT_EXTERNAL_AUDIT: PASS
+PRIMARY_SAMPLE_AVAILABLE: NO
+B3-I4_EXECUTION: BLOCKED_MISSING_PRIMARY_REAL_VOICE_SAMPLE
+B3_IMPLEMENTATION_STATUS: BLOCKED
+B4_AUTHORIZED: NO
 ```
+
+B3-I4 está bloqueada hasta que el propietario proporcione una muestra principal real autorizada. B4 no está autorizado.
