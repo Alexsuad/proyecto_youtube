@@ -3,19 +3,19 @@
 **Documento:** Proyección operativa resumida  
 **Plan rector:** [`001_reestructuracion_motor_agentico_editorial_y_harness.md`](001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Índice por bloques:** [`plan_001/README.md`](plan_001/README.md)  
-**Versión del plan:** `1.3`  
-**Última sincronización:** `2026-07-21`
+**Versión del plan:** `1.4`
+**Última sincronización:** `2026-07-22`
 
 ## 1. Estado canónico
 
 ```yaml
 plan_id: PLAN-001
-plan_version: "1.3"
-plan_status: READY_FOR_AUDIT
-implementation_authorized: true
+plan_version: "1.4"
+plan_status: READY_FOR_EXTERNAL_AUDIT
+implementation_authorized: false
 authorized_blocks: [B0, B1, B2]
-current_block: B3
-current_mission: PLAN-001-B2-HARNESS-GATES-REPAIR
+current_block: NONE
+current_mission: PLAN-001-PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT
 next_allowed_action: PREPARE_B3_EXECUTION_PLAN
 next_implementation_block_if_approved: B3
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
@@ -29,7 +29,7 @@ Este archivo autoriza la implementación únicamente hasta B2. B3 y los bloques 
 1. Decisiones explícitas posteriores del propietario
 2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 3. Decisiones funcionales aprobadas de la responsabilidad competente
-4. Plan 001 v1.3
+4. Plan 001 v1.4
 5. Auditorías finales vigentes de las responsabilidades funcionales
 6. Este control operativo
 7. Archivo del bloque activo
