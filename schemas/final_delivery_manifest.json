@@ -8,14 +8,18 @@
     "final_script_annotated",
     "claims_ledger",
     "checksums",
-    "approval_record"
+    "approval_record",
+    "final_candidate_version",
+    "human_approved_version"
   ],
   "properties": {
     "final_script_clean": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^(06_guion_longform\\.md|06_guion_longform_limpio\\.md)$"
     },
     "final_script_annotated": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^06_guion_longform_anotado\\.md$"
     },
     "claims_ledger": {
       "type": "string"
@@ -38,7 +42,8 @@
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
     "checksums": {
-      "type": "object"
+      "type": "object",
+      "minProperties": 1
     },
     "approval_record": {
       "type": "object"

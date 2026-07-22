@@ -1,265 +1,231 @@
-# File: src/scripts/cerrar_episodio.py
-# ──────────────────────────────────────────────────────────────────────
-# Propósito: Validar entregables del episodio activo y marcarlo como completado.
-# Rol: Último paso del pipeline. Garantiza que no se cierre un episodio incompleto.
-# ──────────────────────────────────────────────────────────────────────
-#
-# Uso:
-#   python src/scripts/cerrar_episodio.py
-#   python src/scripts/cerrar_episodio.py --ep-id ep_0001  (cerrar uno específico)
-#   python src/scripts/cerrar_episodio.py --forzar          (cierra aunque falten archivos opcionales)
-#
-# Validación:
-#   - Verifica los 5 entregables OBLIGATORIOS del episodio.
-#   - Verifica que el Gate V (veracidad) tenga ESTADO_GLOBAL: OK.
-#   - Si alguno falta o Gate V no es OK → 🔴 STOP, lista detallada de faltantes.
-#   - Si todos presentes y Gate V OK → Actualiza índice con estado "completado".
-# ──────────────────────────────────────────────────────────────────────
-
+"""Cierre fuerte: no modifica el índice hasta que todos los contratos pasan."""
 import argparse
 import json
-import sys
-from datetime import datetime
+import os
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
-# ─── Constantes ────────────────────────────────────────────────────────────────
-REPO_ROOT = Path(__file__).parent.parent.parent
-CONFIG_PATH = REPO_ROOT / "config" / "local_settings.json"
-INDEX_FILENAME = "episodes_index.json"
-
-# Entregables obligatorios para considerar un episodio completo
-ENTREGABLES_OBLIGATORIOS = [
-    "06_guion_longform.md",
-    "07_verificacion_veracidad_notebooklm.md",  # Gate V obligatorio
-    "08_shorts.md",
-    "09_packaging.md",
-    "10_seo.md",
-]
-
-# Marcador de Gate V que debe aparecer en el reporte de veracidad
-GATE_V_ARCHIVO = "07_verificacion_veracidad_notebooklm.md"
-GATE_V_MARCADOR_OK = "ESTADO_GLOBAL: OK"
-
-# Entregables deseables (no bloquean el cierre pero generan WARN)
-# Nota: 99_notebooklm_pack.md puede moverse a OBLIGATORIOS activando
-# "notebooklm_pack_required": true en config/local_settings.json
-ENTREGABLES_DESEABLES = [
-    "00_brief_episodio.md",
-    "01_research_bruto.md",
-    "02_curation_obras.md",
-    "03_mapa_eventos.md",
-    "04_analisis_patrones.md",
-    "05_sintesis_tesis.md",
-    "07_qa_revisiones.md",
-    "99_notebooklm_pack.md",
-]
+from src.core.contract_validation import validate_against_schema, validate_claims_ledger, validate_editorial_script_approval
+from src.core.gate_result import GateResult
+from src.core.gate_runtime import run_gate
+from src.core.invalidation import InvalidationEngine
+from src.core.legacy_gate_adapter import parse_legacy_gate_v
+from src.core.path_resolution import REPO_ROOT, expand_path, output_root
+from src.core.status import GateStatus
+from src.core.version_manifest import compute_checksum
 
 
-# ─── Helpers ────────────────────────────────────────────────────────────────────
-def load_config() -> dict:
-    if not CONFIG_PATH.exists():
-        _abort(f"No se encontró config en: {CONFIG_PATH}")
-    with open(CONFIG_PATH, encoding="utf-8") as f:
-        cfg = json.load(f)
-    for key in ("vault_root", "channel_id"):
-        if not cfg.get(key):
-            _abort(f"Clave '{key}' faltante en local_settings.json")
-    return cfg
+DELIVERABLES = ["06_guion_longform.md", "08_shorts.md", "09_packaging.md", "10_seo.md"]
 
 
-def load_index(index_path: Path) -> dict:
-    if not index_path.exists():
-        _abort(f"Índice no encontrado: {index_path}\nEjecuta iniciar_episodio.py primero.")
-    with open(index_path, encoding="utf-8") as f:
-        return json.load(f)
+def load_json(path: Path, label: str, blocked: list[str], failures: list[str]) -> dict | None:
+    if not path.exists():
+        blocked.append(f"{label} ausente")
+        return None
+    if not path.is_file() or not path.read_text(encoding="utf-8").strip():
+        blocked.append(f"{label} vacío o no regular")
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        failures.append(f"{label}: JSON inválido ({exc.msg})")
+        return None
 
 
-def save_index(index_path: Path, index: dict) -> None:
-    index["last_updated"] = datetime.now().isoformat()
-    with open(index_path, "w", encoding="utf-8") as f:
-        json.dump(index, f, indent=2, ensure_ascii=False)
+def validate_gate(path: Path, gate_id: str, allowed: set[GateStatus], blocked: list[str], failures: list[str]) -> None:
+    data = load_json(path, f"Gate requerido {gate_id}", blocked, failures)
+    if data is None: return
+    try: result = GateResult.from_dict(data)
+    except (KeyError, TypeError, ValueError) as exc:
+        failures.append(f"Gate {gate_id} inválido: {exc}")
+        return
+    if result.gate_id != gate_id: failures.append(f"Gate esperado {gate_id}, recibido {result.gate_id}")
+    elif result.artifact_id != path.parent.name:
+        failures.append(f"Gate {gate_id} pertenece a otro episodio: {result.artifact_id}")
+    elif result.status not in allowed: failures.append(f"Gate {gate_id} en estado no permitido: {result.status.value}")
 
 
-def _abort(msg: str) -> None:
-    print(f"\n🔴 ERROR: {msg}", file=sys.stderr)
-    sys.exit(1)
+def evaluate(ep_id: str, ep_path: Path, gates_root: Path) -> GateResult:
+    blocked: list[str] = []; failures: list[str] = []
+    evidence: dict = {"episode_path": str(ep_path), "inputs_reviewed": []}
+    if not ep_path.is_dir():
+        return GateResult("cerrar_episodio", ep_id, "1.0.0", GateStatus.BLOCKED, "Carpeta de episodio ausente", [str(ep_path)], evidence=evidence)
+    for name in DELIVERABLES:
+        path = ep_path / name; evidence["inputs_reviewed"].append(str(path))
+        if not path.exists() or not path.is_file() or not path.read_text(encoding="utf-8").strip(): blocked.append(f"Entregable obligatorio ausente o vacío: {name}")
+
+    gate_v, error = parse_legacy_gate_v(ep_path / "07_verificacion_veracidad_notebooklm.md")
+    if error:
+        (blocked if "ausente" in error or "vacío" in error else failures).append(error)
+    elif gate_v != GateStatus.PASS:
+        failures.append(f"Gate V debe ser PASS; recibido {gate_v.value}")
+
+    gate_dir = gates_root / "gates" / ep_id
+    validate_gate(gate_dir / "qa_brief_research.json", "qa_brief_research", {GateStatus.PASS}, blocked, failures)
+    validate_gate(gate_dir / "evidence_sufficiency.json", "evidence_sufficiency", {GateStatus.PASS, GateStatus.WARN}, blocked, failures)
+    validate_gate(gate_dir / "qa_duracion_guion.json", "qa_duracion_guion", {GateStatus.PASS, GateStatus.WARN}, blocked, failures)
+    validate_gate(gate_dir / "qa_lenguaje_youtube_ultra_post_guion.json", "qa_lenguaje_youtube_ultra_post_guion", {GateStatus.PASS, GateStatus.WARN}, blocked, failures)
+
+    manifest = load_json(ep_path / "script_version_manifest.json", "ScriptVersionManifest", blocked, failures)
+    approval = load_json(ep_path / "editorial_script_approval.json", "EditorialScriptApproval", blocked, failures)
+    final = load_json(ep_path / "final_delivery_manifest.json", "FinalDeliveryManifest", blocked, failures)
+    script = ep_path / "06_guion_longform.md"
+    current_checksum = compute_checksum(script.read_text(encoding="utf-8")) if script.is_file() and script.read_text(encoding="utf-8").strip() else None
+
+    if manifest:
+        failures.extend(f"ScriptVersionManifest: {v}" for v in validate_against_schema(manifest, "script_version_manifest"))
+        if manifest.get("script_id") != ep_id: failures.append("ScriptVersionManifest pertenece a otro episodio")
+        if current_checksum and manifest.get("checksum") != current_checksum: failures.append("Checksum del manifest no coincide con el guion actual")
+    if approval:
+        failures.extend(f"EditorialScriptApproval: {v}" for v in validate_editorial_script_approval(approval))
+        if approval.get("artifact_id") != ep_id: failures.append("Aprobación pertenece a otro episodio")
+        if current_checksum and approval.get("checksum") != current_checksum: failures.append("Checksum aprobado no coincide con el guion actual")
+        if manifest and approval.get("script_version") != manifest.get("version"): failures.append("La aprobación referencia una versión distinta")
+        if manifest and approval.get("artifact_id") and approval.get("artifact_id") != manifest.get("script_id"): failures.append("Aprobación y manifest refieren artefactos distintos")
+        if approval.get("invalidated_at"): failures.append("La aprobación está invalidada")
+        if current_checksum and not InvalidationEngine().check_approval_validity(approval.get("checksum", ""), current_checksum): failures.append("Cambio posterior invalidó la aprobación")
+    if final:
+        failures.extend(f"FinalDeliveryManifest: {v}" for v in validate_against_schema(final, "final_delivery_manifest"))
+        if manifest and final.get("human_approved_version") != manifest.get("version"):
+            failures.append("FinalDeliveryManifest no referencia la versión aprobada")
+        if manifest and final.get("final_candidate_version") != manifest.get("version"):
+            failures.append("FinalDeliveryManifest no referencia la versión candidata exacta")
+        if not final.get("approval_record"):
+            failures.append("FinalDeliveryManifest no contiene approval_record")
+        elif approval and final["approval_record"] != approval:
+            failures.append("approval_record no coincide con la aprobación cargada")
+        clean_rel = final.get("final_script_clean", "")
+        annotated_rel = final.get("final_script_annotated", "")
+        ledger_rel = final.get("claims_ledger", "")
+
+        if clean_rel == annotated_rel:
+            failures.append("Guion limpio y anotado deben ser artefactos distintos")
+
+        def check_path_and_role(rel_path: str, role_label: str, allowed_ext: str, forbidden_keywords: list[str], allowed_basenames: list[str] | None = None) -> Path | None:
+            if not rel_path or not isinstance(rel_path, str) or not rel_path.strip():
+                failures.append(f"FinalDeliveryManifest {role_label}: ruta vacía o inválida")
+                return None
+
+            p = Path(rel_path)
+            parts = rel_path.replace("\\", "/").split("/")
+            if p.is_absolute() or rel_path.startswith("/") or rel_path.startswith("\\") or (len(rel_path) > 1 and rel_path[1] == ":") or ".." in parts:
+                failures.append(f"FinalDeliveryManifest {role_label}: la ruta debe ser relativa y no escapar del episodio ({rel_path})")
+                return None
+
+            resolved_ep = ep_path.resolve()
+            target = (ep_path / rel_path).resolve()
+            try:
+                target.relative_to(resolved_ep)
+            except ValueError:
+                failures.append(f"FinalDeliveryManifest {role_label}: la ruta se escapa de la carpeta del episodio ({rel_path})")
+                return None
+
+            if target == resolved_ep:
+                failures.append(f"FinalDeliveryManifest {role_label}: referencia la carpeta raíz del episodio")
+                return None
+
+            lower_path = rel_path.lower()
+            if allowed_ext and not lower_path.endswith(allowed_ext):
+                failures.append(f"FinalDeliveryManifest {role_label} debe ser de tipo {allowed_ext}: {rel_path}")
+                return None
+
+            if allowed_basenames is not None:
+                basename = parts[-1]
+                if basename not in allowed_basenames:
+                    failures.append(f"FinalDeliveryManifest {role_label}: nombre de archivo no permitido: {basename}. Debe ser uno de: {', '.join(allowed_basenames)}")
+                    return None
+
+            for kw in forbidden_keywords:
+                if kw in lower_path:
+                    failures.append(f"FinalDeliveryManifest {role_label} no puede ser un artefacto de {kw}: {rel_path}")
+                    return None
+
+            if not target.exists() or not target.is_file():
+                blocked.append(f"FinalDeliveryManifest {role_label} referencia archivo ausente o no regular: {rel_path}")
+                return None
+
+            if not target.read_text(encoding="utf-8").strip():
+                blocked.append(f"FinalDeliveryManifest {role_label} referencia archivo vacío: {rel_path}")
+                return None
+
+            return target
+
+        target_clean = check_path_and_role(clean_rel, "final_script_clean", ".md", [], ["06_guion_longform.md", "06_guion_longform_limpio.md"])
+        target_annotated = check_path_and_role(annotated_rel, "final_script_annotated", ".md", [], ["06_guion_longform_anotado.md"])
+        target_ledger = check_path_and_role(ledger_rel, "claims_ledger", ".json", [])
+
+        if target_ledger:
+            ledger = load_json(target_ledger, "ClaimsLedger", blocked, failures)
+            if ledger:
+                failures.extend(f"ClaimsLedger: {item}" for item in validate_claims_ledger(ledger))
+                if manifest and ledger.get("script_version") != manifest.get("version"):
+                    failures.append("ClaimsLedger no referencia la versión exacta del guion")
+
+        checksums = final.get("checksums", {})
+        if not checksums or not isinstance(checksums, dict):
+            failures.append("FinalDeliveryManifest: checksums no puede estar vacío")
+        else:
+            for key in (clean_rel, annotated_rel, ledger_rel):
+                if key and key not in checksums:
+                    failures.append(f"Checksum requerido ausente en FinalDeliveryManifest: {key}")
+
+            for relative, expected_checksum in checksums.items():
+                target = check_path_and_role(relative, f"checksums[{relative}]", "", [])
+                if target:
+                    actual_checksum = compute_checksum(target.read_text(encoding="utf-8"))
+                    if actual_checksum != expected_checksum:
+                        failures.append(f"Checksum incorrecto en FinalDeliveryManifest: {relative}")
+    evidence["gate_directory"] = str(gate_dir)
+    if blocked: return GateResult("cerrar_episodio", ep_id, "1.0.0", GateStatus.BLOCKED, "Cierre bloqueado por requisitos ausentes", blocked, evidence=evidence)
+    if failures: return GateResult("cerrar_episodio", ep_id, "1.0.0", GateStatus.FAIL, "Cierre rechazado por contratos inválidos", failures, evidence=evidence)
+    return GateResult("cerrar_episodio", ep_id, "1.0.0", GateStatus.PASS, "Cierre validado", evidence=evidence)
 
 
-def _warn(msg: str) -> None:
-    print(f"⚠️  WARN: {msg}")
+def save_index_atomically(index_path: Path, index: dict) -> None:
+    """Escribe el índice completo y reemplaza el archivo solo tras un write correcto."""
+    descriptor, temporary_path = tempfile.mkstemp(prefix=".episodes_index.", suffix=".tmp", dir=index_path.parent)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            json.dump(index, handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, index_path)
+    except Exception:
+        try:
+            os.unlink(temporary_path)
+        except FileNotFoundError:
+            pass
+        raise
 
 
-def _ok(msg: str) -> None:
-    print(f"✅ {msg}")
-
-
-# ─── Verificación de entregables ────────────────────────────────────────────────
-def verificar_entregables(ep_path: Path) -> tuple[list, list]:
-    """
-    Verifica entregables del episodio.
-    Retorna: (faltantes_obligatorios, faltantes_deseables)
-    """
-    faltantes_oblig = []
-    faltantes_desea = []
-
-    for archivo in ENTREGABLES_OBLIGATORIOS:
-        if not (ep_path / archivo).exists():
-            faltantes_oblig.append(archivo)
-
-    for archivo in ENTREGABLES_DESEABLES:
-        if not (ep_path / archivo).exists():
-            faltantes_desea.append(archivo)
-
-    return faltantes_oblig, faltantes_desea
-
-
-# ─── Validación Gate V ────────────────────────────────────────────────────────────
-def verificar_gate_v(ep_path: Path) -> str:
-    """
-    Lee el reporte de veracidad y verifica que contenga ESTADO_GLOBAL: OK.
-    Retorna: 'OK', 'WARN', 'FAIL', o 'AUSENTE'.
-    """
-    gate_v_path = ep_path / GATE_V_ARCHIVO
-    if not gate_v_path.exists():
-        return "AUSENTE"
-    contenido = gate_v_path.read_text(encoding="utf-8")
-    if "ESTADO_GLOBAL: OK" in contenido:
-        return "OK"
-    elif "ESTADO_GLOBAL: WARN" in contenido:
-        return "WARN"
-    elif "ESTADO_GLOBAL: FAIL" in contenido:
-        return "FAIL"
-    return "AUSENTE"
-
-
-def imprimir_resumen(ep_path: Path, faltantes_oblig: list, faltantes_desea: list) -> None:
-    """Imprime el resumen de validación de entregables."""
-    print("\n📋 Resumen de entregables:")
-
-    total_oblig = len(ENTREGABLES_OBLIGATORIOS)
-    presentes_oblig = total_oblig - len(faltantes_oblig)
-    print(f"   Obligatorios: {presentes_oblig}/{total_oblig}")
-
-    if faltantes_oblig:
-        print("\n   🔴 Faltantes OBLIGATORIOS:")
-        for f in faltantes_oblig:
-            print(f"      ❌ {f}")
-
-    if faltantes_desea:
-        print(f"\n   ⚠️  Faltantes deseables ({len(faltantes_desea)}):")
-        for f in faltantes_desea:
-            print(f"      - {f}")
-
-    presentes_des = len(ENTREGABLES_DESEABLES) - len(faltantes_desea)
-    print(f"   Deseables: {presentes_des}/{len(ENTREGABLES_DESEABLES)}")
-
-
-# ─── Lógica principal ────────────────────────────────────────────────────────────
-def main():
-    parser = argparse.ArgumentParser(
-        description="Cerrar el episodio activo y marcarlo como completado."
-    )
-    parser.add_argument(
-        "--ep-id", type=str, default=None,
-        help="ID del episodio a cerrar (ej: ep_0001). Si no se da, usa el único 'en_progreso'."
-    )
-    parser.add_argument(
-        "--forzar", action="store_true",
-        help="Cierra el episodio aunque falten entregables deseables (no los obligatorios)."
-    )
-    args = parser.parse_args()
-
-    # ── Cargar config ──
-    cfg = load_config()
-    vault_root = Path(cfg["vault_root"])
-    channel_id = cfg["channel_id"]
-    index_path = vault_root / channel_id / "index" / INDEX_FILENAME
-
-    # ── Flag NotebookLM Pack ──
-    # Si notebooklm_pack_required=true en local_settings.json,
-    # el 99_notebooklm_pack.md se vuelve obligatorio para el cierre.
-    notebooklm_pack_required = cfg.get("notebooklm_pack_required", False)
-    if notebooklm_pack_required and "99_notebooklm_pack.md" in ENTREGABLES_DESEABLES:
-        ENTREGABLES_DESEABLES.remove("99_notebooklm_pack.md")
-        ENTREGABLES_OBLIGATORIOS.append("99_notebooklm_pack.md")
-        print("ℹ️  Modo NotebookLM activo: 99_notebooklm_pack.md es OBLIGATORIO")
-
-    # ── Cargar índice ──
-    index = load_index(index_path)
-    episodes = index.get("episodes", [])
-
-    # ── Encontrar episodio a cerrar ──
-    if args.ep_id:
-        candidatos = [e for e in episodes if e.get("ep_id") == args.ep_id]
-        if not candidatos:
-            _abort(f"No se encontró el episodio '{args.ep_id}' en el índice.")
-        ep_entry = candidatos[0]
-    else:
-        in_progress = [e for e in episodes if e.get("estado") == "en_progreso"]
-        if not in_progress:
-            _abort("No hay episodios con estado 'en_progreso'.\n"
-                   "Usa --ep-id para especificar uno manualmente si crees que hay error.")
-        if len(in_progress) > 1:
-            ids = ", ".join(e.get("ep_id", "?") for e in in_progress)
-            _abort(f"Hay múltiples episodios en_progreso: {ids}\n"
-                   "Usa --ep-id para indicar cuál cerrar.")
-        ep_entry = in_progress[0]
-
-    ep_path = Path(ep_entry["ep_path"])
-    ep_id = ep_entry["ep_id"]
-    print(f"\n🔒 Cerrando episodio: {ep_id}")
-    print(f"   Ruta: {ep_path}\n")
-
-    # ── Verificar que la carpeta existe ──
-    if not ep_path.exists():
-        _abort(f"La carpeta del episodio no existe: {ep_path}")
-
-    # ── Verificar entregables ──
-    faltantes_oblig, faltantes_desea = verificar_entregables(ep_path)
-    imprimir_resumen(ep_path, faltantes_oblig, faltantes_desea)
-
-    # ── Verificar Gate V (veracidad) ──
-    gate_v_estado = verificar_gate_v(ep_path)
-    if gate_v_estado == "AUSENTE":
-        print(f"\n🔴 GATE V: '{GATE_V_ARCHIVO}' no existe.")
-        print("   El reporte de veracidad es obligatorio antes del cierre.")
-        print("   Ejecuta: skill_verificacion_veracidad_notebooklm.md")
-        sys.exit(1)
-    elif gate_v_estado in ("WARN", "FAIL"):
-        print(f"\n🔴 GATE V: '{GATE_V_ARCHIVO}' tiene ESTADO_GLOBAL: {gate_v_estado}.")
-        print("   No se puede cerrar el episodio con warnings o fallos de veracidad.")
-        print("   Corrige el guion, repite QA y Gate V antes de cerrar.")
-        sys.exit(1)
-    else:
-        _ok(f"Gate V (veracidad): {gate_v_estado}")
-
-    # ── Gate: bloquear si faltan obligatorios ──
-    if faltantes_oblig:
-        print(f"\n🔴 STOP: El episodio '{ep_id}' no puede cerrarse.")
-        print("   Completa los entregables obligatorios antes de cerrar.")
-        sys.exit(1)
-
-    # ── Aviso si faltan deseables ──
-    if faltantes_desea and not args.forzar:
-        print(f"\n⚠️  Hay {len(faltantes_desea)} entregable(s) deseable(s) faltantes.")
-        print("   El episodio PUEDE cerrarse (no son bloqueantes).")
-        print("   Usa --forzar para omitir esta advertencia en el futuro.")
-
-    # ── Actualizar índice ──
-    ep_entry["estado"] = "completado"
-    ep_entry["cerrado"] = datetime.now().isoformat()
-    ep_entry["entregables_faltantes_al_cierre"] = faltantes_desea if faltantes_desea else []
-    save_index(index_path, index)
-    _ok(f"Índice actualizado: {index_path}")
-
-    # ── Resultado final ──
-    print(f"\n🟢 Episodio '{ep_id}' cerrado correctamente.")
-    print(f"   Estado: completado")
-    print(f"   Cerrado: {ep_entry['cerrado']}")
-    if faltantes_desea:
-        _warn(f"{len(faltantes_desea)} entregable(s) deseable(s) quedaron pendientes (registrados en índice).")
-    print()
-
+def main() -> int:
+    parser = argparse.ArgumentParser(); parser.add_argument("--ep-id"); parser.add_argument("--config", default=str(REPO_ROOT / "config/local_settings.json")); parser.add_argument("--output-root")
+    args = parser.parse_args(); config_path = Path(args.config)
+    try: config = json.loads(config_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return run_gate(lambda: (_ for _ in ()).throw(RuntimeError(f"No se pudo cargar config: {exc}")), output_root=args.output_root)
+    vault = expand_path(config.get("vault_root", "")); channel = config.get("channel_id")
+    index_path = vault / str(channel) / "index/episodes_index.json"
+    try: index = json.loads(index_path.read_text(encoding="utf-8")); episodes = index.get("episodes", [])
+    except Exception as exc:
+        return run_gate(lambda: (_ for _ in ()).throw(RuntimeError(f"No se pudo cargar índice: {exc}")), output_root=args.output_root)
+    choices = [item for item in episodes if item.get("ep_id") == args.ep_id] if args.ep_id else [item for item in episodes if item.get("estado") == "en_progreso"]
+    if len(choices) != 1:
+        return run_gate(lambda: GateResult("cerrar_episodio", args.ep_id or "unknown", "1.0.0", GateStatus.BLOCKED, "No hay un episodio único para cerrar", ["Especifique un ep-id existente y único"]), output_root=args.output_root)
+    entry = choices[0]; gates = output_root(args.output_root)
+    if entry.get("estado") != "en_progreso":
+        return run_gate(lambda: GateResult("cerrar_episodio", entry["ep_id"], "1.0.0", GateStatus.BLOCKED, "El episodio no está en progreso", [f"Estado actual: {entry.get('estado')}"]), output_root=args.output_root)
+    result = evaluate(entry["ep_id"], expand_path(entry["ep_path"]), gates)
+    if result.status == GateStatus.PASS:
+        entry["estado"] = "completado"; entry["cerrado"] = datetime.now(timezone.utc).isoformat(); index["last_updated"] = entry["cerrado"]
+        try:
+            save_index_atomically(index_path, index)
+        except Exception as exc:
+            return run_gate(lambda: (_ for _ in ()).throw(RuntimeError(f"No se pudo actualizar el índice: {exc}")), output_root=args.output_root)
+    return run_gate(lambda: result, output_root=args.output_root)
 
 if __name__ == "__main__":
-    main()
+    import sys
+    sys.exit(main())

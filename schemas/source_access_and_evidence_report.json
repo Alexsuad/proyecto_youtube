@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SourceAccessAndEvidenceReport",
+  "type": "object",
+  "required": ["material_principal_disponible", "tipo_de_acceso", "fuentes_primarias", "fuentes_secundarias", "escenas_verificadas", "escenas_descritas_indirectamente", "claims_sostenibles", "claims_pendientes", "limitaciones", "nivel_de_confianza", "can_proceed", "required_disclosures"],
+  "properties": {
+    "material_principal_disponible": {"type": "boolean"},
+    "tipo_de_acceso": {"type": "string", "minLength": 1},
+    "fuentes_primarias": {"type": "array", "items": {"type": "object"}},
+    "fuentes_secundarias": {"type": "array", "items": {"type": "object"}},
+    "escenas_verificadas": {"type": "array", "items": {"type": "object"}},
+    "escenas_descritas_indirectamente": {"type": "array", "items": {"type": "object"}},
+    "claims_sostenibles": {"type": "array", "items": {"type": "object"}},
+    "claims_pendientes": {"type": "array", "items": {"type": "object"}},
+    "limitaciones": {"type": "array", "items": {"type": "string"}},
+    "nivel_de_confianza": {"type": "string", "minLength": 1},
+    "can_proceed": {"type": "boolean"},
+    "required_disclosures": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

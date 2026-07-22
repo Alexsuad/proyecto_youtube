@@ -3,7 +3,7 @@
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
 **Versión derivada:** `PLAN-001 v1.3`  
-**Estado inicial:** `PLANNED`  
+**Estado:** `COMPLETED`
 **Dependencia:** `B1`  
 **Siguiente tramo:** `B3`  
 **Gate resumido:** Cero falsos PASS conocidos
@@ -142,3 +142,18 @@ PASS si:
 ```
 
 ---
+
+## 5. Registro de implementación B2
+
+- Entorno oficial: Windows nativo. No se exige compatibilidad, ejecución ni reproducción de pruebas en Linux o WSL; un fallo exclusivo de dichos entornos no bloquea B2.
+- Validación oficial desde PowerShell o terminal Windows: `python -m unittest discover -s tests -p "test_*.py"`, `python -m compileall -q src` y `git diff --check -- .agent/workflows plans schemas src tests`.
+- Los `subprocess.run()` de la matriz B2 usan timeout para evitar bloqueos indefinidos también en Windows.
+- Correcciones finales: evidencia sin soporte falla; ausencia de material y alternativas bloquea; identidad de manifests, aprobaciones y gates es exacta; FinalDeliveryManifest valida scripts distintos, ClaimsLedger, versiones y checksums; cierre exige los gates obligatorios de B2 y separa QA ultra pre/post-guion.
+- Archivos creados: runtime, validación de entradas, resolución de rutas, adaptador estricto Gate V, schema y gate de evidencia, y pruebas en `tests/harness/`.
+- Archivos modificados: scripts autorizados, workflows, contratos y control operativo.
+- Pruebas ejecutadas: `python -m unittest discover -s tests -p "test_*.py"` (46 tests, matriz B2 y regresiones, PASS) y `python -m compileall -q src` (PASS).
+- Defectos B0 corregidos: C-01 a C-08 quedan cubiertos por códigos de salida, inputs bloqueantes, parser exacto, portabilidad y regresiones B2.
+- Limitaciones: Gate V continúa textual por compatibilidad y se adapta una sola vez a `GateResult`; políticas editoriales y producción/publicación permanecen fuera de B2.
+- Auditoría externa: `PASS`.
+- Pruebas oficiales Windows: `46/46 PASS`.
+- Pendientes reales: B3 no iniciado.

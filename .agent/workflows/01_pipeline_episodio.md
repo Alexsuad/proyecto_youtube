@@ -28,19 +28,16 @@ Antigravity debe tener disponibles:
 ```
 python src/scripts/gate0_auditoria.py
 ```
-- Leer `output/auditoria_sistema_v1.md`
-- Extraer `ESTADO_GLOBAL`
-- Si `FAIL` → **🔴 DETENER** y reportar al usuario.
+- Consumir `output/gates/system/gate0_auditoria.json` y su exit code.
+- `FAIL`, `BLOCKED` y error técnico → **🔴 DETENER**.
 
 ### Paso 0.2 — Integridad del pipeline
 // turbo
 ```
 python src/scripts/gate0_integridad.py
 ```
-- Leer `output/control_integridad_pipeline.md`
-- Extraer `ESTADO_GLOBAL`
-- Si `FAIL` → **🔴 DETENER**.
-- Si `WARN` → notificar al usuario y esperar confirmación antes de continuar.
+- Consumir `output/gates/system/gate0_integridad.json` y su exit code.
+- `FAIL`, `BLOCKED` y error técnico → **🔴 DETENER**; `WARN` requiere política explícita.
 
 ### Gate 0 — Decisión final
 | Auditoría Sistema | Integridad Pipeline | Decisión |
@@ -91,14 +88,21 @@ python src/scripts/iniciar_episodio.py --num <NUM> --slug <SLUG>
 - Skill: `skill_qa_brief_research.md` 
 // turbo
 ```
-python src/scripts/qa_brief_research.py --ep_path <EP_PATH>
+python src/scripts/qa_brief_research.py --ep_path <EP_PATH> --ep-id <EP_ID>
 ```
-- Leer el reporte generado en `output/auditoria_brief_research_<EP_NAME>.md`
-- Si el `ESTADO_GLOBAL` es `FAIL` → **🔴 DETENER** y corregir los entregables según la lista. No pedir revisión humana hasta que sea `PASS`.
+- Consumir `output/gates/<EP_ID>/qa_brief_research.json` y su exit code.
+- `FAIL`, `BLOCKED` y error técnico detienen; solo `PASS` permite la revisión humana.
 
 ### Paso 3.3 — Revisión del usuario (Gate Humano del Momento 1)
 - **⛔ Gate:** El usuario debe revisar y aprobar explícitamente el brief y la investigación antes de pasar a estructura.
 - Preguntar: "¿La investigación y la tesis están correctas? ¿Damos check al Momento 1?"
+
+### Paso 3.4 — Gate de suficiencia de evidencia
+
+1. Crear `<EP_PATH>/source_access_and_evidence_report.json` documentando fuentes, escenas y claims del episodio.
+2. Validar `<EP_PATH>/source_access_and_evidence_report.json` contra el esquema `schemas/source_access_and_evidence_report.json`.
+3. Ejecutar `python src/scripts/evidence_sufficiency_gate.py --report <EP_PATH>/source_access_and_evidence_report.json --ep-id <EP_ID>`.
+4. Consumir `output/gates/<EP_ID>/evidence_sufficiency.json`: `FAIL`, `BLOCKED` o error técnico detienen antes de curación, análisis o redacción.
 
 ---
 
@@ -167,10 +171,10 @@ python src/scripts/qa_brief_research.py --ep_path <EP_PATH>
 - Skill: `skill_qa_lenguaje_youtube_ultra.md`
 // turbo
 ```
-python src/scripts/qa_lenguaje_youtube_ultra.py --ep_path <EP_PATH> --fase pre-guion
+python src/scripts/qa_lenguaje_youtube_ultra.py --ep_path <EP_PATH> --ep-id <EP_ID> --fase pre-guion
 ```
-- Leer el reporte generado en `output/qa_youtube_lenguaje/<EP_NAME>__qa_youtube_ultra.md`
-- Si el `ESTADO_GLOBAL` es `FAIL` → **🔴 DETENER** y cambiar los términos marcados antes de escribir el guion.
+- Consumir `output/gates/<EP_ID>/qa_lenguaje_youtube_ultra_pre_guion.json` y su exit code.
+- `FAIL`, `BLOCKED` y error técnico detienen antes de escribir el guion.
 
 ---
 
@@ -184,9 +188,8 @@ python src/scripts/qa_lenguaje_youtube_ultra.py --ep_path <EP_PATH> --fase pre-g
 - Leer: `workspace/02_reglas_editoriales.md`, `workspace/03_formato_longform.md`, `workspace/05_estilo_y_voz.md`
 - Crear: `<EP_PATH>/06_guion_longform.md`
 
-### Paso 8.2 — Revisión del usuario
-- **⛔ Gate HUMANO (obligatorio):** El usuario debe leer y aprobar el guion.
-- Preguntar: "¿El guion está listo para QA?"
+### Paso 8.2 — Revisión inicial del usuario
+- Esta revisión no es la aprobación editorial final si el guion se modifica después.
 
 ---
 
@@ -197,10 +200,10 @@ python src/scripts/qa_lenguaje_youtube_ultra.py --ep_path <EP_PATH> --fase pre-g
 ### Paso 8.8.1 — Ejecutar script de duración
 // turbo
 ```
-python src/scripts/qa_duracion_guion.py --ep_path <EP_PATH> --min_target 18 --max_target 22
+python src/scripts/qa_duracion_guion.py --ep_path <EP_PATH> --ep-id <EP_ID> --min_target 18 --max_target 22
 ```
-- Leer el reporte en `output/qa_duracion/<EP_NAME>__qa_duracion.md`
-- Si `ESTADO_GLOBAL` es `FAIL` → Notificar recomendación (recortar/expandir) y decidir si se procede o se ajusta.
+- Consumir `output/gates/<EP_ID>/qa_duracion_guion.json` y su exit code.
+- `FAIL`, `BLOCKED` y error técnico se resuelven antes de continuar.
 
 ---
 
@@ -236,8 +239,8 @@ python src/scripts/qa_duracion_guion.py --ep_path <EP_PATH> --min_target 18 --ma
 - Crear: `<EP_PATH>/07_verificacion_veracidad_notebooklm.md`
 - Template: `templates/verificacion_veracidad_notebooklm_template.md`
 
-### Paso 9.5.2 — Evaluar ESTADO_GLOBAL
-Leer `07_verificacion_veracidad_notebooklm.md` y extraer `ESTADO_GLOBAL`:
+### Paso 9.5.2 — Evaluar Gate V heredado
+`legacy_gate_adapter` consume una única línea exacta `ESTADO_GLOBAL`; el workflow no usa búsquedas por substring.
 
 | ESTADO_GLOBAL | Acción |
 |---|---|
@@ -245,22 +248,7 @@ Leer `07_verificacion_veracidad_notebooklm.md` y extraer `ESTADO_GLOBAL`:
 | `WARN` | 🟡 **DETENER** — corregir guion, volver a Fase 9.5 |
 | `FAIL` | 🔴 **STOP OBLIGATORIO** — corregir guion (Fase 8), luego repetir QA y Gate V |
 
-**⛔ Gate:** `07_verificacion_veracidad_notebooklm.md` debe existir Y contener `ESTADO_GLOBAL: OK`.
-
----
-
-## FASE 9.8 — Gate Post-Guion (QA Lenguaje YouTube Final)
-
-**Objetivo:** Última red de seguridad algorítmica. Audita el Guion, Packaging y SEO para certificar que el contenido que leerá el Bot de YouTube está higienizado y 100% monetizable.
-
-### Paso 9.8.1 — Ejecutar script
-- Skill: `skill_qa_lenguaje_youtube_ultra.md`
-// turbo
-```
-python src/scripts/qa_lenguaje_youtube_ultra.py --ep_path <EP_PATH> --fase post-guion
-```
-- Leer el reporte generado en `output/qa_youtube_lenguaje/<EP_NAME>__qa_youtube_ultra.md`
-- Si el `ESTADO_GLOBAL` es `FAIL` → **🔴 DETENER** y corregir los términos en el guion o empaquetado.
+**⛔ Gate:** el resultado normalizado de Gate V debe ser `PASS`.
 
 ---
 
@@ -287,6 +275,14 @@ python src/scripts/qa_lenguaje_youtube_ultra.py --ep_path <EP_PATH> --fase post-
 
 ---
 
+## FASE 10.5 — Gate post-guion y aprobación exacta
+
+Ejecutar `qa_lenguaje_youtube_ultra.py --ep-id <EP_ID> --fase post-guion` solo después de generar `06_guion_longform.md`, `09_packaging.md` y `10_seo.md`. La decisión consume `output/gates/<EP_ID>/qa_lenguaje_youtube_ultra_post_guion.json` y su exit code: `FAIL`, `BLOCKED` o error técnico detienen el flujo.
+
+Tras las correcciones, la verificación factual disponible y la repetición de gates afectados, generar el manifest de versión y obtener `EditorialScriptApproval` para la versión y checksum exactos. Crear `FinalDeliveryManifest` antes del cierre. Producción y publicación permanecen diferidas.
+
+---
+
 ## FASE 11 — Cierre del Episodio
 
 **Objetivo:** Validar entregables y marcar el episodio como completado en el Vault.
@@ -296,9 +292,8 @@ python src/scripts/qa_lenguaje_youtube_ultra.py --ep_path <EP_PATH> --fase post-
 ```
 python src/scripts/cerrar_episodio.py
 ```
-- Si hay faltantes obligatorios → 🔴 STOP. Completar antes de cerrar.
-- Si `07_verificacion_veracidad_notebooklm.md` tiene ESTADO_GLOBAL distinto de OK → 🔴 STOP.
-- Si todo OK → episodio marcado como `completado` en `episodes_index.json`.
+- El cierre consume GateResult JSON, Gate V normalizado, manifests, checksums y aprobación exacta; no decide mediante substring Markdown.
+- Con exit `1`, `2` o `3` no modifica `episodes_index.json`.
 
 ### Paso 11.2 — Generar pack NotebookLM (IA)
 - Skill: `skill_cerrar_episodio.md` (Paso B — generación del pack)
@@ -310,7 +305,7 @@ python src/scripts/cerrar_episodio.py
 
 | Fase | Entregable Gate | Tipo de verificación |
 |---|---|---|
-| 0 | ESTADO_GLOBAL en reportes | Python (script) |
+| 0 | GateResult JSON | Python (script) |
 | 1 | EP_PATH creado | Python (script) |
 | 2 | `00_brief_episodio.md` | Humano (confirmación) |
 | 3 | `01_research_bruto.md` | IA (verificar existencia) |
@@ -318,10 +313,11 @@ python src/scripts/cerrar_episodio.py
 | 5 | `03_mapa_eventos.md` | IA (verificar existencia) |
 | 6 | `04_analisis_patrones.md` | IA (verificar existencia) |
 | 7 | `05_sintesis_tesis.md` | IA (verificar existencia) |
-| **7.5** | **`qa_youtube_ultra.md` + ESTADO_GLOBAL: PASS** | **Python (script)** |
+| **3.4** | **GateResult `evidence_sufficiency` en PASS/WARN permitido** | **Python (script)** |
+| **7.5** | **GateResult `qa_lenguaje_youtube_ultra_pre_guion` en PASS/WARN permitido** | **Python (script)** |
 | 8 | `06_guion_longform.md` | **Humano (revisar guion)** |
 | 9 | `07_qa_revisiones.md` | IA (verificar existencia) |
-| **9.5** | **`07_verificacion_veracidad_notebooklm.md` + ESTADO_GLOBAL: OK** | **IA + NotebookLM (Gate V)** |
-| **9.8** | **`qa_youtube_ultra.md` + ESTADO_GLOBAL: PASS** | **Python (script)** |
+| **9.5** | **Gate V normalizado por `legacy_gate_adapter` en PASS** | **IA + NotebookLM (Gate V)** |
 | 10 | Los 3 entregables finales | IA (verificar existencia) |
+| **10.5** | **GateResult `qa_lenguaje_youtube_ultra_post_guion` después de packaging y SEO** | **Python (script)** |
 | 11 | `cerrar_episodio.py` OK | Python (script) |

@@ -13,15 +13,15 @@ plan_id: PLAN-001
 plan_version: "1.3"
 plan_status: READY_FOR_AUDIT
 implementation_authorized: true
-authorized_blocks: [B0, B1]
-current_block: B2
-current_mission: null
-next_allowed_action: B2_START
-next_implementation_block_if_approved: B2
+authorized_blocks: [B0, B1, B2]
+current_block: B3
+current_mission: PLAN-001-B2-HARNESS-GATES-REPAIR
+next_allowed_action: PREPARE_B3_EXECUTION_PLAN
+next_implementation_block_if_approved: B3
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-Este archivo autoriza la implementación únicamente de B0 y B1. B2 y los bloques posteriores no están autorizados. Ningún agente operativo puede comenzar B2 ni modificar el sistema en nombre del plan.
+Este archivo autoriza la implementación únicamente hasta B2. B3 y los bloques posteriores no están autorizados.
 
 ## 2. Autoridad documental
 
@@ -130,7 +130,7 @@ B0
 |---|---|---|---|---|
 | B0 | Gobernanza, baseline y benchmarks editoriales | Ninguna | `PASS` | [B0_gobernanza_baseline_benchmarks.md](plan_001/B0_gobernanza_baseline_benchmarks.md) |
 | B1 | Contratos, schemas, estados y versionado | B0 | `PASS` (auditoría aprobada, 29/29 tests) | [B1_contratos_schemas_estados_versionado.md](plan_001/B1_contratos_schemas_estados_versionado.md) |
-| B2 | Reparación del arnés y gates críticos | B1 | `READY_TO_START` (todavía no iniciado) | [B2_reparacion_harness_gates.md](plan_001/B2_reparacion_harness_gates.md) |
+| B2 | Reparación del arnés y gates críticos | B1 | `PASS` | [B2_reparacion_harness_gates.md](plan_001/B2_reparacion_harness_gates.md) |
 | B3 | Perfil editorial y frontera del canal | B1–B2 | `PLANNED` | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
 | B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `PLANNED` | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
 | B5 | Profesionalización del diseño editorial | B3–B4 | `PLANNED` | [B5_diseno_editorial.md](plan_001/B5_diseno_editorial.md) |
@@ -175,7 +175,7 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: B2_START
-IMPLEMENTATION_AUTHORIZED: YES (solo para B0 y B1)
-NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B2 (todavía no iniciado)
+NEXT_ALLOWED_ACTION: PREPARE_B3_EXECUTION_PLAN
+IMPLEMENTATION_AUTHORIZED: YES (solo hasta B2)
+NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B3 (solo tras auditoría externa)
 ```

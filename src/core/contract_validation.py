@@ -237,3 +237,15 @@ def validate_claims_ledger(data: Dict[str, Any]) -> List[str]:
                 violations.append(f"Claim '{claim.get('claim_id')}' rechazada: No se permiten claims sin fuente ni estado de verificacion.")
 
     return violations
+
+
+def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str]:
+    """Valida el contrato de suficiencia sin introducir umbrales editoriales."""
+    violations = validate_against_schema(data, "source_access_and_evidence_report")
+    if not isinstance(data.get("can_proceed"), bool):
+        return violations
+    if data["can_proceed"] and not isinstance(data.get("limitaciones"), list):
+        violations.append("can_proceed=true requiere una lista válida de limitaciones.")
+    if not data["can_proceed"] and not (data.get("limitaciones") or data.get("claims_pendientes")):
+        violations.append("can_proceed=false requiere declarar limitaciones o claims pendientes.")
+    return violations

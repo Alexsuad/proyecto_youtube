@@ -58,21 +58,32 @@ class GateResult:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GateResult":
-        # Prohibido decidir estado usando busqueda por substring en summary o texto libre
-        status_raw = data.get("status")
-        if not status_raw:
-            raise ValueError("Campo 'status' es obligatorio en GateResult y no puede inferirse por texto libre.")
-        
+        """Carga un resultado persistido sin normalizar corrupción silenciosamente."""
+        if not isinstance(data, dict):
+            raise ValueError("GateResult persistido debe ser un objeto JSON.")
+        from src.core.contract_validation import validate_against_schema
+
+        schema_violations = validate_against_schema(data, "gate_result")
+        if schema_violations:
+            raise ValueError("GateResult persistido inválido: " + "; ".join(schema_violations))
+        status_raw = data["status"]
+        status = GateStatus(status_raw)
+        expected_exit_code = EXIT_CODE_MAP[status]
+        if data["exit_code"] != expected_exit_code:
+            raise ValueError(
+                f"GateResult persistido contradictorio: status={status.value} requiere exit_code={expected_exit_code}, "
+                f"recibido {data['exit_code']}."
+            )
         return cls(
             gate_id=data["gate_id"],
             artifact_id=data["artifact_id"],
             artifact_version=data["artifact_version"],
-            status=GateStatus(status_raw),
-            summary=data.get("summary", ""),
-            violations=data.get("violations", []),
-            warnings=data.get("warnings", []),
-            evidence=data.get("evidence", {}),
-            checked_at=data.get("checked_at", datetime.now(timezone.utc).isoformat()),
-            checker_version=data.get("checker_version", "1.0.0"),
-            exit_code=data.get("exit_code", EXIT_CODE_MAP.get(GateStatus(status_raw), EXIT_CODE_ERROR)),
+            status=status,
+            summary=data["summary"],
+            violations=data["violations"],
+            warnings=data["warnings"],
+            evidence=data["evidence"],
+            checked_at=data["checked_at"],
+            checker_version=data["checker_version"],
+            exit_code=data["exit_code"],
         )

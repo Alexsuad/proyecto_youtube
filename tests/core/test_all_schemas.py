@@ -110,10 +110,12 @@ VALID_FIXTURES = {
         "status": "PASS"
     },
     "final_delivery_manifest": {
-        "final_script_clean": "final_clean.md",
-        "final_script_annotated": "final_annotated.md",
-        "claims_ledger": "ledger.json",
-        "checksums": {},
+        "final_script_clean": "06_guion_longform.md",
+        "final_script_annotated": "06_guion_longform_anotado.md",
+        "claims_ledger": "claims_ledger.json",
+        "final_candidate_version": "1.0.0",
+        "human_approved_version": "1.0.0",
+        "checksums": {"06_guion_longform.md": "a" * 64},
         "approval_record": {}
     },
     "final_editorial_audit": {
@@ -229,6 +231,20 @@ VALID_FIXTURES = {
         "narrative_plan_version": "1.0.0",
         "status": "DRAFT"
     },
+    "source_access_and_evidence_report": {
+        "material_principal_disponible": True,
+        "tipo_de_acceso": "visionado directo",
+        "fuentes_primarias": [],
+        "fuentes_secundarias": [],
+        "escenas_verificadas": [],
+        "escenas_descritas_indirectamente": [],
+        "claims_sostenibles": [],
+        "claims_pendientes": [],
+        "limitaciones": [],
+        "nivel_de_confianza": "alto",
+        "can_proceed": True,
+        "required_disclosures": []
+    },
     "thesis_artifact": {
         "thesis_id": "THESIS-001",
         "stage": "THESIS_PROVISIONAL",
@@ -248,9 +264,9 @@ VALID_FIXTURES = {
 class TestAllJSONSchemas(unittest.TestCase):
 
     def test_all_schemas_are_valid_draft7(self):
-        """Valida que los 24 schemas sean válidos bajo el metaschema Draft 7."""
+        """Valida el inventario de schemas y su sintaxis Draft 7."""
         schema_files = [f for f in os.listdir(SCHEMAS_DIR) if f.endswith(".json")]
-        self.assertEqual(len(schema_files), 24, f"Se esperaban exactamente 24 schemas, se encontraron {len(schema_files)}")
+        self.assertEqual(set(f.replace(".json", "") for f in schema_files), set(VALID_FIXTURES))
 
         for filename in schema_files:
             with self.subTest(schema=filename):
@@ -279,7 +295,7 @@ class TestAllJSONSchemas(unittest.TestCase):
                     )
 
     def test_every_schema_has_valid_fixture(self):
-        """Valida que cada uno de los 24 esquemas tenga un fixture mínimo válido y pase la validación."""
+        """Valida que cada schema tenga un fixture mínimo válido y pase la validación."""
         schema_files = [f for f in os.listdir(SCHEMAS_DIR) if f.endswith(".json")]
         for filename in schema_files:
             name = filename.replace(".json", "")
