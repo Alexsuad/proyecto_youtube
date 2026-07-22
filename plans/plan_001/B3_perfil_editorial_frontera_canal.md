@@ -1,6 +1,19 @@
 PLAN-001 / B3 — Perfil editorial y frontera del canal
 
-Plan rector: ../001_reestructuracion_motor_agentico_editorial_y_harness.mdControl operativo: ../001_CONTROL_OPERATIVO.mdEspecificación funcional obligatoria: ../../docs/specifications/B3_especificacion_funcional_equipo_01.mdVersión derivada: PLAN-001 v1.4Estado del plan de ejecución: READY_FOR_EXTERNAL_AUDITEstado de implementación: NOT_AUTHORIZEDDependencia: B1–B2Siguiente tramo: B4Gate resumido: producción consume un perfil activo, aprobado, versionado y trazable.
+Plan rector: ../001_reestructuracion_motor_agentico_editorial_y_harness.mdControl operativo: ../001_CONTROL_OPERATIVO.mdEspecificación funcional obligatoria: ../../docs/specifications/B3_especificacion_funcional_equipo_01.mdVersión derivada: PLAN-001 v1.4Estado del plan de ejecución: READY_FOR_EXTERNAL_AUDITEstado de implementación: IN_PROGRESSDependencia: B1–B2Siguiente misión autorizada: B3-I2Gate resumido: producción consume un perfil activo, aprobado, versionado y trazable.
+
+Estado operativo de B3
+
+```text
+B3-I1_IMPLEMENTATION: COMPLETED
+B3-I1_TECHNICAL_AUDIT: PASS
+B3_PROFILE_STATUS: DRAFT
+B3_IMPLEMENTATION_STATUS: IN_PROGRESS
+NEXT_ALLOWED_ACTION: EXECUTE_B3-I2
+B3-I3_AUTHORIZATION: NOT_AUTHORIZED
+B3-I4_AUTHORIZATION: NOT_AUTHORIZED
+REAL_PROFILE_ACTIVATION: NOT_AUTHORIZED
+```
 
 Este archivo es la única sede operativa del bloque B3 dentro del Plan 001. No crea autoridad funcional nueva ni sustituye el plan rector. La especificación del Equipo 01 define qué necesita el producto; este plan define cómo materializarlo técnicamente. Ante una contradicción, prevalecen, en este orden, las decisiones posteriores expresas del propietario, el documento rector de equipos, la especificación funcional aprobada del Equipo 01 y el Plan 001. Si la contradicción afecta alcance, autoridad, estados, contratos, gates o ejecución, la misión debe bloquearse hasta resolverla.
 
@@ -833,4 +846,4 @@ B3_FUNCTIONAL_SPECIFICATION: AVAILABLE_AND_CANONICALIZED
 B3_EXECUTION_PLAN_STATUS: READY_FOR_EXTERNAL_AUDIT
 B3_IMPLEMENTATION_STATUS: NOT_AUTHORIZED
 B3_KNOWN_CLOSURE_BLOCKER: PRIMARY_REAL_VOICE_SAMPLE_NOT_IN_REPOSITORY
-NEXT_ALLOWED_ACTION: EXTERNAL_AUDIT_AND_OWNER_AUTHORIZATION_OF_B3_EXECUTION_PLAN
+NEXT_ALLOWED_ACTION: EXECUTE_B3-I2
