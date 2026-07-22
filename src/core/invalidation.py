@@ -30,9 +30,10 @@ class InvalidationEngine:
     de aprobaciones y artefactos derivados cuando un insumo aguas arriba cambia.
     """
 
-    def __init__(self):
+    def __init__(self, registry=None):
         self.invalidation_log: List[InvalidationRecord] = []
-        self.dependencies: Dict[str, Set[str]] = {}
+        self.registry = registry
+        self.dependencies: Dict[str, Set[str]] = {} if registry is None else {key: set(value) for key, value in registry.data.get("dependencies", {}).items()}
 
     def register_dependency(self, parent_id: str, child_id: str):
         """
@@ -42,6 +43,22 @@ class InvalidationEngine:
         if parent_id not in self.dependencies:
             self.dependencies[parent_id] = set()
         self.dependencies[parent_id].add(child_id)
+        if self.registry:
+            self.registry.add_dependency(parent_id, child_id)
+
+    def classify_profile_change(self, change_type: str) -> str:
+        mapping = {"NO_IMPACT": "NO_IMPACT", "PARTIAL_INVALIDATION": "PARTIAL_INVALIDATION", "FULL_INVALIDATION": "FULL_INVALIDATION"}
+        if change_type not in mapping: raise ValueError("Clasificación de cambio inválida")
+        return mapping[change_type]
+
+    def invalidate_profile_change(self, profile_id: str, version: str, classification: str, by_role: str, affected=None):
+        classification = self.classify_profile_change(classification)
+        if classification == "NO_IMPACT": return []
+        if classification == "PARTIAL_INVALIDATION":
+            allowed = set(self.dependencies.get(profile_id, set()))
+            return [self.invalidate_artifact(item, version, "Cambio parcial de perfil", by_role) for item in (affected or []) if item in allowed]
+        self.invalidate_artifact(profile_id, version, "Cambio completo de perfil", by_role)
+        return list(self.invalidation_log)
 
     def check_approval_validity(
         self,
