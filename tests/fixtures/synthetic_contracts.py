@@ -8,21 +8,18 @@ from typing import Dict, Any
 VALID_CHECKSUM = "a" * 64
 
 VALID_EDITORIAL_PROFILE: Dict[str, Any] = {
-    "profile_id": "EP-MAS-ALLA-DEL-GUION",
+    "profile_id": "MADG-EDITORIAL-PROFILE",
     "channel_id": "MasAllaDelGuion",
     "version": "1.0.0",
     "status": "DRAFT",
-    "created_at": "2026-07-21T20:00:00Z",
-    "updated_at": "2026-07-21T20:00:00Z",
-    "functional_owner_role": "EDITORIAL_LEAD",
-    "functional_approval_status": "APPROVED",
-    "functional_approved_by": "editor_jefe_editorial_01",
-    "functional_approved_at": "2026-07-21T20:00:00Z",
-    "identity": "Canal de ensayismo cinematográfico y narrativo profundo.",
-    "purpose": "Analizar la estructura y significado humano de las historias.",
-    "positioning": "Ensayismo riguroso y accesible.",
-    "primary_promise": "Revelar el subtexto y la maestría narrativa Detrás del Guion.",
-    "checksum": VALID_CHECKSUM,
+    "functional_owner_role": "TEAM_01",
+    "source_lineage": [{"source_id": "B3-FUNCTIONAL-SPEC", "locator": "docs/specifications/B3_especificacion_funcional_equipo_01.md", "checksum": VALID_CHECKSUM, "role": "FUNCTIONAL_SPECIFICATION"}],
+    "identity_stable": {"identity": "Videoensayos narrativos", "purpose": ["Comprender historias"], "positioning": "Reflexión narrativa", "primary_promise": "Comprender cómo vivimos", "differentiator": ["Interpretación propia"], "editorial_pillars": ["Individuo e identidad"], "territories": [{"name": "Cultura", "classification": "ACTIVE"}], "permanent_limits": ["No inventar"], "authorial_persona": {"acts_as": "Observador con criterio", "does_not_act_as": ["Terapeuta"], "voice_traits": ["Claridad"]}, "first_person_rule": "FIRST_PERSON_ALLOWED_WHEN_TRUE_AND_EDITORIALLY_RELEVANT"},
+    "audience_hypotheses": [{"classification": "AUDIENCE_HYPOTHESIS_INITIAL", "statement": "Audiencia inicial", "status": "HYPOTHESIS"}],
+    "voice_profile": {"corpus_status": "INCOMPLETE_MISSING_REQUIRED_SAMPLE", "approved_sample_ids": [], "initial_authorized_patterns": ["Observación concreta"], "anti_imitation_rules": ["No copiar referentes"]},
+    "supported_delivery_formats": ["VIDEO_ESSAY", "NARRATIVE_PODCAST", "AUDIO_CONTENT"],
+    "external_policy_references": [],
+    "pending_decisions": ["Muestra real principal"],
 }
 
 INVALID_EDITORIAL_PROFILE_EMPTY_VERSION: Dict[str, Any] = {

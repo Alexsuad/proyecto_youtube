@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/active_editorial_profile.json",
+  "title": "ActiveEditorialProfile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ACTIVE_PROFILE_ID", "ACTIVE_PROFILE_VERSION", "profile_checksum", "functional_approval", "technical_validation", "activation", "status"],
+  "properties": {
+    "ACTIVE_PROFILE_ID": {"type": "string", "minLength": 1},
+    "ACTIVE_PROFILE_VERSION": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "profile_checksum": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+    "functional_approval": {"type": "object", "additionalProperties": false, "required": ["decision", "profile_checksum"], "properties": {"decision": {"type": "string", "const": "APPROVE"}, "profile_checksum": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"}}},
+    "technical_validation": {"type": "object", "additionalProperties": false, "required": ["gate_id", "status", "profile_checksum"], "properties": {"gate_id": {"type": "string", "const": "B3_TECHNICAL_PROFILE_VALIDATION"}, "status": {"type": "string", "const": "PASS"}, "profile_checksum": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"}}},
+    "activation": {"type": "object", "additionalProperties": false, "required": ["activated_by", "activated_at"], "properties": {"activated_by": {"type": "string", "minLength": 1}, "activated_at": {"type": "string", "format": "date-time"}}},
+    "status": {"type": "string", "const": "ACTIVE"}
+  }
+}

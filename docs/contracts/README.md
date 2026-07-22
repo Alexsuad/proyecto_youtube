@@ -51,6 +51,9 @@ Los contratos de aprobación requieren **identidad verificable** (no texto ambig
 | ID Contrato | Nombre del Contrato | Schema JSON | Rol Funcional Autorizado |
 |---|---|---|---|
 | **B1-C1** | `EditorialProfile` | `schemas/editorial_profile.json` | Rol Editorial |
+| **B3-C1** | `EditorialProfileApproval` | `schemas/editorial_profile_approval.json` | Equipo 01 |
+| **B3-C2** | `ActiveEditorialProfile` | `schemas/active_editorial_profile.json` | Infraestructura y Gobernanza |
+| **B3-C3** | `VoiceSample` | `schemas/voice_sample.json` | Equipo 01 |
 | **B1-C2** | `EpisodeBrief` | `schemas/episode_brief.json` | Rol Editorial |
 | **B1-C3** | `SourceAccessAndEvidenceReport` | *Documentado* | Rol Investigación / Evidencia |
 | **B1-C4** | `PackagingHypothesis` | `schemas/packaging_hypothesis.json` | Rol Adaptación YouTube / Editorial |

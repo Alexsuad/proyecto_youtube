@@ -1,0 +1,49 @@
+{
+  "profile_id": "MADG-EDITORIAL-PROFILE",
+  "channel_id": "MAS_ALLA_DEL_GUION",
+  "version": "1.0.0",
+  "status": "DRAFT",
+  "functional_owner_role": "TEAM_01",
+  "source_lineage": [
+    {
+      "source_id": "B3-FUNCTIONAL-SPEC-TEAM-01",
+      "locator": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
+      "checksum": "dfe44c02b04094eef85e88d9dad77db5bf53bbda19adb1c69f9381011fea6317",
+      "role": "FUNCTIONAL_SPECIFICATION"
+    }
+  ],
+  "identity_stable": {
+    "identity": "Más Allá del Guion crea videoensayos narrativos y contenidos de reflexión que utilizan películas, series y libros para comprender el comportamiento humano, la sociedad y nuestro tiempo.",
+    "purpose": ["comportamientos humanos", "relaciones", "identidad", "familia", "generaciones", "sociedad", "poder", "instituciones", "historia", "cultura", "tecnología", "actualidad", "miedo colectivo", "educación emocional"],
+    "positioning": "El canal no se limita a resumir o criticar obras.",
+    "primary_promise": "Ayudar al público a comprender qué revelan las historias sobre cómo vivimos, nos relacionamos y construimos sociedad.",
+    "differentiator": ["Historia u obra narrativa", "conflicto concreto", "pregunta humana, social o cultural", "investigación", "interpretación propia", "contraste y matiz", "conexión con la realidad", "nueva lectura para la audiencia"],
+    "editorial_pillars": ["Individuo e identidad", "Relaciones, familia y generaciones", "Sociedad, poder e instituciones", "Historia, cultura y nuestro tiempo", "Educación emocional"],
+    "territories": [
+      {"name": "Individuo e identidad", "classification": "ACTIVE"},
+      {"name": "Relaciones, familia y generaciones", "classification": "ACTIVE"},
+      {"name": "Sociedad, poder e instituciones", "classification": "ACTIVE"},
+      {"name": "Historia, cultura y nuestro tiempo", "classification": "ACTIVE"},
+      {"name": "Educación emocional", "classification": "ACTIVE"}
+    ],
+    "permanent_limits": ["No inventar", "No diagnosticar", "No sustituir terapia", "No hacer coaching", "No manipular mediante dolor", "No copiar referentes", "No presentar hipótesis como hechos", "No deformar fuentes", "No convertir el canal en noticias generales", "No hacer propaganda partidista", "No perseguir cualquier tendencia", "No resumir obras como producto principal", "No utilizar una estructura idéntica en todos los episodios", "No sacrificar la tesis por el packaging", "No fingir humanidad mediante anécdotas falsas", "No confundir claridad con superficialidad", "No utilizar investigación sin interpretación propia", "No utilizar emoción sin argumento"],
+    "authorial_persona": {
+      "acts_as": "Un observador con criterio que piensa junto a la audiencia y utiliza historias para conectar experiencias individuales, estructuras sociales y cambios culturales.",
+      "does_not_act_as": ["terapeuta", "gurú", "profesor omnisciente", "comentarista partidista", "crítico tradicional", "narrador totalmente neutro"],
+      "voice_traits": ["pensamiento en movimiento", "observación concreta", "asociación natural", "paso de lo cotidiano a una reflexión amplia", "conexión entre individuo y sociedad", "memoria y contraste temporal cuando sean relevantes", "criterio autoral", "claridad", "crítica conversacional", "ironía suave", "autoconciencia", "duda honesta", "profundidad accesible"]
+    },
+    "first_person_rule": "FIRST_PERSON_ALLOWED_WHEN_TRUE_AND_EDITORIALLY_RELEVANT"
+  },
+  "audience_hypotheses": [
+    {"classification": "AUDIENCE_HYPOTHESIS_INITIAL", "statement": "Audiencia aproximada de 25 a 45 años; revisable mediante aprendizaje del canal, evidencia de audiencia, evolución editorial, formatos y consumo real.", "status": "HYPOTHESIS"}
+  ],
+  "voice_profile": {
+    "corpus_status": "INCOMPLETE_MISSING_REQUIRED_SAMPLE",
+    "approved_sample_ids": [],
+    "initial_authorized_patterns": ["pensamiento asociativo", "memoria concreta", "reflexión generacional", "objetos cotidianos", "contraste entre pasado y presente", "paso de experiencia individual a lectura colectiva", "crítica sin academicismo", "ironía suave", "cierre paradójico", "autoconciencia", "claridad directa", "orientación práctica", "rechazo de duplicación", "detección de desviaciones", "preferencia por lenguaje sencillo", "separación de responsabilidades", "prioridad del resultado útil"],
+    "anti_imitation_rules": ["La voz real del propietario es el núcleo", "Los referentes externos son recursos parciales, nunca un modelo total de imitación", "Los errores de digitación y escritura rápida no son rasgos de voz"]
+  },
+  "supported_delivery_formats": ["VIDEO_ESSAY", "AUDIOVISUAL_NARRATION", "NARRATIVE_PODCAST", "REFLECTIVE_PODCAST", "AUDIO_CONTENT", "COMPATIBLE_DERIVATIVE"],
+  "external_policy_references": [],
+  "pending_decisions": ["Incorporar la muestra real principal autorizada con checksum, autoría, autorización, representatividad y lineage.", "Definir referencias versionadas para políticas editoriales, de plataforma y preferencias de formato fuera de la identidad estable.", "No activar este perfil hasta disponer de aprobación funcional y validación técnica sobre el checksum externo exacto."]
+}
