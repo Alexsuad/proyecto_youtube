@@ -35,7 +35,7 @@ voice_evidence_level: SPECIFICATION_BASED
 authentic_editorial_writing_sample_status: NOT_AVAILABLE
 editorial_writing_reference_corpus_mechanism: AVAILABLE
 b3_authorized_missions: []
-b3_not_authorized_missions: [B4]
+b3_not_authorized_missions: []
 b3_i4_preflight_implementation: COMPLETED
 b3_i4_preflight_external_audit: PASS
 b3_i4_primary_sample_available: NOT_REQUIRED
@@ -45,13 +45,19 @@ b3_i4_corpus_ready: YES
 b3_i4_execution: COMPLETED
 B4_AUTHORIZED: YES
 B4_STATUS: IN_PROGRESS
-B4_I1_STATUS: READY_FOR_AUDIT
-next_allowed_action: EXTERNAL_AUDIT_B4_I1
+B4_I1_STATUS: PASS
+B4_I1_AUDIT: PASS
+B4_I2_STATUS: NOT_STARTED
+b4_i1_implementation_commit: 42ef1a6ccb028a26cc2bdfce436804c27026ea2a
+b4_i1_correction_commit: c3c6c23dec464d78ff2f2317366156a538c8aee1
+b4_i1_tests: "84 passed, 110 subtests"
+b4_i1_external_audit: PASS
+next_allowed_action: PREPARE_B4_I2
 next_implementation_block_if_approved: B4
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 está en curso; B4-I1 queda READY_FOR_AUDIT y B4-I2 no se ha iniciado.
+B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 está en curso; B4-I1 superó la auditoría externa y B4-I2 no se ha iniciado.
 
 ## 2. Autoridad documental
 
@@ -205,14 +211,20 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: EXTERNAL_AUDIT_B4_I1
+NEXT_ALLOWED_ACTION: PREPARE_B4_I2
 B3_PROFILE_STATUS: ACTIVE
 B3_IMPLEMENTATION_STATUS: COMPLETED
 B3_FUNCTIONAL_APPROVAL: APPROVE
 B3_TECHNICAL_VALIDATION: PASS
 B4_AUTHORIZED: YES
 B4_STATUS: IN_PROGRESS
-B4_I1_STATUS: READY_FOR_AUDIT
+B4_I1_STATUS: PASS
+B4_I1_AUDIT: PASS
+B4_I2_STATUS: NOT_STARTED
+IMPLEMENTATION_COMMIT: 42ef1a6ccb028a26cc2bdfce436804c27026ea2a
+CORRECTION_COMMIT: c3c6c23dec464d78ff2f2317366156a538c8aee1
+TESTS: 84 passed, 110 subtests
+EXTERNAL_AUDIT: PASS
 ```
 
-B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 está en curso; B4-I1 queda READY_FOR_AUDIT y B4-I2 no se ha iniciado.
+B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 está en curso; B4-I1 superó la auditoría externa y B4-I2 no se ha iniciado.
