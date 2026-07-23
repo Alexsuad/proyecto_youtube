@@ -268,6 +268,11 @@ VALID_FIXTURES = {
     }
 }
 
+# B4-I1: los registros canónicos sirven como fixtures válidos de sus schemas.
+for _name in ("responsibility_registry", "skill_catalog"):
+    with open(os.path.join(os.path.dirname(__file__), "..", "..", "config", f"{_name}.json"), encoding="utf-8") as _fixture:
+        VALID_FIXTURES[_name] = json.load(_fixture)
+
 
 class TestAllJSONSchemas(unittest.TestCase):
 

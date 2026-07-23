@@ -109,6 +109,14 @@ Los contratos de aprobación requieren **identidad verificable** (no texto ambig
 
 ## 6. Diferidos a B2 o Bloques Posteriores
 
+### B4-I1 — Responsabilidades y skills
+
+- `schemas/responsibility_registry.json` define las seis responsabilidades base, dos familias funcionales y el mapeo legado.
+- `config/responsibility_registry.json` contiene el registro canónico operativo.
+- `schemas/skill_catalog.json` define el contrato del catálogo.
+- `config/skill_catalog.json` relaciona cada skill existente con su destino neutral.
+
+
 - **B2:** Reparación del arnés de ejecución de scripts antiguos (`scripts/`) y gates críticos de CLI.
 - **B3:** Compilación formal y validación del `EditorialProfile` de producción.
 - **B4-B10:** Integración de skills, pipelines de generación, edición de desarrollo, auditorías avanzadas y métricas en vivo.

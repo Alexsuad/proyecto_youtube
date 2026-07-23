@@ -13,7 +13,7 @@ plan_id: PLAN-001
 plan_version: "1.4"
 plan_status: READY_FOR_EXTERNAL_AUDIT
 implementation_authorized: true
-authorized_blocks: [B0, B1, B2, B3]
+authorized_blocks: [B0, B1, B2, B3, B4]
 current_block: NONE
 current_mission: NONE
 b3_i1_implementation: COMPLETED
@@ -43,12 +43,15 @@ b3_i4_authorized_complementary_samples: 0
 b3_i4_invalid_or_incomplete_samples: 0
 b3_i4_corpus_ready: YES
 b3_i4_execution: COMPLETED
-next_allowed_action: AWAIT_B4_AUTHORIZATION
+B4_AUTHORIZED: YES
+B4_STATUS: IN_PROGRESS
+B4_I1_STATUS: READY_FOR_AUDIT
+next_allowed_action: EXTERNAL_AUDIT_B4_I1
 next_implementation_block_if_approved: B4
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 no está autorizado.
+B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 está en curso; B4-I1 queda READY_FOR_AUDIT y B4-I2 no se ha iniciado.
 
 ## 2. Autoridad documental
 
@@ -159,7 +162,7 @@ B0
 | B1 | Contratos, schemas, estados y versionado | B0 | `PASS` (auditoría aprobada, 29/29 tests) | [B1_contratos_schemas_estados_versionado.md](plan_001/B1_contratos_schemas_estados_versionado.md) |
 | B2 | Reparación del arnés y gates críticos | B1 | `PASS` | [B2_reparacion_harness_gates.md](plan_001/B2_reparacion_harness_gates.md) |
 | B3 | Perfil editorial y frontera del canal | B1–B2 | `PASS` (perfil 1.1.0 activo; aprobación OWNER y validación técnica PASS) | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
-| B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `PLANNED` | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
+| B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `IN_PROGRESS` | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
 | B5 | Profesionalización del diseño editorial | B3–B4 | `PLANNED` | [B5_diseno_editorial.md](plan_001/B5_diseno_editorial.md) |
 | B5.5 | Prototipo editorial controlado | B5 | `PLANNED` | [B5_5_prototipo_editorial.md](plan_001/B5_5_prototipo_editorial.md) |
 | B6 | Redacción, ensamblaje, edición y verificación | B5.5 | `PLANNED` | [B6_redaccion_edicion_verificacion.md](plan_001/B6_redaccion_edicion_verificacion.md) |
@@ -202,12 +205,14 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: AWAIT_B4_AUTHORIZATION
+NEXT_ALLOWED_ACTION: EXTERNAL_AUDIT_B4_I1
 B3_PROFILE_STATUS: ACTIVE
 B3_IMPLEMENTATION_STATUS: COMPLETED
 B3_FUNCTIONAL_APPROVAL: APPROVE
 B3_TECHNICAL_VALIDATION: PASS
-B4_AUTHORIZED: NO
+B4_AUTHORIZED: YES
+B4_STATUS: IN_PROGRESS
+B4_I1_STATUS: READY_FOR_AUDIT
 ```
 
-B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 no está autorizado.
+B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 está en curso; B4-I1 queda READY_FOR_AUDIT y B4-I2 no se ha iniciado.
