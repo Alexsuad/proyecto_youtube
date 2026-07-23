@@ -44,20 +44,26 @@ b3_i4_invalid_or_incomplete_samples: 0
 b3_i4_corpus_ready: YES
 b3_i4_execution: COMPLETED
 B4_AUTHORIZED: YES
-B4_STATUS: IN_PROGRESS
+B4_STATUS: PASS
 B4_I1_STATUS: PASS
 B4_I1_AUDIT: PASS
 b4_i1_implementation_commit: 42ef1a6ccb028a26cc2bdfce436804c27026ea2a
 b4_i1_correction_commit: c3c6c23dec464d78ff2f2317366156a538c8aee1
 b4_i1_tests: "84 passed, 110 subtests"
 b4_i1_external_audit: PASS
-B4_I2_STATUS: READY_FOR_AUDIT
-next_allowed_action: EXTERNAL_AUDIT_B4_I2
+b4_i2_implementation_commit: a8e85025465b13848ebd21482addbcf7149f2f14
+b4_i2_correction_commit: 1e0a072eedc97228c0f7942cd25c5051113db88f
+b4_i2_specific_tests: "33 passed"
+b4_i2_external_audit: PASS
+b4_final_status: PASS
+B4_I2_STATUS: PASS
+B4_I2_AUDIT: PASS
+next_allowed_action: PREPARE_B5
 next_implementation_block_if_approved: B4
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 está en curso; B4-I1 superó la auditoría externa y B4-I2 no se ha iniciado.
+B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5 no se ha iniciado.
 
 ## 2. Autoridad documental
 
@@ -211,20 +217,26 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: EXTERNAL_AUDIT_B4_I2
+NEXT_ALLOWED_ACTION: PREPARE_B5
 B3_PROFILE_STATUS: ACTIVE
 B3_IMPLEMENTATION_STATUS: COMPLETED
 B3_FUNCTIONAL_APPROVAL: APPROVE
 B3_TECHNICAL_VALIDATION: PASS
 B4_AUTHORIZED: YES
-B4_STATUS: IN_PROGRESS
+B4_STATUS: PASS
 B4_I1_STATUS: PASS
 B4_I1_AUDIT: PASS
-B4_I2_STATUS: READY_FOR_AUDIT
+B4_I2_STATUS: PASS
+B4_I2_AUDIT: PASS
 IMPLEMENTATION_COMMIT: 42ef1a6ccb028a26cc2bdfce436804c27026ea2a
 CORRECTION_COMMIT: c3c6c23dec464d78ff2f2317366156a538c8aee1
 TESTS: 84 passed, 110 subtests
 EXTERNAL_AUDIT: PASS
+B4_I2_IMPLEMENTATION_COMMIT: a8e85025465b13848ebd21482addbcf7149f2f14
+B4_I2_CORRECTION_COMMIT: 1e0a072eedc97228c0f7942cd25c5051113db88f
+B4_I2_SPECIFIC_TESTS: 33 passed
+B4_I2_EXTERNAL_AUDIT: PASS
+B4_FINAL_STATUS: PASS
 ```
 
-B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 está en curso; B4-I1 superó la auditoría externa y B4-I2 no se ha iniciado.
+B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5 no se ha iniciado.

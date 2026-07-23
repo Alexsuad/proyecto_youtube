@@ -63,7 +63,7 @@ Los archivos de esta carpeta:
 | `B1` | [B1_contratos_schemas_estados_versionado.md](B1_contratos_schemas_estados_versionado.md) | B0 | `PLANNED` | Contratos canónicos aprobados |
 | `B2` | [B2_reparacion_harness_gates.md](B2_reparacion_harness_gates.md) | B1 | `PLANNED` | Cero falsos PASS conocidos |
 | `B3` | [B3_perfil_editorial_frontera_canal.md](B3_perfil_editorial_frontera_canal.md) | B1–B2 | `PLANNED` | Producción consume perfil versionado |
-| `B4` | [B4_responsabilidades_skills_portabilidad.md](B4_responsabilidades_skills_portabilidad.md) | B3 | `IN_PROGRESS` | B4-I1 auditado `PASS`; B4-I2 `NOT_STARTED` |
+| `B4` | [B4_responsabilidades_skills_portabilidad.md](B4_responsabilidades_skills_portabilidad.md) | B3 | `PASS` | B4-I1 y B4-I2 auditados `PASS`; B5 aún no iniciado |
 | `B5` | [B5_diseno_editorial.md](B5_diseno_editorial.md) | B3–B4 | `PLANNED` | Diseño editorial completo aprobado |
 | `B5.5` | [B5_5_prototipo_editorial.md](B5_5_prototipo_editorial.md) | B5 | `PLANNED` | Mejora editorial temprana demostrada |
 | `B6` | [B6_redaccion_edicion_verificacion.md](B6_redaccion_edicion_verificacion.md) | B5.5 | `PLANNED` | Candidato final coherente y trazable |
@@ -97,10 +97,12 @@ Una modificación aislada de un archivo de bloque no cambia el plan rector.
 ```text
 PLAN_STATUS: READY_FOR_EXTERNAL_AUDIT
 IMPLEMENTATION_AUTHORIZED: YES
-CURRENT_BLOCK: B4
+CURRENT_BLOCK: NONE
+B4_STATUS: PASS
 B4_I1_STATUS: PASS
 B4_I1_AUDIT: PASS
-B4_I2_STATUS: READY_FOR_AUDIT
-NEXT_ALLOWED_ACTION: EXTERNAL_AUDIT_B4_I2
-NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B4
+B4_I2_STATUS: PASS
+B4_I2_AUDIT: PASS
+NEXT_ALLOWED_ACTION: PREPARE_B5
+NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B5
 ```
