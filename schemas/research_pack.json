@@ -3,103 +3,251 @@
   "$id": "https://masalladelguion.com/schemas/research_pack.json",
   "title": "ResearchPack",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "research_id",
     "episode_id",
     "brief_version",
+    "scope",
     "facts",
     "interpretations",
     "hypotheses",
     "contradictions",
+    "alternative_views",
+    "scene_evidence",
     "source_registry",
+    "claims_candidates",
+    "unsupported_claims",
+    "narrative_opportunities",
+    "limitations",
     "created_at"
   ],
   "properties": {
     "research_id": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "episode_id": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "brief_version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
     "scope": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "facts": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/definitions/researchItem"
       }
     },
     "interpretations": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/definitions/researchItem"
       }
     },
     "hypotheses": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/definitions/researchItem"
       }
     },
     "contradictions": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/definitions/researchItem"
       }
     },
     "alternative_views": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/definitions/researchItem"
       }
     },
     "scene_evidence": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/definitions/researchItem"
       }
     },
     "source_registry": {
       "type": "array",
+      "minItems": 1,
       "items": {
-        "type": "object"
+        "$ref": "#/definitions/sourceRef"
       }
     },
     "claims_candidates": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/definitions/researchItem"
       }
     },
     "unsupported_claims": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/definitions/unsupportedClaim"
       }
     },
     "narrative_opportunities": {
       "type": "array",
       "items": {
-        "type": "string"
-      }
-    },
-    "narrative_human_analysis_by_material": {
-      "type": "array",
-      "items": {
-        "type": "object"
+        "$ref": "#/definitions/researchItem"
       }
     },
     "limitations": {
-      "type": "string"
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
     },
     "created_at": {
       "type": "string",
       "format": "date-time"
+    }
+  },
+  "definitions": {
+    "sourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "title",
+        "source_type",
+        "access_type",
+        "locator",
+        "confidence"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        },
+        "access_type": {
+          "type": "string",
+          "enum": [
+            "DIRECT",
+            "INDIRECT",
+            "SECONDARY_ONLY"
+          ]
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "researchItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_id",
+        "statement",
+        "source_refs",
+        "locator",
+        "confidence"
+      ],
+      "properties": {
+        "item_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        },
+        "material_id": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "unsupportedClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "statement",
+        "reason"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attempted_source_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
     }
   }
 }

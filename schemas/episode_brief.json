@@ -3,87 +3,186 @@
   "$id": "https://masalladelguion.com/schemas/episode_brief.json",
   "title": "EpisodeBrief",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "episode_id",
+    "brief_version",
     "profile_id",
     "profile_version",
+    "profile_checksum",
     "tema",
     "pregunta_central",
+    "conflicto_o_tension",
     "tesis_provisional",
     "objetivo",
+    "transformacion_esperada",
     "audiencia_concreta",
-    "salida_esperada"
+    "angulo_diferencial",
+    "alcance",
+    "fuera_de_alcance",
+    "spoilers",
+    "tono",
+    "duracion_objetivo",
+    "ritmo_locucion",
+    "nivel_investigacion",
+    "tipo_de_guion_principal",
+    "estructura_candidata",
+    "razon_eleccion_estructura",
+    "citation_style",
+    "attribution_policy",
+    "quotation_policy",
+    "source_visibility",
+    "salida_esperada",
+    "created_at"
   ],
   "properties": {
     "episode_id": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
+    },
+    "brief_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
     "profile_id": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "profile_version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
+    "profile_checksum": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
     "tema": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "pregunta_central": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "conflicto_o_tension": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "tesis_provisional": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "objetivo": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "transformacion_esperada": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "audiencia_concreta": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "angulo_diferencial": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "alcance": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "fuera_de_alcance": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "spoilers": {
-      "type": "string"
+      "type": "string",
+      "enum": [
+        "NO",
+        "SI_LIMITADOS",
+        "SI_COMPLETOS"
+      ]
     },
     "tono": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "duracion_objetivo": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "ritmo_locucion": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "nivel_investigacion": {
-      "type": "string"
+      "type": "string",
+      "enum": [
+        "BASICO",
+        "ESTANDAR",
+        "PROFUNDO",
+        "CRITICO"
+      ]
     },
     "fuentes_requeridas": {
       "type": "array",
       "items": {
-        "type": "string"
-      }
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
     },
     "obra_o_fuente_principal": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "tipo_de_guion_principal": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
+    },
+    "tipo_de_guion_secundario": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "estructura_candidata": {
+      "type": "string",
+      "minLength": 1
+    },
+    "razon_eleccion_estructura": {
+      "type": "string",
+      "minLength": 1
+    },
+    "citation_style": {
+      "type": "string",
+      "minLength": 1
+    },
+    "attribution_policy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quotation_policy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_visibility": {
+      "type": "string",
+      "enum": [
+        "INTERNAL_ONLY",
+        "PUBLIC_SUMMARY",
+        "PUBLIC_DETAILED"
+      ]
     },
     "salida_esperada": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
     }
   }
 }

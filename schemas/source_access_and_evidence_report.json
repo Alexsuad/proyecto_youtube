@@ -1,21 +1,295 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/source_access_and_evidence_report.json",
   "title": "SourceAccessAndEvidenceReport",
   "type": "object",
-  "required": ["material_principal_disponible", "tipo_de_acceso", "fuentes_primarias", "fuentes_secundarias", "escenas_verificadas", "escenas_descritas_indirectamente", "claims_sostenibles", "claims_pendientes", "limitaciones", "nivel_de_confianza", "can_proceed", "required_disclosures"],
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "episode_id",
+    "research_id",
+    "brief_version",
+    "material_principal_disponible",
+    "tipo_de_acceso",
+    "fuentes_primarias",
+    "fuentes_secundarias",
+    "escenas_verificadas",
+    "escenas_descritas_indirectamente",
+    "claims_sostenibles",
+    "claims_pendientes",
+    "limitaciones",
+    "nivel_de_confianza",
+    "can_proceed",
+    "required_disclosures",
+    "created_at"
+  ],
   "properties": {
-    "material_principal_disponible": {"type": "boolean"},
-    "tipo_de_acceso": {"type": "string", "minLength": 1},
-    "fuentes_primarias": {"type": "array", "items": {"type": "object"}},
-    "fuentes_secundarias": {"type": "array", "items": {"type": "object"}},
-    "escenas_verificadas": {"type": "array", "items": {"type": "object"}},
-    "escenas_descritas_indirectamente": {"type": "array", "items": {"type": "object"}},
-    "claims_sostenibles": {"type": "array", "items": {"type": "object"}},
-    "claims_pendientes": {"type": "array", "items": {"type": "object"}},
-    "limitaciones": {"type": "array", "items": {"type": "string"}},
-    "nivel_de_confianza": {"type": "string", "minLength": 1},
-    "can_proceed": {"type": "boolean"},
-    "required_disclosures": {"type": "array", "items": {"type": "string"}}
+    "report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "episode_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "research_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "brief_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "material_principal_disponible": {
+      "type": "boolean"
+    },
+    "tipo_de_acceso": {
+      "type": "string",
+      "enum": [
+        "DIRECT",
+        "INDIRECT",
+        "MIXED",
+        "UNAVAILABLE"
+      ]
+    },
+    "fuentes_primarias": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/sourceEntry"
+      }
+    },
+    "fuentes_secundarias": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/sourceEntry"
+      }
+    },
+    "escenas_verificadas": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/sceneEntry"
+      }
+    },
+    "escenas_descritas_indirectamente": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/sceneEntry"
+      }
+    },
+    "claims_sostenibles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/claimEntry"
+      }
+    },
+    "claims_pendientes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/pendingClaim"
+      }
+    },
+    "limitaciones": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "nivel_de_confianza": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    "can_proceed": {
+      "type": "boolean"
+    },
+    "required_disclosures": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
   },
-  "additionalProperties": false
+  "definitions": {
+    "sourceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "title",
+        "access_type",
+        "locator",
+        "confidence"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        },
+        "access_type": {
+          "type": "string",
+          "enum": [
+            "DIRECT",
+            "INDIRECT",
+            "SECONDARY_ONLY"
+          ]
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        }
+      }
+    },
+    "sceneEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene_id",
+        "description",
+        "source_id",
+        "locator",
+        "verification_mode"
+      ],
+      "properties": {
+        "scene_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verification_mode": {
+          "type": "string",
+          "enum": [
+            "DIRECT",
+            "INDIRECT"
+          ]
+        }
+      }
+    },
+    "claimEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "claim_text",
+        "source_refs",
+        "locator",
+        "confidence"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "claim_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "pendingClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "claim_text",
+        "reason"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "claim_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attempted_source_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "locator": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        }
+      }
+    }
+  }
 }

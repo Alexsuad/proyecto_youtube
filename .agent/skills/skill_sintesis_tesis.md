@@ -1,25 +1,21 @@
-# Skill — Síntesis: Tesis central y promesa del episodio
-Objetivo: unir todo en una idea central coherente que guíe el guion.
+# Skill — Tesis provisional y refinada
 
-> **Rol ejecutor actual:** Antigravity (en el futuro puede ser un agente Sintetizador con modelo especializado en razonamiento — ej: Claude 3.5 Sonnet)
+## Objetivo
+Construir un `ThesisArtifact` trazable sin confundir la hipótesis inicial con la tesis refinada.
 
----
+## Modo B5-I1: THESIS_PROVISIONAL
+Entradas obligatorias:
+- `episode_brief.json`;
+- `research_pack.json`;
+- `source_access_and_evidence_report.json`;
+- gate de evidencia en `PASS` o `WARN`.
 
-## Entrada mínima
-- `<EP_PATH>/03_mapa_eventos.md`
-- `<EP_PATH>/04_analisis_patrones.md`
+Debe incluir statement, razonamiento inicial, objeción prevista, riesgo de simplificación, preguntas abiertas, referencias a fuentes y versión. La salida es `<EP_PATH>/thesis_provisional.json`.
 
----
+## Modo THESIS_REFINED
+Queda bloqueado hasta B5-I2. No puede ejecutarse ni simularse en B5-I1.
 
-## Pasos
-1) Proponer una tesis central (1 frase clara)
-2) Extraer 3–5 ideas fuerza
-3) Definir promesa al espectador
-4) Definir cierre (reflexión final)
-5) Crear:
-   - `<EP_PATH>/05_sintesis_tesis.md`
-
----
-
-## Salida
-- `<EP_PATH>/05_sintesis_tesis.md`
+## Bloqueos
+- evidencia en `FAIL` o `BLOCKED`;
+- referencias de fuente ausentes;
+- intento de marcar la tesis como refinada antes de B5-I2.

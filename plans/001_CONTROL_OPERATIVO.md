@@ -4,7 +4,7 @@
 **Plan rector:** [`001_reestructuracion_motor_agentico_editorial_y_harness.md`](001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Índice por bloques:** [`plan_001/README.md`](plan_001/README.md)  
 **Versión del plan:** `1.4`
-**Última sincronización:** `2026-07-22`
+**Última sincronización:** `2026-07-23`
 
 ## 1. Estado canónico
 
@@ -13,9 +13,9 @@ plan_id: PLAN-001
 plan_version: "1.4"
 plan_status: READY_FOR_EXTERNAL_AUDIT
 implementation_authorized: true
-authorized_blocks: [B0, B1, B2, B3, B4]
-current_block: NONE
-current_mission: NONE
+authorized_blocks: [B0, B1, B2, B3, B4, B5]
+current_block: B5
+current_mission: B5-I1
 b3_i1_implementation: COMPLETED
 b3_i1_technical_audit: PASS
 b3_profile_status: ACTIVE
@@ -58,12 +58,15 @@ b4_i2_external_audit: PASS
 b4_final_status: PASS
 B4_I2_STATUS: PASS
 B4_I2_AUDIT: PASS
-next_allowed_action: PREPARE_B5
-next_implementation_block_if_approved: B4
+B5_STATUS: IN_PROGRESS
+B5_I1_STATUS: READY_FOR_AUDIT
+B5_I1_AUDIT: PENDING
+next_allowed_action: EXTERNAL_AUDIT_B5_I1
+next_implementation_block_if_approved: B5
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5 no se ha iniciado.
+B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5-I1 está implementado y queda READY_FOR_AUDIT; B5-I2, B5.5 y B6 no se han iniciado.
 
 ## 2. Autoridad documental
 
@@ -174,8 +177,8 @@ B0
 | B1 | Contratos, schemas, estados y versionado | B0 | `PASS` (auditoría aprobada, 29/29 tests) | [B1_contratos_schemas_estados_versionado.md](plan_001/B1_contratos_schemas_estados_versionado.md) |
 | B2 | Reparación del arnés y gates críticos | B1 | `PASS` | [B2_reparacion_harness_gates.md](plan_001/B2_reparacion_harness_gates.md) |
 | B3 | Perfil editorial y frontera del canal | B1–B2 | `PASS` (perfil 1.1.0 activo; aprobación OWNER y validación técnica PASS) | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
-| B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `IN_PROGRESS` | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
-| B5 | Profesionalización del diseño editorial | B3–B4 | `PLANNED` | [B5_diseno_editorial.md](plan_001/B5_diseno_editorial.md) |
+| B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `PASS` | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
+| B5 | Profesionalización del diseño editorial | B3–B4 | `IN_PROGRESS` | [B5_diseno_editorial.md](plan_001/B5_diseno_editorial.md) |
 | B5.5 | Prototipo editorial controlado | B5 | `PLANNED` | [B5_5_prototipo_editorial.md](plan_001/B5_5_prototipo_editorial.md) |
 | B6 | Redacción, ensamblaje, edición y verificación | B5.5 | `PLANNED` | [B6_redaccion_edicion_verificacion.md](plan_001/B6_redaccion_edicion_verificacion.md) |
 | B7 | Auditoría independiente, correcciones y aprobación editorial | B6 | `PLANNED` | [B7_auditoria_aprobacion_editorial.md](plan_001/B7_auditoria_aprobacion_editorial.md) |
@@ -217,7 +220,7 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: PREPARE_B5
+NEXT_ALLOWED_ACTION: EXTERNAL_AUDIT_B5_I1
 B3_PROFILE_STATUS: ACTIVE
 B3_IMPLEMENTATION_STATUS: COMPLETED
 B3_FUNCTIONAL_APPROVAL: APPROVE
@@ -226,17 +229,21 @@ B4_AUTHORIZED: YES
 B4_STATUS: PASS
 B4_I1_STATUS: PASS
 B4_I1_AUDIT: PASS
-B4_I2_STATUS: PASS
-B4_I2_AUDIT: PASS
 IMPLEMENTATION_COMMIT: 42ef1a6ccb028a26cc2bdfce436804c27026ea2a
 CORRECTION_COMMIT: c3c6c23dec464d78ff2f2317366156a538c8aee1
 TESTS: 84 passed, 110 subtests
 EXTERNAL_AUDIT: PASS
+B4_I2_STATUS: PASS
+B4_I2_AUDIT: PASS
 B4_I2_IMPLEMENTATION_COMMIT: a8e85025465b13848ebd21482addbcf7149f2f14
 B4_I2_CORRECTION_COMMIT: 1e0a072eedc97228c0f7942cd25c5051113db88f
 B4_I2_SPECIFIC_TESTS: 33 passed
 B4_I2_EXTERNAL_AUDIT: PASS
 B4_FINAL_STATUS: PASS
+B5_STATUS: IN_PROGRESS
+B5_I1_STATUS: READY_FOR_AUDIT
+B5_I1_AUDIT: PENDING
+B5_I1_SPECIFIC_TESTS: 13 passed
 ```
 
-B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5 no se ha iniciado.
+B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5-I1 está implementado y queda READY_FOR_AUDIT; B5-I2, B5.5 y B6 no se han iniciado.

@@ -22,11 +22,30 @@ SUBPROCESS_TIMEOUT_SECONDS = 20
 
 def report(can_proceed=True, limitations=None, pending=None):
     return {
-        "material_principal_disponible": True, "tipo_de_acceso": "directo",
-        "fuentes_primarias": [{"source": "synthetic"}], "fuentes_secundarias": [], "escenas_verificadas": [],
-        "escenas_descritas_indirectamente": [], "claims_sostenibles": [],
-        "claims_pendientes": pending or [], "limitaciones": limitations or [],
-        "nivel_de_confianza": "alto", "can_proceed": can_proceed, "required_disclosures": [],
+        "report_id": "ER-001",
+        "episode_id": "ep",
+        "research_id": "RP-001",
+        "brief_version": "1.0.0",
+        "material_principal_disponible": True,
+        "tipo_de_acceso": "DIRECT",
+        "fuentes_primarias": [{
+            "source_id": "S1", "title": "Fuente sintética",
+            "url": "https://example.com/source", "access_type": "DIRECT",
+            "locator": "documento completo", "confidence": "HIGH"
+        }],
+        "fuentes_secundarias": [],
+        "escenas_verificadas": [{
+            "scene_id": "SC1", "description": "Escena sintética",
+            "source_id": "S1", "locator": "00:10:00", "verification_mode": "DIRECT"
+        }],
+        "escenas_descritas_indirectamente": [],
+        "claims_sostenibles": [],
+        "claims_pendientes": pending or [],
+        "limitaciones": limitations or [],
+        "nivel_de_confianza": "HIGH",
+        "can_proceed": can_proceed,
+        "required_disclosures": [],
+        "created_at": "2026-07-23T20:00:00Z",
     }
 
 
@@ -236,10 +255,9 @@ class TestB2Harness(unittest.TestCase):
         workflow = (ROOT / ".agent/workflows/01_pipeline_episodio.md").read_text(encoding="utf-8")
         self.assertNotIn("output/auditoria_brief_research_", workflow)
         self.assertNotIn("qa_youtube_ultra.md` + ESTADO_GLOBAL", workflow)
-        self.assertGreater(workflow.index("09_packaging.md"), workflow.index("FASE 10"))
-        self.assertGreater(workflow.index("FASE 10.5"), workflow.index("09_packaging.md"))
-        self.assertGreater(workflow.index("EditorialScriptApproval"), workflow.index("correcciones"))
-        self.assertGreater(workflow.index("FASE 11"), workflow.index("EditorialScriptApproval"))
+        self.assertIn("BLOCKED_PENDING_B5_I2", workflow)
+        self.assertNotIn("09_packaging.md", workflow)
+        self.assertNotIn("EditorialScriptApproval", workflow)
 
     def test_evidence_substantive_regression_cases(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -328,6 +346,7 @@ class TestB2Harness(unittest.TestCase):
         # workflow crea SourceAccessAndEvidenceReport antes de ejecutar el gate
         self.assertIn("<EP_PATH>/source_access_and_evidence_report.json", workflow)
         self.assertIn("schemas/source_access_and_evidence_report.json", workflow)
-        # workflow consume el ID correcto de pre-guion
-        self.assertIn("qa_lenguaje_youtube_ultra_pre_guion.json", workflow)
+        # B5-I1 se detiene antes de los controles pre-guion heredados.
+        self.assertIn("BLOCKED_PENDING_B5_I2", workflow)
+        self.assertNotIn("qa_lenguaje_youtube_ultra_pre_guion.json", workflow)
 

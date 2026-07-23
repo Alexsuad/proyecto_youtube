@@ -3,7 +3,7 @@
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
 **Versión:** `1.4`
-**Implementación autorizada:** `NO`
+**Implementación autorizada:** `YES`
 
 ## 1. Propósito
 
@@ -63,8 +63,8 @@ Los archivos de esta carpeta:
 | `B1` | [B1_contratos_schemas_estados_versionado.md](B1_contratos_schemas_estados_versionado.md) | B0 | `PLANNED` | Contratos canónicos aprobados |
 | `B2` | [B2_reparacion_harness_gates.md](B2_reparacion_harness_gates.md) | B1 | `PLANNED` | Cero falsos PASS conocidos |
 | `B3` | [B3_perfil_editorial_frontera_canal.md](B3_perfil_editorial_frontera_canal.md) | B1–B2 | `PLANNED` | Producción consume perfil versionado |
-| `B4` | [B4_responsabilidades_skills_portabilidad.md](B4_responsabilidades_skills_portabilidad.md) | B3 | `PASS` | B4-I1 y B4-I2 auditados `PASS`; B5 aún no iniciado |
-| `B5` | [B5_diseno_editorial.md](B5_diseno_editorial.md) | B3–B4 | `PLANNED` | Diseño editorial completo aprobado |
+| `B4` | [B4_responsabilidades_skills_portabilidad.md](B4_responsabilidades_skills_portabilidad.md) | B3 | `PASS` | B4-I1 y B4-I2 auditados `PASS` |
+| `B5` | [B5_diseno_editorial.md](B5_diseno_editorial.md) | B3–B4 | `IN_PROGRESS` | B5-I1 listo para auditoría externa |
 | `B5.5` | [B5_5_prototipo_editorial.md](B5_5_prototipo_editorial.md) | B5 | `PLANNED` | Mejora editorial temprana demostrada |
 | `B6` | [B6_redaccion_edicion_verificacion.md](B6_redaccion_edicion_verificacion.md) | B5.5 | `PLANNED` | Candidato final coherente y trazable |
 | `B7` | [B7_auditoria_aprobacion_editorial.md](B7_auditoria_aprobacion_editorial.md) | B6 | `PLANNED` | Guion aprobado editorialmente |
@@ -97,12 +97,14 @@ Una modificación aislada de un archivo de bloque no cambia el plan rector.
 ```text
 PLAN_STATUS: READY_FOR_EXTERNAL_AUDIT
 IMPLEMENTATION_AUTHORIZED: YES
-CURRENT_BLOCK: NONE
-B4_STATUS: PASS
+CURRENT_BLOCK: B5
 B4_I1_STATUS: PASS
 B4_I1_AUDIT: PASS
 B4_I2_STATUS: PASS
 B4_I2_AUDIT: PASS
-NEXT_ALLOWED_ACTION: PREPARE_B5
+B5_STATUS: IN_PROGRESS
+B5_I1_STATUS: READY_FOR_AUDIT
+B5_I1_AUDIT: PENDING
+NEXT_ALLOWED_ACTION: EXTERNAL_AUDIT_B5_I1
 NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B5
 ```

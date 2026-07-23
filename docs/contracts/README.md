@@ -55,7 +55,7 @@ Los contratos de aprobación requieren **identidad verificable** (no texto ambig
 | **B3-C2** | `ActiveEditorialProfile` | `schemas/active_editorial_profile.json` | Infraestructura y Gobernanza |
 | **B3-C3** | `VoiceSample` | `schemas/voice_sample.json` | Equipo 01 |
 | **B1-C2** | `EpisodeBrief` | `schemas/episode_brief.json` | Rol Editorial |
-| **B1-C3** | `SourceAccessAndEvidenceReport` | *Documentado* | Rol Investigación / Evidencia |
+| **B1-C3** | `SourceAccessAndEvidenceReport` | `schemas/source_access_and_evidence_report.json` | Rol Investigación / Evidencia |
 | **B1-C4** | `PackagingHypothesis` | `schemas/packaging_hypothesis.json` | Rol Adaptación YouTube / Editorial |
 | **B1-C5** | `ViewerJourney` | `schemas/viewer_journey.json` | Rol Editorial |
 | **B1-C6** | `OpeningDesign` | *Documentado* | Rol Editorial |

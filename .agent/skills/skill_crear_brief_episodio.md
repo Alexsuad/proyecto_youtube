@@ -1,35 +1,25 @@
 # Skill — Crear Brief de Episodio
-Objetivo: crear el documento base para iniciar el pipeline sin confusiones.
 
-> **Rol ejecutor actual:** Antigravity (en el futuro puede ser un agente independiente con modelo configurable en `config/agents_config.json`)
+## Objetivo
+Crear el `EpisodeBrief` canónico que gobierna B5-I1.
 
----
+## Entradas
+- tema e intención del episodio;
+- restricciones editoriales;
+- `<EP_PATH>`;
+- referencia exacta del perfil activo: `profile_id`, `profile_version`, `profile_checksum`.
 
-## Entrada mínima
-- Tema del episodio
-- Intención del episodio (qué debe sentir/entender la audiencia)
-- Restricciones (spoilers sí/no, tono, límite de duración si aplica)
-- `<EP_PATH>`: ruta del episodio activo en el Vault (viene del `skill_iniciar_episodio`)
-- `profile_id`, `profile_version`, `profile_checksum` del perfil editorial activo
-
----
-
-## Pasos
-1) Verificar la referencia exacta del perfil editorial. Si no existe perfil activo válido, devolver `BLOCKED`; no leer fuentes históricas para suplirlo.
-
-2) Crear el archivo:
-   - `<EP_PATH>/00_brief_episodio.md`
-
-3) El brief debe incluir:
-   - FECHA: Insertar automáticamente la fecha actual (YYYY-MM-DD).
-   - Tema
-   - Objetivo emocional (qué se busca provocar)
-   - Promesa al espectador (qué se lleva)
-   - Límites y NO-GO (según reglas del canal)
-   - PENDIENTES (si falta info)
-   - Referencia de perfil exacta (`profile_id`, versión y checksum)
-
----
+## Procedimiento
+1. Resolver el perfil editorial activo. Si falta o no coincide exactamente ID, versión y checksum, devolver `BLOCKED`.
+2. Definir pregunta central, conflicto, transformación, ángulo, alcance, fuera de alcance, tipo de guion y estructura candidata.
+3. Definir duración, ritmo y políticas de investigación, citas, atribución, citas textuales y visibilidad de fuentes.
+4. Escribir `<EP_PATH>/episode_brief.json` y validarlo contra `schemas/episode_brief.json`.
+5. Un Markdown opcional solo puede ser una vista derivada identificada como no canónica.
 
 ## Salida
-- `<EP_PATH>/00_brief_episodio.md` (listo y claro)
+- `<EP_PATH>/episode_brief.json` como única fuente de verdad.
+
+## Bloqueos
+- perfil activo ausente o divergente;
+- decisión funcional necesaria no disponible;
+- contrato inválido o campos sustantivos vacíos.

@@ -210,10 +210,29 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
     # 1. Validación estructural con JSON Schema
     violations = validate_against_schema(data, "research_pack")
 
-    # 2. Validación de negocio
-    for category in ["facts", "interpretations", "hypotheses"]:
-        if category in data and not isinstance(data[category], list):
+    # 2. Validación de negocio y trazabilidad cruzada.
+    categories = [
+        "facts", "interpretations", "hypotheses", "contradictions",
+        "alternative_views", "scene_evidence", "claims_candidates",
+        "narrative_opportunities",
+    ]
+    source_ids = [item.get("source_id") for item in data.get("source_registry", []) if isinstance(item, dict)]
+    if len(source_ids) != len(set(source_ids)):
+        violations.append("ResearchPack contiene source_id duplicados.")
+    known_sources = set(source_ids)
+    for category in categories:
+        entries = data.get(category, [])
+        if not isinstance(entries, list):
             violations.append(f"El campo '{category}' en ResearchPack debe ser una lista estructurada.")
+            continue
+        for index, entry in enumerate(entries):
+            if not isinstance(entry, dict):
+                continue
+            for source_ref in entry.get("source_refs", []):
+                if source_ref not in known_sources:
+                    violations.append(
+                        f"ResearchPack.{category}[{index}] referencia una fuente desconocida: '{source_ref}'."
+                    )
 
     return violations
 
@@ -240,7 +259,7 @@ def validate_claims_ledger(data: Dict[str, Any]) -> List[str]:
 
 
 def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str]:
-    """Valida el contrato de suficiencia sin introducir umbrales editoriales."""
+    """Valida suficiencia estructural y referencias internas sin fijar umbrales editoriales."""
     violations = validate_against_schema(data, "source_access_and_evidence_report")
     if not isinstance(data.get("can_proceed"), bool):
         return violations
@@ -248,4 +267,22 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
         violations.append("can_proceed=true requiere una lista válida de limitaciones.")
     if not data["can_proceed"] and not (data.get("limitaciones") or data.get("claims_pendientes")):
         violations.append("can_proceed=false requiere declarar limitaciones o claims pendientes.")
+
+    sources = []
+    for field in ("fuentes_primarias", "fuentes_secundarias"):
+        sources.extend(item.get("source_id") for item in data.get(field, []) if isinstance(item, dict))
+    if len(sources) != len(set(sources)):
+        violations.append("SourceAccessAndEvidenceReport contiene source_id duplicados.")
+    known_sources = set(sources)
+    if known_sources:
+        for field in ("escenas_verificadas", "escenas_descritas_indirectamente"):
+            for index, item in enumerate(data.get(field, [])):
+                if isinstance(item, dict) and item.get("source_id") not in known_sources:
+                    violations.append(f"{field}[{index}] referencia una fuente desconocida.")
+        for index, claim in enumerate(data.get("claims_sostenibles", [])):
+            if not isinstance(claim, dict):
+                continue
+            for source_ref in claim.get("source_refs", []):
+                if source_ref not in known_sources:
+                    violations.append(f"claims_sostenibles[{index}] referencia una fuente desconocida: '{source_ref}'.")
     return violations
