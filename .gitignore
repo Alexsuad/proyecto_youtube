@@ -22,3 +22,9 @@ docs/*
 !docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 !docs/contracts/
 !docs/contracts/README.md
+!docs/product/
+!docs/product/**
+!docs/initiatives/
+!docs/initiatives/**
+!docs/functional/
+!docs/functional/**
