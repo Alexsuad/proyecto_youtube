@@ -1,0 +1,77 @@
+{
+  "registry_version": "1.0.0",
+  "entries": [
+    {
+      "role_id": "ORCHESTRATION",
+      "provider": "mock",
+      "model": "default",
+      "adapter": "mock",
+      "tools": ["read_registry", "emit_gate"],
+      "permissions": {
+        "read": ["contracts", "statuses"],
+        "write": ["operational_state", "handoff_record"]
+      },
+      "execution_mode": "DIRECT"
+    },
+    {
+      "role_id": "RESEARCH_AND_CURATION",
+      "provider": "mock",
+      "model": "default",
+      "adapter": "mock",
+      "tools": ["fetch_sources", "classify_material"],
+      "permissions": {
+        "read": ["source_material", "brief"],
+        "write": ["research_artifacts"]
+      },
+      "execution_mode": "HANDOFF"
+    },
+    {
+      "role_id": "NARRATIVE_ARCHITECTURE",
+      "provider": "mock",
+      "model": "default",
+      "adapter": "mock",
+      "tools": ["analyze_patterns", "design_journey"],
+      "permissions": {
+        "read": ["research_artifacts", "brief"],
+        "write": ["narrative_plan", "thesis"]
+      },
+      "execution_mode": "HANDOFF"
+    },
+    {
+      "role_id": "WRITING",
+      "provider": "mock",
+      "model": "default",
+      "adapter": "mock",
+      "tools": ["write_block", "version_track"],
+      "permissions": {
+        "read": ["narrative_artifacts", "active_profile"],
+        "write": ["script_draft"]
+      },
+      "execution_mode": "HANDOFF"
+    },
+    {
+      "role_id": "EDITOR",
+      "provider": "mock",
+      "model": "default",
+      "adapter": "mock",
+      "tools": ["edit_script", "track_changes"],
+      "permissions": {
+        "read": ["script", "profile", "brief"],
+        "write": ["script", "EditorialEditReport"]
+      },
+      "execution_mode": "HANDOFF"
+    },
+    {
+      "role_id": "FINAL_EDITORIAL_AUDITOR",
+      "provider": "mock",
+      "model": "default",
+      "adapter": "mock",
+      "tools": ["audit_compliance", "grade_decision"],
+      "permissions": {
+        "read": ["all_approved_inputs"],
+        "write": ["FinalEditorialAudit"]
+      },
+      "execution_mode": "ISOLATED"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "title":"Agent Prompt Registry",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["registry_version","prompts"],
+  "properties":{
+    "registry_version":{"type":"string"},
+    "prompts":{
+      "type":"array",
+      "minItems":6,
+      "maxItems":6,
+      "items":{
+        "type":"object",
+        "additionalProperties":false,
+        "required":[
+          "role_id","prompt_id","prompt_version","status",
+          "objective","authority","required_inputs","required_context",
+          "allowed_actions","forbidden_actions","required_outputs",
+          "blocking_conditions","handoff","evidence_requirements"
+        ],
+        "properties":{
+          "role_id":{"type":"string","pattern":"^[A-Z][A-Z0-9_]+$"},
+          "prompt_id":{"type":"string","pattern":"^[a-z][a-z0-9_]+$"},
+          "prompt_version":{"type":"string","pattern":"^\\d+\\.\\d+\\.\\d+$"},
+          "status":{"enum":["DRAFT","ACTIVE","DEPRECATED"]},
+          "objective":{"type":"string","minLength":1},
+          "authority":{"type":"string","minLength":1},
+          "required_inputs":{"type":"array","items":{"type":"string"}},
+          "required_context":{"type":"array","items":{"type":"string"}},
+          "allowed_actions":{"type":"array","items":{"type":"string"}},
+          "forbidden_actions":{"type":"array","items":{"type":"string"}},
+          "required_outputs":{"type":"array","items":{"type":"string"}},
+          "blocking_conditions":{"type":"array","items":{"type":"string"}},
+          "handoff":{"type":"object","additionalProperties":false,"required":["to","condition"],"properties":{"to":{"type":"string"},"condition":{"type":"string"}}},
+          "evidence_requirements":{"type":"array","items":{"type":"string"}}
+        }
+      }
+    }
+  }
+}

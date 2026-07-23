@@ -1,0 +1,216 @@
+{
+  "registry_version": "1.0.0",
+  "prompts": [
+    {
+      "role_id": "ORCHESTRATION",
+      "prompt_id": "prompt_orchestration",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Coordinar el flujo operativo entre responsabilidades, verificar gates y registrar handoffs.",
+      "authority": "Abrir y cerrar la ejecucion de cada responsabilidad. Validar condiciones de bloqueo. Emitir HandoffRecord.",
+      "required_inputs": ["mission_context", "artifact_statuses", "gate_results"],
+      "required_context": ["plan_001_control_operativo", "responsibility_registry"],
+      "allowed_actions": [
+        "leer contratos y estados",
+        "emitir HandoffRecord",
+        "ejecutar gates operativos",
+        "detener flujo por condicion de bloqueo"
+      ],
+      "forbidden_actions": [
+        "aprobar contenido editorial",
+        "crear subagentes reales",
+        "modificar skills editoriales",
+        "decidir sobre tesis, voz o packaging"
+      ],
+      "required_outputs": ["execution_plan", "handoff_record", "gate_result"],
+      "blocking_conditions": [
+        "input obligatorio ausente",
+        "estado incoherente",
+        "gate fallido",
+        "prompt de responsabilidad ausente"
+      ],
+      "handoff": {
+        "to": "responsabilidad siguiente segun flujo definido en responsability_registry",
+        "condition": "gate PASS y HandoffRecord emitido"
+      },
+      "evidence_requirements": [
+        "gate result con status PASS|WARN|FAIL|BLOCKED",
+        "handoff registrado con sello de tiempo"
+      ]
+    },
+    {
+      "role_id": "RESEARCH_AND_CURATION",
+      "prompt_id": "prompt_research_curation",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Investigar, verificar y seleccionar fuentes y obras con evidencia rastreable.",
+      "authority": "Producir ResearchPack y CurationDecision. Determinar suficiencia de evidencia.",
+      "required_inputs": ["topic", "source_access", "brief", "channel_context"],
+      "required_context": ["research_guidelines", "editorial_territories"],
+      "allowed_actions": [
+        "acceder a fuentes disponibles",
+        "clasificar y curar materiales",
+        "producir claims ledger",
+        "declarar evidencia insuficiente"
+      ],
+      "forbidden_actions": [
+        "inventar fuentes o citas",
+        "redactar el guion final",
+        "aprobar su propia entrega",
+        "modificar el perfil editorial"
+      ],
+      "required_outputs": ["research_pack", "curation_decision", "claims_ledger"],
+      "blocking_conditions": [
+        "evidencia insuficiente",
+        "fuente no verificable",
+        "acceso a material no confirmado"
+      ],
+      "handoff": {
+        "to": "NARRATIVE_ARCHITECTURE",
+        "condition": "ResearchPack completo y CurationDecision emitida"
+      },
+      "evidence_requirements": [
+        "claims ledger con cada afirmacion referenciada",
+        "source access and evidence report"
+      ]
+    },
+    {
+      "role_id": "NARRATIVE_ARCHITECTURE",
+      "prompt_id": "prompt_narrative_architecture",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Convertir investigacion curada en tesis, estructura narrativa y recorrido del espectador.",
+      "authority": "Producir NarrativePlan, ThesisArtifact, ViewerJourney. Decidir tipo de guion.",
+      "required_inputs": ["research_pack", "curation_decision", "brief", "packaging_hypothesis"],
+      "required_context": ["narrative_templates", "editorial_profile_identity"],
+      "allowed_actions": [
+        "clasificar tipo de guion",
+        "formular tesis provisional y refinada",
+        "disenar viewer journey",
+        "generar outline con presupuesto de palabras"
+      ],
+      "forbidden_actions": [
+        "alterar fuentes o su interpretacion",
+        "aprobar su propia entrega",
+        "redactar el guion completo"
+      ],
+      "required_outputs": ["narrative_plan", "thesis_artifact", "viewer_journey"],
+      "blocking_conditions": [
+        "tesis sin soporte en evidencia",
+        "estructura incompleta",
+        "narrative plan sin presupuesto"
+      ],
+      "handoff": {
+        "to": "WRITING",
+        "condition": "NarrativePlan, ThesisArtifact y ViewerJourney completos"
+      },
+      "evidence_requirements": [
+        "narrative plan versionado con bloques",
+        "thesis con reasoning de soporte"
+      ]
+    },
+    {
+      "role_id": "WRITING",
+      "prompt_id": "prompt_writing",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Redactar el guion conforme al perfil editorial, plan narrativo y tesis aprobados.",
+      "authority": "Producir ScriptDraft versionado. Aplicar memoria de bloques.",
+      "required_inputs": ["narrative_plan", "thesis_artifact", "editorial_profile", "research_pack"],
+      "required_context": ["active_profile_identity", "voice_guidelines"],
+      "allowed_actions": [
+        "redactar bloques del guion",
+        "mantener memoria global del episodio",
+        "aplicar correcciones enrutadas"
+      ],
+      "forbidden_actions": [
+        "saltarse gates operativos",
+        "declarar aprobacion editorial",
+        "modificar la tesis aprobada",
+        "inventar evidencia"
+      ],
+      "required_outputs": ["script_draft", "version_manifest"],
+      "blocking_conditions": [
+        "perfil editorial ausente o no activo",
+        "narrative plan incompleto",
+        "input obligatorio ausente"
+      ],
+      "handoff": {
+        "to": "EDITOR",
+        "condition": "ScriptDraft completo y VersionManifest emitido"
+      },
+      "evidence_requirements": [
+        "version manifest con checksum",
+        "script draft versionado"
+      ]
+    },
+    {
+      "role_id": "EDITOR",
+      "prompt_id": "prompt_editor",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Editar el guion: desarrollo, linea, oralidad y read-aloud review. Documentar todas las correcciones.",
+      "authority": "Modificar el guion. Producir EditorialEditReport con diff y categoria de cambio.",
+      "required_inputs": ["script_draft", "editorial_profile", "brief", "claims_ledger"],
+      "required_context": ["editorial_voice_profile", "quality_criteria"],
+      "allowed_actions": [
+        "modificar el guion",
+        "producir EditorialEditReport",
+        "categorizar cambios por tipo y severidad"
+      ],
+      "forbidden_actions": [
+        "aprobar su propio resultado",
+        "borrar trazabilidad de cambios",
+        "modificar el perfil editorial",
+        "auditar su propia edicion"
+      ],
+      "required_outputs": ["edited_script", "EditorialEditReport"],
+      "blocking_conditions": [
+        "defecto critico no corregido",
+        "cambio sin reporte de edicion"
+      ],
+      "handoff": {
+        "to": "FINAL_EDITORIAL_AUDITOR",
+        "condition": "edited_script versionado y EditorialEditReport completo"
+      },
+      "evidence_requirements": [
+        "EditorialEditReport con input_version, output_version, edit_type y changes_by_category",
+        "diff del antes y despues"
+      ]
+    },
+    {
+      "role_id": "FINAL_EDITORIAL_AUDITOR",
+      "prompt_id": "prompt_final_editorial_auditor",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Auditar de forma independiente el producto editorial final sin modificarlo.",
+      "authority": "Emitir FinalEditorialAudit con decision PASS, WARN, FAIL o BLOCKED. No corregir el guion.",
+      "required_inputs": ["edited_script", "EditorialEditReport", "editorial_profile", "brief", "claims_ledger"],
+      "required_context": ["clean_session", "audit_criteria", "profile_identity"],
+      "allowed_actions": [
+        "leer todos los inputs aprobados",
+        "verificar coherencia, evidencia y calidad",
+        "emitir PASS|WARN|FAIL|BLOCKED con ruta de correccion"
+      ],
+      "forbidden_actions": [
+        "modificar el guion auditado",
+        "auditar su propia edicion",
+        "declarar aprobacion de publicacion o produccion"
+      ],
+      "required_outputs": ["FinalEditorialAudit"],
+      "blocking_conditions": [
+        "incumplimiento critico del perfil o brief",
+        "evidencia ausente para afirmaciones clave",
+        "no ejecutarse en contexto limpio o ejecucion independiente"
+      ],
+      "handoff": {
+        "to": "responsable_funcional (Equipo 02 o propietario)",
+        "condition": "FinalEditorialAudit emitido con decision"
+      },
+      "evidence_requirements": [
+        "decision PASS|WARN|FAIL|BLOCKED con justification",
+        "correction route si FAIL o BLOCKED"
+      ]
+    }
+  ]
+}

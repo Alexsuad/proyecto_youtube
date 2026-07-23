@@ -1,0 +1,27 @@
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "title":"AI Runtime Configuration",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["registry_version","entries"],
+  "properties":{
+    "registry_version":{"type":"string"},
+    "entries":{
+      "type":"array",
+      "items":{
+        "type":"object",
+        "additionalProperties":false,
+        "required":["role_id","provider","model","adapter","tools","permissions","execution_mode"],
+        "properties":{
+          "role_id":{"type":"string","pattern":"^[A-Z][A-Z0-9_]+$"},
+          "provider":{"type":"string","minLength":1},
+          "model":{"type":"string","minLength":1},
+          "adapter":{"type":"string","minLength":1},
+          "tools":{"type":"array","items":{"type":"string"}},
+          "permissions":{"type":"object","additionalProperties":false,"required":["read","write"],"properties":{"read":{"type":"array","items":{"type":"string"}},"write":{"type":"array","items":{"type":"string"}}}},
+          "execution_mode":{"enum":["DIRECT","HANDOFF","ISOLATED","MOCK"]}
+        }
+      }
+    }
+  }
+}

@@ -20,6 +20,23 @@ from src.core.contract_validation import (
 )
 
 VALID_FIXTURES = {
+    "agent_prompt_registry": {
+        "registry_version": "1.0.0",
+        "prompts": [
+            {"role_id":"ORCHESTRATION","prompt_id":"prompt_orch","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
+            {"role_id":"RESEARCH_AND_CURATION","prompt_id":"prompt_rc","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
+            {"role_id":"NARRATIVE_ARCHITECTURE","prompt_id":"prompt_na","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
+            {"role_id":"WRITING","prompt_id":"prompt_writing","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
+            {"role_id":"EDITOR","prompt_id":"prompt_editor","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
+            {"role_id":"FINAL_EDITORIAL_AUDITOR","prompt_id":"prompt_fea","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]}
+        ]
+    },
+    "ai_runtime_config": {
+        "registry_version": "1.0.0",
+        "entries": [
+            {"role_id":"ORCHESTRATION","provider":"mock","model":"default","adapter":"mock","tools":[],"permissions":{"read":[],"write":[]},"execution_mode":"DIRECT"}
+        ]
+    },
     "claims_ledger": {
         "ledger_id": "CL-001",
         "script_version": "1.0.0",

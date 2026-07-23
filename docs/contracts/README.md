@@ -120,3 +120,29 @@ Los contratos de aprobación requieren **identidad verificable** (no texto ambig
 - **B2:** Reparación del arnés de ejecución de scripts antiguos (`scripts/`) y gates críticos de CLI.
 - **B3:** Compilación formal y validación del `EditorialProfile` de producción.
 - **B4-B10:** Integración de skills, pipelines de generación, edición de desarrollo, auditorías avanzadas y métricas en vivo.
+
+## 7. Sede canónica portable y adapter .agent/
+
+La arquitectura del sistema se organiza en dos capas:
+
+### 7.1 Sede canónica (portable)
+
+```
+prompts/roles/<role_id>/<version>.md     → prompts oficiales versionados
+config/                                  → registros y configuraciones agnósticas
+schemas/                                 → contratos JSON Schema
+```
+
+Esta sede no depende de ningun proveedor, IDE o modelo concreto. Es la fuente de verdad portable del sistema.
+
+### 7.2 .agent/ como adapter de compatibilidad
+
+```
+.agent/rules/     → reglas operativas para el agente del entorno actual
+.agent/skills/    → skills locales del agente operativo
+.agent/workflows/ → workflows del agente operativo
+```
+
+`.agent/` es un adapter de compatibilidad. Contiene reglas, skills y workflows adaptados al entorno del agente operativo (por ejemplo, Antigravity, Codex, OpenCode). No duplica la sede canonica: apunta o deriva de ella.
+
+La sede canónica (`prompts/ + config/ + schemas/`) y el adapter (`.agent/`) mantienen separacion de capas. El adapter puede ser sustituido cuando el entorno operativo cambie, sin afectar la sede canonica.

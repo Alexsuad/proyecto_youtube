@@ -47,12 +47,12 @@ B4_AUTHORIZED: YES
 B4_STATUS: IN_PROGRESS
 B4_I1_STATUS: PASS
 B4_I1_AUDIT: PASS
-B4_I2_STATUS: NOT_STARTED
 b4_i1_implementation_commit: 42ef1a6ccb028a26cc2bdfce436804c27026ea2a
 b4_i1_correction_commit: c3c6c23dec464d78ff2f2317366156a538c8aee1
 b4_i1_tests: "84 passed, 110 subtests"
 b4_i1_external_audit: PASS
-next_allowed_action: PREPARE_B4_I2
+B4_I2_STATUS: READY_FOR_AUDIT
+next_allowed_action: EXTERNAL_AUDIT_B4_I2
 next_implementation_block_if_approved: B4
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
@@ -211,7 +211,7 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: PREPARE_B4_I2
+NEXT_ALLOWED_ACTION: EXTERNAL_AUDIT_B4_I2
 B3_PROFILE_STATUS: ACTIVE
 B3_IMPLEMENTATION_STATUS: COMPLETED
 B3_FUNCTIONAL_APPROVAL: APPROVE
@@ -220,7 +220,7 @@ B4_AUTHORIZED: YES
 B4_STATUS: IN_PROGRESS
 B4_I1_STATUS: PASS
 B4_I1_AUDIT: PASS
-B4_I2_STATUS: NOT_STARTED
+B4_I2_STATUS: READY_FOR_AUDIT
 IMPLEMENTATION_COMMIT: 42ef1a6ccb028a26cc2bdfce436804c27026ea2a
 CORRECTION_COMMIT: c3c6c23dec464d78ff2f2317366156a538c8aee1
 TESTS: 84 passed, 110 subtests
