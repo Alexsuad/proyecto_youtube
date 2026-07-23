@@ -88,7 +88,7 @@ VALID_FIXTURES = {
         "external_policy_references": [],
         "pending_decisions": ["Incorporar muestra real principal autorizada"]
     },
-    "editorial_profile_approval": {"profile_id": "MADG-EDITORIAL-PROFILE", "profile_version": "1.0.0", "profile_checksum": "a" * 64, "decision": "APPROVE", "functional_owner_role": "TEAM_01", "approved_by": "equipo_01_responsable", "approved_at": "2026-07-22T20:00:00Z"},
+    "editorial_profile_approval": {"profile_id": "MADG-EDITORIAL-PROFILE", "profile_version": "1.0.0", "profile_checksum": "a" * 64, "decision": "APPROVE", "functional_owner_role": "TEAM_01", "voice_evidence_level": "SPECIFICATION_BASED", "evidence_summary": "Aprobación final de fixture sintético.", "limitations": ["Fixture de validación."], "approved_by": "responsable_editorial_equipo_01", "approved_at": "2026-07-22T20:00:00Z"},
     "active_editorial_profile": {"ACTIVE_PROFILE_ID": "MADG-EDITORIAL-PROFILE", "ACTIVE_PROFILE_VERSION": "1.0.0", "profile_checksum": "a" * 64, "functional_approval": {"decision": "APPROVE", "profile_checksum": "a" * 64}, "technical_validation": {"gate_id": "B3_TECHNICAL_PROFILE_VALIDATION", "status": "PASS", "profile_checksum": "a" * 64}, "activation": {"activated_by": "technical_auditor_user", "activated_at": "2026-07-22T20:00:00Z"}, "status": "ACTIVE"},
     "voice_sample": {"sample_id": "SAMPLE-001", "locator": "fixtures/sample.md", "checksum": "a" * 64, "authorship": "OWNER", "text_type": "PERSONAL_TEXT", "classification": "AUTHENTIC", "usage_authorization": "AUTHORIZED", "representativeness": "HIGH", "recorded_at": "2026-07-22T20:00:00Z", "lineage": ["OWNER_PROVIDED"], "inclusion_reason": "Muestra autorizada"},
     "editorial_script_approval": {

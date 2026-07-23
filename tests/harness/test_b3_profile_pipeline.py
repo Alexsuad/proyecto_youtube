@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[2]
 ENV={**os.environ,"PYTHONPATH":str(ROOT)}
 def run(script,*args): return subprocess.run([sys.executable,str(ROOT/'src/scripts'/script),*map(str,args)],cwd=ROOT,env=ENV,text=True,capture_output=True)
 def payload(): return json.loads((ROOT/'profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json').read_text())
-def approval(profile, checksum): return {'profile_id':profile['profile_id'],'profile_version':profile['version'],'profile_checksum':checksum,'decision':'APPROVE','functional_owner_role':'TEAM_01','approved_by':'team_01_owner','approved_at':'2026-07-22T20:00:00Z'}
+def approval(profile, checksum): return {'profile_id':profile['profile_id'],'profile_version':profile['version'],'profile_checksum':checksum,'decision':'APPROVE','functional_owner_role':'TEAM_01','voice_evidence_level':'SPECIFICATION_BASED','evidence_summary':'Aprobación final de fixture sintético.','limitations':['Fixture de validación.'],'approved_by':'team_01_owner','approved_at':'2026-07-22T20:00:00Z'}
 def gate(profile, checksum): return {'gate_id':'B3_TECHNICAL_PROFILE_VALIDATION','artifact_id':profile['profile_id'],'artifact_version':profile['version'],'status':'PASS','summary':'synthetic','violations':[],'warnings':[],'evidence':{'profile_checksum':checksum},'checked_at':'2026-07-22T20:00:00Z','checker_version':'1.0.0','exit_code':0}
 def test_cli_pipeline_and_rejections(tmp_path):
  source=tmp_path/'payload.json'; source.write_text(json.dumps(payload())); registry=tmp_path/'registry.json'; one=tmp_path/'one.json'; two=tmp_path/'two.json'

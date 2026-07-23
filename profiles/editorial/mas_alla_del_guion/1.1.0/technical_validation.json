@@ -1,0 +1,25 @@
+{
+  "artifact_id": "mas_alla_del_guion",
+  "artifact_version": "1.1.0",
+  "checked_at": "2026-07-23T14:34:45.801407+00:00",
+  "checker_version": "1.1.0",
+  "evidence": {
+    "corpus_status": "SPECIFICATION_BASED",
+    "implemented_request_changes": [
+      "RC-01",
+      "RC-02",
+      "RC-03",
+      "RC-04",
+      "RC-05",
+      "RC-06"
+    ],
+    "profile_checksum": "ff45c54267dd2c5f36896c802846322e57476820ed1fd9e81a5f9556b528c2cd",
+    "voice_evidence_level": "SPECIFICATION_BASED"
+  },
+  "exit_code": 0,
+  "gate_id": "B3_TECHNICAL_PROFILE_VALIDATION",
+  "status": "PASS",
+  "summary": "Perfil editorial 1.1.0 validado contra editorial_profile.json y compilado de forma reproducible.",
+  "violations": [],
+  "warnings": []
+}
