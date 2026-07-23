@@ -1,0 +1,19 @@
+{
+  "ACTIVE_PROFILE_ID": "mas_alla_del_guion",
+  "ACTIVE_PROFILE_VERSION": "1.1.0",
+  "profile_checksum": "ff45c54267dd2c5f36896c802846322e57476820ed1fd9e81a5f9556b528c2cd",
+  "functional_approval": {
+    "decision": "APPROVE",
+    "profile_checksum": "ff45c54267dd2c5f36896c802846322e57476820ed1fd9e81a5f9556b528c2cd"
+  },
+  "technical_validation": {
+    "gate_id": "B3_TECHNICAL_PROFILE_VALIDATION",
+    "status": "PASS",
+    "profile_checksum": "ff45c54267dd2c5f36896c802846322e57476820ed1fd9e81a5f9556b528c2cd"
+  },
+  "activation": {
+    "activated_by": "OWNER",
+    "activated_at": "2026-07-23T15:49:29.128511+00:00"
+  },
+  "status": "ACTIVE"
+}

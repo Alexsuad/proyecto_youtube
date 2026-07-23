@@ -19,6 +19,6 @@ def test_cli_pipeline_and_rejections(tmp_path):
  profile=json.loads(one.read_text())['profile']; checksum=compute_checksum(profile); ap=tmp_path/'approval.json'; te=tmp_path/'gate.json'; ap.write_text(json.dumps(approval(profile,checksum)));te.write_text(json.dumps(gate(profile,checksum))); active=tmp_path/'active.json'
  assert run('activate_editorial_profile.py','--profile',one,'--approval',ap,'--technical',te,'--output',active,'--actor','synthetic').returncode==0
  assert validate_against_schema(json.loads(active.read_text()),'active_editorial_profile')==[]
- assert not (ROOT/'config/active_editorial_profile.json').exists()
+ configured=json.loads((ROOT/'config/active_editorial_profile.json').read_text());assert configured['ACTIVE_PROFILE_ID']=='mas_alla_del_guion';assert configured['ACTIVE_PROFILE_VERSION']=='1.1.0';assert configured['profile_checksum']=='ff45c54267dd2c5f36896c802846322e57476820ed1fd9e81a5f9556b528c2cd'
  missing=tmp_path/'missing.json'; assert run('activate_editorial_profile.py','--profile',one,'--approval',missing,'--technical',te,'--output',tmp_path/'no.json','--actor','synthetic').returncode!=0
  wrong=gate(profile,'b'*64);te.write_text(json.dumps(wrong));assert run('activate_editorial_profile.py','--profile',one,'--approval',ap,'--technical',te,'--output',tmp_path/'wrong.json','--actor','synthetic').returncode!=0

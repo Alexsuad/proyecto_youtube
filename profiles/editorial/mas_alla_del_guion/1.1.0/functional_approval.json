@@ -1,0 +1,18 @@
+{
+  "conditions": [
+    "Aprobación del propietario registrada sobre la versión 1.1.0 y el checksum exacto.",
+    "La activación requiere validación técnica coincidente."
+  ],
+  "decision": "APPROVE",
+  "approved_by": "OWNER",
+  "approved_at": "2026-07-23T17:03:01+02:00",
+  "evidence_summary": "Aprobación funcional del propietario registrada sobre la versión 1.1.0 y checksum exacto; compilación, validación técnica y consumo canónico verificados.",
+  "functional_owner_role": "TEAM_01",
+  "limitations": [
+    "El corpus auténtico permanece vacío bajo evidencia SPECIFICATION_BASED; no se requiere audio ni transcripción."
+  ],
+  "profile_checksum": "ff45c54267dd2c5f36896c802846322e57476820ed1fd9e81a5f9556b528c2cd",
+  "profile_id": "mas_alla_del_guion",
+  "profile_version": "1.1.0",
+  "voice_evidence_level": "SPECIFICATION_BASED"
+}
