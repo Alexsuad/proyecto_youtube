@@ -13,28 +13,28 @@ plan_id: PLAN-001
 plan_version: "1.4"
 plan_status: READY_FOR_EXTERNAL_AUDIT
 implementation_authorized: true
-authorized_blocks: [B0, B1, B2]
-current_block: B3
-current_mission: B3-I4-VALIDATION
+authorized_blocks: [B0, B1, B2, B3]
+current_block: NONE
+current_mission: NONE
 b3_i1_implementation: COMPLETED
 b3_i1_technical_audit: PASS
-b3_profile_status: DRAFT
-b3_implementation_status: IN_PROGRESS
+b3_profile_status: ACTIVE
+b3_implementation_status: COMPLETED
 b3_i2_implementation: COMPLETED
 b3_i2_external_technical_audit: PASS
 b3_i2_commit: 5872aa8cda6ff65cd2228ff3d681afbb8ff53f53
 b3_i3_implementation: COMPLETED
 b3_i3_external_technical_audit: PASS
 b3_i3_commit: ad306fe46a9d58546369308be10716eea656afae
-b3_i4_authorization: CONDITIONAL
+b3_i4_authorization: APPROVED
 b3_i4_primary_voice_sample: DEPRECATED
-b3_i4_team_01_functional_approval: REQUIRED
+b3_i4_team_01_functional_approval: APPROVE
 b3_i4_functional_blocker: REMOVED
 team_01_clarification: APPROVED
 voice_evidence_level: SPECIFICATION_BASED
 authentic_editorial_writing_sample_status: NOT_AVAILABLE
 editorial_writing_reference_corpus_mechanism: AVAILABLE
-b3_authorized_missions: [B3-I4-VALIDATION]
+b3_authorized_missions: []
 b3_not_authorized_missions: [B4]
 b3_i4_preflight_implementation: COMPLETED
 b3_i4_preflight_external_audit: PASS
@@ -42,13 +42,13 @@ b3_i4_primary_sample_available: NOT_REQUIRED
 b3_i4_authorized_complementary_samples: 0
 b3_i4_invalid_or_incomplete_samples: 0
 b3_i4_corpus_ready: YES
-b3_i4_execution: IN_PROGRESS
-next_allowed_action: COMPLETE_B3-I4_VALIDATION
-next_implementation_block_if_approved: B3-I4-VALIDATION
+b3_i4_execution: COMPLETED
+next_allowed_action: AWAIT_B4_AUTHORIZATION
+next_implementation_block_if_approved: B4
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-La aclaración aprobada del Equipo 01 establece evidencia de voz `SPECIFICATION_BASED`; una muestra auténtica futura es opcional. B3-I4 continúa en validación. El perfil editorial real continúa en `DRAFT`. No existe activación real, no hay aprobación del Equipo 01, no hay validación técnica final y B4 no está autorizado.
+B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 no está autorizado.
 
 ## 2. Autoridad documental
 
@@ -158,7 +158,7 @@ B0
 | B0 | Gobernanza, baseline y benchmarks editoriales | Ninguna | `PASS` | [B0_gobernanza_baseline_benchmarks.md](plan_001/B0_gobernanza_baseline_benchmarks.md) |
 | B1 | Contratos, schemas, estados y versionado | B0 | `PASS` (auditoría aprobada, 29/29 tests) | [B1_contratos_schemas_estados_versionado.md](plan_001/B1_contratos_schemas_estados_versionado.md) |
 | B2 | Reparación del arnés y gates críticos | B1 | `PASS` | [B2_reparacion_harness_gates.md](plan_001/B2_reparacion_harness_gates.md) |
-| B3 | Perfil editorial y frontera del canal | B1–B2 | `BLOCKED` (B3-I3 `COMPLETED`, preflight `PASS`; B3-I4 bloqueado por falta de muestra principal real) | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
+| B3 | Perfil editorial y frontera del canal | B1–B2 | `PASS` (perfil 1.1.0 activo; aprobación OWNER y validación técnica PASS) | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
 | B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `PLANNED` | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
 | B5 | Profesionalización del diseño editorial | B3–B4 | `PLANNED` | [B5_diseno_editorial.md](plan_001/B5_diseno_editorial.md) |
 | B5.5 | Prototipo editorial controlado | B5 | `PLANNED` | [B5_5_prototipo_editorial.md](plan_001/B5_5_prototipo_editorial.md) |
@@ -202,12 +202,12 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: COMPLETE_B3-I4_VALIDATION
-B3-I4_PREFLIGHT_IMPLEMENTATION: COMPLETED
-B3-I4_PREFLIGHT_EXTERNAL_AUDIT: PASS
-B3-I4_FUNCTIONAL_BLOCKER: REMOVED
-B3_IMPLEMENTATION_STATUS: IN_PROGRESS
+NEXT_ALLOWED_ACTION: AWAIT_B4_AUTHORIZATION
+B3_PROFILE_STATUS: ACTIVE
+B3_IMPLEMENTATION_STATUS: COMPLETED
+B3_FUNCTIONAL_APPROVAL: APPROVE
+B3_TECHNICAL_VALIDATION: PASS
 B4_AUTHORIZED: NO
 ```
 
-B3-I4 continúa con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura es opcional. B4 no está autorizado.
+B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 no está autorizado.
