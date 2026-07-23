@@ -1,0 +1,19 @@
+registry_version: "1.0.0"
+project_id: PROYECTO-YOUTUBE
+mvp_baseline:
+  artifact: docs/product/MVP_BASELINE.md
+  version: "1.0.0"
+current_delivery_baseline:
+  artifact: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
+  version: "1.4"
+updated_at: null
+items:
+  - initiative_id: INIT-001
+    record: docs/initiatives/records/INIT-001.yaml
+    title: Memoria editorial persistente y consultable
+    maturity_status: READY_FOR_TRIAGE
+    classification_status: CLASSIFIED
+    scope_recommendation: POST_MVP
+    recommendation: PRESERVE_EXTENSION_POINT
+    execution_status: NOT_AUTHORIZED
+    implementation_authorized: false

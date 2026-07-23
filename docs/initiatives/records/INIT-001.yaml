@@ -1,0 +1,18 @@
+initiative_id: INIT-001
+title: Memoria editorial persistente y consultable
+problem: Conservar y consultar guiones aprobados, temas, tesis, obras, estructuras, aperturas, diferencias entre borradores y aprobadas, aprendizajes y posibles repeticiones o similitudes.
+value: Facilitar trazabilidad editorial e identificación futura de repetición sin sustituir revisión humana.
+alternatives: [Biblioteca Markdown local, Obsidian como interfaz, SQLite, Índice semántico o vectorial, NotebookLM como complemento, Otras alternativas desacopladas]
+maturity_status: READY_FOR_TRIAGE
+classification_status: CLASSIFIED
+scope_recommendation: POST_MVP
+recommendation: {status: PRESERVE_EXTENSION_POINT, rationale: "La iniciativa se clasifica como POST_MVP; preservar un punto de extensión no autoriza su implementación."}
+decision_status: UNDECIDED
+execution_status: NOT_AUTHORIZED
+implementation_authorized: false
+authorization: null
+mvp_evaluation: {status: OUT_OF_SCOPE, rationale: "La línea base MVP 1.0.0 aprobada no incluye una memoria editorial persistente y consultable."}
+plan_evaluation: {status: PARTIALLY_RELATED, rationale: "B9.5 cubre aprendizaje y versiones aprobadas; biblioteca, consulta histórica y similitud automática deben distinguirse de lo planificado."}
+relationship: {type: NONE, related_initiative_id: null}
+current_scope_reference: null
+architecture: null

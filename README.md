@@ -1,5 +1,7 @@
 # Proyecto YouTube — MasAllaDelGuion
 
+> Alcance y mejoras: consultar [`docs/product/MVP_BASELINE.md`](docs/product/MVP_BASELINE.md) y [`docs/initiatives/README.md`](docs/initiatives/README.md). Ante una mejora fuera de la misión: localizar MVP y Plan 001, comprobar pertenencia y duplicados, capturar problema/valor, clasificar proporcionalmente, evaluar extensión, mantener `implementation_authorized: false`, no ampliar el alcance y continuar el trabajo autorizado. Si falta baseline suficiente, registrar `UNDECIDED` sin inventar alcance ni declarar bloqueo operativo.
+
 > Repositorio de scripts, plantillas y documentación del canal **Más Allá del Guion**.
 > La fuente de verdad del *contenido* vive en en el **Content Vault** externo.
 
