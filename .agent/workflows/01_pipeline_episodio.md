@@ -102,9 +102,20 @@ python src/scripts/evidence_sufficiency_gate.py --report <EP_PATH>/source_access
 - Validar contra `schemas/thesis_artifact.json`.
 - No crear ni declarar una tesis refinada.
 
+### 6. Gate de tesis provisional
+```powershell
+python src/scripts/thesis_provisional_gate.py `
+  --thesis <EP_PATH>/thesis_provisional.json `
+  --research <EP_PATH>/research_pack.json `
+  --evidence-report <EP_PATH>/source_access_and_evidence_report.json `
+  --ep-id <EP_ID>
+```
+- `FAIL`, `BLOCKED` o error técnico detienen.
+- Solo `PASS` o `WARN` permiten terminar B5-I1.
+
 ## Gate de salida B5-I1
 
-Cuando los cuatro artefactos sean válidos y los gates permitan continuar, B5-I1 termina en:
+Cuando los cinco artefactos sean válidos y los gates permitan continuar, B5-I1 termina en:
 
 ```text
 BLOCKED_PENDING_B5_I2

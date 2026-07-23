@@ -109,7 +109,7 @@ class TestB2Harness(unittest.TestCase):
             unsupported = report(); unsupported["fuentes_primarias"] = []
             path.write_text(json.dumps(unsupported), encoding="utf-8")
             self.assertEqual(evidence_evaluate(path, "ep").status, GateStatus.FAIL)
-            unavailable = report(); unavailable["material_principal_disponible"] = False; unavailable["fuentes_primarias"] = []
+            unavailable = report(); unavailable["material_principal_disponible"] = False; unavailable["fuentes_primarias"] = []; unavailable["tipo_de_acceso"] = "UNAVAILABLE"
             path.write_text(json.dumps(unavailable), encoding="utf-8")
             self.assertEqual(evidence_evaluate(path, "ep").status, GateStatus.BLOCKED)
 

@@ -12,6 +12,8 @@ Entradas obligatorias:
 
 Debe incluir statement, razonamiento inicial, objeción prevista, riesgo de simplificación, preguntas abiertas, referencias a fuentes y versión. La salida es `<EP_PATH>/thesis_provisional.json`.
 
+La tesis será validada por `thesis_provisional_gate.py` tras su creación. Solo PASS o WARN permiten continuar a B5-I2.
+
 ## Modo THESIS_REFINED
 Queda bloqueado hasta B5-I2. No puede ejecutarse ni simularse en B5-I1.
 

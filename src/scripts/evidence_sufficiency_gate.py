@@ -27,6 +27,23 @@ def _count(items: Any) -> int:
     return sum(1 for item in items if _substantive(item)) if isinstance(items, list) else 0
 
 
+def _all_substantive_low(report: dict) -> bool:
+    sources = []
+    for field in ("fuentes_primarias", "fuentes_secundarias"):
+        sources.extend(report.get(field, []))
+    claims = report.get("claims_sostenibles", [])
+    substantive = [s for s in sources if _substantive(s)] + [c for c in claims if _substantive(c)]
+    if not substantive:
+        return False
+    return all(
+        s.get("confidence") == "LOW"
+        for s in sources if _substantive(s)
+    ) and all(
+        c.get("confidence") == "LOW"
+        for c in claims if _substantive(c)
+    )
+
+
 def evaluate(report_path: Path, artifact_id: str) -> GateResult:
     blocked, failures, evidence = validate_inputs(
         [InputRequirement(report_path, "SourceAccessAndEvidenceReport")]
@@ -64,6 +81,20 @@ def evaluate(report_path: Path, artifact_id: str) -> GateResult:
             evidence=evidence,
         )
 
+    tipo = report.get("tipo_de_acceso")
+    confianza = report.get("nivel_de_confianza")
+
+    if tipo == "UNAVAILABLE":
+        return GateResult(
+            "evidence_sufficiency",
+            artifact_id,
+            "2.0.0",
+            GateStatus.BLOCKED,
+            "Acceso no disponible: no se puede producir PASS ni WARN",
+            [f"tipo_de_acceso={tipo} bloquea la evaluación"],
+            evidence=evidence,
+        )
+
     violations = validate_source_access_and_evidence_report(report)
     evidence.update(
         {
@@ -92,6 +123,17 @@ def evaluate(report_path: Path, artifact_id: str) -> GateResult:
     evidence["substantive_source_count"] = source_count
     evidence["substantive_evidence_count"] = evidence_count
 
+    if confianza == "LOW":
+        return GateResult(
+            "evidence_sufficiency",
+            artifact_id,
+            "2.0.0",
+            GateStatus.BLOCKED,
+            "Nivel de confianza LOW bloquea la evaluación",
+            [f"nivel_de_confianza={confianza} no puede producir PASS"],
+            evidence=evidence,
+        )
+
     if not report.get("material_principal_disponible") and source_count == 0:
         return GateResult(
             "evidence_sufficiency",
@@ -113,6 +155,7 @@ def evaluate(report_path: Path, artifact_id: str) -> GateResult:
             ["can_proceed=false"],
             evidence=evidence,
         )
+
     if source_count == 0 or evidence_count == 0:
         return GateResult(
             "evidence_sufficiency",
@@ -124,11 +167,26 @@ def evaluate(report_path: Path, artifact_id: str) -> GateResult:
             evidence=evidence,
         )
 
+    if _all_substantive_low(report):
+        return GateResult(
+            "evidence_sufficiency",
+            artifact_id,
+            "2.0.0",
+            GateStatus.BLOCKED,
+            "Toda la evidencia sustantiva tiene confianza LOW",
+            ["Toda la evidencia disponible tiene confianza LOW"],
+            evidence=evidence,
+        )
+
     warnings = list(report.get("limitaciones", [])) + list(report.get("required_disclosures", []))
     if report.get("claims_pendientes"):
         warnings.append("Existen claims pendientes declarados")
-    if report.get("tipo_de_acceso") in {"INDIRECT", "SECONDARY_ONLY", "MIXED"}:
-        warnings.append(f"Acceso no totalmente directo: {report.get('tipo_de_acceso')}")
+
+    if confianza == "MEDIUM":
+        warnings.append(f"nivel_de_confianza=MEDIUM requiere al menos WARN")
+    if tipo in ("INDIRECT", "MIXED"):
+        warnings.append(f"Acceso no totalmente directo: {tipo}")
+
     status = GateStatus.WARN if warnings else GateStatus.PASS
     return GateResult(
         "evidence_sufficiency",

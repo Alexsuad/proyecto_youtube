@@ -6,10 +6,15 @@ import json
 import socket
 from pathlib import Path
 
-from src.core.contract_validation import validate_against_schema
+from src.core.contract_validation import (
+    validate_against_schema,
+    validate_source_access_and_evidence_report,
+    validate_thesis_artifact,
+)
 from src.core.status import GateStatus
 from src.scripts.evidence_sufficiency_gate import evaluate as evaluate_evidence
 from src.scripts.qa_brief_research import evaluate as evaluate_brief_research
+from src.scripts.thesis_provisional_gate import evaluate as evaluate_thesis_gate
 
 CHECKSUM = "a" * 64
 
@@ -268,3 +273,232 @@ def test_evaluation_makes_no_network_calls(tmp_path: Path, monkeypatch) -> None:
     report_path = tmp_path / "report.json"
     report_path.write_text(json.dumps(valid_report()), encoding="utf-8")
     assert evaluate_evidence(report_path, "EP-001").status is GateStatus.PASS
+
+
+# ─── B5-I1 correction tests: evidence gate falsos PASS ───
+
+
+def write_report(report: dict, tmp_path: Path, name: str = "report.json") -> Path:
+    p = tmp_path / name
+    p.write_text(json.dumps(report), encoding="utf-8")
+    return p
+
+
+def test_unavailable_with_can_proceed_true_blocks(tmp_path: Path) -> None:
+    report = valid_report()
+    report["tipo_de_acceso"] = "UNAVAILABLE"
+    report["can_proceed"] = True
+    path = write_report(report, tmp_path)
+    result = evaluate_evidence(path, "EP-001")
+    assert result.status is GateStatus.BLOCKED
+    assert result.exit_code == 2
+
+
+def test_global_low_confidence_blocks(tmp_path: Path) -> None:
+    report = valid_report()
+    report["nivel_de_confianza"] = "LOW"
+    path = write_report(report, tmp_path)
+    result = evaluate_evidence(path, "EP-001")
+    assert result.status is GateStatus.BLOCKED
+    assert result.exit_code == 2
+
+
+def test_indirect_access_with_medium_confidence_warns(tmp_path: Path) -> None:
+    report = valid_report()
+    report["tipo_de_acceso"] = "INDIRECT"
+    report["nivel_de_confianza"] = "MEDIUM"
+    path = write_report(report, tmp_path)
+    result = evaluate_evidence(path, "EP-001")
+    assert result.status is GateStatus.WARN
+    assert result.exit_code == 0
+
+
+def test_indirect_scene_in_escenas_verificadas_fails(tmp_path: Path) -> None:
+    report = valid_report()
+    report["escenas_verificadas"] = [
+        {
+            "scene_id": "SC_BAD",
+            "description": "Escena con modo incorrecto.",
+            "source_id": "S1",
+            "locator": "00:15:00",
+            "verification_mode": "INDIRECT",
+        }
+    ]
+    report["escenas_descritas_indirectamente"] = []
+    violations = validate_source_access_and_evidence_report(report)
+    assert any("verification_mode" in v for v in violations)
+
+
+def test_direct_scene_in_escenas_descritas_indirectamente_fails(tmp_path: Path) -> None:
+    report = valid_report()
+    report["escenas_descritas_indirectamente"] = [
+        {
+            "scene_id": "SC_BAD2",
+            "description": "Escena directa mal colocada.",
+            "source_id": "S1",
+            "locator": "00:20:00",
+            "verification_mode": "DIRECT",
+        }
+    ]
+    violations = validate_source_access_and_evidence_report(report)
+    assert any("verification_mode" in v for v in violations)
+
+
+def _valid_thesis() -> dict:
+    return {
+        "thesis_id": "TH-001",
+        "episode_id": "EP-001",
+        "brief_version": "1.0.0",
+        "research_id": "RP-001",
+        "evidence_report_id": "ER-001",
+        "stage": "THESIS_PROVISIONAL",
+        "statement": "Tesis provisional de prueba.",
+        "supporting_reasoning": "Razonamiento que la soporta.",
+        "main_objection": "Objecion principal.",
+        "simplification_risk": "Riesgo de simplificacion.",
+        "open_questions": ["?Se sostiene con mas evidencia?"],
+        "source_refs": ["S1"],
+        "version": "1.0.0",
+        "created_at": "2026-07-23T20:00:00Z",
+    }
+
+
+def _valid_research_dict() -> dict:
+    return {
+        "research_id": "RP-001",
+        "episode_id": "EP-001",
+        "brief_version": "1.0.0",
+        "scope": "Cobertura de prueba.",
+        "facts": [{"item_id": "F1", "statement": "Hecho.", "source_refs": ["S1"], "locator": "p.5", "confidence": "HIGH"}],
+        "interpretations": [],
+        "hypotheses": [],
+        "contradictions": [],
+        "alternative_views": [],
+        "scene_evidence": [],
+        "source_registry": [
+            {"source_id": "S1", "title": "Fuente 1", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "doc", "confidence": "HIGH"},
+            {"source_id": "S2", "title": "Fuente 2", "source_type": "SECONDARY", "access_type": "INDIRECT", "locator": "web", "confidence": "MEDIUM"},
+        ],
+        "claims_candidates": [],
+        "unsupported_claims": [],
+        "narrative_opportunities": [],
+        "limitations": [],
+        "created_at": "2026-07-23T20:00:00Z",
+    }
+
+
+def _valid_evidence_dict() -> dict:
+    return {
+        "report_id": "ER-001",
+        "episode_id": "EP-001",
+        "research_id": "RP-001",
+        "brief_version": "1.0.0",
+        "material_principal_disponible": True,
+        "tipo_de_acceso": "DIRECT",
+        "fuentes_primarias": [
+            {"source_id": "S1", "title": "Fuente 1", "access_type": "DIRECT", "locator": "doc", "confidence": "HIGH"},
+        ],
+        "fuentes_secundarias": [
+            {"source_id": "S2", "title": "Fuente 2", "access_type": "INDIRECT", "locator": "web", "confidence": "MEDIUM"},
+        ],
+        "escenas_verificadas": [
+            {"scene_id": "SC1", "description": "Escena.", "source_id": "S1", "locator": "00:10", "verification_mode": "DIRECT"},
+        ],
+        "escenas_descritas_indirectamente": [],
+        "claims_sostenibles": [],
+        "claims_pendientes": [],
+        "limitaciones": [],
+        "nivel_de_confianza": "HIGH",
+        "can_proceed": True,
+        "required_disclosures": [],
+        "created_at": "2026-07-23T20:00:00Z",
+    }
+
+
+def test_thesis_refined_stage_fails(tmp_path: Path) -> None:
+    thesis = _valid_thesis()
+    thesis["stage"] = "THESIS_REFINED"
+    violations = validate_thesis_artifact(thesis, _valid_research_dict(), _valid_evidence_dict())
+    assert any("THESIS_REFINED" in v for v in violations)
+
+
+def test_thesis_source_ref_not_in_research_fails(tmp_path: Path) -> None:
+    thesis = _valid_thesis()
+    thesis["source_refs"] = ["S99"]
+    violations = validate_thesis_artifact(thesis, _valid_research_dict(), _valid_evidence_dict())
+    assert any("S99" in v for v in violations)
+
+
+def test_thesis_source_ref_in_research_but_not_in_evidence_fails(tmp_path: Path) -> None:
+    research = _valid_research_dict()
+    research["source_registry"].append(
+        {"source_id": "S3", "title": "Fuente 3", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "doc", "confidence": "HIGH"}
+    )
+    thesis = _valid_thesis()
+    thesis["source_refs"] = ["S3"]
+    violations = validate_thesis_artifact(thesis, research, _valid_evidence_dict())
+    assert any("S3" in v for v in violations)
+
+
+def test_cross_artifact_id_mismatch_fails(tmp_path: Path) -> None:
+    thesis_dict = _valid_thesis()
+    thesis_dict["episode_id"] = "EP-999"
+    research_dict = _valid_research_dict()
+    evidence_dict = _valid_evidence_dict()
+    thesis_p = tmp_path / "thesis.json"
+    research_p = tmp_path / "research.json"
+    evidence_p = tmp_path / "evidence.json"
+    thesis_p.write_text(json.dumps(thesis_dict), encoding="utf-8")
+    research_p.write_text(json.dumps(research_dict), encoding="utf-8")
+    evidence_p.write_text(json.dumps(evidence_dict), encoding="utf-8")
+    result = evaluate_thesis_gate(thesis_p, research_p, evidence_p, "TH-001")
+    assert result.status is GateStatus.FAIL
+    assert any("episode_id" in v for v in result.violations)
+
+
+def test_valid_provisional_thesis_with_pass_evidence_passes(tmp_path: Path) -> None:
+    thesis_dict = _valid_thesis()
+    research_dict = _valid_research_dict()
+    evidence_dict = _valid_evidence_dict()
+    thesis_p = tmp_path / "thesis.json"
+    research_p = tmp_path / "research.json"
+    evidence_p = tmp_path / "evidence.json"
+    thesis_p.write_text(json.dumps(thesis_dict), encoding="utf-8")
+    research_p.write_text(json.dumps(research_dict), encoding="utf-8")
+    evidence_p.write_text(json.dumps(evidence_dict), encoding="utf-8")
+    result = evaluate_thesis_gate(thesis_p, research_p, evidence_p, "TH-001")
+    assert result.status is GateStatus.PASS
+    assert result.exit_code == 0
+
+
+def test_valid_provisional_thesis_with_warn_evidence_warns(tmp_path: Path) -> None:
+    evidence_dict = _valid_evidence_dict()
+    evidence_dict["nivel_de_confianza"] = "MEDIUM"
+    thesis_dict = _valid_thesis()
+    research_dict = _valid_research_dict()
+    thesis_p = tmp_path / "thesis.json"
+    research_p = tmp_path / "research.json"
+    evidence_p = tmp_path / "evidence.json"
+    thesis_p.write_text(json.dumps(thesis_dict), encoding="utf-8")
+    research_p.write_text(json.dumps(research_dict), encoding="utf-8")
+    evidence_p.write_text(json.dumps(evidence_dict), encoding="utf-8")
+    result = evaluate_thesis_gate(thesis_p, research_p, evidence_p, "TH-001")
+    assert result.status is GateStatus.WARN
+    assert result.exit_code == 0
+
+
+def test_thesis_gate_makes_no_network_calls(tmp_path: Path, monkeypatch) -> None:
+    def forbidden_socket(*args, **kwargs):
+        raise AssertionError("No se permiten llamadas externas")
+    monkeypatch.setattr(socket, "socket", forbidden_socket)
+    thesis_dict = _valid_thesis()
+    research_dict = _valid_research_dict()
+    evidence_dict = _valid_evidence_dict()
+    thesis_p = tmp_path / "thesis.json"
+    research_p = tmp_path / "research.json"
+    evidence_p = tmp_path / "evidence.json"
+    thesis_p.write_text(json.dumps(thesis_dict), encoding="utf-8")
+    research_p.write_text(json.dumps(research_dict), encoding="utf-8")
+    evidence_p.write_text(json.dumps(evidence_dict), encoding="utf-8")
+    result = evaluate_thesis_gate(thesis_p, research_p, evidence_p, "TH-001")
+    assert result.status is GateStatus.PASS

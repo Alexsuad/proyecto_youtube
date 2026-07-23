@@ -285,4 +285,59 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
             for source_ref in claim.get("source_refs", []):
                 if source_ref not in known_sources:
                     violations.append(f"claims_sostenibles[{index}] referencia una fuente desconocida: '{source_ref}'.")
+
+    tipo = data.get("tipo_de_acceso")
+    material = data.get("material_principal_disponible")
+    if material is True and tipo == "UNAVAILABLE":
+        violations.append("material_principal_disponible=true es incoherente con tipo_de_acceso=UNAVAILABLE.")
+    if material is False and tipo == "DIRECT":
+        violations.append("material_principal_disponible=false es incoherente con tipo_de_acceso=DIRECT.")
+
+    for index, item in enumerate(data.get("escenas_verificadas", [])):
+        if isinstance(item, dict) and item.get("verification_mode") != "DIRECT":
+            violations.append(
+                f"escenas_verificadas[{index}] tiene verification_mode='{item.get('verification_mode')}', "
+                f"se esperaba DIRECT."
+            )
+
+    for index, item in enumerate(data.get("escenas_descritas_indirectamente", [])):
+        if isinstance(item, dict) and item.get("verification_mode") != "INDIRECT":
+            violations.append(
+                f"escenas_descritas_indirectamente[{index}] tiene verification_mode='{item.get('verification_mode')}', "
+                f"se esperaba INDIRECT."
+            )
+
+    return violations
+
+
+def validate_thesis_artifact(data: Dict[str, Any], research: Dict[str, Any], evidence_report: Dict[str, Any]) -> List[str]:
+    violations = validate_against_schema(data, "thesis_artifact")
+
+    stage = data.get("stage")
+    if stage != "THESIS_PROVISIONAL":
+        violations.append(
+            f"stage debe ser THESIS_PROVISIONAL, recibido: '{stage}'."
+        )
+
+    research_sources = {
+        s["source_id"] for s in research.get("source_registry", [])
+        if isinstance(s, dict) and "source_id" in s
+    }
+    evidence_sources = set()
+    for field in ("fuentes_primarias", "fuentes_secundarias"):
+        for s in evidence_report.get(field, []):
+            if isinstance(s, dict) and "source_id" in s:
+                evidence_sources.add(s["source_id"])
+
+    for source_ref in data.get("source_refs", []):
+        if source_ref not in research_sources:
+            violations.append(
+                f"source_ref '{source_ref}' no existe en ResearchPack.source_registry."
+            )
+        if source_ref not in evidence_sources:
+            violations.append(
+                f"source_ref '{source_ref}' no existe entre las fuentes admitidas "
+                f"por SourceAccessAndEvidenceReport."
+            )
+
     return violations
