@@ -30,7 +30,7 @@
         "prompt de responsabilidad ausente"
       ],
       "handoff": {
-        "to": "responsabilidad siguiente segun flujo definido en responsability_registry",
+        "to": "responsabilidad siguiente segun flujo definido en responsibility_registry",
         "condition": "gate PASS y HandoffRecord emitido"
       },
       "evidence_requirements": [
@@ -204,7 +204,7 @@
         "no ejecutarse en contexto limpio o ejecucion independiente"
       ],
       "handoff": {
-        "to": "responsable_funcional (Equipo 02 o propietario)",
+        "to": "SCRIPT_PRODUCT or PRODUCT_OWNER",
         "condition": "FinalEditorialAudit emitido con decision"
       },
       "evidence_requirements": [

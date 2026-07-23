@@ -1,5 +1,6 @@
 """PromptResolver portatil: resuelve prompt activo y configuracion runtime para un role_id."""
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -67,56 +68,63 @@ def resolve_prompt(role_id: str) -> dict[str, Any]:
     return entry
 
 
-def resolve_runtime(role_id: str) -> dict[str, Any]:
-    """Return the runtime configuration entry for a given role_id.
+def resolve_runtime(role_id: str, runtime_config_path: str | Path | None = None) -> dict[str, Any]:
+    """Resolve a role runtime from an explicitly supplied configuration path.
 
-    Reads ai_runtime config and finds the matching entry.
-
-    Blocks if:
-    - config file is missing
-    - role_id is not in the config
+    The ``ai_runtime.example.json`` file is a template only and is never
+    selected implicitly. A missing or invalid explicit path blocks resolution.
     """
-    config_path = ROOT / "config" / "ai_runtime.example.json"
-    try:
-        if not config_path.exists():
-            raise ConfigResolutionError(f"Configuracion runtime no encontrada: {config_path}")
-        config = _read_json(config_path)
-    except FileNotFoundError as e:
-        raise ConfigResolutionError(str(e)) from e
-    entries = config.get("entries", [])
-    matching = [e for e in entries if e.get("role_id") == role_id]
-
-    if not matching:
+    if runtime_config_path is None:
         raise ConfigResolutionError(
-            f"role_id '{role_id}' no encontrado en configuracion runtime"
+            "Debe proporcionarse explícitamente una ruta de configuración runtime real"
         )
 
+    config_path = Path(runtime_config_path)
+    if config_path.name.endswith('.example.json'):
+        raise ConfigResolutionError(
+            "La configuración .example.json es solo una plantilla, no un runtime"
+        )
+    if not config_path.exists():
+        raise ConfigResolutionError(f"Configuración runtime no encontrada: {config_path}")
+
+    try:
+        config = _read_json(config_path)
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
+        raise ConfigResolutionError(
+            f"Configuración runtime inválida: {config_path}"
+        ) from exc
+
+    entries = config.get("entries", [])
+    matching = [entry for entry in entries if entry.get("role_id") == role_id]
+    if not matching:
+        raise ConfigResolutionError(
+            f"role_id '{role_id}' no encontrado en configuración runtime"
+        )
+    if len(matching) > 1:
+        raise ConfigResolutionError(
+            f"Múltiples entradas runtime para role_id '{role_id}'"
+        )
     return matching[0]
 
 
-def resolve_execution(role_id: str) -> dict[str, Any]:
-    """Resolve prompt + runtime into a single execution object.
-
-    Returns a dict with:
-    - role_id
-    - prompt (contract from registry)
-    - prompt_content_path (str path to the .md file)
-    - runtime (config entry)
-    - adapter (from runtime config)
-
-    Does NOT invoke any external API.
-    """
-    prompt_entry = resolve_prompt(role_id)
-    runtime_entry = resolve_runtime(role_id)
-
+def resolve_execution(
+    role_id: str, runtime_config_path: str | Path | None = None
+) -> dict[str, Any]:
+    """Resolve prompt content and runtime without invoking external services."""
+    prompt_contract = resolve_prompt(role_id)
+    runtime_entry = resolve_runtime(role_id, runtime_config_path)
     prompt_path = (
-        ROOT / "prompts" / "roles" / role_id / f"{prompt_entry['prompt_version']}.md"
+        ROOT / "prompts" / "roles" / role_id / f"{prompt_contract['prompt_version']}.md"
     )
+    prompt_content = prompt_path.read_text(encoding="utf-8")
+    prompt_checksum = hashlib.sha256(prompt_content.encode("utf-8")).hexdigest()
 
     return {
         "role_id": role_id,
-        "prompt": prompt_entry,
-        "prompt_content_path": str(prompt_path),
+        "prompt_contract": prompt_contract,
+        "prompt_path": str(prompt_path),
+        "prompt_content": prompt_content,
+        "prompt_checksum": prompt_checksum,
         "runtime": runtime_entry,
         "adapter": runtime_entry.get("adapter", "unknown"),
     }
