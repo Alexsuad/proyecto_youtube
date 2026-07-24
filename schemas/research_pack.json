@@ -14,7 +14,9 @@
     "hypotheses",
     "contradictions",
     "alternative_views",
-    "scene_evidence",
+    "coverage",
+    "narrative_evidence",
+    "external_reality_evidence",
     "source_registry",
     "claims_candidates",
     "unsupported_claims",
@@ -69,10 +71,21 @@
         "$ref": "#/definitions/researchItem"
       }
     },
-    "scene_evidence": {
+    "coverage": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/coverageEntry"}
+    },
+    "narrative_evidence": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/researchItem"
+        "$ref": "#/definitions/narrativeEvidence"
+      }
+    },
+    "external_reality_evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/externalEvidence"
       }
     },
     "source_registry": {
@@ -114,6 +127,30 @@
     }
   },
   "definitions": {
+    "coverageEntry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dimension_id", "status", "related_finding_ids", "related_source_ids", "limitation_or_pending", "scope_decision"],
+      "properties": {
+        "dimension_id": {"type": "string", "enum": ["CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS", "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL", "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES"]},
+        "status": {"type": "string", "enum": ["COVERED", "PARTIALLY_COVERED", "PENDING", "NOT_VERIFIABLE"]},
+        "related_finding_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "related_source_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "limitation_or_pending": {"type": ["string", "null"]}
+        ,"scope_decision": {"type": "string", "enum": ["NONE", "REDUCED_SCOPE", "BLOCKED"]}
+      }
+    },
+    "narrativeEvidence": {
+      "allOf": [
+        {"$ref": "#/definitions/researchItem"},
+        {"properties": {"evidence_kind": {"type": "string", "enum": ["SCENE", "SEQUENCE", "DIALOGUE", "PASSAGE", "CHAPTER", "DECISION", "NARRATIVE_EVENT", "FORMAL_ELEMENT"]}}, "required": ["evidence_kind"]}
+      ]
+    },
+    "externalEvidence": {
+      "allOf": [
+        {"$ref": "#/definitions/researchItem"},
+        {"properties": {"evidence_kind": {"type": "string", "enum": ["STUDY", "DOCUMENT", "DATA", "STATEMENT", "HISTORICAL_RECORD", "INSTITUTIONAL_SOURCE", "VERIFIABLE_EVENT", "EXPERT_ANALYSIS"]}}, "required": ["evidence_kind"]}
+      ]
+    },
     "sourceRef": {
       "type": "object",
       "additionalProperties": false,
@@ -167,6 +204,9 @@
         },
         "notes": {
           "type": "string"
+        },
+        "evidence_kind": {
+          "type": "string"
         }
       }
     },
@@ -214,6 +254,9 @@
           "type": "string"
         },
         "notes": {
+          "type": "string"
+        },
+        "evidence_kind": {
           "type": "string"
         }
       }

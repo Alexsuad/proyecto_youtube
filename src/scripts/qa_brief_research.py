@@ -46,6 +46,29 @@ def _substantive_research_violations(research: dict[str, Any]) -> list[str]:
         violations.append("ResearchPack requiere al menos un hecho respaldado")
     if not (research.get("interpretations") or research.get("hypotheses")):
         violations.append("ResearchPack requiere al menos una interpretación o hipótesis trazable")
+    if not research.get("narrative_evidence"):
+        violations.append("ResearchPack requiere evidencia narrativa diferenciada")
+    if not research.get("external_reality_evidence"):
+        violations.append("ResearchPack requiere evidencia externa sobre la realidad diferenciada")
+    return violations
+
+
+def _brief_and_coverage_violations(brief: dict[str, Any], research: dict[str, Any]) -> list[str]:
+    violations: list[str] = []
+    hypothesis = brief.get("initial_editorial_hypothesis", {})
+    if not isinstance(hypothesis, dict) or hypothesis.get("status") != "HYPOTHESIS_UNAPPROVED":
+        violations.append("EpisodeBrief requiere una hipótesis inicial no aprobada.")
+    if not brief.get("narrative_materials"):
+        violations.append("EpisodeBrief sin material narrativo de partida bloquea el avance.")
+    if brief.get("audience_status") != "INITIAL_HYPOTHESIS":
+        violations.append("La audiencia concreta debe declararse como hipótesis inicial.")
+    if brief.get("structure_status") != "INITIAL_HYPOTHESIS_REVISABLE_AFTER_RESEARCH":
+        violations.append("La estructura candidata debe declararse revisable tras investigar.")
+    coverage = {item.get("dimension_id"): item for item in research.get("coverage", []) if isinstance(item, dict)}
+    alternative = coverage.get("ALTERNATIVE_PERSPECTIVES", {})
+    if brief.get("nivel_investigacion") in ("PROFUNDO", "CRITICO") and not (research.get("alternative_views") or research.get("contradictions")):
+        if not alternative.get("limitation_or_pending"):
+            violations.append("Investigación profunda o crítica requiere rival, contradicción o justificación trazable.")
     return violations
 
 
@@ -109,6 +132,7 @@ def evaluate(
     if research.get("brief_version") != brief.get("brief_version"):
         violations.append("ResearchPack.brief_version no coincide con EpisodeBrief.brief_version")
     violations.extend(_substantive_research_violations(research))
+    violations.extend(_brief_and_coverage_violations(brief, research))
 
     evidence.update(
         {

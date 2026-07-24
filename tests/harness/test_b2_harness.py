@@ -44,7 +44,21 @@ def report(can_proceed=True, limitations=None, pending=None):
         "limitaciones": limitations or [],
         "nivel_de_confianza": "HIGH",
         "can_proceed": can_proceed,
+        "allowed_analyses": ["CONTEXTUAL_ANALYSIS"],
+        "limited_analyses": [],
+        "prohibited_analyses": [],
+        "excluded_claims": [],
         "required_disclosures": [],
+        "propagated_constraints": [],
+        "critical_claim_assessments": [],
+        "sufficiency_basis": {
+            "central_question": "Pregunta sintética de B2.",
+            "critical_claims": [],
+            "analysis_type": "CONTEXTUAL_ANALYSIS",
+            "material_roles": ["PRIMARY_NARRATIVE_MATERIAL"],
+            "requested_depth": "ESTANDAR",
+            "research_coverage": "Cobertura sintética de B2.",
+        },
         "created_at": "2026-07-23T20:00:00Z",
     }
 
@@ -349,4 +363,3 @@ class TestB2Harness(unittest.TestCase):
         # B5-I1 se detiene antes de los controles pre-guion heredados.
         self.assertIn("BLOCKED_PENDING_B5_I2", workflow)
         self.assertNotIn("qa_lenguaje_youtube_ultra_pre_guion.json", workflow)
-

@@ -213,7 +213,7 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
     # 2. Validación de negocio y trazabilidad cruzada.
     categories = [
         "facts", "interpretations", "hypotheses", "contradictions",
-        "alternative_views", "scene_evidence", "claims_candidates",
+        "alternative_views", "narrative_evidence", "external_reality_evidence", "claims_candidates",
         "narrative_opportunities",
     ]
     source_ids = [item.get("source_id") for item in data.get("source_registry", []) if isinstance(item, dict)]
@@ -234,6 +234,22 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
                         f"ResearchPack.{category}[{index}] referencia una fuente desconocida: '{source_ref}'."
                     )
 
+    required_dimensions = {
+        "CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS",
+        "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL",
+        "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES",
+    }
+    coverage = data.get("coverage", [])
+    coverage_ids = {entry.get("dimension_id") for entry in coverage if isinstance(entry, dict)}
+    missing = required_dimensions - coverage_ids
+    if missing:
+        violations.append(f"ResearchPack.coverage no cubre dimensiones críticas: {', '.join(sorted(missing))}.")
+    for entry in coverage:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("status") in ("PENDING", "NOT_VERIFIABLE"):
+            if not entry.get("limitation_or_pending") or entry.get("scope_decision") == "NONE":
+                violations.append(f"Coverage {entry.get('dimension_id')} pendiente o no verificable requiere limitación y decisión de bloqueo o reducción.")
     return violations
 
 
@@ -307,6 +323,27 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
                 f"se esperaba INDIRECT."
             )
 
+    required_scope_fields = ("allowed_analyses", "limited_analyses", "prohibited_analyses", "excluded_claims", "required_disclosures", "propagated_constraints")
+    for field in required_scope_fields:
+        if field not in data or not isinstance(data.get(field), list):
+            violations.append(f"SourceAccessAndEvidenceReport requiere '{field}' como lista explícita.")
+    for claim in data.get("critical_claim_assessments", []):
+        if not isinstance(claim, dict):
+            continue
+        if claim.get("support_status") in ("SUPPORTED", "LIMITED") and claim.get("confidence") == "LOW":
+            violations.append(f"Claim crítico '{claim.get('claim_id')}' con confianza LOW debe excluirse o bloquearse.")
+        if claim.get("support_status") in ("EXCLUDED", "INSUFFICIENT") and claim.get("claim_id") not in data.get("excluded_claims", []):
+            violations.append(f"Claim crítico '{claim.get('claim_id')}' no sostenible debe figurar en excluded_claims.")
+
+    if tipo == "INDIRECT":
+        prohibited = set(data.get("prohibited_analyses", []))
+        required_prohibitions = {"CLOSE_SCENE_ANALYSIS", "UNSUPPORTED_AUTHORIAL_INTENT", "PRIMARY_EVIDENCE_FOR_DEEP_READING"}
+        missing = required_prohibitions - prohibited
+        if missing:
+            violations.append(f"Acceso INDIRECT requiere prohibir: {', '.join(sorted(missing))}.")
+        if not data.get("required_disclosures"):
+            violations.append("Acceso INDIRECT requiere disclosures obligatorios.")
+
     return violations
 
 
@@ -329,15 +366,30 @@ def validate_thesis_artifact(data: Dict[str, Any], research: Dict[str, Any], evi
             if isinstance(s, dict) and "source_id" in s:
                 evidence_sources.add(s["source_id"])
 
-    for source_ref in data.get("source_refs", []):
-        if source_ref not in research_sources:
-            violations.append(
-                f"source_ref '{source_ref}' no existe en ResearchPack.source_registry."
-            )
-        if source_ref not in evidence_sources:
-            violations.append(
-                f"source_ref '{source_ref}' no existe entre las fuentes admitidas "
-                f"por SourceAccessAndEvidenceReport."
-            )
+    findings = {}
+    for category in ("facts", "interpretations", "hypotheses", "contradictions", "alternative_views", "narrative_evidence", "external_reality_evidence", "claims_candidates"):
+        for item in research.get(category, []):
+            if isinstance(item, dict) and item.get("item_id"):
+                findings[item["item_id"]] = set(item.get("source_refs", []))
+    for premise in data.get("premises", []):
+        if not isinstance(premise, dict):
+            continue
+        premise_sources = set(premise.get("source_refs", []))
+        for finding_id in premise.get("finding_ids", []):
+            if finding_id not in findings:
+                violations.append(f"Premisa '{premise.get('premise_id')}' referencia hallazgo inexistente: '{finding_id}'.")
+            elif not findings[finding_id].intersection(premise_sources):
+                violations.append(f"Premisa '{premise.get('premise_id')}' no conserva trazabilidad hallazgo → fuente para '{finding_id}'.")
+        for source_ref in premise_sources:
+            if source_ref not in research_sources or source_ref not in evidence_sources:
+                violations.append(f"Premisa '{premise.get('premise_id')}' referencia fuente no admitida: '{source_ref}'.")
+    for relation in data.get("tensioning_evidence", []):
+        if isinstance(relation, dict) and relation.get("finding_id") not in findings:
+            violations.append(f"La contraevidencia referencia hallazgo inexistente: '{relation.get('finding_id')}'.")
+    expected_constraints = set(evidence_report.get("limitaciones", [])) | set(evidence_report.get("excluded_claims", [])) | set(evidence_report.get("required_disclosures", [])) | set(evidence_report.get("prohibited_analyses", [])) | set(evidence_report.get("propagated_constraints", []))
+    inherited = set(data.get("inherited_constraints", []))
+    missing_constraints = expected_constraints - inherited
+    if missing_constraints:
+        violations.append(f"ThesisArtifact no hereda restricciones del reporte: {', '.join(sorted(missing_constraints))}.")
 
     return violations

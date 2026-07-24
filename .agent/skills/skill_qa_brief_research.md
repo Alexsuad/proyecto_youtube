@@ -12,7 +12,8 @@ Auditar `EpisodeBrief` y `ResearchPack` antes del gate de suficiencia de evidenc
 1. Entradas ausentes o vacías: `BLOCKED`.
 2. JSON o contrato inválido: `FAIL`.
 3. El brief debe referenciar exactamente el perfil activo por ID, versión y checksum.
-4. La investigación debe separar hechos, interpretaciones e hipótesis y contener fuentes trazables.
+4. La investigación debe separar hechos, interpretaciones, evidencia narrativa y evidencia externa, y demostrar cobertura trazable del brief.
+5. Una dimensión pendiente o no verificable exige reducción explícita de alcance o bloqueo; en profundidad crítica se exige rival, contradicción o justificación.
 5. No contar números universales de URLs, ideas, preguntas u obras.
 6. Limitaciones o claims no sostenibles declarados producen `WARN` cuando el contrato y la cobertura permiten continuar.
 

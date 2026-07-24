@@ -20,7 +20,14 @@
     "limitaciones",
     "nivel_de_confianza",
     "can_proceed",
+    "allowed_analyses",
+    "limited_analyses",
+    "prohibited_analyses",
+    "excluded_claims",
     "required_disclosures",
+    "propagated_constraints",
+    "critical_claim_assessments",
+    "sufficiency_basis",
     "created_at"
   ],
   "properties": {
@@ -107,6 +114,10 @@
     "can_proceed": {
       "type": "boolean"
     },
+    "allowed_analyses": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "limited_analyses": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "prohibited_analyses": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "excluded_claims": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "required_disclosures": {
       "type": "array",
       "items": {
@@ -115,12 +126,26 @@
       },
       "uniqueItems": true
     },
+    "propagated_constraints": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "critical_claim_assessments": {"type": "array", "items": {"$ref": "#/definitions/criticalClaimAssessment"}},
+    "sufficiency_basis": {"type": "object", "additionalProperties": false, "required": ["central_question", "critical_claims", "analysis_type", "material_roles", "requested_depth", "research_coverage"], "properties": {"central_question": {"type": "string", "minLength": 1}, "critical_claims": {"type": "array", "items": {"type": "string", "minLength": 1}}, "analysis_type": {"type": "string", "minLength": 1}, "material_roles": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "requested_depth": {"type": "string", "minLength": 1}, "research_coverage": {"type": "string", "minLength": 1}}},
     "created_at": {
       "type": "string",
       "format": "date-time"
     }
   },
   "definitions": {
+    "criticalClaimAssessment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["claim_id", "claim_text", "support_status", "confidence", "allowed_scope"],
+      "properties": {
+        "claim_id": {"type": "string", "minLength": 1},
+        "claim_text": {"type": "string", "minLength": 1},
+        "support_status": {"type": "string", "enum": ["SUPPORTED", "LIMITED", "EXCLUDED", "INSUFFICIENT"]},
+        "confidence": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH"]},
+        "allowed_scope": {"type": "string", "minLength": 1}
+      }
+    },
     "sourceEntry": {
       "type": "object",
       "additionalProperties": false,

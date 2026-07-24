@@ -13,10 +13,11 @@
     "tema",
     "pregunta_central",
     "conflicto_o_tension",
-    "tesis_provisional",
+    "initial_editorial_hypothesis",
     "objetivo",
     "transformacion_esperada",
     "audiencia_concreta",
+    "audience_status",
     "angulo_diferencial",
     "alcance",
     "fuera_de_alcance",
@@ -25,8 +26,10 @@
     "duracion_objetivo",
     "ritmo_locucion",
     "nivel_investigacion",
+    "narrative_materials",
     "tipo_de_guion_principal",
     "estructura_candidata",
+    "structure_status",
     "razon_eleccion_estructura",
     "citation_style",
     "attribution_policy",
@@ -68,9 +71,17 @@
       "type": "string",
       "minLength": 1
     },
-    "tesis_provisional": {
-      "type": "string",
-      "minLength": 1
+    "initial_editorial_hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "status", "research_role", "revisable", "adversarial_research_required"],
+      "properties": {
+        "statement": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["HYPOTHESIS_UNAPPROVED"]},
+        "research_role": {"type": "string", "enum": ["ORIENTS_RESEARCH_NOT_APPROVED_THESIS"]},
+        "revisable": {"type": "boolean", "const": true},
+        "adversarial_research_required": {"type": "boolean", "const": true}
+      }
     },
     "objetivo": {
       "type": "string",
@@ -84,6 +95,7 @@
       "type": "string",
       "minLength": 1
     },
+    "audience_status": {"type": "string", "enum": ["INITIAL_HYPOTHESIS"]},
     "angulo_diferencial": {
       "type": "string",
       "minLength": 1
@@ -133,9 +145,11 @@
       },
       "uniqueItems": true
     },
-    "obra_o_fuente_principal": {
-      "type": "string",
-      "minLength": 1
+    "narrative_materials": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
     },
     "tipo_de_guion_principal": {
       "type": "string",
@@ -152,6 +166,7 @@
       "type": "string",
       "minLength": 1
     },
+    "structure_status": {"type": "string", "enum": ["INITIAL_HYPOTHESIS_REVISABLE_AFTER_RESEARCH"]},
     "razon_eleccion_estructura": {
       "type": "string",
       "minLength": 1

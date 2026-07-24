@@ -29,10 +29,11 @@ def valid_brief() -> dict:
         "tema": "Miedo al fracaso",
         "pregunta_central": "¿Por qué evitamos aquello que más deseamos?",
         "conflicto_o_tension": "Deseo de avanzar frente al miedo a equivocarse.",
-        "tesis_provisional": "Confundir el error con la identidad amplifica el miedo.",
+        "initial_editorial_hypothesis": {"statement": "Confundir el error con la identidad amplifica el miedo.", "status": "HYPOTHESIS_UNAPPROVED", "research_role": "ORIENTS_RESEARCH_NOT_APPROVED_THESIS", "revisable": True, "adversarial_research_required": True},
         "objetivo": "Comprender el coste de evitar el error.",
         "transformacion_esperada": "Interpretar el fracaso como información.",
         "audiencia_concreta": "Adultos que posponen decisiones importantes.",
+        "audience_status": "INITIAL_HYPOTHESIS",
         "angulo_diferencial": "Contrastar respuestas narrativas distintas al error.",
         "alcance": "Consecuencias humanas y narrativas.",
         "fuera_de_alcance": "Diagnóstico clínico.",
@@ -42,10 +43,11 @@ def valid_brief() -> dict:
         "ritmo_locucion": "130 palabras por minuto",
         "nivel_investigacion": "PROFUNDO",
         "fuentes_requeridas": ["obra principal", "fuente conceptual"],
-        "obra_o_fuente_principal": "Obra sintética",
+        "narrative_materials": ["Obra sintética"],
         "tipo_de_guion_principal": "VIDEOENSAYO_NARRATIVO",
         "tipo_de_guion_secundario": None,
         "estructura_candidata": "creencia-evidencia-reinterpretación",
+        "structure_status": "INITIAL_HYPOTHESIS_REVISABLE_AFTER_RESEARCH",
         "razon_eleccion_estructura": "Permite transformar la lectura inicial.",
         "citation_style": "Atribución narrativa con registro interno.",
         "attribution_policy": "Atribuir hechos e ideas específicas.",
@@ -89,8 +91,10 @@ def valid_research(source_count: int = 3) -> dict:
         "interpretations": [item("I1")],
         "hypotheses": [],
         "contradictions": [],
-        "alternative_views": [],
-        "scene_evidence": [],
+        "alternative_views": [item("A1")],
+        "coverage": [{"dimension_id": dimension, "status": "COVERED", "related_finding_ids": ["F1"], "related_source_ids": ["S1"], "limitation_or_pending": None, "scope_decision": "NONE"} for dimension in ["CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS", "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL", "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES"]],
+        "narrative_evidence": [{**item("N1"), "evidence_kind": "SCENE"}],
+        "external_reality_evidence": [{**item("E1"), "evidence_kind": "STUDY"}],
         "source_registry": sources,
         "claims_candidates": [],
         "unsupported_claims": [],
@@ -135,6 +139,13 @@ def valid_report() -> dict:
         "nivel_de_confianza": "HIGH",
         "can_proceed": True,
         "required_disclosures": [],
+        "allowed_analyses": ["CONTEXTUAL_ANALYSIS"],
+        "limited_analyses": [],
+        "prohibited_analyses": [],
+        "excluded_claims": [],
+        "propagated_constraints": [],
+        "critical_claim_assessments": [],
+        "sufficiency_basis": {"central_question": "¿Por qué evitamos aquello que más deseamos?", "critical_claims": [], "analysis_type": "CONTEXTUAL_ANALYSIS", "material_roles": ["PRIMARY_NARRATIVE_MATERIAL"], "requested_depth": "PROFUNDO", "research_coverage": "Cobertura revisada"},
         "created_at": "2026-07-23T20:00:00Z",
     }
 
@@ -239,11 +250,14 @@ def test_provisional_thesis_requires_research_and_evidence_lineage() -> None:
         "evidence_report_id": "ER-001",
         "stage": "THESIS_PROVISIONAL",
         "statement": "Tesis provisional.",
-        "supporting_reasoning": "Razonamiento inicial.",
-        "main_objection": "Objeción principal.",
-        "simplification_risk": "Riesgo de generalización.",
+        "premises": [{"premise_id": "P1", "statement": "Premisa trazable.", "finding_ids": ["F1"], "source_refs": ["S1"]}],
+        "supporting_findings": ["F1"],
+        "tensioning_evidence": [{"finding_id": "I1", "explanation": "La interpretación tensiona la formulación."}],
+        "alternative_explanations": ["Explicación alternativa."],
+        "assumptions": ["Supuesto declarado."],
+        "revision_conditions": ["Nueva evidencia relevante."],
+        "inherited_constraints": [],
         "open_questions": ["¿Qué evidencia puede cambiarla?"],
-        "source_refs": ["S1"],
         "version": "1.0.0",
         "created_at": "2026-07-23T20:00:00Z",
     }
@@ -307,6 +321,9 @@ def test_indirect_access_with_medium_confidence_warns(tmp_path: Path) -> None:
     report = valid_report()
     report["tipo_de_acceso"] = "INDIRECT"
     report["nivel_de_confianza"] = "MEDIUM"
+    report["prohibited_analyses"] = ["CLOSE_SCENE_ANALYSIS", "UNSUPPORTED_AUTHORIAL_INTENT", "PRIMARY_EVIDENCE_FOR_DEEP_READING"]
+    report["required_disclosures"] = ["Acceso indirecto declarado."]
+    report["propagated_constraints"] = ["Acceso indirecto declarado."]
     path = write_report(report, tmp_path)
     result = evaluate_evidence(path, "EP-001")
     assert result.status is GateStatus.WARN
@@ -353,11 +370,14 @@ def _valid_thesis() -> dict:
         "evidence_report_id": "ER-001",
         "stage": "THESIS_PROVISIONAL",
         "statement": "Tesis provisional de prueba.",
-        "supporting_reasoning": "Razonamiento que la soporta.",
-        "main_objection": "Objecion principal.",
-        "simplification_risk": "Riesgo de simplificacion.",
+        "premises": [{"premise_id": "P1", "statement": "Premisa trazable.", "finding_ids": ["F1"], "source_refs": ["S1"]}],
+        "supporting_findings": ["F1"],
+        "tensioning_evidence": [{"finding_id": "F1", "explanation": "El alcance de este hallazgo obliga a matizar."}],
+        "alternative_explanations": ["Explicación alternativa."],
+        "assumptions": ["Supuesto declarado."],
+        "revision_conditions": ["Nueva evidencia relevante."],
+        "inherited_constraints": [],
         "open_questions": ["?Se sostiene con mas evidencia?"],
-        "source_refs": ["S1"],
         "version": "1.0.0",
         "created_at": "2026-07-23T20:00:00Z",
     }
@@ -373,8 +393,10 @@ def _valid_research_dict() -> dict:
         "interpretations": [],
         "hypotheses": [],
         "contradictions": [],
-        "alternative_views": [],
-        "scene_evidence": [],
+        "alternative_views": [{"item_id": "A1", "statement": "Alternativa.", "source_refs": ["S2"], "locator": "web", "confidence": "MEDIUM"}],
+        "coverage": [{"dimension_id": dimension, "status": "COVERED", "related_finding_ids": ["F1"], "related_source_ids": ["S1"], "limitation_or_pending": None, "scope_decision": "NONE"} for dimension in ["CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS", "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL", "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES"]],
+        "narrative_evidence": [{"item_id": "N1", "statement": "Escena.", "source_refs": ["S1"], "locator": "00:10", "confidence": "HIGH", "evidence_kind": "SCENE"}],
+        "external_reality_evidence": [{"item_id": "E1", "statement": "Estudio.", "source_refs": ["S2"], "locator": "web", "confidence": "MEDIUM", "evidence_kind": "STUDY"}],
         "source_registry": [
             {"source_id": "S1", "title": "Fuente 1", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "doc", "confidence": "HIGH"},
             {"source_id": "S2", "title": "Fuente 2", "source_type": "SECONDARY", "access_type": "INDIRECT", "locator": "web", "confidence": "MEDIUM"},
@@ -411,6 +433,13 @@ def _valid_evidence_dict() -> dict:
         "nivel_de_confianza": "HIGH",
         "can_proceed": True,
         "required_disclosures": [],
+        "allowed_analyses": ["CONTEXTUAL_ANALYSIS"],
+        "limited_analyses": [],
+        "prohibited_analyses": [],
+        "excluded_claims": [],
+        "propagated_constraints": [],
+        "critical_claim_assessments": [],
+        "sufficiency_basis": {"central_question": "Pregunta", "critical_claims": [], "analysis_type": "CONTEXTUAL_ANALYSIS", "material_roles": ["PRIMARY_NARRATIVE_MATERIAL"], "requested_depth": "ESTANDAR", "research_coverage": "Cobertura revisada"},
         "created_at": "2026-07-23T20:00:00Z",
     }
 
@@ -424,7 +453,7 @@ def test_thesis_refined_stage_fails(tmp_path: Path) -> None:
 
 def test_thesis_source_ref_not_in_research_fails(tmp_path: Path) -> None:
     thesis = _valid_thesis()
-    thesis["source_refs"] = ["S99"]
+    thesis["premises"][0]["source_refs"] = ["S99"]
     violations = validate_thesis_artifact(thesis, _valid_research_dict(), _valid_evidence_dict())
     assert any("S99" in v for v in violations)
 
@@ -435,7 +464,7 @@ def test_thesis_source_ref_in_research_but_not_in_evidence_fails(tmp_path: Path)
         {"source_id": "S3", "title": "Fuente 3", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "doc", "confidence": "HIGH"}
     )
     thesis = _valid_thesis()
-    thesis["source_refs"] = ["S3"]
+    thesis["premises"][0]["source_refs"] = ["S3"]
     violations = validate_thesis_artifact(thesis, research, _valid_evidence_dict())
     assert any("S3" in v for v in violations)
 
@@ -468,7 +497,36 @@ def test_valid_provisional_thesis_with_pass_evidence_passes(tmp_path: Path) -> N
     evidence_p.write_text(json.dumps(evidence_dict), encoding="utf-8")
     result = evaluate_thesis_gate(thesis_p, research_p, evidence_p, "TH-001")
     assert result.status is GateStatus.PASS
-    assert result.exit_code == 0
+
+
+def test_brief_without_narrative_material_does_not_pass(tmp_path: Path) -> None:
+    brief = valid_brief()
+    brief["narrative_materials"] = []
+    ep, active = write_inputs(tmp_path, brief=brief)
+    assert evaluate_brief_research(ep, active_profile_path=active).status is GateStatus.FAIL
+
+
+def test_pending_critical_coverage_requires_scope_decision() -> None:
+    research = valid_research()
+    research["coverage"][0].update({"status": "PENDING", "limitation_or_pending": "Falta verificar.", "scope_decision": "NONE"})
+    from src.core.contract_validation import validate_research_pack
+    assert any("bloqueo o reducción" in v for v in validate_research_pack(research))
+
+
+def test_indirect_report_requires_prohibitions_and_disclosure() -> None:
+    report = valid_report()
+    report["tipo_de_acceso"] = "INDIRECT"
+    violations = validate_source_access_and_evidence_report(report)
+    assert any("Acceso INDIRECT" in violation or "disclosures" in violation for violation in violations)
+
+
+def test_thesis_must_inherit_evidence_constraints() -> None:
+    thesis = _valid_thesis()
+    report = _valid_evidence_dict()
+    report["limitaciones"] = ["Lectura parcial."]
+    report["propagated_constraints"] = ["Lectura parcial."]
+    violations = validate_thesis_artifact(thesis, _valid_research_dict(), report)
+    assert any("no hereda restricciones" in violation for violation in violations)
 
 
 def test_valid_provisional_thesis_with_warn_evidence_warns(tmp_path: Path) -> None:

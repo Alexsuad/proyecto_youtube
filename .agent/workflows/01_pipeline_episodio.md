@@ -72,6 +72,7 @@ python src/scripts/iniciar_episodio.py --num <NUM> --slug <SLUG>
 ### 1. EpisodeBrief
 - Ejecutar `skill_crear_brief_episodio.md`.
 - Crear `<EP_PATH>/episode_brief.json`.
+- Exigir material narrativo de partida e hipótesis editorial inicial revisable; audiencia y estructura siguen siendo hipótesis.
 - Validar ID, versión y checksum contra `config/active_editorial_profile.json`.
 - No usar `00_brief_episodio.md` como fuente canónica.
 
@@ -79,6 +80,7 @@ python src/scripts/iniciar_episodio.py --num <NUM> --slug <SLUG>
 - Ejecutar `skill_research_tema_y_obras.md`.
 - Crear `<EP_PATH>/research_pack.json`.
 - Investigar por cobertura, sin mínimos universales de URLs u obras.
+- No avanzar si la cobertura crítica está pendiente sin reducción o bloqueo explícito.
 
 ### 3. QA de brief e investigación
 ```bash
@@ -95,12 +97,14 @@ python src/scripts/evidence_sufficiency_gate.py --report <EP_PATH>/source_access
 ```
 - `FAIL`, `BLOCKED` o error técnico detienen.
 - `WARN` debe conservarse como restricción de la tesis provisional.
+- El reporte declara análisis permitidos, limitados y prohibidos, claims excluidos, disclosures y restricciones propagadas. Acceso indirecto prohíbe análisis cercano e intención autoral no respaldada.
 
 ### 5. Tesis provisional
 - Ejecutar `skill_sintesis_tesis.md` en modo `THESIS_PROVISIONAL`.
 - Crear `<EP_PATH>/thesis_provisional.json`.
 - Validar contra `schemas/thesis_artifact.json`.
 - No crear ni declarar una tesis refinada.
+- La tesis hereda todas las restricciones del reporte y debe vincular cada premisa a hallazgos específicos.
 
 ### 6. Gate de tesis provisional
 ```powershell

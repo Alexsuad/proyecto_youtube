@@ -167,6 +167,22 @@ def evaluate(report_path: Path, artifact_id: str) -> GateResult:
             evidence=evidence,
         )
 
+    basis = report.get("sufficiency_basis", {})
+    critical_claims = basis.get("critical_claims", []) if isinstance(basis, dict) else []
+    assessments = {item.get("claim_id") for item in report.get("critical_claim_assessments", []) if isinstance(item, dict)}
+    missing_assessments = [claim for claim in critical_claims if claim not in assessments]
+    if missing_assessments:
+        return GateResult(
+            "evidence_sufficiency", artifact_id, "2.0.0", GateStatus.FAIL,
+            "Claims críticos sin evaluación de soporte",
+            [f"Sin evaluación: {claim}" for claim in missing_assessments], evidence=evidence,
+        )
+    if not report.get("allowed_analyses"):
+        return GateResult(
+            "evidence_sufficiency", artifact_id, "2.0.0", GateStatus.FAIL,
+            "El reporte no declara análisis permitidos", ["allowed_analyses no puede quedar vacío"], evidence=evidence,
+        )
+
     if _all_substantive_low(report):
         return GateResult(
             "evidence_sufficiency",
