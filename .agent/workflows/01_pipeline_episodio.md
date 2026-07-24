@@ -133,3 +133,12 @@ READY_FOR_TEAM_02_FUNCTIONAL_REAUDIT
 ```
 
 Esto no autoriza B5-I2. Las skills heredadas permanecen no ejecutables hasta sus bloques registrados en `config/skill_catalog.json`.
+
+## B5-I2 — análisis, curación, tesis refinada y packaging temprano
+
+1. Crear `narrative_human_analysis.json` y `material_curation.json` con lineage de B5-I1.
+2. Crear `refined_thesis.json`, distinta de `THESIS_PROVISIONAL`, vinculada a análisis y curación.
+3. Crear `early_packaging_hypothesis.json` como interfaz provisional para Equipo 03; no es packaging final.
+4. Ejecutar `src/scripts/b5_i2_gate.py`. Cualquier checksum divergente, auditoría B5-I1 insuficiente, análisis sin evidencia narrativa, curación redundante no justificada, tesis sin derivación o sobrepromesa bloquea.
+
+El estado de salida permitido es `READY_FOR_B5_I2_FUNCTIONAL_AUDIT`. B5-I3, B6 y B7 permanecen sin iniciar.

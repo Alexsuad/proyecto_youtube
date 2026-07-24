@@ -1,5 +1,5 @@
-# Skill — Curación: Selección final de obras (3–5)
-Objetivo: elegir las obras más útiles para el episodio y justificarlo.
+# Skill — Curación por función narrativa B5-I2
+Objetivo: producir `MaterialCuration` sin mínimos rígidos de materiales.
 
 > **Rol ejecutor actual:** Antigravity (en el futuro puede ser un agente Curador especializado en análisis narrativo)
 
@@ -12,16 +12,10 @@ Objetivo: elegir las obras más útiles para el episodio y justificarlo.
 
 ## Pasos
 1) Leer `<EP_PATH>/01_research_bruto.md`
-2) Proponer selección:
-   - Opción A (3 obras)
-   - Opción B (5 obras)
-3) Justificar:
-   - qué aporta cada obra
-   - por qué encaja con el tema
-   - riesgo spoiler/sensibilidad
+2) Evaluar función, contribución a tesis, perspectiva nueva, redundancia, coste de contexto, evidencia, contradicción y uso narrativo.
+3) Diferenciar selección preliminar y final, y justificar exclusiones; no seleccionar solo por afinidad temática.
 
-4) Crear:
-   - `<EP_PATH>/02_curation_obras.md`
+4) Crear `<EP_PATH>/material_curation.json`.
 
 ---
 

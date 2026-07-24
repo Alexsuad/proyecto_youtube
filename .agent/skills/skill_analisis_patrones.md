@@ -1,5 +1,5 @@
-# Skill — Análisis: Emocional / Social / Conductual
-Objetivo: analizar cada obra con foco en patrones útiles para la audiencia.
+# Skill — Análisis narrativo y humano B5-I2
+Objetivo: producir `NarrativeHumanAnalysis` con lectura específica de deseos, miedos, creencias, contradicciones, decisiones, causas, costes, transformación, entorno, poder, instituciones, historia, cultura y sociedad.
 
 > **Rol ejecutor actual:** Antigravity (en el futuro puede ser un agente Analista con modelo especializado en análisis de texto — ej: Claude 3.5 Sonnet)
 
@@ -11,15 +11,11 @@ Objetivo: analizar cada obra con foco en patrones útiles para la audiencia.
 ---
 
 ## Pasos
-1) Para cada obra seleccionada, analizar:
-   - Emocional: qué herida, qué emoción, qué tensión
-   - Social: qué relación, rol, contexto, poder
-   - Conductual: decisiones, hábitos, defensas
+1) Analizar según el material y la pregunta del episodio, sin imponer una lista fija.
+2) Separar hecho, interpretación, hipótesis y contraargumento; cada hallazgo debe enlazar evidencia narrativa concreta y fuente.
+3) Registrar interpretaciones rivales y límites de la analogía.
 
-2) Conectar cada conclusión con el tema central del episodio.
-
-3) Crear:
-   - `<EP_PATH>/04_analisis_patrones.md`
+4) Conectar cada hallazgo con el tema y producir `<EP_PATH>/narrative_human_analysis.json`.
 
 ---
 
