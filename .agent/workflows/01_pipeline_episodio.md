@@ -117,12 +117,19 @@ python src/scripts/thesis_provisional_gate.py `
 - `FAIL`, `BLOCKED` o error técnico detienen.
 - Solo `PASS` o `WARN` permiten terminar B5-I1.
 
+### 7. Auditoría semántica de suficiencia
+- Un revisor IA produce `<EP_PATH>/semantic_sufficiency_audit.json` sobre los cuatro artefactos exactos; no se sustituye por heurísticas Python.
+```powershell
+python src/scripts/semantic_sufficiency_gate.py --brief <EP_PATH>/episode_brief.json --research <EP_PATH>/research_pack.json --evidence-report <EP_PATH>/source_access_and_evidence_report.json --thesis <EP_PATH>/thesis_provisional.json --audit <EP_PATH>/semantic_sufficiency_audit.json --ep-id <EP_ID>
+```
+- `FAIL`, `BLOCKED` o auditoría ausente detienen. `WARN` conserva restricciones para la reauditoría.
+
 ## Gate de salida B5-I1
 
-Cuando los cinco artefactos sean válidos y los gates permitan continuar, B5-I1 termina en:
+Cuando los artefactos y la auditoría semántica permitan continuar, B5-I1 queda preparado para reauditoría en:
 
 ```text
-BLOCKED_PENDING_B5_I2
+READY_FOR_TEAM_02_FUNCTIONAL_REAUDIT
 ```
 
-Las fases heredadas de curación, análisis, packaging, outline, redacción, edición y cierre quedan deshabilitadas hasta que sus incrementos correspondientes estén implementados y auditados.
+Esto no autoriza B5-I2. Las skills heredadas permanecen no ejecutables hasta sus bloques registrados en `config/skill_catalog.json`.

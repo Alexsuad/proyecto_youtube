@@ -250,6 +250,16 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
         if entry.get("status") in ("PENDING", "NOT_VERIFIABLE"):
             if not entry.get("limitation_or_pending") or entry.get("scope_decision") == "NONE":
                 violations.append(f"Coverage {entry.get('dimension_id')} pendiente o no verificable requiere limitación y decisión de bloqueo o reducción.")
+        if entry.get("status") == "PARTIALLY_COVERED":
+            required = ("limitation_or_pending", "editorial_impact", "scope_decision", "propagated_constraint")
+            if any(not entry.get(field) or entry.get(field) == "NONE" for field in required) or entry.get("editorial_impact") == "NOT_APPLICABLE":
+                violations.append(f"Coverage parcial {entry.get('dimension_id')} requiere falta, impacto editorial, decisión de alcance y restricción propagada.")
+    claims = data.get("critical_claims_assessment", {})
+    if isinstance(claims, dict) and claims.get("status") == "IDENTIFIED" and not claims.get("claim_ids"):
+        violations.append("Critical claims identificados requieren claim_ids concretos.")
+    if isinstance(claims, dict) and claims.get("status") == "NONE_JUSTIFIED":
+        if not claims.get("justification") or claims.get("editorial_impact") == "NONE":
+            violations.append("La ausencia de claims críticos requiere justificación e impacto editorial explícitos.")
     return violations
 
 

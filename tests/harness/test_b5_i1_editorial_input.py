@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import socket
 from pathlib import Path
@@ -15,6 +16,7 @@ from src.core.status import GateStatus
 from src.scripts.evidence_sufficiency_gate import evaluate as evaluate_evidence
 from src.scripts.qa_brief_research import evaluate as evaluate_brief_research
 from src.scripts.thesis_provisional_gate import evaluate as evaluate_thesis_gate
+from src.scripts.semantic_sufficiency_gate import evaluate as evaluate_semantic_gate
 
 CHECKSUM = "a" * 64
 
@@ -92,7 +94,8 @@ def valid_research(source_count: int = 3) -> dict:
         "hypotheses": [],
         "contradictions": [],
         "alternative_views": [item("A1")],
-        "coverage": [{"dimension_id": dimension, "status": "COVERED", "related_finding_ids": ["F1"], "related_source_ids": ["S1"], "limitation_or_pending": None, "scope_decision": "NONE"} for dimension in ["CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS", "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL", "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES"]],
+        "coverage": [{"dimension_id": dimension, "status": "COVERED", "related_finding_ids": ["F1"], "related_source_ids": ["S1"], "limitation_or_pending": None, "scope_decision": "NONE", "editorial_impact": "NOT_APPLICABLE", "propagated_constraint": None, "mitigation_status": "NOT_REQUIRED"} for dimension in ["CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS", "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL", "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES"]],
+        "critical_claims_assessment": {"status": "IDENTIFIED", "claim_ids": ["C1"], "justification": None, "editorial_impact": "MATERIAL"},
         "narrative_evidence": [{**item("N1"), "evidence_kind": "SCENE"}],
         "external_reality_evidence": [{**item("E1"), "evidence_kind": "STUDY"}],
         "source_registry": sources,
@@ -272,8 +275,8 @@ def test_provisional_and_refined_stages_are_not_confused() -> None:
 
 def test_workflow_stops_before_curation_and_outline() -> None:
     workflow = Path(".agent/workflows/01_pipeline_episodio.md").read_text(encoding="utf-8")
-    assert "BLOCKED_PENDING_B5_I2" in workflow
-    assert "fases heredadas de curación" in workflow
+    assert "READY_FOR_TEAM_02_FUNCTIONAL_REAUDIT" in workflow
+    assert "no autoriza B5-I2" in workflow
     assert "03_mapa_eventos.md" not in workflow
 
 
@@ -394,7 +397,8 @@ def _valid_research_dict() -> dict:
         "hypotheses": [],
         "contradictions": [],
         "alternative_views": [{"item_id": "A1", "statement": "Alternativa.", "source_refs": ["S2"], "locator": "web", "confidence": "MEDIUM"}],
-        "coverage": [{"dimension_id": dimension, "status": "COVERED", "related_finding_ids": ["F1"], "related_source_ids": ["S1"], "limitation_or_pending": None, "scope_decision": "NONE"} for dimension in ["CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS", "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL", "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES"]],
+        "coverage": [{"dimension_id": dimension, "status": "COVERED", "related_finding_ids": ["F1"], "related_source_ids": ["S1"], "limitation_or_pending": None, "scope_decision": "NONE", "editorial_impact": "NOT_APPLICABLE", "propagated_constraint": None, "mitigation_status": "NOT_REQUIRED"} for dimension in ["CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS", "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL", "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES"]],
+        "critical_claims_assessment": {"status": "IDENTIFIED", "claim_ids": ["C1"], "justification": None, "editorial_impact": "MATERIAL"},
         "narrative_evidence": [{"item_id": "N1", "statement": "Escena.", "source_refs": ["S1"], "locator": "00:10", "confidence": "HIGH", "evidence_kind": "SCENE"}],
         "external_reality_evidence": [{"item_id": "E1", "statement": "Estudio.", "source_refs": ["S2"], "locator": "web", "confidence": "MEDIUM", "evidence_kind": "STUDY"}],
         "source_registry": [
@@ -560,3 +564,61 @@ def test_thesis_gate_makes_no_network_calls(tmp_path: Path, monkeypatch) -> None
     evidence_p.write_text(json.dumps(evidence_dict), encoding="utf-8")
     result = evaluate_thesis_gate(thesis_p, research_p, evidence_p, "TH-001")
     assert result.status is GateStatus.PASS
+
+
+def _write_semantic_inputs(tmp_path: Path, decision: str = "PASS") -> tuple[Path, Path, Path, Path, Path]:
+    brief, research, evidence, thesis = tmp_path / "brief.json", tmp_path / "research.json", tmp_path / "evidence.json", tmp_path / "thesis.json"
+    brief.write_text(json.dumps(valid_brief()), encoding="utf-8")
+    research.write_text(json.dumps(_valid_research_dict()), encoding="utf-8")
+    evidence.write_text(json.dumps(_valid_evidence_dict()), encoding="utf-8")
+    thesis.write_text(json.dumps(_valid_thesis()), encoding="utf-8")
+    checksum = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+    audit = tmp_path / "audit.json"
+    audit.write_text(json.dumps({"audit_id": "SSA-1", "episode_id": "EP-001", "brief_checksum": checksum(brief), "research_checksum": checksum(research), "evidence_report_checksum": checksum(evidence), "thesis_checksum": checksum(thesis), "audited_by": "team_02_ai", "audit_method": "AI_SEMANTIC_REVIEW", "findings": [{"criterion": "THESIS_SUBSTANCE", "assessment": "SATISFIED" if decision == "PASS" else "NOT_SATISFIED", "rationale": "Juicio semántico explícito."}], "decision": decision, "created_at": "2026-07-24T20:00:00Z"}), encoding="utf-8")
+    return brief, research, evidence, thesis, audit
+
+
+def test_semantic_audit_missing_blocks(tmp_path: Path) -> None:
+    brief, research, evidence, thesis, audit = _write_semantic_inputs(tmp_path)
+    audit.unlink()
+    assert evaluate_semantic_gate(brief, research, evidence, thesis, audit, "EP-001").status is GateStatus.BLOCKED
+
+
+def test_semantic_audit_wrong_checksum_fails(tmp_path: Path) -> None:
+    brief, research, evidence, thesis, audit = _write_semantic_inputs(tmp_path)
+    data = json.loads(audit.read_text(encoding="utf-8")); data["thesis_checksum"] = "b" * 64; audit.write_text(json.dumps(data), encoding="utf-8")
+    assert evaluate_semantic_gate(brief, research, evidence, thesis, audit, "EP-001").status is GateStatus.FAIL
+
+
+def test_semantic_audit_generic_content_can_fail(tmp_path: Path) -> None:
+    brief, research, evidence, thesis, audit = _write_semantic_inputs(tmp_path, "FAIL")
+    assert evaluate_semantic_gate(brief, research, evidence, thesis, audit, "EP-001").status is GateStatus.FAIL
+
+
+def test_semantic_audit_specific_candidate_can_pass(tmp_path: Path) -> None:
+    brief, research, evidence, thesis, audit = _write_semantic_inputs(tmp_path, "PASS")
+    assert evaluate_semantic_gate(brief, research, evidence, thesis, audit, "EP-001").status is GateStatus.PASS
+
+
+def test_partial_coverage_dispositions(tmp_path: Path) -> None:
+    research = valid_research()
+    entry = research["coverage"][0]
+    entry.update({"status": "PARTIALLY_COVERED", "limitation_or_pending": "Falta contexto.", "editorial_impact": "NON_CRITICAL", "scope_decision": "REDUCED_SCOPE", "propagated_constraint": "No generalizar.", "mitigation_status": "MITIGATED"})
+    ep, active = write_inputs(tmp_path, research=research)
+    assert evaluate_brief_research(ep, active_profile_path=active).status is GateStatus.WARN
+    entry.update({"editorial_impact": "CRITICAL", "mitigation_status": "INSUFFICIENT"})
+    (ep / "research_pack.json").write_text(json.dumps(research), encoding="utf-8")
+    assert evaluate_brief_research(ep, active_profile_path=active).status is GateStatus.BLOCKED
+
+
+def test_partial_coverage_without_impact_fails(tmp_path: Path) -> None:
+    research = valid_research()
+    research["coverage"][0].update({"status": "PARTIALLY_COVERED", "limitation_or_pending": "Falta contexto.", "scope_decision": "REDUCED_SCOPE", "propagated_constraint": "No generalizar.", "mitigation_status": "MITIGATED", "editorial_impact": "NOT_APPLICABLE"})
+    ep, active = write_inputs(tmp_path, research=research)
+    assert evaluate_brief_research(ep, active_profile_path=active).status is GateStatus.FAIL
+
+
+def test_inherited_skills_are_marked_non_executable() -> None:
+    catalog = json.loads(Path("config/skill_catalog.json").read_text(encoding="utf-8"))
+    deferred = {item["skill_id"]: item for item in catalog["skills"] if item.get("non_executable_current")}
+    assert set(deferred) >= {"skill_analisis_patrones", "skill_curation_obras", "skill_mapa_eventos_y_outline", "skill_guion_longform", "skill_qa_editorial", "skill_verificacion_veracidad_notebooklm", "skill_extraer_voice_learnings"}

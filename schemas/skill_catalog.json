@@ -1,3 +1,28 @@
 {
-  "$schema":"http://json-schema.org/draft-07/schema#","title":"Canonical Skill Catalog","type":"object","additionalProperties":false,"required":["catalog_version","skills"],"properties":{"catalog_version":{"type":"string"},"skills":{"type":"array","minItems":21,"items":{"type":"object","additionalProperties":false,"required":["skill_id","path","canonical_owner","classification","target_or_merge_destination","rationale","covered_by_general_capability"],"properties":{"skill_id":{"type":"string","pattern":"^[a-z0-9_]+$"},"path":{"type":"string","pattern":"^\\.agent/skills/.+\\.md$"},"canonical_owner":{"type":"string"},"classification":{"enum":["KEEP","MODIFY_LATER","MERGE","REPLACE","RETIRE","NEEDS_PRODUCT_DECISION"]},"target_or_merge_destination":{"type":"string"},"rationale":{"type":"string"},"covered_by_general_capability":{"type":"array","items":{"type":"string"}}}},"uniqueItems":true}}
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Canonical Skill Catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["catalog_version", "skills"],
+  "properties": {
+    "catalog_version": {"type": "string"},
+    "skills": {
+      "type": "array", "minItems": 21, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["skill_id", "path", "canonical_owner", "classification", "target_or_merge_destination", "rationale", "covered_by_general_capability"],
+        "properties": {
+          "skill_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+          "path": {"type": "string", "pattern": "^\\.agent/skills/.+\\.md$"},
+          "canonical_owner": {"type": "string"},
+          "classification": {"enum": ["KEEP", "MODIFY_LATER", "MERGE", "REPLACE", "RETIRE", "NEEDS_PRODUCT_DECISION", "MODIFY_REQUIRED_IN_B5_I2", "MODIFY_REQUIRED_IN_B5_I3", "REWRITE_REQUIRED_IN_B6", "REPLACE_OR_SPLIT_REQUIRED_IN_B6_B7", "REPLACE_REQUIRED_IN_B6", "MODIFY_REQUIRED_IN_LEARNING_BLOCK"]},
+          "target_or_merge_destination": {"type": "string"},
+          "rationale": {"type": "string"},
+          "covered_by_general_capability": {"type": "array", "items": {"type": "string"}},
+          "future_block": {"type": "string"},
+          "non_executable_current": {"type": "boolean"}
+        }
+      }
+    }
+  }
 }

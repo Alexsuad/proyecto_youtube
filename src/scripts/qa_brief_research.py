@@ -72,6 +72,22 @@ def _brief_and_coverage_violations(brief: dict[str, Any], research: dict[str, An
     return violations
 
 
+def _coverage_disposition(brief: dict[str, Any], research: dict[str, Any]) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    blocked: list[str] = []
+    for entry in research.get("coverage", []):
+        if not isinstance(entry, dict) or entry.get("status") != "PARTIALLY_COVERED":
+            continue
+        if entry.get("editorial_impact") == "CRITICAL" and entry.get("mitigation_status") != "MITIGATED":
+            blocked.append(f"Cobertura parcial crítica sin mitigación suficiente: {entry.get('dimension_id')}")
+        else:
+            warnings.append(f"Cobertura parcial limitada: {entry.get('dimension_id')}")
+    claims = research.get("critical_claims_assessment", {})
+    if brief.get("nivel_investigacion") in ("PROFUNDO", "CRITICO") and isinstance(claims, dict) and claims.get("status") == "NONE_JUSTIFIED":
+        warnings.append("Claims críticos aún no identificados: ausencia justificada e impacto declarado")
+    return warnings, blocked
+
+
 def evaluate(
     ep_path: Path,
     episode_id: str | None = None,
@@ -133,6 +149,7 @@ def evaluate(
         violations.append("ResearchPack.brief_version no coincide con EpisodeBrief.brief_version")
     violations.extend(_substantive_research_violations(research))
     violations.extend(_brief_and_coverage_violations(brief, research))
+    coverage_warnings, coverage_blocked = _coverage_disposition(brief, research)
 
     evidence.update(
         {
@@ -156,7 +173,13 @@ def evaluate(
             evidence=evidence,
         )
 
-    warnings: list[str] = []
+    if coverage_blocked:
+        return GateResult(
+            "qa_brief_research", artifact_id, "2.1.0", GateStatus.BLOCKED,
+            "La cobertura crítica no permite continuar", coverage_blocked, evidence=evidence,
+        )
+
+    warnings: list[str] = coverage_warnings
     if research.get("limitations"):
         warnings.extend([f"Limitación declarada: {item}" for item in research["limitations"]])
     if research.get("unsupported_claims"):

@@ -5,10 +5,10 @@
       "skill_id": "skill_analisis_patrones",
       "path": ".agent/skills/skill_analisis_patrones.md",
       "canonical_owner": "NARRATIVE_ARCHITECTURE",
-      "classification": "KEEP",
+      "classification": "MODIFY_REQUIRED_IN_B5_I2",
       "target_or_merge_destination": "NARRATIVE_ARCHITECTURE",
-      "rationale": "Convierte observaciones en patrones narrativos.",
-      "covered_by_general_capability": []
+      "rationale": "Problema funcional: patrones heredados sin contrato B5-I2.",
+      "covered_by_general_capability": [], "future_block": "B5-I2", "non_executable_current": true
     },
     {
       "skill_id": "skill_auditoria_sistema",
@@ -60,30 +60,30 @@
       "skill_id": "skill_curation_obras",
       "path": ".agent/skills/skill_curation_obras.md",
       "canonical_owner": "RESEARCH_AND_CURATION",
-      "classification": "KEEP",
+      "classification": "MODIFY_REQUIRED_IN_B5_I2",
       "target_or_merge_destination": "RESEARCH_AND_CURATION",
-      "rationale": "Selecciona obras con justificación.",
-      "covered_by_general_capability": []
+      "rationale": "Problema funcional: curación heredada sin restricciones B5-I1.",
+      "covered_by_general_capability": [], "future_block": "B5-I2", "non_executable_current": true
     },
     {
       "skill_id": "skill_extraer_voice_learnings",
       "path": ".agent/skills/skill_extraer_voice_learnings.md",
       "canonical_owner": "EDITOR",
-      "classification": "NEEDS_PRODUCT_DECISION",
+      "classification": "MODIFY_REQUIRED_IN_LEARNING_BLOCK",
       "target_or_merge_destination": "EDITOR",
-      "rationale": "El alcance de aprendizaje de voz requiere decisión de producto.",
-      "covered_by_general_capability": []
+      "rationale": "Problema funcional: aprendizaje de voz diferido al bloque de learning.",
+      "covered_by_general_capability": [], "future_block": "LEARNING_BLOCK", "non_executable_current": true
     },
     {
       "skill_id": "skill_guion_longform",
       "path": ".agent/skills/skill_guion_longform.md",
       "canonical_owner": "WRITING",
-      "classification": "KEEP",
+      "classification": "REWRITE_REQUIRED_IN_B6",
       "target_or_merge_destination": "WRITING",
-      "rationale": "Redacción del guion longform.",
+      "rationale": "Problema funcional: redacción heredada requiere reescritura B6.",
       "covered_by_general_capability": [
         "decidir-tipo-pieza-sistema-agentico"
-      ]
+      ], "future_block": "B6", "non_executable_current": true
     },
     {
       "skill_id": "skill_iniciar_episodio",
@@ -100,12 +100,12 @@
       "skill_id": "skill_mapa_eventos_y_outline",
       "path": ".agent/skills/skill_mapa_eventos_y_outline.md",
       "canonical_owner": "NARRATIVE_ARCHITECTURE",
-      "classification": "KEEP",
+      "classification": "MODIFY_REQUIRED_IN_B5_I3",
       "target_or_merge_destination": "NARRATIVE_ARCHITECTURE",
-      "rationale": "Produce mapa de eventos y outline.",
+      "rationale": "Problema funcional: outline depende de B5-I3.",
       "covered_by_general_capability": [
         "decidir-tipo-pieza-sistema-agentico"
-      ]
+      ], "future_block": "B5-I3", "non_executable_current": true
     },
     {
       "skill_id": "skill_owner_report",
@@ -145,13 +145,13 @@
       "skill_id": "skill_qa_editorial",
       "path": ".agent/skills/skill_qa_editorial.md",
       "canonical_owner": "EDITOR",
-      "classification": "KEEP",
+      "classification": "REPLACE_OR_SPLIT_REQUIRED_IN_B6_B7",
       "target_or_merge_destination": "EDITOR",
-      "rationale": "Control estructural y de voz del guion.",
+      "rationale": "Problema funcional: QA heredado debe reemplazarse o dividirse en B6-B7.",
       "covered_by_general_capability": [
         "tests-validacion-cierre",
         "verificar-evidencia-minima-cierre"
-      ]
+      ], "future_block": "B6-B7", "non_executable_current": true
     },
     {
       "skill_id": "skill_qa_lenguaje_youtube",
@@ -219,12 +219,12 @@
       "skill_id": "skill_verificacion_veracidad_notebooklm",
       "path": ".agent/skills/skill_verificacion_veracidad_notebooklm.md",
       "canonical_owner": "RESEARCH_AND_CURATION",
-      "classification": "NEEDS_PRODUCT_DECISION",
+      "classification": "REPLACE_REQUIRED_IN_B6",
       "target_or_merge_destination": "RESEARCH_AND_CURATION",
-      "rationale": "La dependencia histórica de una herramienta externa requiere decisión neutral.",
+      "rationale": "Problema funcional: dependencia histórica externa a reemplazar en B6.",
       "covered_by_general_capability": [
         "verificar-evidencia-minima-cierre"
-      ]
+      ], "future_block": "B6", "non_executable_current": true
     }
   ]
 }

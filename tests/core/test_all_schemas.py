@@ -264,7 +264,8 @@ VALID_FIXTURES = {
         "hypotheses": [],
         "contradictions": [],
         "alternative_views": [],
-        "coverage": [{"dimension_id": d, "status": "COVERED", "related_finding_ids": ["I1"], "related_source_ids": ["S1"], "limitation_or_pending": None, "scope_decision": "NONE"} for d in ["CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS", "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL", "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES"]],
+        "coverage": [{"dimension_id": d, "status": "COVERED", "related_finding_ids": ["I1"], "related_source_ids": ["S1"], "limitation_or_pending": None, "scope_decision": "NONE", "editorial_impact": "NOT_APPLICABLE", "propagated_constraint": None, "mitigation_status": "NOT_REQUIRED"} for d in ["CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS", "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL", "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES"]],
+        "critical_claims_assessment": {"status": "NONE_JUSTIFIED", "claim_ids": [], "justification": "Fixture sin claim central.", "editorial_impact": "LIMITED"},
         "narrative_evidence": [{"item_id": "N1", "statement": "Escena.", "source_refs": ["S1"], "locator": "00:10", "confidence": "HIGH", "evidence_kind": "SCENE"}],
         "external_reality_evidence": [{"item_id": "E1", "statement": "Estudio.", "source_refs": ["S1"], "locator": "p. 11", "confidence": "HIGH", "evidence_kind": "STUDY"}],
         "source_registry": [{"source_id": "S1", "title": "Fuente oficial", "source_type": "PRIMARY", "url": "https://example.com/source", "access_type": "DIRECT", "locator": "documento completo", "confidence": "HIGH"}],
@@ -323,6 +324,13 @@ VALID_FIXTURES = {
         "open_questions": ["¿Qué evidencia adicional puede cambiar la tesis?"],
         "version": "1.0.0",
         "created_at": "2026-07-23T20:00:00Z"
+    },
+    "semantic_sufficiency_audit": {
+        "audit_id": "SSA-001", "episode_id": "EP-001", "brief_checksum": "a" * 64,
+        "research_checksum": "a" * 64, "evidence_report_checksum": "a" * 64, "thesis_checksum": "a" * 64,
+        "audited_by": "team_02_ai_reviewer", "audit_method": "AI_SEMANTIC_REVIEW",
+        "findings": [{"criterion": "THESIS_SUBSTANCE", "assessment": "SATISFIED", "rationale": "La tesis responde a la pregunta."}],
+        "decision": "PASS", "created_at": "2026-07-24T20:00:00Z"
     },
     "viewer_journey": {
         "estado_inicial_del_espectador": "Curioso y expectante",

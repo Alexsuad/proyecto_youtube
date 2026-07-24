@@ -269,7 +269,7 @@ class TestB2Harness(unittest.TestCase):
         workflow = (ROOT / ".agent/workflows/01_pipeline_episodio.md").read_text(encoding="utf-8")
         self.assertNotIn("output/auditoria_brief_research_", workflow)
         self.assertNotIn("qa_youtube_ultra.md` + ESTADO_GLOBAL", workflow)
-        self.assertIn("BLOCKED_PENDING_B5_I2", workflow)
+        self.assertIn("READY_FOR_TEAM_02_FUNCTIONAL_REAUDIT", workflow)
         self.assertNotIn("09_packaging.md", workflow)
         self.assertNotIn("EditorialScriptApproval", workflow)
 
@@ -361,5 +361,5 @@ class TestB2Harness(unittest.TestCase):
         self.assertIn("<EP_PATH>/source_access_and_evidence_report.json", workflow)
         self.assertIn("schemas/source_access_and_evidence_report.json", workflow)
         # B5-I1 se detiene antes de los controles pre-guion heredados.
-        self.assertIn("BLOCKED_PENDING_B5_I2", workflow)
+        self.assertIn("READY_FOR_TEAM_02_FUNCTIONAL_REAUDIT", workflow)
         self.assertNotIn("qa_lenguaje_youtube_ultra_pre_guion.json", workflow)

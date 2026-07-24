@@ -19,3 +19,6 @@ Auditar `EpisodeBrief` y `ResearchPack` antes del gate de suficiencia de evidenc
 
 ## Salida
 `GateResult` canónico persistido por `src/scripts/qa_brief_research.py`.
+
+## Auditoría semántica obligatoria
+La suficiencia editorial no se decide por conteos ni por este QA determinista. Un auditor con IA produce `semantic_sufficiency_audit.json` sobre los checksums exactos de brief, investigación, reporte y tesis. Evalúa sustancia, relevancia, rival, claims y preparación real; el gate canónico solo comprueba lineage y decisión.

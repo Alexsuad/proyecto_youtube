@@ -15,6 +15,7 @@
     "contradictions",
     "alternative_views",
     "coverage",
+    "critical_claims_assessment",
     "narrative_evidence",
     "external_reality_evidence",
     "source_registry",
@@ -76,6 +77,7 @@
       "minItems": 1,
       "items": {"$ref": "#/definitions/coverageEntry"}
     },
+    "critical_claims_assessment": {"$ref": "#/definitions/criticalClaimsAssessment"},
     "narrative_evidence": {
       "type": "array",
       "items": {
@@ -129,14 +131,27 @@
   "definitions": {
     "coverageEntry": {
       "type": "object", "additionalProperties": false,
-      "required": ["dimension_id", "status", "related_finding_ids", "related_source_ids", "limitation_or_pending", "scope_decision"],
+      "required": ["dimension_id", "status", "related_finding_ids", "related_source_ids", "limitation_or_pending", "scope_decision", "editorial_impact", "propagated_constraint", "mitigation_status"],
       "properties": {
         "dimension_id": {"type": "string", "enum": ["CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS", "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON", "PRIMARY_NARRATIVE_MATERIAL", "CRITICAL_CLAIMS", "ALTERNATIVE_PERSPECTIVES"]},
         "status": {"type": "string", "enum": ["COVERED", "PARTIALLY_COVERED", "PENDING", "NOT_VERIFIABLE"]},
         "related_finding_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
         "related_source_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
         "limitation_or_pending": {"type": ["string", "null"]}
-        ,"scope_decision": {"type": "string", "enum": ["NONE", "REDUCED_SCOPE", "BLOCKED"]}
+        ,"scope_decision": {"type": "string", "enum": ["NONE", "REDUCED_SCOPE", "BLOCKED"]},
+        "editorial_impact": {"type": "string", "enum": ["NOT_APPLICABLE", "NON_CRITICAL", "CRITICAL"]},
+        "propagated_constraint": {"type": ["string", "null"]},
+        "mitigation_status": {"type": "string", "enum": ["NOT_REQUIRED", "MITIGATED", "INSUFFICIENT"]}
+      }
+    },
+    "criticalClaimsAssessment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "claim_ids", "justification", "editorial_impact"],
+      "properties": {
+        "status": {"type": "string", "enum": ["IDENTIFIED", "NONE_JUSTIFIED"]},
+        "claim_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "justification": {"type": ["string", "null"]},
+        "editorial_impact": {"type": "string", "enum": ["NONE", "LIMITED", "MATERIAL", "CRITICAL"]}
       }
     },
     "narrativeEvidence": {
