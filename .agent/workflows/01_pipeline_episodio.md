@@ -136,9 +136,10 @@ Esto no autoriza B5-I2. Las skills heredadas permanecen no ejecutables hasta sus
 
 ## B5-I2 — análisis, curación, tesis refinada y packaging temprano
 
-1. Crear `narrative_human_analysis.json` y `material_curation.json` con lineage de B5-I1.
-2. Crear `refined_thesis.json`, distinta de `THESIS_PROVISIONAL`, vinculada a análisis y curación.
-3. Crear `early_packaging_hypothesis.json` como interfaz provisional para Equipo 03; no es packaging final.
-4. Ejecutar `src/scripts/b5_i2_gate.py`. Cualquier checksum divergente, auditoría B5-I1 insuficiente, análisis sin evidencia narrativa, curación redundante no justificada, tesis sin derivación o sobrepromesa bloquea.
+1. Crear un `narrative_human_analysis.json` por cada material que pueda quedar seleccionado y `material_curation.json` con lineage y restricciones B5-I1.
+2. Crear `refined_thesis.json`, distinta de `THESIS_PROVISIONAL`, vinculada a análisis, curación, evidencia y restricciones heredadas.
+3. Crear `early_packaging_hypothesis.json` como interfaz provisional estructurada para Equipo 03; no es packaging final.
+4. Un revisor IA produce `b5_i2_semantic_sufficiency_audit.json` con los nueve criterios B5-I2 y checksums exactos.
+5. Ejecutar `src/scripts/b5_i2_gate.py` incluyendo la auditoría B5-I2. Cualquier checksum divergente, auditoría insuficiente, análisis sin evidencia, curación final incompleta, tesis sin refinamiento demostrado o packaging deshonesto bloquea.
 
-El estado de salida permitido es `READY_FOR_B5_I2_FUNCTIONAL_AUDIT`. B5-I3, B6 y B7 permanecen sin iniciar.
+El estado de salida permitido es `READY_FOR_B5_I2_FUNCTIONAL_REAUDIT`. B5-I3, B6 y B7 permanecen sin iniciar.

@@ -13,9 +13,10 @@ Objetivo: producir `MaterialCuration` sin mínimos rígidos de materiales.
 ## Pasos
 1) Leer `<EP_PATH>/01_research_bruto.md`
 2) Evaluar función, contribución a tesis, perspectiva nueva, redundancia, coste de contexto, evidencia, contradicción y uso narrativo.
-3) Diferenciar selección preliminar y final, y justificar exclusiones; no seleccionar solo por afinidad temática.
+3) Diferenciar selección preliminar y final, y justificar exclusiones; no seleccionar solo por afinidad temática. Una curación `FINAL` no conserva `CANDIDATE`.
+4) Registrar razón de secuencia, relación del conjunto, contribución única por material seleccionado y justificación de solapamientos funcionales.
 
-4) Crear `<EP_PATH>/material_curation.json`.
+5) Crear `<EP_PATH>/material_curation.json`.
 
 ---
 

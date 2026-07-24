@@ -15,7 +15,7 @@ Debe reconstruirse tras investigar: premisas vinculadas a hallazgos concretos, e
 La tesis será validada por `thesis_provisional_gate.py` tras su creación. Solo PASS o WARN permiten continuar a B5-I2.
 
 ## Modo THESIS_REFINED
-El modo refinado estuvo bloqueado hasta B5-I2. En B5-I2 produce `RefinedThesis` desde análisis narrativo, curación, evidencia y tesis provisional. No crea outline ni apertura.
+El modo refinado estuvo bloqueado hasta B5-I2. En B5-I2 produce `RefinedThesis` desde análisis narrativo, curación, evidencia y tesis provisional. Debe declarar qué confirmó, cambió y descartó, su matiz, razón de refinamiento y restricciones heredadas; si conserva la misma formulación, justifica por qué sigue siendo defendible. No crea outline ni apertura.
 
 ## Bloqueos
 - evidencia en `FAIL` o `BLOCKED`;
