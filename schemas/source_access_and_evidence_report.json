@@ -27,6 +27,7 @@
     "required_disclosures",
     "propagated_constraints",
     "critical_claim_assessments",
+    "critical_claims_propagation",
     "sufficiency_basis",
     "created_at"
   ],
@@ -128,6 +129,7 @@
     },
     "propagated_constraints": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "critical_claim_assessments": {"type": "array", "items": {"$ref": "#/definitions/criticalClaimAssessment"}},
+    "critical_claims_propagation": {"$ref": "#/definitions/criticalClaimsPropagation"},
     "sufficiency_basis": {"type": "object", "additionalProperties": false, "required": ["central_question", "critical_claims", "analysis_type", "material_roles", "requested_depth", "research_coverage"], "properties": {"central_question": {"type": "string", "minLength": 1}, "critical_claims": {"type": "array", "items": {"type": "string", "minLength": 1}}, "analysis_type": {"type": "string", "minLength": 1}, "material_roles": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "requested_depth": {"type": "string", "minLength": 1}, "research_coverage": {"type": "string", "minLength": 1}}},
     "created_at": {
       "type": "string",
@@ -137,13 +139,25 @@
   "definitions": {
     "criticalClaimAssessment": {
       "type": "object", "additionalProperties": false,
-      "required": ["claim_id", "claim_text", "support_status", "confidence", "allowed_scope"],
+      "required": ["claim_id", "claim_text", "support_status", "confidence", "allowed_scope", "evidence_refs"],
       "properties": {
         "claim_id": {"type": "string", "minLength": 1},
         "claim_text": {"type": "string", "minLength": 1},
         "support_status": {"type": "string", "enum": ["SUPPORTED", "LIMITED", "EXCLUDED", "INSUFFICIENT"]},
         "confidence": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH"]},
         "allowed_scope": {"type": "string", "minLength": 1}
+        ,"evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "criticalClaimsPropagation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "claim_ids", "justification", "editorial_impact", "scope_decision"],
+      "properties": {
+        "status": {"type": "string", "enum": ["IDENTIFIED", "NONE_JUSTIFIED"]},
+        "claim_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "justification": {"type": ["string", "null"]},
+        "editorial_impact": {"type": "string", "enum": ["NONE", "LIMITED", "MATERIAL", "CRITICAL"]},
+        "scope_decision": {"type": "string", "minLength": 1}
       }
     },
     "sourceEntry": {

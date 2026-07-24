@@ -308,7 +308,7 @@ VALID_FIXTURES = {
         "nivel_de_confianza": "HIGH",
         "can_proceed": True,
         "required_disclosures": [],
-        "allowed_analyses": ["CONTEXTUAL_ANALYSIS"], "limited_analyses": [], "prohibited_analyses": [], "excluded_claims": [], "propagated_constraints": [], "critical_claim_assessments": [],
+        "allowed_analyses": ["CONTEXTUAL_ANALYSIS"], "limited_analyses": [], "prohibited_analyses": [], "excluded_claims": [], "propagated_constraints": [], "critical_claim_assessments": [], "critical_claims_propagation": {"status": "NONE_JUSTIFIED", "claim_ids": [], "justification": "Fixture sin claims críticos.", "editorial_impact": "LIMITED", "scope_decision": "REDUCED_SCOPE"},
         "sufficiency_basis": {"central_question": "Pregunta", "critical_claims": [], "analysis_type": "CONTEXTUAL_ANALYSIS", "material_roles": ["PRIMARY_NARRATIVE_MATERIAL"], "requested_depth": "PROFUNDO", "research_coverage": "Cobertura revisada"},
         "created_at": "2026-07-23T20:00:00Z"
     },
@@ -329,7 +329,7 @@ VALID_FIXTURES = {
         "audit_id": "SSA-001", "episode_id": "EP-001", "brief_checksum": "a" * 64,
         "research_checksum": "a" * 64, "evidence_report_checksum": "a" * 64, "thesis_checksum": "a" * 64,
         "audited_by": "team_02_ai_reviewer", "audit_method": "AI_SEMANTIC_REVIEW",
-        "findings": [{"criterion": "THESIS_SUBSTANCE", "assessment": "SATISFIED", "rationale": "La tesis responde a la pregunta."}],
+        "findings": [{"criterion": criterion, "assessment": "SATISFIED", "rationale": "La auditoría evalúa el criterio.", "references": ["thesis.statement"]} for criterion in ["CENTRAL_QUESTION_SPECIFICITY", "RESEARCH_RELEVANCE", "DEPTH_FIT", "RIVAL_PERSPECTIVE_SUBSTANCE", "NARRATIVE_UTILITY", "CRITICAL_CLAIMS_QUALITY", "THESIS_SUBSTANCE", "READINESS_FOR_B5_I2"]],
         "decision": "PASS", "created_at": "2026-07-24T20:00:00Z"
     },
     "viewer_journey": {

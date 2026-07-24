@@ -51,6 +51,7 @@ def report(can_proceed=True, limitations=None, pending=None):
         "required_disclosures": [],
         "propagated_constraints": [],
         "critical_claim_assessments": [],
+        "critical_claims_propagation": {"status": "NONE_JUSTIFIED", "claim_ids": [], "justification": "B2 no formula claims centrales.", "editorial_impact": "LIMITED", "scope_decision": "REDUCED_SCOPE"},
         "sufficiency_basis": {
             "central_question": "Pregunta sintética de B2.",
             "critical_claims": [],

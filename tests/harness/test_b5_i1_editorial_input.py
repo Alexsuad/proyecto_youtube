@@ -147,7 +147,8 @@ def valid_report() -> dict:
         "prohibited_analyses": [],
         "excluded_claims": [],
         "propagated_constraints": [],
-        "critical_claim_assessments": [],
+        "critical_claim_assessments": [{"claim_id": "C1", "claim_text": "Claim central.", "support_status": "SUPPORTED", "confidence": "HIGH", "allowed_scope": "Contexto del episodio", "evidence_refs": ["S1"]}],
+        "critical_claims_propagation": {"status": "IDENTIFIED", "claim_ids": ["C1"], "justification": None, "editorial_impact": "MATERIAL", "scope_decision": "CONTINUE_WITH_REVIEW"},
         "sufficiency_basis": {"central_question": "¿Por qué evitamos aquello que más deseamos?", "critical_claims": [], "analysis_type": "CONTEXTUAL_ANALYSIS", "material_roles": ["PRIMARY_NARRATIVE_MATERIAL"], "requested_depth": "PROFUNDO", "research_coverage": "Cobertura revisada"},
         "created_at": "2026-07-23T20:00:00Z",
     }
@@ -442,7 +443,8 @@ def _valid_evidence_dict() -> dict:
         "prohibited_analyses": [],
         "excluded_claims": [],
         "propagated_constraints": [],
-        "critical_claim_assessments": [],
+        "critical_claim_assessments": [{"claim_id": "C1", "claim_text": "Claim central.", "support_status": "SUPPORTED", "confidence": "HIGH", "allowed_scope": "Contexto del episodio", "evidence_refs": ["S1"]}],
+        "critical_claims_propagation": {"status": "IDENTIFIED", "claim_ids": ["C1"], "justification": None, "editorial_impact": "MATERIAL", "scope_decision": "CONTINUE_WITH_REVIEW"},
         "sufficiency_basis": {"central_question": "Pregunta", "critical_claims": [], "analysis_type": "CONTEXTUAL_ANALYSIS", "material_roles": ["PRIMARY_NARRATIVE_MATERIAL"], "requested_depth": "ESTANDAR", "research_coverage": "Cobertura revisada"},
         "created_at": "2026-07-23T20:00:00Z",
     }
@@ -574,7 +576,9 @@ def _write_semantic_inputs(tmp_path: Path, decision: str = "PASS") -> tuple[Path
     thesis.write_text(json.dumps(_valid_thesis()), encoding="utf-8")
     checksum = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
     audit = tmp_path / "audit.json"
-    audit.write_text(json.dumps({"audit_id": "SSA-1", "episode_id": "EP-001", "brief_checksum": checksum(brief), "research_checksum": checksum(research), "evidence_report_checksum": checksum(evidence), "thesis_checksum": checksum(thesis), "audited_by": "team_02_ai", "audit_method": "AI_SEMANTIC_REVIEW", "findings": [{"criterion": "THESIS_SUBSTANCE", "assessment": "SATISFIED" if decision == "PASS" else "NOT_SATISFIED", "rationale": "Juicio semántico explícito."}], "decision": decision, "created_at": "2026-07-24T20:00:00Z"}), encoding="utf-8")
+    criteria = ["CENTRAL_QUESTION_SPECIFICITY", "RESEARCH_RELEVANCE", "DEPTH_FIT", "RIVAL_PERSPECTIVE_SUBSTANCE", "NARRATIVE_UTILITY", "CRITICAL_CLAIMS_QUALITY", "THESIS_SUBSTANCE", "READINESS_FOR_B5_I2"]
+    findings = [{"criterion": criterion, "assessment": "SATISFIED" if decision == "PASS" else "NOT_SATISFIED", "rationale": "Juicio semántico explícito.", "references": ["thesis.statement"]} for criterion in criteria]
+    audit.write_text(json.dumps({"audit_id": "SSA-1", "episode_id": "EP-001", "brief_checksum": checksum(brief), "research_checksum": checksum(research), "evidence_report_checksum": checksum(evidence), "thesis_checksum": checksum(thesis), "audited_by": "team_02_ai", "audit_method": "AI_SEMANTIC_REVIEW", "findings": findings, "decision": decision, "created_at": "2026-07-24T20:00:00Z"}), encoding="utf-8")
     return brief, research, evidence, thesis, audit
 
 
@@ -598,6 +602,36 @@ def test_semantic_audit_generic_content_can_fail(tmp_path: Path) -> None:
 def test_semantic_audit_specific_candidate_can_pass(tmp_path: Path) -> None:
     brief, research, evidence, thesis, audit = _write_semantic_inputs(tmp_path, "PASS")
     assert evaluate_semantic_gate(brief, research, evidence, thesis, audit, "EP-001").status is GateStatus.PASS
+
+
+def test_identified_claim_without_report_assessment_fails(tmp_path: Path) -> None:
+    brief, research, evidence, thesis, audit = _write_semantic_inputs(tmp_path)
+    report = json.loads(evidence.read_text(encoding="utf-8")); report["critical_claim_assessments"] = []; evidence.write_text(json.dumps(report), encoding="utf-8"); data = json.loads(audit.read_text(encoding="utf-8")); data["evidence_report_checksum"] = hashlib.sha256(evidence.read_bytes()).hexdigest(); audit.write_text(json.dumps(data), encoding="utf-8")
+    assert evaluate_semantic_gate(brief, research, evidence, thesis, audit, "EP-001").status is GateStatus.FAIL
+
+
+def test_untraceable_additional_claim_fails(tmp_path: Path) -> None:
+    brief, research, evidence, thesis, audit = _write_semantic_inputs(tmp_path)
+    report = json.loads(evidence.read_text(encoding="utf-8")); report["critical_claim_assessments"].append({"claim_id": "C2", "claim_text": "No trazable.", "support_status": "SUPPORTED", "confidence": "HIGH", "allowed_scope": "Ninguno", "evidence_refs": ["S1"]}); evidence.write_text(json.dumps(report), encoding="utf-8"); data = json.loads(audit.read_text(encoding="utf-8")); data["evidence_report_checksum"] = hashlib.sha256(evidence.read_bytes()).hexdigest(); audit.write_text(json.dumps(data), encoding="utf-8")
+    assert evaluate_semantic_gate(brief, research, evidence, thesis, audit, "EP-001").status is GateStatus.FAIL
+
+
+def test_semantic_audit_criteria_are_complete_and_unique(tmp_path: Path) -> None:
+    brief, research, evidence, thesis, audit = _write_semantic_inputs(tmp_path)
+    data = json.loads(audit.read_text(encoding="utf-8")); data["findings"] = data["findings"][:1]; audit.write_text(json.dumps(data), encoding="utf-8")
+    assert evaluate_semantic_gate(brief, research, evidence, thesis, audit, "EP-001").status is GateStatus.FAIL
+
+
+def test_critical_not_satisfied_cannot_claim_pass_or_warn(tmp_path: Path) -> None:
+    brief, research, evidence, thesis, audit = _write_semantic_inputs(tmp_path)
+    data = json.loads(audit.read_text(encoding="utf-8")); data["findings"][6]["assessment"] = "NOT_SATISFIED"; data["decision"] = "WARN"; audit.write_text(json.dumps(data), encoding="utf-8")
+    assert evaluate_semantic_gate(brief, research, evidence, thesis, audit, "EP-001").status is GateStatus.FAIL
+
+
+def test_limited_finding_requires_warn(tmp_path: Path) -> None:
+    brief, research, evidence, thesis, audit = _write_semantic_inputs(tmp_path)
+    data = json.loads(audit.read_text(encoding="utf-8")); data["findings"][0]["assessment"] = "LIMITED"; data["decision"] = "PASS"; audit.write_text(json.dumps(data), encoding="utf-8")
+    assert evaluate_semantic_gate(brief, research, evidence, thesis, audit, "EP-001").status is GateStatus.FAIL
 
 
 def test_partial_coverage_dispositions(tmp_path: Path) -> None:
