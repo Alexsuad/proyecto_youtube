@@ -32,7 +32,7 @@ No leer por defecto el Plan 001 completo, otros bloques, todo `workspace/` ni re
 
 ## 1. Objetivo
 
-Convertir brief, investigación, evidencia, tesis, curación, packaging, recorrido y outline en un diseño profesional antes de redactar.
+Convertir brief, investigación, evidencia, tesis, curación, promesa editorial del guion, recorrido y outline en un diseño profesional antes de redactar.
 
 ## 2. Misiones
 
@@ -137,47 +137,29 @@ La fórmula habitual del canal se mantiene como preferencia fuerte, no obligaci�
 
 No se aprueba una selección basada únicamente en afinidad temática.
 
-### B5-M6 — Audiencia concreta e hipótesis temprana de promesa y packaging
+### B5-M6 — Audiencia concreta y promesa editorial del guion
 
 Antes del outline debe existir una audiencia concreta del episodio derivada del `EditorialProfile` aprobado.
 
 Debe definir:
 
 - qué persona concreta se busca alcanzar;
-- qué conocimiento previo se presupone;
-- qué tensión reconoce;
-- por qué la obra o pregunta le importa;
-- qué expectativa no debe generarse;
-- qué versión de perfil y brief la sustentan.
+- promesa editorial necesaria para escribir el guion;
+- tensión central;
+- expectativas legítimas;
+- expectativas que deben evitarse;
+- alineación con la tesis refinada;
+- riesgo textual de sobrepromesa y su mitigación, si aplica;
+- obligaciones de apertura;
+- restricciones heredadas de B5-I1.
 
-La hipótesis temprana debe incluir:
+Esta promesa no produce ni exige título, miniatura, promesa de clic, complementariedad título-miniatura, Shorts, SEO ni aprobación de packaging. El packaging permanece diferido a B7.5.
 
-- promesa de clic;
-- título de trabajo;
-- concepto de miniatura;
-- expectativa del espectador;
-- diferenciador;
-- riesgo de sobrepromesa.
-
-La autoridad funcional se distribuye así:
-
-```text
-Equipo 03
-→ define o aprueba la audiencia concreta,
-  la promesa visible y la hipótesis de packaging.
-
-Equipo 02
-→ valida que la tesis, la evidencia y la arquitectura
-  puedan cumplir honestamente esa promesa.
-```
-
-El Equipo 02 no puede aprobar unilateralmente el packaging. El Equipo 03 no puede modificar unilateralmente la tesis.
-
-Un cambio sustancial en audiencia concreta, promesa visible, tesis o conflicto central invalida los artefactos dependientes.
+Un cambio sustancial en audiencia, promesa editorial, tesis o tensión central invalida los artefactos dependientes.
 
 ### B5-M7 — Tesis refinada
 
-Después de evidencia, análisis narrativo y humano, curación final y packaging:
+Después de evidencia, análisis narrativo y humano, curación final y promesa editorial del guion:
 
 - tesis defendible;
 - matiz;
@@ -275,9 +257,8 @@ PASS si:
 - hechos narrativos, interpretaciones e hipótesis están diferenciados;
 - los límites de las analogías con la vida real están declarados;
 - curación asigna funciones y contribuciones distintas;
-- PackagingHypothesis tiene aprobación funcional del Equipo 03;
+- EditorialScriptPromise conserva audiencia, tesis, restricciones y riesgo textual de sobrepromesa;
 - Producto Guion confirmó que la tesis y la arquitectura pueden cumplir la promesa;
-- PackagingHypothesis no sobrepromete;
 - ViewerJourney muestra transformación;
 - apertura (OPENING_UNIT) y cierre tienen contrato;
 - la apertura cumple funciones obligatorias sin duración rígida;

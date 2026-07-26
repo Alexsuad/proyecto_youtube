@@ -25,7 +25,7 @@ def _audit() -> dict:
     criteria = [
         "ANALYSIS_SPECIFICITY", "MATERIAL_ANALYSIS_COVERAGE", "RIVAL_INTERPRETATION_AND_LIMITS",
         "INHERITED_RESTRICTION_PROPAGATION", "CURATION_COMPLETENESS", "CURATION_CONTRAST_AND_PROGRESSION",
-        "THESIS_REFINEMENT_SUBSTANCE", "EVIDENCE_TRACEABILITY", "EARLY_PACKAGING_HONESTY",
+        "THESIS_REFINEMENT_SUBSTANCE", "EVIDENCE_TRACEABILITY", "SCRIPT_PROMISE_HONESTY",
     ]
     critical = {"ANALYSIS_SPECIFICITY", "CURATION_CONTRAST_AND_PROGRESSION", "THESIS_REFINEMENT_SUBSTANCE"}
     anchored = {"artifact_kind": "analysis", "artifact_id": "A-1", "artifact_field": "summary", "evaluated_excerpt": "texto", "evidence_refs": ["F-1"], "evidence_excerpts": [{"evidence_ref": "F-1", "excerpt": "texto"}], "editorial_comparison": "comparación", "why_specific_or_generic": "es específico", "decision": "SATISFIED"}
@@ -34,7 +34,7 @@ def _audit() -> dict:
         "auditor_run_id": "RUN-AUDIT", "auditor_skill_id": "skill_qa_editorial", "auditor_skill_version": "2.0.0",
         "provider_or_adapter": "mock", "model_or_evaluator": "test", "execution_timestamp": "2026-07-25T08:00:00Z",
         "input_manifest_checksum": "a" * 64,
-        "artifact_checksums": [{"artifact_kind": kind, "artifact_id": artifact_id, "checksum": "a" * 64, "producer_run_id": "RUN-P"} for kind, artifact_id in [("analysis", "A-1"), ("curation", "C-1"), ("thesis", "T-1"), ("packaging", "P-1")]],
+        "artifact_checksums": [{"artifact_kind": kind, "artifact_id": artifact_id, "checksum": "a" * 64, "producer_run_id": "RUN-P"} for kind, artifact_id in [("research", "R-1"), ("evidence_report", "E-1"), ("provisional_thesis", "TP-1"), ("analysis", "A-1"), ("curation", "C-1"), ("thesis", "T-1"), ("script_promise", "SP-1")]],
         "audit_method": "AI_SEMANTIC_REVIEW",
         "findings": [{"criterion": criterion, "status": "SATISFIED", "anchored_findings": [anchored] if criterion in critical else [], "rationale": "hallazgo trazable"} for criterion in criteria],
         "decision": "PASS", "created_at": "2026-07-25T08:00:00Z",
@@ -50,7 +50,7 @@ def _request(tmp_path: Path, **overrides) -> ExecutionRequest:
 
 
 def _four_artifacts(tmp_path: Path) -> list[InputArtifact]:
-    rows = [("analysis", "A-1"), ("curation", "C-1"), ("thesis", "T-1"), ("packaging", "P-1")]
+    rows = [("research", "R-1"), ("evidence_report", "E-1"), ("provisional_thesis", "TP-1"), ("analysis", "A-1"), ("curation", "C-1"), ("thesis", "T-1"), ("script_promise", "SP-1")]
     return [InputArtifact(kind, artifact_id, _write_artifact(tmp_path, f"{kind}.json", artifact_id), "RUN-P") for kind, artifact_id in rows]
 
 
@@ -123,6 +123,18 @@ def test_real_run_is_recorded_in_canonical_provenance(tmp_path: Path, monkeypatc
 
 
 def test_mock_b5_i2_flow_remains_blocked_for_editorial_decision(tmp_path: Path) -> None:
+    result = execute_b5_i2_audit(
+        artifacts=_four_artifacts(tmp_path),
+        output_path=tmp_path / "audit.json",
+        registry_path=tmp_path / "execution_registry.json",
+        provider="mock",
+        execution_mode="mock",
+        mock_output=_audit(),
+    )
+    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+
+
+def test_runner_rejects_audit_without_original_b5_i1_evidence(tmp_path: Path) -> None:
     request = _request(tmp_path)
     result = execute_b5_i2_audit(
         artifacts=request.input_artifacts,
@@ -132,7 +144,8 @@ def test_mock_b5_i2_flow_remains_blocked_for_editorial_decision(tmp_path: Path) 
         execution_mode="mock",
         mock_output=_audit(),
     )
-    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert result.status is ExecutionStatus.FAILED
+    assert "research" in (result.error or "")
 
 
 def test_runner_builds_nonempty_editorial_prompt_and_imposes_runtime_provenance(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

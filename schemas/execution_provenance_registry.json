@@ -56,10 +56,13 @@
       "properties": {
         "artifact_kind": {
           "enum": [
+            "research",
+            "evidence_report",
+            "provisional_thesis",
             "analysis",
             "curation",
             "thesis",
-            "packaging",
+            "script_promise",
             "semantic_audit"
           ]
         },

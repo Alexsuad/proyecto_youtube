@@ -22,7 +22,7 @@ CRITERIA = {
     "RIVAL_INTERPRETATION_AND_LIMITS", "INHERITED_RESTRICTION_PROPAGATION",
     "CURATION_COMPLETENESS", "CURATION_CONTRAST_AND_PROGRESSION",
     "THESIS_REFINEMENT_SUBSTANCE", "EVIDENCE_TRACEABILITY",
-    "EARLY_PACKAGING_HONESTY",
+    "SCRIPT_PROMISE_HONESTY",
 }
 CRITICAL_CRITERIA = {
     "ANALYSIS_SPECIFICITY",
@@ -112,8 +112,31 @@ def _resolve_field(data: Any, field_path: str) -> Any:
     return current
 
 
-def _build_actual_artifacts(data: dict[str, Any], analysis_paths: list[Path], curation: Path, thesis: Path, packaging: Path) -> list[dict[str, Any]]:
+def _build_actual_artifacts(data: dict[str, Any], b5_i1: dict[str, Path], analysis_paths: list[Path], curation: Path, thesis: Path, script_promise: Path) -> list[dict[str, Any]]:
     artifacts = [
+        {
+            "artifact_kind": "research",
+            "artifact_id": data["research"].get("research_id"),
+            "artifact_ref": _artifact_ref("research", data["research"].get("research_id")),
+            "checksum": checksum(b5_i1["research"]),
+            "data": data["research"],
+        },
+        {
+            "artifact_kind": "evidence_report",
+            "artifact_id": data["evidence"].get("report_id"),
+            "artifact_ref": _artifact_ref("evidence_report", data["evidence"].get("report_id")),
+            "checksum": checksum(b5_i1["evidence"]),
+            "data": data["evidence"],
+        },
+        {
+            "artifact_kind": "provisional_thesis",
+            "artifact_id": data["provisional"].get("thesis_id"),
+            "artifact_ref": _artifact_ref("provisional_thesis", data["provisional"].get("thesis_id")),
+            "checksum": checksum(b5_i1["provisional"]),
+            "data": data["provisional"],
+        },
+    ]
+    artifacts.extend(
         {
             "artifact_kind": "analysis",
             "artifact_id": item.get("analysis_id"),
@@ -122,7 +145,7 @@ def _build_actual_artifacts(data: dict[str, Any], analysis_paths: list[Path], cu
             "data": item,
         }
         for item, path in zip(data["analyses"], analysis_paths)
-    ]
+    )
     artifacts.extend(
         [
             {
@@ -140,11 +163,11 @@ def _build_actual_artifacts(data: dict[str, Any], analysis_paths: list[Path], cu
                 "data": data["thesis"],
             },
             {
-                "artifact_kind": "packaging",
-                "artifact_id": data["packaging"].get("packaging_id"),
-                "artifact_ref": _artifact_ref("packaging", data["packaging"].get("packaging_id")),
-                "checksum": checksum(packaging),
-                "data": data["packaging"],
+                "artifact_kind": "script_promise",
+                "artifact_id": data["script_promise"].get("promise_id"),
+                "artifact_ref": _artifact_ref("script_promise", data["script_promise"].get("promise_id")),
+                "checksum": checksum(script_promise),
+                "data": data["script_promise"],
             },
         ]
     )
@@ -155,7 +178,7 @@ def _canonical_manifest_checksum(episode_id: str, artifacts: list[dict[str, Any]
     return _shared_manifest_checksum(episode_id, artifacts)
 
 
-def _build_evidence_texts(research: dict, report: dict, analyses: list[dict], constraints: set[str]) -> dict[str, list[str]]:
+def _build_evidence_texts(research: dict, report: dict, constraints: set[str]) -> dict[str, list[str]]:
     evidence_texts: dict[str, list[str]] = {}
     for field in (
         "facts", "interpretations", "hypotheses", "contradictions",
@@ -172,10 +195,6 @@ def _build_evidence_texts(research: dict, report: dict, analyses: list[dict], co
     for item in report.get("claims_sostenibles", []):
         if isinstance(item, dict) and item.get("claim_id"):
             evidence_texts[item["claim_id"]] = _collect_strings(item)
-    for analysis in analyses:
-        for finding in analysis.get("findings", []):
-            if isinstance(finding, dict) and finding.get("finding_id"):
-                evidence_texts[finding["finding_id"]] = _collect_strings(finding)
     for constraint in constraints:
         evidence_texts[constraint] = [constraint]
     return evidence_texts
@@ -213,10 +232,10 @@ def _outputs_by_ref(run: dict) -> dict[str, dict]:
 
 def evaluate(
     b5_i1: dict[str, Path], analysis: Path | list[Path], curation: Path,
-    thesis: Path, packaging: Path, b5_i2_audit: Path, execution_registry: Path, artifact_id: str,
+    thesis: Path, script_promise: Path, b5_i2_audit: Path, execution_registry: Path, artifact_id: str,
 ) -> GateResult:
     analysis_paths = _as_paths(analysis)
-    paths = list(b5_i1.values()) + analysis_paths + [curation, thesis, packaging, b5_i2_audit, execution_registry]
+    paths = list(b5_i1.values()) + analysis_paths + [curation, thesis, script_promise, b5_i2_audit, execution_registry]
     blocked, failures, evidence = validate_inputs([InputRequirement(path, path.name) for path in paths])
     if blocked:
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.BLOCKED, "Faltan artefactos B5-I1/B5-I2", blocked, evidence=evidence)
@@ -227,7 +246,7 @@ def evaluate(
             "brief": load(b5_i1["brief"]), "research": load(b5_i1["research"]),
             "evidence": load(b5_i1["evidence"]), "audit": load(b5_i1["audit"]),
             "provisional": load(b5_i1["provisional"]), "analyses": [load(path) for path in analysis_paths],
-            "curation": load(curation), "thesis": load(thesis), "packaging": load(packaging),
+            "curation": load(curation), "thesis": load(thesis), "script_promise": load(script_promise),
             "b5_i2_audit": load(b5_i2_audit), "execution_registry": load(execution_registry),
         }
     except (OSError, json.JSONDecodeError) as exc:
@@ -242,7 +261,7 @@ def evaluate(
         "provisional": "thesis_artifact",
         "curation": "material_curation",
         "thesis": "refined_thesis",
-        "packaging": "early_packaging_hypothesis",
+        "script_promise": "editorial_script_promise",
         "b5_i2_audit": "b5_i2_semantic_sufficiency_audit",
         "execution_registry": "execution_provenance_registry",
     }.items():
@@ -265,7 +284,7 @@ def evaluate(
     brief, research, report, audit = data["brief"], data["research"], data["evidence"], data["audit"]
     if any(
         item.get("episode_id") != brief.get("episode_id")
-        for item in [research, report, data["provisional"], data["curation"], data["thesis"], data["packaging"], data["b5_i2_audit"], *data["analyses"]]
+        for item in [research, report, data["provisional"], data["curation"], data["thesis"], data["script_promise"], data["b5_i2_audit"], *data["analyses"]]
     ):
         violations.append("Los artefactos B5-I1/B5-I2 no comparten episode_id")
     if data["curation"].get("research_id") != research.get("research_id"):
@@ -440,32 +459,18 @@ def evaluate(
     if thesis_data.get("statement") == data["provisional"].get("statement") and not thesis_data.get("statement_unchanged_justification"):
         violations.append("Tesis refinada igual a la provisional exige justificación sustantiva")
 
-    packaging_data = data["packaging"]
-    if packaging_data.get("refined_thesis_checksum") != checksum(thesis):
+    script_promise_data = data["script_promise"]
+    if script_promise_data.get("refined_thesis_checksum") != checksum(thesis):
         violations.append("Checksum de RefinedThesis incorrecto")
-    if packaging_data.get("refined_thesis_id") != thesis_data.get("thesis_id"):
-        violations.append("Packaging no referencia la tesis refinada")
-    audience = packaging_data.get("audience", {})
-    if (
-        (audience.get("profile_id"), audience.get("profile_version"), audience.get("profile_checksum"))
-        != (brief.get("profile_id"), brief.get("profile_version"), brief.get("profile_checksum"))
-        or audience.get("brief_checksum") != checksum(b5_i1["brief"])
-    ):
-        violations.append("Audience de packaging no conserva lineage de EditorialProfile y EpisodeBrief")
-    honesty = packaging_data.get("honesty_assessment", {})
-    if honesty.get("risk_level") != packaging_data.get("overpromise_risk"):
-        violations.append("Riesgo de honestidad no coincide con overpromise_risk")
-    if thesis_data.get("thesis_id") not in set(honesty.get("thesis_refs", [])) or not set(honesty.get("evidence_refs", [])).issubset(traceable_ids):
-        violations.append("Honesty assessment no demuestra relación con tesis y evidencia")
-    if not constraints.issubset(set(honesty.get("inherited_constraint_ids", []))):
-        violations.append("Packaging pierde restricciones heredadas de B5-I1")
-    risk = honesty.get("risk_level")
-    if risk == "LOW" and honesty.get("unsupported_elements"):
-        violations.append("Packaging LOW no puede declarar elementos no sustentados")
-    if risk == "MEDIUM" and not honesty.get("mitigation_or_pending"):
-        violations.append("Packaging MEDIUM exige mitigación explícita")
+    if script_promise_data.get("refined_thesis_id") != thesis_data.get("thesis_id"):
+        violations.append("La promesa editorial no referencia la tesis refinada")
+    if not constraints.issubset(set(script_promise_data.get("inherited_constraint_ids", []))):
+        violations.append("La promesa editorial pierde restricciones heredadas de B5-I1")
+    risk = script_promise_data.get("textual_overpromise_risk", {}).get("level")
+    if risk == "MEDIUM" and not script_promise_data.get("textual_overpromise_risk", {}).get("mitigation_or_pending"):
+        violations.append("Riesgo textual MEDIUM exige mitigación explícita")
     if risk in ("HIGH", "UNRESOLVED"):
-        violations.append("Packaging temprano sobrepromete o mantiene riesgo no resuelto")
+        violations.append("La promesa editorial sobrepromete o mantiene riesgo no resuelto")
 
     b5_audit = data["b5_i2_audit"]
     registry_runs = [item for item in data["execution_registry"].get("runs", []) if isinstance(item, dict)]
@@ -473,7 +478,7 @@ def evaluate(
     if len(run_ids) != len(set(run_ids)):
         violations.append("ExecutionProvenanceRegistry no puede duplicar run_id")
     runs_by_id = {item.get("run_id"): item for item in registry_runs}
-    actual_artifacts = _build_actual_artifacts(data, analysis_paths, curation, thesis, packaging)
+    actual_artifacts = _build_actual_artifacts(data, b5_i1, analysis_paths, curation, thesis, script_promise)
     actual_by_ref = {item["artifact_ref"]: item for item in actual_artifacts}
     expected_manifest_checksum = _canonical_manifest_checksum(brief.get("episode_id"), actual_artifacts)
     if b5_audit.get("input_manifest_checksum") != expected_manifest_checksum:
@@ -541,7 +546,7 @@ def evaluate(
         if any(item.get("artifact_kind") in {"analysis", "curation", "thesis"} for item in audit_outputs.values()):
             violations.append("El run auditor también produjo análisis, curación o tesis")
 
-    evidence_texts = _build_evidence_texts(research, report, data["analyses"], constraints)
+    evidence_texts = _build_evidence_texts(research, report, constraints)
     criterion_coverage = {
         "ANALYSIS_SPECIFICITY": {
             _artifact_ref("analysis", analysis_id) for analysis_id in analysis_by_id
@@ -621,7 +626,7 @@ def evaluate(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    for option in ("brief", "research", "evidence", "audit", "provisional", "curation", "thesis", "packaging", "b5-i2-audit"):
+    for option in ("brief", "research", "evidence", "audit", "provisional", "curation", "thesis", "script-promise", "b5-i2-audit"):
         parser.add_argument(f"--{option}", required=True)
     parser.add_argument("--execution-registry", required=True)
     parser.add_argument("--analysis", required=True, action="append")
@@ -641,7 +646,7 @@ def main() -> int:
             [Path(path) for path in args.analysis],
             Path(args.curation),
             Path(args.thesis),
-            Path(args.packaging),
+            Path(args.script_promise),
             Path(args.b5_i2_audit),
             Path(args.execution_registry),
             args.ep_id or Path(args.curation).parent.name,

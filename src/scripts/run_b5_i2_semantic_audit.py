@@ -19,10 +19,25 @@ from src.core.contract_validation import validate_against_schema
 
 SKILL_PATH = Path(".agent/skills/skill_qa_editorial.md")
 CRITICAL_CRITERIA = ("ANALYSIS_SPECIFICITY", "CURATION_CONTRAST_AND_PROGRESSION", "THESIS_REFINEMENT_SUBSTANCE")
+REQUIRED_AUDIT_INPUT_KINDS = {"research", "evidence_report", "provisional_thesis", "analysis", "curation", "thesis", "script_promise"}
 
 
 def _skill_text() -> str:
     return SKILL_PATH.read_text(encoding="utf-8")
+
+
+def _validate_audit_inputs(artifacts: list[InputArtifact]) -> str | None:
+    kinds = {item.artifact_kind for item in artifacts}
+    missing = REQUIRED_AUDIT_INPUT_KINDS - kinds
+    unsupported = kinds - REQUIRED_AUDIT_INPUT_KINDS
+    if missing or unsupported:
+        details = []
+        if missing:
+            details.append("faltan: " + ", ".join(sorted(missing)))
+        if unsupported:
+            details.append("no admitidos: " + ", ".join(sorted(unsupported)))
+        return "inputs de auditoría B5-I2 inválidos; " + "; ".join(details)
+    return None
 
 
 def build_editorial_prompt(request: ExecutionRequest) -> str:
@@ -102,6 +117,9 @@ def _atomic_persist(output_path: Path, registry_path: Path, audit: dict[str, Any
 
 
 def execute_b5_i2_audit(*, artifacts: list[InputArtifact], output_path: Path, registry_path: Path, episode_id: str = "", provider: str | None = None, execution_mode: str = "auto", model: str | None = None, timeout: float = 30.0, mock_output: dict | None = None, handoff_directory: Path | None = None, config: dict[str, Any] | None = None) -> ExecutionResult:
+    input_error = _validate_audit_inputs(artifacts)
+    if input_error:
+        return ExecutionResult("", ExecutionStatus.FAILED, "validation", provider or "none", model or "none", "", None, None, "", "", input_error)
     request = ExecutionRequest(
         capability_id="editorial_semantic_audit_b5_i2", skill_id="skill_qa_editorial", skill_version="2.0.0",
         input_artifacts=artifacts, output_schema="b5_i2_semantic_sufficiency_audit", execution_mode=execution_mode,
@@ -129,6 +147,9 @@ def execute_b5_i2_audit(*, artifacts: list[InputArtifact], output_path: Path, re
 
 def import_b5_i2_handoff(*, package_path: Path, result_path: Path, artifacts: list[InputArtifact], output_path: Path, registry_path: Path, episode_id: str, provider: str = "agent_handoff", model: str = "external-agent") -> ExecutionResult:
     """Importa un dictamen de un paquete exacto; nunca acepta provenance del agente."""
+    input_error = _validate_audit_inputs(artifacts)
+    if input_error:
+        return ExecutionResult("", ExecutionStatus.FAILED, "validation", provider, model, "", None, None, "", "", input_error)
     package = json.loads(package_path.read_text(encoding="utf-8"))
     request = ExecutionRequest(
         capability_id="editorial_semantic_audit_b5_i2", skill_id="skill_qa_editorial", skill_version="2.0.0",

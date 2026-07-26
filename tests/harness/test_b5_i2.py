@@ -19,14 +19,17 @@ EXCLUDED_CLAIM = "Causalidad clínica universal."
 CRITERIA = [
     "ANALYSIS_SPECIFICITY", "MATERIAL_ANALYSIS_COVERAGE", "RIVAL_INTERPRETATION_AND_LIMITS",
     "INHERITED_RESTRICTION_PROPAGATION", "CURATION_COMPLETENESS", "CURATION_CONTRAST_AND_PROGRESSION",
-    "THESIS_REFINEMENT_SUBSTANCE", "EVIDENCE_TRACEABILITY", "EARLY_PACKAGING_HONESTY",
+    "THESIS_REFINEMENT_SUBSTANCE", "EVIDENCE_TRACEABILITY", "SCRIPT_PROMISE_HONESTY",
 ]
 ALL_CONSTRAINTS = [CONSTRAINT, DISCLOSURE, EXCLUDED_CLAIM]
 RUN_ANALYSIS = "RUN-B5I2-AN-1"
 RUN_ANALYSIS_2 = "RUN-B5I2-AN-2"
 RUN_CURATION = "RUN-B5I2-CU-1"
 RUN_THESIS = "RUN-B5I2-TH-1"
-RUN_PACKAGING = "RUN-B5I2-PK-1"
+RUN_RESEARCH = "RUN-B5I1-RE-1"
+RUN_EVIDENCE = "RUN-B5I1-EV-1"
+RUN_PROVISIONAL = "RUN-B5I1-TH-1"
+RUN_PROMISE = "RUN-B5I2-SP-1"
 RUN_AUDIT = "RUN-B5I2-AU-1"
 
 
@@ -187,55 +190,31 @@ def _thesis() -> dict:
     }
 
 
-def _packaging(brief: dict, thesis: dict, risk: str = "LOW") -> dict:
+def _script_promise(brief: dict, thesis: dict, risk: str = "LOW") -> dict:
     return {
-        "packaging_id": "P-1",
+        "promise_id": "SP-1",
         "episode_id": EP,
         "refined_thesis_id": thesis["thesis_id"],
         "refined_thesis_checksum": "",
-        "audience": {
-            "persona_concreta": "Adulto que pospone una decisión importante.",
-            "conocimiento_previo": "Reconoce el miedo a equivocarse.",
-            "tension_reconocida": "Desea avanzar pero teme el coste del error.",
-            "relevancia": "La tesis explica el coste de la evitación.",
-            "expectativa_que_no_debe_generarse": "No ofrece terapia ni diagnóstico.",
-            "profile_id": brief["profile_id"],
-            "profile_version": brief["profile_version"],
-            "profile_checksum": brief["profile_checksum"],
-            "brief_checksum": "",
-        },
-        "promesa_visible_provisional": "Explora el coste de evitar el error sin prometer una solución clínica.",
-        "tension_central": "Avanzar o proteger la identidad.",
-        "expectativa_del_espectador": "Reinterpretar una decisión pendiente.",
-        "diferenciador": "Conecta evidencia narrativa, límite y contraargumento.",
-        "titulo_de_trabajo": "Cuando evitar también decide",
-        "concepto_inicial_miniatura": "Una puerta entreabierta frente a una decisión.",
-        "titulo_miniatura_complementarity": "El título nombra la decisión y la miniatura hace visible la tensión.",
-        "overpromise_risk": risk,
-        "platform_constraints": [
-            {
-                "constraint": "Sin promesas terapéuticas.",
-                "reason": "El reporte B5-I1 limita el alcance.",
-                "impact": "La promesa se formula como exploración.",
-            }
-        ],
-        "honesty_assessment": {
-            "thesis_relation": "La promesa resume la tesis refinada sin ampliarla.",
-            "thesis_refs": [thesis["thesis_id"]],
-            "evidence_refs": ["F-M1"],
-            "inherited_constraint_ids": list(ALL_CONSTRAINTS),
-            "unsupported_elements": [],
-            "risk_level": risk,
-            "risk_justification": "Las referencias cubren la promesa propuesta.",
-            "mitigation_or_pending": None,
-        },
-        "status": "PROVISIONAL_TEAM_03_INPUT",
+        "audience": brief["audiencia_concreta"],
+        "editorial_promise": "Explora el coste de evitar el error sin prometer una solución clínica.",
+        "central_tension": "Avanzar o proteger la identidad.",
+        "legitimate_expectations": ["Reinterpretar una decisión pendiente."],
+        "expectations_to_avoid": ["No ofrece terapia ni diagnóstico."],
+        "thesis_alignment": "La promesa resume la tesis refinada sin ampliarla.",
+        "textual_overpromise_risk": {"level": risk, "justification": "La formulación se limita a la evidencia disponible.", "mitigation_or_pending": None},
+        "opening_obligations": ["Presentar la tensión antes de proponer la lectura."],
+        "inherited_constraint_ids": list(ALL_CONSTRAINTS),
+        "status": "SCRIPT_CORE_INPUT",
         "created_at": "2026-07-24T20:00:00Z",
     }
 
 
 def _artifact_checksum_rows(paths: dict[str, Path]) -> list[dict]:
     rows = [
+        {"artifact_kind": "research", "artifact_id": _read(paths["research"])["research_id"], "checksum": _digest(paths["research"]), "producer_run_id": RUN_RESEARCH},
+        {"artifact_kind": "evidence_report", "artifact_id": _read(paths["evidence"])["report_id"], "checksum": _digest(paths["evidence"]), "producer_run_id": RUN_EVIDENCE},
+        {"artifact_kind": "provisional_thesis", "artifact_id": _read(paths["provisional"])["thesis_id"], "checksum": _digest(paths["provisional"]), "producer_run_id": RUN_PROVISIONAL},
         {
             "artifact_kind": "analysis",
             "artifact_id": _read(paths["analysis"])["analysis_id"],
@@ -267,10 +246,10 @@ def _artifact_checksum_rows(paths: dict[str, Path]) -> list[dict]:
                 "producer_run_id": RUN_THESIS,
             },
             {
-                "artifact_kind": "packaging",
-                "artifact_id": _read(paths["packaging"])["packaging_id"],
-                "checksum": _digest(paths["packaging"]),
-                "producer_run_id": RUN_PACKAGING,
+                "artifact_kind": "script_promise",
+                "artifact_id": _read(paths["script_promise"])["promise_id"],
+                "checksum": _digest(paths["script_promise"]),
+                "producer_run_id": RUN_PROMISE,
             },
         ]
     )
@@ -285,8 +264,8 @@ def _anchored(criterion: str) -> list[dict]:
                 "artifact_id": "A-1",
                 "artifact_field": "findings[0].statement",
                 "evaluated_excerpt": "La escena muestra una decisión condicionada por el miedo.",
-                "evidence_refs": ["F-M1"],
-                "evidence_excerpts": [{"evidence_ref": "F-M1", "excerpt": "La escena muestra una decisión condicionada por el miedo."}],
+                "evidence_refs": ["N1"],
+                "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
                 "editorial_comparison": "La observación liga una escena concreta con una interpretación no intercambiable.",
                 "why_specific_or_generic": "Cita una conducta concreta y el límite de no generalizar a cualquier demora.",
                 "decision": "SATISFIED",
@@ -298,8 +277,8 @@ def _anchored(criterion: str) -> list[dict]:
                 "artifact_id": "A-1",
                 "artifact_field": "demonstrates",
                 "evaluated_excerpt": "La decisión se relaciona con una creencia observable.",
-                "evidence_refs": ["F-M1"],
-                "evidence_excerpts": [{"evidence_ref": "F-M1", "excerpt": "La escena muestra una decisión condicionada por el miedo."}],
+                "evidence_refs": ["N1"],
+                "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
                 "editorial_comparison": "La cobertura conecta hallazgo, interpretación y evidencia narrativa.",
                 "why_specific_or_generic": "No se limita a afirmar cobertura; muestra el hallazgo exacto auditado.",
                 "decision": "SATISFIED",
@@ -337,8 +316,8 @@ def _anchored(criterion: str) -> list[dict]:
                 "artifact_id": "C-1",
                 "artifact_field": "sequence_rationale",
                 "evaluated_excerpt": "El material seleccionado introduce la complicación después del contexto.",
-                "evidence_refs": ["F-M1"],
-                "evidence_excerpts": [{"evidence_ref": "F-M1", "excerpt": "La escena muestra una decisión condicionada por el miedo."}],
+                "evidence_refs": ["N1"],
+                "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
                 "editorial_comparison": "La secuencia se fundamenta en una función narrativa concreta.",
                 "why_specific_or_generic": "Justifica el orden con la escena seleccionada y no con una fórmula reusable.",
                 "decision": "SATISFIED",
@@ -350,8 +329,8 @@ def _anchored(criterion: str) -> list[dict]:
                 "artifact_id": "C-1",
                 "artifact_field": "progression_evidence[0].change_in_understanding",
                 "evaluated_excerpt": "La escena desplaza la lectura de prudencia a coste de evitación.",
-                "evidence_refs": ["F-M1"],
-                "evidence_excerpts": [{"evidence_ref": "F-M1", "excerpt": "La escena muestra una decisión condicionada por el miedo."}],
+                "evidence_refs": ["N1"],
+                "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
                 "editorial_comparison": "La curación muestra un antes y un después ligados a un material no sustituible.",
                 "why_specific_or_generic": "El cambio se apoya en un hallazgo concreto y en una pérdida identificable si se elimina el material.",
                 "decision": "SATISFIED",
@@ -363,9 +342,9 @@ def _anchored(criterion: str) -> list[dict]:
                 "artifact_id": "T-1",
                 "artifact_field": "refinement_dimensions[0].resulting_position",
                 "evaluated_excerpt": "La evitación explica solo decisiones donde la escena muestra protección identitaria.",
-                "evidence_refs": ["F-M1", "A1"],
+                "evidence_refs": ["N1", "A1"],
                 "evidence_excerpts": [
-                    {"evidence_ref": "F-M1", "excerpt": "La escena muestra una decisión condicionada por el miedo."},
+                    {"evidence_ref": "N1", "excerpt": "Hallazgo N1"},
                     {"evidence_ref": "A1", "excerpt": "Hallazgo A1"},
                 ],
                 "editorial_comparison": "La tesis compara posición provisional y posición resultante en una dimensión concreta.",
@@ -379,21 +358,21 @@ def _anchored(criterion: str) -> list[dict]:
                 "artifact_id": "T-1",
                 "artifact_field": "refinement_rationale",
                 "evaluated_excerpt": "Análisis, contraevidencia y curación obligan a acotar la tesis.",
-                "evidence_refs": ["F-M1"],
-                "evidence_excerpts": [{"evidence_ref": "F-M1", "excerpt": "La escena muestra una decisión condicionada por el miedo."}],
+                "evidence_refs": ["N1"],
+                "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
                 "editorial_comparison": "La razón de refinamiento enlaza explícitamente el cambio con evidencia trazable.",
                 "why_specific_or_generic": "No apela a intuición editorial; cita el soporte real usado para refinar.",
                 "decision": "SATISFIED",
             }
         ],
-        "EARLY_PACKAGING_HONESTY": [
+        "SCRIPT_PROMISE_HONESTY": [
             {
-                "artifact_kind": "packaging",
-                "artifact_id": "P-1",
-                "artifact_field": "promesa_visible_provisional",
+                "artifact_kind": "script_promise",
+                "artifact_id": "SP-1",
+                "artifact_field": "editorial_promise",
                 "evaluated_excerpt": "Explora el coste de evitar el error sin prometer una solución clínica.",
-                "evidence_refs": ["F-M1"],
-                "evidence_excerpts": [{"evidence_ref": "F-M1", "excerpt": "La escena muestra una decisión condicionada por el miedo."}],
+                "evidence_refs": ["N1"],
+                "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
                 "editorial_comparison": "La promesa se compara con la tesis y con la restricción heredada.",
                 "why_specific_or_generic": "La honestidad se demuestra contra evidencia y límite explícito, no por etiqueta abstracta.",
                 "decision": "SATISFIED",
@@ -431,7 +410,7 @@ def _write_case(tmp_path: Path, risk: str = "LOW") -> dict[str, Path]:
     }
     paths["audit"] = _put(tmp_path / "audit.json", b5audit)
     thesis = _thesis()
-    packaging = _packaging(brief, thesis, risk)
+    script_promise = _script_promise(brief, thesis, risk)
     paths.update(
         {
             "analysis": _put(tmp_path / "analysis.json", _analysis()),
@@ -439,9 +418,8 @@ def _write_case(tmp_path: Path, risk: str = "LOW") -> dict[str, Path]:
             "thesis": _put(tmp_path / "thesis.json", thesis),
         }
     )
-    packaging["refined_thesis_checksum"] = _digest(paths["thesis"])
-    packaging["audience"]["brief_checksum"] = _digest(paths["brief"])
-    paths["packaging"] = _put(tmp_path / "packaging.json", packaging)
+    script_promise["refined_thesis_checksum"] = _digest(paths["thesis"])
+    paths["script_promise"] = _put(tmp_path / "script_promise.json", script_promise)
     _refresh_b5_i2_audit(paths)
     _refresh_execution_registry(paths)
     return paths
@@ -528,20 +506,28 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
                 "status": "SUCCEEDED",
                 "execution_mode": "SYNTHETIC",
             },
-            {
-                "run_id": RUN_PACKAGING,
-                "role": "PACKAGING_EDITOR",
-                "skill_id": "skill_packaging_temprano",
+            *[
+                {
+                "run_id": run_id,
+                "role": role,
+                "skill_id": skill_id,
                 "skill_version": "1.0.0",
                 "provider_or_adapter": "synthetic-fixture",
                 "model_or_evaluator": "fixture",
                 "input_manifest_checksum": "a" * 64,
-                "outputs": [item for item in registry_outputs if item["artifact_kind"] == "packaging"],
+                "outputs": [item for item in registry_outputs if item["artifact_kind"] == artifact_kind],
                 "started_at": "2026-07-25T07:06:00Z",
                 "completed_at": "2026-07-25T07:07:00Z",
                 "status": "SUCCEEDED",
                 "execution_mode": "SYNTHETIC",
-            },
+                }
+                for run_id, role, skill_id, artifact_kind in (
+                    (RUN_RESEARCH, "RESEARCHER", "skill_research_tema_y_obras", "research"),
+                    (RUN_EVIDENCE, "EVIDENCE_REVIEWER", "skill_qa_brief_research", "evidence_report"),
+                    (RUN_PROVISIONAL, "THESIS_EDITOR", "skill_sintesis_tesis", "provisional_thesis"),
+                    (RUN_PROMISE, "SCRIPT_EDITOR", "skill_crear_brief_episodio", "script_promise"),
+                )
+            ],
             {
                 "run_id": RUN_AUDIT,
                 "role": "INDEPENDENT_EDITORIAL_AUDITOR",
@@ -574,7 +560,7 @@ def _evaluate(paths: dict[str, Path]):
         analyses,
         paths["curation"],
         paths["thesis"],
-        paths["packaging"],
+        paths["script_promise"],
         paths["b5_i2_audit"],
         paths["execution_registry"],
         EP,
@@ -628,11 +614,9 @@ def test_b5_i1_checksum_divergence_fails(tmp_path: Path, field: str) -> None:
     ("supporting_evidence_missing", "thesis", lambda d: d.update(supporting_evidence_refs=["F-404"]), "evidencia favorable inexistente"),
     ("counterevidence_missing", "thesis", lambda d: d.update(counterevidence_refs=["F-404"]), "contraevidencia inexistente"),
     ("restriction_lost", "thesis", lambda d: d.update(inherited_constraint_ids=[]), "pierde restricciones heredadas"),
-    ("audience_incomplete", "packaging", lambda d: d["audience"].pop("persona_concreta"), "persona_concreta"),
-    ("packaging_without_tension", "packaging", lambda d: d.pop("tension_central"), "tension_central"),
-    ("packaging_without_complementarity", "packaging", lambda d: d.pop("titulo_miniatura_complementarity"), "titulo_miniatura_complementarity"),
-    ("low_unsupported_promise", "packaging", lambda d: d["honesty_assessment"].update(unsupported_elements=["Promesa no sustentada"]), "LOW no puede declarar elementos no sustentados"),
-    ("medium_without_mitigation", "packaging", lambda d: (d.update(overpromise_risk="MEDIUM"), d["honesty_assessment"].update(risk_level="MEDIUM")), "MEDIUM exige mitigación"),
+    ("promise_without_tension", "script_promise", lambda d: d.pop("central_tension"), "central_tension"),
+    ("promise_without_opening_obligation", "script_promise", lambda d: d.update(opening_obligations=[]), "opening_obligations"),
+    ("medium_without_mitigation", "script_promise", lambda d: d["textual_overpromise_risk"].update(level="MEDIUM"), "MEDIUM exige mitigación"),
     ("curation_research_id", "curation", lambda d: d.update(research_id="RP-404"), "curation.research_id"),
     ("thesis_research_id", "thesis", lambda d: d.update(research_id="RP-404"), "thesis.research_id"),
     ("thesis_evidence_id", "thesis", lambda d: d.update(evidence_report_id="ER-404"), "thesis.evidence_report_id"),
@@ -786,6 +770,18 @@ def test_evidence_excerpt_must_exist_in_referenced_evidence(tmp_path: Path) -> N
     assert any("fragmento que no aparece en la evidencia" in item for item in result.violations)
 
 
+def test_analysis_finding_cannot_be_used_as_its_own_audit_evidence(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    def mutate(audit: dict) -> None:
+        anchored = _criterion(audit, "ANALYSIS_SPECIFICITY")["anchored_findings"][0]
+        anchored["evidence_refs"] = ["F-M1"]
+        anchored["evidence_excerpts"] = [{"evidence_ref": "F-M1", "excerpt": "La escena muestra una decisión condicionada por el miedo."}]
+    _mutate(paths, "b5_i2_audit", mutate, refresh=False)
+    result = _evaluate(paths)
+    assert result.status is GateStatus.FAIL
+    assert any("evidencia inexistente" in item for item in result.violations)
+
+
 def test_relevant_artifact_must_be_covered_by_critical_audit(tmp_path: Path) -> None:
     paths = _write_case(tmp_path)
     _mutate(paths, "b5_i2_audit", lambda d: _criterion(d, "THESIS_REFINEMENT_SUBSTANCE").update(anchored_findings=[]), refresh=False)
@@ -796,7 +792,12 @@ def test_relevant_artifact_must_be_covered_by_critical_audit(tmp_path: Path) -> 
 
 def test_audit_created_by_same_execution_as_produced_artifacts_fails(tmp_path: Path) -> None:
     paths = _write_case(tmp_path)
-    _mutate(paths, "b5_i2_audit", lambda d: d["artifact_checksums"][0].update(producer_run_id=RUN_AUDIT), refresh=False)
+    _mutate(
+        paths,
+        "b5_i2_audit",
+        lambda d: next(item for item in d["artifact_checksums"] if item["artifact_kind"] == "analysis").update(producer_run_id=RUN_AUDIT),
+        refresh=False,
+    )
     result = _evaluate(paths)
     assert result.status is GateStatus.FAIL
     assert any("misma ejecución" in item for item in result.violations)
@@ -867,7 +868,7 @@ def test_orphan_artifact_or_evidence_references_fail(tmp_path: Path) -> None:
 
 def test_medium_with_mitigation_warns(tmp_path: Path) -> None:
     paths = _write_case(tmp_path, risk="MEDIUM")
-    _mutate(paths, "packaging", lambda d: d["honesty_assessment"].update(mitigation_or_pending="Revisar la formulación antes de Team 03."))
+    _mutate(paths, "script_promise", lambda d: d["textual_overpromise_risk"].update(mitigation_or_pending="Revisar la formulación antes de escribir el guion."))
     assert _evaluate(paths).status is GateStatus.WARN
 
 
@@ -883,7 +884,7 @@ def test_equal_provisional_thesis_with_justification_is_allowed(tmp_path: Path) 
         ),
         refresh=False,
     )
-    _mutate(paths, "packaging", lambda d: d.update(refined_thesis_checksum=_digest(paths["thesis"])), refresh=True)
+    _mutate(paths, "script_promise", lambda d: d.update(refined_thesis_checksum=_digest(paths["thesis"])), refresh=True)
     assert _evaluate(paths).status is GateStatus.PASS
 
 
