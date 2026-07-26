@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecutionProvenanceRegistry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registry_version",
+    "runs"
+  ],
+  "properties": {
+    "registry_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runs": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "$ref": "#/definitions/run"
+      }
+    },
+    "handoffs": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/handoff"}
+    }
+  },
+  "definitions": {
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["handoff_id", "capability_id", "episode_id", "skill_id", "skill_version", "skill_checksum", "input_manifest_checksum", "package_checksum", "prepared_at", "status"],
+      "properties": {
+        "handoff_id": {"type": "string", "minLength": 1},
+        "capability_id": {"type": "string", "minLength": 1},
+        "episode_id": {"type": "string", "minLength": 1},
+        "skill_id": {"type": "string", "minLength": 1},
+        "skill_version": {"type": "string", "minLength": 1},
+        "skill_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "input_manifest_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "package_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "prepared_at": {"type": "string", "format": "date-time"},
+        "status": {"enum": ["HANDOFF_PREPARED", "HANDOFF_CONSUMED"]},
+        "result_run_id": {"type": "string", "minLength": 1},
+        "output_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "consumed_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_kind",
+        "artifact_id",
+        "checksum"
+      ],
+      "properties": {
+        "artifact_kind": {
+          "enum": [
+            "analysis",
+            "curation",
+            "thesis",
+            "packaging",
+            "semantic_audit"
+          ]
+        },
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "role",
+        "skill_id",
+        "skill_version",
+        "provider_or_adapter",
+        "model_or_evaluator",
+        "input_manifest_checksum",
+        "outputs",
+        "started_at",
+        "completed_at",
+        "status",
+        "execution_mode"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skill_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skill_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider_or_adapter": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_or_evaluator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_manifest_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/output"
+          }
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "enum": [
+            "SUCCEEDED",
+            "FAILED",
+            "BLOCKED_BY_SEMANTIC_EVALUATOR"
+          ]
+        },
+        "execution_mode": {
+          "enum": [
+            "SYNTHETIC",
+            "REAL"
+          ]
+        }
+      }
+    }
+  }
+}

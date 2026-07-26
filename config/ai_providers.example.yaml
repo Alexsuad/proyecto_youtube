@@ -1,0 +1,11 @@
+# Sin secretos: AI_API_KEY solo se admite mediante variables de entorno.
+providers:
+  ollama:
+    base_url: http://127.0.0.1:11434
+    model: editorial-local
+  openai_compatible:
+    base_url_env: AI_BASE_URL
+    api_key_env: AI_API_KEY
+    model_env: AI_MODEL
+  agent_handoff:
+    enabled: true

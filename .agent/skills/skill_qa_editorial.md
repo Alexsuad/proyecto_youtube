@@ -42,3 +42,38 @@ Objetivo: auditar el guion asegurando que cumple **exactamente** la arquitectura
 - `<EP_PATH>/07_qa_revisiones.md`
 
 Los cambios de identidad se escalan al Equipo 01; esta auditoría no los aprueba.
+
+---
+
+## Extensión B5-I2 — Adjudicación semántica independiente
+
+Cuando esta skill se use como auditor editorial de B5-I2, su salida no puede ser un formulario manual ni una autodeclaración del mismo flujo que produjo análisis, curación o tesis.
+
+Debe registrar provenance trazable:
+- `auditor_role`
+- `auditor_run_id`
+- `auditor_skill_id`
+- `auditor_skill_version`
+- `provider_or_adapter`
+- `model_or_evaluator`
+- `execution_timestamp`
+- `input_manifest_checksum`
+- `artifact_checksums`
+
+Y debe emitir una evaluación por criterio con hallazgos anclados a contenido real:
+- `artifact_kind`
+- `artifact_id`
+- `artifact_field`
+- `evaluated_excerpt`
+- `evidence_refs`
+- `evidence_excerpts`
+- `editorial_comparison`
+- `why_specific_or_generic`
+- `decision`
+
+Para los criterios críticos:
+- `ANALYSIS_SPECIFICITY`
+- `CURATION_CONTRAST_AND_PROGRESSION`
+- `THESIS_REFINEMENT_SUBSTANCE`
+
+la skill debe justificar comparativamente por qué el contenido es específico, limitado, genérico o irresuelto. Esa decisión pertenece al auditor editorial; el gate técnico solo valida que la observación esté trazada a checksums, campos y fragmentos reales.

@@ -15,8 +15,9 @@ Objetivo: producir `NarrativeHumanAnalysis` con lectura específica de deseos, m
 2) Producir un `NarrativeHumanAnalysis` por cada material que pueda quedar `SELECTED`; un material sin análisis solo puede quedar explícitamente `EXCLUDED`.
 3) Separar hecho, interpretación, hipótesis y contraargumento; cada hallazgo debe enlazar evidencia narrativa concreta y fuente existente.
 4) Propagar IDs de restricciones B5-I1, registrar interpretación rival y límites —o justificar explícitamente que no aplican— y declarar qué demuestra y qué no permite concluir.
+5) Para declarar `ANALYSIS_SPECIFICITY: SATISFIED`, el revisor debe poder citar sujeto, personaje, relación, institución o situación; conducta, decisión, escena o patrón; relación causal o interpretativa; evidencia narrativa; demostración, no-conclusión, rival y límite concretos. No aceptar redacciones intercambiables: el juicio es semántico y debe explicar por qué esta evidencia no podría describir cualquier otro material.
 
-5) Conectar cada hallazgo con el tema y producir `<EP_PATH>/narrative_human_analysis.json`.
+6) Conectar cada hallazgo con el tema y producir `<EP_PATH>/narrative_human_analysis.json`.
 
 ---
 

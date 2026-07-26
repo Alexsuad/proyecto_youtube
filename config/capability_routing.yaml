@@ -1,0 +1,12 @@
+capabilities:
+  editorial_semantic_audit_b5_i2:
+    skill_id: skill_qa_editorial
+    skill_version: 2.0.0
+    output_schema: b5_i2_semantic_sufficiency_audit
+    routing:
+      explicit_mode: respect_requested_route
+      auto_high_privacy: ollama
+      auto_local: true
+      auto_agent_handoff: false
+      allow_external_api: false
+      unavailable: BLOCKED_BY_SEMANTIC_EVALUATOR
