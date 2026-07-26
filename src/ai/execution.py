@@ -15,6 +15,20 @@ from src.ai.providers import AgentHandoffProvider, MockProvider, OllamaProvider,
 from src.ai.router import KNOWN_PROVIDERS, resolve_provider
 from src.core.contract_validation import load_schema, validate_against_schema
 
+B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
+    "ANALYSIS_PRODUCER": "analysis",
+    "CURATION_PRODUCER": "curation",
+    "THESIS_PRODUCER": "refined_thesis",
+    "SCRIPT_PROMISE_PRODUCER": "script_promise",
+    "INDEPENDENT_EDITORIAL_AUDITOR": "semantic_audit",
+}
+
+
+def persist_execution_result(path: Path, result: ExecutionResult, request: ExecutionRequest, *, execution_mode: str) -> None:
+    """Registra por runtime cualquier productor o auditor con salida verificable."""
+    from src.ai.registry import append_result
+    append_result(path, result, execution_mode=execution_mode, role=request.role or "UNSPECIFIED_PRODUCER")
+
 
 def manifest_checksum(request: ExecutionRequest) -> str:
     return canonical_manifest_checksum(request.episode_id, [
@@ -29,10 +43,32 @@ def _now() -> str:
 
 def _result(request: ExecutionRequest, provider: str, status: ExecutionStatus, started: str, manifest: str, *, output: dict[str, Any] | None = None, error: str | None = None, usage: dict[str, Any] | None = None, real: bool = False, run_id: str | None = None) -> ExecutionResult:
     usage = usage or {}
-    output_checksum = hashlib.sha256(canonical_json(output)).hexdigest() if output is not None else None
+    if request.output_artifact_path and request.output_artifact_path.exists():
+        output_checksum = file_checksum(request.output_artifact_path)
+    else:
+        output_checksum = hashlib.sha256(canonical_json(output)).hexdigest() if output is not None else None
     model = str(usage.get("model_or_evaluator") or request.model or "unconfigured")
     effective_provider = str(usage.get("provider_or_adapter") or provider)
-    return ExecutionResult(run_id or f"RUN-AI-{uuid.uuid4().hex}", status, "provider", effective_provider, model, manifest, output, output_checksum, started, _now(), error, {"skill_id": request.skill_id, "skill_version": request.skill_version, **usage}, request.output_artifact_id, is_real_editorial_execution=real)
+    return ExecutionResult(
+        run_id or f"RUN-AI-{uuid.uuid4().hex}",
+        status,
+        "provider",
+        effective_provider,
+        model,
+        manifest,
+        output,
+        output_checksum,
+        started,
+        _now(),
+        error,
+        {"skill_id": request.skill_id, "skill_version": request.skill_version, **usage},
+        request.episode_id,
+        request.output_artifact_id,
+        request.output_artifact_kind,
+        request.output_artifact_path,
+        request.output_artifact_ref,
+        real,
+    )
 
 
 def validate_editorial_payload(payload: dict[str, Any], schema_name: str) -> list[str]:

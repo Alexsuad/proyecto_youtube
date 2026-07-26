@@ -17,9 +17,10 @@ CONSTRAINT = "CONSTRAINT-ACCESS-1"
 DISCLOSURE = "No diagnóstico clínico."
 EXCLUDED_CLAIM = "Causalidad clínica universal."
 CRITERIA = [
-    "ANALYSIS_SPECIFICITY", "MATERIAL_ANALYSIS_COVERAGE", "RIVAL_INTERPRETATION_AND_LIMITS",
-    "INHERITED_RESTRICTION_PROPAGATION", "CURATION_COMPLETENESS", "CURATION_CONTRAST_AND_PROGRESSION",
-    "THESIS_REFINEMENT_SUBSTANCE", "EVIDENCE_TRACEABILITY", "SCRIPT_PROMISE_HONESTY",
+    "ANALYSIS_SPECIFICITY", "EVIDENCE_TRACEABILITY", "EPISTEMIC_SEPARATION", "EDITORIAL_DEPTH_AND_UTILITY",
+    "MATERIAL_COVERAGE", "CURATION_FUNCTION", "CURATION_CONTRAST_AND_PROGRESSION", "REDUNDANCY_AND_CONTEXT_COST",
+    "THESIS_REFINEMENT_SUBSTANCE", "THESIS_ARGUMENTATIVE_QUALITY", "MATERIAL_THESIS_CONTRIBUTION",
+    "INHERITED_RESTRICTIONS", "SCRIPT_PROMISE_HONESTY", "EARLY_PACKAGING_HONESTY", "B5_I3_READINESS",
 ]
 ALL_CONSTRAINTS = [CONSTRAINT, DISCLOSURE, EXCLUDED_CLAIM]
 RUN_ANALYSIS = "RUN-B5I2-AN-1"
@@ -240,7 +241,7 @@ def _artifact_checksum_rows(paths: dict[str, Path]) -> list[dict]:
                 "producer_run_id": RUN_CURATION,
             },
             {
-                "artifact_kind": "thesis",
+                "artifact_kind": "refined_thesis",
                 "artifact_id": _read(paths["thesis"])["thesis_id"],
                 "checksum": _digest(paths["thesis"]),
                 "producer_run_id": RUN_THESIS,
@@ -271,7 +272,7 @@ def _anchored(criterion: str) -> list[dict]:
                 "decision": "SATISFIED",
             }
         ],
-        "MATERIAL_ANALYSIS_COVERAGE": [
+        "EVIDENCE_TRACEABILITY": [
             {
                 "artifact_kind": "analysis",
                 "artifact_id": "A-1",
@@ -284,7 +285,7 @@ def _anchored(criterion: str) -> list[dict]:
                 "decision": "SATISFIED",
             }
         ],
-        "RIVAL_INTERPRETATION_AND_LIMITS": [
+        "EPISTEMIC_SEPARATION": [
             {
                 "artifact_kind": "analysis",
                 "artifact_id": "A-1",
@@ -297,7 +298,33 @@ def _anchored(criterion: str) -> list[dict]:
                 "decision": "SATISFIED",
             }
         ],
-        "INHERITED_RESTRICTION_PROPAGATION": [
+        "EDITORIAL_DEPTH_AND_UTILITY": [
+            {
+                "artifact_kind": "analysis",
+                "artifact_id": "A-1",
+                "artifact_field": "demonstrates",
+                "evaluated_excerpt": "La decisión se relaciona con una creencia observable.",
+                "evidence_refs": ["N1"],
+                "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
+                "editorial_comparison": "El análisis resuelve una utilidad editorial concreta para la tesis futura.",
+                "why_specific_or_generic": "Traduce la evidencia a una decisión editorial verificable.",
+                "decision": "SATISFIED",
+            }
+        ],
+        "MATERIAL_COVERAGE": [
+            {
+                "artifact_kind": "analysis",
+                "artifact_id": "A-1",
+                "artifact_field": "demonstrates",
+                "evaluated_excerpt": "La decisión se relaciona con una creencia observable.",
+                "evidence_refs": ["N1"],
+                "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
+                "editorial_comparison": "La cobertura conecta hallazgo, interpretación y evidencia narrativa.",
+                "why_specific_or_generic": "No se limita a afirmar cobertura; muestra el hallazgo exacto auditado.",
+                "decision": "SATISFIED",
+            }
+        ],
+        "CURATION_FUNCTION": [
             {
                 "artifact_kind": "curation",
                 "artifact_id": "C-1",
@@ -310,7 +337,7 @@ def _anchored(criterion: str) -> list[dict]:
                 "decision": "SATISFIED",
             }
         ],
-        "CURATION_COMPLETENESS": [
+        "REDUNDANCY_AND_CONTEXT_COST": [
             {
                 "artifact_kind": "curation",
                 "artifact_id": "C-1",
@@ -338,7 +365,7 @@ def _anchored(criterion: str) -> list[dict]:
         ],
         "THESIS_REFINEMENT_SUBSTANCE": [
             {
-                "artifact_kind": "thesis",
+                "artifact_kind": "refined_thesis",
                 "artifact_id": "T-1",
                 "artifact_field": "refinement_dimensions[0].resulting_position",
                 "evaluated_excerpt": "La evitación explica solo decisiones donde la escena muestra protección identitaria.",
@@ -352,9 +379,9 @@ def _anchored(criterion: str) -> list[dict]:
                 "decision": "SATISFIED",
             }
         ],
-        "EVIDENCE_TRACEABILITY": [
+        "THESIS_ARGUMENTATIVE_QUALITY": [
             {
-                "artifact_kind": "thesis",
+                "artifact_kind": "refined_thesis",
                 "artifact_id": "T-1",
                 "artifact_field": "refinement_rationale",
                 "evaluated_excerpt": "Análisis, contraevidencia y curación obligan a acotar la tesis.",
@@ -362,6 +389,32 @@ def _anchored(criterion: str) -> list[dict]:
                 "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
                 "editorial_comparison": "La razón de refinamiento enlaza explícitamente el cambio con evidencia trazable.",
                 "why_specific_or_generic": "No apela a intuición editorial; cita el soporte real usado para refinar.",
+                "decision": "SATISFIED",
+            }
+        ],
+        "MATERIAL_THESIS_CONTRIBUTION": [
+            {
+                "artifact_kind": "refined_thesis",
+                "artifact_id": "T-1",
+                "artifact_field": "material_contributions[0].contribution",
+                "evaluated_excerpt": "Convierte la tensión en una decisión concreta.",
+                "evidence_refs": ["N1"],
+                "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
+                "editorial_comparison": "La tesis asigna a cada material una contribución verificable.",
+                "why_specific_or_generic": "No trata los materiales como decorativos ni intercambiables.",
+                "decision": "SATISFIED",
+            }
+        ],
+        "INHERITED_RESTRICTIONS": [
+            {
+                "artifact_kind": "curation",
+                "artifact_id": "C-1",
+                "artifact_field": "inherited_restrictions[1].selection_or_exclusion_impact",
+                "evaluated_excerpt": "Obliga a declarar el límite editorial en la selección final.",
+                "evidence_refs": [DISCLOSURE],
+                "evidence_excerpts": [{"evidence_ref": DISCLOSURE, "excerpt": DISCLOSURE}],
+                "editorial_comparison": "La curación traduce la restricción heredada a una decisión editorial operativa.",
+                "why_specific_or_generic": "No deja la restricción como etiqueta; muestra su impacto concreto.",
                 "decision": "SATISFIED",
             }
         ],
@@ -375,6 +428,20 @@ def _anchored(criterion: str) -> list[dict]:
                 "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
                 "editorial_comparison": "La promesa se compara con la tesis y con la restricción heredada.",
                 "why_specific_or_generic": "La honestidad se demuestra contra evidencia y límite explícito, no por etiqueta abstracta.",
+                "decision": "SATISFIED",
+            }
+        ],
+        "EARLY_PACKAGING_HONESTY": [],
+        "B5_I3_READINESS": [
+            {
+                "artifact_kind": "curation",
+                "artifact_id": "C-1",
+                "artifact_field": "sequence_rationale",
+                "evaluated_excerpt": "El material seleccionado introduce la complicación después del contexto.",
+                "evidence_refs": ["N1"],
+                "evidence_excerpts": [{"evidence_ref": "N1", "excerpt": "Hallazgo N1"}],
+                "editorial_comparison": "La tesis, la curación y la promesa dejan explícitas las decisiones que B5-I3 podrá heredar.",
+                "why_specific_or_generic": "La preparación para B5-I3 no queda implícita ni delegada a una futura invención.",
                 "decision": "SATISFIED",
             }
         ],
@@ -432,14 +499,17 @@ def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS") -> None
         "episode_id": EP,
         "auditor_role": "INDEPENDENT_EDITORIAL_AUDITOR",
         "auditor_run_id": RUN_AUDIT,
-        "auditor_skill_id": "skill_qa_editorial",
-        "auditor_skill_version": "2.0.0",
+        "auditor_skill_id": "skill_auditar_suficiencia_semantica_b5_i2",
+        "auditor_skill_version": "1.0.0",
         "provider_or_adapter": "local-mock-semantic",
         "model_or_evaluator": "semantic-mock-v1",
         "execution_timestamp": "2026-07-25T08:00:00Z",
         "input_manifest_checksum": _canonical_manifest_checksum(EP, artifact_rows),
         "artifact_checksums": artifact_rows,
         "audit_method": "AI_SEMANTIC_REVIEW",
+        "audited_artifact_ids": ["analysis:A-1", "curation:C-1", "refined_thesis:T-1", "script_promise:SP-1"],
+        "audited_artifact_versions": [item for item in artifact_rows if item["artifact_kind"] in {"analysis", "curation", "refined_thesis", "script_promise"}],
+        "criteria_results": [{"criterion": criterion, "status": "SATISFIED", "summary": "La revisión editorial independiente quedó anclada a fragmentos y evidencia reales."} for criterion in CRITERIA],
         "findings": [
             {
                 "criterion": criterion,
@@ -449,7 +519,15 @@ def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS") -> None
             }
             for criterion in CRITERIA
         ],
+        "blocking_defects": [],
+        "non_blocking_defects": [],
+        "cited_evidence": sorted({ref for criterion in CRITERIA for finding in _anchored(criterion) for ref in finding.get("evidence_refs", [])}),
+        "required_corrections": [],
+        "unresolved_questions": [],
+        "inherited_restrictions_checked": [CONSTRAINT, DISCLOSURE, EXCLUDED_CLAIM],
+        "auditor_statement": "Decision PASS emitida sobre artefactos B5-I2 con evidencia citada.",
         "decision": decision,
+        "readiness": "READY_FOR_TEAM_02_REAUDIT" if decision in {"PASS", "WARN"} else ("NOT_READY_FOR_TEAM_02_REAUDIT" if decision == "FAIL" else "BLOCKED_BY_MISSING_INPUT"),
         "created_at": "2026-07-25T08:00:00Z",
     }
     paths["b5_i2_audit"] = _put(paths["analysis"].parent / "b5_i2_audit.json", payload)
@@ -458,7 +536,7 @@ def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS") -> None
 def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "SUCCEEDED", execution_mode: str = "SYNTHETIC") -> None:
     outputs = _artifact_checksum_rows(paths)
     registry_outputs = [
-        {"artifact_kind": item["artifact_kind"], "artifact_id": item["artifact_id"], "checksum": item["checksum"]}
+        {"artifact_kind": item["artifact_kind"], "artifact_id": item["artifact_id"], "artifact_ref": f"{item['artifact_kind']}:{item['artifact_id']}", "artifact_path": None, "checksum": item["checksum"]}
         for item in outputs
     ]
     registry = {
@@ -466,7 +544,8 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
         "runs": [
             {
                 "run_id": RUN_ANALYSIS,
-                "role": "NARRATIVE_ANALYST",
+                "episode_id": EP,
+                "role": "ANALYSIS_PRODUCER",
                 "skill_id": "skill_analisis_patrones",
                 "skill_version": "1.0.0",
                 "provider_or_adapter": "synthetic-fixture",
@@ -480,7 +559,8 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
             },
             {
                 "run_id": RUN_CURATION,
-                "role": "CURATION_EDITOR",
+                "episode_id": EP,
+                "role": "CURATION_PRODUCER",
                 "skill_id": "skill_curation_obras",
                 "skill_version": "1.0.0",
                 "provider_or_adapter": "synthetic-fixture",
@@ -494,13 +574,14 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
             },
             {
                 "run_id": RUN_THESIS,
-                "role": "THESIS_EDITOR",
+                "episode_id": EP,
+                "role": "THESIS_PRODUCER",
                 "skill_id": "skill_sintesis_tesis",
                 "skill_version": "1.0.0",
                 "provider_or_adapter": "synthetic-fixture",
                 "model_or_evaluator": "fixture",
                 "input_manifest_checksum": "a" * 64,
-                "outputs": [item for item in registry_outputs if item["artifact_kind"] == "thesis"],
+                "outputs": [item for item in registry_outputs if item["artifact_kind"] == "refined_thesis"],
                 "started_at": "2026-07-25T07:04:00Z",
                 "completed_at": "2026-07-25T07:05:00Z",
                 "status": "SUCCEEDED",
@@ -509,6 +590,7 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
             *[
                 {
                 "run_id": run_id,
+                "episode_id": EP,
                 "role": role,
                 "skill_id": skill_id,
                 "skill_version": "1.0.0",
@@ -525,14 +607,15 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
                     (RUN_RESEARCH, "RESEARCHER", "skill_research_tema_y_obras", "research"),
                     (RUN_EVIDENCE, "EVIDENCE_REVIEWER", "skill_qa_brief_research", "evidence_report"),
                     (RUN_PROVISIONAL, "THESIS_EDITOR", "skill_sintesis_tesis", "provisional_thesis"),
-                    (RUN_PROMISE, "SCRIPT_EDITOR", "skill_crear_brief_episodio", "script_promise"),
+                    (RUN_PROMISE, "SCRIPT_PROMISE_PRODUCER", "skill_crear_brief_episodio", "script_promise"),
                 )
             ],
             {
                 "run_id": RUN_AUDIT,
+                "episode_id": EP,
                 "role": "INDEPENDENT_EDITORIAL_AUDITOR",
-                "skill_id": "skill_qa_editorial",
-                "skill_version": "2.0.0",
+                "skill_id": "skill_auditar_suficiencia_semantica_b5_i2",
+                "skill_version": "1.0.0",
                 "provider_or_adapter": "local-mock-semantic",
                 "model_or_evaluator": "semantic-mock-v1",
                 "input_manifest_checksum": _canonical_manifest_checksum(EP, outputs),
@@ -540,6 +623,8 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
                     {
                         "artifact_kind": "semantic_audit",
                         "artifact_id": _read(paths["b5_i2_audit"])["audit_id"],
+                        "artifact_ref": f"semantic_audit:{_read(paths['b5_i2_audit'])['audit_id']}",
+                        "artifact_path": None,
                         "checksum": _digest(paths["b5_i2_audit"]),
                     }
                 ],
@@ -806,7 +891,7 @@ def test_audit_created_by_same_execution_as_produced_artifacts_fails(tmp_path: P
 def test_auditor_that_also_produced_thesis_fails(tmp_path: Path) -> None:
     paths = _write_case(tmp_path)
     def mutate(registry: dict) -> None:
-        registry["runs"][-1]["outputs"].append({"artifact_kind": "thesis", "artifact_id": "T-1", "checksum": _digest(paths["thesis"])})
+        registry["runs"][-1]["outputs"].append({"artifact_kind": "refined_thesis", "artifact_id": "T-1", "artifact_ref": "refined_thesis:T-1", "artifact_path": None, "checksum": _digest(paths["thesis"])})
     _mutate(paths, "execution_registry", mutate, refresh=False)
     result = _evaluate(paths)
     assert result.status is GateStatus.FAIL

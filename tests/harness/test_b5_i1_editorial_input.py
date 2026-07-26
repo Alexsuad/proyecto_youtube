@@ -655,4 +655,6 @@ def test_partial_coverage_without_impact_fails(tmp_path: Path) -> None:
 def test_inherited_skills_are_marked_non_executable() -> None:
     catalog = json.loads(Path("config/skill_catalog.json").read_text(encoding="utf-8"))
     deferred = {item["skill_id"]: item for item in catalog["skills"] if item.get("non_executable_current")}
-    assert set(deferred) >= {"skill_analisis_patrones", "skill_curation_obras", "skill_mapa_eventos_y_outline", "skill_guion_longform", "skill_qa_editorial", "skill_verificacion_veracidad_notebooklm", "skill_extraer_voice_learnings"}
+    assert set(deferred) >= {"skill_mapa_eventos_y_outline", "skill_guion_longform", "skill_qa_editorial", "skill_verificacion_veracidad_notebooklm", "skill_extraer_voice_learnings"}
+    assert "skill_analisis_patrones" not in deferred
+    assert "skill_curation_obras" not in deferred

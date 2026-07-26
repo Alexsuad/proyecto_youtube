@@ -11,6 +11,15 @@ from src.ai.contracts import ExecutionResult, ExecutionStatus
 from src.ai.manifest import canonical_json, file_checksum
 from src.core.contract_validation import validate_against_schema
 
+B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
+    "ANALYSIS_PRODUCER": "analysis",
+    "CURATION_PRODUCER": "curation",
+    "THESIS_PRODUCER": "refined_thesis",
+    "SCRIPT_PROMISE_PRODUCER": "script_promise",
+    "INDEPENDENT_EDITORIAL_AUDITOR": "semantic_audit",
+}
+B5_I2_ARTIFACT_KINDS = set(B5_I2_ROLE_ARTIFACT_COMPATIBILITY.values())
+
 
 def load_registry(path: Path) -> dict[str, Any]:
     if not path.exists():
@@ -28,7 +37,7 @@ def _now() -> str:
 
 
 def skill_checksum(skill_path: Path | None = None) -> str:
-    path = skill_path or Path(".agent/skills/skill_qa_editorial.md")
+    path = skill_path or Path(".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md")
     return file_checksum(path)
 
 
@@ -88,27 +97,48 @@ def append_result(
     result: ExecutionResult,
     *,
     execution_mode: str,
+    role: str = "UNSPECIFIED_PRODUCER",
 ) -> None:
     """Registra solo ejecuciones que realmente produjeron un artefacto verificable."""
     if result.status is not ExecutionStatus.SUCCEEDED or not result.output_checksum:
         return
+    if not result.output_artifact_kind or not result.output_artifact_id:
+        raise ValueError("ExecutionResult requiere output_artifact_kind y output_artifact_id")
+    if result.output_artifact_kind in B5_I2_ARTIFACT_KINDS and role not in B5_I2_ROLE_ARTIFACT_COMPATIBILITY:
+        raise ValueError(f"role {role} no registrado para artifact_kind B5-I2 {result.output_artifact_kind}")
+    if role in B5_I2_ROLE_ARTIFACT_COMPATIBILITY and result.output_artifact_kind != B5_I2_ROLE_ARTIFACT_COMPATIBILITY[role]:
+        raise ValueError(f"role {role} incompatible con artifact_kind {result.output_artifact_kind}")
+    if role in {"ANALYSIS_PRODUCER", "CURATION_PRODUCER", "THESIS_PRODUCER", "SCRIPT_PROMISE_PRODUCER"} and not result.output_artifact_path:
+        raise ValueError(f"{role} requiere output_artifact_path verificable")
+    if result.output_artifact_path:
+        if not result.output_artifact_path.exists():
+            raise ValueError(f"output inexistente: {result.output_artifact_path}")
+        if file_checksum(result.output_artifact_path) != result.output_checksum:
+            raise ValueError(f"checksum incorrecto para output: {result.output_artifact_path}")
     registry = load_registry(path)
     if any(run.get("run_id") == result.run_id for run in registry["runs"]):
         raise ValueError(f"run_id duplicado en provenance: {result.run_id}")
+    outputs = [{
+        "artifact_kind": result.output_artifact_kind,
+        "artifact_id": result.output_artifact_id,
+        "artifact_path": str(result.output_artifact_path) if result.output_artifact_path else None,
+        "artifact_ref": result.output_artifact_ref or f"{result.output_artifact_kind}:{result.output_artifact_id}",
+        "checksum": result.output_checksum,
+    }]
+    output_refs = [item["artifact_ref"] for item in outputs]
+    if len(output_refs) != len(set(output_refs)):
+        raise ValueError("outputs duplicados en el mismo run")
     registry["runs"].append(
         {
             "run_id": result.run_id,
-            "role": "INDEPENDENT_EDITORIAL_AUDITOR",
+            "episode_id": result.episode_id,
+            "role": role,
             "skill_id": result.usage["skill_id"],
             "skill_version": result.usage["skill_version"],
             "provider_or_adapter": result.provider,
             "model_or_evaluator": result.model,
             "input_manifest_checksum": result.input_manifest_checksum,
-            "outputs": [{
-                "artifact_kind": result.output_artifact_kind,
-                "artifact_id": result.output_artifact_id,
-                "checksum": result.output_checksum,
-            }],
+            "outputs": outputs,
             "started_at": result.started_at,
             "completed_at": result.completed_at,
             "status": "SUCCEEDED",

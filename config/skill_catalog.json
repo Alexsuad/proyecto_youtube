@@ -2,13 +2,25 @@
   "catalog_version": "1.0.0",
   "skills": [
     {
+      "skill_id": "skill_auditar_suficiencia_semantica_b5_i2",
+      "path": ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
+      "canonical_owner": "B5_I2_SEMANTIC_AUDITOR",
+      "classification": "KEEP",
+      "target_or_merge_destination": "B5_I2_SEMANTIC_AUDITOR",
+      "rationale": "B5-I2: auditoría semántica independiente de análisis, curación, tesis refinada y promesa editorial interna; packaging queda en Equipo 03.",
+      "covered_by_general_capability": [
+        "auditar-trazabilidad-input-output",
+        "tests-validacion-cierre"
+      ]
+    },
+    {
       "skill_id": "skill_analisis_patrones",
       "path": ".agent/skills/skill_analisis_patrones.md",
       "canonical_owner": "NARRATIVE_ARCHITECTURE",
-      "classification": "MODIFY_REQUIRED_IN_B5_I2",
+      "classification": "KEEP",
       "target_or_merge_destination": "NARRATIVE_ARCHITECTURE",
       "rationale": "Problema funcional: patrones heredados sin contrato B5-I2.",
-      "covered_by_general_capability": [], "future_block": "B5-I2", "non_executable_current": true
+      "covered_by_general_capability": []
     },
     {
       "skill_id": "skill_auditoria_sistema",
@@ -60,10 +72,10 @@
       "skill_id": "skill_curation_obras",
       "path": ".agent/skills/skill_curation_obras.md",
       "canonical_owner": "RESEARCH_AND_CURATION",
-      "classification": "MODIFY_REQUIRED_IN_B5_I2",
+      "classification": "KEEP",
       "target_or_merge_destination": "RESEARCH_AND_CURATION",
       "rationale": "Problema funcional: curación heredada sin restricciones B5-I1.",
-      "covered_by_general_capability": [], "future_block": "B5-I2", "non_executable_current": true
+      "covered_by_general_capability": []
     },
     {
       "skill_id": "skill_extraer_voice_learnings",

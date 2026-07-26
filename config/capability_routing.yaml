@@ -1,7 +1,7 @@
 capabilities:
-  editorial_semantic_audit_b5_i2:
-    skill_id: skill_qa_editorial
-    skill_version: 2.0.0
+  B5_I2_SEMANTIC_AUDITOR:
+    skill_id: skill_auditar_suficiencia_semantica_b5_i2
+    skill_version: 1.0.0
     output_schema: b5_i2_semantic_sufficiency_audit
     routing:
       explicit_mode: respect_requested_route

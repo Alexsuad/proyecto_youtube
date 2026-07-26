@@ -81,7 +81,7 @@
       "status": "ACTIVE",
       "objective": "Convertir investigacion curada en tesis, estructura narrativa y recorrido del espectador.",
       "authority": "Producir NarrativePlan, ThesisArtifact, ViewerJourney. Decidir tipo de guion.",
-      "required_inputs": ["research_pack", "curation_decision", "brief", "packaging_hypothesis"],
+      "required_inputs": ["research_pack", "curation_decision", "brief"],
       "required_context": ["narrative_templates", "editorial_profile_identity"],
       "allowed_actions": [
         "clasificar tipo de guion",

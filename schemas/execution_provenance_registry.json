@@ -51,6 +51,7 @@
       "required": [
         "artifact_kind",
         "artifact_id",
+        "artifact_ref",
         "checksum"
       ],
       "properties": {
@@ -61,12 +62,23 @@
             "provisional_thesis",
             "analysis",
             "curation",
-            "thesis",
+            "refined_thesis",
             "script_promise",
             "semantic_audit"
           ]
         },
         "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "artifact_ref": {
           "type": "string",
           "minLength": 1
         },
@@ -81,6 +93,7 @@
       "additionalProperties": false,
       "required": [
         "run_id",
+        "episode_id",
         "role",
         "skill_id",
         "skill_version",
@@ -95,6 +108,10 @@
       ],
       "properties": {
         "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
           "type": "string",
           "minLength": 1
         },

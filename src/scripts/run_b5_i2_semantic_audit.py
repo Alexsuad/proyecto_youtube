@@ -17,9 +17,24 @@ from src.ai.registry import append_result, consume_handoff, skill_checksum, vali
 from src.core.contract_validation import validate_against_schema
 
 
-SKILL_PATH = Path(".agent/skills/skill_qa_editorial.md")
-CRITICAL_CRITERIA = ("ANALYSIS_SPECIFICITY", "CURATION_CONTRAST_AND_PROGRESSION", "THESIS_REFINEMENT_SUBSTANCE")
-REQUIRED_AUDIT_INPUT_KINDS = {"research", "evidence_report", "provisional_thesis", "analysis", "curation", "thesis", "script_promise"}
+SKILL_PATH = Path(".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md")
+AUDITOR_CAPABILITY = "B5_I2_SEMANTIC_AUDITOR"
+AUDITOR_ROLE = "INDEPENDENT_EDITORIAL_AUDITOR"
+CRITICAL_CRITERIA = (
+    "ANALYSIS_SPECIFICITY",
+    "EVIDENCE_TRACEABILITY",
+    "EPISTEMIC_SEPARATION",
+    "MATERIAL_COVERAGE",
+    "CURATION_FUNCTION",
+    "CURATION_CONTRAST_AND_PROGRESSION",
+    "THESIS_REFINEMENT_SUBSTANCE",
+    "THESIS_ARGUMENTATIVE_QUALITY",
+    "MATERIAL_THESIS_CONTRIBUTION",
+    "INHERITED_RESTRICTIONS",
+    "B5_I3_READINESS",
+)
+REQUIRED_AUDIT_INPUT_KINDS = {"research", "evidence_report", "provisional_thesis", "analysis", "curation", "refined_thesis", "script_promise"}
+OPTIONAL_AUDIT_INPUT_KINDS = {"early_packaging_hypothesis"}
 
 
 def _skill_text() -> str:
@@ -29,7 +44,7 @@ def _skill_text() -> str:
 def _validate_audit_inputs(artifacts: list[InputArtifact]) -> str | None:
     kinds = {item.artifact_kind for item in artifacts}
     missing = REQUIRED_AUDIT_INPUT_KINDS - kinds
-    unsupported = kinds - REQUIRED_AUDIT_INPUT_KINDS
+    unsupported = kinds - REQUIRED_AUDIT_INPUT_KINDS - OPTIONAL_AUDIT_INPUT_KINDS
     if missing or unsupported:
         details = []
         if missing:
@@ -51,6 +66,10 @@ def build_editorial_prompt(request: ExecutionRequest) -> str:
         f"Skill obligatoria: {request.skill_id}@{request.skill_version}.",
         "Aplica sus instrucciones editoriales: " + _skill_text(),
         "Criterios críticos obligatorios: " + ", ".join(CRITICAL_CRITERIA) + ".",
+        "No apliques reglas heredadas de QA de guion: ni número fijo de eventos, ni ejemplos obligatorios, ni re-hooks, ni regla 80/20, ni estructura de guion terminado.",
+        "EarlyPackagingHypothesis es opcional, de solo lectura y no bloquea por ausencia. Si existe, solo permite una observación de honestidad para Equipo 03; no evalúes título, miniatura, clic ni packaging.",
+        "Debes emitir decision en PASS, WARN, FAIL o BLOCKED y readiness en READY_FOR_TEAM_02_REAUDIT, NOT_READY_FOR_TEAM_02_REAUDIT o BLOCKED_BY_MISSING_INPUT.",
+        "Esta auditoría no autoriza B5-I3.",
         "Distingue SEMANTIC_AUDIT_INTEGRITY (lo impondrá el runtime) de SEMANTIC_EDITORIAL_DECISION (tu dictamen).",
         "No inventes provenance, runs, checksums ni timestamps. Ancla cada hallazgo a contenido concreto.",
         "Devuelve exclusivamente un objeto JSON que respete este schema estructural: " + schema.read_text(encoding="utf-8"),
@@ -61,10 +80,23 @@ def build_editorial_prompt(request: ExecutionRequest) -> str:
 def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: ExecutionResult) -> dict[str, Any]:
     """El payload es editorial; la provenance es propiedad exclusiva del runtime."""
     audit = dict(payload)
+    artifact_checksums = [
+        {"artifact_kind": item.artifact_kind, "artifact_id": item.artifact_id, "checksum": file_checksum(item.path), "producer_run_id": item.producer_run_id}
+        for item in request.input_artifacts
+    ]
+    findings = [item for item in audit.get("findings", []) if isinstance(item, dict)]
+    cited_evidence = sorted({
+        ref
+        for finding in findings
+        for anchored in finding.get("anchored_findings", [])
+        if isinstance(anchored, dict)
+        for ref in anchored.get("evidence_refs", [])
+        if isinstance(ref, str) and ref
+    })
     audit.update({
         "audit_id": audit.get("audit_id") or request.output_artifact_id,
         "episode_id": request.episode_id,
-        "auditor_role": "INDEPENDENT_EDITORIAL_AUDITOR",
+        "auditor_role": AUDITOR_ROLE,
         "auditor_run_id": result.run_id,
         "auditor_skill_id": request.skill_id,
         "auditor_skill_version": request.skill_version,
@@ -72,11 +104,28 @@ def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: E
         "model_or_evaluator": result.model,
         "execution_timestamp": result.completed_at,
         "input_manifest_checksum": result.input_manifest_checksum,
-        "artifact_checksums": [
-            {"artifact_kind": item.artifact_kind, "artifact_id": item.artifact_id,
-             "checksum": file_checksum(item.path), "producer_run_id": item.producer_run_id}
-            for item in request.input_artifacts
+        "artifact_checksums": artifact_checksums,
+        "audited_artifact_ids": [
+            f"{item['artifact_kind']}:{item['artifact_id']}"
+            for item in artifact_checksums
+            if item["artifact_kind"] in {"analysis", "curation", "refined_thesis", "script_promise"}
         ],
+        "audited_artifact_versions": [
+            item
+            for item in artifact_checksums
+            if item["artifact_kind"] in {"analysis", "curation", "refined_thesis", "script_promise"}
+        ],
+        "criteria_results": [
+            {"criterion": item.get("criterion", ""), "status": item.get("status", ""), "summary": item.get("rationale", "")}
+            for item in findings
+        ],
+        "blocking_defects": audit.get("blocking_defects", []),
+        "non_blocking_defects": audit.get("non_blocking_defects", []),
+        "cited_evidence": audit.get("cited_evidence", cited_evidence),
+        "required_corrections": audit.get("required_corrections", []),
+        "unresolved_questions": audit.get("unresolved_questions", []),
+        "inherited_restrictions_checked": audit.get("inherited_restrictions_checked", []),
+        "auditor_statement": audit.get("auditor_statement") or f"Decision {audit.get('decision', 'UNSPECIFIED')} emitida sobre artefactos B5-I2 con evidencia citada.",
         "audit_method": "AI_SEMANTIC_REVIEW",
         "created_at": result.completed_at,
     })
@@ -92,7 +141,7 @@ def _atomic_persist(output_path: Path, registry_path: Path, audit: dict[str, Any
     try:
         # append_result remains canonical for registry shape and validation.
         draft_registry_path.write_bytes(old_registry or b'{"registry_version":"1.0.0","runs":[]}')
-        append_result(draft_registry_path, result, execution_mode="REAL")
+        append_result(draft_registry_path, result, execution_mode="REAL", role=AUDITOR_ROLE)
         registry_bytes = draft_registry_path.read_bytes()
         with tempfile.NamedTemporaryFile(delete=False, dir=output_path.parent, suffix=".tmp") as audit_tmp:
             audit_tmp.write(output_bytes); audit_name = audit_tmp.name
@@ -119,12 +168,12 @@ def _atomic_persist(output_path: Path, registry_path: Path, audit: dict[str, Any
 def execute_b5_i2_audit(*, artifacts: list[InputArtifact], output_path: Path, registry_path: Path, episode_id: str = "", provider: str | None = None, execution_mode: str = "auto", model: str | None = None, timeout: float = 30.0, mock_output: dict | None = None, handoff_directory: Path | None = None, config: dict[str, Any] | None = None) -> ExecutionResult:
     input_error = _validate_audit_inputs(artifacts)
     if input_error:
-        return ExecutionResult("", ExecutionStatus.FAILED, "validation", provider or "none", model or "none", "", None, None, "", "", input_error)
+        return ExecutionResult(run_id="", status=ExecutionStatus.FAILED, executor_type="validation", provider=provider or "none", model=model or "none", input_manifest_checksum="", output=None, output_checksum=None, started_at="", completed_at="", error=input_error)
     request = ExecutionRequest(
-        capability_id="editorial_semantic_audit_b5_i2", skill_id="skill_qa_editorial", skill_version="2.0.0",
+        capability_id=AUDITOR_CAPABILITY, skill_id="skill_auditar_suficiencia_semantica_b5_i2", skill_version="1.0.0",
         input_artifacts=artifacts, output_schema="b5_i2_semantic_sufficiency_audit", execution_mode=execution_mode,
-        provider=provider, model=model, timeout=timeout, output_artifact_id="B5I2-SSA-1", mock_output=mock_output,
-        handoff_directory=handoff_directory, config={**(config or {}), "execution_registry_path": str(registry_path)}, episode_id=episode_id,
+        provider=provider, model=model, timeout=timeout, output_artifact_kind="semantic_audit", output_artifact_id="B5I2-SSA-1", output_artifact_ref="semantic_audit:B5I2-SSA-1", mock_output=mock_output,
+        handoff_directory=handoff_directory, config={**(config or {}), "execution_registry_path": str(registry_path)}, episode_id=episode_id, role=AUDITOR_ROLE,
     )
     request.config["prompt"] = build_editorial_prompt(request)
     result = execute(request)
@@ -136,7 +185,7 @@ def execute_b5_i2_audit(*, artifacts: list[InputArtifact], output_path: Path, re
     violations = validate_against_schema(audit, request.output_schema)
     if violations:
         return replace(result, status=ExecutionStatus.FAILED, output=audit, error="output B5-I2 inválido: " + "; ".join(violations))
-    result = replace(result, output=audit, output_checksum=None, output_artifact_id=audit["audit_id"])
+    result = replace(result, output=audit, output_checksum=None, output_artifact_id=audit["audit_id"], output_artifact_kind="semantic_audit", output_artifact_ref=f"semantic_audit:{audit['audit_id']}")
     result = replace(result, output_checksum=__import__("hashlib").sha256(json.dumps(audit, ensure_ascii=False, indent=2).encode("utf-8") + b"\n").hexdigest())
     try:
         _atomic_persist(output_path, registry_path, audit, result)
@@ -149,24 +198,24 @@ def import_b5_i2_handoff(*, package_path: Path, result_path: Path, artifacts: li
     """Importa un dictamen de un paquete exacto; nunca acepta provenance del agente."""
     input_error = _validate_audit_inputs(artifacts)
     if input_error:
-        return ExecutionResult("", ExecutionStatus.FAILED, "validation", provider, model, "", None, None, "", "", input_error)
+        return ExecutionResult(run_id="", status=ExecutionStatus.FAILED, executor_type="validation", provider=provider, model=model, input_manifest_checksum="", output=None, output_checksum=None, started_at="", completed_at="", error=input_error)
     package = json.loads(package_path.read_text(encoding="utf-8"))
     request = ExecutionRequest(
-        capability_id="editorial_semantic_audit_b5_i2", skill_id="skill_qa_editorial", skill_version="2.0.0",
-        input_artifacts=artifacts, output_schema="b5_i2_semantic_sufficiency_audit", output_artifact_id="B5I2-SSA-1",
-        episode_id=episode_id,
+        capability_id=AUDITOR_CAPABILITY, skill_id="skill_auditar_suficiencia_semantica_b5_i2", skill_version="1.0.0",
+        input_artifacts=artifacts, output_schema="b5_i2_semantic_sufficiency_audit", output_artifact_kind="semantic_audit", output_artifact_id="B5I2-SSA-1", output_artifact_ref="semantic_audit:B5I2-SSA-1",
+        episode_id=episode_id, role=AUDITOR_ROLE,
     )
     computed_manifest = manifest_checksum(request)
     if package.get("input_manifest_checksum") != computed_manifest or package.get("episode_id") != episode_id:
-        return ExecutionResult("", ExecutionStatus.FAILED, "handoff", provider, model, computed_manifest, None, None, "", "", "paquete no corresponde a los inputs actuales")
+        return ExecutionResult(run_id="", status=ExecutionStatus.FAILED, executor_type="handoff", provider=provider, model=model, input_manifest_checksum=computed_manifest, output=None, output_checksum=None, started_at="", completed_at="", error="paquete no corresponde a los inputs actuales")
     try:
         validate_handoff(registry_path, package=package, current_skill_checksum=skill_checksum())
         editorial_payload = AgentHandoffProvider().import_result(package_path, result_path)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
-        return ExecutionResult("", ExecutionStatus.FAILED, "handoff", provider, model, computed_manifest, None, None, "", "", str(exc))
+        return ExecutionResult(run_id="", status=ExecutionStatus.FAILED, executor_type="handoff", provider=provider, model=model, input_manifest_checksum=computed_manifest, output=None, output_checksum=None, started_at="", completed_at="", error=str(exc))
     from src.ai.execution import _now  # mantiene un único formato de timestamp del runtime
     run_id, timestamp = f"RUN-AI-IMPORT-{package['handoff_id'].replace('RUN-AI-', '')}", _now()
-    result = ExecutionResult(run_id, ExecutionStatus.SUCCEEDED, "handoff", provider, model, computed_manifest, editorial_payload, None, timestamp, timestamp, usage={"skill_id": request.skill_id, "skill_version": request.skill_version}, output_artifact_id=request.output_artifact_id, is_real_editorial_execution=True)
+    result = ExecutionResult(run_id, ExecutionStatus.SUCCEEDED, "handoff", provider, model, computed_manifest, editorial_payload, None, timestamp, timestamp, usage={"skill_id": request.skill_id, "skill_version": request.skill_version}, episode_id=request.episode_id, output_artifact_id=request.output_artifact_id, output_artifact_kind="semantic_audit", output_artifact_ref=request.output_artifact_ref, is_real_editorial_execution=True)
     audit = _runtime_audit(editorial_payload, request, result)
     violations = validate_against_schema(audit, request.output_schema)
     if violations:

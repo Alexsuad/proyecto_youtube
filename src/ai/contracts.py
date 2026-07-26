@@ -34,11 +34,15 @@ class ExecutionRequest:
     model: str | None = None
     timeout: float = 30.0
     privacy: str = "normal"
+    output_artifact_kind: str = ""
     output_artifact_id: str = ""
+    output_artifact_path: Path | None = None
+    output_artifact_ref: str = ""
     mock_output: dict[str, Any] | None = None
     handoff_directory: Path | None = None
     config: dict[str, Any] = field(default_factory=dict)
     episode_id: str = ""
+    role: str = ""
 
 
 @dataclass
@@ -55,6 +59,9 @@ class ExecutionResult:
     completed_at: str
     error: str | None = None
     usage: dict[str, Any] = field(default_factory=dict)
+    episode_id: str = ""
     output_artifact_id: str = ""
-    output_artifact_kind: str = "semantic_audit"
+    output_artifact_kind: str = ""
+    output_artifact_path: Path | None = None
+    output_artifact_ref: str = ""
     is_real_editorial_execution: bool = False

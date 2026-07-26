@@ -18,18 +18,43 @@ from src.core.status import GateStatus
 
 
 CRITERIA = {
-    "ANALYSIS_SPECIFICITY", "MATERIAL_ANALYSIS_COVERAGE",
-    "RIVAL_INTERPRETATION_AND_LIMITS", "INHERITED_RESTRICTION_PROPAGATION",
-    "CURATION_COMPLETENESS", "CURATION_CONTRAST_AND_PROGRESSION",
-    "THESIS_REFINEMENT_SUBSTANCE", "EVIDENCE_TRACEABILITY",
+    "ANALYSIS_SPECIFICITY",
+    "EVIDENCE_TRACEABILITY",
+    "EPISTEMIC_SEPARATION",
+    "EDITORIAL_DEPTH_AND_UTILITY",
+    "MATERIAL_COVERAGE",
+    "CURATION_FUNCTION",
+    "CURATION_CONTRAST_AND_PROGRESSION",
+    "REDUNDANCY_AND_CONTEXT_COST",
+    "THESIS_REFINEMENT_SUBSTANCE",
+    "THESIS_ARGUMENTATIVE_QUALITY",
+    "MATERIAL_THESIS_CONTRIBUTION",
+    "INHERITED_RESTRICTIONS",
     "SCRIPT_PROMISE_HONESTY",
+    "EARLY_PACKAGING_HONESTY",
+    "B5_I3_READINESS",
 }
 CRITICAL_CRITERIA = {
     "ANALYSIS_SPECIFICITY",
+    "EVIDENCE_TRACEABILITY",
+    "EPISTEMIC_SEPARATION",
+    "MATERIAL_COVERAGE",
+    "CURATION_FUNCTION",
     "CURATION_CONTRAST_AND_PROGRESSION",
     "THESIS_REFINEMENT_SUBSTANCE",
+    "THESIS_ARGUMENTATIVE_QUALITY",
+    "MATERIAL_THESIS_CONTRIBUTION",
+    "INHERITED_RESTRICTIONS",
+    "B5_I3_READINESS",
 }
 INVALID_PROVENANCE = {"manual", "unknown", "unverified"}
+AUDITOR_ROLE = "INDEPENDENT_EDITORIAL_AUDITOR"
+READINESS_BY_DECISION = {
+    "PASS": "READY_FOR_TEAM_02_REAUDIT",
+    "WARN": "READY_FOR_TEAM_02_REAUDIT",
+    "FAIL": "NOT_READY_FOR_TEAM_02_REAUDIT",
+    "BLOCKED": "BLOCKED_BY_MISSING_INPUT",
+}
 
 
 def checksum(path: Path) -> str:
@@ -156,9 +181,9 @@ def _build_actual_artifacts(data: dict[str, Any], b5_i1: dict[str, Path], analys
                 "data": data["curation"],
             },
             {
-                "artifact_kind": "thesis",
+                "artifact_kind": "refined_thesis",
                 "artifact_id": data["thesis"].get("thesis_id"),
-                "artifact_ref": _artifact_ref("thesis", data["thesis"].get("thesis_id")),
+                "artifact_ref": _artifact_ref("refined_thesis", data["thesis"].get("thesis_id")),
                 "checksum": checksum(thesis),
                 "data": data["thesis"],
             },
@@ -221,6 +246,9 @@ def _editorial_status(audit: dict, violations: list[str]) -> GateStatus:
         violations.append("Un criterio LIMITED exige como mínimo decision=WARN")
     if all(value == "SATISFIED" for value in statuses) and decision not in ("PASS", "WARN"):
         violations.append("Todos los criterios satisfechos no son compatibles con una decisión bloqueante")
+    expected_readiness = READINESS_BY_DECISION.get(decision)
+    if expected_readiness and audit.get("readiness") != expected_readiness:
+        violations.append(f"decision={decision} exige readiness={expected_readiness}")
     return GateStatus(decision) if decision in GateStatus._value2member_map_ else GateStatus.FAIL
 
 
@@ -488,6 +516,8 @@ def evaluate(
     for field in ("auditor_role", "auditor_run_id", "auditor_skill_id", "auditor_skill_version", "provider_or_adapter", "model_or_evaluator"):
         if _normalize_token(b5_audit.get(field, "")) in INVALID_PROVENANCE:
             violations.append(f"B5I2SemanticSufficiencyAudit declara procedencia no verificable en {field}")
+    if b5_audit.get("auditor_role") != AUDITOR_ROLE:
+        violations.append(f"B5I2SemanticSufficiencyAudit exige auditor_role={AUDITOR_ROLE}")
 
     artifact_rows = [item for item in b5_audit.get("artifact_checksums", []) if isinstance(item, dict)]
     artifact_refs = [
@@ -512,13 +542,15 @@ def evaluate(
         if not producer_run:
             violations.append(f"producer_run_id inexistente para {artifact_ref}")
         else:
+            if producer_run.get("role") == AUDITOR_ROLE:
+                violations.append(f"El run {producer_run_id} no puede reutilizar el rol auditor para {artifact_ref}")
             producer_outputs = _outputs_by_ref(producer_run)
             registered_output = producer_outputs.get(artifact_ref)
             if not registered_output:
                 violations.append(f"El run {producer_run_id} no produjo realmente {artifact_ref}")
             elif registered_output.get("checksum") != actual.get("checksum"):
                 violations.append(f"El run {producer_run_id} registró un checksum distinto para {artifact_ref}")
-        if declared.get("artifact_kind") in {"analysis", "curation", "thesis"} and producer_run_id == auditor_run_id:
+        if declared.get("artifact_kind") in {"analysis", "curation", "refined_thesis"} and producer_run_id == auditor_run_id:
             violations.append("B5I2SemanticSufficiencyAudit fue producida por la misma ejecución que creó análisis, curación o tesis")
 
     auditor_run = runs_by_id.get(auditor_run_id)
@@ -534,6 +566,8 @@ def evaluate(
         ):
             if b5_audit.get(audit_field) != auditor_run.get(run_field):
                 violations.append(f"B5I2SemanticSufficiencyAudit no coincide con ExecutionProvenanceRegistry en {audit_field}")
+        if auditor_run.get("role") != AUDITOR_ROLE:
+            violations.append(f"El auditor registrado debe usar role={AUDITOR_ROLE}")
         if auditor_run.get("input_manifest_checksum") != expected_manifest_checksum:
             violations.append("El run auditor no evaluó el manifiesto de entrada exacto de B5-I2")
         audit_output_ref = _artifact_ref("semantic_audit", b5_audit.get("audit_id"))
@@ -543,7 +577,7 @@ def evaluate(
             violations.append("El run auditor no produjo realmente la auditoría semántica declarada")
         elif audit_output.get("checksum") != checksum(b5_i2_audit):
             violations.append("El run auditor registró un checksum distinto para la auditoría semántica")
-        if any(item.get("artifact_kind") in {"analysis", "curation", "thesis"} for item in audit_outputs.values()):
+        if any(item.get("artifact_kind") in {"analysis", "curation", "refined_thesis"} for item in audit_outputs.values()):
             violations.append("El run auditor también produjo análisis, curación o tesis")
 
     evidence_texts = _build_evidence_texts(research, report, constraints)
@@ -552,7 +586,7 @@ def evaluate(
             _artifact_ref("analysis", analysis_id) for analysis_id in analysis_by_id
         },
         "CURATION_CONTRAST_AND_PROGRESSION": {_artifact_ref("curation", curation_data.get("curation_id"))},
-        "THESIS_REFINEMENT_SUBSTANCE": {_artifact_ref("thesis", thesis_data.get("thesis_id"))},
+        "THESIS_REFINEMENT_SUBSTANCE": {_artifact_ref("refined_thesis", thesis_data.get("thesis_id"))},
     }
     for finding in b5_audit.get("findings", []):
         if not isinstance(finding, dict):
