@@ -56,7 +56,7 @@ def _audit() -> dict:
         "criteria_results": [{"criterion": criterion, "status": "SATISFIED", "summary": "hallazgo trazable"} for criterion in criteria],
         "findings": [{"criterion": criterion, "status": "SATISFIED", "anchored_findings": [anchored] if criterion in critical else [], "rationale": "hallazgo trazable"} for criterion in criteria],
         "blocking_defects": [], "non_blocking_defects": [], "cited_evidence": ["F-1"], "required_corrections": [], "unresolved_questions": [], "inherited_restrictions_checked": [], "auditor_statement": "Decision PASS emitida sobre artefactos B5-I2 con evidencia citada.",
-        "decision": "PASS", "readiness": "READY_FOR_TEAM_02_REAUDIT", "created_at": "2026-07-25T08:00:00Z",
+        "decision": "PASS", "readiness": "BLOCKED", "created_at": "2026-07-25T08:00:00Z",
     }
 
 
@@ -403,6 +403,59 @@ def test_registry_failure_does_not_leave_orphan_audit(tmp_path: Path, monkeypatc
         audit_runner._atomic_persist(output, registry, _audit(), result)
     assert output.read_text(encoding="utf-8") == '{"previous":true}\n'
     assert not registry.exists()
+    assert not (tmp_path / "audit.json.txn.json").exists()
+    assert not (tmp_path / "audit.json.bak").exists()
+    assert not (tmp_path / "registry.json.bak").exists()
+
+
+def test_recovery_after_interruption_between_replaces_restores_previous_state(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _, _, _, registry = _registered_handoff_fixture(tmp_path)
+    output = tmp_path / "audit.json"
+    output.write_text('{"previous":"audit"}\n', encoding="utf-8")
+    previous_registry_text = registry.read_text(encoding="utf-8")
+    result = ExecutionResult(run_id="RUN-AI-interrupt", status=ExecutionStatus.SUCCEEDED, executor_type="provider", provider="ollama", model="editorial-local", input_manifest_checksum="a" * 64, output=_audit(), output_checksum="b" * 64, started_at="2026-07-25T08:00:00Z", completed_at="2026-07-25T08:01:00Z", usage={"skill_id": SKILL_ID, "skill_version": SKILL_VERSION}, episode_id="EP-1", output_artifact_id="B5I2-SSA-1", output_artifact_kind="semantic_audit", output_artifact_ref="semantic_audit:B5I2-SSA-1", is_real_editorial_execution=True)
+    original_replace = audit_runner.os.replace
+    state = {"count": 0}
+
+    def interrupt_after_first_replace(source, destination):
+        state["count"] += 1
+        original_replace(source, destination)
+        if state["count"] == 1:
+            raise KeyboardInterrupt("simulated interruption")
+
+    monkeypatch.setattr(audit_runner.os, "replace", interrupt_after_first_replace)
+    with pytest.raises(KeyboardInterrupt, match="simulated interruption"):
+        audit_runner._atomic_persist(output, registry, _audit(), result)
+
+    journal = tmp_path / "audit.json.txn.json"
+    assert journal.exists()
+    assert json.loads(journal.read_text(encoding="utf-8"))["status"] == "PREPARED"
+    assert json.loads(output.read_text(encoding="utf-8"))["audit_id"] == "B5I2-SSA-1"
+    assert json.loads(registry.read_text(encoding="utf-8"))["handoffs"][0]["status"] == "HANDOFF_PREPARED"
+
+    monkeypatch.setattr(audit_runner.os, "replace", original_replace)
+    audit_runner._recover_prepared_transaction(output, registry)
+
+    assert output.read_text(encoding="utf-8") == '{"previous":"audit"}\n'
+    assert registry.read_text(encoding="utf-8") == previous_registry_text
+    restored = json.loads(previous_registry_text)
+    assert restored["handoffs"][0]["status"] == "HANDOFF_PREPARED"
+    assert not journal.exists()
+    assert not (tmp_path / "audit.json.bak").exists()
+    assert not (tmp_path / "registry.json.bak").exists()
+
+
+def test_complete_commit_cleans_journal_and_backups(tmp_path: Path) -> None:
+    output, registry = tmp_path / "audit.json", tmp_path / "registry.json"
+    result = ExecutionResult(run_id="RUN-AI-clean", status=ExecutionStatus.SUCCEEDED, executor_type="provider", provider="ollama", model="editorial-local", input_manifest_checksum="a" * 64, output=_audit(), output_checksum="b" * 64, started_at="2026-07-25T08:00:00Z", completed_at="2026-07-25T08:01:00Z", usage={"skill_id": SKILL_ID, "skill_version": SKILL_VERSION}, episode_id="EP-1", output_artifact_id="B5I2-SSA-1", output_artifact_kind="semantic_audit", output_artifact_ref="semantic_audit:B5I2-SSA-1", is_real_editorial_execution=True)
+
+    audit_runner._atomic_persist(output, registry, _audit(), result)
+
+    assert output.exists()
+    assert registry.exists()
+    assert not (tmp_path / "audit.json.txn.json").exists()
+    assert not (tmp_path / "audit.json.bak").exists()
+    assert not (tmp_path / "registry.json.bak").exists()
 
 
 def test_provider_may_return_editorial_fields_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -423,7 +476,6 @@ def test_provider_may_return_editorial_fields_only(tmp_path: Path, monkeypatch: 
         "inherited_restrictions_checked": [],
         "auditor_statement": "Decision PASS emitida sobre artefactos B5-I2 con evidencia citada.",
         "decision": "PASS",
-        "readiness": "READY_FOR_TEAM_02_REAUDIT",
     }
     monkeypatch.setattr(OpenAICompatibleProvider, "execute", lambda self, request: (editorial, {"provider_or_adapter": "openai_compatible", "model_or_evaluator": "model-real"}))
     result = execute_b5_i2_audit(artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=tmp_path / "registry.json", episode_id="EP-1", provider="openai_compatible", execution_mode="api", config={"routing_policy_path": policy})
@@ -515,6 +567,20 @@ def test_persistence_failure_does_not_mark_handoff_consumed(tmp_path: Path, monk
     assert rejected.status is ExecutionStatus.FAILED
     saved = json.loads(registry.read_text(encoding="utf-8"))
     assert saved["handoffs"][0]["status"] == "HANDOFF_PREPARED"
+
+
+def test_handoff_consume_failure_rolls_back_audit_and_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    package, result_file, artifacts, registry = _registered_handoff_fixture(tmp_path)
+    monkeypatch.setattr(audit_runner, "consume_handoff", lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("consume failed")))
+    rejected = import_b5_i2_handoff(package_path=package, result_path=result_file, artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=registry, episode_id="EP-1")
+    assert rejected.status is ExecutionStatus.FAILED
+    assert not (tmp_path / "audit.json").exists()
+    saved = json.loads(registry.read_text(encoding="utf-8"))
+    assert saved["handoffs"][0]["status"] == "HANDOFF_PREPARED"
+    assert all(run["run_id"] != rejected.run_id for run in saved.get("runs", []))
+    assert not (tmp_path / "audit.json.txn.json").exists()
+    assert not (tmp_path / "audit.json.bak").exists()
+    assert not (tmp_path / "registry.json.bak").exists()
 
 
 def test_auto_explicit_openai_provider_requires_authorization(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

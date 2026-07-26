@@ -22,6 +22,22 @@ B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
     "SCRIPT_PROMISE_PRODUCER": "script_promise",
     "INDEPENDENT_EDITORIAL_AUDITOR": "semantic_audit",
 }
+EDITORIAL_RUNTIME_FIELDS = {
+    "episode_id", "auditor_role", "auditor_run_id", "auditor_skill_id", "auditor_skill_version",
+    "provider_or_adapter", "model_or_evaluator", "execution_timestamp", "input_manifest_checksum",
+    "artifact_checksums", "created_at", "audit_method", "readiness",
+}
+
+
+def _classify_provider_kind(provider: str, request: ExecutionRequest, usage: dict[str, Any]) -> str:
+    explicit = str(usage.get("provider_kind") or "").strip().upper()
+    if explicit in {"REAL", "SYNTHETIC"}:
+        return explicit
+    if usage.get("synthetic"):
+        return "SYNTHETIC"
+    if provider == "mock" or (request.execution_mode or "").lower() == "mock":
+        return "SYNTHETIC"
+    return "REAL"
 
 
 def persist_execution_result(path: Path, result: ExecutionResult, request: ExecutionRequest, *, execution_mode: str) -> None:
@@ -43,6 +59,7 @@ def _now() -> str:
 
 def _result(request: ExecutionRequest, provider: str, status: ExecutionStatus, started: str, manifest: str, *, output: dict[str, Any] | None = None, error: str | None = None, usage: dict[str, Any] | None = None, real: bool = False, run_id: str | None = None) -> ExecutionResult:
     usage = usage or {}
+    usage = {**usage, "provider_kind": _classify_provider_kind(provider, request, usage)}
     if request.output_artifact_path and request.output_artifact_path.exists():
         output_checksum = file_checksum(request.output_artifact_path)
     else:
@@ -74,14 +91,8 @@ def _result(request: ExecutionRequest, provider: str, status: ExecutionStatus, s
 def validate_editorial_payload(payload: dict[str, Any], schema_name: str) -> list[str]:
     """Valida solo campos editoriales usando una proyección del schema canónico."""
     schema = load_schema(schema_name)
-    provenance_fields = {
-        "episode_id", "auditor_role", "auditor_run_id", "auditor_skill_id", "auditor_skill_version",
-        "provider_or_adapter", "model_or_evaluator", "execution_timestamp", "input_manifest_checksum",
-        "artifact_checksums", "created_at",
-        "audit_method",
-    }
-    editorial_schema = {**schema, "required": [field for field in schema.get("required", []) if field not in provenance_fields]}
-    editorial_schema["properties"] = {key: value for key, value in schema.get("properties", {}).items() if key not in provenance_fields}
+    editorial_schema = {**schema, "required": [field for field in schema.get("required", []) if field not in EDITORIAL_RUNTIME_FIELDS]}
+    editorial_schema["properties"] = {key: value for key, value in schema.get("properties", {}).items() if key not in EDITORIAL_RUNTIME_FIELDS}
     errors = Draft7Validator(editorial_schema).iter_errors(payload)
     return [
         f"[{ ' -> '.join(str(p) for p in error.path) if error.path else 'root' }] {error.message}"
@@ -90,12 +101,15 @@ def validate_editorial_payload(payload: dict[str, Any], schema_name: str) -> lis
 
 
 def editorial_only_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in payload.items() if key not in {
-        "episode_id", "auditor_role", "auditor_run_id", "auditor_skill_id", "auditor_skill_version",
-        "provider_or_adapter", "model_or_evaluator", "execution_timestamp", "input_manifest_checksum",
-        "artifact_checksums", "created_at",
-        "audit_method",
-    }}
+    return {key: value for key, value in payload.items() if key not in EDITORIAL_RUNTIME_FIELDS}
+
+
+def editorial_projection_schema(schema_name: str) -> dict[str, Any]:
+    schema = load_schema(schema_name)
+    projected = dict(schema)
+    projected["required"] = [field for field in schema.get("required", []) if field not in EDITORIAL_RUNTIME_FIELDS]
+    projected["properties"] = {key: value for key, value in schema.get("properties", {}).items() if key not in EDITORIAL_RUNTIME_FIELDS}
+    return projected
 
 
 def execute(request: ExecutionRequest) -> ExecutionResult:

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
-from src.ai.execution import execute, manifest_checksum
+from src.ai.execution import editorial_projection_schema, execute, manifest_checksum
 from src.ai.manifest import file_checksum
 from src.ai.providers.agent_handoff import AgentHandoffProvider
 from src.ai.registry import append_result, consume_handoff, skill_checksum, validate_handoff
@@ -60,7 +60,7 @@ def build_editorial_prompt(request: ExecutionRequest) -> str:
         {"artifact_kind": item.artifact_kind, "artifact_id": item.artifact_id, "content": item.path.read_text(encoding="utf-8")}
         for item in request.input_artifacts
     ]
-    schema = Path("schemas") / f"{request.output_schema}.json"
+    schema_projection = editorial_projection_schema(request.output_schema)
     return "\n\n".join((
         "Eres el auditor editorial independiente de B5-I2.",
         f"Skill obligatoria: {request.skill_id}@{request.skill_version}.",
@@ -68,13 +68,27 @@ def build_editorial_prompt(request: ExecutionRequest) -> str:
         "Criterios críticos obligatorios: " + ", ".join(CRITICAL_CRITERIA) + ".",
         "No apliques reglas heredadas de QA de guion: ni número fijo de eventos, ni ejemplos obligatorios, ni re-hooks, ni regla 80/20, ni estructura de guion terminado.",
         "EarlyPackagingHypothesis es opcional, de solo lectura y no bloquea por ausencia. Si existe, solo permite una observación de honestidad para Equipo 03; no evalúes título, miniatura, clic ni packaging.",
-        "Debes emitir decision en PASS, WARN, FAIL o BLOCKED y readiness en READY_FOR_TEAM_02_REAUDIT, NOT_READY_FOR_TEAM_02_REAUDIT o BLOCKED_BY_MISSING_INPUT.",
+        "Debes emitir solo el dictamen editorial: decision en PASS, WARN, FAIL o BLOCKED.",
+        "No decidas readiness operativo ni campos técnicos; eso lo inyecta el runtime.",
         "Esta auditoría no autoriza B5-I3.",
         "Distingue SEMANTIC_AUDIT_INTEGRITY (lo impondrá el runtime) de SEMANTIC_EDITORIAL_DECISION (tu dictamen).",
         "No inventes provenance, runs, checksums ni timestamps. Ancla cada hallazgo a contenido concreto.",
-        "Devuelve exclusivamente un objeto JSON que respete este schema estructural: " + schema.read_text(encoding="utf-8"),
+        "Devuelve exclusivamente un objeto JSON que respete esta proyección editorial del schema estructural: " + json.dumps(schema_projection, ensure_ascii=False),
         "Artefactos reales a evaluar: " + json.dumps(artifacts, ensure_ascii=False),
     ))
+
+
+def _operational_readiness(result: ExecutionResult, editorial_decision: str) -> str:
+    provider_kind = str(result.usage.get("provider_kind") or "").upper()
+    if editorial_decision == "FAIL":
+        return "NOT_READY_FOR_TEAM_02_REAUDIT"
+    if editorial_decision in {"BLOCKED", "NOT_EVALUATED"}:
+        return "BLOCKED"
+    if result.status is not ExecutionStatus.SUCCEEDED:
+        return "BLOCKED"
+    if (provider_kind == "SYNTHETIC") or (not result.is_real_editorial_execution):
+        return "BLOCKED"
+    return "READY_FOR_TEAM_02_REAUDIT"
 
 
 def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: ExecutionResult) -> dict[str, Any]:
@@ -127,36 +141,108 @@ def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: E
         "inherited_restrictions_checked": audit.get("inherited_restrictions_checked", []),
         "auditor_statement": audit.get("auditor_statement") or f"Decision {audit.get('decision', 'UNSPECIFIED')} emitida sobre artefactos B5-I2 con evidencia citada.",
         "audit_method": "AI_SEMANTIC_REVIEW",
+        "readiness": _operational_readiness(result, str(audit.get("decision") or "")),
         "created_at": result.completed_at,
     })
     return audit
 
 
-def _atomic_persist(output_path: Path, registry_path: Path, audit: dict[str, Any], result: ExecutionResult) -> None:
-    """Prevalida y sustituye los dos documentos; si falla el segundo, restaura el primero."""
+def _transaction_paths(output_path: Path, registry_path: Path) -> dict[str, Path]:
+    return {
+        "journal": output_path.with_suffix(output_path.suffix + ".txn.json"),
+        "audit_backup": output_path.with_suffix(output_path.suffix + ".bak"),
+        "registry_backup": registry_path.with_suffix(registry_path.suffix + ".bak"),
+    }
+
+
+def _write_transaction_journal(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _cleanup_transaction_files(*paths: Path) -> None:
+    for path in paths:
+        path.unlink(missing_ok=True)
+
+
+def _restore_from_backup(target: Path, backup: Path, existed_before: bool) -> None:
+    if existed_before:
+        if not backup.exists():
+            raise OSError(f"backup faltante para restaurar {target}")
+        os.replace(backup, target)
+        return
+    target.unlink(missing_ok=True)
+    backup.unlink(missing_ok=True)
+
+
+def _recover_prepared_transaction(output_path: Path, registry_path: Path) -> None:
+    txn_paths = _transaction_paths(output_path, registry_path)
+    journal_path = txn_paths["journal"]
+    if not journal_path.exists():
+        return
+    payload = json.loads(journal_path.read_text(encoding="utf-8"))
+    status = str(payload.get("status") or "")
+    if status == "PREPARED":
+        _restore_from_backup(output_path, txn_paths["audit_backup"], bool(payload.get("audit_existed")))
+        _restore_from_backup(registry_path, txn_paths["registry_backup"], bool(payload.get("registry_existed")))
+        payload["status"] = "ROLLED_BACK"
+        _write_transaction_journal(journal_path, payload)
+        journal_path.unlink(missing_ok=True)
+        return
+    if status == "COMMITTED":
+        _cleanup_transaction_files(txn_paths["audit_backup"], txn_paths["registry_backup"], journal_path)
+        return
+    _cleanup_transaction_files(txn_paths["audit_backup"], txn_paths["registry_backup"], journal_path)
+
+
+def _atomic_persist(output_path: Path, registry_path: Path, audit: dict[str, Any], result: ExecutionResult, *, handoff_package: dict[str, Any] | None = None, current_skill_checksum: str | None = None) -> None:
+    """Prevalida y sustituye los documentos de auditoría+provenance como una sola unidad."""
+    _recover_prepared_transaction(output_path, registry_path)
     output_bytes = json.dumps(audit, ensure_ascii=False, indent=2).encode("utf-8") + b"\n"
     old_audit = output_path.read_bytes() if output_path.exists() else None
     old_registry = registry_path.read_bytes() if registry_path.exists() else None
     draft_registry_path = registry_path.with_suffix(registry_path.suffix + ".draft")
+    txn_paths = _transaction_paths(output_path, registry_path)
+    journal_payload = {
+        "status": "PREPARED",
+        "audit_path": str(output_path),
+        "registry_path": str(registry_path),
+        "audit_existed": old_audit is not None,
+        "registry_existed": old_registry is not None,
+    }
     try:
         # append_result remains canonical for registry shape and validation.
         draft_registry_path.write_bytes(old_registry or b'{"registry_version":"1.0.0","runs":[]}')
         append_result(draft_registry_path, result, execution_mode="REAL", role=AUDITOR_ROLE)
+        if handoff_package:
+            consume_handoff(
+                draft_registry_path,
+                package=handoff_package,
+                result_run_id=result.run_id,
+                output_checksum=result.output_checksum or "",
+                current_skill_checksum=current_skill_checksum or skill_checksum(),
+            )
         registry_bytes = draft_registry_path.read_bytes()
         with tempfile.NamedTemporaryFile(delete=False, dir=output_path.parent, suffix=".tmp") as audit_tmp:
             audit_tmp.write(output_bytes); audit_name = audit_tmp.name
         with tempfile.NamedTemporaryFile(delete=False, dir=registry_path.parent, suffix=".tmp") as registry_tmp:
             registry_tmp.write(registry_bytes); registry_name = registry_tmp.name
+        if old_audit is not None:
+            txn_paths["audit_backup"].write_bytes(old_audit)
+        else:
+            txn_paths["audit_backup"].unlink(missing_ok=True)
+        if old_registry is not None:
+            txn_paths["registry_backup"].write_bytes(old_registry)
+        else:
+            txn_paths["registry_backup"].unlink(missing_ok=True)
+        _write_transaction_journal(txn_paths["journal"], journal_payload)
         try:
             os.replace(audit_name, output_path)
             os.replace(registry_name, registry_path)
+            journal_payload["status"] = "COMMITTED"
+            _write_transaction_journal(txn_paths["journal"], journal_payload)
+            _cleanup_transaction_files(txn_paths["audit_backup"], txn_paths["registry_backup"], txn_paths["journal"])
         except Exception:
-            if old_audit is None:
-                output_path.unlink(missing_ok=True)
-            else:
-                output_path.write_bytes(old_audit)
-            if old_registry is not None:
-                registry_path.write_bytes(old_registry)
+            _recover_prepared_transaction(output_path, registry_path)
             raise
     finally:
         draft_registry_path.unlink(missing_ok=True)
@@ -222,13 +308,9 @@ def import_b5_i2_handoff(*, package_path: Path, result_path: Path, artifacts: li
         return replace(result, status=ExecutionStatus.FAILED, output=audit, error="output B5-I2 inválido: " + "; ".join(violations))
     result = replace(result, output=audit, output_artifact_id=audit["audit_id"], output_checksum=__import__("hashlib").sha256(json.dumps(audit, ensure_ascii=False, indent=2).encode("utf-8") + b"\n").hexdigest())
     try:
-        _atomic_persist(output_path, registry_path, audit, result)
+        _atomic_persist(output_path, registry_path, audit, result, handoff_package=package, current_skill_checksum=skill_checksum())
     except (OSError, ValueError) as exc:
         return replace(result, status=ExecutionStatus.FAILED, error=f"persistencia atómica falló: {exc}")
-    try:
-        consume_handoff(registry_path, package=package, result_run_id=result.run_id, output_checksum=result.output_checksum or "", current_skill_checksum=skill_checksum())
-    except (OSError, ValueError) as exc:
-        return replace(result, status=ExecutionStatus.FAILED, error=f"handoff no pudo consumirse: {exc}")
     return result
 
 

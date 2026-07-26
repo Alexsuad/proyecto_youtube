@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from src.ai.manifest import canonical_json
 from src.core.status import GateStatus
 from src.scripts.b5_i2_gate import _canonical_manifest_checksum, evaluate
 from tests.harness.test_b5_i1_editorial_input import _valid_thesis, valid_brief, valid_report, valid_research
@@ -47,6 +48,17 @@ def _read(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _material_checksum_from_research(research: dict, material_id: str) -> str:
+    matches = [
+        item
+        for field in ("facts", "interpretations", "hypotheses", "contradictions", "alternative_views", "narrative_evidence", "external_reality_evidence", "claims_candidates")
+        for item in research.get(field, [])
+        if isinstance(item, dict) and item.get("material_id") == material_id
+    ]
+    assert len(matches) == 1, f"material_id {material_id} debe tener una única referencia canónica de prueba"
+    return hashlib.sha256(canonical_json(matches[0])).hexdigest()
+
+
 def _analysis(material_id: str = "M1", analysis_id: str = "A-1") -> dict:
     return {
         "analysis_id": analysis_id,
@@ -55,7 +67,7 @@ def _analysis(material_id: str = "M1", analysis_id: str = "A-1") -> dict:
         "evidence_report_id": "ER-001",
         "semantic_audit_id": "SSA-1",
         "material_id": material_id,
-        "material_checksum": "a" * 64,
+        "material_checksum": "",
         "inherited_constraint_ids": list(ALL_CONSTRAINTS),
         "findings": [
             {
@@ -451,6 +463,8 @@ def _anchored(criterion: str) -> list[dict]:
 
 def _write_case(tmp_path: Path, risk: str = "LOW") -> dict[str, Path]:
     brief, research, evidence, provisional = valid_brief(), valid_research(), valid_report(), _valid_thesis()
+    research["narrative_evidence"][0]["material_id"] = "M1"
+    research["narrative_evidence"].append({**research["narrative_evidence"][0], "item_id": "N2", "statement": "Escena excluida.", "locator": "00:11", "material_id": "M2"})
     evidence["propagated_constraints"] = [CONSTRAINT]
     evidence["required_disclosures"] = [DISCLOSURE]
     evidence["excluded_claims"] = [EXCLUDED_CLAIM]
@@ -487,13 +501,46 @@ def _write_case(tmp_path: Path, risk: str = "LOW") -> dict[str, Path]:
     )
     script_promise["refined_thesis_checksum"] = _digest(paths["thesis"])
     paths["script_promise"] = _put(tmp_path / "script_promise.json", script_promise)
+    analysis = _read(paths["analysis"])
+    analysis["material_checksum"] = _material_checksum_from_research(research, analysis["material_id"])
+    _put(paths["analysis"], analysis)
     _refresh_b5_i2_audit(paths)
     _refresh_execution_registry(paths)
     return paths
 
 
-def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS") -> None:
+def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS", readiness: str | None = None, provider_or_adapter: str = "mock") -> None:
     artifact_rows = _artifact_checksum_rows(paths)
+    if readiness is not None:
+        effective_readiness = readiness
+    elif provider_or_adapter == "mock":
+        effective_readiness = "BLOCKED"
+    elif decision in {"PASS", "WARN"}:
+        effective_readiness = "READY_FOR_TEAM_02_REAUDIT"
+    elif decision == "FAIL":
+        effective_readiness = "NOT_READY_FOR_TEAM_02_REAUDIT"
+    else:
+        effective_readiness = "BLOCKED"
+    criteria_results = [{"criterion": criterion, "status": "SATISFIED", "summary": "La revisión editorial independiente quedó anclada a fragmentos y evidencia reales."} for criterion in CRITERIA]
+    findings = [
+        {
+            "criterion": criterion,
+            "status": "SATISFIED",
+            "anchored_findings": _anchored(criterion),
+            "rationale": "La revisión editorial independiente quedó anclada a fragmentos y evidencia reales.",
+        }
+        for criterion in CRITERIA
+    ]
+    if decision == "FAIL":
+        criteria_results[0]["status"] = "NOT_SATISFIED"
+        findings[0]["status"] = "NOT_SATISFIED"
+        findings[0]["anchored_findings"][0]["decision"] = "NOT_SATISFIED"
+        findings[0]["rationale"] = "La revisión editorial detectó una insuficiencia sustantiva."
+    elif decision == "BLOCKED":
+        criteria_results[0]["status"] = "UNRESOLVED"
+        findings[0]["status"] = "UNRESOLVED"
+        findings[0]["anchored_findings"][0]["decision"] = "UNRESOLVED"
+        findings[0]["rationale"] = "La revisión editorial quedó bloqueada y no puede emitir un cierre operativo."
     payload = {
         "audit_id": "B5I2-SSA-1",
         "episode_id": EP,
@@ -501,7 +548,7 @@ def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS") -> None
         "auditor_run_id": RUN_AUDIT,
         "auditor_skill_id": "skill_auditar_suficiencia_semantica_b5_i2",
         "auditor_skill_version": "1.0.0",
-        "provider_or_adapter": "local-mock-semantic",
+        "provider_or_adapter": provider_or_adapter,
         "model_or_evaluator": "semantic-mock-v1",
         "execution_timestamp": "2026-07-25T08:00:00Z",
         "input_manifest_checksum": _canonical_manifest_checksum(EP, artifact_rows),
@@ -509,16 +556,8 @@ def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS") -> None
         "audit_method": "AI_SEMANTIC_REVIEW",
         "audited_artifact_ids": ["analysis:A-1", "curation:C-1", "refined_thesis:T-1", "script_promise:SP-1"],
         "audited_artifact_versions": [item for item in artifact_rows if item["artifact_kind"] in {"analysis", "curation", "refined_thesis", "script_promise"}],
-        "criteria_results": [{"criterion": criterion, "status": "SATISFIED", "summary": "La revisión editorial independiente quedó anclada a fragmentos y evidencia reales."} for criterion in CRITERIA],
-        "findings": [
-            {
-                "criterion": criterion,
-                "status": "SATISFIED",
-                "anchored_findings": _anchored(criterion),
-                "rationale": "La revisión editorial independiente quedó anclada a fragmentos y evidencia reales.",
-            }
-            for criterion in CRITERIA
-        ],
+        "criteria_results": criteria_results,
+        "findings": findings,
         "blocking_defects": [],
         "non_blocking_defects": [],
         "cited_evidence": sorted({ref for criterion in CRITERIA for finding in _anchored(criterion) for ref in finding.get("evidence_refs", [])}),
@@ -527,13 +566,41 @@ def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS") -> None
         "inherited_restrictions_checked": [CONSTRAINT, DISCLOSURE, EXCLUDED_CLAIM],
         "auditor_statement": "Decision PASS emitida sobre artefactos B5-I2 con evidencia citada.",
         "decision": decision,
-        "readiness": "READY_FOR_TEAM_02_REAUDIT" if decision in {"PASS", "WARN"} else ("NOT_READY_FOR_TEAM_02_REAUDIT" if decision == "FAIL" else "BLOCKED_BY_MISSING_INPUT"),
+        "readiness": effective_readiness,
         "created_at": "2026-07-25T08:00:00Z",
     }
     paths["b5_i2_audit"] = _put(paths["analysis"].parent / "b5_i2_audit.json", payload)
+    _sync_auditor_run(paths)
 
 
-def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "SUCCEEDED", execution_mode: str = "SYNTHETIC") -> None:
+def _sync_auditor_run(paths: dict[str, Path]) -> None:
+    registry_path = paths.get("execution_registry")
+    if not registry_path or not registry_path.exists():
+        return
+    registry = _read(registry_path)
+    audit = _read(paths["b5_i2_audit"])
+    for run in registry.get("runs", []):
+        if run.get("run_id") != RUN_AUDIT:
+            continue
+        run["provider_or_adapter"] = audit["provider_or_adapter"]
+        run["skill_id"] = audit["auditor_skill_id"]
+        run["skill_version"] = audit["auditor_skill_version"]
+        run["model_or_evaluator"] = audit["model_or_evaluator"]
+        run["input_manifest_checksum"] = audit["input_manifest_checksum"]
+        run["outputs"] = [
+            {
+                "artifact_kind": "semantic_audit",
+                "artifact_id": audit["audit_id"],
+                "artifact_ref": f"semantic_audit:{audit['audit_id']}",
+                "artifact_path": None,
+                "checksum": _digest(paths["b5_i2_audit"]),
+            }
+        ]
+        break
+    _put(registry_path, registry)
+
+
+def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "SUCCEEDED", execution_mode: str = "SYNTHETIC", auditor_provider_kind: str = "SYNTHETIC", auditor_provider: str = "mock") -> None:
     outputs = _artifact_checksum_rows(paths)
     registry_outputs = [
         {"artifact_kind": item["artifact_kind"], "artifact_id": item["artifact_id"], "artifact_ref": f"{item['artifact_kind']}:{item['artifact_id']}", "artifact_path": None, "checksum": item["checksum"]}
@@ -549,6 +616,7 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
                 "skill_id": "skill_analisis_patrones",
                 "skill_version": "1.0.0",
                 "provider_or_adapter": "synthetic-fixture",
+                "provider_kind": "SYNTHETIC",
                 "model_or_evaluator": "fixture",
                 "input_manifest_checksum": "a" * 64,
                 "outputs": [item for item in registry_outputs if item["artifact_kind"] == "analysis" and item["artifact_id"] == "A-1"],
@@ -557,6 +625,24 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
                 "status": "SUCCEEDED",
                 "execution_mode": "SYNTHETIC",
             },
+            *(
+                [{
+                    "run_id": RUN_ANALYSIS_2,
+                    "episode_id": EP,
+                    "role": "ANALYSIS_PRODUCER",
+                    "skill_id": "skill_analisis_patrones",
+                    "skill_version": "1.0.0",
+                    "provider_or_adapter": "synthetic-fixture",
+                    "provider_kind": "SYNTHETIC",
+                    "model_or_evaluator": "fixture",
+                    "input_manifest_checksum": "a" * 64,
+                    "outputs": [item for item in registry_outputs if item["artifact_kind"] == "analysis" and item["artifact_id"] == _read(paths["analysis2"])["analysis_id"]],
+                    "started_at": "2026-07-25T07:01:30Z",
+                    "completed_at": "2026-07-25T07:01:45Z",
+                    "status": "SUCCEEDED",
+                    "execution_mode": "SYNTHETIC",
+                }] if "analysis2" in paths else []
+            ),
             {
                 "run_id": RUN_CURATION,
                 "episode_id": EP,
@@ -564,6 +650,7 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
                 "skill_id": "skill_curation_obras",
                 "skill_version": "1.0.0",
                 "provider_or_adapter": "synthetic-fixture",
+                "provider_kind": "SYNTHETIC",
                 "model_or_evaluator": "fixture",
                 "input_manifest_checksum": "a" * 64,
                 "outputs": [item for item in registry_outputs if item["artifact_kind"] == "curation"],
@@ -579,6 +666,7 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
                 "skill_id": "skill_sintesis_tesis",
                 "skill_version": "1.0.0",
                 "provider_or_adapter": "synthetic-fixture",
+                "provider_kind": "SYNTHETIC",
                 "model_or_evaluator": "fixture",
                 "input_manifest_checksum": "a" * 64,
                 "outputs": [item for item in registry_outputs if item["artifact_kind"] == "refined_thesis"],
@@ -595,6 +683,7 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
                 "skill_id": skill_id,
                 "skill_version": "1.0.0",
                 "provider_or_adapter": "synthetic-fixture",
+                "provider_kind": "SYNTHETIC",
                 "model_or_evaluator": "fixture",
                 "input_manifest_checksum": "a" * 64,
                 "outputs": [item for item in registry_outputs if item["artifact_kind"] == artifact_kind],
@@ -616,7 +705,8 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
                 "role": "INDEPENDENT_EDITORIAL_AUDITOR",
                 "skill_id": "skill_auditar_suficiencia_semantica_b5_i2",
                 "skill_version": "1.0.0",
-                "provider_or_adapter": "local-mock-semantic",
+                "provider_or_adapter": auditor_provider,
+                "provider_kind": auditor_provider_kind,
                 "model_or_evaluator": "semantic-mock-v1",
                 "input_manifest_checksum": _canonical_manifest_checksum(EP, outputs),
                 "outputs": [
@@ -670,16 +760,22 @@ def _criterion(audit: dict, criterion: str) -> dict:
 
 
 def _add_analysis(paths: dict[str, Path], material_id: str = "M2", analysis_id: str = "A-2") -> None:
-    paths["analysis2"] = _put(paths["analysis"].parent / "analysis2.json", _analysis(material_id, analysis_id))
+    analysis = _analysis(material_id, analysis_id)
+    analysis["material_checksum"] = _material_checksum_from_research(_read(paths["research"]), material_id)
+    paths["analysis2"] = _put(paths["analysis"].parent / "analysis2.json", analysis)
     _refresh_b5_i2_audit(paths)
     _refresh_execution_registry(paths)
 
 
 def test_complete_coherent_case_passes_and_unanalysed_exclusion_is_allowed(tmp_path: Path) -> None:
-    result = _evaluate(_write_case(tmp_path))
+    paths = _write_case(tmp_path)
+    _refresh_execution_registry(paths, execution_mode="REAL", auditor_provider_kind="REAL", auditor_provider="openai_compatible")
+    _refresh_b5_i2_audit(paths, decision="PASS", readiness="READY_FOR_TEAM_02_REAUDIT", provider_or_adapter="openai_compatible")
+    result = _evaluate(paths)
     assert result.status is GateStatus.PASS
-    assert result.evidence["semantic_audit"]["SEMANTIC_AUDIT_INTEGRITY"] == "PASS"
+    assert result.evidence["semantic_audit"]["TECHNICAL_INTEGRITY"] == "PASS"
     assert result.evidence["semantic_audit"]["SEMANTIC_EDITORIAL_DECISION"] == "PASS"
+    assert result.evidence["semantic_audit"]["OPERATIONAL_READINESS"] == "READY_FOR_TEAM_02_REAUDIT"
 
 
 @pytest.mark.parametrize("field", ["brief_checksum", "research_checksum", "evidence_report_checksum", "thesis_checksum"])
@@ -901,11 +997,14 @@ def test_auditor_that_also_produced_thesis_fails(tmp_path: Path) -> None:
 @pytest.mark.parametrize("status", ["NOT_SATISFIED", "UNRESOLVED"])
 def test_critical_editorial_failure_or_unresolved_fails(tmp_path: Path, status: str) -> None:
     paths = _write_case(tmp_path)
+    _refresh_execution_registry(paths, execution_mode="REAL", auditor_provider_kind="REAL", auditor_provider="openai_compatible")
+    _refresh_b5_i2_audit(paths, decision="FAIL", readiness="NOT_READY_FOR_TEAM_02_REAUDIT", provider_or_adapter="openai_compatible")
     def mutate(audit: dict) -> None:
         _criterion(audit, "ANALYSIS_SPECIFICITY")["status"] = status
         _criterion(audit, "ANALYSIS_SPECIFICITY")["anchored_findings"][0]["decision"] = status
         audit["decision"] = "FAIL"
     _mutate(paths, "b5_i2_audit", mutate, refresh=False)
+    _sync_auditor_run(paths)
     result = _evaluate(paths)
     assert result.status is GateStatus.FAIL
     assert result.evidence["semantic_audit"]["SEMANTIC_EDITORIAL_DECISION"] == "FAIL"
@@ -913,12 +1012,14 @@ def test_critical_editorial_failure_or_unresolved_fails(tmp_path: Path, status: 
 
 def test_limited_critical_editorial_decision_warns(tmp_path: Path) -> None:
     paths = _write_case(tmp_path)
+    _refresh_execution_registry(paths, execution_mode="REAL", auditor_provider_kind="REAL", auditor_provider="openai_compatible")
+    _refresh_b5_i2_audit(paths, decision="WARN", readiness="READY_FOR_TEAM_02_REAUDIT", provider_or_adapter="openai_compatible")
     def mutate(audit: dict) -> None:
         _criterion(audit, "THESIS_REFINEMENT_SUBSTANCE")["status"] = "LIMITED"
         _criterion(audit, "THESIS_REFINEMENT_SUBSTANCE")["anchored_findings"][0]["decision"] = "LIMITED"
         audit["decision"] = "WARN"
     _mutate(paths, "b5_i2_audit", mutate, refresh=False)
-    _refresh_execution_registry(paths)
+    _sync_auditor_run(paths)
     result = _evaluate(paths)
     assert result.status is GateStatus.WARN
     assert result.evidence["semantic_audit"]["SEMANTIC_EDITORIAL_DECISION"] == "WARN"
@@ -926,16 +1027,19 @@ def test_limited_critical_editorial_decision_warns(tmp_path: Path) -> None:
 
 def test_synthetic_complete_provenance_passes_technical_integrity(tmp_path: Path) -> None:
     result = _evaluate(_write_case(tmp_path))
-    assert result.status is GateStatus.PASS
-    assert result.evidence["semantic_audit"]["SEMANTIC_AUDIT_INTEGRITY"] == "PASS"
+    assert result.status is GateStatus.BLOCKED
+    assert result.evidence["semantic_audit"]["TECHNICAL_INTEGRITY"] == "PASS"
+    assert result.evidence["semantic_audit"]["SEMANTIC_EDITORIAL_DECISION"] == "NOT_EVALUATED"
+    assert result.evidence["semantic_audit"]["OPERATIONAL_READINESS"] == "BLOCKED"
 
 
 def test_real_operation_without_evaluator_blocks(tmp_path: Path) -> None:
     paths = _write_case(tmp_path)
-    _refresh_execution_registry(paths, auditor_status="BLOCKED_BY_SEMANTIC_EVALUATOR", execution_mode="REAL")
+    _refresh_execution_registry(paths, auditor_status="BLOCKED_BY_SEMANTIC_EVALUATOR", execution_mode="REAL", auditor_provider_kind="REAL", auditor_provider="openai_compatible")
+    _refresh_b5_i2_audit(paths, decision="BLOCKED", readiness="BLOCKED", provider_or_adapter="openai_compatible")
     result = _evaluate(paths)
     assert result.status is GateStatus.BLOCKED
-    assert result.evidence["semantic_audit"]["SEMANTIC_EDITORIAL_DECISION"] == "BLOCKED_BY_SEMANTIC_EVALUATOR"
+    assert result.evidence["semantic_audit"]["SEMANTIC_EDITORIAL_DECISION"] == "BLOCKED"
 
 
 def test_orphan_artifact_or_evidence_references_fail(tmp_path: Path) -> None:
@@ -953,7 +1057,9 @@ def test_orphan_artifact_or_evidence_references_fail(tmp_path: Path) -> None:
 
 def test_medium_with_mitigation_warns(tmp_path: Path) -> None:
     paths = _write_case(tmp_path, risk="MEDIUM")
-    _mutate(paths, "script_promise", lambda d: d["textual_overpromise_risk"].update(mitigation_or_pending="Revisar la formulación antes de escribir el guion."))
+    _mutate(paths, "script_promise", lambda d: d["textual_overpromise_risk"].update(mitigation_or_pending="Revisar la formulación antes de escribir el guion."), refresh=False)
+    _refresh_execution_registry(paths, execution_mode="REAL", auditor_provider_kind="REAL", auditor_provider="openai_compatible")
+    _refresh_b5_i2_audit(paths, decision="WARN", readiness="READY_FOR_TEAM_02_REAUDIT", provider_or_adapter="openai_compatible")
     assert _evaluate(paths).status is GateStatus.WARN
 
 
@@ -969,7 +1075,9 @@ def test_equal_provisional_thesis_with_justification_is_allowed(tmp_path: Path) 
         ),
         refresh=False,
     )
-    _mutate(paths, "script_promise", lambda d: d.update(refined_thesis_checksum=_digest(paths["thesis"])), refresh=True)
+    _mutate(paths, "script_promise", lambda d: d.update(refined_thesis_checksum=_digest(paths["thesis"])), refresh=False)
+    _refresh_execution_registry(paths, execution_mode="REAL", auditor_provider_kind="REAL", auditor_provider="openai_compatible")
+    _refresh_b5_i2_audit(paths, decision="PASS", readiness="READY_FOR_TEAM_02_REAUDIT", provider_or_adapter="openai_compatible")
     assert _evaluate(paths).status is GateStatus.PASS
 
 
@@ -999,3 +1107,71 @@ def test_excluded_claim_lost_in_curation_fails(tmp_path: Path) -> None:
 
 def test_b5_i3_not_started() -> None:
     assert not Path("src/scripts/b5_i3_gate.py").exists()
+
+
+def test_synthetic_warn_is_operationally_blocked(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    _refresh_b5_i2_audit(paths, decision="WARN", readiness="BLOCKED")
+    result = _evaluate(paths)
+    assert result.status is GateStatus.BLOCKED
+    assert result.evidence["semantic_audit"]["SEMANTIC_EDITORIAL_DECISION"] == "NOT_EVALUATED"
+    assert result.evidence["semantic_audit"]["OPERATIONAL_READINESS"] == "BLOCKED"
+
+
+def test_real_provider_fail_is_not_ready(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    _refresh_execution_registry(paths, execution_mode="REAL", auditor_provider_kind="REAL", auditor_provider="openai_compatible")
+    _refresh_b5_i2_audit(paths, decision="FAIL", readiness="NOT_READY_FOR_TEAM_02_REAUDIT", provider_or_adapter="openai_compatible")
+    result = _evaluate(paths)
+    assert result.status is GateStatus.FAIL
+    assert result.evidence["semantic_audit"]["OPERATIONAL_READINESS"] == "NOT_READY_FOR_TEAM_02_REAUDIT"
+
+
+@pytest.mark.parametrize(("decision", "readiness", "expected"), [("FAIL", "READY_FOR_TEAM_02_REAUDIT", GateStatus.FAIL), ("BLOCKED", "READY_FOR_TEAM_02_REAUDIT", GateStatus.FAIL), ("PASS", "READY_FOR_TEAM_02_REAUDIT", GateStatus.FAIL)])
+def test_incoherent_decision_readiness_is_rejected(tmp_path: Path, decision: str, readiness: str, expected: GateStatus) -> None:
+    paths = _write_case(tmp_path)
+    _refresh_b5_i2_audit(paths, decision=decision, readiness=readiness)
+    result = _evaluate(paths)
+    assert result.status is expected
+    assert any("readiness operativo incoherente" in item or "no puede autorizar readiness operativo" in item for item in result.violations)
+
+
+def test_material_checksum_incorrect_fails(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    _mutate(paths, "analysis", lambda d: d.update(material_checksum="b" * 64))
+    result = _evaluate(paths)
+    assert result.status is GateStatus.FAIL
+    assert any("material_checksum no coincide" in item for item in result.violations)
+
+
+def test_material_reference_missing_blocks(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    _mutate(paths, "research", lambda d: d["narrative_evidence"][0].pop("material_id"), refresh=False)
+    _refresh_b5_i2_audit(paths)
+    _refresh_execution_registry(paths)
+    result = _evaluate(paths)
+    assert result.status is GateStatus.BLOCKED
+    assert any("No existe referencia canónica suficiente" in item for item in result.violations)
+
+
+def test_material_checksum_from_other_material_fails(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    _mutate(paths, "analysis", lambda d: d.update(material_checksum=_material_checksum_from_research(_read(paths["research"]), "M2")))
+    result = _evaluate(paths)
+    assert result.status is GateStatus.FAIL
+    assert any("material_checksum no coincide" in item for item in result.violations)
+
+
+def test_excluded_material_analysis_is_rejected(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    _mutate(paths, "analysis", lambda d: d.update(material_id="M2", material_checksum=_material_checksum_from_research(_read(paths["research"]), "M2")))
+    result = _evaluate(paths)
+    assert result.status is GateStatus.FAIL
+    assert any("está excluido" in item for item in result.violations)
+
+
+def test_unauthorized_material_analysis_is_blocked(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    _mutate(paths, "analysis", lambda d: d.update(material_id="M3", material_checksum="a" * 64))
+    result = _evaluate(paths)
+    assert result.status is GateStatus.BLOCKED

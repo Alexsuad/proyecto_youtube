@@ -136,6 +136,7 @@ def append_result(
             "skill_id": result.usage["skill_id"],
             "skill_version": result.usage["skill_version"],
             "provider_or_adapter": result.provider,
+            "provider_kind": str(result.usage.get("provider_kind") or ("SYNTHETIC" if execution_mode == "SYNTHETIC" else "REAL")),
             "model_or_evaluator": result.model,
             "input_manifest_checksum": result.input_manifest_checksum,
             "outputs": outputs,

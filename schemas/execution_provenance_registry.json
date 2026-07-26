@@ -98,6 +98,7 @@
         "skill_id",
         "skill_version",
         "provider_or_adapter",
+        "provider_kind",
         "model_or_evaluator",
         "input_manifest_checksum",
         "outputs",
@@ -130,6 +131,12 @@
         "provider_or_adapter": {
           "type": "string",
           "minLength": 1
+        },
+        "provider_kind": {
+          "enum": [
+            "REAL",
+            "SYNTHETIC"
+          ]
         },
         "model_or_evaluator": {
           "type": "string",

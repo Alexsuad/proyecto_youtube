@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from src.ai.manifest import manifest_checksum as _shared_manifest_checksum
+from src.ai.manifest import canonical_json, manifest_checksum as _shared_manifest_checksum
 
 from src.core.contract_validation import validate_against_schema
 from src.core.gate_result import GateResult
@@ -49,12 +49,9 @@ CRITICAL_CRITERIA = {
 }
 INVALID_PROVENANCE = {"manual", "unknown", "unverified"}
 AUDITOR_ROLE = "INDEPENDENT_EDITORIAL_AUDITOR"
-READINESS_BY_DECISION = {
-    "PASS": "READY_FOR_TEAM_02_REAUDIT",
-    "WARN": "READY_FOR_TEAM_02_REAUDIT",
-    "FAIL": "NOT_READY_FOR_TEAM_02_REAUDIT",
-    "BLOCKED": "BLOCKED_BY_MISSING_INPUT",
-}
+REAL_PROVIDER_KIND = "REAL"
+SYNTHETIC_PROVIDER_KIND = "SYNTHETIC"
+READINESS_BY_DECISION = {"FAIL": "NOT_READY_FOR_TEAM_02_REAUDIT", "BLOCKED": "BLOCKED", "NOT_EVALUATED": "BLOCKED"}
 
 
 def checksum(path: Path) -> str:
@@ -199,6 +196,61 @@ def _build_actual_artifacts(data: dict[str, Any], b5_i1: dict[str, Path], analys
     return artifacts
 
 
+def _research_material_entries(research: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    entries: dict[str, list[dict[str, Any]]] = {}
+    for category in (
+        "facts", "interpretations", "hypotheses", "contradictions",
+        "alternative_views", "narrative_evidence", "external_reality_evidence", "claims_candidates",
+    ):
+        for item in research.get(category, []):
+            if isinstance(item, dict) and item.get("material_id"):
+                entries.setdefault(item["material_id"], []).append({"category": category, "artifact": item})
+    return entries
+
+
+def _material_checksum(entry: dict[str, Any]) -> str:
+    return hashlib.sha256(canonical_json(entry)).hexdigest()
+
+
+def _provider_kind(run: dict[str, Any]) -> str:
+    explicit = _normalize_token(run.get("provider_kind", ""))
+    if explicit == "real":
+        return REAL_PROVIDER_KIND
+    if explicit == "synthetic":
+        return SYNTHETIC_PROVIDER_KIND
+    return REAL_PROVIDER_KIND if run.get("execution_mode") == "REAL" else SYNTHETIC_PROVIDER_KIND
+
+
+def _semantic_editorial_decision(audit: dict[str, Any], auditor_run: dict[str, Any] | None) -> str:
+    if not auditor_run:
+        return "BLOCKED"
+    if auditor_run.get("status") == "BLOCKED_BY_SEMANTIC_EVALUATOR":
+        return "BLOCKED"
+    if auditor_run.get("status") != "SUCCEEDED":
+        return "BLOCKED"
+    if auditor_run.get("execution_mode") != "REAL" or _provider_kind(auditor_run) != REAL_PROVIDER_KIND:
+        return "NOT_EVALUATED"
+    return str(audit.get("decision") or "BLOCKED")
+
+
+def _operational_readiness(technical_integrity: str, semantic_decision: str, auditor_run: dict[str, Any] | None) -> str:
+    if technical_integrity != "PASS":
+        return "BLOCKED"
+    if semantic_decision in {"FAIL"}:
+        return "NOT_READY_FOR_TEAM_02_REAUDIT"
+    if semantic_decision in {"BLOCKED", "NOT_EVALUATED"}:
+        return "BLOCKED"
+    if not auditor_run:
+        return "BLOCKED"
+    if auditor_run.get("status") != "SUCCEEDED":
+        return "BLOCKED"
+    if auditor_run.get("execution_mode") != "REAL":
+        return "BLOCKED"
+    if _provider_kind(auditor_run) != REAL_PROVIDER_KIND:
+        return "BLOCKED"
+    return "READY_FOR_TEAM_02_REAUDIT"
+
+
 def _canonical_manifest_checksum(episode_id: str, artifacts: list[dict[str, Any]]) -> str:
     return _shared_manifest_checksum(episode_id, artifacts)
 
@@ -234,8 +286,8 @@ def _editorial_status(audit: dict, violations: list[str]) -> GateStatus:
     statuses = [item.get("status") for item in findings]
     critical_statuses = {item.get("criterion"): item.get("status") for item in findings if item.get("criterion") in CRITICAL_CRITERIA}
     decision = audit.get("decision")
-    if any(value in ("NOT_SATISFIED", "UNRESOLVED") for value in critical_statuses.values()) and decision != "FAIL":
-        violations.append("Un criterio crítico NOT_SATISFIED o UNRESOLVED exige decision=FAIL")
+    if any(value in ("NOT_SATISFIED", "UNRESOLVED") for value in critical_statuses.values()) and decision not in ("FAIL", "BLOCKED"):
+        violations.append("Un criterio crítico NOT_SATISFIED o UNRESOLVED exige decision=FAIL o decision=BLOCKED")
     if any(value == "LIMITED" for value in critical_statuses.values()) and decision == "PASS":
         violations.append("Un criterio crítico LIMITED no permite decision=PASS")
     if any(value == "UNRESOLVED" for value in statuses) and decision in ("PASS", "WARN"):
@@ -244,11 +296,8 @@ def _editorial_status(audit: dict, violations: list[str]) -> GateStatus:
         violations.append("Un criterio NOT_SATISFIED no permite PASS ni WARN")
     if any(value == "LIMITED" for value in statuses) and not any(value in ("NOT_SATISFIED", "UNRESOLVED") for value in statuses) and decision == "PASS":
         violations.append("Un criterio LIMITED exige como mínimo decision=WARN")
-    if all(value == "SATISFIED" for value in statuses) and decision not in ("PASS", "WARN"):
-        violations.append("Todos los criterios satisfechos no son compatibles con una decisión bloqueante")
-    expected_readiness = READINESS_BY_DECISION.get(decision)
-    if expected_readiness and audit.get("readiness") != expected_readiness:
-        violations.append(f"decision={decision} exige readiness={expected_readiness}")
+    if all(value == "SATISFIED" for value in statuses) and decision == "FAIL":
+        violations.append("Todos los criterios satisfechos no son compatibles con decision=FAIL")
     return GateStatus(decision) if decision in GateStatus._value2member_map_ else GateStatus.FAIL
 
 
@@ -281,6 +330,7 @@ def evaluate(
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.FAIL, "JSON inválido", [str(exc)], evidence=evidence)
 
     violations: list[str] = []
+    blocking_violations: list[str] = []
     for name, schema in {
         "brief": "episode_brief",
         "research": "research_pack",
@@ -394,6 +444,7 @@ def evaluate(
                 violations.append("Análisis referencia evidencia narrativa inexistente")
             if not set(finding.get("source_refs", [])).issubset(source_ids):
                 violations.append("Análisis referencia fuente inexistente")
+    research_materials = _research_material_entries(research)
 
     curation_data = data["curation"]
     candidate_rows = curation_data.get("candidates", [])
@@ -467,6 +518,22 @@ def evaluate(
     for item in progression.values():
         if not set(item.get("evidence_refs", [])).issubset(research_ids | evidence_ids | analysis_finding_ids):
             violations.append("Curación referencia evidencia de progresión inexistente")
+    for item in data["analyses"]:
+        material_id = item.get("material_id")
+        matches = research_materials.get(material_id, [])
+        if not matches:
+            blocking_violations.append(f"No existe referencia canónica suficiente para verificar material_checksum de {material_id}")
+            continue
+        if len(matches) != 1:
+            blocking_violations.append(f"La referencia canónica de material_id={material_id} es ambigua en ResearchPack")
+            continue
+        if material_id in excluded:
+            violations.append(f"material_id {material_id} está excluido y no puede validarse como análisis autorizado")
+        if material_id not in candidate_id_set:
+            violations.append(f"material_id {material_id} no está autorizado por MaterialCuration")
+        canonical_entry = matches[0]["artifact"]
+        if item.get("material_checksum") != _material_checksum(canonical_entry):
+            violations.append(f"material_checksum no coincide con el material canónico real para {material_id}")
 
     thesis_data = data["thesis"]
     if thesis_data.get("analysis_ids") != curation_data.get("analysis_ids"):
@@ -631,29 +698,41 @@ def evaluate(
             violations.append(f"{criterion} no cubre todos los artefactos relevantes auditados")
 
     editorial_gate_status = _editorial_status(b5_audit, violations)
-    integrity_status = "FAIL" if violations else "PASS"
-    semantic_editorial_decision = editorial_gate_status.value
-    if auditor_run and auditor_run.get("execution_mode") == "REAL" and auditor_run.get("status") == "BLOCKED_BY_SEMANTIC_EVALUATOR":
-        semantic_editorial_decision = "BLOCKED_BY_SEMANTIC_EVALUATOR"
+    integrity_status = "BLOCKED" if blocking_violations else ("FAIL" if violations else "PASS")
+    semantic_editorial_decision = _semantic_editorial_decision(b5_audit, auditor_run)
+    operational_readiness = _operational_readiness(integrity_status, semantic_editorial_decision, auditor_run)
+    expected_readiness = READINESS_BY_DECISION.get(semantic_editorial_decision, "READY_FOR_TEAM_02_REAUDIT")
+    if operational_readiness == "READY_FOR_TEAM_02_REAUDIT" and expected_readiness != "READY_FOR_TEAM_02_REAUDIT":
+        violations.append(f"SEMANTIC_EDITORIAL_DECISION={semantic_editorial_decision} no puede autorizar readiness operativo READY_FOR_TEAM_02_REAUDIT")
+    if b5_audit.get("readiness") != operational_readiness:
+        violations.append(f"readiness operativo incoherente: se esperaba {operational_readiness} y se recibió {b5_audit.get('readiness')}")
     evidence["semantic_audit"] = {
-        "SEMANTIC_AUDIT_INTEGRITY": integrity_status,
+        "TECHNICAL_INTEGRITY": integrity_status,
         "SEMANTIC_EDITORIAL_DECISION": semantic_editorial_decision,
+        "OPERATIONAL_READINESS": operational_readiness,
+        "AUDITOR_EXECUTION_MODE": auditor_run.get("execution_mode") if auditor_run else "",
+        "AUDITOR_STATUS": auditor_run.get("status") if auditor_run else "",
+        "AUDITOR_PROVIDER_KIND": _provider_kind(auditor_run) if auditor_run else "",
         "auditor_run_id": b5_audit.get("auditor_run_id"),
+        "raw_audit_decision": b5_audit.get("decision"),
+        "raw_audit_readiness": b5_audit.get("readiness"),
         "input_manifest_checksum": b5_audit.get("input_manifest_checksum"),
     }
+    if blocking_violations:
+        return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.BLOCKED, "B5-I2 bloqueada por falta de referencia técnica suficiente", blocking_violations + violations, evidence=evidence)
     if violations:
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.FAIL, "B5-I2 no puede avanzar", violations, evidence=evidence)
-    if semantic_editorial_decision == "BLOCKED_BY_SEMANTIC_EVALUATOR":
-        return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.BLOCKED, "El evaluador semántico operativo no está disponible para una adjudicación editorial real", evidence=evidence)
 
     critical_statuses = {
         item.get("criterion"): item.get("status")
         for item in b5_audit.get("findings", [])
         if isinstance(item, dict) and item.get("criterion") in CRITICAL_CRITERIA
     }
-    if any(value in ("NOT_SATISFIED", "UNRESOLVED") for value in critical_statuses.values()):
+    if operational_readiness == "BLOCKED":
+        return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.BLOCKED, "La auditoría no tiene autorización operativa para pasar al Equipo 02", evidence=evidence)
+    if any(value in ("NOT_SATISFIED", "UNRESOLVED") for value in critical_statuses.values()) or semantic_editorial_decision == "FAIL":
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.FAIL, "La adjudicación editorial independiente no autoriza avanzar", evidence=evidence)
-    if any(value == "LIMITED" for value in critical_statuses.values()) or editorial_gate_status == GateStatus.WARN or risk == "MEDIUM":
+    if any(value == "LIMITED" for value in critical_statuses.values()) or editorial_gate_status == GateStatus.WARN or risk == "MEDIUM" or semantic_editorial_decision == "WARN":
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.WARN, "La auditoría editorial es trazable pero mantiene limitaciones no bloqueantes", evidence=evidence)
     return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.PASS, "B5-I2 preparado para reauditoría funcional", evidence=evidence)
 
