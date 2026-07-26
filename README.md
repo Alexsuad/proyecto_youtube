@@ -2,7 +2,7 @@
 
 > Alcance y mejoras: consultar [`docs/product/MVP_BASELINE.md`](docs/product/MVP_BASELINE.md) y [`docs/initiatives/README.md`](docs/initiatives/README.md). Ante una mejora fuera de la misión: localizar MVP y Plan 001, comprobar pertenencia y duplicados, capturar problema/valor, clasificar proporcionalmente, evaluar extensión, mantener `implementation_authorized: false`, no ampliar el alcance y continuar el trabajo autorizado. Si falta baseline suficiente, registrar `UNDECIDED` sin inventar alcance ni declarar bloqueo operativo.
 
-> Repositorio de scripts, plantillas y documentación del canal **Más Allá del Guion**.
+> Repositorio de scripts, plantillas y documentación del canal **Más Allá del Guion**. La prioridad activa es el núcleo profesional de Guion hasta `EDITORIAL_SCRIPT_APPROVED`.
 > La fuente de verdad del *contenido* vive en en el **Content Vault** externo.
 
 ---
@@ -31,6 +31,10 @@ La configuración del Vault está en `config/local_settings.json`.
 ---
 
 ## Pipeline del episodio (scripts)
+
+El orden actual es: identidad y brief → investigación y evidencia → tesis y curación → análisis y diseño editorial → redacción y edición → verificación → aprobación editorial del guion. Packaging, Shorts, SEO y distribución se conservan como Etapa 2 diferida y no autorizada. Audio pertenece a un repositorio externo futuro; Video está fuera del alcance de este repositorio.
+
+Estado operativo: `ACTIVE_PRODUCT_STAGE=SCRIPT_CORE`, `CURRENT_INCREMENT=B5-I2`, implementación completada con riesgo residual técnico; la auditoría semántica real y la reauditoría funcional del Equipo 02 siguen pendientes. `B5-I3` no está autorizado.
 
 Los scripts se encuentran en `src/scripts/`. Se ejecutan en este orden:
 
@@ -70,9 +74,9 @@ Dentro de la carpeta del episodio en el Vault (`ep_XXXX_slug/`):
 | `02_curation_obras.md` | Deseable | Obras seleccionadas |
 | `06_guion_longform.md` | **Obligatorio** | Guion final aprobado |
 | `07_verificacion_veracidad_notebooklm.md` | **Obligatorio** | Gate V — debe tener `ESTADO_GLOBAL: OK` |
-| `08_shorts.md` | **Obligatorio** | Guiones de shorts |
-| `09_packaging.md` | **Obligatorio** | Títulos y concepto de miniatura |
-| `10_seo.md` | **Obligatorio** | Metadatos para YouTube |
+| `08_shorts.md` | Futuro / Etapa 2 | Guiones de shorts |
+| `09_packaging.md` | Futuro / Etapa 2 | Títulos y concepto de miniatura |
+| `10_seo.md` | Futuro / Etapa 2 | Metadatos para YouTube |
 | `99_notebooklm_pack.md` | Deseable* | Índice de subida a NotebookLM |
 
 > *`99_notebooklm_pack.md` puede convertirse en obligatorio activando `notebooklm_pack_required: true` en `config/local_settings.json`.
@@ -83,7 +87,7 @@ Dentro de la carpeta del episodio en el Vault (`ep_XXXX_slug/`):
 
 **NotebookLM es la memoria limpia del canal. Solo recibe "verdades terminadas".**
 
-### ✅ Qué se sube
+### ✅ Qué se subirá en la Etapa 2 autorizada
 - `06_guion_longform.md` — guion final aprobado
 - `08_shorts.md` — shorts finales
 - `09_packaging.md` — packaging final

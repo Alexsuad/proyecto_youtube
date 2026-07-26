@@ -1,10 +1,10 @@
-# PLAN-001 / B9.5 — Registro publicado y aprendizaje controlado
+# PLAN-001 / B9.5 — Aprendizaje editorial controlado
 
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
 **Versión derivada:** `PLAN-001 v1.4`
 **Estado inicial:** `PLANNED`  
-**Dependencia:** `B9`  
+**Dependencia activa:** `B9 / núcleo de Guion validado`
 **Siguiente tramo:** `B10`  
 **Gate resumido:** Ciclo manual de aprendizaje demostrado
 
@@ -32,11 +32,15 @@ No leer por defecto el Plan 001 completo, otros bloques, todo `workspace/` ni re
 
 ## 1. Objetivo
 
-Demostrar un ciclo inicial y manual de registro pospublicación sin añadir todavía integración automática con YouTube Studio.
+Demostrar un ciclo inicial y manual de aprendizaje editorial del Guion sin requerir publicación real. La analítica posterior de distribución queda diferida.
 
 ## 2. Misiones
 
-### B9.5-M1 — Registro de versión publicada
+### B9.5-M1 — Aprendizaje editorial de episodios
+
+Recoger observaciones de episodios de validación, correcciones humanas, resultados de benchmarks editoriales e hipótesis sobre tesis, estructura, apertura, redacción, edición y oralidad. Los estados permitidos son `SUPPORTED`, `NOT_SUPPORTED` e `INCONCLUSIVE`, con `EditorialLearningCandidate`, acumulación de evidencia y revisión humana. No requiere publicación real.
+
+### Validación futura de Etapa 2 — Registro de versión publicada (`DEFERRED_NOT_AUTHORIZED`)
 
 Generar `PublishedVersionManifest` para al menos un caso cuando exista publicación real.
 
@@ -59,7 +63,7 @@ El manifest debe registrar de forma cronológica cualquier cambio posterior en:
 
 Cada cambio debe indicar versión anterior, versión nueva, fecha, razón y ventanas métricas afectadas.
 
-### B9.5-M2 — Captura manual de desempeño
+### B9.5-M2 — Captura manual de desempeño (`DEFERRED_NOT_AUTHORIZED`)
 
 Generar `PerformanceSnapshot`.
 
@@ -74,7 +78,7 @@ Cada `PerformanceSnapshot` debe identificar las versiones activas de título, mi
 
 Una ventana con cambios de versión debe dividirse o marcarse como mezclada e inconclusa para atribución causal.
 
-### B9.5-M3 — Aprendizaje de YouTube gobernado
+### B9.5-M3 — Aprendizaje de YouTube gobernado (`DEFERRED_NOT_AUTHORIZED`)
 
 Generar `YouTubeLearningReport`.
 
@@ -101,13 +105,13 @@ El aprendizaje contempla fuentes desde:
 
 - correcciones humanas;
 - comparación entre borrador y versión aprobada;
-- versión producida y publicada;
-- resultados de apertura;
-- packaging;
-- métricas de YouTube;
-- cambios de perfil;
-- nuevas políticas;
+- resultados editoriales de episodios de validación;
+- correcciones humanas y comparación entre borrador y versión aprobada;
+- resultados de apertura y edición;
+- cambios de perfil o nuevas políticas cuando estén aprobados;
 - resultados inconclusos.
+
+Las fuentes de publicación, packaging y métricas de YouTube pertenecen al tramo diferido `DEFERRED_NOT_AUTHORIZED`.
 
 Flujo de aprendizaje:
 
@@ -133,14 +137,13 @@ Una sola corrección no se convierte en regla estable.
 
 ```text
 PASS si:
-- versión publicada o fixture está identificada sin ambigüedad;
-- cambios posteriores de packaging y elementos de publicación están versionados y fechados;
-- cada PerformanceSnapshot identifica las versiones activas durante su ventana;
-- una ventana con versiones mezcladas está dividida o marcada como inconclusa;
-- métricas no se presentan sin contexto;
+- observaciones y correcciones editoriales están identificadas sin ambigüedad;
+- candidatos de aprendizaje tienen evidencia y revisión humana;
 - hallazgos e hipótesis están separados;
 - ningún aprendizaje modificó el perfil automáticamente;
 - existe siguiente experimento o decisión explícita de no experimentar.
+
+El registro publicado, `PerformanceSnapshot` y el aprendizaje de distribución quedan fuera de este gate activo y permanecen `DEFERRED_NOT_AUTHORIZED`.
 ```
 
 ---

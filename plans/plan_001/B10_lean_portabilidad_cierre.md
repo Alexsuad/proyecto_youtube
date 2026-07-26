@@ -2,9 +2,9 @@
 
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
-**Versión derivada:** `PLAN-001 v1.3`  
+**Versión derivada:** `PLAN-001 v1.4`
 **Estado inicial:** `PLANNED`  
-**Dependencia:** `B9.5`  
+**Dependencia activa:** `B9` completado para el núcleo de Guion + aprendizaje editorial aplicable de `B9.5`
 **Siguiente tramo:** `Cierre del Plan 001`  
 **Gate resumido:** Plan cerrado con evidencia
 
@@ -32,7 +32,7 @@ No leer por defecto el Plan 001 completo, otros bloques, todo `workspace/` ni re
 
 ## 1. Objetivo
 
-Reducir duplicación y contradicciones sin borrar evidencia ni romper compatibilidad, cerrando formalmente el plan y determinando el camino de portabilidad y evoluciones futuras.
+Reducir duplicación y contradicciones sin borrar evidencia ni romper compatibilidad, cerrando Lean/5S, portabilidad y deuda técnica de la Etapa 1 sin depender de publicación, analítica de YouTube, Audio o Video. La Etapa 2 tendrá un cierre posterior cuando sea autorizada.
 
 ## 2. Misiones
 
@@ -146,18 +146,19 @@ Corregir:
 
 Acciones:
 
-1. Ejecutar suite completa.
-2. Ejecutar auditoría de arquitectura.
-3. Ejecutar auditoría editorial externa.
-4. Ejecutar auditoría de Adaptación a YouTube.
-5. Revisar seguridad, rutas y configuración.
-6. Actualizar README y mapa de arquitectura.
-7. Marcar documentos sustituidos.
-8. Consolidar changelog.
-9. Etiquetar versión estable.
-10. Registrar deudas no bloqueantes.
-11. Comparar resultados contra benchmarks.
-12. Documentar si las capacidades generalizables son realmente extraíbles.
+1. Ejecutar las validaciones de la Etapa 1.
+2. Ejecutar auditoría de arquitectura y portabilidad.
+3. Ejecutar auditoría editorial del Guion.
+4. Revisar seguridad, rutas y configuración.
+5. Actualizar README y mapa de arquitectura.
+6. Marcar documentos sustituidos.
+7. Consolidar changelog.
+8. Etiquetar versión estable del núcleo de Guion.
+9. Registrar deudas no bloqueantes.
+10. Comparar resultados contra benchmarks editoriales.
+11. Documentar si las capacidades generalizables son realmente extraíbles.
+
+Las auditorías de adaptación, derechos de publicación, producción audiovisual, Audio, Video y analítica de YouTube pertenecen a la Etapa 2 `DEFERRED_NOT_AUTHORIZED`.
 
 ### B10-M10 — Decisiones futuras permitidas
 
@@ -177,13 +178,12 @@ Solo después de la validación podrán evaluarse:
 ## 3. Gate B10
 
 ```text
-PLAN_STATUS: PASS
+PLAN_STATUS: PASS_FOR_SCRIPT_CORE
 SYSTEM_REVIEW: PASS
 PRODUCT_REVIEW: PASS
-YOUTUBE_ADAPTATION_REVIEW: PASS
-PLATFORM_AND_RIGHTS_REVIEW: PASS
-HUMAN_PRODUCTION_APPROVAL: APPROVED_FOR_PRODUCTION
-CLOSURE_STATE: YOUTUBE_PRODUCTION_READY
+EDITORIAL_SCRIPT_APPROVAL: PASS
+CLOSURE_STATE: EDITORIAL_SCRIPT_APPROVED
+STAGE_2_CLOSURE: DEFERRED_NOT_AUTHORIZED
 ```
 
 ---

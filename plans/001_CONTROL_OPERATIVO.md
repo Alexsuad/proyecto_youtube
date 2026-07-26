@@ -15,7 +15,18 @@ plan_status: READY_FOR_EXTERNAL_AUDIT
 implementation_authorized: true
 authorized_blocks: [B0, B1, B2, B3, B4, B5]
 current_block: B5
-current_mission: B5-I1
+current_mission: B5-I2
+ACTIVE_PRODUCT_STAGE: SCRIPT_CORE
+CURRENT_INCREMENT: B5-I2
+B5_I2_IMPLEMENTATION: COMPLETED
+B5_I2_TECHNICAL_CORRECTION: PASS_WITH_RESIDUAL_RISK
+B5_I2_REAL_SEMANTIC_AUDIT: PENDING
+B5_I2_TEAM_02_FUNCTIONAL_REAUDIT: PENDING
+B5_I2_FINAL_STATUS: PENDING_SEMANTIC_AND_FUNCTIONAL_APPROVAL
+B5_I3: NOT_AUTHORIZED
+STAGE_2_YOUTUBE_DISTRIBUTION: DEFERRED_NOT_AUTHORIZED
+AUDIO_INTEGRATION: EXTERNAL_REPOSITORY_FUTURE_CONTRACT
+VIDEO_PRODUCTION: OUT_OF_REPOSITORY_SCOPE
 b3_i1_implementation: COMPLETED
 b3_i1_technical_audit: PASS
 b3_profile_status: ACTIVE
@@ -59,14 +70,14 @@ b4_final_status: PASS
 B4_I2_STATUS: PASS
 B4_I2_AUDIT: PASS
 B5_STATUS: IN_PROGRESS
-B5_I1_STATUS: READY_FOR_AUDIT
-B5_I1_AUDIT: PENDING
-next_allowed_action: EXTERNAL_AUDIT_B5_I1
+B5_I1_STATUS: TECHNICALLY_CLOSED
+B5_I2_STATUS: COMPLETED_PENDING_APPROVAL
+next_allowed_action: REAL_SEMANTIC_AUDIT_B5_I2_THEN_TEAM_02_FUNCTIONAL_REAUDIT
 next_implementation_block_if_approved: B5
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5-I1 está implementado y queda READY_FOR_AUDIT; B5-I2, B5.5 y B6 no se han iniciado.
+B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5-I2 está implementado y corregido técnicamente, pero sigue pendiente de auditoría semántica real y reauditoría funcional del Equipo 02. B5-I3 no está autorizado.
 
 ## 2. Autoridad documental
 
@@ -161,12 +172,11 @@ B0
                      └── B5.5
                           └── B6
                                └── B7
-                                    └── B7.5
-                                         └── B8
-                                              └── B8.5
-                                                   └── B9
-                                                        └── B9.5
-                                                             └── B10
+                                    └── B9 (NÚCLEO DE GUION)
+                                         └── B9.5 (APRENDIZAJE EDITORIAL)
+                                              └── B10 (CIERRE ETAPA 1)
+
+ETAPA 2 DIFERIDA: autorización futura → B7.5 → componentes diferidos de B8 → B8.5
 ```
 
 ## 7. Tablero de bloques
@@ -182,12 +192,12 @@ B0
 | B5.5 | Prototipo editorial controlado | B5 | `PLANNED` | [B5_5_prototipo_editorial.md](plan_001/B5_5_prototipo_editorial.md) |
 | B6 | Redacción, ensamblaje, edición y verificación | B5.5 | `PLANNED` | [B6_redaccion_edicion_verificacion.md](plan_001/B6_redaccion_edicion_verificacion.md) |
 | B7 | Auditoría independiente, correcciones y aprobación editorial | B6 | `PLANNED` | [B7_auditoria_aprobacion_editorial.md](plan_001/B7_auditoria_aprobacion_editorial.md) |
-| B7.5 | Adaptación profesional a YouTube | B7 | `PLANNED` | [B7_5_adaptacion_youtube.md](plan_001/B7_5_adaptacion_youtube.md) |
-| B8 | Plataforma, monetización, copyright y paquete para producción | B7.5 | `PLANNED` | [B8_plataforma_derechos_paquete.md](plan_001/B8_plataforma_derechos_paquete.md) |
-| B8.5 | Aprobación para producción y cierre YOUTUBE_PRODUCTION_READY | B8 | `PLANNED` | [B8_5_aprobacion_youtube_production_ready.md](plan_001/B8_5_aprobacion_youtube_production_ready.md) |
-| B9 | Validación con tres episodios completos | B2–B8.5 | `PLANNED` | [B9_validacion_tres_episodios.md](plan_001/B9_validacion_tres_episodios.md) |
-| B9.5 | Registro publicado y aprendizaje controlado | B9 | `PLANNED` | [B9_5_aprendizaje_controlado.md](plan_001/B9_5_aprendizaje_controlado.md) |
-| B10 | Lean/5S, portabilidad, documentación y cierre | B9.5 | `PLANNED` | [B10_lean_portabilidad_cierre.md](plan_001/B10_lean_portabilidad_cierre.md) |
+| B7.5 | Adaptación profesional a YouTube | B7 | `DEFERRED_NOT_AUTHORIZED` | [B7_5_adaptacion_youtube.md](plan_001/B7_5_adaptacion_youtube.md) |
+| B8 | Plataforma, monetización, copyright y paquete para producción | B7.5 | `DEFERRED_NOT_AUTHORIZED` | [B8_plataforma_derechos_paquete.md](plan_001/B8_plataforma_derechos_paquete.md) |
+| B8.5 | Aprobación para producción y cierre YOUTUBE_PRODUCTION_READY | B8 | `DEFERRED_NOT_AUTHORIZED` | [B8_5_aprobacion_youtube_production_ready.md](plan_001/B8_5_aprobacion_youtube_production_ready.md) |
+| B9 | Validación con tres episodios completos | B7 / `EDITORIAL_SCRIPT_APPROVED` | `PLANNED` | [B9_validacion_tres_episodios.md](plan_001/B9_validacion_tres_episodios.md) |
+| B9.5 | Aprendizaje editorial controlado | B9 | `PLANNED` | [B9_5_aprendizaje_controlado.md](plan_001/B9_5_aprendizaje_controlado.md) |
+| B10 | Lean/5S, portabilidad, documentación y cierre | B9 + aprendizaje editorial B9.5 | `PLANNED` | [B10_lean_portabilidad_cierre.md](plan_001/B10_lean_portabilidad_cierre.md) |
 
 ## 8. Evidencia prevista
 
@@ -220,7 +230,7 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: EXTERNAL_AUDIT_B5_I1
+NEXT_ALLOWED_ACTION: REAL_SEMANTIC_AUDIT_B5_I2_THEN_TEAM_02_FUNCTIONAL_REAUDIT
 B3_PROFILE_STATUS: ACTIVE
 B3_IMPLEMENTATION_STATUS: COMPLETED
 B3_FUNCTIONAL_APPROVAL: APPROVE
@@ -241,9 +251,12 @@ B4_I2_SPECIFIC_TESTS: 33 passed
 B4_I2_EXTERNAL_AUDIT: PASS
 B4_FINAL_STATUS: PASS
 B5_STATUS: IN_PROGRESS
-B5_I1_STATUS: READY_FOR_AUDIT
-B5_I1_AUDIT: PENDING
-B5_I1_SPECIFIC_TESTS: 13 passed
+B5_I1_STATUS: TECHNICALLY_CLOSED
+B5_I2_STATUS: COMPLETED_PENDING_APPROVAL
+B5_I2_TECHNICAL_CORRECTION: PASS_WITH_RESIDUAL_RISK
+B5_I2_REAL_SEMANTIC_AUDIT: PENDING
+B5_I2_TEAM_02_FUNCTIONAL_REAUDIT: PENDING
+B5_I3: NOT_AUTHORIZED
 ```
 
-B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5-I1 está implementado y queda READY_FOR_AUDIT; B5-I2, B5.5 y B6 no se han iniciado.
+B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5-I2 está implementado y técnicamente corregido, pero pendiente de auditoría semántica real y reauditoría funcional. B5-I3 no está autorizado.

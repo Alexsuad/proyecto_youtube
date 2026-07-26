@@ -3,7 +3,11 @@
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
 **Versión:** `1.4`
-**Implementación autorizada:** `YES`
+**Implementación autorizada:** `YES` únicamente para bloques activos; B5-I3 y la Etapa 2 permanecen no autorizados.
+
+## 1A. Prioridad y etapas
+
+La fuente canónica es el Plan 001 principal. La etapa activa es el núcleo profesional de Guion (`SCRIPT_CORE`) hasta `EDITORIAL_SCRIPT_APPROVED`; B5-I2 es el incremento actual y queda pendiente de auditoría semántica real y reauditoría funcional del Equipo 02. B5-I3 no está autorizado. B7.5, B8 y B8.5 se conservan como Etapa 2 diferida, no como continuación automática. Audio pertenece a un repositorio externo futuro y Video queda fuera del repositorio.
 
 ## 1. Propósito
 
@@ -59,21 +63,21 @@ Los archivos de esta carpeta:
 
 | Bloque | Archivo | Dependencia | Estado | Gate resumido |
 |---|---|---|---|---|
-| `B0` | [B0_gobernanza_baseline_benchmarks.md](B0_gobernanza_baseline_benchmarks.md) | Ninguna | `PLANNED` | Baseline y benchmarks aprobados |
-| `B1` | [B1_contratos_schemas_estados_versionado.md](B1_contratos_schemas_estados_versionado.md) | B0 | `PLANNED` | Contratos canónicos aprobados |
-| `B2` | [B2_reparacion_harness_gates.md](B2_reparacion_harness_gates.md) | B1 | `PLANNED` | Cero falsos PASS conocidos |
-| `B3` | [B3_perfil_editorial_frontera_canal.md](B3_perfil_editorial_frontera_canal.md) | B1–B2 | `PLANNED` | Producción consume perfil versionado |
+| `B0` | [B0_gobernanza_baseline_benchmarks.md](B0_gobernanza_baseline_benchmarks.md) | Ninguna | `PASS` | Baseline y benchmarks aprobados |
+| `B1` | [B1_contratos_schemas_estados_versionado.md](B1_contratos_schemas_estados_versionado.md) | B0 | `PASS` | Contratos canónicos aprobados |
+| `B2` | [B2_reparacion_harness_gates.md](B2_reparacion_harness_gates.md) | B1 | `PASS` | Cero falsos PASS conocidos |
+| `B3` | [B3_perfil_editorial_frontera_canal.md](B3_perfil_editorial_frontera_canal.md) | B1–B2 | `PASS` | Producción consume perfil versionado |
 | `B4` | [B4_responsabilidades_skills_portabilidad.md](B4_responsabilidades_skills_portabilidad.md) | B3 | `PASS` | B4-I1 y B4-I2 auditados `PASS` |
-| `B5` | [B5_diseno_editorial.md](B5_diseno_editorial.md) | B3–B4 | `IN_PROGRESS` | B5-I1 listo para auditoría externa |
+| `B5` | [B5_diseno_editorial.md](B5_diseno_editorial.md) | B3–B4 | `IN_PROGRESS` | B5-I1 cerrado; B5-I2 implementación completada y cierre funcional pendiente; B5-I3 `NOT_AUTHORIZED` |
 | `B5.5` | [B5_5_prototipo_editorial.md](B5_5_prototipo_editorial.md) | B5 | `PLANNED` | Mejora editorial temprana demostrada |
 | `B6` | [B6_redaccion_edicion_verificacion.md](B6_redaccion_edicion_verificacion.md) | B5.5 | `PLANNED` | Candidato final coherente y trazable |
 | `B7` | [B7_auditoria_aprobacion_editorial.md](B7_auditoria_aprobacion_editorial.md) | B6 | `PLANNED` | Guion aprobado editorialmente |
-| `B7.5` | [B7_5_adaptacion_youtube.md](B7_5_adaptacion_youtube.md) | B7 | `PLANNED` | Packaging, correspondencia y continuidad aprobados |
-| `B8` | [B8_plataforma_derechos_paquete.md](B8_plataforma_derechos_paquete.md) | B7.5 | `PLANNED` | Paquete completo evaluado y compilado |
-| `B8.5` | [B8_5_aprobacion_youtube_production_ready.md](B8_5_aprobacion_youtube_production_ready.md) | B8 | `PLANNED` | Paquete exacto autorizado para producción |
-| `B9` | [B9_validacion_tres_episodios.md](B9_validacion_tres_episodios.md) | B2–B8.5 | `PLANNED` | Tres casos aprobados |
-| `B9.5` | [B9_5_aprendizaje_controlado.md](B9_5_aprendizaje_controlado.md) | B9 | `PLANNED` | Ciclo manual de aprendizaje demostrado |
-| `B10` | [B10_lean_portabilidad_cierre.md](B10_lean_portabilidad_cierre.md) | B9.5 | `PLANNED` | Plan cerrado con evidencia |
+| `B7.5` | [B7_5_adaptacion_youtube.md](B7_5_adaptacion_youtube.md) | B7 | `DEFERRED_NOT_AUTHORIZED` | Adaptación y packaging futuros |
+| `B8` | [B8_plataforma_derechos_paquete.md](B8_plataforma_derechos_paquete.md) | B7.5 | `DEFERRED_NOT_AUTHORIZED` | Componentes de texto pueden evaluarse en Etapa 1; plataforma y distribución son futuras |
+| `B8.5` | [B8_5_aprobacion_youtube_production_ready.md](B8_5_aprobacion_youtube_production_ready.md) | B8 | `DEFERRED_NOT_AUTHORIZED` | Producción futura |
+| `B9` | [B9_validacion_tres_episodios.md](B9_validacion_tres_episodios.md) | B7 / `EDITORIAL_SCRIPT_APPROVED` | `PLANNED` | Validación del núcleo profesional de Guion |
+| `B9.5` | [B9_5_aprendizaje_controlado.md](B9_5_aprendizaje_controlado.md) | B9 | `PLANNED` | Aprendizaje editorial; distribución diferida |
+| `B10` | [B10_lean_portabilidad_cierre.md](B10_lean_portabilidad_cierre.md) | B9 + aprendizaje editorial B9.5 | `PLANNED` | Cierre de Etapa 1 y portabilidad |
 
 ## 4. Versiones derivadas
 
@@ -97,14 +101,21 @@ Una modificación aislada de un archivo de bloque no cambia el plan rector.
 ```text
 PLAN_STATUS: READY_FOR_EXTERNAL_AUDIT
 IMPLEMENTATION_AUTHORIZED: YES
-CURRENT_BLOCK: B5
+CURRENT_BLOCK: B5-I2
 B4_I1_STATUS: PASS
 B4_I1_AUDIT: PASS
 B4_I2_STATUS: PASS
 B4_I2_AUDIT: PASS
 B5_STATUS: IN_PROGRESS
-B5_I1_STATUS: READY_FOR_AUDIT
-B5_I1_AUDIT: PENDING
-NEXT_ALLOWED_ACTION: EXTERNAL_AUDIT_B5_I1
-NEXT_IMPLEMENTATION_BLOCK_IF_APPROVED: B5
+B5_I1_STATUS: TECHNICALLY_CLOSED
+B5_I2_IMPLEMENTATION: COMPLETED
+B5_I2_TECHNICAL_CORRECTION: PASS_WITH_RESIDUAL_RISK
+B5_I2_REAL_SEMANTIC_AUDIT: PENDING
+B5_I2_TEAM_02_FUNCTIONAL_REAUDIT: PENDING
+B5_I2_FINAL_STATUS: PENDING_SEMANTIC_AND_FUNCTIONAL_APPROVAL
+B5_I3: NOT_AUTHORIZED
+STAGE_2_YOUTUBE_DISTRIBUTION: DEFERRED_NOT_AUTHORIZED
+AUDIO_INTEGRATION: EXTERNAL_REPOSITORY_FUTURE_CONTRACT
+VIDEO_PRODUCTION: OUT_OF_REPOSITORY_SCOPE
+NEXT_ALLOWED_ACTION: REAL_SEMANTIC_AUDIT_B5_I2_THEN_TEAM_02_FUNCTIONAL_REAUDIT
 ```

@@ -13,6 +13,20 @@ La regla principal es:
 
 Los equipos pueden intercambiar consultas, requisitos, observaciones y auditorías. Sin embargo, solo el equipo **04_Infraestructura y Gobernanza** puede convertir esas necesidades en instrucciones para agentes operativos como Antigravity, Codex, OpenCode u otros equivalentes.
 
+## Etapas globales y frontera operativa
+
+### Etapa 1 — Núcleo profesional de Guion (`ACTIVA`)
+
+Incluye identidad e inteligencia del canal, investigación, evidencia, pregunta central, tesis, curación, análisis narrativo, humano, social y cultural, arquitectura, apertura y primeros 90 segundos, redacción, ensamblaje, edición, oralidad, humanización, verificación factual e interpretativa, adecuación textual a YouTube, seguridad publicitaria y riesgos de plataforma originados en el texto. Su cierre principal es `EDITORIAL_SCRIPT_APPROVED`.
+
+### Etapa 2 — Adaptación y distribución en YouTube (`DIFERIDA / NO AUTORIZADA`)
+
+Packaging, títulos, miniatura conceptual, Shorts, SEO, metadatos y paquete de distribución se conservan como capacidades futuras. No se desarrollan, amplían ni ejecutan ahora y no bloquean la aprobación del guion. Requieren autorización expresa del propietario.
+
+### Integraciones externas
+
+Audio se desarrolla en otro repositorio y se integrará en el futuro mediante un contrato versionado y verificable. Este repositorio no implementa síntesis de voz, clonación, DSP, mezcla ni masterización. Video queda fuera del alcance: no se implementan edición, montaje, visuales, animación, render o exportación.
+
 ---
 
 # 2. Equipo 01 — Inteligencia del Canal
@@ -65,6 +79,8 @@ Puede solicitar cambios funcionales, pero no instruye directamente al agente ope
 ---
 
 # 3. Equipo 02 — Producto Guion
+
+Durante la Etapa 1 es el responsable principal del cierre editorial del guion, incluida la adecuación textual a YouTube y la aprobación `EDITORIAL_SCRIPT_APPROVED`.
 
 ## Responsabilidad
 
@@ -124,6 +140,8 @@ Este equipo define qué debe hacer una skill de guion y redacta su contenido fun
 
 # 4. Equipo 03 — Adaptación a YouTube
 
+Durante la Etapa 1 limita su intervención activa a la audiencia concreta del episodio, la promesa que el guion debe cumplir, la correspondencia apertura–desarrollo, los primeros 90 segundos, duración y ritmo orientativos, riesgo de sobrepromesa, monetización y seguridad publicitaria derivadas del texto, copyright, contenido reutilizado o sintético y adecuación del guion a YouTube. Durante la Etapa 2 conserva la responsabilidad futura sobre packaging, títulos, miniatura conceptual, Shorts, SEO, metadatos y paquete de distribución; esa etapa está diferida.
+
 ## Responsabilidad
 
 Convierte una pieza editorial aprobada en un producto preparado para funcionar dentro de YouTube.
@@ -180,6 +198,8 @@ Puede bloquear una publicación por riesgos dentro de su especialidad, pero no p
 ---
 
 # 5. Equipo 04 — Infraestructura y Gobernanza
+
+El Equipo 04 integra contratos entre etapas y repositorios, pero no inicia ni completa una etapa diferida sin autorización expresa.
 
 ## Responsabilidad
 

@@ -4,7 +4,7 @@
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
 **Versión derivada:** `PLAN-001 v1.4`
 **Estado inicial:** `PLANNED`  
-**Dependencia:** `B2–B8.5`  
+**Dependencia activa:** `B7 / EDITORIAL_SCRIPT_APPROVED`
 **Siguiente tramo:** `B9.5`  
 **Gate resumido:** Tres casos aprobados
 
@@ -25,14 +25,14 @@ No leer por defecto el Plan 001 completo, otros bloques, todo `workspace/` ni re
 ### Referencias normativas relacionadas
 
 - B0 benchmarks y rubric
-- Todos los gates B1–B8.5
+- Todos los controles de la Etapa 1 hasta `EDITORIAL_SCRIPT_APPROVED`
 - §32 Definition of Done global
 
 ---
 
 ## 1. Objetivo
 
-Demostrar que el nuevo sistema mejora guiones reales y que el arnés bloquea cierres inválidos.
+Demostrar que el sistema produce y valida episodios completos del núcleo profesional de Guion y que el arnés bloquea cierres inválidos. B9 no requiere packaging final, Shorts, SEO, publicación, Audio ni Video.
 
 ## 2. Casos obligatorios
 
@@ -77,10 +77,10 @@ La estructura habitual es preferencia fuerte. La desviación debe mejorar el epi
 El conjunto de validación debe cubrir, sin necesidad de asignar una sola categoría a cada caso:
 
 ```text
-RIESGO DE PLATAFORMA Y DERECHOS
-- al menos un caso de bajo riesgo publicitario;
-- al menos un tema sensible con tratamiento analítico o documental;
-- al menos un caso con alta dependencia potencial de material protegido.
+ADECUACIÓN TEXTUAL Y RIESGOS ORIGINADOS EN EL GUION
+- al menos un caso con tratamiento sensible;
+- verificación factual e interpretativa;
+- evaluación de copyright, reutilización y seguridad publicitaria cuando se originen en el texto.
 
 TIPO DE OPORTUNIDAD
 - al menos un episodio evergreen;
@@ -117,19 +117,12 @@ FactCheckReport
 SourceTransformationAndOriginalityReview
 FinalEditorialAudit
 EditorialScriptApproval
-PromiseCorrespondenceReport
-YouTubePackagingDecision
-SessionContinuityPlan
-Metadatos y paquete preliminar
-Shorts clasificados por función
-PlatformAndMonetizationRiskReport
-CopyrightAndReuseReport
-AudiovisualProductionRightsBrief
-PublicationPackage
-HumanProductionApproval
-FinalDeliveryManifest
-Reporte de cierre YOUTUBE_PRODUCTION_READY
+Adecuación textual a YouTube
+PlatformAndMonetizationRiskReport cuando el riesgo se origine en el texto
+CopyrightAndReuseReport del material usado en el guion
 ```
+
+La validación de títulos, miniatura, Shorts, SEO, metadatos de distribución, aprobación audiovisual y publicación queda clasificada como `VALIDACIÓN FUTURA DE ETAPA 2`, `DEFERRED_NOT_AUTHORIZED`, y no es requisito de B9 activo.
 
 ## 4. Rubric de producto
 
@@ -151,7 +144,6 @@ Cada caso debe evaluar:
 - rigor;
 - originalidad;
 - transformación de fuentes;
-- preparación para producción;
 - necesidad de reescritura humana;
 - claridad;
 - densidad informativa;
@@ -171,12 +163,8 @@ Cuando sea viable, al menos una evaluación comparativa se realizará de forma c
 0 cierres con archivos vacíos
 0 claims críticos sin tratamiento
 0 aprobaciones aplicadas a otra versión
-0 cambios posteriores a `EditorialScriptApproval` o `HumanProductionApproval` sin invalidación
+0 cambios posteriores a `EditorialScriptApproval` sin invalidación
 3/3 EDITORIAL_SCRIPT_APPROVAL = APPROVE
-3/3 YOUTUBE_ADAPTATION_REVIEW = PASS
-3/3 PLATFORM_AND_RIGHTS_REVIEW = PASS
-3/3 HUMAN_PRODUCTION_APPROVAL = APPROVED_FOR_PRODUCTION
-3/3 CLOSURE_STATE = YOUTUBE_PRODUCTION_READY
 ```
 
 Las métricas de edición se comparan contra el baseline. No se inventa un porcentaje de mejora sin datos.
@@ -188,10 +176,10 @@ PASS solo si los tres casos cumplen:
 - SYSTEM_REVIEW;
 - PRODUCT_REVIEW;
 - EDITORIAL_SCRIPT_APPROVAL;
-- YOUTUBE_ADAPTATION_REVIEW;
-- PLATFORM_AND_RIGHTS_REVIEW;
-- HUMAN_PRODUCTION_APPROVAL;
-- YOUTUBE_PRODUCTION_READY.
+- trazabilidad y checksums del núcleo de Guion;
+- adecuación textual a YouTube y riesgos originados en el texto.
+
+La validación futura de adaptación y distribución no forma parte de este gate activo.
 
 Un caso bloqueado o fallido impide avanzar.
 ```

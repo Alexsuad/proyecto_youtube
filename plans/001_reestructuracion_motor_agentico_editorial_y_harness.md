@@ -6,7 +6,7 @@
 **Fecha de revisión:** 2026-07-22
 **Estado:** `READY_FOR_EXTERNAL_AUDIT`
 **Auditorías funcionales incorporadas:** `TEAM_01_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_02_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_03_APPROVED_WITH_REQUIRED_AMENDMENTS` + `PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT`
-**Implementación autorizada:** `NO`  
+**Implementación autorizada:** `YES_FOR_ACTIVE_B5_SCOPE_ONLY`
 **Progreso global inicial:** `0 %`  
 **Ruta objetivo en el repositorio:** `plans/001_reestructuracion_motor_agentico_editorial_y_harness.md`
 
@@ -35,6 +35,23 @@ Este documento funciona simultáneamente como:
 
 El objetivo no es aumentar el número de agentes, skills, scripts o documentos. El objetivo es que cada responsabilidad necesaria quede representada por la pieza correcta y produzca evidencia comprobable.
 
+## Mapa global de implementación y prioridades
+
+La prioridad activa es cerrar el núcleo profesional de Guion hasta `EDITORIAL_SCRIPT_APPROVED`. La adaptación y distribución en YouTube se conserva como una segunda etapa diferida y no autorizada.
+
+| Etapa global | Bloques | Objetivo y entregable principal | Dependencia / cierre | Estado |
+|---|---|---|---|---|
+| Fundaciones | B0–B2 | Gobernanza, contratos, gates y arnés técnico | Cierre técnico de B2 | Completada |
+| Inteligencia del canal | B3–B4 | `EditorialProfile`, responsabilidades y portabilidad | Perfil activo y validación técnica | Completada / mantenimiento |
+| Diseño editorial | B5-I1, B5-I2, B5-I3 | Evidencia, análisis, curación y tesis | Aprobaciones funcionales y técnicas de B5 | Activa; B5-I3 no autorizado |
+| Prototipo y escritura | B5.5, B6 | Prototipo, redacción, ensamblaje y edición | Diseño editorial cerrado | Pendiente |
+| Aprobación del guion | B7 | Auditoría independiente y aprobación editorial | Guion exacto aprobado | Pendiente |
+| Adaptación y distribución | B7.5, parte diferida de B8 y B8.5 | Packaging, plataforma y paquete de distribución | `EDITORIAL_SCRIPT_APPROVED` + autorización expresa | Diferida / no autorizada |
+| Validación y aprendizaje | B9, B9.5 | Validar episodios y separar aprendizaje editorial de métricas de publicación | B7 / `EDITORIAL_SCRIPT_APPROVED`; aprendizaje editorial aplicable | Pendiente; publicación futura separada |
+| Cierre y portabilidad | B10 | Cierre documental y portabilidad del núcleo de Guion | B9 + aprendizaje editorial aplicable de B9.5 | Pendiente |
+
+La producción de Audio y Video no forma parte de este plan. Solo se contemplan contratos futuros de integración con repositorios o productos externos.
+
 ---
 
 ## 2. Objetivo de producto
@@ -51,11 +68,9 @@ Al finalizar el plan, el repositorio debe demostrar que puede producir guiones l
 - originales y legítimamente transformativos respecto a sus fuentes;
 - auditables antes del cierre;
 - aprobados editorialmente en una versión exacta;
-- adaptados profesionalmente a YouTube sin deformar su tesis;
-- presentados mediante una promesa visible coherente con el contenido;
-- acompañados por un paquete de publicación verificable;
+- adecuados textualmente a YouTube sin deformar su tesis;
 - evaluados separadamente en calidad editorial, adaptación a YouTube y riesgos de plataforma y derechos;
-- autorizados humanamente para publicación sobre una versión exacta del paquete completo;
+- aprobados editorialmente por un humano sobre una versión exacta del guion;
 - preparados para registrar la versión publicada y generar aprendizajes controlados;
 - generados mediante un sistema portable y no dependiente de un único IDE o proveedor.
 
@@ -196,7 +211,7 @@ La hipótesis temprana de packaging es una interfaz entre los equipos 02 y 03. E
 
 `EDITORIAL_SCRIPT_APPROVED`, `YOUTUBE_PRODUCTION_READY`, `YOUTUBE_READY` y `PUBLISHED` son estados distintos y no intercambiables.
 
-El Plan 001 debe demostrar hasta `YOUTUBE_PRODUCTION_READY`. No puede declarar `YOUTUBE_READY` sin revisar la pieza audiovisual final exacta.
+El Plan 001 mantiene documentadas las etapas posteriores, pero la prioridad actual demuestra el núcleo profesional de Guion hasta `EDITORIAL_SCRIPT_APPROVED`. No puede declarar `YOUTUBE_READY` sin revisar la pieza audiovisual final exacta.
 
 ---
 
@@ -846,21 +861,21 @@ status
 
 | Bloque | Nombre | Dependencia | Estado inicial | Gate de cierre |
 |---:|---|---|---|---|
-| B0 | Gobernanza, baseline y benchmarks | Ninguna | `PLANNED` | Baseline y benchmarks aprobados |
-| B1 | Contratos, schemas, estados y versionado | B0 | `PLANNED` | Contratos canónicos aprobados |
-| B2 | Reparación del arnés y gates críticos | B1 | `PLANNED` | Cero falsos PASS conocidos |
-| B3 | Perfil editorial y frontera del canal | B1–B2 | `PLANNED` | Producción consume perfil versionado |
-| B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `PLANNED` | Responsabilidades y familias funcionales operables sin crear subagentes innecesarios |
-| B5 | Profesionalización del diseño editorial | B3–B4 | `PLANNED` | Diseño editorial completo aprobado |
+| B0 | Gobernanza, baseline y benchmarks | Ninguna | `PASS` | Baseline y benchmarks aprobados |
+| B1 | Contratos, schemas, estados y versionado | B0 | `PASS` | Contratos canónicos aprobados |
+| B2 | Reparación del arnés y gates críticos | B1 | `PASS` | Cero falsos PASS conocidos |
+| B3 | Perfil editorial y frontera del canal | B1–B2 | `PASS` | Producción consume perfil versionado |
+| B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `PASS` | Responsabilidades y familias funcionales operables sin crear subagentes innecesarios |
+| B5 | Profesionalización del diseño editorial | B3–B4 | `IN_PROGRESS` | B5-I1 cerrado; B5-I2 pendiente de cierre funcional; B5-I3 no autorizado |
 | B5.5 | Prototipo editorial controlado | B5 | `PLANNED` | Mejora editorial temprana demostrada |
 | B6 | Redacción, ensamblaje, edición y verificación | B5.5 | `PLANNED` | Candidato final coherente y trazable |
 | B7 | Auditoría editorial independiente y candidato aprobado | B6 | `PLANNED` | Guion aprobado editorialmente |
-| B7.5 | Adaptación profesional a YouTube | B7 | `PLANNED` | Packaging, correspondencia y continuidad aprobados |
-| B8 | Plataforma, monetización, copyright y paquete para producción | B7.5 | `PLANNED` | Paquete completo evaluado y compilado |
-| B8.5 | Aprobación para producción y cierre `YOUTUBE_PRODUCTION_READY` | B8 | `PLANNED` | Paquete exacto autorizado para producción |
-| B9 | Validación con tres episodios completos | B2–B8.5 | `PLANNED` | Tres casos aprobados |
-| B9.5 | Registro publicado y aprendizaje controlado | B9 | `PLANNED` | Ciclo manual de aprendizaje demostrado |
-| B10 | Lean/5S, portabilidad, documentación y cierre | B9.5 | `PLANNED` | Plan cerrado con evidencia |
+| B7.5 | Adaptación profesional a YouTube | B7 | `DEFERRED_NOT_AUTHORIZED` | Packaging y distribución futuras |
+| B8 | Plataforma, monetización, copyright y paquete para producción | B7.5 | `DEFERRED_NOT_AUTHORIZED` | Plataforma y derechos futuros |
+| B8.5 | Aprobación para producción y cierre `YOUTUBE_PRODUCTION_READY` | B8 | `DEFERRED_NOT_AUTHORIZED` | Producción futura |
+| B9 | Validación con tres episodios completos | B7 / `EDITORIAL_SCRIPT_APPROVED` | `PLANNED` | Validación del núcleo profesional de Guion |
+| B9.5 | Aprendizaje editorial controlado | B9 | `PLANNED` | Aprendizaje editorial; distribución diferida |
+| B10 | Lean/5S, portabilidad, documentación y cierre | B9 + aprendizaje editorial B9.5 | `PLANNED` | Cierre de Etapa 1 y portabilidad |
 
 ---
 
@@ -3396,7 +3411,7 @@ PASS si:
 
 ## 25.1 Objetivo
 
-Demostrar que el nuevo sistema mejora guiones reales y que el arnés bloquea cierres inválidos.
+Demostrar que el sistema produce y valida episodios completos del núcleo profesional de Guion y que el arnés bloquea cierres inválidos. B9 no requiere packaging final, Shorts, SEO, publicación, Audio ni Video.
 
 ## 25.2 Casos obligatorios
 
@@ -3441,10 +3456,10 @@ La estructura habitual es preferencia fuerte. La desviación debe mejorar el epi
 El conjunto de validación debe cubrir, sin necesidad de asignar una sola categoría a cada caso:
 
 ```text
-RIESGO DE PLATAFORMA Y DERECHOS
-- al menos un caso de bajo riesgo publicitario;
-- al menos un tema sensible con tratamiento analítico o documental;
-- al menos un caso con alta dependencia potencial de material protegido.
+ADECUACIÓN TEXTUAL Y RIESGOS ORIGINADOS EN EL GUION
+- al menos un caso con tratamiento sensible;
+- verificación factual e interpretativa;
+- evaluación de copyright, reutilización y seguridad publicitaria cuando se originen en el texto.
 
 TIPO DE OPORTUNIDAD
 - al menos un episodio evergreen;
@@ -3485,15 +3500,12 @@ PromiseCorrespondenceReport
 YouTubePackagingDecision
 SessionContinuityPlan
 Metadatos y paquete preliminar
-Shorts clasificados por función
-PlatformAndMonetizationRiskReport
-CopyrightAndReuseReport
-AudiovisualProductionRightsBrief
-PublicationPackage
-HumanProductionApproval
-FinalDeliveryManifest
-Reporte de cierre YOUTUBE_PRODUCTION_READY
+Adecuación textual a YouTube
+PlatformAndMonetizationRiskReport cuando el riesgo se origine en el texto
+CopyrightAndReuseReport del material usado en el guion
 ```
+
+La validación de títulos, miniatura, Shorts, SEO, metadatos de distribución, aprobación audiovisual y publicación queda clasificada como `VALIDACIÓN FUTURA DE ETAPA 2`, `DEFERRED_NOT_AUTHORIZED`, y no es requisito de B9 activo.
 
 ## 25.4 Rubric de producto
 
@@ -3515,7 +3527,6 @@ Cada caso debe evaluar:
 - rigor;
 - originalidad;
 - transformación de fuentes;
-- preparación para producción;
 - necesidad de reescritura humana;
 - claridad;
 - densidad informativa;
@@ -3535,12 +3546,8 @@ Cuando sea viable, al menos una evaluación comparativa se realizará de forma c
 0 cierres con archivos vacíos
 0 claims críticos sin tratamiento
 0 aprobaciones aplicadas a otra versión
-0 cambios posteriores a `EditorialScriptApproval` o `HumanProductionApproval` sin invalidación
+0 cambios posteriores a `EditorialScriptApproval` sin invalidación
 3/3 EDITORIAL_SCRIPT_APPROVAL = APPROVE
-3/3 YOUTUBE_ADAPTATION_REVIEW = PASS
-3/3 PLATFORM_AND_RIGHTS_REVIEW = PASS
-3/3 HUMAN_PRODUCTION_APPROVAL = APPROVED_FOR_PRODUCTION
-3/3 CLOSURE_STATE = YOUTUBE_PRODUCTION_READY
 ```
 
 Las métricas de edición se comparan contra el baseline. No se inventa un porcentaje de mejora sin datos.
@@ -3552,25 +3559,31 @@ PASS solo si los tres casos cumplen:
 - SYSTEM_REVIEW;
 - PRODUCT_REVIEW;
 - EDITORIAL_SCRIPT_APPROVAL;
-- YOUTUBE_ADAPTATION_REVIEW;
-- PLATFORM_AND_RIGHTS_REVIEW;
-- HUMAN_PRODUCTION_APPROVAL;
-- YOUTUBE_PRODUCTION_READY.
+- trazabilidad y checksums del núcleo de Guion;
+- adecuación textual a YouTube y riesgos originados en el texto.
+
+La validación futura de adaptación y distribución no forma parte de este gate activo.
 
 Un caso bloqueado o fallido impide avanzar.
 ```
 
 ---
 
-# 25A. Bloque B9.5 — Registro publicado y aprendizaje controlado
+# 25A. Bloque B9.5 — Aprendizaje editorial controlado
 
 ## 25A.1 Objetivo
 
-Demostrar un ciclo inicial y manual de registro pospublicación sin añadir todavía integración automática con YouTube Studio.
+Demostrar un ciclo inicial y manual de aprendizaje editorial del Guion sin requerir publicación real. La analítica posterior de distribución queda diferida.
+
+### B9.5-M1 — Aprendizaje editorial de episodios
+
+Recoger observaciones de episodios de validación, correcciones humanas, resultados de benchmarks editoriales e hipótesis sobre tesis, estructura, apertura, redacción, edición y oralidad. Los estados permitidos son `SUPPORTED`, `NOT_SUPPORTED` e `INCONCLUSIVE`, con `EditorialLearningCandidate`, acumulación de evidencia y revisión humana. No requiere publicación real.
+
+El registro publicado, las métricas de YouTube y el aprendizaje de distribución se conservan como `DEFERRED_NOT_AUTHORIZED`.
 
 ## 25A.2 Misiones
 
-### B9.5-M1 — Registro de versión publicada
+### Validación futura de Etapa 2 — Registro de versión publicada (`DEFERRED_NOT_AUTHORIZED`)
 
 Generar `PublishedVersionManifest` para al menos un caso cuando exista publicación real.
 
@@ -3593,7 +3606,7 @@ El manifest debe registrar de forma cronológica cualquier cambio posterior en:
 
 Cada cambio debe indicar versión anterior, versión nueva, fecha, razón y ventanas métricas afectadas.
 
-### B9.5-M2 — Captura manual de desempeño
+### B9.5-M2 — Captura manual de desempeño (`DEFERRED_NOT_AUTHORIZED`)
 
 Generar `PerformanceSnapshot`.
 
@@ -3608,7 +3621,7 @@ Cada `PerformanceSnapshot` debe identificar las versiones activas de título, mi
 
 Una ventana con cambios de versión debe dividirse o marcarse como mezclada e inconclusa para atribución causal.
 
-### B9.5-M3 — Aprendizaje de YouTube gobernado
+### B9.5-M3 — Aprendizaje de YouTube gobernado (`DEFERRED_NOT_AUTHORIZED`)
 
 Generar `YouTubeLearningReport`.
 
@@ -3635,13 +3648,13 @@ El aprendizaje contempla fuentes desde:
 
 - correcciones humanas;
 - comparación entre borrador y versión aprobada;
-- versión producida y publicada;
-- resultados de apertura;
-- packaging;
-- métricas de YouTube;
-- cambios de perfil;
-- nuevas políticas;
+- resultados editoriales de episodios de validación;
+- correcciones humanas y comparación entre borrador y versión aprobada;
+- resultados de apertura y edición;
+- cambios de perfil o nuevas políticas cuando estén aprobados;
 - resultados inconclusos.
+
+Las fuentes de publicación, packaging y métricas de YouTube pertenecen al tramo diferido `DEFERRED_NOT_AUTHORIZED`.
 
 Flujo de aprendizaje:
 
@@ -3667,14 +3680,13 @@ Una sola corrección no se convierte en regla estable.
 
 ```text
 PASS si:
-- versión publicada o fixture está identificada sin ambigüedad;
-- cambios posteriores de packaging y elementos de publicación están versionados y fechados;
-- cada PerformanceSnapshot identifica las versiones activas durante su ventana;
-- una ventana con versiones mezcladas está dividida o marcada como inconclusa;
-- métricas no se presentan sin contexto;
+- observaciones y correcciones editoriales están identificadas sin ambigüedad;
+- candidatos de aprendizaje tienen evidencia y revisión humana;
 - hallazgos e hipótesis están separados;
 - ningún aprendizaje modificó el perfil automáticamente;
 - existe siguiente experimento o decisión explícita de no experimentar.
+
+El registro publicado, `PerformanceSnapshot` y el aprendizaje de distribución quedan fuera de este gate activo y permanecen `DEFERRED_NOT_AUTHORIZED`.
 ```
 
 ---
@@ -3683,7 +3695,7 @@ PASS si:
 
 ## 26.1 Objetivo
 
-Reducir duplicación y contradicciones sin borrar evidencia ni romper compatibilidad, cerrando formalmente el plan y determinando el camino de portabilidad y evoluciones futuras.
+Reducir duplicación y contradicciones sin borrar evidencia ni romper compatibilidad, cerrando Lean/5S, portabilidad y deuda técnica de la Etapa 1 sin depender de publicación, analítica de YouTube, Audio o Video. La Etapa 2 tendrá un cierre posterior cuando sea autorizada.
 
 ## 26.2 Misiones
 
@@ -3797,18 +3809,19 @@ Corregir:
 
 Acciones:
 
-1. Ejecutar suite completa.
-2. Ejecutar auditoría de arquitectura.
-3. Ejecutar auditoría editorial externa.
-4. Ejecutar auditoría de Adaptación a YouTube.
-5. Revisar seguridad, rutas y configuración.
-6. Actualizar README y mapa de arquitectura.
-7. Marcar documentos sustituidos.
-8. Consolidar changelog.
-9. Etiquetar versión estable.
-10. Registrar deudas no bloqueantes.
-11. Comparar resultados contra benchmarks.
-12. Documentar si las capacidades generalizables son realmente extraíbles.
+1. Ejecutar las validaciones de la Etapa 1.
+2. Ejecutar auditoría de arquitectura y portabilidad.
+3. Ejecutar auditoría editorial del Guion.
+4. Revisar seguridad, rutas y configuración.
+5. Actualizar README y mapa de arquitectura.
+6. Marcar documentos sustituidos.
+7. Consolidar changelog.
+8. Etiquetar versión estable del núcleo de Guion.
+9. Registrar deudas no bloqueantes.
+10. Comparar resultados contra benchmarks editoriales.
+11. Documentar si las capacidades generalizables son realmente extraíbles.
+
+Las auditorías de adaptación, derechos de publicación, producción audiovisual, Audio, Video y analítica de YouTube pertenecen a la Etapa 2 `DEFERRED_NOT_AUTHORIZED`.
 
 ### B10-M10 — Decisiones futuras permitidas
 
@@ -3828,13 +3841,12 @@ Solo después de la validación podrán evaluarse:
 ## 26.3 Gate B10
 
 ```text
-PLAN_STATUS: PASS
+PLAN_STATUS: PASS_FOR_SCRIPT_CORE
 SYSTEM_REVIEW: PASS
 PRODUCT_REVIEW: PASS
-YOUTUBE_ADAPTATION_REVIEW: PASS
-PLATFORM_AND_RIGHTS_REVIEW: PASS
-HUMAN_PRODUCTION_APPROVAL: APPROVED_FOR_PRODUCTION
-CLOSURE_STATE: YOUTUBE_PRODUCTION_READY
+EDITORIAL_SCRIPT_APPROVAL: PASS
+CLOSURE_STATE: EDITORIAL_SCRIPT_APPROVED
+STAGE_2_CLOSURE: DEFERRED_NOT_AUTHORIZED
 ```
 
 ---
@@ -3851,12 +3863,24 @@ B0
                      └── B5.5
                           └── B6
                                └── B7
-                                    └── B7.5
-                                         └── B8
-                                              └── B8.5
-                                                   └── B9
-                                                        └── B9.5
-                                                             └── B10
+                                    └── B9 (NÚCLEO DE GUION)
+                                                        └── B9.5 (APRENDIZAJE EDITORIAL)
+                                                             └── B10 (CIERRE ETAPA 1)
+```
+
+Cadena activa de la Etapa 1:
+
+```text
+B7 / EDITORIAL_SCRIPT_APPROVED
+  → B9 / validación del núcleo de Guion
+  → B9.5 / aprendizaje editorial aplicable
+  → B10 / cierre de Etapa 1
+```
+
+Cadena diferida de la Etapa 2:
+
+```text
+autorización futura → B7.5 → componentes diferidos de B8 → B8.5 → validación futura de adaptación y distribución
 ```
 
 No se inicia B6 sin PASS de B5.5.
@@ -3990,7 +4014,7 @@ Cualquier incorporación requiere cambio formal del plan.
 
 ## 31A. MVP y post-MVP
 
-### MVP (alcance validado por B9)
+### MVP activo — núcleo profesional de Guion
 
 - EditorialProfile versionado;
 - territorios extensibles;
@@ -4003,6 +4027,14 @@ Cualquier incorporación requiere cambio formal del plan.
 - aprobación humana;
 - proveedor configurable al menos por contrato;
 - entrada canónica única.
+
+El cierre principal del MVP de Guion es `EDITORIAL_SCRIPT_APPROVED`. La adecuación textual a YouTube, incluida la evaluación de riesgos de plataforma, monetización y copyright originados en el texto, pertenece a esta etapa.
+
+### Etapa 2 — adaptación y distribución (diferida / no autorizada)
+
+Packaging final, títulos, miniatura conceptual, Shorts, SEO, metadatos, continuidad y paquete de distribución se conservan en B7.5, B8 y B8.5, pero no se desarrollan, amplían ni ejecutan ahora ni bloquean la aprobación del guion.
+
+Audio se desarrolla en otro repositorio y solo se integrará mediante un contrato futuro versionado. Video queda fuera del alcance de este repositorio; no se implementan edición, montaje, visuales, animación, render ni exportación.
 
 ### Post-MVP (no implementar ahora)
 
@@ -4019,9 +4051,11 @@ Cualquier incorporación requiere cambio formal del plan.
 
 ---
 
-## 32. Definition of Done global
+## 32. Definition of Done
 
-El Plan 001 se considera completado solo cuando:
+### Definition of Done activa — Núcleo de Guion
+
+La Etapa 1 se considera completada cuando el núcleo profesional de Guion alcanza `EDITORIAL_SCRIPT_APPROVED`, B9 valida tres episodios y B9.5 deja aprendizaje editorial aplicable para B10:
 
 - [ ] Más Allá del Guion sigue siendo el producto rector;
 - [ ] existe un EditorialProfile versionado y trazable;
@@ -4055,12 +4089,25 @@ El Plan 001 se considera completado solo cuando:
 - [ ] artefactos y aprobaciones están versionados e invalidados correctamente;
 - [ ] aprobación editorial del guion ocurre sobre una versión exacta;
 - [ ] Adaptación a YouTube está separada de auditoría editorial;
-- [ ] existe auditoría de correspondencia entre título, miniatura, apertura, desarrollo y cierre;
-- [ ] packaging final contiene opción recomendada, alternativas y descartes;
 - [ ] QA de lenguaje funciona solo como detector auxiliar;
 - [ ] ningún componente promete “100 % monetizable”;
 - [ ] riesgo de plataforma se evalúa con contexto;
 - [ ] copyright, Content ID y contenido reutilizado están diferenciados;
+- [ ] `EDITORIAL_SCRIPT_APPROVED`, `YOUTUBE_PRODUCTION_READY`, `YOUTUBE_READY` y `PUBLISHED` son estados distintos;
+- [ ] aprendizajes editoriales están gobernados;
+- [ ] entregable final incluye guion limpio, anotado, claims y limitaciones;
+- [ ] QA contractual, plataforma, edición y auditoría están separados;
+- [ ] documentos históricos están clasificados;
+- [ ] rutas, configuración y README son portables;
+- [ ] los tres episodios de validación obtienen PASS;
+- [ ] Producto, Sistema y Humano aprueban el cierre editorial de la Etapa 1.
+
+### Definition of Done futura — Etapa 2 (`DEFERRED_NOT_AUTHORIZED`)
+
+Los siguientes requisitos pertenecen a la Etapa 2 y no bloquean el cierre de la Etapa 1. Solo podrán activarse mediante autorización explícita:
+
+- [ ] existe auditoría de correspondencia entre título, miniatura, apertura, desarrollo y cierre;
+- [ ] packaging final contiene opción recomendada, alternativas y descartes;
 - [ ] existe brief de producción audiovisual y derechos;
 - [ ] Shorts tienen función estratégica explícita;
 - [ ] SEO fue sustituido por Metadatos y paquete de publicación;
@@ -4068,33 +4115,20 @@ El Plan 001 se considera completado solo cuando:
 - [ ] existe PublicationPackage versionado;
 - [ ] HumanProductionApproval corresponde al paquete exacto autorizado para producción;
 - [ ] HumanPublicationApproval está reservado para la pieza audiovisual final exacta;
-- [ ] `EDITORIAL_SCRIPT_APPROVED`, `YOUTUBE_PRODUCTION_READY`, `YOUTUBE_READY` y `PUBLISHED` son estados distintos;
 - [ ] existe registro de versión publicada o fixture inequívocamente sintético;
-- [ ] métricas, hipótesis y aprendizajes están separados;
-- [ ] aprendizajes editoriales están gobernados;
-- [ ] entregable final incluye guion limpio, anotado, claims, métricas y limitaciones;
-- [ ] QA contractual, plataforma, edición y auditoría están separados;
-- [ ] documentos históricos están clasificados;
-- [ ] rutas, configuración y README son portables;
-- [ ] los tres episodios de validación obtienen PASS;
-- [ ] Producto, Sistema y Humano aprueban el cierre.
+- [ ] métricas, hipótesis y aprendizajes de distribución están separados y gobernados.
 
 ---
 
 ## 33. Próximo paso tras la auditoría externa
 
-B0, B1 y B2 están cerrados.
+B0–B4 están cerrados y B5-I2 está implementado con corrección técnica pendiente de confirmación semántica y funcional.
 
 La siguiente acción permitida es:
 
-PREPARE_B3_EXECUTION_PLAN
+REAL_SEMANTIC_AUDIT_B5_I2_THEN_TEAM_02_FUNCTIONAL_REAUDIT
 
-B3 permanece sin autorización de implementación.
-
-La preparación de B3 debe definir alcance, archivos, contratos,
-pruebas y criterios de aceptación antes de autorizar cualquier cambio.
-
-No iniciar B3 automáticamente.
+B5-I3 no está autorizado. La Etapa 2 permanece diferida y no puede iniciarse automáticamente.
 
 ---
 
@@ -4111,8 +4145,16 @@ FUNCTIONAL_AUDIT_SOURCES:
 - PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT
 CONSOLIDATION_OWNER: TEAM_04_INFRASTRUCTURE_AND_GOVERNANCE
 REQUIRED_AMENDMENTS_INCORPORATED: YES
-IMPLEMENTATION_AUTHORIZED: NO
-CURRENT_BLOCK: NONE
-NEXT_ALLOWED_ACTION: PREPARE_B3_EXECUTION_PLAN
-NEXT_BLOCK_IF_APPROVED: B3
+IMPLEMENTATION_AUTHORIZED: YES_FOR_ACTIVE_B5_SCOPE_ONLY
+CURRENT_BLOCK: B5-I2
+CURRENT_INCREMENT: B5-I2
+B5_I2_IMPLEMENTATION: COMPLETED
+B5_I2_TECHNICAL_CORRECTION: PASS_WITH_RESIDUAL_RISK
+B5_I2_REAL_SEMANTIC_AUDIT: PENDING
+B5_I2_TEAM_02_FUNCTIONAL_REAUDIT: PENDING
+B5_I3: NOT_AUTHORIZED
+STAGE_2_YOUTUBE_DISTRIBUTION: DEFERRED_NOT_AUTHORIZED
+AUDIO_INTEGRATION: EXTERNAL_REPOSITORY_FUTURE_CONTRACT
+VIDEO_PRODUCTION: OUT_OF_REPOSITORY_SCOPE
+NEXT_ALLOWED_ACTION: REAL_SEMANTIC_AUDIT_B5_I2_THEN_TEAM_02_FUNCTIONAL_REAUDIT
 ```
