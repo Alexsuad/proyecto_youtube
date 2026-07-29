@@ -1,7 +1,8 @@
-"""Adaptador local mínimo para la API de Ollama."""
+﻿"""Adaptador local mínimo para la API de Ollama."""
 from __future__ import annotations
 
 import json
+import os
 import urllib.error
 import urllib.request
 from typing import Any
@@ -13,8 +14,10 @@ class OllamaProvider:
     name = "ollama"
 
     def execute(self, request: ExecutionRequest) -> tuple[dict[str, Any] | None, dict[str, Any]]:
-        base_url = str(request.config.get("base_url", "http://127.0.0.1:11434")).rstrip("/")
-        model = request.model or str(request.config.get("model", ""))
+        api_base_env = str(request.config.get("api_base_env") or "OLLAMA_API_BASE")
+        model_env = str(request.config.get("model_env") or "OLLAMA_MODEL")
+        base_url = str(request.config.get("base_url") or os.getenv(api_base_env) or "http://127.0.0.1:11434").rstrip("/")
+        model = request.model or str(request.config.get("model", "") or os.getenv(model_env) or "")
         if not model:
             raise ValueError("MODEL_UNAVAILABLE")
         try:
@@ -35,6 +38,8 @@ class OllamaProvider:
         except (KeyError, TypeError, json.JSONDecodeError) as exc:
             raise ValueError("INVALID_RESPONSE") from exc
         return parsed, {
-            "prompt_eval_count": body.get("prompt_eval_count"), "eval_count": body.get("eval_count"),
-            "provider_or_adapter": self.name, "model_or_evaluator": model,
+            "prompt_eval_count": body.get("prompt_eval_count"),
+            "eval_count": body.get("eval_count"),
+            "provider_or_adapter": str(request.config.get("provider_label") or self.name),
+            "model_or_evaluator": model,
         }

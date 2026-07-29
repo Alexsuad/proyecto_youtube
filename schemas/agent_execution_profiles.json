@@ -3,56 +3,87 @@
   "title": "AgentExecutionProfiles",
   "type": "object",
   "additionalProperties": false,
-  "required": ["registry_version", "policy", "providers", "executors", "agent_profiles"],
+  "required": [
+    "registry_version",
+    "policy",
+    "global_defaults",
+    "providers",
+    "executors",
+    "execution_profiles",
+    "role_defaults"
+  ],
   "properties": {
     "registry_version": {"type": "string", "minLength": 1},
     "policy": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["free_or_local_first", "paid_provider_requires_owner_approval", "executors_optional", "native_provider_preferred_for_product_runtime"],
+      "required": [
+        "model_selection_authority",
+        "execution_route_selection_authority",
+        "per_run_override_required",
+        "any_supported_model_allowed",
+        "defaults_are_non_binding",
+        "benchmarks_determine_fit",
+        "free_or_local_first",
+        "paid_provider_requires_owner_approval",
+        "executors_optional",
+        "native_provider_preferred_for_product_runtime"
+      ],
       "properties": {
+        "model_selection_authority": {"const": "OWNER"},
+        "execution_route_selection_authority": {"const": "OWNER"},
+        "per_run_override_required": {"const": true},
+        "any_supported_model_allowed": {"const": true},
+        "defaults_are_non_binding": {"const": true},
+        "benchmarks_determine_fit": {"const": true},
         "free_or_local_first": {"const": true},
         "paid_provider_requires_owner_approval": {"const": true},
         "executors_optional": {"const": true},
         "native_provider_preferred_for_product_runtime": {"const": true}
       }
     },
-    "providers": {
+    "global_defaults": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ollama", "deepseek"],
+      "required": ["execution_route", "execution_profile", "timeout_seconds", "max_retries", "temperature", "max_tokens", "budget_limit", "paid_cost_approved"],
       "properties": {
-        "ollama": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["enabled", "api_base_env", "model_env", "timeout_seconds", "max_retries", "cost_policy"],
-          "properties": {
-            "enabled": {"const": true},
-            "api_base_env": {"const": "OLLAMA_API_BASE"},
-            "model_env": {"const": "OLLAMA_MODEL"},
-            "timeout_seconds": {"type": "integer", "minimum": 1},
-            "max_retries": {"type": "integer", "minimum": 0},
-            "cost_policy": {"const": "LOCAL_FREE"}
-          }
-        },
-        "deepseek": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["enabled", "api_base_env", "api_key_env", "model_env", "timeout_seconds", "max_retries", "cost_policy"],
-          "properties": {
-            "enabled": {"const": true},
-            "api_base_env": {"const": "DEEPSEEK_API_BASE"},
-            "api_key_env": {"const": "DEEPSEEK_API_KEY"},
-            "model_env": {"const": "DEEPSEEK_MODEL"},
-            "timeout_seconds": {"type": "integer", "minimum": 1},
-            "max_retries": {"type": "integer", "minimum": 0},
-            "cost_policy": {"const": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"}
-          }
+        "execution_route": {"enum": ["local_model", "api_model", "agent_harness"]},
+        "execution_profile": {"type": "string", "minLength": 1},
+        "default_provider": {"type": ["string", "null"]},
+        "default_executor": {"type": ["string", "null"]},
+        "default_model": {"type": ["string", "null"]},
+        "timeout_seconds": {"type": "integer", "minimum": 1},
+        "max_retries": {"type": "integer", "minimum": 0},
+        "temperature": {"type": ["number", "null"]},
+        "max_tokens": {"type": ["integer", "null"], "minimum": 1},
+        "budget_limit": {"type": ["number", "integer", "null"], "minimum": 0},
+        "paid_cost_approved": {"type": "boolean"},
+        "model_env": {"type": ["string", "null"]}
+      }
+    },
+    "providers": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["route_type", "adapter", "enabled", "timeout_seconds", "max_retries", "cost_policy"],
+        "properties": {
+          "route_type": {"enum": ["LOCAL_MODEL_RUNTIME", "API_MODEL_RUNTIME"]},
+          "adapter": {"enum": ["ollama", "deepseek", "openai_compatible"]},
+          "enabled": {"type": "boolean"},
+          "api_base_env": {"type": ["string", "null"]},
+          "api_key_env": {"type": ["string", "null"]},
+          "model_env": {"type": ["string", "null"]},
+          "timeout_seconds": {"type": "integer", "minimum": 1},
+          "max_retries": {"type": "integer", "minimum": 0},
+          "cost_policy": {"type": "string", "minLength": 1}
         }
       }
     },
     "executors": {
       "type": "object",
+      "minProperties": 1,
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
@@ -61,38 +92,64 @@
           "kind": {"enum": ["NATIVE_PROVIDER", "CONTROLLED_EXECUTOR"]},
           "command": {"type": "string"},
           "status": {"enum": ["READY", "HANDOFF_ONLY", "UNAVAILABLE"]},
-          "requires_actual_provider_and_model": {"type": "boolean"}
+          "accepts_model_override": {"type": "boolean"},
+          "managed_provider_identity": {"type": "string", "minLength": 1},
+          "managed_model_identity": {"type": "string", "minLength": 1}
         }
       }
     },
-    "agent_profiles": {
-      "type": "array",
-      "minItems": 2,
-      "items": {
+    "execution_profiles": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["role_id", "routes"],
+        "required": ["route_type", "execution_route", "executor", "timeout_seconds", "max_retries", "cost_policy", "supports_model_override"],
         "properties": {
-          "role_id": {"enum": ["SCRIPT_PRODUCT_PRODUCER", "SCRIPT_PRODUCT_AUDITOR"]},
-          "routes": {
+          "route_type": {"enum": ["LOCAL_MODEL_RUNTIME", "API_MODEL_RUNTIME", "AGENT_HARNESS_RUNTIME"]},
+          "execution_route": {"enum": ["local_model", "api_model", "agent_harness"]},
+          "executor": {"type": "string", "minLength": 1},
+          "provider": {"type": ["string", "null"]},
+          "provider_config_ref": {"type": ["string", "null"]},
+          "timeout_seconds": {"type": "integer", "minimum": 1},
+          "max_retries": {"type": "integer", "minimum": 0},
+          "cost_policy": {"type": "string", "minLength": 1},
+          "supports_model_override": {"type": "boolean"},
+          "default_model": {"type": ["string", "null"]},
+          "model_env": {"type": ["string", "null"]},
+          "model_selection": {"enum": ["USER_SELECTED", "USER_SELECTED_OR_EXECUTOR_MANAGED", "EXECUTOR_MANAGED"]},
+          "temperature": {"type": ["number", "null"]},
+          "max_tokens": {"type": ["integer", "null"], "minimum": 1},
+          "budget_limit": {"type": ["number", "integer", "null"], "minimum": 0},
+          "paid_cost_approved": {"type": "boolean"}
+        }
+      }
+    },
+    "role_defaults": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["default_execution_profile", "default_execution_route", "allowed_execution_profiles"],
+        "properties": {
+          "default_execution_profile": {"type": "string", "minLength": 1},
+          "default_execution_route": {"enum": ["local_model", "api_model", "agent_harness"]},
+          "default_provider": {"type": ["string", "null"]},
+          "default_executor": {"type": ["string", "null"]},
+          "default_model": {"type": ["string", "null"]},
+          "timeout_seconds": {"type": ["integer", "null"], "minimum": 1},
+          "max_retries": {"type": ["integer", "null"], "minimum": 0},
+          "temperature": {"type": ["number", "null"]},
+          "max_tokens": {"type": ["integer", "null"], "minimum": 1},
+          "budget_limit": {"type": ["number", "integer", "null"], "minimum": 0},
+          "paid_cost_approved": {"type": ["boolean", "null"]},
+          "model_env": {"type": ["string", "null"]},
+          "allowed_execution_profiles": {
             "type": "array",
             "minItems": 1,
-            "items": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["execution_route", "executor", "provider", "model_env"],
-              "properties": {
-                "execution_route": {"type": "string", "minLength": 1},
-                "executor": {"type": "string", "minLength": 1},
-                "provider": {"type": "string", "minLength": 1},
-                "model_env": {"type": "string", "minLength": 1},
-                "provider_config_ref": {"enum": ["ollama", "deepseek"]},
-                "enabled": {"type": "boolean"},
-                "timeout_seconds": {"type": "integer", "minimum": 1},
-                "max_retries": {"type": "integer", "minimum": 0},
-                "cost_policy": {"type": "string", "minLength": 1}
-              }
-            }
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
           }
         }
       }

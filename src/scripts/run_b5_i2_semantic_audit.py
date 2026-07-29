@@ -168,6 +168,8 @@ def _restore_from_backup(target: Path, backup: Path, existed_before: bool) -> No
     if existed_before:
         if not backup.exists():
             raise OSError(f"backup faltante para restaurar {target}")
+        if target.exists():
+            target.unlink()
         os.replace(backup, target)
         return
     target.unlink(missing_ok=True)

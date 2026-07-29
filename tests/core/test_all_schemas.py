@@ -21,19 +21,48 @@ from src.core.contract_validation import (
 
 VALID_FIXTURES = {
     "agent_execution_profiles": {
-        "registry_version": "1.0.0",
-        "policy": {"free_or_local_first": True, "paid_provider_requires_owner_approval": True, "executors_optional": True, "native_provider_preferred_for_product_runtime": True},
-        "providers": {
-            "ollama": {"enabled": True, "api_base_env": "OLLAMA_API_BASE", "model_env": "OLLAMA_MODEL", "timeout_seconds": 30, "max_retries": 0, "cost_policy": "LOCAL_FREE"},
-            "deepseek": {"enabled": True, "api_base_env": "DEEPSEEK_API_BASE", "api_key_env": "DEEPSEEK_API_KEY", "model_env": "DEEPSEEK_MODEL", "timeout_seconds": 30, "max_retries": 0, "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"}
+        "registry_version": "2.0.0",
+        "policy": {
+            "model_selection_authority": "OWNER",
+            "execution_route_selection_authority": "OWNER",
+            "per_run_override_required": True,
+            "any_supported_model_allowed": True,
+            "defaults_are_non_binding": True,
+            "benchmarks_determine_fit": True,
+            "free_or_local_first": True,
+            "paid_provider_requires_owner_approval": True,
+            "executors_optional": True,
+            "native_provider_preferred_for_product_runtime": True
         },
-        "executors": {"native_provider": {"kind": "NATIVE_PROVIDER", "status": "READY"}},
-        "agent_profiles": [
-            {"role_id": "SCRIPT_PRODUCT_PRODUCER", "routes": [{"execution_route": "native:ollama", "executor": "native_provider", "provider": "ollama", "model_env": "OLLAMA_MODEL", "provider_config_ref": "ollama"}]},
-            {"role_id": "SCRIPT_PRODUCT_AUDITOR", "routes": [{"execution_route": "native:ollama", "executor": "native_provider", "provider": "ollama", "model_env": "OLLAMA_MODEL", "provider_config_ref": "ollama"}]}
-        ]
-    },
-    "agent_prompt_registry": {
+        "global_defaults": {
+            "execution_route": "local_model",
+            "execution_profile": "ollama_local",
+            "timeout_seconds": 30,
+            "max_retries": 0,
+            "temperature": None,
+            "max_tokens": None,
+            "budget_limit": None,
+            "paid_cost_approved": False
+        },
+        "providers": {
+            "ollama": {"route_type": "LOCAL_MODEL_RUNTIME", "adapter": "ollama", "enabled": True, "api_base_env": "OLLAMA_API_BASE", "model_env": "OLLAMA_MODEL", "timeout_seconds": 30, "max_retries": 0, "cost_policy": "LOCAL_FREE"},
+            "deepseek": {"route_type": "API_MODEL_RUNTIME", "adapter": "deepseek", "enabled": True, "api_base_env": "DEEPSEEK_API_BASE", "api_key_env": "DEEPSEEK_API_KEY", "model_env": "DEEPSEEK_MODEL", "timeout_seconds": 30, "max_retries": 0, "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"},
+            "openai": {"route_type": "API_MODEL_RUNTIME", "adapter": "openai_compatible", "enabled": True, "api_base_env": "OPENAI_API_BASE", "api_key_env": "OPENAI_API_KEY", "model_env": "OPENAI_MODEL", "timeout_seconds": 60, "max_retries": 1, "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"}
+        },
+        "executors": {
+            "native_provider": {"kind": "NATIVE_PROVIDER", "status": "READY"},
+            "controlled_exec": {"kind": "CONTROLLED_EXECUTOR", "command": "runnerctl", "status": "HANDOFF_ONLY", "accepts_model_override": True, "managed_provider_identity": "MANAGED_BY_EXECUTOR", "managed_model_identity": "UNAVAILABLE_FROM_EXECUTOR"}
+        },
+        "execution_profiles": {
+            "ollama_local": {"route_type": "LOCAL_MODEL_RUNTIME", "execution_route": "local_model", "executor": "native_provider", "provider": "ollama", "provider_config_ref": "ollama", "timeout_seconds": 30, "max_retries": 0, "cost_policy": "LOCAL_FREE", "supports_model_override": True, "default_model": None, "model_env": "OLLAMA_MODEL"},
+            "deepseek_chat": {"route_type": "API_MODEL_RUNTIME", "execution_route": "api_model", "executor": "native_provider", "provider": "deepseek", "provider_config_ref": "deepseek", "timeout_seconds": 30, "max_retries": 0, "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE", "supports_model_override": True, "default_model": "deepseek-chat", "model_env": "DEEPSEEK_MODEL"},
+            "managed_current": {"route_type": "AGENT_HARNESS_RUNTIME", "execution_route": "agent_harness", "executor": "controlled_exec", "provider": "MANAGED_BY_EXECUTOR", "timeout_seconds": 180, "max_retries": 1, "cost_policy": "PLAN_MANAGED", "supports_model_override": True, "model_selection": "USER_SELECTED_OR_EXECUTOR_MANAGED", "model_env": "MANAGED_MODEL_ENV"}
+        },
+        "role_defaults": {
+            "SCRIPT_PRODUCT_PRODUCER": {"default_execution_profile": "ollama_local", "default_execution_route": "local_model", "allowed_execution_profiles": ["ollama_local", "deepseek_chat", "managed_current"]},
+            "SCRIPT_PRODUCT_AUDITOR": {"default_execution_profile": "ollama_local", "default_execution_route": "local_model", "allowed_execution_profiles": ["ollama_local", "deepseek_chat", "managed_current"]}
+        }
+    },    "agent_prompt_registry": {
         "registry_version": "1.0.0",
         "prompts": [
             {"role_id":"ORCHESTRATION","prompt_id":"prompt_orch","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
@@ -75,6 +104,7 @@ VALID_FIXTURES = {
                 "agent_id": "INDEPENDENT_EDITORIAL_AUDITOR",
                 "role_id": "INDEPENDENT_EDITORIAL_AUDITOR",
                 "execution_route": "native:mock",
+                "execution_profile": "mock_audit",
                 "actual_executor": "native_provider",
                 "actual_provider": "mock",
                 "actual_model": "mock",
@@ -94,10 +124,43 @@ VALID_FIXTURES = {
                 "estimated_cost": 0.0,
                 "retry_count": 0,
                 "decision": "SUCCEEDED",
+                "error_type": "NONE",
                 "blocking_reason": None,
                 "handoff_target": "NONE"
             }
         ]
+    },
+    "run_configuration": {
+        "role_id": "SCRIPT_PRODUCT_PRODUCER",
+        "execution_route": "agent_harness",
+        "execution_profile": "managed_current",
+        "executor_override": "controlled_exec",
+        "provider_override": None,
+        "model_override": "managed-model",
+        "timeout_seconds": 180,
+        "max_retries": 1,
+        "temperature": None,
+        "max_tokens": None,
+        "budget_limit": None,
+        "paid_cost_approved": False
+    },
+    "execution_smoke_report": {
+        "smoke_id": "SMOKE-001",
+        "role_id": "SCRIPT_PRODUCT_PRODUCER",
+        "execution_profile": "managed_current",
+        "execution_route": "agent_harness",
+        "selected_executor": "controlled_exec",
+        "selected_provider": "MANAGED_BY_EXECUTOR",
+        "selected_model": "managed-model",
+        "actual_executor": "controlled_exec",
+        "actual_provider": "MANAGED_BY_EXECUTOR",
+        "actual_model": "UNAVAILABLE_FROM_EXECUTOR",
+        "result": "SUCCEEDED",
+        "decision": "SMOKE_PASS",
+        "stdout_preview": "usage: runnerctl ...",
+        "stderr_preview": "",
+        "exit_code": 0,
+        "notes": ["executor identity verified"]
     },
     "claims_ledger": {
         "ledger_id": "CL-001",

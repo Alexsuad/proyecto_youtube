@@ -1,4 +1,4 @@
-"""DeepSeek adapter using environment-only credentials."""
+﻿"""DeepSeek adapter using environment-only credentials."""
 from __future__ import annotations
 
 import json
@@ -14,11 +14,14 @@ class DeepSeekProvider:
     name = "deepseek"
 
     def execute(self, request: ExecutionRequest) -> tuple[dict[str, Any] | None, dict[str, Any]]:
-        api_key = os.getenv("DEEPSEEK_API_KEY")
+        api_key_env = str(request.config.get("api_key_env") or "DEEPSEEK_API_KEY")
+        base_url_env = str(request.config.get("api_base_env") or "DEEPSEEK_API_BASE")
+        model_env = str(request.config.get("model_env") or "DEEPSEEK_MODEL")
+        api_key = os.getenv(api_key_env)
         if not api_key:
             raise PermissionError("CREDENTIALS_MISSING")
-        base_url = str(request.config.get("base_url") or os.getenv("DEEPSEEK_API_BASE") or "https://api.deepseek.com").rstrip("/")
-        model = request.model or os.getenv("DEEPSEEK_MODEL")
+        base_url = str(request.config.get("base_url") or os.getenv(base_url_env) or "https://api.deepseek.com").rstrip("/")
+        model = request.model or os.getenv(model_env)
         if not model:
             raise ValueError("MODEL_UNAVAILABLE")
         payload = json.dumps({"model": model, "messages": [{"role": "user", "content": request.config.get("prompt", "")}], "response_format": {"type": "json_object"}}).encode()
@@ -40,5 +43,5 @@ class DeepSeekProvider:
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
             raise ValueError("INVALID_RESPONSE") from exc
         usage = body.get("usage", {})
-        usage.update({"provider_or_adapter": self.name, "model_or_evaluator": model})
+        usage.update({"provider_or_adapter": str(request.config.get("provider_label") or self.name), "model_or_evaluator": model})
         return parsed, usage

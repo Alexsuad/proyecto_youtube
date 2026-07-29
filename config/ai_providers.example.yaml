@@ -1,4 +1,4 @@
-# Archivo de ejemplo sin secretos.
+﻿# Archivo de ejemplo sin secretos.
 # La sede canonica de seleccion de ruta, proveedor y ejecutor es config/agent_execution_profiles.json.
 # Este archivo solo documenta las variables de entorno esperadas por los proveedores nativos.
 providers:
@@ -16,6 +16,30 @@ providers:
     model_env: DEEPSEEK_MODEL
     timeout_seconds: 30
     max_retries: 0
+    cost_policy: OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE
+  openai:
+    enabled: true
+    base_url_env: OPENAI_API_BASE
+    api_key_env: OPENAI_API_KEY
+    model_env: OPENAI_MODEL
+    timeout_seconds: 60
+    max_retries: 1
+    cost_policy: OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE
+  gemini:
+    enabled: true
+    base_url_env: GEMINI_API_BASE
+    api_key_env: GEMINI_API_KEY
+    model_env: GEMINI_MODEL
+    timeout_seconds: 60
+    max_retries: 1
+    cost_policy: OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE
+  anthropic:
+    enabled: true
+    base_url_env: ANTHROPIC_API_BASE
+    api_key_env: ANTHROPIC_API_KEY
+    model_env: ANTHROPIC_MODEL
+    timeout_seconds: 60
+    max_retries: 1
     cost_policy: OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE
 executors:
   agent_handoff:

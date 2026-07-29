@@ -1,4 +1,3 @@
-"""Contratos independientes de proveedor para el harness híbrido de IA."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -34,6 +33,7 @@ class ExecutionRequest:
     model: str | None = None
     executor: str | None = None
     execution_route: str | None = None
+    execution_profile: str | None = None
     timeout: float = 30.0
     privacy: str = "normal"
     output_artifact_kind: str = ""
@@ -45,6 +45,7 @@ class ExecutionRequest:
     config: dict[str, Any] = field(default_factory=dict)
     episode_id: str = ""
     role: str = ""
+    run_configuration: dict[str, Any] | None = None
 
 
 @dataclass

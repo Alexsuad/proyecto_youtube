@@ -103,6 +103,7 @@ def _provenance_fields(
     role: str,
     provider: str,
     model: str,
+    execution_profile: str,
     prompt_version: str,
     started_at: str,
     finished_at: str,
@@ -126,6 +127,7 @@ def _provenance_fields(
         "agent_id": role,
         "role_id": role,
         "execution_route": str(usage.get("execution_route") or f"native:{provider}"),
+        "execution_profile": str(usage.get("execution_profile") or execution_profile or "UNSPECIFIED_PROFILE"),
         "actual_executor": str(usage.get("actual_executor") or ("NONE" if provider == "agent_handoff" else "native_provider")),
         "actual_provider": str(usage.get("actual_provider") or provider),
         "actual_model": str(usage.get("actual_model") or model or "NONE"),
@@ -145,6 +147,7 @@ def _provenance_fields(
         "estimated_cost": estimated_cost,
         "retry_count": retry_count,
         "decision": decision,
+        "error_type": str(usage.get("error_type") or usage.get("availability_status") or "NONE"),
         "blocking_reason": blocking_reason,
         "handoff_target": handoff_target,
     }
@@ -177,6 +180,7 @@ def register_handoff(path: Path, package_path: Path, request: Any) -> None:
             role=str(getattr(request, "role", "UNSPECIFIED_PRODUCER") or "UNSPECIFIED_PRODUCER"),
             provider="agent_handoff",
             model=str(getattr(request, "model", None) or "NONE"),
+            execution_profile=str(getattr(request, "execution_profile", None) or request.config.get("execution_profile") or "UNSPECIFIED_PROFILE"),
             prompt_version=prompt_version,
             started_at=started_at,
             finished_at=started_at,
@@ -214,6 +218,7 @@ def consume_handoff(path: Path, *, package: dict[str, Any], result_run_id: str, 
         "output_versions": [result_run_id],
         "output_checksums": [output_checksum],
         "decision": "HANDOFF_CONSUMED",
+        "error_type": "NONE",
     })
     record["latency"] = _seconds_between(record["started_at"], finished_at)
     violations = validate_against_schema(registry, "execution_provenance_registry")
@@ -254,7 +259,7 @@ def append_result(
         raise ValueError("ExecutionResult requiere output_artifact_kind y output_artifact_id")
     if result.output_artifact_kind in B5_I2_ARTIFACT_KINDS and role not in B5_I2_ROLE_ARTIFACT_COMPATIBILITY:
         raise ValueError(f"role {role} no registrado para artifact_kind B5-I2 {result.output_artifact_kind}")
-    if role in B5_I2_ROLE_ARTIFACT_COMPATIBILITY and result.output_artifact_kind not in B5_I2_ROLE_ARTIFACT_COMPATIBILITY[role]:
+    if result.output_artifact_kind in B5_I2_ARTIFACT_KINDS and role in B5_I2_ROLE_ARTIFACT_COMPATIBILITY and result.output_artifact_kind not in B5_I2_ROLE_ARTIFACT_COMPATIBILITY[role]:
         raise ValueError(f"role {role} incompatible con artifact_kind {result.output_artifact_kind}")
     if role in {"ANALYSIS_PRODUCER", "CURATION_PRODUCER", "THESIS_PRODUCER", "SCRIPT_PROMISE_PRODUCER", "SCRIPT_PRODUCT_PRODUCER", "YOUTUBE_ADAPTATION_PRODUCER"} and not result.output_artifact_path:
         raise ValueError(f"{role} requiere output_artifact_path verificable")
@@ -274,10 +279,12 @@ def append_result(
         input_ids, input_versions, input_checksums = _input_rows_from_request(request)
         prompt_version = str(request.config.get("prompt_version") or result.usage.get("prompt_version") or result.usage.get("skill_version") or result.usage["skill_version"])
         handoff_target = str(request.config.get("handoff_target") or request.capability_id)
+        execution_profile = str(getattr(request, "execution_profile", None) or request.config.get("execution_profile") or result.usage.get("execution_profile") or "UNSPECIFIED_PROFILE")
     else:
         input_ids, input_versions, input_checksums = _input_rows_from_output(result.output)
         prompt_version = str(result.usage.get("prompt_version") or result.usage["skill_version"])
         handoff_target = str(result.usage.get("handoff_target") or "NONE")
+        execution_profile = str(result.usage.get("execution_profile") or "UNSPECIFIED_PROFILE")
     registry["runs"].append({
         "run_id": result.run_id,
         "episode_id": result.episode_id,
@@ -297,6 +304,7 @@ def append_result(
             role=role,
             provider=result.provider,
             model=result.model,
+            execution_profile=execution_profile,
             prompt_version=prompt_version,
             started_at=result.started_at,
             finished_at=result.completed_at,

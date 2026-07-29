@@ -1,13 +1,31 @@
 {
-  "registry_version": "1.0.0",
+  "registry_version": "2.0.0",
   "policy": {
+    "model_selection_authority": "OWNER",
+    "execution_route_selection_authority": "OWNER",
+    "per_run_override_required": true,
+    "any_supported_model_allowed": true,
+    "defaults_are_non_binding": true,
+    "benchmarks_determine_fit": true,
     "free_or_local_first": true,
     "paid_provider_requires_owner_approval": true,
     "executors_optional": true,
     "native_provider_preferred_for_product_runtime": true
   },
+  "global_defaults": {
+    "execution_route": "local_model",
+    "execution_profile": "ollama_local",
+    "timeout_seconds": 30,
+    "max_retries": 0,
+    "temperature": null,
+    "max_tokens": null,
+    "budget_limit": null,
+    "paid_cost_approved": false
+  },
   "providers": {
     "ollama": {
+      "route_type": "LOCAL_MODEL_RUNTIME",
+      "adapter": "ollama",
       "enabled": true,
       "api_base_env": "OLLAMA_API_BASE",
       "model_env": "OLLAMA_MODEL",
@@ -16,12 +34,47 @@
       "cost_policy": "LOCAL_FREE"
     },
     "deepseek": {
+      "route_type": "API_MODEL_RUNTIME",
+      "adapter": "deepseek",
       "enabled": true,
       "api_base_env": "DEEPSEEK_API_BASE",
       "api_key_env": "DEEPSEEK_API_KEY",
       "model_env": "DEEPSEEK_MODEL",
       "timeout_seconds": 30,
       "max_retries": 0,
+      "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"
+    },
+    "openai": {
+      "route_type": "API_MODEL_RUNTIME",
+      "adapter": "openai_compatible",
+      "enabled": true,
+      "api_base_env": "OPENAI_API_BASE",
+      "api_key_env": "OPENAI_API_KEY",
+      "model_env": "OPENAI_MODEL",
+      "timeout_seconds": 60,
+      "max_retries": 1,
+      "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"
+    },
+    "gemini": {
+      "route_type": "API_MODEL_RUNTIME",
+      "adapter": "openai_compatible",
+      "enabled": true,
+      "api_base_env": "GEMINI_API_BASE",
+      "api_key_env": "GEMINI_API_KEY",
+      "model_env": "GEMINI_MODEL",
+      "timeout_seconds": 60,
+      "max_retries": 1,
+      "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"
+    },
+    "anthropic": {
+      "route_type": "API_MODEL_RUNTIME",
+      "adapter": "openai_compatible",
+      "enabled": true,
+      "api_base_env": "ANTHROPIC_API_BASE",
+      "api_key_env": "ANTHROPIC_API_KEY",
+      "model_env": "ANTHROPIC_MODEL",
+      "timeout_seconds": 60,
+      "max_retries": 1,
       "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"
     }
   },
@@ -34,119 +87,158 @@
       "kind": "CONTROLLED_EXECUTOR",
       "command": "codex",
       "status": "HANDOFF_ONLY",
-      "requires_actual_provider_and_model": true
+      "accepts_model_override": true,
+      "managed_provider_identity": "MANAGED_BY_EXECUTOR",
+      "managed_model_identity": "UNAVAILABLE_FROM_EXECUTOR"
     },
     "opencode": {
       "kind": "CONTROLLED_EXECUTOR",
       "command": "opencode",
       "status": "HANDOFF_ONLY",
-      "requires_actual_provider_and_model": true
+      "accepts_model_override": true,
+      "managed_provider_identity": "MANAGED_BY_EXECUTOR",
+      "managed_model_identity": "UNAVAILABLE_FROM_EXECUTOR"
     },
     "antigravity": {
       "kind": "CONTROLLED_EXECUTOR",
       "command": "antigravity",
       "status": "HANDOFF_ONLY",
-      "requires_actual_provider_and_model": true
+      "accepts_model_override": true,
+      "managed_provider_identity": "MANAGED_BY_EXECUTOR",
+      "managed_model_identity": "UNAVAILABLE_FROM_EXECUTOR"
     }
   },
-  "agent_profiles": [
-    {
-      "role_id": "SCRIPT_PRODUCT_PRODUCER",
-      "routes": [
-        {
-          "execution_route": "native:ollama",
-          "executor": "native_provider",
-          "provider": "ollama",
-          "model_env": "OLLAMA_MODEL",
-          "provider_config_ref": "ollama"
-        },
-        {
-          "execution_route": "native:deepseek",
-          "executor": "native_provider",
-          "provider": "deepseek",
-          "model_env": "DEEPSEEK_MODEL",
-          "provider_config_ref": "deepseek"
-        },
-        {
-          "execution_route": "executor:codex_cli",
-          "executor": "codex_cli",
-          "provider": "EXTERNAL_REPORTED",
-          "model_env": "CODEX_MODEL",
-          "enabled": true,
-          "timeout_seconds": 30,
-          "max_retries": 0,
-          "cost_policy": "EXTERNALLY_REPORTED"
-        },
-        {
-          "execution_route": "executor:opencode",
-          "executor": "opencode",
-          "provider": "EXTERNAL_REPORTED",
-          "model_env": "OPENCODE_MODEL",
-          "enabled": true,
-          "timeout_seconds": 30,
-          "max_retries": 0,
-          "cost_policy": "EXTERNALLY_REPORTED"
-        },
-        {
-          "execution_route": "executor:antigravity",
-          "executor": "antigravity",
-          "provider": "EXTERNAL_REPORTED",
-          "model_env": "ANTIGRAVITY_MODEL",
-          "enabled": true,
-          "timeout_seconds": 30,
-          "max_retries": 0,
-          "cost_policy": "EXTERNALLY_REPORTED"
-        }
+  "execution_profiles": {
+    "ollama_local": {
+      "route_type": "LOCAL_MODEL_RUNTIME",
+      "execution_route": "local_model",
+      "executor": "native_provider",
+      "provider": "ollama",
+      "provider_config_ref": "ollama",
+      "timeout_seconds": 30,
+      "max_retries": 0,
+      "cost_policy": "LOCAL_FREE",
+      "supports_model_override": true,
+      "default_model": null,
+      "model_env": "OLLAMA_MODEL"
+    },
+    "deepseek_chat": {
+      "route_type": "API_MODEL_RUNTIME",
+      "execution_route": "api_model",
+      "executor": "native_provider",
+      "provider": "deepseek",
+      "provider_config_ref": "deepseek",
+      "timeout_seconds": 30,
+      "max_retries": 0,
+      "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE",
+      "supports_model_override": true,
+      "default_model": "deepseek-chat",
+      "model_env": "DEEPSEEK_MODEL"
+    },
+    "openai_chat": {
+      "route_type": "API_MODEL_RUNTIME",
+      "execution_route": "api_model",
+      "executor": "native_provider",
+      "provider": "openai",
+      "provider_config_ref": "openai",
+      "timeout_seconds": 60,
+      "max_retries": 1,
+      "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE",
+      "supports_model_override": true,
+      "default_model": null,
+      "model_env": "OPENAI_MODEL"
+    },
+    "gemini_chat": {
+      "route_type": "API_MODEL_RUNTIME",
+      "execution_route": "api_model",
+      "executor": "native_provider",
+      "provider": "gemini",
+      "provider_config_ref": "gemini",
+      "timeout_seconds": 60,
+      "max_retries": 1,
+      "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE",
+      "supports_model_override": true,
+      "default_model": null,
+      "model_env": "GEMINI_MODEL"
+    },
+    "anthropic_messages": {
+      "route_type": "API_MODEL_RUNTIME",
+      "execution_route": "api_model",
+      "executor": "native_provider",
+      "provider": "anthropic",
+      "provider_config_ref": "anthropic",
+      "timeout_seconds": 60,
+      "max_retries": 1,
+      "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE",
+      "supports_model_override": true,
+      "default_model": null,
+      "model_env": "ANTHROPIC_MODEL"
+    },
+    "codex_current": {
+      "route_type": "AGENT_HARNESS_RUNTIME",
+      "execution_route": "agent_harness",
+      "executor": "codex_cli",
+      "provider": "MANAGED_BY_EXECUTOR",
+      "timeout_seconds": 180,
+      "max_retries": 1,
+      "cost_policy": "PLAN_MANAGED",
+      "supports_model_override": true,
+      "model_selection": "USER_SELECTED_OR_EXECUTOR_MANAGED",
+      "model_env": "CODEX_MODEL"
+    },
+    "opencode_free": {
+      "route_type": "AGENT_HARNESS_RUNTIME",
+      "execution_route": "agent_harness",
+      "executor": "opencode",
+      "provider": "MANAGED_BY_EXECUTOR",
+      "timeout_seconds": 180,
+      "max_retries": 1,
+      "cost_policy": "FREE_ONLY",
+      "supports_model_override": true,
+      "model_selection": "USER_SELECTED",
+      "model_env": "OPENCODE_MODEL"
+    },
+    "antigravity_current": {
+      "route_type": "AGENT_HARNESS_RUNTIME",
+      "execution_route": "agent_harness",
+      "executor": "antigravity",
+      "provider": "MANAGED_BY_EXECUTOR",
+      "timeout_seconds": 180,
+      "max_retries": 1,
+      "cost_policy": "PLAN_MANAGED",
+      "supports_model_override": true,
+      "model_selection": "USER_SELECTED_OR_EXECUTOR_MANAGED",
+      "model_env": "ANTIGRAVITY_MODEL"
+    }
+  },
+  "role_defaults": {
+    "SCRIPT_PRODUCT_PRODUCER": {
+      "default_execution_profile": "ollama_local",
+      "default_execution_route": "local_model",
+      "allowed_execution_profiles": [
+        "ollama_local",
+        "deepseek_chat",
+        "openai_chat",
+        "gemini_chat",
+        "anthropic_messages",
+        "codex_current",
+        "opencode_free",
+        "antigravity_current"
       ]
     },
-    {
-      "role_id": "SCRIPT_PRODUCT_AUDITOR",
-      "routes": [
-        {
-          "execution_route": "native:ollama",
-          "executor": "native_provider",
-          "provider": "ollama",
-          "model_env": "OLLAMA_MODEL",
-          "provider_config_ref": "ollama"
-        },
-        {
-          "execution_route": "native:deepseek",
-          "executor": "native_provider",
-          "provider": "deepseek",
-          "model_env": "DEEPSEEK_MODEL",
-          "provider_config_ref": "deepseek"
-        },
-        {
-          "execution_route": "executor:codex_cli",
-          "executor": "codex_cli",
-          "provider": "EXTERNAL_REPORTED",
-          "model_env": "CODEX_MODEL",
-          "enabled": true,
-          "timeout_seconds": 30,
-          "max_retries": 0,
-          "cost_policy": "EXTERNALLY_REPORTED"
-        },
-        {
-          "execution_route": "executor:opencode",
-          "executor": "opencode",
-          "provider": "EXTERNAL_REPORTED",
-          "model_env": "OPENCODE_MODEL",
-          "enabled": true,
-          "timeout_seconds": 30,
-          "max_retries": 0,
-          "cost_policy": "EXTERNALLY_REPORTED"
-        },
-        {
-          "execution_route": "executor:antigravity",
-          "executor": "antigravity",
-          "provider": "EXTERNAL_REPORTED",
-          "model_env": "ANTIGRAVITY_MODEL",
-          "enabled": true,
-          "timeout_seconds": 30,
-          "max_retries": 0,
-          "cost_policy": "EXTERNALLY_REPORTED"
-        }
+    "SCRIPT_PRODUCT_AUDITOR": {
+      "default_execution_profile": "ollama_local",
+      "default_execution_route": "local_model",
+      "allowed_execution_profiles": [
+        "ollama_local",
+        "deepseek_chat",
+        "openai_chat",
+        "gemini_chat",
+        "anthropic_messages",
+        "codex_current",
+        "opencode_free",
+        "antigravity_current"
       ]
     }
-  ]
+  }
 }

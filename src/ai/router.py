@@ -1,7 +1,6 @@
 """Routing explícito y sin fallbacks externos silenciosos."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +9,7 @@ import yaml
 from src.ai.contracts import ExecutionRequest
 
 
-KNOWN_PROVIDERS = {"mock", "ollama", "deepseek", "openai_compatible", "agent_handoff"}
+KNOWN_PROVIDERS = {"mock", "ollama", "deepseek", "openai_compatible", "agent_handoff", "agent_executor"}
 
 
 def load_routing_policy(path: Path | None = None) -> dict[str, Any]:
@@ -28,15 +27,21 @@ def resolve_provider(request: ExecutionRequest) -> str | None:
     mode = (request.execution_mode or "auto").lower()
     capability = policy.get("capabilities", {}).get(request.capability_id, {})
     routing = capability.get("routing", {}) if isinstance(capability, dict) else {}
+    if explicit:
+        return explicit
     if mode != "auto":
-        mapped = {"mock": "mock", "local": "ollama", "api": "openai_compatible", "deepseek": "deepseek", "agent": "agent_handoff", "agent_handoff": "agent_handoff"}.get(mode)
+        mapped = {
+            "mock": "mock",
+            "local": "ollama",
+            "api": "openai_compatible",
+            "deepseek": "deepseek",
+            "agent": "agent_handoff",
+            "agent_handoff": "agent_handoff",
+            "agent_harness": "agent_executor",
+        }.get(mode)
         if mode in {"api", "deepseek"} and not bool(routing.get("allow_external_api", False)):
             return None
-        return explicit or mapped
-    if explicit:
-        if explicit in {"openai_compatible", "deepseek"} and not bool(routing.get("allow_external_api", False)):
-            return None
-        return explicit
+        return mapped
     if request.privacy.lower() == "high":
         return "ollama"
     if request.config.get("local_available", True) and routing.get("auto_local", True):

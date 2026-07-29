@@ -131,10 +131,26 @@
           "type": "string",
           "minLength": 1
         },
-        "execution_route": {"type": "string", "minLength": 1},
-        "actual_executor": {"type": "string", "minLength": 1},
-        "actual_provider": {"type": "string", "minLength": 1},
-        "actual_model": {"type": "string", "minLength": 1},
+        "execution_route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual_executor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual_provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual_model": {
+          "type": "string",
+          "minLength": 1
+        },
         "provider": {
           "type": "string",
           "minLength": 1
@@ -200,14 +216,48 @@
           ],
           "minimum": 0
         },
-        "input_tokens": {"oneOf": [{"type": "integer", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
-        "output_tokens": {"oneOf": [{"type": "integer", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
-        "estimated_cost": {"oneOf": [{"type": "number", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
+        "input_tokens": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "const": "UNAVAILABLE_FROM_PROVIDER"
+            }
+          ]
+        },
+        "output_tokens": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "const": "UNAVAILABLE_FROM_PROVIDER"
+            }
+          ]
+        },
+        "estimated_cost": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "const": "UNAVAILABLE_FROM_PROVIDER"
+            }
+          ]
+        },
         "retry_count": {
           "type": "integer",
           "minimum": 0
         },
         "decision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "error_type": {
           "type": "string",
           "minLength": 1
         },
@@ -252,7 +302,8 @@
             "script_promise",
             "semantic_audit",
             "early_packaging_hypothesis",
-            "youtube_adaptation_review"
+            "youtube_adaptation_review",
+            "execution_smoke_report"
           ]
         },
         "artifact_id": {
@@ -296,6 +347,10 @@
         "execution_mode",
         "agent_id",
         "role_id",
+        "execution_route",
+        "actual_executor",
+        "actual_provider",
+        "actual_model",
         "provider",
         "model",
         "prompt_version",
@@ -313,11 +368,7 @@
         "retry_count",
         "decision",
         "blocking_reason",
-        "handoff_target",
-        "execution_route",
-        "actual_executor",
-        "actual_provider",
-        "actual_model"
+        "handoff_target"
       ],
       "properties": {
         "run_id": {
@@ -394,10 +445,26 @@
           "type": "string",
           "minLength": 1
         },
-        "execution_route": {"type": "string", "minLength": 1},
-        "actual_executor": {"type": "string", "minLength": 1},
-        "actual_provider": {"type": "string", "minLength": 1},
-        "actual_model": {"type": "string", "minLength": 1},
+        "execution_route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual_executor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual_provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual_model": {
+          "type": "string",
+          "minLength": 1
+        },
         "provider": {
           "type": "string",
           "minLength": 1
@@ -463,14 +530,48 @@
           ],
           "minimum": 0
         },
-        "input_tokens": {"oneOf": [{"type": "integer", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
-        "output_tokens": {"oneOf": [{"type": "integer", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
-        "estimated_cost": {"oneOf": [{"type": "number", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
+        "input_tokens": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "const": "UNAVAILABLE_FROM_PROVIDER"
+            }
+          ]
+        },
+        "output_tokens": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "const": "UNAVAILABLE_FROM_PROVIDER"
+            }
+          ]
+        },
+        "estimated_cost": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "const": "UNAVAILABLE_FROM_PROVIDER"
+            }
+          ]
+        },
         "retry_count": {
           "type": "integer",
           "minimum": 0
         },
         "decision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "error_type": {
           "type": "string",
           "minLength": 1
         },

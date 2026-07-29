@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecutionSmokeReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "smoke_id",
+    "role_id",
+    "execution_profile",
+    "execution_route",
+    "selected_executor",
+    "selected_provider",
+    "selected_model",
+    "actual_executor",
+    "actual_provider",
+    "actual_model",
+    "result",
+    "decision",
+    "stdout_preview",
+    "stderr_preview",
+    "exit_code"
+  ],
+  "properties": {
+    "smoke_id": {"type": "string", "minLength": 1},
+    "role_id": {"type": "string", "minLength": 1},
+    "execution_profile": {"type": "string", "minLength": 1},
+    "execution_route": {"type": "string", "minLength": 1},
+    "selected_executor": {"type": "string", "minLength": 1},
+    "selected_provider": {"type": "string", "minLength": 1},
+    "selected_model": {"type": "string", "minLength": 1},
+    "actual_executor": {"type": "string", "minLength": 1},
+    "actual_provider": {"type": "string", "minLength": 1},
+    "actual_model": {"type": "string", "minLength": 1},
+    "result": {"enum": ["READY", "BLOCKED", "SUCCEEDED"]},
+    "decision": {"type": "string", "minLength": 1},
+    "stdout_preview": {"type": "string"},
+    "stderr_preview": {"type": "string"},
+    "exit_code": {"type": ["integer", "null"]},
+    "notes": {"type": "array", "items": {"type": "string"}}
+  }
+}
