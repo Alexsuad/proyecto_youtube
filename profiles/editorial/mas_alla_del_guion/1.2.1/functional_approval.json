@@ -1,0 +1,29 @@
+{
+  "profile_id": "mas_alla_del_guion",
+  "profile_version": "1.2.1",
+  "profile_checksum": "d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1",
+  "decision": "APPROVE",
+  "approval_status": "APPROVE",
+  "reviewer_role": "CHANNEL_INTELLIGENCE",
+  "approval_timestamp": "2026-07-29T00:00:00Z",
+  "review_scope": [
+    "identidad estable",
+    "voz autorizada",
+    "checksum exacto",
+    "activacion controlada"
+  ],
+  "functional_owner_role": "CHANNEL_INTELLIGENCE",
+  "approved_by": "owner_channel_intelligence",
+  "approved_at": "2026-07-29T00:00:00Z",
+  "voice_evidence_level": "AUTHENTIC_CORPUS_PARTIAL",
+  "evidence_summary": "Aprobacion funcional y del propietario registrada sobre la version exacta 1.2.1 con checksum aprobado y corpus autentico parcial no validado globalmente.",
+  "limitations": [
+    "VOICE_CORPUS_STATE = AUTHENTIC_CORPUS_PARTIAL",
+    "GLOBAL_VOICE_REPRESENTATIVENESS = NOT_VALIDATED"
+  ],
+  "conditions": [
+    "Checksum aprobado exacto: d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1",
+    "La activacion no implica validacion global de voz ni autoriza ampliar el corpus sin nueva evaluacion."
+  ],
+  "notes": "OWNER_PROFILE_APPROVAL = APPROVED; la representatividad global de la voz permanece NOT_VALIDATED."
+}

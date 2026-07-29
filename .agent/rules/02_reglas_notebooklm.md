@@ -1,3 +1,7 @@
+HISTORICAL_REFERENCE
+NON_EXECUTABLE
+SUPERSEDED
+
 ---
 trigger: always_on
 ---
@@ -38,6 +42,6 @@ Cuando se use NotebookLM, en output/01_research_bruto.md se debe indicar:
 
 ## 4) Si NotebookLM no está disponible
 Si falla o no está conectado:
-- seguir el pipeline con Antigravity
+- seguir el pipeline con runtime operativo
 - marcar límites de la investigación
 - dejar PENDIENTES claros

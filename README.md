@@ -1,13 +1,35 @@
 # Proyecto YouTube — MasAllaDelGuion
 
-> Alcance y mejoras: consultar [`docs/product/MVP_BASELINE.md`](docs/product/MVP_BASELINE.md) y [`docs/initiatives/README.md`](docs/initiatives/README.md). Ante una mejora fuera de la misión: localizar MVP y Plan 001, comprobar pertenencia y duplicados, capturar problema/valor, clasificar proporcionalmente, evaluar extensión, mantener `implementation_authorized: false`, no ampliar el alcance y continuar el trabajo autorizado. Si falta baseline suficiente, registrar `UNDECIDED` sin inventar alcance ni declarar bloqueo operativo.
+> Entrada operativa: consultar primero [`AGENTS.md`](AGENTS.md), [`plans/001_CONTROL_OPERATIVO.md`](plans/001_CONTROL_OPERATIVO.md) y [`docs/product/MVP_BASELINE.md`](docs/product/MVP_BASELINE.md). Ante una mejora fuera de misión: localizar MVP y control operativo, comprobar pertenencia y duplicados, capturar problema/valor, mantener `implementation_authorized: false` y no ampliar alcance.
 
-> Repositorio de scripts, plantillas y documentación del canal **Más Allá del Guion**. La prioridad activa es el núcleo profesional de Guion hasta `EDITORIAL_SCRIPT_APPROVED`.
-> La fuente de verdad del *contenido* vive en en el **Content Vault** externo.
+> Repositorio canónico del sistema editorial de **Más Allá del Guion**. La prioridad activa es el núcleo profesional de Guion hasta `EDITORIAL_SCRIPT_APPROVED`.
+> La fuente de verdad del contenido operativo del producto está en el perfil editorial activo y en sus contratos versionados; el *Content Vault* externo contiene trabajo episódico y evidencia operativa.
 
 ---
 
-## Arquitectura: Vault externo
+## Autoridad Canónica
+
+```text
+Estado operativo
+→ plans/001_CONTROL_OPERATIVO.md
+
+Alcance del MVP
+→ docs/product/MVP_BASELINE.md
+
+Identidad y voz productivas
+→ config/active_editorial_profile.json
+→ profiles/editorial/mas_alla_del_guion/1.1.0/
+
+Arquitectura y transición vigente
+→ plans/002_CIERRE_ARQUITECTURA_OPERATIVA_Y_MADURACION_EDITORIAL.md
+
+Contratos ejecutables
+→ schemas/ + config/ + src/
+```
+
+Los documentos de `workspace/` se conservan como referencia histórica, de migración o apoyo humano. No se debe reconstruir identidad activa ni autoridad ejecutable desde ellos.
+
+## Arquitectura: Vault Externo
 
 Todo el trabajo de un episodio vive **fuera de este repo**, en el Content Vault:
 
@@ -34,7 +56,7 @@ La configuración del Vault está en `config/local_settings.json`.
 
 El orden actual es: identidad y brief → investigación y evidencia → tesis y curación → análisis y diseño editorial → redacción y edición → verificación → aprobación editorial del guion. Packaging, Shorts, SEO y distribución se conservan como Etapa 2 diferida y no autorizada. Audio pertenece a un repositorio externo futuro; Video está fuera del alcance de este repositorio.
 
-Estado operativo: `ACTIVE_PRODUCT_STAGE=SCRIPT_CORE`, `CURRENT_INCREMENT=B5-I2`, implementación completada con riesgo residual técnico; la auditoría semántica real y la reauditoría funcional del Equipo 02 siguen pendientes. `B5-I3` no está autorizado.
+Estado operativo: `ACTIVE_PRODUCT_STAGE=SCRIPT_CORE`, `CURRENT_INCREMENT=B5-I2`, Misiones 1 a 3 cerradas y commiteadas; `SUBAGENT_FOUNDATION` es la siguiente fase obligatoria. S5 real de B5-I2 está bloqueado hasta cerrarla y `B5-I3` no está autorizado.
 
 Los scripts se encuentran en `src/scripts/`. Se ejecutan en este orden:
 
@@ -113,7 +135,7 @@ Ejemplo: `EPI_ep_0007__duelo_y_culpa__GUION`
 
 ## Cómo usar el pack (`99_notebooklm_pack.md`)
 
-1. Al finalizar el episodio, Antigravity genera `99_notebooklm_pack.md` usando `templates/99_notebooklm_pack_template.md`.
+1. Al finalizar el episodio, el runtime operativo genera `99_notebooklm_pack.md` usando `templates/99_notebooklm_pack_template.md`.
 2. El pack incluye: tesis central, obras principales, 5 ideas fuerza, notas de sensibilidad y la lista de archivos a subir.
 3. Subir los 4-5 archivos finales a NotebookLM, renombrados con la convención de nombres.
 4. Hacer una pregunta de prueba en NotebookLM para verificar que "entiende" el nuevo contenido.
@@ -123,10 +145,10 @@ Ejemplo: `EPI_ep_0007__duelo_y_culpa__GUION`
 
 ## Documentos del workspace
 
-La documentación del canal (identidad, voz, reglas editoriales) vive en `workspace/`:
+La documentación de `workspace/` ya no es fuente ejecutable única. Su uso actual debe clasificarse así:
 
-- `workspace/01_canal_identidad.md`
-- `workspace/02_reglas_editoriales.md`
-- `workspace/03_formato_longform.md`
-- `workspace/05_estilo_y_voz.md`
-- `workspace/06_convencion_outputs_y_notebooklm_v1.md`
+- `workspace/00_sistema_agentes_v1.md`: `SUPERSEDED_NON_EXECUTABLE`
+- `workspace/01_canal_identidad.md`, `workspace/02_reglas_editoriales.md`, `workspace/03_formato_longform.md`, `workspace/05_estilo_y_voz.md`: `MIGRATION_SOURCE`
+- `workspace/06_convencion_outputs_y_notebooklm_v1.md` y contratos auxiliares de operación humana: `HISTORICAL_REFERENCE` o `CANONICAL_REFERENCE` según su función específica
+
+Si una misión necesita un documento concreto de `workspace/`, debe declararlo explícitamente y verificar antes que no haya sido sustituido por una sede canónica más reciente.

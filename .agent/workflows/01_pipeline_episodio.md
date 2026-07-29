@@ -4,7 +4,7 @@ description: Workflow orquestador del pipeline completo de episodio (Fases 0-10)
 
 # Workflow: Pipeline Completo de Episodio (Orquestador)
 
-> **Ejecutor actual:** Antigravity como agente único.
+> **Ejecutor actual:** el runtime operativo como agente único.
 > **Futuro:** Cada fase puede ser ejecutada por un agente independiente.
 > **Regla de oro:** No se avanza a la siguiente fase si no existe el entregable de la fase actual.
 
@@ -12,7 +12,7 @@ description: Workflow orquestador del pipeline completo de episodio (Fases 0-10)
 
 ## PREREQUISITOS (leer antes de comenzar)
 
-Antigravity debe tener disponibles:
+El runtime operativo debe tener disponibles:
 - `config/local_settings.json` con `vault_root` y `channel_id`
 - El **tema** del episodio y su **slug** confirmados por el usuario
 - El **número** de episodio (siguiente al último registrado)
@@ -129,7 +129,7 @@ python src/scripts/semantic_sufficiency_gate.py --brief <EP_PATH>/episode_brief.
 Cuando los artefactos y la auditoría semántica permitan continuar, B5-I1 queda preparado para reauditoría en:
 
 ```text
-READY_FOR_TEAM_02_FUNCTIONAL_REAUDIT
+READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW
 ```
 
 Esto no autoriza B5-I2. Las skills heredadas permanecen no ejecutables hasta sus bloques registrados en `config/skill_catalog.json`.

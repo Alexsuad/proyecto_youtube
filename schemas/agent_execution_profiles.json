@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentExecutionProfiles",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["registry_version", "policy", "providers", "executors", "agent_profiles"],
+  "properties": {
+    "registry_version": {"type": "string", "minLength": 1},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["free_or_local_first", "paid_provider_requires_owner_approval", "executors_optional", "native_provider_preferred_for_product_runtime"],
+      "properties": {
+        "free_or_local_first": {"const": true},
+        "paid_provider_requires_owner_approval": {"const": true},
+        "executors_optional": {"const": true},
+        "native_provider_preferred_for_product_runtime": {"const": true}
+      }
+    },
+    "providers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ollama", "deepseek"],
+      "properties": {
+        "ollama": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "api_base_env", "model_env", "timeout_seconds", "max_retries", "cost_policy"],
+          "properties": {
+            "enabled": {"const": true},
+            "api_base_env": {"const": "OLLAMA_API_BASE"},
+            "model_env": {"const": "OLLAMA_MODEL"},
+            "timeout_seconds": {"type": "integer", "minimum": 1},
+            "max_retries": {"type": "integer", "minimum": 0},
+            "cost_policy": {"const": "LOCAL_FREE"}
+          }
+        },
+        "deepseek": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "api_base_env", "api_key_env", "model_env", "timeout_seconds", "max_retries", "cost_policy"],
+          "properties": {
+            "enabled": {"const": true},
+            "api_base_env": {"const": "DEEPSEEK_API_BASE"},
+            "api_key_env": {"const": "DEEPSEEK_API_KEY"},
+            "model_env": {"const": "DEEPSEEK_MODEL"},
+            "timeout_seconds": {"type": "integer", "minimum": 1},
+            "max_retries": {"type": "integer", "minimum": 0},
+            "cost_policy": {"const": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"}
+          }
+        }
+      }
+    },
+    "executors": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "status"],
+        "properties": {
+          "kind": {"enum": ["NATIVE_PROVIDER", "CONTROLLED_EXECUTOR"]},
+          "command": {"type": "string"},
+          "status": {"enum": ["READY", "HANDOFF_ONLY", "UNAVAILABLE"]},
+          "requires_actual_provider_and_model": {"type": "boolean"}
+        }
+      }
+    },
+    "agent_profiles": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role_id", "routes"],
+        "properties": {
+          "role_id": {"enum": ["SCRIPT_PRODUCT_PRODUCER", "SCRIPT_PRODUCT_AUDITOR"]},
+          "routes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["execution_route", "executor", "provider", "model_env"],
+              "properties": {
+                "execution_route": {"type": "string", "minLength": 1},
+                "executor": {"type": "string", "minLength": 1},
+                "provider": {"type": "string", "minLength": 1},
+                "model_env": {"type": "string", "minLength": 1},
+                "provider_config_ref": {"enum": ["ollama", "deepseek"]},
+                "enabled": {"type": "boolean"},
+                "timeout_seconds": {"type": "integer", "minimum": 1},
+                "max_retries": {"type": "integer", "minimum": 0},
+                "cost_policy": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -10,13 +10,16 @@ from src.core.contract_validation import validate_against_schema, validate_claim
 from src.core.gate_result import GateResult
 from src.core.gate_runtime import run_gate
 from src.core.invalidation import InvalidationEngine
-from src.core.legacy_gate_adapter import parse_legacy_gate_v
 from src.core.path_resolution import REPO_ROOT, expand_path, output_root
 from src.core.status import GateStatus
 from src.core.version_manifest import compute_checksum
 
 
-DELIVERABLES = ["06_guion_longform.md", "08_shorts.md", "09_packaging.md", "10_seo.md"]
+DELIVERABLES = [
+    "06_guion_longform.md",
+    "06_guion_longform_limpio.md",
+    "06_guion_longform_anotado.md",
+]
 
 
 def load_json(path: Path, label: str, blocked: list[str], failures: list[str]) -> dict | None:
@@ -54,12 +57,6 @@ def evaluate(ep_id: str, ep_path: Path, gates_root: Path) -> GateResult:
     for name in DELIVERABLES:
         path = ep_path / name; evidence["inputs_reviewed"].append(str(path))
         if not path.exists() or not path.is_file() or not path.read_text(encoding="utf-8").strip(): blocked.append(f"Entregable obligatorio ausente o vacío: {name}")
-
-    gate_v, error = parse_legacy_gate_v(ep_path / "07_verificacion_veracidad_notebooklm.md")
-    if error:
-        (blocked if "ausente" in error or "vacío" in error else failures).append(error)
-    elif gate_v != GateStatus.PASS:
-        failures.append(f"Gate V debe ser PASS; recibido {gate_v.value}")
 
     gate_dir = gates_root / "gates" / ep_id
     validate_gate(gate_dir / "qa_brief_research.json", "qa_brief_research", {GateStatus.PASS}, blocked, failures)

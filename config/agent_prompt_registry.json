@@ -8,8 +8,15 @@
       "status": "ACTIVE",
       "objective": "Coordinar el flujo operativo entre responsabilidades, verificar gates y registrar handoffs.",
       "authority": "Abrir y cerrar la ejecucion de cada responsabilidad. Validar condiciones de bloqueo. Emitir HandoffRecord.",
-      "required_inputs": ["mission_context", "artifact_statuses", "gate_results"],
-      "required_context": ["plan_001_control_operativo", "responsibility_registry"],
+      "required_inputs": [
+        "mission_context",
+        "artifact_statuses",
+        "gate_results"
+      ],
+      "required_context": [
+        "plan_001_control_operativo",
+        "responsibility_registry"
+      ],
       "allowed_actions": [
         "leer contratos y estados",
         "emitir HandoffRecord",
@@ -22,7 +29,11 @@
         "modificar skills editoriales",
         "decidir sobre tesis, voz o packaging"
       ],
-      "required_outputs": ["execution_plan", "handoff_record", "gate_result"],
+      "required_outputs": [
+        "execution_plan",
+        "handoff_record",
+        "gate_result"
+      ],
       "blocking_conditions": [
         "input obligatorio ausente",
         "estado incoherente",
@@ -45,8 +56,16 @@
       "status": "ACTIVE",
       "objective": "Investigar, verificar y seleccionar fuentes y obras con evidencia rastreable.",
       "authority": "Producir ResearchPack y CurationDecision. Determinar suficiencia de evidencia.",
-      "required_inputs": ["topic", "source_access", "brief", "channel_context"],
-      "required_context": ["research_guidelines", "editorial_territories"],
+      "required_inputs": [
+        "topic",
+        "source_access",
+        "brief",
+        "channel_context"
+      ],
+      "required_context": [
+        "research_guidelines",
+        "editorial_territories"
+      ],
       "allowed_actions": [
         "acceder a fuentes disponibles",
         "clasificar y curar materiales",
@@ -59,7 +78,11 @@
         "aprobar su propia entrega",
         "modificar el perfil editorial"
       ],
-      "required_outputs": ["research_pack", "curation_decision", "claims_ledger"],
+      "required_outputs": [
+        "research_pack",
+        "curation_decision",
+        "claims_ledger"
+      ],
       "blocking_conditions": [
         "evidencia insuficiente",
         "fuente no verificable",
@@ -81,8 +104,15 @@
       "status": "ACTIVE",
       "objective": "Convertir investigacion curada en tesis, estructura narrativa y recorrido del espectador.",
       "authority": "Producir NarrativePlan, ThesisArtifact, ViewerJourney. Decidir tipo de guion.",
-      "required_inputs": ["research_pack", "curation_decision", "brief"],
-      "required_context": ["narrative_templates", "editorial_profile_identity"],
+      "required_inputs": [
+        "research_pack",
+        "curation_decision",
+        "brief"
+      ],
+      "required_context": [
+        "narrative_templates",
+        "editorial_profile_identity"
+      ],
       "allowed_actions": [
         "clasificar tipo de guion",
         "formular tesis provisional y refinada",
@@ -94,7 +124,11 @@
         "aprobar su propia entrega",
         "redactar el guion completo"
       ],
-      "required_outputs": ["narrative_plan", "thesis_artifact", "viewer_journey"],
+      "required_outputs": [
+        "narrative_plan",
+        "thesis_artifact",
+        "viewer_journey"
+      ],
       "blocking_conditions": [
         "tesis sin soporte en evidencia",
         "estructura incompleta",
@@ -116,8 +150,16 @@
       "status": "ACTIVE",
       "objective": "Redactar el guion conforme al perfil editorial, plan narrativo y tesis aprobados.",
       "authority": "Producir ScriptDraft versionado. Aplicar memoria de bloques.",
-      "required_inputs": ["narrative_plan", "thesis_artifact", "editorial_profile", "research_pack"],
-      "required_context": ["active_profile_identity", "voice_guidelines"],
+      "required_inputs": [
+        "narrative_plan",
+        "thesis_artifact",
+        "editorial_profile",
+        "research_pack"
+      ],
+      "required_context": [
+        "active_profile_identity",
+        "voice_guidelines"
+      ],
       "allowed_actions": [
         "redactar bloques del guion",
         "mantener memoria global del episodio",
@@ -129,7 +171,10 @@
         "modificar la tesis aprobada",
         "inventar evidencia"
       ],
-      "required_outputs": ["script_draft", "version_manifest"],
+      "required_outputs": [
+        "script_draft",
+        "version_manifest"
+      ],
       "blocking_conditions": [
         "perfil editorial ausente o no activo",
         "narrative plan incompleto",
@@ -151,8 +196,16 @@
       "status": "ACTIVE",
       "objective": "Editar el guion: desarrollo, linea, oralidad y read-aloud review. Documentar todas las correcciones.",
       "authority": "Modificar el guion. Producir EditorialEditReport con diff y categoria de cambio.",
-      "required_inputs": ["script_draft", "editorial_profile", "brief", "claims_ledger"],
-      "required_context": ["editorial_voice_profile", "quality_criteria"],
+      "required_inputs": [
+        "script_draft",
+        "editorial_profile",
+        "brief",
+        "claims_ledger"
+      ],
+      "required_context": [
+        "editorial_voice_profile",
+        "quality_criteria"
+      ],
       "allowed_actions": [
         "modificar el guion",
         "producir EditorialEditReport",
@@ -164,7 +217,10 @@
         "modificar el perfil editorial",
         "auditar su propia edicion"
       ],
-      "required_outputs": ["edited_script", "EditorialEditReport"],
+      "required_outputs": [
+        "edited_script",
+        "EditorialEditReport"
+      ],
       "blocking_conditions": [
         "defecto critico no corregido",
         "cambio sin reporte de edicion"
@@ -185,8 +241,18 @@
       "status": "ACTIVE",
       "objective": "Auditar de forma independiente el producto editorial final sin modificarlo.",
       "authority": "Emitir FinalEditorialAudit con decision PASS, WARN, FAIL o BLOCKED. No corregir el guion.",
-      "required_inputs": ["edited_script", "EditorialEditReport", "editorial_profile", "brief", "claims_ledger"],
-      "required_context": ["clean_session", "audit_criteria", "profile_identity"],
+      "required_inputs": [
+        "edited_script",
+        "EditorialEditReport",
+        "editorial_profile",
+        "brief",
+        "claims_ledger"
+      ],
+      "required_context": [
+        "clean_session",
+        "audit_criteria",
+        "profile_identity"
+      ],
       "allowed_actions": [
         "leer todos los inputs aprobados",
         "verificar coherencia, evidencia y calidad",
@@ -197,7 +263,9 @@
         "auditar su propia edicion",
         "declarar aprobacion de publicacion o produccion"
       ],
-      "required_outputs": ["FinalEditorialAudit"],
+      "required_outputs": [
+        "FinalEditorialAudit"
+      ],
       "blocking_conditions": [
         "incumplimiento critico del perfil o brief",
         "evidencia ausente para afirmaciones clave",
@@ -210,6 +278,206 @@
       "evidence_requirements": [
         "decision PASS|WARN|FAIL|BLOCKED con justification",
         "correction route si FAIL o BLOCKED"
+      ]
+    },
+    {
+      "role_id": "SCRIPT_PRODUCT_PRODUCER",
+      "prompt_id": "prompt_script_product_producer",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Producir artefactos de dise?o editorial alineados con el EditorialProfile activo exacto y con evidencia trazable.",
+      "authority": "Puede producir analysis, curation, refined_thesis y script_promise. No puede aprobar ni activar entregas.",
+      "required_inputs": [
+        "episode_brief",
+        "research_pack",
+        "source_access_and_evidence_report",
+        "active_editorial_profile"
+      ],
+      "required_context": [
+        "config/active_editorial_profile.json",
+        "profile_payload aprobado",
+        "contratos B5-I2"
+      ],
+      "allowed_actions": [
+        "leer el EditorialProfile activo exacto",
+        "producir artefactos contractuales",
+        "declarar evidencia insuficiente",
+        "emitir handoff verificable"
+      ],
+      "forbidden_actions": [
+        "autoaprobar",
+        "activar perfiles",
+        "modificar registros can?nicos",
+        "crear subagentes anidados"
+      ],
+      "required_outputs": [
+        "analysis",
+        "curation",
+        "refined_thesis",
+        "script_promise"
+      ],
+      "blocking_conditions": [
+        "EditorialProfile activo ausente",
+        "checksum del perfil no verificable",
+        "evidencia insuficiente",
+        "contrato de salida ausente"
+      ],
+      "handoff": {
+        "to": "SCRIPT_PRODUCT_AUDITOR",
+        "condition": "outputs completos y trazables"
+      },
+      "evidence_requirements": [
+        "run_id independiente",
+        "checksums de inputs y outputs",
+        "profile checksum exacto usado en la ejecuci?n"
+      ]
+    },
+    {
+      "role_id": "SCRIPT_PRODUCT_AUDITOR",
+      "prompt_id": "prompt_script_product_auditor",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Auditar de forma independiente los artefactos de Script Product sin modificarlos y sin autoaprobar ejecuci?n real.",
+      "authority": "Puede emitir semantic_audit con decisi?n trazable. No puede corregir ni sobrescribir artefactos auditados.",
+      "required_inputs": [
+        "analysis",
+        "curation",
+        "refined_thesis",
+        "script_promise",
+        "active_editorial_profile"
+      ],
+      "required_context": [
+        "config/active_editorial_profile.json",
+        "criterios B5-I2",
+        "provenance previa del productor"
+      ],
+      "allowed_actions": [
+        "leer el EditorialProfile activo exacto",
+        "evaluar coherencia editorial",
+        "emitir decision",
+        "bloquear por evidencia insuficiente"
+      ],
+      "forbidden_actions": [
+        "modificar silenciosamente artefactos",
+        "autoaprobar",
+        "activar perfiles",
+        "crear subagentes anidados"
+      ],
+      "required_outputs": [
+        "semantic_audit"
+      ],
+      "blocking_conditions": [
+        "EditorialProfile activo ausente",
+        "contexto no independiente",
+        "checksum de artefactos no verificable",
+        "evidencia insuficiente"
+      ],
+      "handoff": {
+        "to": "OWNER_REVIEW",
+        "condition": "semantic_audit emitido con decisi?n"
+      },
+      "evidence_requirements": [
+        "decision PASS|WARN|FAIL|BLOCKED",
+        "checksums auditados",
+        "ruta de correcci?n cuando proceda"
+      ]
+    },
+    {
+      "role_id": "YOUTUBE_ADAPTATION_PRODUCER",
+      "prompt_id": "prompt_youtube_adaptation_producer",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Preparar una adaptaci?n provisional de YouTube consistente con el EditorialProfile activo exacto y con los contratos aprobados.",
+      "authority": "Puede producir early_packaging_hypothesis sin alterar tesis, identidad ni activar publicaci?n.",
+      "required_inputs": [
+        "refined_thesis",
+        "script_promise",
+        "episode_brief",
+        "active_editorial_profile"
+      ],
+      "required_context": [
+        "config/active_editorial_profile.json",
+        "contratos de adaptaci?n temprana",
+        "l?mites del MVP"
+      ],
+      "allowed_actions": [
+        "leer el EditorialProfile activo exacto",
+        "producir early_packaging_hypothesis",
+        "declarar l?mites de plataforma",
+        "emitir handoff verificable"
+      ],
+      "forbidden_actions": [
+        "autoaprobar",
+        "activar publicaci?n",
+        "modificar silenciosamente artefactos previos",
+        "crear subagentes anidados"
+      ],
+      "required_outputs": [
+        "early_packaging_hypothesis"
+      ],
+      "blocking_conditions": [
+        "EditorialProfile activo ausente",
+        "tesis refinada ausente",
+        "script_promise ausente",
+        "contrato de salida ausente"
+      ],
+      "handoff": {
+        "to": "YOUTUBE_ADAPTATION_AUDITOR",
+        "condition": "early_packaging_hypothesis completo y trazable"
+      },
+      "evidence_requirements": [
+        "checksum de adaptaci?n provisional",
+        "relaci?n expl?cita con la tesis",
+        "restricciones heredadas registradas"
+      ]
+    },
+    {
+      "role_id": "YOUTUBE_ADAPTATION_AUDITOR",
+      "prompt_id": "prompt_youtube_adaptation_auditor",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Auditar la adaptaci?n provisional de YouTube desde un contexto independiente y sin modificar artefactos.",
+      "authority": "Puede emitir youtube_adaptation_review. No puede corregir, activar ni aprobar publicaci?n.",
+      "required_inputs": [
+        "early_packaging_hypothesis",
+        "refined_thesis",
+        "script_promise",
+        "active_editorial_profile"
+      ],
+      "required_context": [
+        "config/active_editorial_profile.json",
+        "criterios de honestidad",
+        "provenance del productor de adaptaci?n"
+      ],
+      "allowed_actions": [
+        "leer el EditorialProfile activo exacto",
+        "verificar honestidad de adaptaci?n",
+        "emitir decision",
+        "bloquear por evidencia insuficiente"
+      ],
+      "forbidden_actions": [
+        "modificar silenciosamente artefactos",
+        "autoaprobar",
+        "activar publicaci?n",
+        "crear subagentes anidados"
+      ],
+      "required_outputs": [
+        "youtube_adaptation_review"
+      ],
+      "blocking_conditions": [
+        "EditorialProfile activo ausente",
+        "contexto no independiente",
+        "checksum de adaptaci?n no verificable",
+        "evidencia insuficiente"
+      ],
+      "handoff": {
+        "to": "OWNER_REVIEW",
+        "condition": "youtube_adaptation_review emitido con decisi?n"
+      },
+      "evidence_requirements": [
+        "decision PASS|WARN|FAIL|BLOCKED",
+        "checksums auditados",
+        "l?mites de publicaci?n preservados"
       ]
     }
   ]

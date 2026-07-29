@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/subagent_registry.json",
+  "title": "SubagentRegistry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["registry_version", "agents"],
+  "properties": {
+    "registry_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "agents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "agent_id",
+          "version",
+          "execution_role",
+          "functional_role",
+          "purpose",
+          "maturity_status",
+          "inputs",
+          "outputs",
+          "allowed_context",
+          "allowed_memory",
+          "allowed_skills",
+          "allowed_tools",
+          "permissions",
+          "provider",
+          "model",
+          "budget",
+          "timeout_seconds",
+          "retries",
+          "handoff",
+          "provenance",
+          "evidence_requirements",
+          "success_criteria",
+          "blocking_conditions",
+          "failure_conditions",
+          "synthetic_policy",
+          "loop_policy",
+          "artifact_compatibility",
+          "immutable_targets"
+        ],
+        "properties": {
+          "agent_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"},
+          "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+          "execution_role": {"enum": ["root", "subagent"]},
+          "functional_role": {"enum": ["orchestrator", "researcher", "producer", "writer", "editor", "verifier"]},
+          "purpose": {"type": "string", "minLength": 1},
+          "maturity_status": {
+            "enum": [
+              "AGENT_DESIGNED",
+              "AGENT_IMPLEMENTED",
+              "AGENT_TESTED_IN_ISOLATION",
+              "AGENT_INTEGRATED",
+              "AGENT_DEMONSTRATED"
+            ]
+          },
+          "inputs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "outputs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "allowed_context": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "allowed_memory": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "allowed_skills": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "allowed_tools": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "permissions": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["read", "write"],
+            "properties": {
+              "read": {"type": "array", "items": {"type": "string", "minLength": 1}},
+              "write": {"type": "array", "items": {"type": "string", "minLength": 1}}
+            }
+          },
+          "provider": {"type": "string", "minLength": 1},
+          "model": {"type": "string", "minLength": 1},
+          "budget": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["max_tokens", "max_turns"],
+            "properties": {
+              "max_tokens": {"type": "integer", "minimum": 1},
+              "max_turns": {"type": "integer", "minimum": 1},
+              "max_cost_usd": {"type": ["number", "null"], "minimum": 0}
+            }
+          },
+          "timeout_seconds": {"type": "integer", "minimum": 1},
+          "retries": {"type": "integer", "minimum": 0},
+          "handoff": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["accepts", "emits", "integrity"],
+            "properties": {
+              "accepts": {"type": "array", "items": {"type": "string", "minLength": 1}},
+              "emits": {"type": "array", "items": {"type": "string", "minLength": 1}},
+              "integrity": {"type": "string", "enum": ["CHECKSUM_REQUIRED", "ATOMIC_REQUIRED"]}
+            }
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["registry_path", "require_independent_run", "require_output_checksum"],
+            "properties": {
+              "registry_path": {"type": "string", "minLength": 1},
+              "require_independent_run": {"type": "boolean"},
+              "require_output_checksum": {"type": "boolean"}
+            }
+          },
+          "evidence_requirements": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "success_criteria": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "blocking_conditions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "failure_conditions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "synthetic_policy": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["allows_structural_tests", "can_authorize_readiness"],
+            "properties": {
+              "allows_structural_tests": {"type": "boolean"},
+              "can_authorize_readiness": {"type": "boolean", "const": false}
+            }
+          },
+          "loop_policy": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["max_cycles"],
+            "properties": {
+              "max_cycles": {"type": "integer", "minimum": 1, "maximum": 3}
+            }
+          },
+          "artifact_compatibility": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "immutable_targets": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    }
+  }
+}

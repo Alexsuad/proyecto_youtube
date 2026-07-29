@@ -18,7 +18,7 @@ mvp_baseline:
 
 El MVP es el núcleo profesional de guiones de Más Allá del Guion: un sistema portable que deja evidencia de un guion hasta `EDITORIAL_SCRIPT_APPROVED`, sin diluir la identidad del canal ni depender de un único proveedor. No incluye el paquete de distribución, publicación automática ni una pieza audiovisual final.
 
-Resuelve entradas incompletas, evidencia insuficiente, falsos PASS, contratos incompatibles, aprobaciones sobre una versión distinta y pérdida de coherencia entre bloques. Lo usan el propietario y operadores autorizados; los equipos 01, 02 y 03 consumen o auditan salidas en su especialidad, y el Equipo 04 gobierna contratos, integración, pruebas y evidencia. La audiencia final del canal no es usuaria del sistema.
+Resuelve entradas incompletas, evidencia insuficiente, falsos PASS, contratos incompatibles, aprobaciones sobre una versión distinta y pérdida de coherencia entre bloques. Lo usan el propietario y operadores autorizados; Inteligencia del Canal, Producto Guion y Adaptación a YouTube consumen o auditan salidas en su especialidad, y Gobernanza Técnica gobierna contratos, integración, pruebas y evidencia. La audiencia final del canal no es usuaria del sistema.
 
 ## Promesa, capacidades y aceptación
 
@@ -48,7 +48,7 @@ Restricciones: portabilidad, independencia de proveedores, aprobaciones humanas,
 
 ## Autoridad, estado y trazabilidad
 
-El Equipo 01 define identidad, audiencia editorial, promesa, voz y perfil; el 02 producto guion; el 03 adaptación a YouTube; el 04 valida técnicamente contratos, pruebas e integración. El propietario y las responsabilidades funcionales aprueban este MVP y cualquier cambio de producto, alcance o aceptación.
+Inteligencia del Canal define identidad, audiencia editorial, promesa, voz y perfil; Producto Guion define el producto narrativo; Adaptación a YouTube define la adecuación textual a plataforma; Gobernanza Técnica valida contratos, pruebas e integración. El propietario y las responsabilidades funcionales aprueban este MVP y cualquier cambio de producto, alcance o aceptación.
 
 Estado: definido mediante esta consolidación; la etapa activa es el núcleo profesional de Guion. El estado operativo vigente, el incremento activo, las auditorías pendientes y la siguiente acción autorizada se mantienen exclusivamente en `plans/001_CONTROL_OPERATIVO.md`. La Etapa 2 requiere autorización expresa del propietario. El cierre principal del MVP es `EDITORIAL_SCRIPT_APPROVED`.
 
@@ -59,6 +59,6 @@ AUDIO_INTEGRATION: EXTERNAL_REPOSITORY_FUTURE_CONTRACT
 VIDEO_PRODUCTION: OUT_OF_REPOSITORY_SCOPE
 ```
 
-Fuentes: Plan 001 v1.4 (§2, §4, §7, §31, §31A, §32), `docs/ALCANCE_Y_COORDINACION_EQUIPOS.md`, B0, B9, B9.5 y especificación B3 del Equipo 01. La decisión de alcance fue aprobada por el propietario; la validación funcional y técnica de la implementación permanece separada.
+Fuentes: Plan 001 v1.4 (§2, §4, §7, §31, §31A, §32), `docs/ALCANCE_Y_COORDINACION_EQUIPOS.md`, B0, B9, B9.5 y `docs/specifications/B3_editorial_profile_functional_specification.md`. La decisión de alcance fue aprobada por el propietario; la validación funcional y técnica de la implementación permanece separada.
 
 Nota de cambio v1.1.0: el MVP activo termina en `EDITORIAL_SCRIPT_APPROVED`; la adaptación y distribución quedan diferidas; Audio y Video se tratan como productos externos o fuera del repositorio.

@@ -11,7 +11,7 @@ from src.scripts.check_b3_i4_readiness import assess_manifest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "src/scripts/check_b3_i4_readiness.py"
-PAYLOAD = ROOT / "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json"
+PAYLOAD = ROOT / "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json"
 
 
 def sample(locator: str, checksum: str) -> dict:
@@ -113,4 +113,4 @@ def test_preflight_is_read_only_and_never_activates(tmp_path):
     assert command.returncode == 0
     assert manifest.read_bytes() == before
     assert not (tmp_path / "config/active_editorial_profile.json").exists()
-    assert not (tmp_path / "profiles/editorial/mas_alla_del_guion/1.0.0/editorial_profile.json").exists()
+    assert not (tmp_path / "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json").exists()

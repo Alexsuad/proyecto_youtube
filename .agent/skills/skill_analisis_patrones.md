@@ -1,7 +1,7 @@
 # Skill — Análisis narrativo y humano B5-I2
 Objetivo: producir `NarrativeHumanAnalysis` con lectura específica de deseos, miedos, creencias, contradicciones, decisiones, causas, costes, transformación, entorno, poder, instituciones, historia, cultura y sociedad.
 
-> **Rol ejecutor actual:** Antigravity (en el futuro puede ser un agente Analista con modelo especializado en análisis de texto — ej: Claude 3.5 Sonnet)
+> **Rol ejecutor actual:** el runtime operativo (en el futuro puede ser un agente Analista con modelo especializado en análisis de texto — ej: Claude 3.5 Sonnet)
 
 ---
 

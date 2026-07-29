@@ -21,28 +21,214 @@
     },
     "handoffs": {
       "type": "array",
-      "items": {"$ref": "#/definitions/handoff"}
+      "items": {
+        "$ref": "#/definitions/handoff"
+      }
     }
   },
   "definitions": {
     "handoff": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["handoff_id", "capability_id", "episode_id", "skill_id", "skill_version", "skill_checksum", "input_manifest_checksum", "package_checksum", "prepared_at", "status"],
+      "required": [
+        "handoff_id",
+        "capability_id",
+        "episode_id",
+        "skill_id",
+        "skill_version",
+        "skill_checksum",
+        "input_manifest_checksum",
+        "package_checksum",
+        "prepared_at",
+        "status",
+        "run_id",
+        "agent_id",
+        "role_id",
+        "provider",
+        "model",
+        "prompt_version",
+        "input_artifact_ids",
+        "input_versions",
+        "input_checksums",
+        "output_artifact_ids",
+        "output_versions",
+        "output_checksums",
+        "started_at",
+        "finished_at",
+        "latency",
+        "input_tokens",
+        "output_tokens",
+        "estimated_cost",
+        "retry_count",
+        "decision",
+        "blocking_reason",
+        "handoff_target",
+        "execution_route",
+        "actual_executor",
+        "actual_provider",
+        "actual_model"
+      ],
       "properties": {
-        "handoff_id": {"type": "string", "minLength": 1},
-        "capability_id": {"type": "string", "minLength": 1},
-        "episode_id": {"type": "string", "minLength": 1},
-        "skill_id": {"type": "string", "minLength": 1},
-        "skill_version": {"type": "string", "minLength": 1},
-        "skill_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "input_manifest_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "package_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "prepared_at": {"type": "string", "format": "date-time"},
-        "status": {"enum": ["HANDOFF_PREPARED", "HANDOFF_CONSUMED"]},
-        "result_run_id": {"type": "string", "minLength": 1},
-        "output_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-        "consumed_at": {"type": "string", "format": "date-time"}
+        "handoff_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skill_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skill_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skill_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "input_manifest_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "package_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "prepared_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "enum": [
+            "HANDOFF_PREPARED",
+            "HANDOFF_CONSUMED"
+          ]
+        },
+        "result_run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "output_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "consumed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_route": {"type": "string", "minLength": 1},
+        "actual_executor": {"type": "string", "minLength": 1},
+        "actual_provider": {"type": "string", "minLength": 1},
+        "actual_model": {"type": "string", "minLength": 1},
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_artifact_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "input_versions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "input_checksums": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "output_artifact_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "output_versions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "output_checksums": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "latency": {
+          "type": [
+            "number",
+            "integer"
+          ],
+          "minimum": 0
+        },
+        "input_tokens": {"oneOf": [{"type": "integer", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
+        "output_tokens": {"oneOf": [{"type": "integer", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
+        "estimated_cost": {"oneOf": [{"type": "number", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "decision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocking_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "handoff_target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        }
       }
     },
     "output": {
@@ -64,7 +250,9 @@
             "curation",
             "refined_thesis",
             "script_promise",
-            "semantic_audit"
+            "semantic_audit",
+            "early_packaging_hypothesis",
+            "youtube_adaptation_review"
           ]
         },
         "artifact_id": {
@@ -105,7 +293,31 @@
         "started_at",
         "completed_at",
         "status",
-        "execution_mode"
+        "execution_mode",
+        "agent_id",
+        "role_id",
+        "provider",
+        "model",
+        "prompt_version",
+        "input_artifact_ids",
+        "input_versions",
+        "input_checksums",
+        "output_artifact_ids",
+        "output_versions",
+        "output_checksums",
+        "finished_at",
+        "latency",
+        "input_tokens",
+        "output_tokens",
+        "estimated_cost",
+        "retry_count",
+        "decision",
+        "blocking_reason",
+        "handoff_target",
+        "execution_route",
+        "actual_executor",
+        "actual_provider",
+        "actual_model"
       ],
       "properties": {
         "run_id": {
@@ -173,6 +385,104 @@
             "SYNTHETIC",
             "REAL"
           ]
+        },
+        "agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_route": {"type": "string", "minLength": 1},
+        "actual_executor": {"type": "string", "minLength": 1},
+        "actual_provider": {"type": "string", "minLength": 1},
+        "actual_model": {"type": "string", "minLength": 1},
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_artifact_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "input_versions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "input_checksums": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "output_artifact_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "output_versions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "output_checksums": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "latency": {
+          "type": [
+            "number",
+            "integer"
+          ],
+          "minimum": 0
+        },
+        "input_tokens": {"oneOf": [{"type": "integer", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
+        "output_tokens": {"oneOf": [{"type": "integer", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
+        "estimated_cost": {"oneOf": [{"type": "number", "minimum": 0}, {"const": "UNAVAILABLE_FROM_PROVIDER"}]},
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "decision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocking_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "handoff_target": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }

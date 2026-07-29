@@ -4,9 +4,9 @@
 **Repositorio de referencia:** `proyecto_youtube_2026-07-21_10-00-29.zip`  
 **Versión del plan:** 1.4
 **Fecha de revisión:** 2026-07-22
-**Estado:** `READY_FOR_EXTERNAL_AUDIT`
+**Estado:** `READY_FOR_EXTERNAL_AUDIT` / `TEMPORARILY_PAUSED_BY_PLAN_003_R0`
 **Auditorías funcionales incorporadas:** `TEAM_01_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_02_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_03_APPROVED_WITH_REQUIRED_AMENDMENTS` + `PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT`
-**Implementación autorizada:** `YES_FOR_ACTIVE_B5_SCOPE_ONLY`
+**Implementación autorizada:** `LIMITED_TO_PLAN_003_R0` mientras dure la recuperación
 **Progreso global inicial:** `0 %`  
 **Ruta objetivo en el repositorio:** `plans/001_reestructuracion_motor_agentico_editorial_y_harness.md`
 
@@ -37,13 +37,13 @@ El objetivo no es aumentar el número de agentes, skills, scripts o documentos. 
 
 ## Mapa global de implementación y prioridades
 
-La prioridad activa es cerrar el núcleo profesional de Guion hasta `EDITORIAL_SCRIPT_APPROVED`. La adaptación y distribución en YouTube se conserva como una segunda etapa diferida y no autorizada.
+La prioridad activa del producto sigue siendo cerrar el núcleo profesional de Guion hasta `EDITORIAL_SCRIPT_APPROVED`. Sin embargo, durante R0 del Plan 003 la continuación de implementación del Plan 001 queda temporalmente pausada para resolver autoridad, baseline y falsos cierres. La adaptación y distribución en YouTube se conserva como una segunda etapa diferida y no autorizada.
 
 | Etapa global | Bloques | Objetivo y entregable principal | Dependencia / cierre | Estado |
 |---|---|---|---|---|
-| Fundaciones | B0–B2 | Gobernanza, contratos, gates y arnés técnico | Cierre técnico de B2 | Completada |
-| Inteligencia del canal | B3–B4 | `EditorialProfile`, responsabilidades y portabilidad | Perfil activo y validación técnica | Completada / mantenimiento |
-| Diseño editorial | B5-I1, B5-I2, B5-I3 | Evidencia, análisis, curación y tesis | Aprobaciones funcionales y técnicas de B5 | Activa; B5-I3 no autorizado |
+| Fundaciones | B0–B2 | Gobernanza, contratos, gates y arnés técnico | Cierre técnico de B2; baseline de B0 en revisión de evidencia | B1–B2 completados; B0 abierto por recuperación |
+| Inteligencia del canal | B3–B4 | `EditorialProfile`, responsabilidades y portabilidad | Aprobación funcional pendiente y ejecución real no demostrada | Recuperación activa en B3–B4 |
+| Diseño editorial | B5-I1, B5-I2, B5-I3 | Evidencia, análisis, curación y tesis | Confirmación funcional pendiente en B5-I1; ejecución real y aprobación funcional pendientes en B5-I2 | Activa; B5-I3 no autorizado |
 | Prototipo y escritura | B5.5, B6 | Prototipo, redacción, ensamblaje y edición | Diseño editorial cerrado | Pendiente |
 | Aprobación del guion | B7 | Auditoría independiente y aprobación editorial | Guion exacto aprobado | Pendiente |
 | Adaptación y distribución | B7.5, parte diferida de B8 y B8.5 | Packaging, plataforma y paquete de distribución | `EDITORIAL_SCRIPT_APPROVED` + autorización expresa | Diferida / no autorizada |
@@ -228,7 +228,7 @@ Cuando exista una contradicción, se aplicará esta jerarquía:
    - Equipo 02 para tesis, investigación, curación, diseño, escritura, edición y aprobación editorial del guion;
    - Equipo 03 para audiencia concreta del episodio, promesa visible, packaging, adaptación a YouTube, plataforma, monetización, derechos y paquete de producción o publicación;
    - Equipo 04 para arquitectura, contratos técnicos, schemas, estados, gates, pruebas, portabilidad e implementación.
-4. Este Plan 001 versión 1.3, como traducción integrada y gobernada de esas decisiones.
+4. Este Plan 001 versión 1.4, como traducción integrada y gobernada de esas decisiones.
 5. Auditorías finales vigentes de los equipos 01, 02, 03 y 04.
 6. Auditoría funcional y arquitectónica del repositorio del 2026-07-21.
 7. Auditoría editorial de skills y scripts.
@@ -354,7 +354,7 @@ El Plan 001 v1.0 queda marcado como `SUPERSEDED_BY_PLAN_001_V1_1`.
 
 El Plan 001 v1.1 queda marcado como `SUPERSEDED_BY_PLAN_001_V1_2`.
 
-Solo la versión 1.2 puede considerarse candidata a aprobación y documento activo del plan.
+La versión 1.4 es la versión rectora vigente del Plan 001. Su continuación de implementación permanece temporalmente pausada por el Plan 003.
 
 ---
 
@@ -861,12 +861,12 @@ status
 
 | Bloque | Nombre | Dependencia | Estado inicial | Gate de cierre |
 |---:|---|---|---|---|
-| B0 | Gobernanza, baseline y benchmarks | Ninguna | `PASS` | Baseline y benchmarks aprobados |
+| B0 | Gobernanza, baseline y benchmarks | Ninguna | `OPEN` | `EVIDENCE_REVIEW_REQUIRED` |
 | B1 | Contratos, schemas, estados y versionado | B0 | `PASS` | Contratos canónicos aprobados |
 | B2 | Reparación del arnés y gates críticos | B1 | `PASS` | Cero falsos PASS conocidos |
-| B3 | Perfil editorial y frontera del canal | B1–B2 | `PASS` | Producción consume perfil versionado |
-| B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `PASS` | Responsabilidades y familias funcionales operables sin crear subagentes innecesarios |
-| B5 | Profesionalización del diseño editorial | B3–B4 | `IN_PROGRESS` | B5-I1 cerrado; B5-I2 pendiente de cierre funcional; B5-I3 no autorizado |
+| B3 | Perfil editorial y frontera del canal | B1–B2 | `OPEN` | `FUNCTIONAL_APPROVAL_PENDING` |
+| B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `OPEN` | `CONTRACTUAL_FOUNDATION_PASS / OPERATIONAL_EXECUTION_PENDING` |
+| B5 | Profesionalización del diseño editorial | B3–B4 | `IN_PROGRESS` | `B5-I1 = TECHNICAL_PASS / FUNCTIONAL_CONFIRMATION_PENDING`; `B5-I2 = IMPLEMENTED_AND_MOCK_TESTED / REAL_EXECUTION_AND_FUNCTIONAL_APPROVAL_PENDING`; B5-I3 no autorizado |
 | B5.5 | Prototipo editorial controlado | B5 | `PLANNED` | Mejora editorial temprana demostrada |
 | B6 | Redacción, ensamblaje, edición y verificación | B5.5 | `PLANNED` | Candidato final coherente y trazable |
 | B7 | Auditoría editorial independiente y candidato aprobado | B6 | `PLANNED` | Guion aprobado editorialmente |
@@ -4122,11 +4122,11 @@ Los siguientes requisitos pertenecen a la Etapa 2 y no bloquean el cierre de la 
 
 ## 33. Próximo paso tras la auditoría externa
 
-B0–B4 están cerrados y B5-I2 está implementado con corrección técnica pendiente de confirmación semántica y funcional.
+B0, B3 y B4 permanecen abiertos en recuperación; B1 y B2 conservan cierre `PASS`. B5-I1 mantiene pase técnico pendiente de confirmación funcional y B5-I2 sigue implementado con validación mock, pero pendiente de ejecución real y confirmación funcional.
 
 La siguiente acción permitida es:
 
-REAL_SEMANTIC_AUDIT_B5_I2_THEN_TEAM_02_FUNCTIONAL_REAUDIT
+R1_STATUS_AND_EVIDENCE_RECONCILIATION
 
 B5-I3 no está autorizado. La Etapa 2 permanece diferida y no puede iniciarse automáticamente.
 
@@ -4145,16 +4145,18 @@ FUNCTIONAL_AUDIT_SOURCES:
 - PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT
 CONSOLIDATION_OWNER: TEAM_04_INFRASTRUCTURE_AND_GOVERNANCE
 REQUIRED_AMENDMENTS_INCORPORATED: YES
-IMPLEMENTATION_AUTHORIZED: YES_FOR_ACTIVE_B5_SCOPE_ONLY
-CURRENT_BLOCK: B5-I2
-CURRENT_INCREMENT: B5-I2
+IMPLEMENTATION_AUTHORIZED: LIMITED_TO_PLAN_003_R0
+PLAN_001_SUSPENDED_AT_BLOCK: B5-I2
+PLAN_001_SUSPENDED_AT_INCREMENT: B5-I2
+CURRENT_ACTIVE_PLAN: PLAN_003
+CURRENT_ACTIVE_PHASE: R1_CLOSED
 B5_I2_IMPLEMENTATION: COMPLETED
 B5_I2_TECHNICAL_CORRECTION: PASS_WITH_RESIDUAL_RISK
-B5_I2_REAL_SEMANTIC_AUDIT: PENDING
-B5_I2_TEAM_02_FUNCTIONAL_REAUDIT: PENDING
+B5_I2_REAL_SEMANTIC_AUDIT: NOT_DEMONSTRATED
+B5_I2_SCRIPT_PRODUCT_FUNCTIONAL_REAUDIT: PENDING
 B5_I3: NOT_AUTHORIZED
 STAGE_2_YOUTUBE_DISTRIBUTION: DEFERRED_NOT_AUTHORIZED
 AUDIO_INTEGRATION: EXTERNAL_REPOSITORY_FUTURE_CONTRACT
 VIDEO_PRODUCTION: OUT_OF_REPOSITORY_SCOPE
-NEXT_ALLOWED_ACTION: REAL_SEMANTIC_AUDIT_B5_I2_THEN_TEAM_02_FUNCTIONAL_REAUDIT
+NEXT_ALLOWED_ACTION: PREPARE_R2_CANONICAL_SANITATION_AND_ENFORCEMENT
 ```

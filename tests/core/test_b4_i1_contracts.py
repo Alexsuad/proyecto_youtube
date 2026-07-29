@@ -15,8 +15,8 @@ def test_responsibility_registry_schema_and_contracts():
 def test_skill_catalog_is_one_to_one_and_neutral():
     schema=read_json('schemas/skill_catalog.json'); catalog=read_json('config/skill_catalog.json'); validate(catalog,schema)
     expected={p.relative_to(ROOT).as_posix() for p in (ROOT/'.agent/skills').glob('*.md')}; actual={e['path'] for e in catalog['skills']}
-    assert len(catalog['skills'])==21; assert actual==expected; assert len(actual)==len(catalog['skills'])
-    allowed={'ORCHESTRATION','RESEARCH_AND_CURATION','NARRATIVE_ARCHITECTURE','WRITING','EDITOR','FINAL_EDITORIAL_AUDITOR','CHANNEL_INTELLIGENCE','YOUTUBE_ADAPTATION'}
+    assert len(catalog['skills'])==22; assert actual==expected; assert len(actual)==len(catalog['skills']); assert 'skill_auditar_suficiencia_semantica_b5_i2' in {e['skill_id'] for e in catalog['skills']}
+    allowed={'ORCHESTRATION','RESEARCH_AND_CURATION','NARRATIVE_ARCHITECTURE','WRITING','EDITOR','FINAL_EDITORIAL_AUDITOR','CHANNEL_INTELLIGENCE','YOUTUBE_ADAPTATION','B5_I2_SEMANTIC_AUDITOR'}
     assert {e['canonical_owner'] for e in catalog['skills']} <= allowed; assert any(e['classification']=='NEEDS_PRODUCT_DECISION' for e in catalog['skills'])
 GENERAL_CAPABILITIES = {
     "decidir-tipo-pieza-sistema-agentico", "crear-skill-desde-contrato",
@@ -35,11 +35,12 @@ TECHNICAL_LOCAL_SKILLS = {
 def test_general_capability_coverage_is_explicit_and_known():
     catalog = read_json("config/skill_catalog.json")
     entries = {entry["skill_id"]: entry for entry in catalog["skills"]}
-    assert len(entries) == 21
+    assert len(entries) == 22
     assert all("covered_by_general_capability" in entry for entry in entries.values())
     assert all(set(entry["covered_by_general_capability"]) <= GENERAL_CAPABILITIES for entry in entries.values())
     assert any(entry["covered_by_general_capability"] == [] for entry in entries.values())
     assert TECHNICAL_LOCAL_SKILLS <= entries.keys()
+    assert "skill_auditar_suficiencia_semantica_b5_i2" in entries
     assert all("covered_by_general_capability" in entries[skill] for skill in TECHNICAL_LOCAL_SKILLS)
 
 

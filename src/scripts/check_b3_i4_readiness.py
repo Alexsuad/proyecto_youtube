@@ -18,7 +18,7 @@ from src.core.contract_validation import validate_against_schema
 
 
 DEFAULT_MANIFEST = ROOT / "profiles/voice/corpus_manifest.json"
-DEFAULT_PROFILE = ROOT / "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json"
+DEFAULT_PROFILE = ROOT / "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json"
 
 
 def _safe_sample_path(locator: str, repository_root: Path) -> Path | None:

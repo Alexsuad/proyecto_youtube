@@ -20,6 +20,19 @@ from src.core.contract_validation import (
 )
 
 VALID_FIXTURES = {
+    "agent_execution_profiles": {
+        "registry_version": "1.0.0",
+        "policy": {"free_or_local_first": True, "paid_provider_requires_owner_approval": True, "executors_optional": True, "native_provider_preferred_for_product_runtime": True},
+        "providers": {
+            "ollama": {"enabled": True, "api_base_env": "OLLAMA_API_BASE", "model_env": "OLLAMA_MODEL", "timeout_seconds": 30, "max_retries": 0, "cost_policy": "LOCAL_FREE"},
+            "deepseek": {"enabled": True, "api_base_env": "DEEPSEEK_API_BASE", "api_key_env": "DEEPSEEK_API_KEY", "model_env": "DEEPSEEK_MODEL", "timeout_seconds": 30, "max_retries": 0, "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"}
+        },
+        "executors": {"native_provider": {"kind": "NATIVE_PROVIDER", "status": "READY"}},
+        "agent_profiles": [
+            {"role_id": "SCRIPT_PRODUCT_PRODUCER", "routes": [{"execution_route": "native:ollama", "executor": "native_provider", "provider": "ollama", "model_env": "OLLAMA_MODEL", "provider_config_ref": "ollama"}]},
+            {"role_id": "SCRIPT_PRODUCT_AUDITOR", "routes": [{"execution_route": "native:ollama", "executor": "native_provider", "provider": "ollama", "model_env": "OLLAMA_MODEL", "provider_config_ref": "ollama"}]}
+        ]
+    },
     "agent_prompt_registry": {
         "registry_version": "1.0.0",
         "prompts": [
@@ -28,7 +41,11 @@ VALID_FIXTURES = {
             {"role_id":"NARRATIVE_ARCHITECTURE","prompt_id":"prompt_na","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
             {"role_id":"WRITING","prompt_id":"prompt_writing","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
             {"role_id":"EDITOR","prompt_id":"prompt_editor","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
-            {"role_id":"FINAL_EDITORIAL_AUDITOR","prompt_id":"prompt_fea","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]}
+            {"role_id":"FINAL_EDITORIAL_AUDITOR","prompt_id":"prompt_fea","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
+            {"role_id":"SCRIPT_PRODUCT_PRODUCER","prompt_id":"prompt_spp","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
+            {"role_id":"SCRIPT_PRODUCT_AUDITOR","prompt_id":"prompt_spa","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
+            {"role_id":"YOUTUBE_ADAPTATION_PRODUCER","prompt_id":"prompt_yap","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]},
+            {"role_id":"YOUTUBE_ADAPTATION_AUDITOR","prompt_id":"prompt_yaa","prompt_version":"1.0.0","status":"ACTIVE","objective":"test","authority":"test","required_inputs":[],"required_context":[],"allowed_actions":[],"forbidden_actions":[],"required_outputs":[],"blocking_conditions":[],"handoff":{"to":"next","condition":"pass"},"evidence_requirements":[]}
         ]
     },
     "ai_runtime_config": {
@@ -54,7 +71,31 @@ VALID_FIXTURES = {
                 "started_at": "2026-07-25T08:00:00Z",
                 "completed_at": "2026-07-25T08:01:00Z",
                 "status": "SUCCEEDED",
-                "execution_mode": "SYNTHETIC"
+                "execution_mode": "SYNTHETIC",
+                "agent_id": "INDEPENDENT_EDITORIAL_AUDITOR",
+                "role_id": "INDEPENDENT_EDITORIAL_AUDITOR",
+                "execution_route": "native:mock",
+                "actual_executor": "native_provider",
+                "actual_provider": "mock",
+                "actual_model": "mock",
+                "provider": "mock",
+                "model": "mock",
+                "prompt_version": "1.0.0",
+                "input_artifact_ids": ["analysis:A-1"],
+                "input_versions": ["RUN-P"],
+                "input_checksums": ["a" * 64],
+                "output_artifact_ids": ["semantic_audit:AUD-1"],
+                "output_versions": ["RUN-001"],
+                "output_checksums": ["a" * 64],
+                "finished_at": "2026-07-25T08:01:00Z",
+                "latency": 60,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "estimated_cost": 0.0,
+                "retry_count": 0,
+                "decision": "SUCCEEDED",
+                "blocking_reason": None,
+                "handoff_target": "NONE"
             }
         ]
     },
@@ -117,8 +158,8 @@ VALID_FIXTURES = {
         "channel_id": "MasAllaDelGuion",
         "version": "1.0.0",
         "status": "DRAFT",
-        "functional_owner_role": "TEAM_01",
-        "source_lineage": [{"source_id": "B3-FUNCTIONAL-SPEC", "locator": "docs/specifications/B3_especificacion_funcional_equipo_01.md", "checksum": "a" * 64, "role": "FUNCTIONAL_SPECIFICATION"}],
+        "functional_owner_role": "CHANNEL_INTELLIGENCE",
+        "source_lineage": [{"source_id": "B3-FUNCTIONAL-SPEC", "locator": "docs/specifications/B3_editorial_profile_functional_specification.md", "checksum": "a" * 64, "role": "FUNCTIONAL_SPECIFICATION"}],
         "identity_stable": {"identity": "Videoensayos narrativos", "purpose": ["Comprender historias"], "positioning": "Reflexión narrativa", "primary_promise": "Comprender cómo vivimos", "differentiator": ["Interpretación propia"], "editorial_pillars": ["Individuo e identidad"], "territories": [{"name": "Cultura", "classification": "ACTIVE"}], "permanent_limits": ["No inventar"], "authorial_persona": {"acts_as": "Observador con criterio", "does_not_act_as": ["Terapeuta"], "voice_traits": ["Claridad"]}, "first_person_rule": "FIRST_PERSON_ALLOWED_WHEN_TRUE_AND_EDITORIALLY_RELEVANT"},
         "audience_hypotheses": [{"classification": "AUDIENCE_HYPOTHESIS_INITIAL", "statement": "Personas aproximadamente entre 25 y 45 años", "status": "HYPOTHESIS"}],
         "voice_profile": {"corpus_status": "INCOMPLETE_MISSING_REQUIRED_SAMPLE", "approved_sample_ids": [], "initial_authorized_patterns": ["Observación concreta"], "anti_imitation_rules": ["No copiar referentes"], "approved_positive_examples": ["Ejemplo editorial compatible derivado de la especificación."], "approved_negative_examples": ["Ejemplo editorial incompatible derivado de la especificación."]},
@@ -126,7 +167,7 @@ VALID_FIXTURES = {
         "external_policy_references": [],
         "pending_decisions": ["Incorporar muestra real principal autorizada"]
     },
-    "editorial_profile_approval": {"profile_id": "MADG-EDITORIAL-PROFILE", "profile_version": "1.0.0", "profile_checksum": "a" * 64, "decision": "APPROVE", "functional_owner_role": "TEAM_01", "voice_evidence_level": "SPECIFICATION_BASED", "evidence_summary": "Aprobación final de fixture sintético.", "limitations": ["Fixture de validación."], "approved_by": "responsable_editorial_equipo_01", "approved_at": "2026-07-22T20:00:00Z"},
+    "editorial_profile_approval": {"profile_id": "MADG-EDITORIAL-PROFILE", "profile_version": "1.0.0", "profile_checksum": "a" * 64, "decision": "APPROVE", "approval_status": "APPROVE", "reviewer_role": "CHANNEL_INTELLIGENCE", "approval_timestamp": "2026-07-22T20:00:00Z", "review_scope": ["identidad", "voz", "límites"], "functional_owner_role": "CHANNEL_INTELLIGENCE", "voice_evidence_level": "SPECIFICATION_BASED", "evidence_summary": "Aprobación final de fixture sintético.", "limitations": ["Fixture de validación."], "approved_by": "channel_intelligence_owner", "approved_at": "2026-07-22T20:00:00Z"},
     "active_editorial_profile": {"ACTIVE_PROFILE_ID": "MADG-EDITORIAL-PROFILE", "ACTIVE_PROFILE_VERSION": "1.0.0", "profile_checksum": "a" * 64, "functional_approval": {"decision": "APPROVE", "profile_checksum": "a" * 64}, "technical_validation": {"gate_id": "B3_TECHNICAL_PROFILE_VALIDATION", "status": "PASS", "profile_checksum": "a" * 64}, "activation": {"activated_by": "technical_auditor_user", "activated_at": "2026-07-22T20:00:00Z"}, "status": "ACTIVE"},
     "voice_sample": {"sample_id": "SAMPLE-001", "locator": "fixtures/sample.md", "checksum": "a" * 64, "authorship": "OWNER", "text_type": "PERSONAL_TEXT", "classification": "AUTHENTIC", "usage_authorization": "AUTHORIZED", "representativeness": "HIGH", "recorded_at": "2026-07-22T20:00:00Z", "lineage": ["OWNER_PROVIDED"], "inclusion_reason": "Muestra autorizada"},
     "editorial_script_approval": {
@@ -349,14 +390,14 @@ VALID_FIXTURES = {
     "semantic_sufficiency_audit": {
         "audit_id": "SSA-001", "episode_id": "EP-001", "brief_checksum": "a" * 64,
         "research_checksum": "a" * 64, "evidence_report_checksum": "a" * 64, "thesis_checksum": "a" * 64,
-        "audited_by": "team_02_ai_reviewer", "audit_method": "AI_SEMANTIC_REVIEW",
+        "audited_by": "script_product_ai_reviewer", "audit_method": "AI_SEMANTIC_REVIEW",
         "findings": [{"criterion": criterion, "assessment": "SATISFIED", "rationale": "La auditoría evalúa el criterio.", "references": ["thesis.statement"]} for criterion in ["CENTRAL_QUESTION_SPECIFICITY", "RESEARCH_RELEVANCE", "DEPTH_FIT", "RIVAL_PERSPECTIVE_SUBSTANCE", "NARRATIVE_UTILITY", "CRITICAL_CLAIMS_QUALITY", "THESIS_SUBSTANCE", "READINESS_FOR_B5_I2"]],
         "decision": "PASS", "created_at": "2026-07-24T20:00:00Z"
     },
     "narrative_human_analysis": {"analysis_id":"A-1","episode_id":"EP-1","research_id":"R-1","evidence_report_id":"E-1","semantic_audit_id":"S-1","material_id":"M-1","material_checksum":"a"*64,"inherited_constraint_ids":[],"findings":[{"finding_id":"F-1","claim_type":"INTERPRETATION","statement":"Lectura.","narrative_evidence_refs":["NE-1"],"source_refs":["S-1"],"human_dimension":"BELIEF","causal_relation":"Relación.","confidence":"HIGH"}],"rival_interpretations":["Rival."],"rival_interpretation_status":"PRESENT","rival_interpretation_justification":None,"limitations":["Límite."],"limits_status":"PRESENT","limits_justification":None,"demonstrates":"Demuestra una relación.","does_not_establish":"No demuestra causalidad universal.","created_at":"2026-07-24T20:00:00Z"},
     "material_curation": {"curation_id":"C-1","episode_id":"EP-1","research_id":"R-1","analysis_ids":["A-1"],"candidates":[{"material_id":"M-1","function":"Complicación","thesis_contribution":"Aporta.","new_perspective":"Nueva.","redundancy_with_selected":[],"context_cost":"Bajo.","narrative_evidence_strength":"HIGH","contradiction_or_nuance":"Matiz.","narrative_use":"COMPLICATION","selection_status":"SELECTED"}],"selected_material_ids":["M-1"],"selection_stage":"FINAL","exclusions":[],"sequence_rationale":"Secuencia justificada.","set_relationship":"Relación del conjunto.","unique_contributions":[{"material_id":"M-1","contribution":"Aporta."}],"function_overlap_justification":"No hay solapamiento.","progression_evidence":[{"material_id":"M-1","change_in_understanding":"Cambio.","evidence_refs":["F-1"],"non_substitutability":"No sustituible."}],"inherited_restrictions":[],"created_at":"2026-07-24T20:00:00Z"},
     "refined_thesis": {"thesis_id":"T-1","episode_id":"EP-1","brief_version":"1.0.0","research_id":"R-1","evidence_report_id":"E-1","semantic_audit_id":"S-1","provisional_thesis_id":"TP-1","analysis_ids":["A-1"],"curation_id":"C-1","statement":"Tesis.","supporting_evidence_refs":["F-1"],"counterevidence_refs":["R-1"],"rival_interpretations":["Rival."],"main_objection":"Objeción.","nuance":"Matiz.","material_contributions":[{"material_id":"M-1","contribution":"Aporta."}],"analysis_confirmed":["Confirmación."],"changes_from_provisional":["Cambio."],"discarded_from_provisional":["Descartado."],"refinement_rationale":"Razón.","refinement_dimensions":[{"dimension":"SCOPE","provisional_position":"Antes.","resulting_position":"Después.","evidence_refs":["F-1"],"rationale":"Razón."}],"inherited_constraint_ids":[],"statement_unchanged_justification":None,"limits":["Límite."],"revision_conditions":["Nueva evidencia."],"stage":"THESIS_REFINED","created_at":"2026-07-24T20:00:00Z"},
-    "early_packaging_hypothesis": {"packaging_id":"P-1","episode_id":"EP-1","refined_thesis_id":"T-1","refined_thesis_checksum":"a"*64,"audience":{"persona_concreta":"Persona.","conocimiento_previo":"Conocimiento.","tension_reconocida":"Tensión.","relevancia":"Relevancia.","expectativa_que_no_debe_generarse":"No promesa.","profile_id":"P-1","profile_version":"1.0.0","profile_checksum":"a"*64,"brief_checksum":"a"*64},"promesa_visible_provisional":"Promesa.","tension_central":"Tensión.","expectativa_del_espectador":"Expectativa.","diferenciador":"Diferenciador.","titulo_de_trabajo":"Título.","concepto_inicial_miniatura":"Concepto.","titulo_miniatura_complementarity":"Complemento.","overpromise_risk":"LOW","platform_constraints":[{"constraint":"Restricción.","reason":"Motivo.","impact":"Impacto."}],"honesty_assessment":{"thesis_relation":"Relación.","thesis_refs":["T-1"],"evidence_refs":["F-1"],"inherited_constraint_ids":[],"unsupported_elements":[],"risk_level":"LOW","risk_justification":"Justificación.","mitigation_or_pending":None},"status":"PROVISIONAL_TEAM_03_INPUT","created_at":"2026-07-24T20:00:00Z"},
+    "early_packaging_hypothesis": {"packaging_id":"P-1","episode_id":"EP-1","refined_thesis_id":"T-1","refined_thesis_checksum":"a"*64,"audience":{"persona_concreta":"Persona.","conocimiento_previo":"Conocimiento.","tension_reconocida":"Tensión.","relevancia":"Relevancia.","expectativa_que_no_debe_generarse":"No promesa.","profile_id":"P-1","profile_version":"1.0.0","profile_checksum":"a"*64,"brief_checksum":"a"*64},"promesa_visible_provisional":"Promesa.","tension_central":"Tensión.","expectativa_del_espectador":"Expectativa.","diferenciador":"Diferenciador.","titulo_de_trabajo":"Título.","concepto_inicial_miniatura":"Concepto.","titulo_miniatura_complementarity":"Complemento.","overpromise_risk":"LOW","platform_constraints":[{"constraint":"Restricción.","reason":"Motivo.","impact":"Impacto."}],"honesty_assessment":{"thesis_relation":"Relación.","thesis_refs":["T-1"],"evidence_refs":["F-1"],"inherited_constraint_ids":[],"unsupported_elements":[],"risk_level":"LOW","risk_justification":"Justificación.","mitigation_or_pending":None},"status":"PROVISIONAL_YOUTUBE_ADAPTATION_INPUT","created_at":"2026-07-24T20:00:00Z"},
     "editorial_script_promise": {"promise_id":"SP-1","episode_id":"EP-1","refined_thesis_id":"T-1","refined_thesis_checksum":"a"*64,"audience":"Persona.","editorial_promise":"Promesa.","central_tension":"Tensión.","legitimate_expectations":["Comprensión."],"expectations_to_avoid":["No promesa."],"thesis_alignment":"Alineada.","textual_overpromise_risk":{"level":"LOW","justification":"Justificación.","mitigation_or_pending":None},"opening_obligations":["Abrir con tensión."],"inherited_constraint_ids":[],"status":"SCRIPT_CORE_INPUT","created_at":"2026-07-24T20:00:00Z"},
     "b5_i2_semantic_sufficiency_audit": {"audit_id":"B5I2-SSA-1","episode_id":"EP-1","auditor_role":"INDEPENDENT_EDITORIAL_AUDITOR","auditor_run_id":"RUN-AUDIT-1","auditor_skill_id":"skill_auditar_suficiencia_semantica_b5_i2","auditor_skill_version":"1.0.0","provider_or_adapter":"local-mock-semantic","model_or_evaluator":"semantic-mock-v1","execution_timestamp":"2026-07-25T08:00:00Z","input_manifest_checksum":"a"*64,"artifact_checksums":[{"artifact_kind":kind,"artifact_id":artifact_id,"checksum":"a"*64,"producer_run_id":"RUN-P"} for kind, artifact_id in [("research","R-1"),("evidence_report","E-1"),("provisional_thesis","TP-1"),("analysis","A-1"),("curation","C-1"),("refined_thesis","T-1"),("script_promise","SP-1")]],"audit_method":"AI_SEMANTIC_REVIEW","audited_artifact_ids":["analysis:A-1","curation:C-1","refined_thesis:T-1","script_promise:SP-1"],"audited_artifact_versions":[{"artifact_kind":"analysis","artifact_id":"A-1","checksum":"a"*64,"producer_run_id":"RUN-P"},{"artifact_kind":"curation","artifact_id":"C-1","checksum":"a"*64,"producer_run_id":"RUN-P"},{"artifact_kind":"refined_thesis","artifact_id":"T-1","checksum":"a"*64,"producer_run_id":"RUN-P"},{"artifact_kind":"script_promise","artifact_id":"SP-1","checksum":"a"*64,"producer_run_id":"RUN-P"}],"criteria_results":[{"criterion":criterion,"status":"SATISFIED","summary":"Evaluado."} for criterion in ["ANALYSIS_SPECIFICITY","EVIDENCE_TRACEABILITY","EPISTEMIC_SEPARATION","EDITORIAL_DEPTH_AND_UTILITY","MATERIAL_COVERAGE","CURATION_FUNCTION","CURATION_CONTRAST_AND_PROGRESSION","REDUNDANCY_AND_CONTEXT_COST","THESIS_REFINEMENT_SUBSTANCE","THESIS_ARGUMENTATIVE_QUALITY","MATERIAL_THESIS_CONTRIBUTION","INHERITED_RESTRICTIONS","SCRIPT_PROMISE_HONESTY","EARLY_PACKAGING_HONESTY","B5_I3_READINESS"]],"findings":[{"criterion":criterion,"status":"SATISFIED","anchored_findings":[{"artifact_kind":"analysis","artifact_id":"A-1","artifact_field":"statement","evaluated_excerpt":"Lectura.","evidence_refs":["F-1"],"evidence_excerpts":[{"evidence_ref":"F-1","excerpt":"Lectura."}],"editorial_comparison":"Comparación editorial trazable.","why_specific_or_generic":"Justificación editorial concreta.","decision":"SATISFIED"}],"rationale":"Evaluado."} for criterion in ["ANALYSIS_SPECIFICITY","EVIDENCE_TRACEABILITY","EPISTEMIC_SEPARATION","EDITORIAL_DEPTH_AND_UTILITY","MATERIAL_COVERAGE","CURATION_FUNCTION","CURATION_CONTRAST_AND_PROGRESSION","REDUNDANCY_AND_CONTEXT_COST","THESIS_REFINEMENT_SUBSTANCE","THESIS_ARGUMENTATIVE_QUALITY","MATERIAL_THESIS_CONTRIBUTION","INHERITED_RESTRICTIONS","SCRIPT_PROMISE_HONESTY","EARLY_PACKAGING_HONESTY","B5_I3_READINESS"]],"blocking_defects":[],"non_blocking_defects":[],"cited_evidence":["F-1"],"required_corrections":[],"unresolved_questions":[],"inherited_restrictions_checked":[],"auditor_statement":"Decision PASS emitida sobre artefactos B5-I2 con evidencia citada.","decision":"PASS","readiness":"BLOCKED","created_at":"2026-07-25T08:00:00Z"},
     "viewer_journey": {
@@ -368,7 +409,7 @@ VALID_FIXTURES = {
 }
 
 # B4-I1: los registros canónicos sirven como fixtures válidos de sus schemas.
-for _name in ("responsibility_registry", "skill_catalog"):
+for _name in ("responsibility_registry", "skill_catalog", "subagent_registry", "editorial_profile_registry"):
     with open(os.path.join(os.path.dirname(__file__), "..", "..", "config", f"{_name}.json"), encoding="utf-8") as _fixture:
         VALID_FIXTURES[_name] = json.load(_fixture)
 

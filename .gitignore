@@ -7,8 +7,10 @@ env/
 venv/
 ENV/
 
+
 # Configuration
 config/local_settings.json
+.runtime-tmp/
 
 # IDEs
 .vscode/
@@ -21,10 +23,17 @@ Thumbs.db
 docs/*
 !docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 !docs/contracts/
-!docs/contracts/README.md
+!docs/contracts/**
 !docs/product/
 !docs/product/**
+!docs/specifications/
+!docs/specifications/B3_editorial_profile_functional_specification.md
 !docs/initiatives/
 !docs/initiatives/**
 !docs/functional/
 !docs/functional/**
+.env
+.env.*
+env.example
+*.example
+!.env.example

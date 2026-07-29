@@ -13,13 +13,13 @@
       "RC-05",
       "RC-06"
     ],
-    "profile_checksum": "ff45c54267dd2c5f36896c802846322e57476820ed1fd9e81a5f9556b528c2cd",
+    "profile_checksum": "dbe94dbfcee5e9e30a956dab20097f62216e4fb58beddb3ef8fa3086fd95ee8c",
     "voice_evidence_level": "SPECIFICATION_BASED"
   },
   "exit_code": 0,
   "gate_id": "B3_TECHNICAL_PROFILE_VALIDATION",
   "status": "PASS",
-  "summary": "Perfil editorial 1.1.0 validado contra editorial_profile.json y compilado de forma reproducible.",
+  "summary": "Perfil editorial 1.1.0 validado contra la sede canónica activa y compilado de forma reproducible.",
   "violations": [],
   "warnings": []
 }

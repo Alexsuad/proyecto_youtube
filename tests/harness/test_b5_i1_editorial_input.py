@@ -276,7 +276,7 @@ def test_provisional_and_refined_stages_are_not_confused() -> None:
 
 def test_workflow_stops_before_curation_and_outline() -> None:
     workflow = Path(".agent/workflows/01_pipeline_episodio.md").read_text(encoding="utf-8")
-    assert "READY_FOR_TEAM_02_FUNCTIONAL_REAUDIT" in workflow
+    assert "READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW" in workflow
     assert "no autoriza B5-I2" in workflow
     assert "03_mapa_eventos.md" not in workflow
 
@@ -578,7 +578,7 @@ def _write_semantic_inputs(tmp_path: Path, decision: str = "PASS") -> tuple[Path
     audit = tmp_path / "audit.json"
     criteria = ["CENTRAL_QUESTION_SPECIFICITY", "RESEARCH_RELEVANCE", "DEPTH_FIT", "RIVAL_PERSPECTIVE_SUBSTANCE", "NARRATIVE_UTILITY", "CRITICAL_CLAIMS_QUALITY", "THESIS_SUBSTANCE", "READINESS_FOR_B5_I2"]
     findings = [{"criterion": criterion, "assessment": "SATISFIED" if decision == "PASS" else "NOT_SATISFIED", "rationale": "Juicio semántico explícito.", "references": ["thesis.statement"]} for criterion in criteria]
-    audit.write_text(json.dumps({"audit_id": "SSA-1", "episode_id": "EP-001", "brief_checksum": checksum(brief), "research_checksum": checksum(research), "evidence_report_checksum": checksum(evidence), "thesis_checksum": checksum(thesis), "audited_by": "team_02_ai", "audit_method": "AI_SEMANTIC_REVIEW", "findings": findings, "decision": decision, "created_at": "2026-07-24T20:00:00Z"}), encoding="utf-8")
+    audit.write_text(json.dumps({"audit_id": "SSA-1", "episode_id": "EP-001", "brief_checksum": checksum(brief), "research_checksum": checksum(research), "evidence_report_checksum": checksum(evidence), "thesis_checksum": checksum(thesis), "audited_by": "script_product_ai_reviewer", "audit_method": "AI_SEMANTIC_REVIEW", "findings": findings, "decision": decision, "created_at": "2026-07-24T20:00:00Z"}), encoding="utf-8")
     return brief, research, evidence, thesis, audit
 
 
@@ -655,6 +655,6 @@ def test_partial_coverage_without_impact_fails(tmp_path: Path) -> None:
 def test_inherited_skills_are_marked_non_executable() -> None:
     catalog = json.loads(Path("config/skill_catalog.json").read_text(encoding="utf-8"))
     deferred = {item["skill_id"]: item for item in catalog["skills"] if item.get("non_executable_current")}
-    assert set(deferred) >= {"skill_mapa_eventos_y_outline", "skill_guion_longform", "skill_qa_editorial", "skill_verificacion_veracidad_notebooklm", "skill_extraer_voice_learnings"}
+    assert set(deferred) >= {"skill_mapa_eventos_y_outline", "skill_guion_longform", "skill_qa_editorial", "skill_verificacion_veracidad_fuente_externa_historica", "skill_extraer_voice_learnings"}
     assert "skill_analisis_patrones" not in deferred
     assert "skill_curation_obras" not in deferred

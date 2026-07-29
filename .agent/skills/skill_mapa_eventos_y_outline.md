@@ -1,7 +1,7 @@
 # Skill — Mapa de eventos + Outline (estructura longform)
 Objetivo: pasar de "ideas" a estructura clara del episodio.
 
-> **Rol ejecutor actual:** Antigravity (en el futuro puede ser un agente Planner con modelo especializado en estructura narrativa)
+> **Rol ejecutor actual:** el runtime operativo (en el futuro puede ser un agente Planner con modelo especializado en estructura narrativa)
 
 ---
 

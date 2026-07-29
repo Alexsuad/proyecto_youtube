@@ -10,6 +10,14 @@
 
 > Este archivo es una proyección operativa del Plan 001. No crea autoridad nueva ni sustituye el plan rector. Ante una contradicción, prevalece el plan rector y debe bloquearse la misión hasta resolverla.
 
+## R1. Estado reconciliado
+
+``text
+STATUS_RECONCILED: PASS
+FINAL_CLOSURE_STATUS: OPEN
+EVIDENCE_REFS: Ver Plan 003 R1 y control operativo
+```
+
 ## 0. Uso operativo
 
 Lectura mínima para ejecutar una misión de este bloque:
@@ -54,7 +62,6 @@ evidence
 handoff
 prompt_version
 ```
-
 ### B4-M2 — Separar Editor y Auditor
 
 Crear dos contratos distintos:
@@ -154,7 +161,6 @@ model
 tools
 permissions
 ```
-
 El cambio de proveedor debe ocurrir por configuración.
 
 ### B4-M8 — Puntos de extensión
@@ -197,5 +203,4 @@ PASS si:
 - no se crearon subagentes sin justificación;
 - los adaptadores de entrada adicionales (Telegram, voz, web, API) no se implementaron en MVP.
 ```
-
 ---

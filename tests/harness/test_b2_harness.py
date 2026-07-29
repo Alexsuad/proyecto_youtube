@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -14,6 +13,7 @@ from src.core.legacy_gate_adapter import parse_legacy_gate_v
 from src.core.status import GateStatus
 from src.scripts.evidence_sufficiency_gate import evaluate as evidence_evaluate
 from src.scripts import cerrar_episodio
+from tests.support.workspace_temp import temporary_directory
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -68,9 +68,8 @@ class TestB2Harness(unittest.TestCase):
     def make_valid_closure(self, temp_path: Path, ep_id: str = "ep_0001") -> tuple[Path, Path, Path]:
         vault, episode, output = temp_path / "vault", temp_path / ep_id, temp_path / "out"
         episode.mkdir()
-        files = {"06_guion_longform.md": "guion", "06_guion_longform_limpio.md": "guion limpio", "06_guion_longform_anotado.md": "guion anotado", "08_shorts.md": "shorts", "09_packaging.md": "packaging", "10_seo.md": "seo"}
+        files = {"06_guion_longform.md": "guion", "06_guion_longform_limpio.md": "guion limpio", "06_guion_longform_anotado.md": "guion anotado"}
         for name, content in files.items(): (episode / name).write_text(content, encoding="utf-8")
-        (episode / "07_verificacion_veracidad_notebooklm.md").write_text("ESTADO_GLOBAL: OK\n", encoding="utf-8")
         checksum = __import__("hashlib").sha256("guion".encode()).hexdigest()
         manifest = {"script_id": ep_id, "version": "1.0.0", "checksum": checksum, "narrative_plan_version": "1.0.0", "status": "EDITORIAL_SCRIPT_APPROVED"}
         approval = {"artifact_id": ep_id, "script_version": "1.0.0", "checksum": checksum, "decision": "APPROVED", "approved_by": "editor_jefe_01", "approved_role": "EDITORIAL_LEAD", "approved_at": "2026-07-21T20:00:00Z"}
@@ -93,14 +92,18 @@ class TestB2Harness(unittest.TestCase):
     def close(self, config: Path, output: Path, ep_id="ep_0001") -> subprocess.CompletedProcess:
         return subprocess.run([sys.executable, str(ROOT / "src/scripts/cerrar_episodio.py"), "--ep-id", ep_id, "--config", str(config), "--output-root", str(output)], cwd=config.parent, env={**os.environ, "PYTHONPATH": str(ROOT)}, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
 
+    @staticmethod
+    def tempdir(label: str):
+        return temporary_directory(f"test_b2_harness_{label}")
+
     def test_canonical_exit_codes(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("canonical_exit_codes") as temp:
             for status, expected in ((GateStatus.PASS, 0), (GateStatus.WARN, 0), (GateStatus.FAIL, 1), (GateStatus.BLOCKED, 2)):
                 result = GateResult("test", "ep", "1.0.0", status, "ok", ["x"] if status in {GateStatus.FAIL, GateStatus.BLOCKED} else [])
                 self.assertEqual(emit(result, output_root=temp), expected)
 
     def test_legacy_parser_is_exact_and_unambiguous(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("legacy_parser") as temp:
             path = Path(temp) / "gate.md"
             path.write_text("ESTADO_GLOBAL: FAIL\nESTADO_GLOBAL: OK\n", encoding="utf-8")
             status, error = parse_legacy_gate_v(path)
@@ -110,7 +113,7 @@ class TestB2Harness(unittest.TestCase):
             self.assertEqual(status, GateStatus.PASS); self.assertIsNone(error)
 
     def test_evidence_statuses(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("evidence_statuses") as temp:
             path = Path(temp) / "report.json"
             self.assertEqual(evidence_evaluate(path, "ep").status, GateStatus.BLOCKED)
             path.write_text("{}", encoding="utf-8")
@@ -129,7 +132,7 @@ class TestB2Harness(unittest.TestCase):
             self.assertEqual(evidence_evaluate(path, "ep").status, GateStatus.BLOCKED)
 
     def test_post_script_inputs_block_and_output_is_portable(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("post_script_inputs") as temp:
             temp_path = Path(temp); episode = temp_path / "episode with spaces"; episode.mkdir(); output = temp_path / "out"
             command = [sys.executable, str(ROOT / "src/scripts/qa_lenguaje_youtube_ultra.py"), "--ep_path", str(episode), "--fase", "post-guion", "--output-root", str(output)]
             environment = {**os.environ, "PYTHONPATH": str(ROOT)}
@@ -139,7 +142,7 @@ class TestB2Harness(unittest.TestCase):
             self.assertFalse((temp_path / "output").exists())
 
     def test_pre_and_post_ultra_use_distinct_gate_ids(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("distinct_gate_ids") as temp:
             temp_path = Path(temp); episode = temp_path / "ep_0001"; episode.mkdir(); output = temp_path / "out"
             command = [sys.executable, str(ROOT / "src/scripts/qa_lenguaje_youtube_ultra.py"), "--ep_path", str(episode), "--ep-id", "ep_0001", "--fase", "pre-guion", "--output-root", str(output)]
             done = subprocess.run(command, cwd=temp_path, env={**os.environ, "PYTHONPATH": str(ROOT)}, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
@@ -148,9 +151,9 @@ class TestB2Harness(unittest.TestCase):
             self.assertFalse((output / "gates/ep_0001/qa_lenguaje_youtube_ultra_post_guion.json").exists())
 
     def test_closure_with_empty_script_is_blocked_without_index_mutation(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("empty_script") as temp:
             temp_path = Path(temp); vault = temp_path / "vault"; episode = temp_path / "episode"; episode.mkdir()
-            for name in ("06_guion_longform.md", "08_shorts.md", "09_packaging.md", "10_seo.md"):
+            for name in ("06_guion_longform.md", "06_guion_longform_limpio.md", "06_guion_longform_anotado.md"):
                 (episode / name).write_text("" if name == "06_guion_longform.md" else "content", encoding="utf-8")
             index_path = vault / "channel/index/episodes_index.json"; index_path.parent.mkdir(parents=True)
             index = {"episodes": [{"ep_id": "ep_0001", "ep_path": str(episode), "estado": "en_progreso"}]}
@@ -162,8 +165,8 @@ class TestB2Harness(unittest.TestCase):
             self.assertEqual(json.loads(index_path.read_text(encoding="utf-8"))["episodes"][0]["estado"], "en_progreso")
 
     def test_closure_blocked_inputs_and_invalid_index_are_non_mutating(self):
-        for filename in ("06_guion_longform.md", "09_packaging.md", "10_seo.md"):
-            with self.subTest(filename=filename), tempfile.TemporaryDirectory() as temp:
+        for filename in ("06_guion_longform.md", "06_guion_longform_limpio.md", "06_guion_longform_anotado.md"):
+            with self.subTest(filename=filename), self.tempdir(f"invalid_input_{filename}") as temp:
                 temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
                 (episode / filename).write_text("", encoding="utf-8")
                 done = self.close(config, output)
@@ -172,9 +175,9 @@ class TestB2Harness(unittest.TestCase):
                 self.assertEqual(index["episodes"][0]["estado"], "en_progreso")
 
     def test_closure_with_all_deliverables_empty_is_blocked(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("all_deliverables_empty") as temp:
             temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
-            for name in ("06_guion_longform.md", "08_shorts.md", "09_packaging.md", "10_seo.md"):
+            for name in ("06_guion_longform.md", "06_guion_longform_limpio.md", "06_guion_longform_anotado.md"):
                 (episode / name).write_text("", encoding="utf-8")
             self.assertEqual(self.close(config, output).returncode, 2)
             index = json.loads((temp_path / "vault/channel/index/episodes_index.json").read_text())
@@ -182,8 +185,6 @@ class TestB2Harness(unittest.TestCase):
 
     def test_closure_rejects_gate_v_and_contract_mismatches(self):
         cases = {
-            "ambiguous_gate_v": ("07_verificacion_veracidad_notebooklm.md", "ESTADO_GLOBAL: FAIL\nESTADO_GLOBAL: OK\n", 1),
-            "failed_gate_v": ("07_verificacion_veracidad_notebooklm.md", "ESTADO_GLOBAL: FAIL\n", 1),
             "approval_other_version": ("editorial_script_approval.json", "version", 1),
             "approval_checksum": ("editorial_script_approval.json", "checksum", 1),
             "modified_script": ("06_guion_longform.md", "modified", 1),
@@ -194,7 +195,7 @@ class TestB2Harness(unittest.TestCase):
             "contradictory_gate": ("qa_lenguaje_youtube_ultra_post_guion.json", "contradictory_gate", 1),
         }
         for label, (target, mutation, expected) in cases.items():
-            with self.subTest(case=label), tempfile.TemporaryDirectory() as temp:
+            with self.subTest(case=label), self.tempdir(f"gate_mismatch_{label}") as temp:
                 temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
                 path = episode / target if target.endswith(".md") or target in {"editorial_script_approval.json", "final_delivery_manifest.json"} else output / "gates/ep_0001" / target
                 if mutation == "version":
@@ -215,7 +216,7 @@ class TestB2Harness(unittest.TestCase):
                 self.assertEqual(self.close(config, output).returncode, expected)
 
     def test_valid_closure_is_single_atomic_mutation(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("single_atomic_mutation") as temp:
             temp_path = Path(temp); _, output, config = self.make_valid_closure(temp_path)
             self.assertEqual(self.close(config, output).returncode, 0)
             index_path = temp_path / "vault/channel/index/episodes_index.json"; first = index_path.read_text()
@@ -226,7 +227,7 @@ class TestB2Harness(unittest.TestCase):
     def test_closure_requires_approval_and_final_manifest_integrity(self):
         mutations = ("missing_approval", "missing_checksum", "empty_approval_record", "same_scripts", "invalid_ledger", "foreign_manifest", "foreign_approval")
         for mutation in mutations:
-            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temp:
+            with self.subTest(mutation=mutation), self.tempdir(f"approval_integrity_{mutation}") as temp:
                 temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
                 if mutation == "missing_approval":
                     (episode / "editorial_script_approval.json").unlink()
@@ -244,7 +245,7 @@ class TestB2Harness(unittest.TestCase):
                 self.assertEqual(self.close(config, output).returncode, expected)
 
     def test_index_write_error_returns_technical_error_without_pass(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("index_write_error") as temp:
             temp_path = Path(temp); _, output, config = self.make_valid_closure(temp_path)
             with patch.object(sys, "argv", ["cerrar_episodio.py", "--ep-id", "ep_0001", "--config", str(config), "--output-root", str(output)]):
                 with patch.object(cerrar_episodio, "save_index_atomically", side_effect=OSError("disk full")):
@@ -260,7 +261,7 @@ class TestB2Harness(unittest.TestCase):
         with self.assertRaises(ValueError): GateResult.from_dict(broken)
 
     def test_legacy_cli_regressions_and_workflow_contract(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("legacy_cli_regressions") as temp:
             temp_path = Path(temp); env = {**os.environ, "PYTHONPATH": str(ROOT)}
             for script in ("qa_brief_research.py", "qa_momento_1.py"):
                 done = subprocess.run([sys.executable, str(ROOT / "src/scripts" / script), "--ep_path", str(temp_path / "missing"), "--output-root", str(temp_path / "out")], cwd=temp_path, env=env, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
@@ -270,12 +271,12 @@ class TestB2Harness(unittest.TestCase):
         workflow = (ROOT / ".agent/workflows/01_pipeline_episodio.md").read_text(encoding="utf-8")
         self.assertNotIn("output/auditoria_brief_research_", workflow)
         self.assertNotIn("qa_youtube_ultra.md` + ESTADO_GLOBAL", workflow)
-        self.assertIn("READY_FOR_TEAM_02_FUNCTIONAL_REAUDIT", workflow)
+        self.assertIn("READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", workflow)
         self.assertNotIn("09_packaging.md", workflow)
         self.assertNotIn("EditorialScriptApproval", workflow)
 
     def test_evidence_substantive_regression_cases(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("evidence_substantive") as temp:
             path = Path(temp) / "report.json"
             
             # fuentes_primarias=[{}] -> FAIL
@@ -291,25 +292,27 @@ class TestB2Harness(unittest.TestCase):
 
     def test_final_delivery_manifest_security_and_roles_regression(self):
         # Shorts como final_script_clean -> FAIL
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("security_shorts") as temp:
             temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
             final = json.loads((episode / "final_delivery_manifest.json").read_text())
+            (episode / "08_shorts.md").write_text("shorts", encoding="utf-8")
             final["final_script_clean"] = "08_shorts.md"
             final["checksums"]["08_shorts.md"] = __import__("hashlib").sha256((episode / "08_shorts.md").read_bytes()).hexdigest()
             (episode / "final_delivery_manifest.json").write_text(json.dumps(final))
             self.assertEqual(self.close(config, output).returncode, 1)
 
         # Packaging como final_script_annotated -> FAIL
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("security_packaging") as temp:
             temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
             final = json.loads((episode / "final_delivery_manifest.json").read_text())
+            (episode / "09_packaging.md").write_text("packaging", encoding="utf-8")
             final["final_script_annotated"] = "09_packaging.md"
             final["checksums"]["09_packaging.md"] = __import__("hashlib").sha256((episode / "09_packaging.md").read_bytes()).hexdigest()
             (episode / "final_delivery_manifest.json").write_text(json.dumps(final))
             self.assertEqual(self.close(config, output).returncode, 1)
 
         # ruta ../outside.md -> FAIL
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("security_parent_escape") as temp:
             temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
             final = json.loads((episode / "final_delivery_manifest.json").read_text())
             final["final_script_clean"] = "../outside.md"
@@ -318,7 +321,7 @@ class TestB2Harness(unittest.TestCase):
             self.assertEqual(self.close(config, output).returncode, 1)
 
         # ruta absoluta externa -> FAIL
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("security_absolute_path") as temp:
             temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
             final = json.loads((episode / "final_delivery_manifest.json").read_text())
             abs_path = str((temp_path / "outside.md").resolve())
@@ -329,7 +332,7 @@ class TestB2Harness(unittest.TestCase):
             self.assertEqual(self.close(config, output).returncode, 1)
 
         # FinalDeliveryManifest sin versiones -> FAIL
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("security_missing_version") as temp:
             temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
             final = json.loads((episode / "final_delivery_manifest.json").read_text())
             del final["final_candidate_version"]
@@ -337,7 +340,7 @@ class TestB2Harness(unittest.TestCase):
             self.assertEqual(self.close(config, output).returncode, 1)
 
         # final_script_clean = research -> FAIL (nombre no canónico)
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("security_research_as_clean") as temp:
             temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
             (episode / "01_research_bruto.md").write_text("dummy", encoding="utf-8")
             final = json.loads((episode / "final_delivery_manifest.json").read_text())
@@ -347,7 +350,7 @@ class TestB2Harness(unittest.TestCase):
             self.assertEqual(self.close(config, output).returncode, 1)
 
         # final_script_annotated = brief -> FAIL (nombre no canónico)
-        with tempfile.TemporaryDirectory() as temp:
+        with self.tempdir("security_brief_as_annotated") as temp:
             temp_path = Path(temp); episode, output, config = self.make_valid_closure(temp_path)
             (episode / "00_brief_episodio.md").write_text("dummy", encoding="utf-8")
             final = json.loads((episode / "final_delivery_manifest.json").read_text())
@@ -362,5 +365,5 @@ class TestB2Harness(unittest.TestCase):
         self.assertIn("<EP_PATH>/source_access_and_evidence_report.json", workflow)
         self.assertIn("schemas/source_access_and_evidence_report.json", workflow)
         # B5-I1 se detiene antes de los controles pre-guion heredados.
-        self.assertIn("READY_FOR_TEAM_02_FUNCTIONAL_REAUDIT", workflow)
+        self.assertIn("READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", workflow)
         self.assertNotIn("qa_lenguaje_youtube_ultra_pre_guion.json", workflow)

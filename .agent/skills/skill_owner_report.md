@@ -1,7 +1,7 @@
 # Skill — Reporte Ejecutivo para el Dueño (Owner Report)
 Objetivo: Generar una síntesis estratégica y técnica del episodio para que el dueño del canal pueda revisar el valor, la arquitectura y los riesgos sin leer todo el contenido bruto.
 
-> **Rol ejecutor actual:** Antigravity (Auditor Estratégico)
+> **Rol ejecutor actual:** el runtime operativo (Auditor Estratégico)
 
 ---
 

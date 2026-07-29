@@ -51,9 +51,9 @@ Los contratos de aprobación requieren **identidad verificable** (no texto ambig
 | ID Contrato | Nombre del Contrato | Schema JSON | Rol Funcional Autorizado |
 |---|---|---|---|
 | **B1-C1** | `EditorialProfile` | `schemas/editorial_profile.json` | Rol Editorial |
-| **B3-C1** | `EditorialProfileApproval` | `schemas/editorial_profile_approval.json` | Equipo 01 |
+| **B3-C1** | `EditorialProfileApproval` | `schemas/editorial_profile_approval.json` | CHANNEL_INTELLIGENCE |
 | **B3-C2** | `ActiveEditorialProfile` | `schemas/active_editorial_profile.json` | Infraestructura y Gobernanza |
-| **B3-C3** | `VoiceSample` | `schemas/voice_sample.json` | Equipo 01 |
+| **B3-C3** | `VoiceSample` | `schemas/voice_sample.json` | CHANNEL_INTELLIGENCE |
 | **B1-C2** | `EpisodeBrief` | `schemas/episode_brief.json` | Rol Editorial |
 | **B1-C3** | `SourceAccessAndEvidenceReport` | `schemas/source_access_and_evidence_report.json` | Rol Investigación / Evidencia |
 | **B1-C4** | `PackagingHypothesis` | `schemas/packaging_hypothesis.json` | Rol Adaptación YouTube / Editorial |
@@ -143,6 +143,6 @@ Esta sede no depende de ningun proveedor, IDE o modelo concreto. Es la fuente de
 .agent/workflows/ → workflows del agente operativo
 ```
 
-`.agent/` es un adapter de compatibilidad. Contiene reglas, skills y workflows adaptados al entorno del agente operativo (por ejemplo, Antigravity, Codex, OpenCode). No duplica la sede canonica: apunta o deriva de ella.
+`.agent/` es un adapter de compatibilidad. Contiene reglas, skills y workflows adaptados al entorno operativo actual. No duplica la sede canonica: apunta o deriva de ella.
 
 La sede canónica (`prompts/ + config/ + schemas/`) y el adapter (`.agent/`) mantienen separacion de capas. El adapter puede ser sustituido cuando el entorno operativo cambie, sin afectar la sede canonica.

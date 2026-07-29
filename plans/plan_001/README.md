@@ -3,11 +3,16 @@
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
 **Versión:** `1.4`
-**Implementación autorizada:** `YES` únicamente para bloques activos; B5-I3 y la Etapa 2 permanecen no autorizados.
+PLAN_001_EXECUTION: TEMPORARILY_PAUSED_BY_RECOVERY
+CURRENT_RECOVERY_PLAN: PLAN_003
+CURRENT_RECOVERY_PHASE: R6_B_0_CLOSED
+IMPLEMENTATION_AUTHORIZED: NO_PENDING_NEXT_MISSION
+NEXT_ALLOWED_ACTION: ACTIVATE_SELECTED_ROUTE_AND_REAUTHORIZE_R6_B
+R6_B_0_EXTERNAL_AUDIT: PASS
 
 ## 1A. Prioridad y etapas
 
-La fuente canónica es el Plan 001 principal. La etapa activa es el núcleo profesional de Guion (`SCRIPT_CORE`) hasta `EDITORIAL_SCRIPT_APPROVED`; B5-I2 es el incremento actual y queda pendiente de auditoría semántica real y reauditoría funcional del Equipo 02. B5-I3 no está autorizado. B7.5, B8 y B8.5 se conservan como Etapa 2 diferida, no como continuación automática. Audio pertenece a un repositorio externo futuro y Video queda fuera del repositorio.
+La fuente canónica es el Plan 001 principal. Tras R1 del Plan 003, el Plan 001 conserva autoridad como plan rector del producto, pero su continuación de implementación permanece temporalmente pausada hasta una misión posterior autorizada. B5-I2 sigue siendo el incremento pendiente; B5-I3 no está autorizado. B7.5, B8 y B8.5 se conservan como Etapa 2 diferida, no como continuación automática. Audio pertenece a un repositorio externo futuro y Video queda fuera del repositorio.
 
 ## 1. Propósito
 
@@ -63,12 +68,12 @@ Los archivos de esta carpeta:
 
 | Bloque | Archivo | Dependencia | Estado | Gate resumido |
 |---|---|---|---|---|
-| `B0` | [B0_gobernanza_baseline_benchmarks.md](B0_gobernanza_baseline_benchmarks.md) | Ninguna | `PASS` | Baseline y benchmarks aprobados |
+| `B0` | [B0_gobernanza_baseline_benchmarks.md](B0_gobernanza_baseline_benchmarks.md) | Ninguna | `OPEN` | EVIDENCE_REVIEW_REQUIRED |
 | `B1` | [B1_contratos_schemas_estados_versionado.md](B1_contratos_schemas_estados_versionado.md) | B0 | `PASS` | Contratos canónicos aprobados |
 | `B2` | [B2_reparacion_harness_gates.md](B2_reparacion_harness_gates.md) | B1 | `PASS` | Cero falsos PASS conocidos |
-| `B3` | [B3_perfil_editorial_frontera_canal.md](B3_perfil_editorial_frontera_canal.md) | B1–B2 | `PASS` | Producción consume perfil versionado |
-| `B4` | [B4_responsabilidades_skills_portabilidad.md](B4_responsabilidades_skills_portabilidad.md) | B3 | `PASS` | B4-I1 y B4-I2 auditados `PASS` |
-| `B5` | [B5_diseno_editorial.md](B5_diseno_editorial.md) | B3–B4 | `IN_PROGRESS` | B5-I1 cerrado; B5-I2 implementación completada y cierre funcional pendiente; B5-I3 `NOT_AUTHORIZED` |
+| `B3` | [B3_perfil_editorial_frontera_canal.md](B3_perfil_editorial_frontera_canal.md) | B1–B2 | `PASS` | PROFILE_1_2_1_ACTIVE |
+| `B4` | [B4_responsabilidades_skills_portabilidad.md](B4_responsabilidades_skills_portabilidad.md) | B3 | `OPEN` | CONTRACTUAL_FOUNDATION_PASS / REAL_EXECUTION_NOT_DEMONSTRATED |
+| `B5` | [B5_diseno_editorial.md](B5_diseno_editorial.md) | B3–B4 | `IN_PROGRESS` | B5-I1_FUNCTIONAL_CONFIRMATION_PENDING / B5-I2_OPEN / B5-I3 `NOT_AUTHORIZED` |
 | `B5.5` | [B5_5_prototipo_editorial.md](B5_5_prototipo_editorial.md) | B5 | `PLANNED` | Mejora editorial temprana demostrada |
 | `B6` | [B6_redaccion_edicion_verificacion.md](B6_redaccion_edicion_verificacion.md) | B5.5 | `PLANNED` | Candidato final coherente y trazable |
 | `B7` | [B7_auditoria_aprobacion_editorial.md](B7_auditoria_aprobacion_editorial.md) | B6 | `PLANNED` | Guion aprobado editorialmente |
@@ -99,9 +104,16 @@ Una modificación aislada de un archivo de bloque no cambia el plan rector.
 ## 6. Estado actual
 
 ```text
-PLAN_STATUS: READY_FOR_EXTERNAL_AUDIT
-IMPLEMENTATION_AUTHORIZED: YES
-CURRENT_BLOCK: B5-I2
+PLAN_STATUS: IN_PROGRESS
+PLAN_001_ROLE: PLAN_RECTOR_DEL_PRODUCTO
+PLAN_001_EXECUTION: TEMPORARILY_PAUSED_BY_RECOVERY
+CURRENT_RECOVERY_PLAN: PLAN_003
+CURRENT_RECOVERY_PHASE: R6_B_0_CLOSED
+IMPLEMENTATION_AUTHORIZED: NO_PENDING_NEXT_MISSION
+PLAN_001_SUSPENDED_AT_BLOCK: B5-I2
+PLAN_001_SUSPENDED_AT_INCREMENT: B5-I2
+CURRENT_ACTIVE_PLAN: PLAN_003
+CURRENT_ACTIVE_PHASE: R6_B_0_CLOSED
 B4_I1_STATUS: PASS
 B4_I1_AUDIT: PASS
 B4_I2_STATUS: PASS
@@ -110,12 +122,17 @@ B5_STATUS: IN_PROGRESS
 B5_I1_STATUS: TECHNICALLY_CLOSED
 B5_I2_IMPLEMENTATION: COMPLETED
 B5_I2_TECHNICAL_CORRECTION: PASS_WITH_RESIDUAL_RISK
-B5_I2_REAL_SEMANTIC_AUDIT: PENDING
-B5_I2_TEAM_02_FUNCTIONAL_REAUDIT: PENDING
-B5_I2_FINAL_STATUS: PENDING_SEMANTIC_AND_FUNCTIONAL_APPROVAL
+B5_I2_REAL_SEMANTIC_AUDIT: NOT_DEMONSTRATED
+B5_I2_SCRIPT_PRODUCT_FUNCTIONAL_REAUDIT: PENDING
+B5_I2_FINAL_STATUS: OPEN
 B5_I3: NOT_AUTHORIZED
 STAGE_2_YOUTUBE_DISTRIBUTION: DEFERRED_NOT_AUTHORIZED
 AUDIO_INTEGRATION: EXTERNAL_REPOSITORY_FUTURE_CONTRACT
 VIDEO_PRODUCTION: OUT_OF_REPOSITORY_SCOPE
-NEXT_ALLOWED_ACTION: REAL_SEMANTIC_AUDIT_B5_I2_THEN_TEAM_02_FUNCTIONAL_REAUDIT
+PLAN_002_DOCUMENT_STATUS: SUPERSEDED_BY_APPROVED_ARCHITECTURE
+PLAN_002_OPERATIONAL_AUTHORITY: NOT_GRANTED
+PLAN_002_AGENT_ARCHITECTURE: APPROVED_REPLACEMENT_MODEL
+PLAN_002_FINAL_DECISION: SUPERSEDED_BY_APPROVED_ARCHITECTURE
+NEXT_ALLOWED_ACTION: ACTIVATE_SELECTED_ROUTE_AND_REAUTHORIZE_R6_B
+R6_B_0_EXTERNAL_AUDIT: PASS
 ```

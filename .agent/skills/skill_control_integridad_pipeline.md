@@ -26,9 +26,12 @@ Objetivo: Garantizar que el sistema está estable y limpio antes de iniciar una 
 
 2) **Los entregables finales verificados son:**
    - `<EP_PATH>/06_guion_longform.md`
-   - `<EP_PATH>/08_shorts.md`
-   - `<EP_PATH>/09_packaging.md`
-   - `<EP_PATH>/10_seo.md`
+   - `<EP_PATH>/06_guion_longform_limpio.md`
+   - `<EP_PATH>/06_guion_longform_anotado.md`
+   - `<EP_PATH>/script_version_manifest.json`
+   - `<EP_PATH>/editorial_script_approval.json`
+   - `<EP_PATH>/claims_ledger.json`
+   - `<EP_PATH>/final_delivery_manifest.json`
 
 3) **Diagnóstico (asignado por el script):**
    - `OK` → Vault limpio o episodio anterior completo.

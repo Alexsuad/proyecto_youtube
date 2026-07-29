@@ -1,0 +1,169 @@
+{
+    "policy_version":  "1.0.0",
+    "exit_codes":  {
+                       "PASS":  0,
+                       "FAIL":  1,
+                       "BLOCKED":  2
+                   },
+    "product_roots":  [
+                          "AGENTS.md",
+                          "src",
+                          "config",
+                          "schemas",
+                          "profiles",
+                          "prompts",
+                          ".agent/rules",
+                          ".agent/skills",
+                          ".agent/workflows",
+                          "docs/product",
+                          "docs/contracts",
+                          "docs/specifications/B3_editorial_profile_functional_specification.md"
+                      ],
+    "generator_roots":  [
+                            ".agent/skills",
+                            ".agent/workflows",
+                            "src/scripts",
+                            "tests"
+                        ],
+    "historical_roots":  [
+                             "workspace",
+                             "output",
+                             "deliverables",
+                             "profiles/editorial/mas_alla_del_guion/1.0.0",
+                             "profiles/editorial/mas_alla_del_guion/1.1.0",
+                             "docs/specifications/B3_especificacion_funcional_equipo_01.md",
+                             ".agent/rules/02_reglas_notebooklm.md"
+                         ],
+    "allowed_external_coordination":  [
+                                          "docs/ALCANCE_Y_COORDINACION_EQUIPOS.md",
+                                          "plans/002_CIERRE_ARQUITECTURA_OPERATIVA_Y_MADURACION_EDITORIAL.md",
+                                          "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
+                                          "plans/plan_001",
+                                          "plans/plan_003",
+                                          "plans/001_CONTROL_OPERATIVO.md"
+                                      ],
+    "optional_executor_catalogs":  [
+                                        "config/agent_execution_profiles.json"
+                                    ],
+    "false_positive_paths":  [
+                                 "tests/core/test_runtime_contamination_guard.py",
+                                 "tests/core/test_b4_i1_contracts.py",
+                                 "tests/core/test_b4_i2_agent_prompts.py",
+                                 "config/runtime_contamination_policy.json",
+                                 "tests/ai/test_r6_b_0_hybrid_runtime.py",
+                                 ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md"
+                             ],
+    "historical_markers":  [
+                               "HISTORICAL_REFERENCE",
+                               "NON_EXECUTABLE",
+                               "SUPERSEDED"
+                           ],
+    "patterns":  [
+                     {
+                         "pattern":  "\\bEquipo 0[1-4]\\b",
+                         "label":  "human_team_name",
+                         "severity":  "HIGH"
+                     },
+                     {
+                         "pattern":  "\\bTEAM[_ ]?0[1-4]\\b",
+                         "label":  "human_team_code",
+                         "severity":  "HIGH"
+                     },
+                     {
+                         "pattern":  "B3-FUNCTIONAL-SPEC-TEAM-01",
+                         "label":  "contaminated_lineage_id",
+                         "severity":  "HIGH"
+                     },
+                     {
+                         "pattern":  "docs/specifications/B3_especificacion_funcional_equipo_01\\.md",
+                         "label":  "contaminated_spec_locator",
+                         "severity":  "HIGH"
+                     },
+                     {
+                         "pattern":  "\\bChatGPT\\b",
+                         "label":  "chat_surface_reference",
+                         "severity":  "HIGH"
+                     },
+                     {
+                         "pattern":  "\\bAntigravity\\b",
+                         "label":  "external_tool_dependency",
+                         "severity":  "HIGH"
+                     },
+                     {
+                         "pattern":  "\\bCodex\\b",
+                         "label":  "external_tool_dependency",
+                         "severity":  "HIGH"
+                     },
+                     {
+                         "pattern":  "\\bOpenCode\\b",
+                         "label":  "external_tool_dependency",
+                         "severity":  "MEDIUM"
+                     },
+                     {
+                         "pattern":  "\\bNotebookLM\\b",
+                         "label":  "external_tool_dependency",
+                         "severity":  "MEDIUM"
+                     },
+                     {
+                         "pattern":  "(?<![A-Za-z0-9_])[A-Za-z]:\\\\[^\\r\\n\\\"']+",
+                         "label":  "absolute_windows_path",
+                         "severity":  "MEDIUM"
+                     },
+                     {
+                         "pattern":  "/mnt/[a-z]/",
+                         "label":  "absolute_wsl_path",
+                         "severity":  "MEDIUM"
+                     }
+                 ],
+    "neutral_terms":  [
+                          "CHANNEL_INTELLIGENCE",
+                          "SCRIPT_PRODUCT",
+                          "YOUTUBE_ADAPTATION",
+                          "TECHNICAL_GOVERNANCE",
+                          "INFRASTRUCTURE_GOVERNANCE"
+                      ],
+    "field_level_exceptions":  [
+                                   {
+                                       "path":  "config/local_settings.json",
+                                       "fields":  [
+                                                      "vault_root"
+                                                  ],
+                                       "labels":  [
+                                                      "absolute_windows_path",
+                                                      "absolute_wsl_path"
+                                                  ]
+                                   }
+                               ],
+    "document_classes":  {
+                             "ACTIVE_PRODUCT_SURFACE":  [
+                                                            "AGENTS.md",
+                                                            "src",
+                                                            "config",
+                                                            "schemas",
+                                                            "profiles",
+                                                            "prompts",
+                                                            ".agent/rules",
+                                                            ".agent/skills",
+                                                            ".agent/workflows",
+                                                            "docs/product",
+                                                            "docs/contracts",
+                                                            "docs/specifications/B3_editorial_profile_functional_specification.md"
+                                                        ],
+                             "TEMPORARY_IMPLEMENTATION_PLAN":  [
+                                                                   "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
+                                                                   "plans/plan_001",
+                                                                   "plans/plan_003"
+                                                               ],
+                             "LIVE_OPERATIONAL_CONTROL":  [
+                                                              "plans/001_CONTROL_OPERATIVO.md"
+                                                          ],
+                             "EXTERNAL_COORDINATION_DOCUMENT":  [
+                                                                    "docs/ALCANCE_Y_COORDINACION_EQUIPOS.md"
+                                                                ],
+                             "HISTORICAL_DOCUMENT":  [
+                                                         "workspace",
+                                                         "output",
+                                                         "deliverables"
+                                                     ]
+                         }
+}

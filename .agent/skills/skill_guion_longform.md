@@ -1,8 +1,7 @@
 # Skill — Guion Longform
 Objetivo: escribir un guion listo para grabar, siguiendo rígidamente la estructura, estilo y reglas anti-cliché del canal.
 
-> **Rol ejecutor actual:** Antigravity 
-
+> **Rol ejecutor actual:** el runtime operativo
 ---
 
 ## Entrada mínima OBLIGATORIA

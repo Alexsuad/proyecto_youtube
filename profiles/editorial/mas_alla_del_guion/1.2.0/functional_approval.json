@@ -1,0 +1,19 @@
+{
+  "profile_id": "mas_alla_del_guion",
+  "profile_version": "1.2.0",
+  "profile_checksum": "b1029e85289c51d4585c555ed20566dfd6f1f6db30b875f989fc23bf46fc5977",
+  "decision": "PENDING",
+  "approval_status": "PENDING",
+  "functional_owner_role": "CHANNEL_INTELLIGENCE",
+  "voice_evidence_level": "AUTHENTIC_CORPUS_PARTIAL",
+  "evidence_summary": "Revisión funcional pendiente sobre la versión 1.2.0 con corpus auténtico parcial y checksum final preparado para revisión explícita del propietario.",
+  "limitations": [
+    "La aprobación funcional sigue pendiente y no existe decisión válida de activación.",
+    "El corpus actual es auténtico parcial; nuevas muestras requerirán evaluación y autorización explícitas antes de ampliar la base de evidencia."
+  ],
+  "conditions": [
+    "La futura aprobación deberá referenciar exactamente este checksum final.",
+    "No puede activarse el perfil mientras la decisión siga en PENDING."
+  ],
+  "notes": "No existe aprobación funcional válida todavía; este archivo solo deja preparado el candidato pendiente."
+}

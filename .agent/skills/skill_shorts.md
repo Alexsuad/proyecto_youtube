@@ -1,7 +1,7 @@
 # Skill — Shorts (derivados del guion)
 Objetivo: extraer shorts desde el guion, no desde ideas sueltas.
 
-> **Rol ejecutor actual:** Antigravity (en el futuro puede ser un agente Shorts Writer con modelo rápido — ej: Gemini 1.5 Flash, GPT-4o-mini)
+> **Rol ejecutor actual:** el runtime operativo (en el futuro puede ser un agente Shorts Writer con modelo rápido — ej: Gemini 1.5 Flash, GPT-4o-mini)
 
 ---
 

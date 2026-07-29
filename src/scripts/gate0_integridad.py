@@ -8,8 +8,13 @@ from src.core.gate_runtime import run_gate
 from src.core.input_validation import InputRequirement, validate_inputs
 from src.core.path_resolution import REPO_ROOT, expand_path
 from src.core.status import GateStatus
+from src.scripts.runtime_contamination_guard import scan
 
 def evaluate() -> GateResult:
+    contamination = scan(REPO_ROOT, REPO_ROOT / "config" / "runtime_contamination_policy.json")
+    if contamination["exit_code"] != 0:
+        status = GateStatus.BLOCKED if contamination["exit_code"] == 2 else GateStatus.FAIL
+        return GateResult("gate0_integridad", "system", "1.0.0", status, "Contaminación runtime detectada", evidence={"runtime_contamination_guard": contamination})
     cfg = REPO_ROOT / "config/local_settings.json"; blocked, failures, evidence = validate_inputs([InputRequirement(cfg, cfg.name)])
     if blocked: return GateResult("gate0_integridad", "system", "1.0.0", GateStatus.BLOCKED, "Configuración ausente", blocked, evidence=evidence)
     try: config = json.loads(cfg.read_text(encoding="utf-8"))

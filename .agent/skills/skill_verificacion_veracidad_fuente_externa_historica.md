@@ -1,3 +1,7 @@
+HISTORICAL_REFERENCE
+NON_EXECUTABLE
+SUPERSEDED
+
 ---
 name: skill_verificacion_veracidad_notebooklm
 description: Gate V — Verifica que los hechos del guion estén sustentados en las fuentes del Acto 1. Bloquea el avance a derivados si hay FAIL o WARN sin resolver.

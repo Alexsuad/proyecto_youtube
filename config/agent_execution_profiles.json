@@ -1,0 +1,152 @@
+{
+  "registry_version": "1.0.0",
+  "policy": {
+    "free_or_local_first": true,
+    "paid_provider_requires_owner_approval": true,
+    "executors_optional": true,
+    "native_provider_preferred_for_product_runtime": true
+  },
+  "providers": {
+    "ollama": {
+      "enabled": true,
+      "api_base_env": "OLLAMA_API_BASE",
+      "model_env": "OLLAMA_MODEL",
+      "timeout_seconds": 30,
+      "max_retries": 0,
+      "cost_policy": "LOCAL_FREE"
+    },
+    "deepseek": {
+      "enabled": true,
+      "api_base_env": "DEEPSEEK_API_BASE",
+      "api_key_env": "DEEPSEEK_API_KEY",
+      "model_env": "DEEPSEEK_MODEL",
+      "timeout_seconds": 30,
+      "max_retries": 0,
+      "cost_policy": "OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE"
+    }
+  },
+  "executors": {
+    "native_provider": {
+      "kind": "NATIVE_PROVIDER",
+      "status": "READY"
+    },
+    "codex_cli": {
+      "kind": "CONTROLLED_EXECUTOR",
+      "command": "codex",
+      "status": "HANDOFF_ONLY",
+      "requires_actual_provider_and_model": true
+    },
+    "opencode": {
+      "kind": "CONTROLLED_EXECUTOR",
+      "command": "opencode",
+      "status": "HANDOFF_ONLY",
+      "requires_actual_provider_and_model": true
+    },
+    "antigravity": {
+      "kind": "CONTROLLED_EXECUTOR",
+      "command": "antigravity",
+      "status": "HANDOFF_ONLY",
+      "requires_actual_provider_and_model": true
+    }
+  },
+  "agent_profiles": [
+    {
+      "role_id": "SCRIPT_PRODUCT_PRODUCER",
+      "routes": [
+        {
+          "execution_route": "native:ollama",
+          "executor": "native_provider",
+          "provider": "ollama",
+          "model_env": "OLLAMA_MODEL",
+          "provider_config_ref": "ollama"
+        },
+        {
+          "execution_route": "native:deepseek",
+          "executor": "native_provider",
+          "provider": "deepseek",
+          "model_env": "DEEPSEEK_MODEL",
+          "provider_config_ref": "deepseek"
+        },
+        {
+          "execution_route": "executor:codex_cli",
+          "executor": "codex_cli",
+          "provider": "EXTERNAL_REPORTED",
+          "model_env": "CODEX_MODEL",
+          "enabled": true,
+          "timeout_seconds": 30,
+          "max_retries": 0,
+          "cost_policy": "EXTERNALLY_REPORTED"
+        },
+        {
+          "execution_route": "executor:opencode",
+          "executor": "opencode",
+          "provider": "EXTERNAL_REPORTED",
+          "model_env": "OPENCODE_MODEL",
+          "enabled": true,
+          "timeout_seconds": 30,
+          "max_retries": 0,
+          "cost_policy": "EXTERNALLY_REPORTED"
+        },
+        {
+          "execution_route": "executor:antigravity",
+          "executor": "antigravity",
+          "provider": "EXTERNAL_REPORTED",
+          "model_env": "ANTIGRAVITY_MODEL",
+          "enabled": true,
+          "timeout_seconds": 30,
+          "max_retries": 0,
+          "cost_policy": "EXTERNALLY_REPORTED"
+        }
+      ]
+    },
+    {
+      "role_id": "SCRIPT_PRODUCT_AUDITOR",
+      "routes": [
+        {
+          "execution_route": "native:ollama",
+          "executor": "native_provider",
+          "provider": "ollama",
+          "model_env": "OLLAMA_MODEL",
+          "provider_config_ref": "ollama"
+        },
+        {
+          "execution_route": "native:deepseek",
+          "executor": "native_provider",
+          "provider": "deepseek",
+          "model_env": "DEEPSEEK_MODEL",
+          "provider_config_ref": "deepseek"
+        },
+        {
+          "execution_route": "executor:codex_cli",
+          "executor": "codex_cli",
+          "provider": "EXTERNAL_REPORTED",
+          "model_env": "CODEX_MODEL",
+          "enabled": true,
+          "timeout_seconds": 30,
+          "max_retries": 0,
+          "cost_policy": "EXTERNALLY_REPORTED"
+        },
+        {
+          "execution_route": "executor:opencode",
+          "executor": "opencode",
+          "provider": "EXTERNAL_REPORTED",
+          "model_env": "OPENCODE_MODEL",
+          "enabled": true,
+          "timeout_seconds": 30,
+          "max_retries": 0,
+          "cost_policy": "EXTERNALLY_REPORTED"
+        },
+        {
+          "execution_route": "executor:antigravity",
+          "executor": "antigravity",
+          "provider": "EXTERNAL_REPORTED",
+          "model_env": "ANTIGRAVITY_MODEL",
+          "enabled": true,
+          "timeout_seconds": 30,
+          "max_retries": 0,
+          "cost_policy": "EXTERNALLY_REPORTED"
+        }
+      ]
+    }
+  ]
+}

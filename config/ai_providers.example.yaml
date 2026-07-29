@@ -1,11 +1,26 @@
-# Sin secretos: AI_API_KEY solo se admite mediante variables de entorno.
+# Archivo de ejemplo sin secretos.
+# La sede canonica de seleccion de ruta, proveedor y ejecutor es config/agent_execution_profiles.json.
+# Este archivo solo documenta las variables de entorno esperadas por los proveedores nativos.
 providers:
   ollama:
-    base_url: http://127.0.0.1:11434
-    model: editorial-local
-  openai_compatible:
-    base_url_env: AI_BASE_URL
-    api_key_env: AI_API_KEY
-    model_env: AI_MODEL
+    enabled: true
+    base_url_env: OLLAMA_API_BASE
+    model_env: OLLAMA_MODEL
+    timeout_seconds: 30
+    max_retries: 0
+    cost_policy: LOCAL_FREE
+  deepseek:
+    enabled: true
+    base_url_env: DEEPSEEK_API_BASE
+    api_key_env: DEEPSEEK_API_KEY
+    model_env: DEEPSEEK_MODEL
+    timeout_seconds: 30
+    max_retries: 0
+    cost_policy: OWNER_APPROVAL_REQUIRED_FOR_PAID_USAGE
+executors:
   agent_handoff:
     enabled: true
+notes:
+  selection_source: config/agent_execution_profiles.json
+  executor_registry_source: config/agent_execution_profiles.json
+  real_execution_note: HANDOFF_ONLY is not a real provider execution

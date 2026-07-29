@@ -1,7 +1,7 @@
 # Skill — QA Editorial (Auditoría Estructural y de Voz)
 Objetivo: auditar el guion asegurando que cumple **exactamente** la arquitectura MADG y no contiene lenguaje IA o clichés de coaching.
 
-> **Rol ejecutor actual:** Antigravity
+> **Rol ejecutor actual:** el runtime operativo
 
 ---
 
@@ -41,7 +41,7 @@ Objetivo: auditar el guion asegurando que cumple **exactamente** la arquitectura
 ## Salida
 - `<EP_PATH>/07_qa_revisiones.md`
 
-Los cambios de identidad se escalan al Equipo 01; esta auditoría no los aprueba.
+Los cambios de identidad se escalan a `CHANNEL_INTELLIGENCE`; esta auditoría no los aprueba.
 
 ---
 

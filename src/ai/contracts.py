@@ -32,6 +32,8 @@ class ExecutionRequest:
     execution_mode: str = "auto"
     provider: str | None = None
     model: str | None = None
+    executor: str | None = None
+    execution_route: str | None = None
     timeout: float = 30.0
     privacy: str = "normal"
     output_artifact_kind: str = ""

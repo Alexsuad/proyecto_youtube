@@ -1,7 +1,7 @@
 # Skill — Extraer Voice Learnings (Aprendizaje de Voz)
 Objetivo: Identificar discrepancias entre el guion generado por IA y el guion final editado por un humano para refinar el estilo y tono del canal sin contaminar la memoria de investigación.
 
-> **Rol ejecutor actual:** Antigravity (Analista de Estilo)
+> **Rol ejecutor actual:** el runtime operativo (Analista de Estilo)
 
 ---
 

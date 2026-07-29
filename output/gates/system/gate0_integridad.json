@@ -1,0 +1,21 @@
+{
+  "gate_id": "gate0_integridad",
+  "artifact_id": "system",
+  "artifact_version": "1.0.0",
+  "status": "PASS",
+  "summary": "Integridad comprobada",
+  "violations": [],
+  "warnings": [],
+  "evidence": {
+    "inputs_checked": [
+      {
+        "label": "episodes_index.json",
+        "path": "C:\\YT_VAULT\\MasAllaDelGuion\\index\\episodes_index.json",
+        "result": "valid"
+      }
+    ]
+  },
+  "checked_at": "2026-07-28T21:40:33.631689+00:00",
+  "checker_version": "1.0.0",
+  "exit_code": 0
+}

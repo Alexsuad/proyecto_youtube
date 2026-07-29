@@ -4,93 +4,187 @@
 **Plan rector:** [`001_reestructuracion_motor_agentico_editorial_y_harness.md`](001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Índice por bloques:** [`plan_001/README.md`](plan_001/README.md)  
 **Versión del plan:** `1.4`
-**Última sincronización:** `2026-07-23`
+**Última sincronización:** `2026-07-28`
 
 ## 1. Estado canónico
 
 ```yaml
+PLAN_001: PLAN_RECTOR_DEL_PRODUCTO
+PLAN_003: ACTIVE_RECOVERY_AUTHORITY
+PLAN_002: PROPOSAL_PENDING_OWNER_DECISION
+CURRENT_RECOVERY_PLAN: PLAN_003
+CURRENT_RECOVERY_PHASE: R6_B_0_CLOSED
+PLAN_001_EXECUTION: TEMPORARILY_PAUSED_BY_RECOVERY
 plan_id: PLAN-001
 plan_version: "1.4"
-plan_status: READY_FOR_EXTERNAL_AUDIT
-implementation_authorized: true
+plan_status: IN_PROGRESS
+implementation_authorized: NO_PENDING_NEXT_MISSION
 authorized_blocks: [B0, B1, B2, B3, B4, B5]
 current_block: B5
-current_mission: B5-I2
+current_mission: R6_B_READY_NOT_AUTHORIZED
 ACTIVE_PRODUCT_STAGE: SCRIPT_CORE
 CURRENT_INCREMENT: B5-I2
-B5_I2_IMPLEMENTATION: COMPLETED
-B5_I2_TECHNICAL_CORRECTION: PASS_WITH_RESIDUAL_RISK
-B5_I2_REAL_SEMANTIC_AUDIT: PENDING
-B5_I2_TEAM_02_FUNCTIONAL_REAUDIT: PENDING
-B5_I2_FINAL_STATUS: PENDING_SEMANTIC_AND_FUNCTIONAL_APPROVAL
+ACTIVE_EDITORIAL_PROFILE: mas_alla_del_guion@1.2.1
+PROFILE_1_1_0_STATUS: INVALID_APPROVAL_CHAIN
+PROFILE_1_1_0_ACTIVE: false
+PROFILE_1_2_0_STATUS: FUNCTIONAL_REVIEW_BLOCKED
+PROFILE_1_2_0_ACTIVE: false
+PROFILE_1_2_1_STATUS: ACTIVE
+PROFILE_1_2_1_ACTIVE: true
+PROFILE_1_2_1_CHECKSUM: d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1
+ACTIVE_EDITORIAL_PROFILE_CHECKSUM: d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1
+PROFILE_1_2_0_CHECKSUM: b1029e85289c51d4585c555ed20566dfd6f1f6db30b875f989fc23bf46fc5977
+REAL_OPERATIONAL_SUBAGENTS: 0
+REAL_MULTIAGENT_RUNTIME: NOT_DEMONSTRATED
+END_TO_END_AGENTIC_EXECUTION: NOT_DEMONSTRATED
+PLAN_002_DOCUMENT_STATUS: SUPERSEDED_BY_APPROVED_ARCHITECTURE
+PLAN_002_OPERATIONAL_AUTHORITY: NOT_GRANTED
+PLAN_002_AGENT_ARCHITECTURE: APPROVED_REPLACEMENT_MODEL
+PLAN_002_FINAL_DECISION: SUPERSEDED_BY_APPROVED_ARCHITECTURE
+R4_STATUS: PASS
+R4_CURRENT_PHASE: CLOSED
+R4_EXECUTION: NOT_AUTHORIZED
+OWNER_AGENT_ARCHITECTURE_APPROVAL: APPROVED
+PIPELINE_ORCHESTRATOR: DETERMINISTIC
+AGENT_ROLES: 7
+NESTED_SUBAGENTS_DURING_MVP: 0
+MATERIALIZATION: PROGRESSIVE_BY_PHASE
+RUNTIME_MODIFIED: NO
+AGENTS_CREATED: NO
+ACTIVE_PRODUCT_CONTAMINATION: 0
+R5_EXECUTION: COMPLETED
+R5A_STATUS: PASS
+R5A_CURRENT_PHASE: CLOSED
+R5B_STATUS: PASS
+R5B_CURRENT_PHASE: CLOSED
+PROFILE_CANDIDATE: mas_alla_del_guion@1.2.1
+PROFILE_ACTIVATION: PASS
+VOICE_CORPUS_STATE: AUTHENTIC_CORPUS_PARTIAL
+GLOBAL_VOICE_REPRESENTATIVENESS: NOT_VALIDATED
+NEXT_ALLOWED_ACTION: ACTIVATE_SELECTED_ROUTE_AND_REAUTHORIZE_R6_B
+R6_EXECUTION: NOT_AUTHORIZED
+B5_I3_EXECUTION: NOT_AUTHORIZED
+R6_PREPARATION: COMPLETE
+R6_A_STATUS: CLOSED
+R6_A_CURRENT_PHASE: CLOSED
+R6_A_EXTERNAL_AUDIT: PASS
+RUNTIME_FOUNDATION: PASS
+MOCK_ONLY_DEPENDENCIES_IDENTIFIED: YES
+SELECTED_PROVIDER: agent_handoff
+SELECTED_MODEL: NONE
+REAL_EXECUTION_ROUTE: HANDOFF
+PAID_PROVIDER_REQUIRED: NO
+CONTROL_CASE_VALID: READY
+CONTROL_CASE_SEMANTIC_FAILURE: READY
+CONTROL_CASE_INSUFFICIENT_EVIDENCE: READY
+BUDGET_POLICY_ENFORCED: PASS
+PROVENANCE_FIELDS_READY: PASS
+PROMPTS_READY: PASS
+REGISTRY_READY: PASS
+R6_B_READY: YES
+R6_B_0_STATUS: PASS
+HYBRID_RUNTIME_READY: YES
+AGENT_RUNTIME_PORT: PASS
+COMMON_ADAPTER: AgentRuntimePort
+EXECUTOR_ABSTRACTION: PASS
+PROVIDER_RESOLUTION_MODE: PER_AGENT_PROFILE
+OLLAMA_INTEGRATION: PASS
+OLLAMA_CONFIGURATION: READY
+OLLAMA_RUNTIME_AVAILABILITY: UNAVAILABLE
+DEEPSEEK_INTEGRATION: PASS
+DEEPSEEK_CONFIGURATION: READY_FOR_SECRET
+ENV_EXAMPLE_READY: PASS
+PROVIDER_CONFIG_COHERENCE: PASS
+DEEPSEEK_READY_FOR_OWNER_SECRET: PASS
+OLLAMA_READY_FOR_ACTIVATION: PASS
+DEEPSEEK_ERROR_CLASSIFICATION: PASS
+R6_B_0_EXTERNAL_AUDIT: PASS
+DEEPSEEK_RUNTIME_AVAILABILITY: CREDENTIALS_MISSING
+CONTROLLED_EXECUTORS: INVENTORIED_AND_CONFIGURABLE
+CODEX_EXECUTOR: HANDOFF_ONLY
+OPENCODE_EXECUTOR: HANDOFF_ONLY
+ANTIGRAVITY_EXECUTOR: UNAVAILABLE
+PROFILE_SWITCH_WITHOUT_CODE_CHANGE: PASS
+HYBRID_PROFILE_CONFIGURATION: PASS
+ROLE_INDEPENDENCE: PASS
+PROVENANCE_HYBRID_SUPPORT: PASS
+SECRET_HANDLING: PASS
+NEGATIVE_CASES: PASS
+PAID_CALL_EXECUTED: NO
+R6_B_STATUS: READY_NOT_AUTHORIZED
+R6_B_AUTHORIZATION_GATE: SELECT_ROUTE_AND_OWNER_REAUTHORIZE
+ACTUAL_EXECUTOR: NONE
+ACTUAL_PROVIDER: NONE
+ACTUAL_MODEL: NONE
+R6_EXECUTION_EXPANDED: NO
+R6_A_MISSION: CLOSED
+R6_B_TO_R6_E: NOT_AUTHORIZED
+R6_C_STATUS: NOT_RUN
+R6_D_STATUS: NOT_RUN
+R6_E_STATUS: NOT_RUN
+REAL_AGENT_RUN_EXECUTED: NO
+R2_STATUS: PASS
+R2_EXECUTION: COMPLETED
+R3_EXECUTION: NOT_AUTHORIZED
+ACTIVE_PLAN_COVERAGE: PASS
+CONTAMINATION_GUARD_DIRECT: PASS
+CONTAMINATION_GUARD_AUTOMATIC_ENFORCEMENT: PASS
+B3_NEUTRAL_SPEC_TRACKABLE: YES
+NEW_AGENT_IMPLEMENTATION: NOT_AUTHORIZED
 B5_I3: NOT_AUTHORIZED
-STAGE_2_YOUTUBE_DISTRIBUTION: DEFERRED_NOT_AUTHORIZED
-AUDIO_INTEGRATION: EXTERNAL_REPOSITORY_FUTURE_CONTRACT
-VIDEO_PRODUCTION: OUT_OF_REPOSITORY_SCOPE
-b3_i1_implementation: COMPLETED
-b3_i1_technical_audit: PASS
-b3_profile_status: ACTIVE
-b3_implementation_status: COMPLETED
-b3_i2_implementation: COMPLETED
-b3_i2_external_technical_audit: PASS
-b3_i2_commit: 5872aa8cda6ff65cd2228ff3d681afbb8ff53f53
-b3_i3_implementation: COMPLETED
-b3_i3_external_technical_audit: PASS
-b3_i3_commit: ad306fe46a9d58546369308be10716eea656afae
-b3_i4_authorization: APPROVED
-b3_i4_primary_voice_sample: DEPRECATED
-b3_i4_team_01_functional_approval: APPROVE
-b3_i4_functional_blocker: REMOVED
-team_01_clarification: APPROVED
-voice_evidence_level: SPECIFICATION_BASED
-authentic_editorial_writing_sample_status: NOT_AVAILABLE
-editorial_writing_reference_corpus_mechanism: AVAILABLE
-b3_authorized_missions: []
-b3_not_authorized_missions: []
-b3_i4_preflight_implementation: COMPLETED
-b3_i4_preflight_external_audit: PASS
-b3_i4_primary_sample_available: NOT_REQUIRED
-b3_i4_authorized_complementary_samples: 0
-b3_i4_invalid_or_incomplete_samples: 0
-b3_i4_corpus_ready: YES
-b3_i4_execution: COMPLETED
-B4_AUTHORIZED: YES
-B4_STATUS: PASS
-B4_I1_STATUS: PASS
-B4_I1_AUDIT: PASS
-b4_i1_implementation_commit: 42ef1a6ccb028a26cc2bdfce436804c27026ea2a
-b4_i1_correction_commit: c3c6c23dec464d78ff2f2317366156a538c8aee1
-b4_i1_tests: "84 passed, 110 subtests"
-b4_i1_external_audit: PASS
-b4_i2_implementation_commit: a8e85025465b13848ebd21482addbcf7149f2f14
-b4_i2_correction_commit: 1e0a072eedc97228c0f7942cd25c5051113db88f
-b4_i2_specific_tests: "33 passed"
-b4_i2_external_audit: PASS
-b4_final_status: PASS
-B4_I2_STATUS: PASS
-B4_I2_AUDIT: PASS
-B5_STATUS: IN_PROGRESS
-B5_I1_STATUS: TECHNICALLY_CLOSED
-B5_I2_STATUS: COMPLETED_PENDING_APPROVAL
-next_allowed_action: REAL_SEMANTIC_AUDIT_B5_I2_THEN_TEAM_02_FUNCTIONAL_REAUDIT
-next_implementation_block_if_approved: B5
+S5_REAL_EXECUTION: BLOCKED
+PROFILE_1_2_0_ACTIVATION: NOT_AUTHORIZED
+PROFILE_1_2_1_ACTIVATION: PASS
+REAL_EPISODE_PRODUCTION: NOT_AUTHORIZED
+B0:
+  final_closure_status: OPEN
+  reason: EVIDENCE_REVIEW_REQUIRED
+B3:
+  implementation_status: COMPLETED
+  functional_approval_status: PASS
+  technical_validation_status: PASS
+  real_execution_status: NOT_APPLICABLE
+  final_closure_status: PASS
+B4:
+  implementation_status: PARTIAL
+  technical_validation_status: PASS
+  mock_validation_status: PASS
+  real_execution_status: NOT_DEMONSTRATED
+  functional_approval_status: PENDING
+  final_closure_status: OPEN
+B5_I1:
+  technical_validation_status: PASS
+  functional_approval_status: PENDING_CONFIRMATION
+  final_closure_status: OPEN
+B5_I2:
+  implementation_status: COMPLETED
+  mock_validation_status: PASS
+  real_execution_status: NOT_DEMONSTRATED
+  functional_approval_status: PENDING
+  final_closure_status: OPEN
+SANITATION:
+  technical_validation_status: PASS
+  active_plan_coverage: PASS
+  final_closure_status: OPEN
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-B3 queda cerrado: el perfil editorial 1.1.0 está `ACTIVE` con aprobación `OWNER`, checksum exacto y validación técnica `PASS`. La evidencia de voz continúa en `SPECIFICATION_BASED` y una muestra auténtica futura es opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5-I2 está implementado y corregido técnicamente, pero sigue pendiente de auditoría semántica real y reauditoría funcional del Equipo 02. B5-I3 no está autorizado.
+El Plan 001 sigue siendo el plan rector del producto y el Plan 003 conserva la autoridad temporal de recuperación. `ACTIVE_EDITORIAL_PROFILE` es `mas_alla_del_guion@1.2.1` con checksum activo `d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1`; la voz permanece en `AUTHENTIC_CORPUS_PARTIAL` y `NOT_VALIDATED` a nivel global. R6-A cerró con auditoría externa aprobada: la base híbrida, budget enforcement, ruta `agent_handoff`, provenance, prompts y registry operativo están alineados. R6-B está preparada, pero no autorizada; B5-I3 y S5 real permanecen bloqueados.
 
 ## 2. Autoridad documental
 
 ```text
 1. Decisiones explícitas posteriores del propietario
 2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
-3. Decisiones funcionales aprobadas de la responsabilidad competente
-4. Plan 001 v1.4
-5. Auditorías finales vigentes de las responsabilidades funcionales
-6. Este control operativo
-7. Archivo del bloque activo
-8. Misión técnica autorizada
-9. Reportes del agente ejecutor
+3. docs/product/MVP_BASELINE.md
+4. Decisiones funcionales aprobadas de la responsabilidad competente
+5. PLAN 003 para recuperación y reconciliación temporales
+6. Plan 001 v1.4 como plan rector del producto
+7. PLAN 002 solo como propuesta sin autoridad operativa
+8. Este control operativo como única sede del estado vivo
+9. Archivo del bloque activo
+10. Misión técnica autorizada
+11. Reportes del agente ejecutor
 ```
 
 Este control resume estado y navegación. No sustituye contratos, criterios ni decisiones del plan rector.
@@ -101,7 +195,7 @@ La autoridad se resuelve por especialidad. El Plan 001 y este control operativo 
 
 ```text
 OBLIGATORIO:
-- AGENTS.md, si existe
+- AGENTS.md
 - docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 - plans/001_CONTROL_OPERATIVO.md
 - plans/plan_001/<BLOQUE_ACTIVO>.md
@@ -132,7 +226,7 @@ Consultar el plan rector completo solo para resolver contradicciones, autoridad,
 10. Un cambio posterior invalida las aprobaciones y gates dependientes.
 11. `EDITORIAL_SCRIPT_APPROVED`, `YOUTUBE_PRODUCTION_READY`, `YOUTUBE_READY` y `PUBLISHED` son estados distintos.
 12. Ningún componente garantiza monetización, copyright seguro ni rendimiento.
-13. NotebookLM y cualquier proveedor externo son opcionales, no el runtime obligatorio.
+13. Cualquier proveedor o herramienta externa es opcional, no el runtime obligatorio.
 14. No se crean agentes, skills, scripts o documentos si una pieza más simple basta.
 15. El plan no se modifica silenciosamente durante la implementación.
 
@@ -183,12 +277,12 @@ ETAPA 2 DIFERIDA: autorización futura → B7.5 → componentes diferidos de B8 
 
 | Bloque | Nombre | Dependencia | Estado | Especificación operativa |
 |---|---|---|---|---|
-| B0 | Gobernanza, baseline y benchmarks editoriales | Ninguna | `PASS` | [B0_gobernanza_baseline_benchmarks.md](plan_001/B0_gobernanza_baseline_benchmarks.md) |
+| B0 | Gobernanza, baseline y benchmarks editoriales | Ninguna | `OPEN` (evidencia pendiente de revisión) | [B0_gobernanza_baseline_benchmarks.md](plan_001/B0_gobernanza_baseline_benchmarks.md) |
 | B1 | Contratos, schemas, estados y versionado | B0 | `PASS` (auditoría aprobada, 29/29 tests) | [B1_contratos_schemas_estados_versionado.md](plan_001/B1_contratos_schemas_estados_versionado.md) |
 | B2 | Reparación del arnés y gates críticos | B1 | `PASS` | [B2_reparacion_harness_gates.md](plan_001/B2_reparacion_harness_gates.md) |
-| B3 | Perfil editorial y frontera del canal | B1–B2 | `PASS` (perfil 1.1.0 activo; aprobación OWNER y validación técnica PASS) | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
-| B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `PASS` | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
-| B5 | Profesionalización del diseño editorial | B3–B4 | `IN_PROGRESS` | [B5_diseno_editorial.md](plan_001/B5_diseno_editorial.md) |
+| B3 | Perfil editorial y frontera del canal | B1–B2 | `PASS` (1.2.1 aprobado, validado y activo; 1.2.0 sustituido e inactivo) | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
+| B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `OPEN` (foundation contractual validada; operación real no demostrada) | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
+| B5 | Profesionalización del diseño editorial | B3–B4 | `IN_PROGRESS` (B5-I1 y B5-I2 abiertos hasta reconciliación de estados y evidencias) | [B5_diseno_editorial.md](plan_001/B5_diseno_editorial.md) |
 | B5.5 | Prototipo editorial controlado | B5 | `PLANNED` | [B5_5_prototipo_editorial.md](plan_001/B5_5_prototipo_editorial.md) |
 | B6 | Redacción, ensamblaje, edición y verificación | B5.5 | `PLANNED` | [B6_redaccion_edicion_verificacion.md](plan_001/B6_redaccion_edicion_verificacion.md) |
 | B7 | Auditoría independiente, correcciones y aprobación editorial | B6 | `PLANNED` | [B7_auditoria_aprobacion_editorial.md](plan_001/B7_auditoria_aprobacion_editorial.md) |
@@ -230,33 +324,59 @@ Una modificación del plan rector debe:
 ## 10. Próxima decisión
 
 ```text
-NEXT_ALLOWED_ACTION: REAL_SEMANTIC_AUDIT_B5_I2_THEN_TEAM_02_FUNCTIONAL_REAUDIT
-B3_PROFILE_STATUS: ACTIVE
+NEXT_ALLOWED_ACTION: ACTIVATE_SELECTED_ROUTE_AND_REAUTHORIZE_R6_B
+R6_PREPARATION: COMPLETE
+R6_A_STATUS: CLOSED
+R2_STATUS: PASS
+R2_EXECUTION: COMPLETED
+R3_EXECUTION: NOT_AUTHORIZED
+ACTIVE_PLAN_COVERAGE: PASS
+CONTAMINATION_GUARD_DIRECT: PASS
+CONTAMINATION_GUARD_AUTOMATIC_ENFORCEMENT: PASS
+B3_NEUTRAL_SPEC_TRACKABLE: YES
+PLAN_001_ROLE: PLAN_RECTOR_DEL_PRODUCTO
+PLAN_001_EXECUTION: TEMPORARILY_PAUSED_BY_RECOVERY
+CURRENT_RECOVERY_PLAN: PLAN_003
+CURRENT_RECOVERY_PHASE: R6_B_0_CLOSED
+PLAN_002_DOCUMENT_STATUS: SUPERSEDED_BY_APPROVED_ARCHITECTURE
+PLAN_002_OPERATIONAL_AUTHORITY: NOT_GRANTED
+PLAN_002_AGENT_ARCHITECTURE: APPROVED_REPLACEMENT_MODEL
+PLAN_002_FINAL_DECISION: SUPERSEDED_BY_APPROVED_ARCHITECTURE
+R4_STATUS: PASS
+R4_CURRENT_PHASE: CLOSED
+R4_EXECUTION: NOT_AUTHORIZED
+OWNER_AGENT_ARCHITECTURE_APPROVAL: APPROVED
+PIPELINE_ORCHESTRATOR: DETERMINISTIC
+AGENT_ROLES: 7
+NESTED_SUBAGENTS_DURING_MVP: 0
+MATERIALIZATION: PROGRESSIVE_BY_PHASE
+RUNTIME_MODIFIED: NO
+AGENTS_CREATED: NO
+ACTIVE_PRODUCT_CONTAMINATION: 0
+R5_EXECUTION: COMPLETED
+R5A_STATUS: PASS
+R5A_CURRENT_PHASE: CLOSED
+R5B_STATUS: PASS
+R5B_CURRENT_PHASE: CLOSED
+R5A_1_STATUS: PASS
+PROFILE_CANDIDATE: mas_alla_del_guion@1.2.1
+PROFILE_ACTIVATION: PASS
+ACTIVE_EDITORIAL_PROFILE: mas_alla_del_guion@1.2.1
+B0_FINAL_CLOSURE_STATUS: OPEN
 B3_IMPLEMENTATION_STATUS: COMPLETED
-B3_FUNCTIONAL_APPROVAL: APPROVE
-B3_TECHNICAL_VALIDATION: PASS
-B4_AUTHORIZED: YES
-B4_STATUS: PASS
-B4_I1_STATUS: PASS
-B4_I1_AUDIT: PASS
-IMPLEMENTATION_COMMIT: 42ef1a6ccb028a26cc2bdfce436804c27026ea2a
-CORRECTION_COMMIT: c3c6c23dec464d78ff2f2317366156a538c8aee1
-TESTS: 84 passed, 110 subtests
-EXTERNAL_AUDIT: PASS
-B4_I2_STATUS: PASS
-B4_I2_AUDIT: PASS
-B4_I2_IMPLEMENTATION_COMMIT: a8e85025465b13848ebd21482addbcf7149f2f14
-B4_I2_CORRECTION_COMMIT: 1e0a072eedc97228c0f7942cd25c5051113db88f
-B4_I2_SPECIFIC_TESTS: 33 passed
-B4_I2_EXTERNAL_AUDIT: PASS
-B4_FINAL_STATUS: PASS
-B5_STATUS: IN_PROGRESS
-B5_I1_STATUS: TECHNICALLY_CLOSED
-B5_I2_STATUS: COMPLETED_PENDING_APPROVAL
-B5_I2_TECHNICAL_CORRECTION: PASS_WITH_RESIDUAL_RISK
-B5_I2_REAL_SEMANTIC_AUDIT: PENDING
-B5_I2_TEAM_02_FUNCTIONAL_REAUDIT: PENDING
+B3_FUNCTIONAL_APPROVAL_STATUS: PASS
+B3_TECHNICAL_VALIDATION_STATUS: PASS
+B3_FINAL_CLOSURE_STATUS: PASS
+B4_IMPLEMENTATION_STATUS: PARTIAL
+B4_REAL_EXECUTION_STATUS: NOT_DEMONSTRATED
+B5_I1_FUNCTIONAL_APPROVAL_STATUS: PENDING_CONFIRMATION
+B5_I2_REAL_EXECUTION_STATUS: NOT_DEMONSTRATED
 B5_I3: NOT_AUTHORIZED
+S5_REAL_EXECUTION: BLOCKED
+PROFILE_1_2_0_ACTIVATION: NOT_AUTHORIZED
+PROFILE_1_2_1_ACTIVATION: PASS
+REAL_EPISODE_PRODUCTION: NOT_AUTHORIZED
+NEW_AGENT_IMPLEMENTATION: NOT_AUTHORIZED
 ```
 
-B3 está cerrado con evidencia `SPECIFICATION_BASED`; una muestra auténtica futura sigue siendo opcional. B4 está cerrado con B4-I1 y B4-I2 auditados externamente con resultado PASS. B5-I2 está implementado y técnicamente corregido, pero pendiente de auditoría semántica real y reauditoría funcional. B5-I3 no está autorizado.
+R6-A cerró la preparación de la vertical y dejó R6-B lista para preparar, sin autorizar su ejecución. B0, B4, B5-I1 y B5-I2 continúan abiertos según su evidencia pendiente; B3 quedó cerrado con el perfil `1.2.1` activo. B5-I3, S5 real y episodios reales permanecen bloqueados.

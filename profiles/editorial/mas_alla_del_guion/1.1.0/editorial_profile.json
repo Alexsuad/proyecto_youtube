@@ -1,5 +1,5 @@
 {
-  "checksum": "ff45c54267dd2c5f36896c802846322e57476820ed1fd9e81a5f9556b528c2cd",
+  "checksum": "dbe94dbfcee5e9e30a956dab20097f62216e4fb58beddb3ef8fa3086fd95ee8c",
   "profile": {
     "audience_hypotheses": [
       {
@@ -15,7 +15,7 @@
     ],
     "channel_id": "MAS_ALLA_DEL_GUION",
     "external_policy_references": [],
-    "functional_owner_role": "TEAM_01",
+    "functional_owner_role": "CHANNEL_INTELLIGENCE",
     "identity_stable": {
       "authorial_persona": {
         "acts_as": "Un observador con criterio que piensa junto a la audiencia y utiliza historias para conectar experiencias individuales, estructuras sociales y cambios culturales.",
@@ -192,15 +192,15 @@
         },
         {
           "classification": "PENDING",
-          "name": "Territorios secundarios aún no aprobados por Equipo 01"
+          "name": "Territorios secundarios aún no aprobados por Inteligencia del Canal"
         }
       ]
     },
     "pending_decisions": [
       "Una muestra futura de escritura editorial auténtica es evidencia opcional y, si se incorpora, requerirá checksum, autoría, autorización, representatividad y lineage.",
       "Definir referencias versionadas para políticas editoriales, de plataforma y preferencias de formato fuera de la identidad estable.",
-      "No activar este perfil hasta disponer de aprobación funcional y validación técnica sobre el checksum externo exacto.",
-      "La versión 1.1.0 incorpora RC-01 a RC-06 y queda pendiente de nueva revisión funcional del Equipo 01; REQUEST_CHANGES sobre 1.0.0 no constituye aprobación de esta versión."
+      "Toda nueva versión requerirá aprobación funcional y validación técnica sobre su checksum exacto antes de activarse.",
+      "La versión 1.1.0 incorpora RC-01 a RC-06 y su activación productiva se gobierna por `functional_approval.json`, `technical_validation.json` y `config/active_editorial_profile.json`."
     ],
     "profile_id": "mas_alla_del_guion",
     "source_lineage": [
@@ -211,10 +211,10 @@
         "source_id": "B3-FUNCTIONAL-SPEC-TEAM-01"
       },
       {
-        "checksum": "ab5c60cc8e7c6fda5b23eaf9d7898c24425a41aebfb9179f24e280906ecf5ef8",
-        "locator": "docs/functional/team_01/editorial_profile_1.0.0_request_changes.md",
+        "checksum": "2c1bc36e50345d079b319bc89d34e5ba856dadf0fca38ea3ca1b342a3e6391cf",
+        "locator": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
         "role": "FUNCTIONAL_REVIEW_DECISION",
-        "source_id": "TEAM-01-PROFILE-1.0.0-REQUEST-CHANGES"
+        "source_id": "CHANNEL-INTELLIGENCE-PROFILE-1.1.0-APPROVAL"
       },
       {
         "checksum": "ffcf30a8a599067456bc169033c8bf33b1f43cc970426389e1f217bcf87e21c0",
@@ -223,7 +223,7 @@
         "source_id": "EDITORIAL-PROFILE-MAS-ALLA-DEL-GUION-1.0.0"
       }
     ],
-    "status": "DRAFT",
+    "status": "FUNCTIONALLY_APPROVED",
     "supported_delivery_formats": [
       "VIDEO_ESSAY",
       "AUDIOVISUAL_NARRATION",

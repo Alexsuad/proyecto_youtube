@@ -11,6 +11,7 @@ from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus,
 from src.ai.execution import execute, manifest_checksum, persist_execution_result
 from src.ai.manifest import manifest_checksum as shared_manifest_checksum
 from src.ai.providers.agent_handoff import AgentHandoffProvider
+from src.ai.providers.deepseek import DeepSeekProvider
 from src.ai.providers.openai_compatible import OpenAICompatibleProvider
 from src.ai.registry import append_result
 from src.ai.router import resolve_provider
@@ -587,3 +588,22 @@ def test_auto_explicit_openai_provider_requires_authorization(tmp_path: Path, mo
     monkeypatch.setenv("AI_API_KEY", "present"); monkeypatch.setenv("AI_BASE_URL", "https://provider.invalid")
     result = execute(_request(tmp_path, provider="openai_compatible", execution_mode="auto", config={"local_available": False}))
     assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+
+
+def test_deepseek_availability_and_response_errors_are_classified_explicitly(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "secret")
+    policy = tmp_path / "routing.yaml"
+    policy.write_text("capabilities:\n  B5_I2_SEMANTIC_AUDITOR:\n    routing:\n      allow_external_api: true\n", encoding="utf-8")
+    request = _request(tmp_path, provider="deepseek", execution_mode="deepseek", model="deepseek-chat", config={"routing_policy_path": policy})
+    monkeypatch.setattr(DeepSeekProvider, "execute", lambda self, req: (_ for _ in ()).throw(RuntimeError("PROVIDER_UNAVAILABLE")))
+    result = execute(request)
+    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert result.usage["availability_status"] == "PROVIDER_UNAVAILABLE"
+    monkeypatch.setattr(DeepSeekProvider, "execute", lambda self, req: (_ for _ in ()).throw(RuntimeError("TIMEOUT")))
+    timeout_result = execute(request)
+    assert timeout_result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert timeout_result.usage["availability_status"] == "TIMEOUT"
+    monkeypatch.setattr(DeepSeekProvider, "execute", lambda self, req: (_ for _ in ()).throw(ValueError("INVALID_RESPONSE")))
+    invalid_result = execute(request)
+    assert invalid_result.status is ExecutionStatus.FAILED
+    assert invalid_result.usage["availability_status"] == "INVALID_RESPONSE"

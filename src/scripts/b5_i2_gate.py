@@ -51,7 +51,7 @@ INVALID_PROVENANCE = {"manual", "unknown", "unverified"}
 AUDITOR_ROLE = "INDEPENDENT_EDITORIAL_AUDITOR"
 REAL_PROVIDER_KIND = "REAL"
 SYNTHETIC_PROVIDER_KIND = "SYNTHETIC"
-READINESS_BY_DECISION = {"FAIL": "NOT_READY_FOR_TEAM_02_REAUDIT", "BLOCKED": "BLOCKED", "NOT_EVALUATED": "BLOCKED"}
+READINESS_BY_DECISION = {"FAIL": "NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", "BLOCKED": "BLOCKED", "NOT_EVALUATED": "BLOCKED"}
 
 
 def checksum(path: Path) -> str:
@@ -237,7 +237,7 @@ def _operational_readiness(technical_integrity: str, semantic_decision: str, aud
     if technical_integrity != "PASS":
         return "BLOCKED"
     if semantic_decision in {"FAIL"}:
-        return "NOT_READY_FOR_TEAM_02_REAUDIT"
+        return "NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW"
     if semantic_decision in {"BLOCKED", "NOT_EVALUATED"}:
         return "BLOCKED"
     if not auditor_run:
@@ -248,7 +248,7 @@ def _operational_readiness(technical_integrity: str, semantic_decision: str, aud
         return "BLOCKED"
     if _provider_kind(auditor_run) != REAL_PROVIDER_KIND:
         return "BLOCKED"
-    return "READY_FOR_TEAM_02_REAUDIT"
+    return "READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW"
 
 
 def _canonical_manifest_checksum(episode_id: str, artifacts: list[dict[str, Any]]) -> str:
@@ -701,9 +701,9 @@ def evaluate(
     integrity_status = "BLOCKED" if blocking_violations else ("FAIL" if violations else "PASS")
     semantic_editorial_decision = _semantic_editorial_decision(b5_audit, auditor_run)
     operational_readiness = _operational_readiness(integrity_status, semantic_editorial_decision, auditor_run)
-    expected_readiness = READINESS_BY_DECISION.get(semantic_editorial_decision, "READY_FOR_TEAM_02_REAUDIT")
-    if operational_readiness == "READY_FOR_TEAM_02_REAUDIT" and expected_readiness != "READY_FOR_TEAM_02_REAUDIT":
-        violations.append(f"SEMANTIC_EDITORIAL_DECISION={semantic_editorial_decision} no puede autorizar readiness operativo READY_FOR_TEAM_02_REAUDIT")
+    expected_readiness = READINESS_BY_DECISION.get(semantic_editorial_decision, "READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW")
+    if operational_readiness == "READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW" and expected_readiness != "READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW":
+        violations.append(f"SEMANTIC_EDITORIAL_DECISION={semantic_editorial_decision} no puede autorizar readiness operativo READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW")
     if b5_audit.get("readiness") != operational_readiness:
         violations.append(f"readiness operativo incoherente: se esperaba {operational_readiness} y se recibió {b5_audit.get('readiness')}")
     evidence["semantic_audit"] = {
@@ -729,7 +729,7 @@ def evaluate(
         if isinstance(item, dict) and item.get("criterion") in CRITICAL_CRITERIA
     }
     if operational_readiness == "BLOCKED":
-        return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.BLOCKED, "La auditoría no tiene autorización operativa para pasar al Equipo 02", evidence=evidence)
+        return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.BLOCKED, "La auditoría no tiene autorización operativa para pasar a SCRIPT_PRODUCT", evidence=evidence)
     if any(value in ("NOT_SATISFIED", "UNRESOLVED") for value in critical_statuses.values()) or semantic_editorial_decision == "FAIL":
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.FAIL, "La adjudicación editorial independiente no autoriza avanzar", evidence=evidence)
     if any(value == "LIMITED" for value in critical_statuses.values()) or editorial_gate_status == GateStatus.WARN or risk == "MEDIUM" or semantic_editorial_decision == "WARN":

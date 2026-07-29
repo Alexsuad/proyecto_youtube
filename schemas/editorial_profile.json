@@ -97,6 +97,11 @@
       "enum": [
         "DRAFT",
         "IN_REVIEW",
+        "PENDING_FUNCTIONAL_APPROVAL",
+        "FUNCTIONALLY_APPROVED",
+        "TECHNICALLY_VALIDATED",
+        "ACTIVE",
+        "SUPERSEDED",
         "APPROVED",
         "DEPRECATED",
         "INVALIDATED"
@@ -104,7 +109,7 @@
     },
     "functional_owner_role": {
       "type": "string",
-      "const": "TEAM_01"
+      "const": "CHANNEL_INTELLIGENCE"
     },
     "source_lineage": {
       "type": "array",

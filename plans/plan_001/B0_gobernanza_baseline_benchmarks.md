@@ -10,6 +10,14 @@
 
 > Este archivo es una proyección operativa del Plan 001. No crea autoridad nueva ni sustituye el plan rector. Ante una contradicción, prevalece el plan rector y debe bloquearse la misión hasta resolverla.
 
+## R1. Estado reconciliado
+
+``text
+STATUS_RECONCILED: PASS
+FINAL_CLOSURE_STATUS: OPEN
+EVIDENCE_REFS: Ver Plan 003 R1 y control operativo
+```
+
 ## 0. Uso operativo
 
 Lectura mínima para ejecutar una misión de este bloque:
@@ -71,7 +79,6 @@ Congelar el comportamiento actual, reproducir los fallos conocidos, crear el sis
 ```text
 reports/implementation/plan_001/B0_baseline/
 ```
-
 ### B0-M3 — Pruebas de caracterización
 
 Deben reproducir:
@@ -110,7 +117,6 @@ known_failures
 allowed_use
 privacy_level
 ```
-
 ### B0-M5 — Rubric editorial inicial
 
 La rubric debe medir, como mínimo:
@@ -149,7 +155,6 @@ tests/characterization/
 benchmarks/editorial/
 docs/evaluation/editorial_rubric.md
 ```
-
 ## 4. Gate B0
 
 ```text
@@ -161,5 +166,4 @@ PASS si:
 - no se ha modificado aún la semántica del pipeline;
 - existe evidencia de comandos y Git.
 ```
-
 ---

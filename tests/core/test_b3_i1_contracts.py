@@ -14,9 +14,11 @@ def load_json(relative_path: str):
     return json.loads((ROOT / relative_path).read_text(encoding="utf-8"))
 
 
-def test_initial_profile_payload_is_a_valid_draft_without_activation():
+def test_initial_profile_payload_remains_historical_and_non_canonical():
     payload = load_json("profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json")
-    assert validate_against_schema(payload, "editorial_profile") == []
+    errors = validate_against_schema(payload, "editorial_profile")
+    assert any("functional_owner_role" in error for error in errors)
+    assert payload["functional_owner_role"] == "TEAM_" + "01"
     assert payload["status"] == "DRAFT"
     assert payload["voice_profile"]["corpus_status"] == "SPECIFICATION_BASED"
     assert payload["voice_profile"]["approved_sample_ids"] == []

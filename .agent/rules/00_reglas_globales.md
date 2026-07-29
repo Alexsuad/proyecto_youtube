@@ -2,9 +2,9 @@
 trigger: always_on
 ---
 
-# Reglas Globales — Proyecto YouTube (Antigravity)
-Versión: 1.0
-Fecha: 19/02/2026
+# Reglas Globales — Proyecto YouTube (runtime operativo)
+Versión: 1.1
+Fecha: 27/07/2026
 Objetivo: Asegurar consistencia, evitar improvisación y mantener entregables limpios.
 
 ---
@@ -39,16 +39,20 @@ Si el usuario pide saltarse fases, se debe advertir el riesgo.
 
 ---
 
-## 4) Entregables obligatorios por episodio
-Todo episodio debe terminar con estos 5 outputs:
+## 4) Cierre mínimo del MVP por episodio
+El núcleo editorial activo termina en `EDITORIAL_SCRIPT_APPROVED`.
 
-1) Guion longform
-2) Reporte de Veracidad (Gate V - NotebookLM)
-3) Shorts derivados
-4) Packaging (títulos + miniatura concepto)
-5) SEO YouTube (descripción + capítulos + keywords/tags)
+El cierre canónico del MVP exige:
 
-Si el usuario pide “solo el guion”, igual se deja nota de los 5 outputs requeridos.
+1) Guion longform exacto
+2) Guion limpio final
+3) Guion anotado final
+4) `ScriptVersionManifest`
+5) `EditorialScriptApproval`
+6) `ClaimsLedger`
+7) `FinalDeliveryManifest`
+
+Shorts, packaging final, SEO, miniatura, publicación y paquetes externos pertenecen a fases diferidas. No se exigen para cerrar el núcleo editorial actual.
 
 ---
 

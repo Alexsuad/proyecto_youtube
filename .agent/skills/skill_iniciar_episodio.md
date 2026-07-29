@@ -2,7 +2,7 @@
 Objetivo: crear la carpeta del nuevo episodio en el Vault y registrarlo en el índice.
 
 > **Rol ejecutor actual:** Python (`src/scripts/iniciar_episodio.py`) — esta es una tarea determinista.
-> Antigravity actúa como orquestador: solicita los datos y delega la ejecución al script.
+> el runtime operativo actúa como orquestador: solicita los datos y delega la ejecución al script.
 
 ---
 

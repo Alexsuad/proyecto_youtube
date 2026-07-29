@@ -67,7 +67,7 @@ def build_editorial_prompt(request: ExecutionRequest) -> str:
         "Aplica sus instrucciones editoriales: " + _skill_text(),
         "Criterios críticos obligatorios: " + ", ".join(CRITICAL_CRITERIA) + ".",
         "No apliques reglas heredadas de QA de guion: ni número fijo de eventos, ni ejemplos obligatorios, ni re-hooks, ni regla 80/20, ni estructura de guion terminado.",
-        "EarlyPackagingHypothesis es opcional, de solo lectura y no bloquea por ausencia. Si existe, solo permite una observación de honestidad para Equipo 03; no evalúes título, miniatura, clic ni packaging.",
+        "EarlyPackagingHypothesis es opcional, de solo lectura y no bloquea por ausencia. Si existe, solo permite una observación de honestidad para YOUTUBE_ADAPTATION; no evalúes título, miniatura, clic ni packaging.",
         "Debes emitir solo el dictamen editorial: decision en PASS, WARN, FAIL o BLOCKED.",
         "No decidas readiness operativo ni campos técnicos; eso lo inyecta el runtime.",
         "Esta auditoría no autoriza B5-I3.",
@@ -81,14 +81,14 @@ def build_editorial_prompt(request: ExecutionRequest) -> str:
 def _operational_readiness(result: ExecutionResult, editorial_decision: str) -> str:
     provider_kind = str(result.usage.get("provider_kind") or "").upper()
     if editorial_decision == "FAIL":
-        return "NOT_READY_FOR_TEAM_02_REAUDIT"
+        return "NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW"
     if editorial_decision in {"BLOCKED", "NOT_EVALUATED"}:
         return "BLOCKED"
     if result.status is not ExecutionStatus.SUCCEEDED:
         return "BLOCKED"
     if (provider_kind == "SYNTHETIC") or (not result.is_real_editorial_execution):
         return "BLOCKED"
-    return "READY_FOR_TEAM_02_REAUDIT"
+    return "READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW"
 
 
 def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: ExecutionResult) -> dict[str, Any]:

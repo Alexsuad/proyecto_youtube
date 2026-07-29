@@ -10,7 +10,7 @@ import yaml
 from src.ai.contracts import ExecutionRequest
 
 
-KNOWN_PROVIDERS = {"mock", "ollama", "openai_compatible", "agent_handoff"}
+KNOWN_PROVIDERS = {"mock", "ollama", "deepseek", "openai_compatible", "agent_handoff"}
 
 
 def load_routing_policy(path: Path | None = None) -> dict[str, Any]:
@@ -29,12 +29,12 @@ def resolve_provider(request: ExecutionRequest) -> str | None:
     capability = policy.get("capabilities", {}).get(request.capability_id, {})
     routing = capability.get("routing", {}) if isinstance(capability, dict) else {}
     if mode != "auto":
-        mapped = {"mock": "mock", "local": "ollama", "api": "openai_compatible", "agent": "agent_handoff", "agent_handoff": "agent_handoff"}.get(mode)
-        if mode == "api" and not bool(routing.get("allow_external_api", False)):
+        mapped = {"mock": "mock", "local": "ollama", "api": "openai_compatible", "deepseek": "deepseek", "agent": "agent_handoff", "agent_handoff": "agent_handoff"}.get(mode)
+        if mode in {"api", "deepseek"} and not bool(routing.get("allow_external_api", False)):
             return None
         return explicit or mapped
     if explicit:
-        if explicit == "openai_compatible" and not bool(routing.get("allow_external_api", False)):
+        if explicit in {"openai_compatible", "deepseek"} and not bool(routing.get("allow_external_api", False)):
             return None
         return explicit
     if request.privacy.lower() == "high":

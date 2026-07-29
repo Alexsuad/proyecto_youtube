@@ -1,7 +1,7 @@
 # Skill — Packaging (títulos + miniatura)
 Objetivo: crear títulos y conceptos de miniatura que trabajen juntos.
 
-> **Rol ejecutor actual:** Antigravity (en el futuro puede ser un agente Packaging con modelo optimizado para copywriting — ej: GPT-4o)
+> **Rol ejecutor actual:** el runtime operativo (en el futuro puede ser un agente Packaging con modelo optimizado para copywriting — ej: GPT-4o)
 
 ---
 

@@ -1,7 +1,7 @@
 # Skill — Curación por función narrativa B5-I2
 Objetivo: producir `MaterialCuration` sin mínimos rígidos de materiales.
 
-> **Rol ejecutor actual:** Antigravity (en el futuro puede ser un agente Curador especializado en análisis narrativo)
+> **Rol ejecutor actual:** el runtime operativo (en el futuro puede ser un agente Curador especializado en análisis narrativo)
 
 ---
 

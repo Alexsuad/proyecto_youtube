@@ -1,7 +1,7 @@
 # Skill — SEO YouTube (básico pero sólido)
 Objetivo: dejar el video listo para publicar con SEO simple y coherente.
 
-> **Rol ejecutor actual:** Antigravity (en el futuro puede ser un agente SEO con acceso a datos de búsqueda — ej: GPT-4o con búsqueda, Gemini)
+> **Rol ejecutor actual:** el runtime operativo (en el futuro puede ser un agente SEO con acceso a datos de búsqueda — ej: GPT-4o con búsqueda, Gemini)
 
 ---
 

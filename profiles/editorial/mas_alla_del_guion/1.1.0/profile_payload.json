@@ -2,8 +2,8 @@
   "profile_id": "mas_alla_del_guion",
   "channel_id": "MAS_ALLA_DEL_GUION",
   "version": "1.1.0",
-  "status": "DRAFT",
-  "functional_owner_role": "TEAM_01",
+  "status": "FUNCTIONALLY_APPROVED",
+  "functional_owner_role": "CHANNEL_INTELLIGENCE",
   "source_lineage": [
     {
       "source_id": "B3-FUNCTIONAL-SPEC-TEAM-01",
@@ -12,9 +12,9 @@
       "role": "FUNCTIONAL_SPECIFICATION"
     },
     {
-      "source_id": "TEAM-01-PROFILE-1.0.0-REQUEST-CHANGES",
-      "locator": "docs/functional/team_01/editorial_profile_1.0.0_request_changes.md",
-      "checksum": "ab5c60cc8e7c6fda5b23eaf9d7898c24425a41aebfb9179f24e280906ecf5ef8",
+      "source_id": "CHANNEL-INTELLIGENCE-PROFILE-1.1.0-APPROVAL",
+      "locator": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
+      "checksum": "2c1bc36e50345d079b319bc89d34e5ba856dadf0fca38ea3ca1b342a3e6391cf",
       "role": "FUNCTIONAL_REVIEW_DECISION"
     },
     {
@@ -131,7 +131,7 @@
         "classification": "EXCLUDED"
       },
       {
-        "name": "Territorios secundarios aún no aprobados por Equipo 01",
+        "name": "Territorios secundarios aún no aprobados por Inteligencia del Canal",
         "classification": "PENDING"
       }
     ],
@@ -333,7 +333,7 @@
   "pending_decisions": [
     "Una muestra futura de escritura editorial auténtica es evidencia opcional y, si se incorpora, requerirá checksum, autoría, autorización, representatividad y lineage.",
     "Definir referencias versionadas para políticas editoriales, de plataforma y preferencias de formato fuera de la identidad estable.",
-    "No activar este perfil hasta disponer de aprobación funcional y validación técnica sobre el checksum externo exacto.",
-    "La versión 1.1.0 incorpora RC-01 a RC-06 y queda pendiente de nueva revisión funcional del Equipo 01; REQUEST_CHANGES sobre 1.0.0 no constituye aprobación de esta versión."
+    "Toda nueva versión requerirá aprobación funcional y validación técnica sobre su checksum exacto antes de activarse.",
+    "La versión 1.1.0 incorpora RC-01 a RC-06 y su activación productiva se gobierna por `functional_approval.json`, `technical_validation.json` y `config/active_editorial_profile.json`."
   ]
 }

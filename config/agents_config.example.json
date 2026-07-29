@@ -1,8 +1,8 @@
 {
-    "_comment": "Configuración de modelos IA por rol. Hoy todos usan el agente principal (Antigravity). A futuro, cada rol puede tener su propio proveedor y modelo.",
+    "_comment": "Configuración de modelos IA por rol. Hoy todos usan el agente principal (runtime operativo). A futuro, cada rol puede tener su propio proveedor y modelo.",
     "roles": {
         "orquestador": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Coordina el pipeline y verifica gates.",
             "posibles_futuros": [
@@ -11,7 +11,7 @@
             ]
         },
         "investigador": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Investiga el tema y propone obras candidatas.",
             "posibles_futuros": [
@@ -20,7 +20,7 @@
             ]
         },
         "curador": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Selecciona y justifica las obras finales.",
             "posibles_futuros": [
@@ -28,7 +28,7 @@
             ]
         },
         "planner": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Crea el mapa de eventos y outline del episodio.",
             "posibles_futuros": [
@@ -37,7 +37,7 @@
             ]
         },
         "analista": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Analiza patrones emocionales, sociales y conductuales.",
             "posibles_futuros": [
@@ -45,7 +45,7 @@
             ]
         },
         "sintetizador": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Genera la tesis central y promesa del episodio.",
             "posibles_futuros": [
@@ -53,7 +53,7 @@
             ]
         },
         "guionista": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Escribe el guion longform completo.",
             "posibles_futuros": [
@@ -62,7 +62,7 @@
             ]
         },
         "qa_editorial": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Revisa el guion: anti-clichés, coherencia, voz del canal.",
             "posibles_futuros": [
@@ -70,7 +70,7 @@
             ]
         },
         "shorts_writer": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Genera guiones de shorts derivados del guion principal.",
             "posibles_futuros": [
@@ -79,7 +79,7 @@
             ]
         },
         "packaging": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Genera títulos y conceptos de miniatura.",
             "posibles_futuros": [
@@ -87,7 +87,7 @@
             ]
         },
         "seo": {
-            "proveedor": "antigravity",
+            "proveedor": "runtime_operativo",
             "modelo": "default",
             "descripcion": "Genera SEO, descripción, timestamps y tags.",
             "posibles_futuros": [

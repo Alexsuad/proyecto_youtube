@@ -6,8 +6,8 @@
 skill_id: skill_auditar_suficiencia_semantica_b5_i2
 version: 1.0.0
 status: FUNCTIONAL_SPEC_APPROVED
-functional_owner: TEAM_02_SCRIPT_PRODUCT
-technical_owner: TEAM_04_INFRASTRUCTURE_GOVERNANCE
+functional_owner: SCRIPT_PRODUCT
+technical_owner: INFRASTRUCTURE_GOVERNANCE
 active_block: B5-I2
 role: INDEPENDENT_EDITORIAL_AUDITOR
 ```
@@ -24,11 +24,11 @@ Pregunta central:
 
 ## Autoridad funcional
 
-La autoridad funcional pertenece al Equipo 02 — Producto Guion.
+La autoridad funcional pertenece a `SCRIPT_PRODUCT`.
 
-El Equipo 04 puede decidir la estructura técnica, schema, runtime, integración, provenance, gate, catálogo, pruebas y mecanismo de ejecución.
+`INFRASTRUCTURE_GOVERNANCE` puede decidir la estructura técnica, schema, runtime, integración, provenance, gate, catálogo, pruebas y mecanismo de ejecución.
 
-El Equipo 04 no puede reducir ni modificar los criterios editoriales críticos de esta skill sin nueva validación del Equipo 02.
+`INFRASTRUCTURE_GOVERNANCE` no puede reducir ni modificar los criterios editoriales críticos de esta skill sin nueva validación de `SCRIPT_PRODUCT`.
 
 ## Cuándo debe ejecutarse
 
@@ -45,7 +45,7 @@ y estén disponibles los antecedentes autorizados de B5-I1.
 Debe ejecutarse:
 
 1. después de completar análisis, curación y tesis refinada;
-2. antes de solicitar la reauditoría funcional final del Equipo 02;
+2. antes de solicitar la reauditoría funcional final de `SCRIPT_PRODUCT`;
 3. antes de permitir cualquier inicio de B5-I3;
 4. nuevamente cuando cambie cualquiera de los artefactos auditados o una restricción heredada.
 
@@ -76,8 +76,8 @@ No debe utilizarse para auditar:
 Tampoco sustituye:
 
 - el gate técnico;
-- la auditoría funcional humana del Equipo 02;
-- la auditoría de packaging del Equipo 03;
+- la auditoría funcional humana de `SCRIPT_PRODUCT`;
+- la auditoría de packaging de `YOUTUBE_ADAPTATION`;
 - la auditoría editorial final del guion.
 
 ## Entradas obligatorias
@@ -135,7 +135,7 @@ La skill no debe evaluar:
 - potencial de clic;
 - estrategia de packaging.
 
-Esas decisiones pertenecen al Equipo 03.
+Esas decisiones pertenecen a `YOUTUBE_ADAPTATION`.
 
 ## Salida funcional
 
@@ -156,7 +156,7 @@ cited_evidence
 required_corrections
 unresolved_questions
 inherited_restrictions_checked
-team_03_interface_observation
+youtube_adaptation_interface_observation
 auditor_statement
 ```
 
@@ -172,8 +172,8 @@ BLOCKED
 ### Estados de preparación
 
 ```text
-READY_FOR_TEAM_02_REAUDIT
-NOT_READY_FOR_TEAM_02_REAUDIT
+READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW
+NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW
 BLOCKED_BY_MISSING_INPUT
 ```
 
@@ -461,7 +461,7 @@ Debe comprobar que:
 
 No debe decidir audiencia concreta, título o miniatura.
 
-### 14. Interfaz honesta con Equipo 03
+### 14. Interfaz honesta con `YOUTUBE_ADAPTATION`
 
 Cuando exista `EarlyPackagingHypothesis`, la skill debe limitarse a comprobar:
 
@@ -470,7 +470,7 @@ Cuando exista `EarlyPackagingHypothesis`, la skill debe limitarse a comprobar:
 - si la formulación exigiría deformar el análisis;
 - si hay riesgo de que el contenido no entregue lo anunciado.
 
-La salida debe ser una observación para Equipo 03:
+La salida debe ser una observación para `YOUTUBE_ADAPTATION`:
 
 ```text
 FULFILLABLE
@@ -516,7 +516,7 @@ Salida:
 
 ```text
 decision: PASS
-readiness: READY_FOR_TEAM_02_REAUDIT
+readiness: READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW
 ```
 
 ### `WARN`
@@ -538,7 +538,7 @@ Salida:
 
 ```text
 decision: WARN
-readiness: READY_FOR_TEAM_02_REAUDIT
+readiness: READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW
 ```
 
 ### `FAIL`
@@ -560,7 +560,7 @@ Salida:
 
 ```text
 decision: FAIL
-readiness: NOT_READY_FOR_TEAM_02_REAUDIT
+readiness: NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW
 ```
 
 ### `BLOCKED`
@@ -776,7 +776,7 @@ La skill:
 - no altera el `EditorialProfile`;
 - no convierte resultados en aprendizaje permanente;
 - no autoriza B5-I3;
-- no sustituye la decisión del Equipo 02.
+- no sustituye la decisión de `SCRIPT_PRODUCT`.
 
 Cuando detecte un problema deberá indicar:
 
@@ -802,13 +802,13 @@ análisis
 skill_auditar_suficiencia_semantica_b5_i2:
 evalúa si esos productos tienen sustancia real
 
-Equipo 02:
+`SCRIPT_PRODUCT`:
 realiza reauditoría funcional
 
-Equipo 03:
+`YOUTUBE_ADAPTATION`:
 audita su parte de packaging temprano
 
-Equipo 04:
+`INFRASTRUCTURE_GOVERNANCE`:
 confirma cierre técnico y operativo
 
 solo después:
@@ -828,7 +828,7 @@ La skill no debe empezar a diseñar:
 ## Resultado esperado
 
 ```text
-TEAM_02_FUNCTIONAL_SPEC:
+SCRIPT_PRODUCT_FUNCTIONAL_SPEC:
 APPROVED_FOR_TECHNICAL_INTEGRATION
 
 DEFINITIVE_SKILL_NAME:
@@ -838,7 +838,7 @@ REUSE_skill_qa_editorial:
 REJECTED_FOR_B5_I2
 
 CANONICAL_ACTIVATION:
-PENDING_TECHNICAL_IMPLEMENTATION_AND_TEAM_02_AUDIT
+PENDING_TECHNICAL_IMPLEMENTATION_AND_SCRIPT_PRODUCT_AUDIT
 
 B5_I3:
 NOT_AUTHORIZED

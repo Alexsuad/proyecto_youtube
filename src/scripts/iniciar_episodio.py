@@ -8,7 +8,7 @@
 #   python src/scripts/iniciar_episodio.py --num 1 --slug abandono_emocional
 #
 # Resultado:
-#   - Crea: C:\YT_VAULT\MasAllaDelGuion\episodios\ep_0001_abandono_emocional\
+#   - Crea: <VAULT_ROOT>/<CHANNEL_ID>/episodios/ep_0001_abandono_emocional/
 #   - Registra el episodio en episodes_index.json con estado "en_progreso"
 #   - Imprime EP_PATH en stdout (para que el pipeline lo capture)
 # ──────────────────────────────────────────────────────────────────────
@@ -57,12 +57,12 @@ def save_index(index_path: Path, index: dict) -> None:
 
 
 def _abort(msg: str) -> None:
-    print(f"\n🔴 ERROR: {msg}", file=sys.stderr)
+    print(f"\nERROR: {msg}", file=sys.stderr)
     sys.exit(1)
 
 
 def _ok(msg: str) -> None:
-    print(f"✅ {msg}")
+    print(msg)
 
 
 # ─── Validaciones ───────────────────────────────────────────────────────────────
@@ -127,7 +127,7 @@ def main():
     ep_path = vault_root / channel_id / "episodios" / ep_folder_name
     index_path = vault_root / channel_id / "index" / INDEX_FILENAME
 
-    print(f"\n🎬 Iniciando episodio: {ep_folder_name}")
+    print(f"\nIniciando episodio: {ep_folder_name}")
     print(f"   Ruta destino: {ep_path}\n")
 
     # ── Verificar Vault ──
@@ -174,8 +174,8 @@ def main():
     _ok(f"Episodio registrado en índice: {index_path}")
 
     # ── Imprimir EP_PATH para que el pipeline lo capture ──
-    print(f"\n📁 EP_PATH={ep_path}")
-    print("\n🟢 Episodio iniciado correctamente. Puedes comenzar el pipeline.")
+    print(f"\nEP_PATH={ep_path}")
+    print("\nEpisodio iniciado correctamente. Puedes comenzar el pipeline.")
     print(f"   Estado: en_progreso")
     print(f"   ID: {ep_id} | Slug: {slug}\n")
 

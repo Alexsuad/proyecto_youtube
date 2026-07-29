@@ -1,10 +1,78 @@
 {
   "manifest_id": "MADG-VOICE-CORPUS-INITIAL",
-  "status": "SPECIFICATION_BASED",
-  "voice_evidence_level": "SPECIFICATION_BASED",
-  "authentic_editorial_writing_sample_status": "NOT_AVAILABLE",
-  "source_lineage": [{"source_id": "B3-FUNCTIONAL-SPEC-TEAM-01", "locator": "docs/specifications/B3_especificacion_funcional_equipo_01.md", "checksum": "dfe44c02b04094eef85e88d9dad77db5bf53bbda19adb1c69f9381011fea6317"}],
-  "voice_samples": [],
-  "pending_optional_samples": ["Muestra futura de escritura editorial auténtica, si el Equipo 01 decide aportarla y autorizarla."],
-  "exclusion_rules": ["Guiones íntegramente generados por IA", "Transcripciones completas de referentes", "Correcciones aisladas", "Frases sin autoría clara", "Listas de muletillas", "Primer guion producido sin aprobación", "Textos cuya representatividad no haya sido evaluada"]
+  "status": "AUTHENTIC_CORPUS_PARTIAL",
+  "voice_evidence_level": "AUTHENTIC_CORPUS_PARTIAL",
+  "corpus_status": "AUTHENTIC_CORPUS_PARTIAL",
+  "MADG_AUTH_001_SCOPE": "PARTIAL_AUTHENTIC_EVIDENCE",
+  "GLOBAL_VOICE_REPRESENTATIVENESS": "NOT_VALIDATED",
+  "authentic_editorial_writing_sample_status": "AVAILABLE",
+  "source_lineage": [
+    {
+      "source_id": "B3-FUNCTIONAL-SPEC-CANONICAL",
+      "locator": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "checksum": "c2108e34fa5113e22c01dc70888e8e510eede12c7b54ccff76bd810045a6aadc"
+    }
+  ],
+  "voice_samples": [
+    {
+      "sample_id": "MADG-AUTH-001",
+      "locator": "profiles/voice/samples/authentic/muestra_001_reflexion_infancia_y_tecnologia.md",
+      "checksum": "5d95286ee5b63b338c9ddb3f92ca805deafcc9b94040e7b471e24f29485430d6",
+      "authorship": "OWNER",
+      "text_type": "PERSONAL_TEXT",
+      "classification": "AUTHENTIC",
+      "usage_authorization": "AUTHORIZED",
+      "representativeness": "NOT_EVALUATED",
+      "recorded_at": "2026-07-27T00:00:00Z",
+      "lineage": [
+        "OWNER_PROVIDED",
+        "PRE_AI_WRITING_SAMPLE"
+      ],
+      "inclusion_reason": "Muestra auténtica autorizada; la representatividad global del corpus aún no ha sido evaluada."
+    },
+    {
+      "sample_id": "MADG-AUTH-002",
+      "locator": "profiles/voice/samples/authentic/muestra_002_texto_personal.md",
+      "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "authorship": "OWNER",
+      "text_type": "PERSONAL_TEXT",
+      "classification": "EXCLUDED",
+      "usage_authorization": "AUTHORIZED",
+      "representativeness": "NOT_EVALUATED",
+      "recorded_at": "2026-07-27T00:00:00Z",
+      "lineage": [
+        "OWNER_PROVIDED",
+        "EMPTY_FILE_DETECTED"
+      ],
+      "exclusion_reason": "Archivo vacío excluido como muestra no representativa."
+    },
+    {
+      "sample_id": "MADG-AUTH-003",
+      "locator": "profiles/voice/samples/authentic/muestra_003_reflexion_generacional.md",
+      "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "authorship": "OWNER",
+      "text_type": "PERSONAL_TEXT",
+      "classification": "EXCLUDED",
+      "usage_authorization": "AUTHORIZED",
+      "representativeness": "NOT_EVALUATED",
+      "recorded_at": "2026-07-27T00:00:00Z",
+      "lineage": [
+        "OWNER_PROVIDED",
+        "EMPTY_FILE_DETECTED"
+      ],
+      "exclusion_reason": "Archivo vacío excluido como muestra no representativa."
+    }
+  ],
+  "pending_optional_samples": [
+    "Se pueden incorporar nuevas muestras auténticas si quedan autorizadas, identificadas y evaluadas como representativas."
+  ],
+  "exclusion_rules": [
+    "Guiones íntegramente generados por IA",
+    "Transcripciones completas de referentes",
+    "Correcciones aisladas",
+    "Frases sin autoría clara",
+    "Listas de muletillas",
+    "Primer guion producido sin aprobación",
+    "Textos cuya representatividad no haya sido evaluada y que no estén autorizados expresamente como evidencia auténtica parcial"
+  ]
 }

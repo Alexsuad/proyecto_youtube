@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/editorial_profile_registry.json",
+  "title": "EditorialProfileRegistry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registry_version",
+    "active_profile_key",
+    "profiles",
+    "dependencies"
+  ],
+  "properties": {
+    "registry_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "active_profile_key": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "profiles": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "profile_id",
+          "version",
+          "checksum",
+          "profile_path",
+          "status",
+          "active",
+          "profile"
+        ],
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          },
+          "checksum": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "profile_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "compiled_profile_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approval_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "technical_validation_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REGISTERED",
+              "PENDING_FUNCTIONAL_APPROVAL",
+              "ACTIVE",
+              "SUPERSEDED",
+              "INVALID_APPROVAL_CHAIN",
+              "FUNCTIONAL_REVIEW_BLOCKED"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "supersedes": {
+            "type": "string",
+            "minLength": 1
+          },
+          "superseded_by": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approval_checksum": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "technical_validation_checksum": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "profile": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "uniqueItems": true
+      }
+    }
+  }
+}

@@ -10,6 +10,14 @@
 
 > Este archivo es una proyección operativa del Plan 001. No crea autoridad nueva ni sustituye el plan rector. Ante una contradicción, prevalece el plan rector y debe bloquearse la misión hasta resolverla.
 
+## R1. Estado reconciliado
+
+``text
+STATUS_RECONCILED: PASS
+FINAL_CLOSURE_STATUS: OPEN
+EVIDENCE_REFS: Ver Plan 003 R1 y control operativo
+```
+
 ## 0. Uso operativo
 
 Lectura mínima para ejecutar una misión de este bloque:
@@ -70,7 +78,6 @@ claims utilizables
 claims no sostenibles
 oportunidades narrativas
 ```
-
 No se mide calidad por número bruto de URLs.
 
 ### B5-M3 — Acceso y suficiencia de evidencia
@@ -230,7 +237,6 @@ presupuesto
 fuentes
 no repetir
 ```
-
 ### B5-M12 — Auditoría de outline
 
 Debe comprobar:
@@ -265,5 +271,4 @@ PASS si:
 - outline y presupuesto están aprobados;
 - Producto considera que el diseño puede producir un buen guion.
 ```
-
 ---

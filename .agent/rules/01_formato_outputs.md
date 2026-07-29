@@ -3,12 +3,12 @@ trigger: always_on
 ---
 
 # Formato estándar de outputs — Proyecto YouTube
-Versión: 1.2
-Fecha: 19/02/2026
+Versión: 1.3
+Fecha: 27/07/2026
 
 ---
 
-## 1) Ubicación de Archivos (V1.2 - Vault)
+## 1) Ubicación de Archivos (V1.3 - Vault)
 
 **REPO (Este repositorio):**
 La carpeta `output/` del repositorio se usa EXCLUSIVAMENTE para:
@@ -21,9 +21,9 @@ Todos los archivos de trabajo de un episodio se generan en:
 `<VAULT_ROOT>/<CHANNEL_ID>/episodios/ep_<ID>_<SLUG>/`
 
 Valores configurados en `config/local_settings.json`:
-- `vault_root` = `C:\YT_VAULT`
-- `channel_id` = `MasAllaDelGuion`
-- Ejemplo ruta episodio: `C:\YT_VAULT\MasAllaDelGuion\episodios\ep_0001_abandono\`
+- `vault_root` = ruta local configurada por cada operador
+- `channel_id` = identificador contractual del canal
+- Ejemplo ruta episodio: `<VAULT_ROOT>/<CHANNEL_ID>/episodios/ep_0001_abandono/`
 
 Si no hay Vault configurado, el sistema debe detenerse y pedir configuración.
 
@@ -39,14 +39,16 @@ Todos los paths son relativos a `<EP_PATH>` = ruta del episodio activo en el Vau
 - `<EP_PATH>/04_analisis_patrones.md`
 - `<EP_PATH>/05_sintesis_tesis.md`
 - `<EP_PATH>/06_guion_longform.md`
+- `<EP_PATH>/06_guion_longform_limpio.md`
+- `<EP_PATH>/06_guion_longform_anotado.md`
 - `<EP_PATH>/07_qa_revisiones.md`
-- `<EP_PATH>/08_shorts.md`
-- `<EP_PATH>/09_packaging.md`
-- `<EP_PATH>/10_seo.md`
-- `<EP_PATH>/99_notebooklm_pack.md`
+- `<EP_PATH>/script_version_manifest.json`
+- `<EP_PATH>/editorial_script_approval.json`
+- `<EP_PATH>/claims_ledger.json`
+- `<EP_PATH>/final_delivery_manifest.json`
 
 `<EP_PATH>` se determina en el Gate 0 (`skill_iniciar_episodio`) y queda
-registrado en `C:\YT_VAULT\MasAllaDelGuion\index\episodes_index.json`.
+registrado en `<VAULT_ROOT>/<CHANNEL_ID>/index/episodes_index.json`.
 
 ---
 

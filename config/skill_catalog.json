@@ -7,7 +7,7 @@
       "canonical_owner": "B5_I2_SEMANTIC_AUDITOR",
       "classification": "KEEP",
       "target_or_merge_destination": "B5_I2_SEMANTIC_AUDITOR",
-      "rationale": "B5-I2: auditoría semántica independiente de análisis, curación, tesis refinada y promesa editorial interna; packaging queda en Equipo 03.",
+      "rationale": "B5-I2: auditoría semántica independiente de análisis, curación, tesis refinada y promesa editorial interna; la adaptación temprana visible pertenece a YOUTUBE_ADAPTATION.",
       "covered_by_general_capability": [
         "auditar-trazabilidad-input-output",
         "tests-validacion-cierre"
@@ -37,9 +37,9 @@
       "skill_id": "skill_cerrar_episodio",
       "path": ".agent/skills/skill_cerrar_episodio.md",
       "canonical_owner": "ORCHESTRATION",
-      "classification": "MODIFY_LATER",
+      "classification": "KEEP",
       "target_or_merge_destination": "ORCHESTRATION",
-      "rationale": "Cierre operativo con dependencias heredadas.",
+      "rationale": "Cierre operativo del núcleo editorial alineado con EDITORIAL_SCRIPT_APPROVED y contratos canónicos.",
       "covered_by_general_capability": [
         "verificar-evidencia-minima-cierre",
         "tests-validacion-cierre"
@@ -51,7 +51,7 @@
       "canonical_owner": "ORCHESTRATION",
       "classification": "KEEP",
       "target_or_merge_destination": "ORCHESTRATION",
-      "rationale": "Control determinista de integridad.",
+      "rationale": "Control determinista de integridad del cierre canónico del MVP.",
       "covered_by_general_capability": [
         "auditar-trazabilidad-input-output",
         "verificar-evidencia-minima-cierre"
@@ -84,7 +84,9 @@
       "classification": "MODIFY_REQUIRED_IN_LEARNING_BLOCK",
       "target_or_merge_destination": "EDITOR",
       "rationale": "Problema funcional: aprendizaje de voz diferido al bloque de learning.",
-      "covered_by_general_capability": [], "future_block": "LEARNING_BLOCK", "non_executable_current": true
+      "covered_by_general_capability": [],
+      "future_block": "LEARNING_BLOCK",
+      "non_executable_current": true
     },
     {
       "skill_id": "skill_guion_longform",
@@ -95,7 +97,9 @@
       "rationale": "Problema funcional: redacción heredada requiere reescritura B6.",
       "covered_by_general_capability": [
         "decidir-tipo-pieza-sistema-agentico"
-      ], "future_block": "B6", "non_executable_current": true
+      ],
+      "future_block": "B6",
+      "non_executable_current": true
     },
     {
       "skill_id": "skill_iniciar_episodio",
@@ -117,7 +121,9 @@
       "rationale": "Problema funcional: outline depende de B5-I3.",
       "covered_by_general_capability": [
         "decidir-tipo-pieza-sistema-agentico"
-      ], "future_block": "B5-I3", "non_executable_current": true
+      ],
+      "future_block": "B5-I3",
+      "non_executable_current": true
     },
     {
       "skill_id": "skill_owner_report",
@@ -163,7 +169,9 @@
       "covered_by_general_capability": [
         "tests-validacion-cierre",
         "verificar-evidencia-minima-cierre"
-      ], "future_block": "B6-B7", "non_executable_current": true
+      ],
+      "future_block": "B6-B7",
+      "non_executable_current": true
     },
     {
       "skill_id": "skill_qa_lenguaje_youtube",
@@ -228,15 +236,17 @@
       ]
     },
     {
-      "skill_id": "skill_verificacion_veracidad_notebooklm",
-      "path": ".agent/skills/skill_verificacion_veracidad_notebooklm.md",
+      "skill_id": "skill_verificacion_veracidad_fuente_externa_historica",
+      "path": ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md",
       "canonical_owner": "RESEARCH_AND_CURATION",
       "classification": "REPLACE_REQUIRED_IN_B6",
       "target_or_merge_destination": "RESEARCH_AND_CURATION",
-      "rationale": "Problema funcional: dependencia histórica externa a reemplazar en B6.",
+      "rationale": "Referencia histórica no ejecutable de verificación externa diferida; no forma parte del runtime productivo actual.",
       "covered_by_general_capability": [
         "verificar-evidencia-minima-cierre"
-      ], "future_block": "B6", "non_executable_current": true
+      ],
+      "future_block": "B6",
+      "non_executable_current": true
     }
   ]
 }
