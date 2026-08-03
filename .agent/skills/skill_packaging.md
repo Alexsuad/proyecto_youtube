@@ -1,3 +1,6 @@
+STATUS: DEFERRED_NON_EXECUTABLE
+CURRENT_AUTHORIZATION: NOT_AUTHORIZED
+
 # Skill — Packaging (títulos + miniatura)
 Objetivo: crear títulos y conceptos de miniatura que trabajen juntos.
 

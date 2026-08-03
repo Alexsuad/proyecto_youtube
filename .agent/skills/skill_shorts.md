@@ -1,3 +1,6 @@
+STATUS: DEFERRED_NON_EXECUTABLE
+CURRENT_AUTHORIZATION: NOT_AUTHORIZED
+
 # Skill — Shorts (derivados del guion)
 Objetivo: extraer shorts desde el guion, no desde ideas sueltas.
 

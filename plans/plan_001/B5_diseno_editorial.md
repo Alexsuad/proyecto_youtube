@@ -271,4 +271,29 @@ PASS si:
 - outline y presupuesto están aprobados;
 - Producto considera que el diseño puede producir un buen guion.
 ```
+
+---
+
+## 4. Relación con la planeación previa al guion (B5_PRE)
+
+B5 (este diseño editorial) se apoya en la planeación previa al guion consolidada en:
+
+- [`B5_PRE_SCRIPT_FOUNDATION.md`](B5_PRE_SCRIPT_FOUNDATION.md) — plan canónico de la fase previa.
+- `policies/script_product/main_episode_format_policy.md` — regla de obras del formato principal.
+- `policies/script_product/episode_discovery_and_material_curation_policy.md` — descubrimiento, investigación, verificación, análisis y curación.
+- `policies/channel_intelligence/topic_belonging_policy.md` — criterio funcional de pertenencia.
+
+B5 reconoce y asume como fundamento previo:
+
+- **B5_PRE** como base de la fase previa al guion;
+- **cinco a ocho obras candidatas** como rango normal;
+- **tres a cinco obras finales** como requisito del formato principal;
+- **análisis antes de curación** (la curación final no puede preceder al análisis sustantivo);
+- **especialistas adaptativos** (capacidad configurable, sin agente permanente por disciplina);
+- **verificación de obras** (acceso directo vs. indirecto; no fingir visionado);
+- **tres modalidades de entrada** (`TOPIC_FIRST`, `ANCHOR_WORK_FIRST`, `CORPUS_FIRST`);
+- **separación respecto de B5-I3 y B5.5**: esta fase previa no diseña outline, arquitectura, apertura ni guion (eso pertenece a B5/B5.5 en adelante).
+
+Ninguna regla activa de este bloque contradice las reglas de la fase previa; si apareciera una contradicción, prevalece la política canónica de formato y debe bloquearse la misión hasta resolverla.
+
 ---

@@ -7,10 +7,27 @@ Repositorio canónico del núcleo profesional de Guion de Más Allá del Guion. 
 Recuperación vigente:
 
 ```text
-PLAN_001 = PLAN_RECTOR_DEL_PRODUCTO
+PLAN_001 = PRODUCT_PLAN_RECTOR
 PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
-PLAN_002 = PROPOSAL_PENDING_OWNER_DECISION
+PLAN_002 = SUPERSEDED_BY_APPROVED_ARCHITECTURE
+B5_5_M2 = NEXT_RECOVERY_ACTION_UNDER_PLAN_003
+B5_5_M2_DEFINED_AS_NEXT_ACTION = YES
+B5_5_M2_OWNER_AUTHORIZATION = PENDING
+B5_5_M2_STARTED = NO
 ```
+
+Relación Plan 001 / Plan 003 (solución documentada única):
+
+```text
+PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
+B5_5_M2 = NEXT_RECOVERY_ACTION_UNDER_PLAN_003
+B5_5_M2_DEFINED_AS_NEXT_ACTION = YES
+B5_5_M2_OWNER_AUTHORIZATION = PENDING
+B5_5_M2_STARTED = NO
+PLAN_001 = PRODUCT_PLAN_RECTOR
+```
+
+La misión B5_5, subordinada al Plan 001, se ejecuta como acción autorizada de recuperación bajo el Plan 003. No se declara Plan 001 como autoridad de ejecución autónoma mientras la recuperación siga vigente.
 
 ## Leer Primero
 
@@ -39,9 +56,13 @@ Durante R0:
 
 ```text
 plans/001_CONTROL_OPERATIVO.md = única sede del estado vivo
-PLAN_003 = autoridad temporal de recuperación y reconciliación
-PLAN_001 = plan rector del producto; implementación temporalmente pausada por recuperación
-PLAN_002 = propuesta no aprobada; arquitectura agéntica no autorizada
+PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
+PLAN_001 = PRODUCT_PLAN_RECTOR; implementación temporalmente pausada por recuperación
+PLAN_002 = SUPERSEDED_BY_APPROVED_ARCHITECTURE; sin autoridad operativa
+B5_5_M2 = NEXT_RECOVERY_ACTION_UNDER_PLAN_003
+B5_5_M2_DEFINED_AS_NEXT_ACTION = YES
+B5_5_M2_OWNER_AUTHORIZATION = PENDING
+B5_5_M2_STARTED = NO
 ```
 
 ## Fuentes Canónicas
@@ -51,15 +72,19 @@ PLAN_002 = propuesta no aprobada; arquitectura agéntica no autorizada
 - Plan rector del producto: `plans/001_reestructuracion_motor_agentico_editorial_y_harness.md`
 - Alcance y frontera del MVP: `docs/product/MVP_BASELINE.md`
 - Estado de perfiles editoriales: `config/editorial_profile_registry.json`
-- Candidato editorial pendiente: `profiles/editorial/mas_alla_del_guion/1.2.0/`
+- Perfil editorial activo: se resuelve exclusivamente desde `config/active_editorial_profile.json` y `config/editorial_profile_registry.json`.
 - Runtime y contratos ejecutables: `src/`, `schemas/`, `config/`
 - Entrada operativa para agentes: este `AGENTS.md`
+
+
 
 Estado actual de activación:
 
 ```text
-ACTIVE_EDITORIAL_PROFILE = NONE
+ACTIVE_EDITORIAL_PROFILE_AUTHORITY = config/active_editorial_profile.json
 ```
+
+Los valores mutables del perfil activo, su checksum y el estado del corpus se leen del puntero canónico y no se duplican en este documento. La consistencia documental de esta referencia debe validarse determinísticamente.
 
 Sin un perfil aprobado y activado:
 
@@ -67,7 +92,7 @@ Sin un perfil aprobado y activado:
 - ningún consumidor debe reconstruir identidad desde `workspace/`;
 - los consumidores productivos deben bloquearse de forma explícita.
 
-Durante R0 tampoco se autoriza:
+Restricciones operativas vigentes mientras la siguiente acción autorizada sea `B5_5_M2_TECHNICAL_OPERATIONAL_SANITATION` y `current_mission` sea `NONE_PENDING_B5_5_M2_AUTHORIZATION`:
 
 - iniciar `R1` o `R2`;
 - aprobar o activar perfiles;

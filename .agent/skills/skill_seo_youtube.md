@@ -1,3 +1,6 @@
+STATUS: DEFERRED_NON_EXECUTABLE
+CURRENT_AUTHORIZATION: NOT_AUTHORIZED
+
 # Skill — SEO YouTube (básico pero sólido)
 Objetivo: dejar el video listo para publicar con SEO simple y coherente.
 

@@ -18,10 +18,21 @@ Alcance del MVP
 
 Identidad y voz productivas
 → config/active_editorial_profile.json
-→ profiles/editorial/mas_alla_del_guion/1.1.0/
+→ config/editorial_profile_registry.json
 
-Arquitectura y transición vigente
-→ plans/002_CIERRE_ARQUITECTURA_OPERATIVA_Y_MADURACION_EDITORIAL.md
+Plan rector del producto
+→ plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
+
+Plan 001 / Plan 003
+→ PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
+→ B5_5_M2 = NEXT_RECOVERY_ACTION_UNDER_PLAN_003
+→ B5_5_M2_DEFINED_AS_NEXT_ACTION = YES
+→ B5_5_M2_OWNER_AUTHORIZATION = PENDING
+→ B5_5_M2_STARTED = NO
+→ PLAN_001 = PRODUCT_PLAN_RECTOR
+
+PLAN_002
+→ sustituido por la arquitectura aprobada; sin autoridad operativa
 
 Contratos ejecutables
 → schemas/ + config/ + src/
@@ -56,7 +67,7 @@ La configuración del Vault está en `config/local_settings.json`.
 
 El orden actual es: identidad y brief → investigación y evidencia → tesis y curación → análisis y diseño editorial → redacción y edición → verificación → aprobación editorial del guion. Packaging, Shorts, SEO y distribución se conservan como Etapa 2 diferida y no autorizada. Audio pertenece a un repositorio externo futuro; Video está fuera del alcance de este repositorio.
 
-Estado operativo: `ACTIVE_PRODUCT_STAGE=SCRIPT_CORE`, `CURRENT_INCREMENT=B5-I2`, Misiones 1 a 3 cerradas y commiteadas; `SUBAGENT_FOUNDATION` es la siguiente fase obligatoria. S5 real de B5-I2 está bloqueado hasta cerrarla y `B5-I3` no está autorizado.
+Estado operativo: `ACTIVE_PRODUCT_STAGE=SCRIPT_CORE`, `CURRENT_INCREMENT=B5-I2`, `current_mission=NONE_PENDING_B5_5_M2_AUTHORIZATION`. El fundamento canónico de la fase previa al guion quedó consolidado (`B5_5_CANONICAL_FOUNDATION=PASS`); la siguiente acción autorizada es `B5_5_M2_TECHNICAL_OPERATIONAL_SANITATION`, sin ejecución real (`TECHNICAL_SANITATION=NOT_STARTED`, `B5_5_M2_STARTED=NO`, `REAL_EXECUTION=NOT_DEMONSTRATED`). B5-I3 no está autorizado y S5 real está bloqueado.
 
 Los scripts se encuentran en `src/scripts/`. Se ejecutan en este orden:
 
