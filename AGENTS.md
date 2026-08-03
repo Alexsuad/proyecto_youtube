@@ -10,24 +10,24 @@ Recuperación vigente:
 PLAN_001 = PRODUCT_PLAN_RECTOR
 PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
 PLAN_002 = SUPERSEDED_BY_APPROVED_ARCHITECTURE
-B5_5_M2 = NEXT_RECOVERY_ACTION_UNDER_PLAN_003
-B5_5_M2_DEFINED_AS_NEXT_ACTION = YES
-B5_5_M2_OWNER_AUTHORIZATION = PENDING
-B5_5_M2_STARTED = NO
+   B5_PRE_M2 = TECHNICAL_OPERATIONAL_CLOSURE
+   B5_PRE_M2_DEFINED_AS_NEXT_ACTION = YES
+   B5_PRE_M2_OWNER_AUTHORIZATION = APPROVED
+   B5_PRE_M2_STARTED = YES
 ```
 
 Relación Plan 001 / Plan 003 (solución documentada única):
 
 ```text
 PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
-B5_5_M2 = NEXT_RECOVERY_ACTION_UNDER_PLAN_003
-B5_5_M2_DEFINED_AS_NEXT_ACTION = YES
-B5_5_M2_OWNER_AUTHORIZATION = PENDING
-B5_5_M2_STARTED = NO
+   B5_PRE_M2 = TECHNICAL_OPERATIONAL_CLOSURE
+   B5_PRE_M2_DEFINED_AS_NEXT_ACTION = YES
+   B5_PRE_M2_OWNER_AUTHORIZATION = APPROVED
+   B5_PRE_M2_STARTED = YES
 PLAN_001 = PRODUCT_PLAN_RECTOR
 ```
 
-La misión B5_5, subordinada al Plan 001, se ejecuta como acción autorizada de recuperación bajo el Plan 003. No se declara Plan 001 como autoridad de ejecución autónoma mientras la recuperación siga vigente.
+La misión B5_PRE_M2, subordinada al Plan 001, se ejecuta como acción autorizada de recuperación bajo el Plan 003. No se declara Plan 001 como autoridad de ejecución autónoma mientras la recuperación siga vigente.
 
 ## Leer Primero
 
@@ -59,10 +59,10 @@ plans/001_CONTROL_OPERATIVO.md = única sede del estado vivo
 PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
 PLAN_001 = PRODUCT_PLAN_RECTOR; implementación temporalmente pausada por recuperación
 PLAN_002 = SUPERSEDED_BY_APPROVED_ARCHITECTURE; sin autoridad operativa
-B5_5_M2 = NEXT_RECOVERY_ACTION_UNDER_PLAN_003
-B5_5_M2_DEFINED_AS_NEXT_ACTION = YES
-B5_5_M2_OWNER_AUTHORIZATION = PENDING
-B5_5_M2_STARTED = NO
+   B5_PRE_M2 = TECHNICAL_OPERATIONAL_CLOSURE
+   B5_PRE_M2_DEFINED_AS_NEXT_ACTION = YES
+   B5_PRE_M2_OWNER_AUTHORIZATION = APPROVED
+   B5_PRE_M2_STARTED = YES
 ```
 
 ## Fuentes Canónicas
@@ -92,7 +92,7 @@ Sin un perfil aprobado y activado:
 - ningún consumidor debe reconstruir identidad desde `workspace/`;
 - los consumidores productivos deben bloquearse de forma explícita.
 
-Restricciones operativas vigentes mientras la siguiente acción autorizada sea `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE` y `current_mission` sea `NONE_PENDING_B5_PRE_M2_AUTHORIZATION`:
+Restricciones operativas vigentes mientras la siguiente acción autorizada sea `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE` y `current_mission` sea `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`:
 
 - iniciar `R1` o `R2`;
 - aprobar o activar perfiles;

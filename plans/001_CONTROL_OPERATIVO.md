@@ -14,18 +14,18 @@ PLAN_003: ACTIVE_RECOVERY_AUTHORITY
 PLAN_002: SUPERSEDED_BY_APPROVED_ARCHITECTURE
 CURRENT_RECOVERY_PLAN: PLAN_003
 CURRENT_RECOVERY_PHASE: R6_B_POST_DIAGNOSTIC_RECONCILIATION_CLOSED
-B5_5_M2: NEXT_RECOVERY_ACTION_UNDER_PLAN_003
-B5_5_M2_DEFINED_AS_NEXT_ACTION: YES
-B5_5_M2_OWNER_AUTHORIZATION: PENDING
-B5_5_M2_STARTED: NO
+B5_PRE_M2: TECHNICAL_OPERATIONAL_CLOSURE
+B5_PRE_M2_DEFINED_AS_NEXT_ACTION: YES
+B5_PRE_M2_OWNER_AUTHORIZATION: APPROVED
+B5_PRE_M2_STARTED: YES
 PLAN_001_EXECUTION: TEMPORARILY_PAUSED_BY_RECOVERY
 plan_id: PLAN-001
 plan_version: "1.4"
 plan_status: IN_PROGRESS
-implementation_authorized: NO_PENDING_NEXT_MISSION
+implementation_authorized: YES
 authorized_blocks: [B0, B1, B2, B3, B4, B5]
 current_block: B5
-    current_mission: NONE_PENDING_B5_PRE_M2_AUTHORIZATION
+current_mission: B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE
 ACTIVE_PRODUCT_STAGE: SCRIPT_CORE
 CURRENT_INCREMENT: B5-I2
 ACTIVE_EDITORIAL_PROFILE: mas_alla_del_guion@1.2.1
@@ -49,11 +49,11 @@ R4_CURRENT_PHASE: CLOSED
 R4_EXECUTION: NOT_AUTHORIZED
 OWNER_AGENT_ARCHITECTURE_APPROVAL: APPROVED
 PIPELINE_ORCHESTRATOR: DETERMINISTIC
-    AGENT_ROLES: 4
+AGENT_ROLES: 4
 NESTED_SUBAGENTS_DURING_MVP: 0
 MATERIALIZATION: PROGRESSIVE_BY_PHASE
-    RUNTIME_MODIFIED: YES
-    AGENTS_CREATED: YES
+RUNTIME_MODIFIED: YES
+AGENTS_CREATED: YES
 ACTIVE_PRODUCT_CONTAMINATION: 0
 R5_EXECUTION: COMPLETED
 R5A_STATUS: PASS
@@ -127,19 +127,25 @@ PROFILE_1_2_1_ACTIVATION: PASS
 REAL_EPISODE_PRODUCTION: NOT_AUTHORIZED
 TEAM_02_B5_I2_FUNCTIONAL_SPECIFICATION: COMPLETE
 TEAM_02_B5_I2_IMPLEMENTATION: PASS
-    TEAM_02_B5_I1_FUNCTIONAL_SPECIFICATION: COMPLETE
+TEAM_02_B5_I1_FUNCTIONAL_SPECIFICATION: COMPLETE
 TEAM_03_R3_FUNCTIONAL_SPECIFICATION: COMPLETE
-    TEAM_03_R3_IMPLEMENTATION: IMPLEMENTED_NOT_DEMONSTRATED
-    NEXT_ALLOWED_ACTION: B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE
+TEAM_03_R3_IMPLEMENTATION: IMPLEMENTED_NOT_DEMONSTRATED
+NEXT_ALLOWED_ACTION: B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE
+B5_PRE_M2_STATUS: IN_PROGRESS
+IMPLEMENTATION_AUTHORIZED: YES
+TECHNICAL_OPERATIONAL_CLOSURE: IN_PROGRESS
+B5_PRE_M2_PHASE_1: PASS
+B5_PRE_M2_PHASE_2: PASS
+B5_PRE_M2_CURRENT_PHASE: PHASE_3
 B5_5_CANONICAL_FOUNDATION: PASS
 B5_5_M1_STATUS: PASS
 B5_5_STATUS: FUNCTIONAL_FOUNDATION
-TECHNICAL_SANITATION: NOT_STARTED
+TECHNICAL_OPERATIONAL_CLOSURE: IN_PROGRESS
 TECHNICAL_IMPLEMENTATION_STARTED: NO
 REAL_EXECUTION: NOT_DEMONSTRATED
 B5_5_PRE_SCRIPT_FOUNDATION: plans/plan_001/B5_PRE_SCRIPT_FOUNDATION.md
-B5_5_M2: TECHNICAL_OPERATIONAL_SANITATION
-B5_5_M2_STARTED: NO
+B5_PRE_M2: TECHNICAL_OPERATIONAL_CLOSURE
+B5_PRE_M2_STARTED: YES
 B0:
   final_closure_status: OPEN
   reason: EVIDENCE_REVIEW_REQUIRED
@@ -173,7 +179,7 @@ SANITATION:
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-El Plan 001 sigue siendo el plan rector del producto y el Plan 003 conserva la autoridad temporal de recuperación. `B5_5_M2` queda declarado como siguiente acción de recuperación bajo el Plan 003 (`NEXT_RECOVERY_ACTION_UNDER_PLAN_003`): la misión B5_5, subordinada al Plan 001, se ejecuta como parte de la recuperación y reconciliación vigente, sin declarar Plan 001 como autoridad de ejecución autónoma. `ACTIVE_EDITORIAL_PROFILE` permanece en `mas_alla_del_guion@1.2.1` con checksum activo `d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1`; la voz sigue en `AUTHENTIC_CORPUS_PARTIAL` y `NOT_VALIDATED` a nivel global. El diagnóstico de Ollama quedó cerrado y diferido: no existe ruta contractual completa viable en el hardware actual, no se recuperó la evidencia real anterior de R6-B y la independencia productor–auditor sigue `NOT_DEMONSTRATED`. La implementación técnica de `SCRIPT_PRODUCT` para B5-I2 y la reparación transversal de integridad textual ya están cerradas. La fase previa al guion quedó consolidada documentalmente (`B5_5_CANONICAL_FOUNDATION: PASS`, `B5_5_M1_STATUS: PASS`); la siguiente acción autorizada es el cierre técnico-operativo `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`, sin ejecución real y sin declarar B5_5 implementado. B5-I3, S5 real, una nueva ejecución real de R6-B, packaging final, producción y publicación permanecen no autorizados.
+El Plan 001 sigue siendo el plan rector del producto y el Plan 003 conserva la autoridad temporal de recuperación. `B5_PRE_M2` queda declarado como la misión técnica-operativa activa bajo el Plan 003 (`NEXT_RECOVERY_ACTION_UNDER_PLAN_003`): la misión B5_PRE_M2, subordinada al Plan 001, se ejecuta como parte de la recuperación y reconciliación vigente, sin declarar Plan 001 como autoridad de ejecución autónoma. `ACTIVE_EDITORIAL_PROFILE` permanece en `mas_alla_del_guion@1.2.1` con checksum activo `d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1`; la voz sigue en `AUTHENTIC_CORPUS_PARTIAL` y `NOT_VALIDATED` a nivel global. El diagnóstico de Ollama quedó cerrado y diferido: no existe ruta contractual completa viable en el hardware actual, no se recuperó la evidencia real anterior de R6-B y la independencia productor–auditor sigue `NOT_DEMONSTRATED`. La implementación técnica de `SCRIPT_PRODUCT` para B5-I2 y la reparación transversal de integridad textual ya están cerradas. La fase previa al guion quedó consolidada documentalmente (`B5_5_CANONICAL_FOUNDATION: PASS`, `B5_5_M1_STATUS: PASS`); la siguiente acción autorizada es el cierre técnico-operativo `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`, con `B5_PRE_M2_PHASE_1: PASS`, `B5_PRE_M2_PHASE_2: PASS` y `B5_PRE_M2_CURRENT_PHASE: PHASE_3`. No se declara todavía `B5_PRE_M2=PASS`, `REAL_PRE_SCRIPT_VERTICAL=DEMONSTRATED`, `B5_5_PROTOTYPE=READY` ni `B6=AUTHORIZED`. B5-I3, S5 real, una nueva ejecución real de R6-B, packaging final, producción y publicación permanecen no autorizados.
 
 ## 2. Autoridad documental
 
@@ -330,17 +336,22 @@ Una modificación del plan rector debe:
 ```text
 PLAN_003: ACTIVE_RECOVERY_AUTHORITY
 PLAN_001: PRODUCT_PLAN_RECTOR
-B5_5_M2: NEXT_RECOVERY_ACTION_UNDER_PLAN_003
-B5_5_M2_DEFINED_AS_NEXT_ACTION: YES
-B5_5_M2_OWNER_AUTHORIZATION: PENDING
-B5_5_M2_STARTED: NO
+B5_PRE_M2: TECHNICAL_OPERATIONAL_CLOSURE
+B5_PRE_M2_DEFINED_AS_NEXT_ACTION: YES
+B5_PRE_M2_OWNER_AUTHORIZATION: APPROVED
+B5_PRE_M2_STARTED: YES
 CURRENT_RECOVERY_PHASE: R6_B_POST_DIAGNOSTIC_RECONCILIATION_CLOSED
-current_mission: NONE_PENDING_B5_PRE_M2_AUTHORIZATION
+current_mission: B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE
 NEXT_ALLOWED_ACTION: B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE
 B5_5_M1_STATUS: PASS
 B5_5_CANONICAL_FOUNDATION: PASS
 B5_5_STATUS: FUNCTIONAL_FOUNDATION
-TECHNICAL_SANITATION: NOT_STARTED
+B5_PRE_M2_STATUS: IN_PROGRESS
+IMPLEMENTATION_AUTHORIZED: YES
+TECHNICAL_OPERATIONAL_CLOSURE: IN_PROGRESS
+B5_PRE_M2_PHASE_1: PASS
+B5_PRE_M2_PHASE_2: PASS
+B5_PRE_M2_CURRENT_PHASE: PHASE_3
 REAL_EXECUTION: NOT_DEMONSTRATED
 OLLAMA: DEFERRED
 OLLAMA_DIAGNOSTIC: CLOSED
@@ -364,6 +375,6 @@ S5_REAL_EXECUTION: BLOCKED
 REAL_EPISODE_PRODUCTION: NOT_AUTHORIZED
 ```
 
-Los estados históricos o técnicos de R3 pueden aparecer, pero **no definen la siguiente acción**. La única siguiente acción autorizada es `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`, con `current_mission` igual a `NONE_PENDING_B5_PRE_M2_AUTHORIZATION`. No se declara simultáneamente `current_mission = R3 pendiente` con `NEXT_ALLOWED_ACTION = B5_PRE_M2`.
+Los estados históricos o técnicos de R3 pueden aparecer, pero **no definen la siguiente acción**. La única siguiente acción autorizada es `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`, con `current_mission` igual a `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`. No se declara simultáneamente `current_mission = R3 pendiente` con `NEXT_ALLOWED_ACTION = B5_PRE_M2`.
 
-El fundamento canónico de la fase previa al guion (`B5_PRE_SCRIPT_FOUNDATION.md`) quedó consolidado (`B5_5_CANONICAL_FOUNDATION: PASS`, `B5_5_M1_STATUS: PASS`). La implementación técnica de esa fundamento, incluidas las contradicciones técnicas inventariadas, se ejecuta en la siguiente acción autorizada: `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`. No se declara B5_5 implementado ni demostrado: `TECHNICAL_SANITATION: NOT_STARTED`, `B5_5_M2_STARTED: NO`, `REAL_EXECUTION: NOT_DEMONSTRATED`. B5-I3, S5 real, packaging final, producción y publicación permanecen no autorizados.
+El fundamento canónico de la fase previa al guion (`B5_PRE_SCRIPT_FOUNDATION.md`) quedó consolidado (`B5_5_CANONICAL_FOUNDATION: PASS`, `B5_5_M1_STATUS: PASS`). La implementación técnica de esa fundamento, incluidas las contradicciones técnicas inventariadas, se ejecuta en la siguiente acción autorizada: `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`. No se declara `B5_PRE_M2=PASS` ni `REAL_PRE_SCRIPT_VERTICAL=DEMONSTRATED`. B5-I3, S5 real, packaging final, producción y publicación permanecen no autorizados.

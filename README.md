@@ -25,10 +25,10 @@ Plan rector del producto
 
 Plan 001 / Plan 003
 → PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
-→ B5_5_M2 = NEXT_RECOVERY_ACTION_UNDER_PLAN_003
-→ B5_5_M2_DEFINED_AS_NEXT_ACTION = YES
-→ B5_5_M2_OWNER_AUTHORIZATION = PENDING
-→ B5_5_M2_STARTED = NO
+→ B5_PRE_M2 = TECHNICAL_OPERATIONAL_CLOSURE
+→ B5_PRE_M2_DEFINED_AS_NEXT_ACTION = YES
+→ B5_PRE_M2_OWNER_AUTHORIZATION = APPROVED
+→ B5_PRE_M2_STARTED = YES
 → PLAN_001 = PRODUCT_PLAN_RECTOR
 
 PLAN_002
@@ -67,7 +67,7 @@ La configuración del Vault está en `config/local_settings.json`.
 
 El orden actual es: identidad y brief → investigación y evidencia → tesis y curación → análisis y diseño editorial → redacción y edición → verificación → aprobación editorial del guion. Packaging, Shorts, SEO y distribución se conservan como Etapa 2 diferida y no autorizada. Audio pertenece a un repositorio externo futuro; Video está fuera del alcance de este repositorio.
 
-Estado operativo: `ACTIVE_PRODUCT_STAGE=SCRIPT_CORE`, `CURRENT_INCREMENT=B5-I2`, `current_mission=NONE_PENDING_B5_PRE_M2_AUTHORIZATION`. El fundamento canónico de la fase previa al guion quedó consolidado (`B5_5_CANONICAL_FOUNDATION=PASS`); la siguiente acción autorizada es `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`, sin ejecución real (`TECHNICAL_SANITATION=NOT_STARTED`, `B5_5_M2_STARTED=NO`, `REAL_EXECUTION=NOT_DEMONSTRATED`). B5-I3 no está autorizado y S5 real está bloqueado.
+Estado operativo: `ACTIVE_PRODUCT_STAGE=SCRIPT_CORE`, `CURRENT_INCREMENT=B5-I2`, `current_mission=B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`, `B5_PRE_M2_OWNER_AUTHORIZATION=APPROVED`, `B5_PRE_M2_STARTED=YES`, `B5_PRE_M2_STATUS=IN_PROGRESS`, `IMPLEMENTATION_AUTHORIZED=YES`, `TECHNICAL_OPERATIONAL_CLOSURE=IN_PROGRESS`, `B5_PRE_M2_PHASE_1=PASS`, `B5_PRE_M2_PHASE_2=PASS`, `B5_PRE_M2_CURRENT_PHASE=PHASE_3`. El fundamento canónico de la fase previa al guion quedó consolidado (`B5_5_CANONICAL_FOUNDATION=PASS`); la siguiente acción autorizada es `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`, sin declarar todavía `B5_PRE_M2=PASS`, `REAL_PRE_SCRIPT_VERTICAL=DEMONSTRATED`, `B5_5_PROTOTYPE=READY` ni `B6=AUTHORIZED`. B5-I3 no está autorizado y S5 real está bloqueado.
 
 Los scripts se encuentran en `src/scripts/`. Se ejecutan en este orden:
 
