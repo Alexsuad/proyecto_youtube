@@ -67,7 +67,7 @@ La configuración del Vault está en `config/local_settings.json`.
 
 El orden actual es: identidad y brief → investigación y evidencia → tesis y curación → análisis y diseño editorial → redacción y edición → verificación → aprobación editorial del guion. Packaging, Shorts, SEO y distribución se conservan como Etapa 2 diferida y no autorizada. Audio pertenece a un repositorio externo futuro; Video está fuera del alcance de este repositorio.
 
-Estado operativo: `ACTIVE_PRODUCT_STAGE=SCRIPT_CORE`, `CURRENT_INCREMENT=B5-I2`, `current_mission=NONE_PENDING_B5_5_M2_AUTHORIZATION`. El fundamento canónico de la fase previa al guion quedó consolidado (`B5_5_CANONICAL_FOUNDATION=PASS`); la siguiente acción autorizada es `B5_5_M2_TECHNICAL_OPERATIONAL_SANITATION`, sin ejecución real (`TECHNICAL_SANITATION=NOT_STARTED`, `B5_5_M2_STARTED=NO`, `REAL_EXECUTION=NOT_DEMONSTRATED`). B5-I3 no está autorizado y S5 real está bloqueado.
+Estado operativo: `ACTIVE_PRODUCT_STAGE=SCRIPT_CORE`, `CURRENT_INCREMENT=B5-I2`, `current_mission=NONE_PENDING_B5_PRE_M2_AUTHORIZATION`. El fundamento canónico de la fase previa al guion quedó consolidado (`B5_5_CANONICAL_FOUNDATION=PASS`); la siguiente acción autorizada es `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`, sin ejecución real (`TECHNICAL_SANITATION=NOT_STARTED`, `B5_5_M2_STARTED=NO`, `REAL_EXECUTION=NOT_DEMONSTRATED`). B5-I3 no está autorizado y S5 real está bloqueado.
 
 Los scripts se encuentran en `src/scripts/`. Se ejecutan en este orden:
 

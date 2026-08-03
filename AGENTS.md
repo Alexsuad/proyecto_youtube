@@ -92,7 +92,7 @@ Sin un perfil aprobado y activado:
 - ningún consumidor debe reconstruir identidad desde `workspace/`;
 - los consumidores productivos deben bloquearse de forma explícita.
 
-Restricciones operativas vigentes mientras la siguiente acción autorizada sea `B5_5_M2_TECHNICAL_OPERATIONAL_SANITATION` y `current_mission` sea `NONE_PENDING_B5_5_M2_AUTHORIZATION`:
+Restricciones operativas vigentes mientras la siguiente acción autorizada sea `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE` y `current_mission` sea `NONE_PENDING_B5_PRE_M2_AUTHORIZATION`:
 
 - iniciar `R1` o `R2`;
 - aprobar o activar perfiles;
