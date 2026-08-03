@@ -15,6 +15,7 @@ UNAVAILABLE = "UNAVAILABLE_FROM_PROVIDER"
 UNAVAILABLE_FROM_EXECUTOR = "UNAVAILABLE_FROM_EXECUTOR"
 MANAGED_BY_EXECUTOR = "MANAGED_BY_EXECUTOR"
 READY = "READY"
+NON_EXECUTABLE_PROFILES = {"NONE_SELECTED"}
 
 
 @dataclass(frozen=True)
@@ -202,6 +203,26 @@ def resolve_run_configuration(
             global_defaults.get("execution_profile"),
         )
     )
+    if execution_profile in NON_EXECUTABLE_PROFILES:
+        return _build_blocked(
+            role_id=role_id,
+            execution_route=str(run_configuration.get("execution_route") or "local_model"),
+            execution_profile=execution_profile,
+            route_type="UNSELECTED",
+            executor=str(run_configuration.get("executor_override") or "native_provider"),
+            provider="",
+            provider_adapter="",
+            model=UNAVAILABLE,
+            timeout_seconds=int(run_configuration.get("timeout_seconds", 30)),
+            max_retries=int(run_configuration.get("max_retries", 0)),
+            temperature=_float_or_none(run_configuration.get("temperature")),
+            max_tokens=_int_or_none(run_configuration.get("max_tokens")),
+            budget_limit=run_configuration.get("budget_limit"),
+            paid_cost_approved=bool(run_configuration.get("paid_cost_approved", False)),
+            cost_policy="BLOCKED_BY_CONFIGURATION",
+            provider_config_ref=None,
+            blocking_reason="BLOCKED_BY_CONFIGURATION",
+        )
     profile = profiles.get("execution_profiles", {}).get(execution_profile)
     if profile is None:
         raise ValueError(f"execution_profile inexistente: {execution_profile}")

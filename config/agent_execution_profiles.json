@@ -14,7 +14,7 @@
   },
   "global_defaults": {
     "execution_route": "local_model",
-    "execution_profile": "ollama_local",
+    "execution_profile": "NONE_SELECTED",
     "timeout_seconds": 30,
     "max_retries": 0,
     "temperature": null,
@@ -26,7 +26,7 @@
     "ollama": {
       "route_type": "LOCAL_MODEL_RUNTIME",
       "adapter": "ollama",
-      "enabled": true,
+      "enabled": false,
       "api_base_env": "OLLAMA_API_BASE",
       "model_env": "OLLAMA_MODEL",
       "timeout_seconds": 30,
@@ -213,7 +213,7 @@
   },
   "role_defaults": {
     "SCRIPT_PRODUCT_PRODUCER": {
-      "default_execution_profile": "ollama_local",
+      "default_execution_profile": "NONE_SELECTED",
       "default_execution_route": "local_model",
       "allowed_execution_profiles": [
         "ollama_local",
@@ -227,7 +227,35 @@
       ]
     },
     "SCRIPT_PRODUCT_AUDITOR": {
-      "default_execution_profile": "ollama_local",
+      "default_execution_profile": "NONE_SELECTED",
+      "default_execution_route": "local_model",
+      "allowed_execution_profiles": [
+        "ollama_local",
+        "deepseek_chat",
+        "openai_chat",
+        "gemini_chat",
+        "anthropic_messages",
+        "codex_current",
+        "opencode_free",
+        "antigravity_current"
+      ]
+    },
+    "CHANNEL_INTELLIGENCE_PRODUCER": {
+      "default_execution_profile": "NONE_SELECTED",
+      "default_execution_route": "local_model",
+      "allowed_execution_profiles": [
+        "ollama_local",
+        "deepseek_chat",
+        "openai_chat",
+        "gemini_chat",
+        "anthropic_messages",
+        "codex_current",
+        "opencode_free",
+        "antigravity_current"
+      ]
+    },
+    "CHANNEL_INTELLIGENCE_REVIEWER": {
+      "default_execution_profile": "NONE_SELECTED",
       "default_execution_route": "local_model",
       "allowed_execution_profiles": [
         "ollama_local",

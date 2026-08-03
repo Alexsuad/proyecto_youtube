@@ -5,8 +5,6 @@ capabilities:
     output_schema: b5_i2_semantic_sufficiency_audit
     routing:
       explicit_mode: respect_requested_route
-      auto_high_privacy: ollama
-      auto_local: true
       auto_agent_handoff: false
       allow_external_api: false
       unavailable: BLOCKED_BY_SEMANTIC_EVALUATOR
@@ -15,7 +13,6 @@ capabilities:
     output_schema: topic_belonging_decision
     routing:
       explicit_mode: respect_requested_route
-      auto_local: true
       auto_agent_handoff: false
       allow_external_api: false
       unavailable: BLOCKED_UNTIL_MISSION_AUTHORIZED

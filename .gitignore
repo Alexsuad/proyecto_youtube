@@ -37,3 +37,4 @@ docs/*
 env.example
 *.example
 !.env.example
+tmp_test_subagent_foundation/
