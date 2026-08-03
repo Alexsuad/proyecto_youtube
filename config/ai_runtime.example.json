@@ -73,5 +73,8 @@
       },
       "execution_mode": "ISOLATED"
     }
+,
+    {"role_id":"CHANNEL_INTELLIGENCE_PRODUCER","provider":"mock","model":"default","adapter":"mock","tools":["read_profile","write_assessment"],"permissions":{"read":["active_profile","topic_artifacts","provenance"],"write":["TopicBelongingAssessment"]},"execution_mode":"ISOLATED"},
+    {"role_id":"CHANNEL_INTELLIGENCE_REVIEWER","provider":"mock","model":"default","adapter":"mock","tools":["read_assessment","write_decision"],"permissions":{"read":["active_profile","topic_artifacts","provenance"],"write":["TopicBelongingDecision"]},"execution_mode":"ISOLATED"}
   ]
 }
