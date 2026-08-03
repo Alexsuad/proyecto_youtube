@@ -2,16 +2,16 @@
 
 **Versión:** `1.0.0`
 **Estado:** `APPROVED_ACTIVE`
-**Implementación autorizada:** `COMPLETED_THROUGH_R6_A`
+**Implementación autorizada:** `COMPLETED_THROUGH_R6_B_POST_DIAGNOSTIC_RECONCILIATION`
 **Tipo:** Plan correctivo temporal
 **Plan rector del producto:** `PLAN 001 — Reestructuración del sistema agéntico, del motor editorial y del arnés de control`
 **Plan relacionado:** `PLAN 002 — Cierre de arquitectura operativa y maduración del núcleo editorial`
 **Fecha de creación:** `2026-07-28`
 **Aprobación del propietario:** `2026-07-28`
-**current_phase:** `R6_B_0_CLOSED`
-**implementation_completed_through:** `R6_B_0`
-**next_phase:** `R6_B`
-**R6_B_STATUS:** `READY_NOT_AUTHORIZED`
+**current_phase:** `R6_B_POST_DIAGNOSTIC_RECONCILIATION_CLOSED`
+**implementation_completed_through:** `R6_B_POST_DIAGNOSTIC_RECONCILIATION`
+**next_phase:** `TEAM_03_R3_IMPLEMENTATION`
+**R6_B_STATUS:** `BLOCKED_PENDING_TEAM_03_R3_IMPLEMENTATION`
 **R6_B_0_EXTERNAL_AUDIT:** `PASS`
 **PLAN_003_STATUS:** `APPROVED_ACTIVE`
 **PLAN_003_FINAL_CLOSURE:** `OPEN`
@@ -72,6 +72,34 @@ contener avances incompatibles
 El Plan 003 es temporal. Debe cerrarse cuando los bloques reabiertos queden reconciliados y exista una única siguiente acción válida dentro del Plan 001.
 
 ---
+
+
+## 1.1 Estado vivo reconciliado posterior a R6-B
+
+El estado vivo posterior al diagnóstico de Ollama, la no recuperación de la evidencia real anterior de R6-B, la implementación técnica de `SCRIPT_PRODUCT` para B5-I2, la reparación transversal de integridad textual y la recepción de la ampliación funcional de `YOUTUBE_ADAPTATION` queda así:
+
+```text
+OLLAMA = DEFERRED
+OLLAMA_DIAGNOSTIC = CLOSED
+OLLAMA_OPTIMIZATION = DEFERRED
+OLLAMA_MODEL_SELECTION = NONE
+OLLAMA_FULL_CONTRACT_ROUTE = NOT_VIABLE_ON_CURRENT_HARDWARE
+R6_B_REAL_PRODUCER_EVIDENCE = NOT_RECOVERED
+R6_B_REAL_AUDITOR_EXECUTION = BLOCKED
+R6_B_PRODUCER_AUDITOR_INDEPENDENCE = NOT_DEMONSTRATED
+R6_B_VERTICAL_DEMONSTRATED = NO
+R6_B_TECHNICAL_CLOSURE = OPEN
+TEAM_02_B5_I2_FUNCTIONAL_SPECIFICATION = COMPLETE
+TEAM_02_B5_I2_IMPLEMENTATION = PASS
+TEAM_02_B5_I1_FUNCTIONAL_SPECIFICATION = PENDING_COMPLETION
+TEAM_03_R3_FUNCTIONAL_SPECIFICATION = COMPLETE
+TEAM_03_R3_IMPLEMENTATION = PENDING
+TEXT_INTEGRITY_REPAIR = PASS
+TEXT_INTEGRITY_PREVENTION = ACTIVE
+NEXT_ALLOWED_ACTION = B5_5_M2_TECHNICAL_OPERATIONAL_SANITATION
+```
+
+Esta sección es una proyección sincronizada del estado vivo. La sede canónica única permanece en `plans/001_CONTROL_OPERATIVO.md`. Las menciones posteriores a `SELECTED_PROVIDER = ollama`, `SELECTED_MODEL = Qwen2.5-Coder:latest` o a la autorización y ejecución de R6-B deben leerse únicamente como snapshots históricos del estado observado en fases anteriores, no como estado operativo vigente.
 
 ## 2. Alcance
 
@@ -193,7 +221,7 @@ Mientras el Plan 003 esté aprobado y abierto, la jerarquía será:
 10. Reporte del agente ejecutor
 ```
 
-El Plan 002 mantiene estado de propuesta hasta que sea aprobado, modificado, sustituido o rechazado dentro de la Fase R4.
+Plan 002 quedó `SUPERSEDED_BY_APPROVED_ARCHITECTURE` en R4 y no conserva autoridad operativa.
 
 El Plan 003 no puede modificar identidad, tesis, estructura narrativa, packaging o políticas funcionales sin decisión del especialista competente.
 
@@ -431,7 +459,7 @@ UNKNOWN_PRESERVED
 - remaining modified/untracked paths outside the authorized-file subset
 ```
 
-### Gate de salida
+### Snapshot histórico de cierre R4 (no vigente como estado vivo)
 
 ```text
 PLAN_AUTHORITY_RESOLVED = PASS
@@ -649,7 +677,7 @@ REJECTED
 
 No puede permanecer simultáneamente como propuesta y autoridad.
 
-### Gate de salida
+### Snapshot histórico de cierre R4 (no vigente como estado vivo)
 
 ```text
 CAPABILITY_MATRIX = APPROVED
@@ -664,7 +692,7 @@ MATERIALIZATION = PROGRESSIVE_BY_PHASE
 RUNTIME_MODIFIED = NO
 AGENTS_CREATED = NO
 ACTIVE_PRODUCT_CONTAMINATION = 0
-NEXT_ALLOWED_ACTION = ACTIVATE_SELECTED_ROUTE_AND_REAUTHORIZE_R6_B
+NEXT_ALLOWED_ACTION = AUTHORIZE_AND_EXECUTE_R6_B_WITH_SELECTED_LOCAL_ROUTE
 R5_EXECUTION = COMPLETED
 R5A_STATUS = PASS
 R5A_CURRENT_PHASE = CLOSED
@@ -675,9 +703,9 @@ R6_A_STATUS = CLOSED
 R6_A_CURRENT_PHASE = CLOSED
 RUNTIME_FOUNDATION = PASS
 MOCK_ONLY_DEPENDENCIES_IDENTIFIED = YES
-SELECTED_PROVIDER = agent_handoff
-SELECTED_MODEL = NONE
-REAL_EXECUTION_ROUTE = HANDOFF
+SELECTED_PROVIDER = ollama
+SELECTED_MODEL = Qwen2.5-Coder:latest
+REAL_EXECUTION_ROUTE = LOCAL_MODEL
 PAID_PROVIDER_REQUIRED = NO
 CONTROL_CASE_VALID = READY
 CONTROL_CASE_SEMANTIC_FAILURE = READY
@@ -695,7 +723,7 @@ EXECUTOR_ABSTRACTION = PASS
 PROVIDER_RESOLUTION_MODE = PER_AGENT_PROFILE
 OLLAMA_INTEGRATION = PASS
 OLLAMA_CONFIGURATION = READY
-OLLAMA_RUNTIME_AVAILABILITY = UNAVAILABLE
+OLLAMA_RUNTIME_AVAILABILITY = READY
 DEEPSEEK_INTEGRATION = PASS
 DEEPSEEK_CONFIGURATION = READY_FOR_SECRET
 ENV_EXAMPLE_READY = PASS
@@ -718,6 +746,13 @@ NEGATIVE_CASES = PASS
 PAID_CALL_EXECUTED = NO
 R6_B_STATUS = READY_NOT_AUTHORIZED
 R6_B_AUTHORIZATION_GATE = SELECT_ROUTE_AND_OWNER_REAUTHORIZE
+R6_B_PREFLIGHT_STATUS = PASS
+R6_B_SELECTED_PROFILE = ollama_local
+R6_B_SELECTED_EXECUTOR = native_provider
+R6_B_SELECTED_PROVIDER = ollama
+R6_B_SELECTED_MODEL_PRODUCER = Qwen2.5-Coder:latest
+R6_B_SELECTED_MODEL_AUDITOR = Qwen2.5-Coder:latest
+R6_B_PREFLIGHT_DATE = 2026-07-29
 ACTUAL_EXECUTOR = NONE
 ACTUAL_PROVIDER = NONE
 ACTUAL_MODEL = NONE
@@ -791,9 +826,9 @@ R6_PREPARATION = COMPLETE
 R6_A_STATUS = CLOSED
 RUNTIME_FOUNDATION = PASS
 MOCK_ONLY_DEPENDENCIES_IDENTIFIED = YES
-SELECTED_PROVIDER = agent_handoff
-SELECTED_MODEL = NONE
-REAL_EXECUTION_ROUTE = HANDOFF
+SELECTED_PROVIDER = ollama
+SELECTED_MODEL = Qwen2.5-Coder:latest
+REAL_EXECUTION_ROUTE = LOCAL_MODEL
 PAID_PROVIDER_REQUIRED = NO
 CONTROL_CASE_VALID = READY
 CONTROL_CASE_SEMANTIC_FAILURE = READY
@@ -811,7 +846,7 @@ EXECUTOR_ABSTRACTION = PASS
 PROVIDER_RESOLUTION_MODE = PER_AGENT_PROFILE
 OLLAMA_INTEGRATION = PASS
 OLLAMA_CONFIGURATION = READY
-OLLAMA_RUNTIME_AVAILABILITY = UNAVAILABLE
+OLLAMA_RUNTIME_AVAILABILITY = READY
 DEEPSEEK_INTEGRATION = PASS
 DEEPSEEK_CONFIGURATION = READY_FOR_SECRET
 ENV_EXAMPLE_READY = PASS
@@ -834,6 +869,13 @@ NEGATIVE_CASES = PASS
 PAID_CALL_EXECUTED = NO
 R6_B_STATUS = READY_NOT_AUTHORIZED
 R6_B_AUTHORIZATION_GATE = SELECT_ROUTE_AND_OWNER_REAUTHORIZE
+R6_B_PREFLIGHT_STATUS = PASS
+R6_B_SELECTED_PROFILE = ollama_local
+R6_B_SELECTED_EXECUTOR = native_provider
+R6_B_SELECTED_PROVIDER = ollama
+R6_B_SELECTED_MODEL_PRODUCER = Qwen2.5-Coder:latest
+R6_B_SELECTED_MODEL_AUDITOR = Qwen2.5-Coder:latest
+R6_B_PREFLIGHT_DATE = 2026-07-29
 ACTUAL_EXECUTOR = NONE
 ACTUAL_PROVIDER = NONE
 ACTUAL_MODEL = NONE
@@ -848,7 +890,7 @@ REAL_AGENT_RUN_EXECUTED = NO
 B5_I3_EXECUTION = NOT_AUTHORIZED
 ```
 
-R6-A cerró con auditoría externa aprobada. R6-B se detuvo antes de ejecutar: Ollama local no está disponible, no existe un proveedor compatible configurado con modelo identificado y `agent_handoff` no constituye ejecución real por sí solo. R6-C, R6-D y R6-E permanecen no autorizadas.
+Snapshot histórico del 29 de julio de 2026: R6-A cerró con auditoría externa aprobada y dejó preparada una ruta local con Ollama. Ese snapshot no representa el estado vivo posterior al diagnóstico contractual, la pérdida no recuperable de la evidencia real y la decisión de diferir Ollama hasta nuevo aviso.
 
 ### Objetivo
 

@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Topic Belonging Owner Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "owner_decision_id",
+    "topic_input_id",
+    "assessment_id",
+    "review_decision_id",
+    "profile_id",
+    "profile_version",
+    "profile_checksum",
+    "assessment_checksum",
+    "review_decision_checksum",
+    "owner_actor_id",
+    "decision",
+    "conditions",
+    "limitations",
+    "decided_at",
+    "owner_decision_checksum",
+    "provenance"
+  ],
+  "properties": {
+    "owner_decision_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "topic_input_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assessment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review_decision_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_checksum": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "assessment_checksum": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "review_decision_checksum": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "owner_actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision": {
+      "enum": [
+        "OWNER_APPROVE",
+        "OWNER_REJECT",
+        "OWNER_RETURN_FOR_CORRECTION"
+      ]
+    },
+    "conditions": {
+      "type": "array"
+    },
+    "limitations": {
+      "type": "array"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "owner_decision_checksum": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actor_id",
+        "output_checksum"
+      ],
+      "properties": {
+        "actor_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "output_checksum": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        }
+      }
+    }
+  }
+}

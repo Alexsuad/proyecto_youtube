@@ -285,18 +285,26 @@
       "prompt_id": "prompt_script_product_producer",
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
-      "objective": "Producir artefactos de dise?o editorial alineados con el EditorialProfile activo exacto y con evidencia trazable.",
-      "authority": "Puede producir analysis, curation, refined_thesis y script_promise. No puede aprobar ni activar entregas.",
+      "objective": "Producir artefactos B5-I2 de Script Product alineados con el EditorialProfile activo exacto, con evidencia trazable y con bloqueo explícito ante insuficiencias sustantivas.",
+      "authority": "Puede producir analysis, curation, refined_thesis y script_promise. No puede aprobar, activar ni cerrar entregas por intención.",
       "required_inputs": [
+        "active_editorial_profile_reference",
         "episode_brief",
         "research_pack",
         "source_access_and_evidence_report",
-        "active_editorial_profile"
+        "provisional_thesis",
+        "semantic_sufficiency_audit",
+        "claims_ledger",
+        "approved_material_candidates",
+        "excluded_claims",
+        "limited_claims",
+        "mandatory_disclosures"
       ],
       "required_context": [
         "config/active_editorial_profile.json",
-        "profile_payload aprobado",
-        "contratos B5-I2"
+        "compiled profile approved",
+        "B5-I2 contracts",
+        "B5-I1 approval state"
       ],
       "allowed_actions": [
         "leer el EditorialProfile activo exacto",
@@ -307,7 +315,7 @@
       "forbidden_actions": [
         "autoaprobar",
         "activar perfiles",
-        "modificar registros can?nicos",
+        "modificar registros canónicos",
         "crear subagentes anidados"
       ],
       "required_outputs": [
@@ -317,19 +325,23 @@
         "script_promise"
       ],
       "blocking_conditions": [
-        "EditorialProfile activo ausente",
-        "checksum del perfil no verificable",
-        "evidencia insuficiente",
-        "contrato de salida ausente"
+        "active EditorialProfile missing",
+        "profile checksum not verifiable",
+        "required B5-I2 version missing",
+        "insufficient evidence for a critical claim",
+        "insufficient access to a central material",
+        "B5-I1 approval missing",
+        "output contract missing"
       ],
       "handoff": {
         "to": "SCRIPT_PRODUCT_AUDITOR",
         "condition": "outputs completos y trazables"
       },
       "evidence_requirements": [
-        "run_id independiente",
-        "checksums de inputs y outputs",
-        "profile checksum exacto usado en la ejecuci?n"
+        "independent run_id",
+        "input and output checksums",
+        "exact profile checksum used in the execution",
+        "explicit blocking reason when evidence is insufficient"
       ]
     },
     {
@@ -337,25 +349,28 @@
       "prompt_id": "prompt_script_product_auditor",
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
-      "objective": "Auditar de forma independiente los artefactos de Script Product sin modificarlos y sin autoaprobar ejecuci?n real.",
-      "authority": "Puede emitir semantic_audit con decisi?n trazable. No puede corregir ni sobrescribir artefactos auditados.",
+      "objective": "Auditar de forma independiente los artefactos B5-I2 de Script Product sin modificarlos y sin reducir defectos sustantivos a observaciones menores.",
+      "authority": "Puede emitir semantic_audit con decisión trazable. No puede corregir, completar ni sobrescribir artefactos auditados.",
       "required_inputs": [
-        "analysis",
-        "curation",
+        "b5_i1_package",
+        "narrative_human_analyses",
+        "material_curation",
         "refined_thesis",
-        "script_promise",
-        "active_editorial_profile"
+        "editorial_script_promise",
+        "producer_run_reference",
+        "artifact_checksums"
       ],
       "required_context": [
         "config/active_editorial_profile.json",
-        "criterios B5-I2",
-        "provenance previa del productor"
+        "B5-I2 criteria",
+        "producer provenance",
+        "independence rules"
       ],
       "allowed_actions": [
-        "leer el EditorialProfile activo exacto",
-        "evaluar coherencia editorial",
-        "emitir decision",
-        "bloquear por evidencia insuficiente"
+        "read the exact active EditorialProfile",
+        "evaluate substantive editorial coherence",
+        "emit decision",
+        "block because of insufficient evidence or independence"
       ],
       "forbidden_actions": [
         "modificar silenciosamente artefactos",
@@ -367,19 +382,22 @@
         "semantic_audit"
       ],
       "blocking_conditions": [
-        "EditorialProfile activo ausente",
-        "contexto no independiente",
-        "checksum de artefactos no verificable",
-        "evidencia insuficiente"
+        "active EditorialProfile missing",
+        "context is not independent",
+        "artifact checksum not verifiable",
+        "producer and auditor are not independent",
+        "persisted audit decision missing",
+        "insufficient evidence"
       ],
       "handoff": {
         "to": "OWNER_REVIEW",
-        "condition": "semantic_audit emitido con decisi?n"
+        "condition": "semantic_audit emitido con decisión"
       },
       "evidence_requirements": [
-        "decision PASS|WARN|FAIL|BLOCKED",
-        "checksums auditados",
-        "ruta de correcci?n cuando proceda"
+        "decision PASS|REQUEST_CHANGES|FAIL|BLOCKED",
+        "audited checksums",
+        "correction route when applicable",
+        "auditor_write_scope=AUDIT_ONLY"
       ]
     },
     {
@@ -387,48 +405,58 @@
       "prompt_id": "prompt_youtube_adaptation_producer",
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
-      "objective": "Preparar una adaptaci?n provisional de YouTube consistente con el EditorialProfile activo exacto y con los contratos aprobados.",
-      "authority": "Puede producir early_packaging_hypothesis sin alterar tesis, identidad ni activar publicaci?n.",
+      "objective": "Preparar el paquete contractual temprano de YOUTUBE_ADAPTATION para B5-I2 usando inputs exactos, sin alterar tesis, perfil ni autoridad de publicación.",
+      "authority": "Puede producir youtube_adaptation_b5_i2_package y conservar early_packaging_hypothesis dentro del paquete. No puede autoaprobar, redactar apertura real, producir packaging final ni cambiar tesis o perfil.",
       "required_inputs": [
-        "refined_thesis",
-        "script_promise",
+        "active_editorial_profile_reference",
         "episode_brief",
-        "active_editorial_profile"
+        "refined_thesis",
+        "editorial_script_promise",
+        "evidence_or_claims_reference"
       ],
       "required_context": [
         "config/active_editorial_profile.json",
-        "contratos de adaptaci?n temprana",
-        "l?mites del MVP"
+        "schemas/youtube_adaptation_b5_i2_package.json",
+        "schemas/early_packaging_hypothesis.json",
+        "límites B5-I2"
       ],
       "allowed_actions": [
         "leer el EditorialProfile activo exacto",
-        "producir early_packaging_hypothesis",
-        "declarar l?mites de plataforma",
-        "emitir handoff verificable"
+        "verificar checksum del perfil activo",
+        "producir youtube_adaptation_b5_i2_package",
+        "reutilizar early_packaging_hypothesis dentro del paquete",
+        "declarar riesgos, límites e incertidumbres",
+        "bloquear ante inputs insuficientes o ambiguos"
       ],
       "forbidden_actions": [
         "autoaprobar",
-        "activar publicaci?n",
-        "modificar silenciosamente artefactos previos",
+        "cambiar tesis o perfil",
+        "redactar apertura real",
+        "producir packaging final",
+        "activar producción o publicación",
+        "garantizar monetización o legalidad",
         "crear subagentes anidados"
       ],
       "required_outputs": [
-        "early_packaging_hypothesis"
+        "youtube_adaptation_b5_i2_package"
       ],
       "blocking_conditions": [
         "EditorialProfile activo ausente",
-        "tesis refinada ausente",
-        "script_promise ausente",
+        "checksum del perfil no verificable",
+        "input obligatorio ausente o ambiguo",
+        "versión exacta de entrada no disponible",
         "contrato de salida ausente"
       ],
       "handoff": {
         "to": "YOUTUBE_ADAPTATION_AUDITOR",
-        "condition": "early_packaging_hypothesis completo y trazable"
+        "condition": "youtube_adaptation_b5_i2_package completo, trazable y con límites explícitos"
       },
       "evidence_requirements": [
-        "checksum de adaptaci?n provisional",
-        "relaci?n expl?cita con la tesis",
-        "restricciones heredadas registradas"
+        "producer_run_id independiente",
+        "checksums exactos de inputs y output",
+        "profile checksum exacto usado",
+        "riesgos e incertidumbres explícitos",
+        "bloqueo explícito cuando falte una versión obligatoria"
       ]
     },
     {
@@ -436,29 +464,33 @@
       "prompt_id": "prompt_youtube_adaptation_auditor",
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
-      "objective": "Auditar la adaptaci?n provisional de YouTube desde un contexto independiente y sin modificar artefactos.",
-      "authority": "Puede emitir youtube_adaptation_review. No puede corregir, activar ni aprobar publicaci?n.",
+      "objective": "Auditar de forma independiente el paquete contractual de YOUTUBE_ADAPTATION para B5-I2 y emitir youtube_adaptation_review sin modificar el artefacto del productor.",
+      "authority": "Puede emitir youtube_adaptation_review con decisiones por capacidad y decisión consolidada. No puede corregir el paquete, autorizar producción, publicación, monetización o aprobación jurídica.",
       "required_inputs": [
-        "early_packaging_hypothesis",
-        "refined_thesis",
-        "script_promise",
-        "active_editorial_profile"
+        "youtube_adaptation_b5_i2_package",
+        "producer_run_reference",
+        "active_editorial_profile_reference"
       ],
       "required_context": [
         "config/active_editorial_profile.json",
-        "criterios de honestidad",
-        "provenance del productor de adaptaci?n"
+        "schemas/youtube_adaptation_review.json",
+        "rules of producer/auditor independence",
+        "límites de publicación"
       ],
       "allowed_actions": [
-        "leer el EditorialProfile activo exacto",
-        "verificar honestidad de adaptaci?n",
-        "emitir decision",
-        "bloquear por evidencia insuficiente"
+        "consumir el paquete exacto",
+        "verificar independencia de run y actor",
+        "emitir decisiones por capacidad",
+        "emitir decisión funcional consolidada",
+        "declarar incertidumbres y ruta de corrección",
+        "bloquear por checksums, independencia o evidencia insuficiente"
       ],
       "forbidden_actions": [
-        "modificar silenciosamente artefactos",
-        "autoaprobar",
-        "activar publicaci?n",
+        "modificar el paquete auditado",
+        "corregir silenciosamente el paquete",
+        "ocultar incertidumbres",
+        "garantizar monetización o legalidad",
+        "autorizar producción o publicación",
         "crear subagentes anidados"
       ],
       "required_outputs": [
@@ -467,17 +499,131 @@
       "blocking_conditions": [
         "EditorialProfile activo ausente",
         "contexto no independiente",
-        "checksum de adaptaci?n no verificable",
-        "evidencia insuficiente"
+        "checksum del paquete no verificable",
+        "producer y auditor no independientes",
+        "límite de publicación ausente o incompleto"
       ],
       "handoff": {
         "to": "OWNER_REVIEW",
-        "condition": "youtube_adaptation_review emitido con decisi?n"
+        "condition": "youtube_adaptation_review emitido con decisión, checksums y límites de publicación"
       },
       "evidence_requirements": [
-        "decision PASS|WARN|FAIL|BLOCKED",
-        "checksums auditados",
-        "l?mites de publicaci?n preservados"
+        "decision APPROVAL|APPROVAL_WITH_WARNINGS|REQUEST_CHANGES|BLOCK",
+        "capability_results completos",
+        "artifact_checksum auditado",
+        "producer_run_id != auditor_run_id",
+        "producer_actor_id != auditor_actor_id",
+        "publication_limit preservado"
+      ]
+    },
+    {
+      "role_id": "CHANNEL_INTELLIGENCE_PRODUCER",
+      "prompt_id": "prompt_channel_intelligence_producer",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Preparar una evaluación cerrada de pertenencia temática contra el perfil activo exacto.",
+      "authority": "Puede producir TopicBelongingAssessment. No puede aprobar, activar perfiles ni decidir por el propietario.",
+      "required_inputs": [
+        "TopicBelongingInput",
+        "active_editorial_profile",
+        "initial_evidence"
+      ],
+      "required_context": [
+        "config/active_editorial_profile.json",
+        "config/editorial_profile_registry.json",
+        "compiled_profile_path resolved from active registry",
+        "policies/channel_intelligence/topic_belonging_policy.md"
+      ],
+      "allowed_actions": [
+        "resolver el perfil compilado exacto",
+        "cargar política funcional canónica",
+        "evaluar puerta narrativa, tesis, territorio, identidad y promesa",
+        "registrar triggers estratégicos",
+        "emitir únicamente TopicBelongingAssessment"
+      ],
+      "forbidden_actions": [
+        "aprobar",
+        "modificar el perfil",
+        "crear subagentes",
+        "emitir TopicBelongingDecision"
+      ],
+      "required_outputs": [
+        "TopicBelongingAssessment"
+      ],
+      "blocking_conditions": [
+        "perfil ausente",
+        "checksum no verificable",
+        "evidencia insuficiente",
+        "salida sin provenance"
+      ],
+      "handoff": {
+        "to": "CHANNEL_INTELLIGENCE_REVIEWER",
+        "condition": "assessment CLOSED_FOR_REVIEW con checksum y provenance"
+      },
+      "evidence_requirements": [
+        "topic_input_id",
+        "profile_id",
+        "profile_version",
+        "profile_checksum",
+        "producer_actor_id",
+        "producer_run_id",
+        "artifact_checksum",
+        "policy field citations"
+      ]
+    },
+    {
+      "role_id": "CHANNEL_INTELLIGENCE_REVIEWER",
+      "prompt_id": "prompt_channel_intelligence_reviewer",
+      "prompt_version": "1.0.0",
+      "status": "ACTIVE",
+      "objective": "Revisar independientemente un TopicBelongingAssessment cerrado y emitir una decisión trazable.",
+      "authority": "Puede aprobar, condicionar, rechazar, bloquear o escalar temas dentro del dominio. No puede aprobar cambios estratégicos por sí mismo.",
+      "required_inputs": [
+        "TopicBelongingInput",
+        "TopicBelongingAssessment",
+        "active_editorial_profile"
+      ],
+      "required_context": [
+        "config/active_editorial_profile.json",
+        "config/editorial_profile_registry.json",
+        "compiled_profile_path resolved from active registry",
+        "policies/channel_intelligence/topic_belonging_policy.md",
+        "producer provenance"
+      ],
+      "allowed_actions": [
+        "resolver el perfil compilado exacto",
+        "cargar política funcional canónica",
+        "verificar aplicación independiente de criterios",
+        "verificar triggers estratégicos",
+        "emitir únicamente TopicBelongingDecision o ESCALATE_TO_OWNER"
+      ],
+      "forbidden_actions": [
+        "modificar el assessment",
+        "revisar en el mismo run",
+        "autoaprobar",
+        "activar perfiles",
+        "crear subagentes"
+      ],
+      "required_outputs": [
+        "TopicBelongingDecision"
+      ],
+      "blocking_conditions": [
+        "mismo actor",
+        "mismo run_id",
+        "checksum distinto",
+        "provenance ausente",
+        "tema estratégico sin ESCALATE_TO_OWNER"
+      ],
+      "handoff": {
+        "to": "OWNER_OR_EPISODE_GATE",
+        "condition": "decision emitida con reviewer_input_checksum exacto"
+      },
+      "evidence_requirements": [
+        "reviewer_actor_id",
+        "reviewer_run_id",
+        "reviewer_input_checksum",
+        "decision checksum",
+        "policy field citations"
       ]
     }
   ]

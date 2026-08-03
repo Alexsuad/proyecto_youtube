@@ -1,0 +1,192 @@
+{
+  "registry_version": "1.0.0",
+  "authority": "CAPABILITY_FUNCTIONAL_AUTHORITY",
+  "routing_consumer": "config/capability_routing.yaml",
+  "capabilities": [
+    {
+      "capability_id": "TOPIC_BELONGING_ASSESSMENT",
+      "domain": "CHANNEL_INTELLIGENCE",
+      "purpose": "Evaluar y decidir si una propuesta temática pertenece al canal antes de desarrollar un episodio real.",
+      "assigned_role": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "CHANNEL_INTELLIGENCE_REVIEWER"
+      ],
+      "input_contract": "schemas/topic_belonging_input.json",
+      "output_contract": "schemas/topic_belonging_decision.json",
+      "decision_authority": "CHANNEL_INTELLIGENCE_REVIEWER_FOR_ORDINARY_TOPICS",
+      "veto_authority": "CHANNEL_INTELLIGENCE_REVIEWER_WITHIN_CHANNEL_SCOPE",
+      "owner_escalation_conditions": [
+        "experimental territory",
+        "positioning expansion",
+        "sensitive partisan matter",
+        "audience change",
+        "exclusion reinterpretation",
+        "new personal exposure",
+        "voice or authorial persona change",
+        "precedent risk"
+      ],
+      "maturity_status": "IMPLEMENTED",
+      "availability_status": "READY_NOT_AUTHORIZED",
+      "dependencies": [
+        "config/active_editorial_profile.json",
+        "config/editorial_profile_registry.json",
+        "profiles/voice/corpus_manifest.json",
+        "policies/channel_intelligence/topic_belonging_policy.md",
+        "schemas/topic_belonging_owner_decision.json"
+      ],
+      "prompt_reference": [
+        "prompt_channel_intelligence_producer",
+        "prompt_channel_intelligence_reviewer"
+      ],
+      "schema_reference": [
+        "topic_belonging_input",
+        "topic_belonging_assessment",
+        "topic_belonging_decision",
+        "topic_belonging_owner_decision"
+      ],
+      "activation_rule": "ACTIVE_ONLY_AFTER_R6_B_AUTHORIZED_CONTROLLED_DEMONSTRATIONS_FUNCTIONAL_AUDIT_AND_OWNER_ACTIVATION"
+    },
+    {
+      "capability_id": "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT",
+      "domain": "CHANNEL_INTELLIGENCE",
+      "purpose": "Evaluar cambios estratégicos de identidad; diferida.",
+      "assigned_role": [
+        "CHANNEL_INTELLIGENCE_PRODUCER"
+      ],
+      "input_contract": "DEFERRED",
+      "output_contract": "DEFERRED",
+      "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
+      "veto_authority": "CHANNEL_INTELLIGENCE_REVIEWER_MATERIAL_CHANGE",
+      "owner_escalation_conditions": [
+        "always"
+      ],
+      "maturity_status": "DEFINED",
+      "availability_status": "NON_EXECUTABLE_CURRENT",
+      "dependencies": [],
+      "prompt_reference": [],
+      "schema_reference": []
+    },
+    {
+      "capability_id": "EDITORIAL_PROFILE_PROPOSAL",
+      "domain": "CHANNEL_INTELLIGENCE",
+      "purpose": "Proponer cambios de perfil; diferida.",
+      "assigned_role": [
+        "CHANNEL_INTELLIGENCE_PRODUCER"
+      ],
+      "input_contract": "DEFERRED",
+      "output_contract": "DEFERRED",
+      "decision_authority": "CHANNEL_INTELLIGENCE_PROPOSAL",
+      "veto_authority": "CHANNEL_INTELLIGENCE_REVIEWER",
+      "owner_escalation_conditions": [
+        "always"
+      ],
+      "maturity_status": "DEFINED",
+      "availability_status": "NON_EXECUTABLE_CURRENT",
+      "dependencies": [],
+      "prompt_reference": [],
+      "schema_reference": []
+    },
+    {
+      "capability_id": "EDITORIAL_PROFILE_FUNCTIONAL_REVIEW",
+      "domain": "CHANNEL_INTELLIGENCE",
+      "purpose": "Revisar funcionalmente un perfil; diferida.",
+      "assigned_role": [
+        "CHANNEL_INTELLIGENCE_REVIEWER"
+      ],
+      "input_contract": "DEFERRED",
+      "output_contract": "DEFERRED",
+      "decision_authority": "CHANNEL_INTELLIGENCE_FUNCTIONAL_REVIEW",
+      "veto_authority": "CHANNEL_INTELLIGENCE_REVIEWER",
+      "owner_escalation_conditions": [
+        "always"
+      ],
+      "maturity_status": "DEFINED",
+      "availability_status": "NON_EXECUTABLE_CURRENT",
+      "dependencies": [],
+      "prompt_reference": [],
+      "schema_reference": []
+    },
+    {
+      "capability_id": "PROFILE_CHANGE_IMPACT_ASSESSMENT",
+      "domain": "CHANNEL_INTELLIGENCE",
+      "purpose": "Evaluar impacto de cambios de perfil; diferida.",
+      "assigned_role": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "CHANNEL_INTELLIGENCE_REVIEWER"
+      ],
+      "input_contract": "DEFERRED",
+      "output_contract": "DEFERRED",
+      "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
+      "veto_authority": "CHANNEL_INTELLIGENCE_REVIEWER_WHEN_MATERIAL",
+      "owner_escalation_conditions": [
+        "always"
+      ],
+      "maturity_status": "DEFINED",
+      "availability_status": "NON_EXECUTABLE_CURRENT",
+      "dependencies": [],
+      "prompt_reference": [],
+      "schema_reference": []
+    },
+    {
+      "capability_id": "VOICE_CORPUS_SAMPLE_ASSESSMENT",
+      "domain": "CHANNEL_INTELLIGENCE",
+      "purpose": "Evaluar muestras del corpus de voz; diferida.",
+      "assigned_role": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "CHANNEL_INTELLIGENCE_REVIEWER"
+      ],
+      "input_contract": "DEFERRED",
+      "output_contract": "DEFERRED",
+      "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
+      "veto_authority": "CHANNEL_INTELLIGENCE_REVIEWER",
+      "owner_escalation_conditions": [
+        "always"
+      ],
+      "maturity_status": "DEFINED",
+      "availability_status": "NON_EXECUTABLE_CURRENT",
+      "dependencies": [],
+      "prompt_reference": [],
+      "schema_reference": []
+    },
+    {
+      "capability_id": "VOICE_LEARNING_CANDIDATE_REVIEW",
+      "domain": "CHANNEL_INTELLIGENCE",
+      "purpose": "Revisar candidatos de aprendizaje de voz; diferida.",
+      "assigned_role": [
+        "CHANNEL_INTELLIGENCE_REVIEWER"
+      ],
+      "input_contract": "DEFERRED",
+      "output_contract": "DEFERRED",
+      "decision_authority": "CHANNEL_INTELLIGENCE_REVIEW",
+      "veto_authority": "CHANNEL_INTELLIGENCE_REVIEWER",
+      "owner_escalation_conditions": [
+        "always"
+      ],
+      "maturity_status": "DEFINED",
+      "availability_status": "NON_EXECUTABLE_CURRENT",
+      "dependencies": [],
+      "prompt_reference": [],
+      "schema_reference": []
+    },
+    {
+      "capability_id": "IDENTITY_DRIFT_AUDIT",
+      "domain": "CHANNEL_INTELLIGENCE",
+      "purpose": "Auditar deriva de identidad; diferida.",
+      "assigned_role": [
+        "CHANNEL_INTELLIGENCE_REVIEWER"
+      ],
+      "input_contract": "DEFERRED",
+      "output_contract": "DEFERRED",
+      "decision_authority": "CHANNEL_INTELLIGENCE_AUDIT",
+      "veto_authority": "CHANNEL_INTELLIGENCE_REVIEWER",
+      "owner_escalation_conditions": [
+        "always"
+      ],
+      "maturity_status": "DEFINED",
+      "availability_status": "NON_EXECUTABLE_CURRENT",
+      "dependencies": [],
+      "prompt_reference": [],
+      "schema_reference": []
+    }
+  ]
+}

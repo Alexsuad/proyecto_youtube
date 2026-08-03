@@ -1,0 +1,253 @@
+{
+  "registry_version": "1.0.0",
+  "capabilities": [
+    {
+      "capability_id": "YT_EARLY_AUDIENCE_FIT",
+      "producer_component": "episode_youtube_positioning.concrete_audience",
+      "auditor_component": "capability_results.YT_EARLY_AUDIENCE_FIT",
+      "input_contracts": [
+        "episode_brief",
+        "refined_thesis",
+        "editorial_script_promise",
+        "active_editorial_profile_reference"
+      ],
+      "output_contract": "youtube_adaptation_b5_i2_package",
+      "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR",
+      "veto_conditions": [
+        "generic audience",
+        "profile contradiction"
+      ],
+      "evidence": [
+        "package concrete audience",
+        "auditor rationale"
+      ],
+      "invalidated_by": [
+        "profile checksum change",
+        "refined thesis change"
+      ],
+      "real_execution_required": true,
+      "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"
+    },
+    {
+      "capability_id": "YT_VISIBLE_PROMISE",
+      "producer_component": "episode_youtube_positioning.visible_promise",
+      "auditor_component": "capability_results.YT_VISIBLE_PROMISE",
+      "input_contracts": [
+        "refined_thesis",
+        "editorial_script_promise",
+        "evidence_or_claims_reference"
+      ],
+      "output_contract": "youtube_adaptation_b5_i2_package",
+      "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR",
+      "veto_conditions": [
+        "unsupported promise",
+        "absolute claim without support"
+      ],
+      "evidence": [
+        "visible promise claims",
+        "unsupported elements"
+      ],
+      "invalidated_by": [
+        "script promise change",
+        "evidence checksum change"
+      ],
+      "real_execution_required": true,
+      "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"
+    },
+    {
+      "capability_id": "YT_EARLY_PACKAGING_HYPOTHESIS",
+      "producer_component": "early_packaging_hypothesis",
+      "auditor_component": "capability_results.YT_EARLY_PACKAGING_HYPOTHESIS",
+      "input_contracts": [
+        "early_packaging_hypothesis",
+        "refined_thesis",
+        "editorial_script_promise"
+      ],
+      "output_contract": "youtube_adaptation_b5_i2_package",
+      "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR",
+      "veto_conditions": [
+        "final packaging disguised as early hypothesis"
+      ],
+      "evidence": [
+        "working title",
+        "thumbnail concept",
+        "overpromise risk"
+      ],
+      "invalidated_by": [
+        "early packaging checksum change"
+      ],
+      "real_execution_required": true,
+      "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"
+    },
+    {
+      "capability_id": "YT_PROMISE_CONTENT_ALIGNMENT",
+      "producer_component": "episode_youtube_positioning.visible_promise + early_packaging_hypothesis",
+      "auditor_component": "capability_results.YT_PROMISE_CONTENT_ALIGNMENT",
+      "input_contracts": [
+        "refined_thesis",
+        "editorial_script_promise",
+        "evidence_or_claims_reference"
+      ],
+      "output_contract": "youtube_adaptation_review",
+      "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR",
+      "veto_conditions": [
+        "promise/content mismatch"
+      ],
+      "evidence": [
+        "supporting_claims",
+        "auditor evidence refs"
+      ],
+      "invalidated_by": [
+        "refined thesis change",
+        "script promise change"
+      ],
+      "real_execution_required": true,
+      "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"
+    },
+    {
+      "capability_id": "YT_OPENING_READINESS",
+      "producer_component": "youtube_design_constraints.opening_readiness",
+      "auditor_component": "capability_results.YT_OPENING_READINESS",
+      "input_contracts": [
+        "editorial_script_promise",
+        "episode_brief"
+      ],
+      "output_contract": "youtube_adaptation_b5_i2_package",
+      "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR",
+      "veto_conditions": [
+        "real opening drafted",
+        "missing obligations"
+      ],
+      "evidence": [
+        "opening obligations",
+        "auditor pending items"
+      ],
+      "invalidated_by": [
+        "script promise change"
+      ],
+      "real_execution_required": true,
+      "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"
+    },
+    {
+      "capability_id": "YT_DURATION_ENVELOPE",
+      "producer_component": "youtube_design_constraints.duration_assessment",
+      "auditor_component": "capability_results.YT_DURATION_ENVELOPE",
+      "input_contracts": [
+        "episode_brief",
+        "refined_thesis"
+      ],
+      "output_contract": "youtube_adaptation_b5_i2_package",
+      "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR",
+      "veto_conditions": [
+        "unjustified universal duration"
+      ],
+      "evidence": [
+        "recommended_range",
+        "complexity factors"
+      ],
+      "invalidated_by": [
+        "brief change",
+        "thesis change"
+      ],
+      "real_execution_required": true,
+      "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"
+    },
+    {
+      "capability_id": "YT_OVERPROMISE_REVIEW",
+      "producer_component": "early_packaging_hypothesis.overpromise_risk",
+      "auditor_component": "capability_results.YT_OVERPROMISE_REVIEW",
+      "input_contracts": [
+        "early_packaging_hypothesis",
+        "editorial_script_promise"
+      ],
+      "output_contract": "youtube_adaptation_review",
+      "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR",
+      "veto_conditions": [
+        "blocking unresolved overpromise"
+      ],
+      "evidence": [
+        "overpromise decision",
+        "unsupported elements"
+      ],
+      "invalidated_by": [
+        "packaging change",
+        "promise change"
+      ],
+      "real_execution_required": true,
+      "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"
+    },
+    {
+      "capability_id": "YT_TEXT_PLATFORM_RISK",
+      "producer_component": "preliminary_youtube_risk_review.platform_risk",
+      "auditor_component": "capability_results.YT_TEXT_PLATFORM_RISK",
+      "input_contracts": [
+        "youtube_adaptation_b5_i2_package"
+      ],
+      "output_contract": "youtube_adaptation_review",
+      "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR",
+      "veto_conditions": [
+        "high platform risk not mitigable"
+      ],
+      "evidence": [
+        "platform risk summary",
+        "mitigations"
+      ],
+      "invalidated_by": [
+        "surface text change"
+      ],
+      "real_execution_required": true,
+      "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"
+    },
+    {
+      "capability_id": "YT_SCRIPT_RIGHTS_REUSE_RISK",
+      "producer_component": "preliminary_youtube_risk_review.rights_reuse_risk",
+      "auditor_component": "capability_results.YT_SCRIPT_RIGHTS_REUSE_RISK",
+      "input_contracts": [
+        "youtube_adaptation_b5_i2_package"
+      ],
+      "output_contract": "youtube_adaptation_review",
+      "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR",
+      "veto_conditions": [
+        "summary substitution risk essential",
+        "non-transformative dependency"
+      ],
+      "evidence": [
+        "rights reuse summary",
+        "unresolved_items"
+      ],
+      "invalidated_by": [
+        "script change",
+        "evidence change"
+      ],
+      "real_execution_required": true,
+      "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"
+    },
+    {
+      "capability_id": "YT_B5_I2_FUNCTIONAL_DECISION",
+      "producer_component": "youtube_adaptation_b5_i2_package",
+      "auditor_component": "decision",
+      "input_contracts": [
+        "youtube_adaptation_b5_i2_package",
+        "youtube_adaptation_review"
+      ],
+      "output_contract": "youtube_adaptation_review",
+      "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR",
+      "veto_conditions": [
+        "independence not demonstrated",
+        "publication limit incomplete",
+        "global decision inconsistent"
+      ],
+      "evidence": [
+        "capability_results",
+        "publication_limit",
+        "independence_check"
+      ],
+      "invalidated_by": [
+        "package checksum change",
+        "review checksum change"
+      ],
+      "real_execution_required": true,
+      "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"
+    }
+  ]
+}

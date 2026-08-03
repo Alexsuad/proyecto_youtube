@@ -1,0 +1,775 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "YouTubeAdaptationReview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "episode_id",
+    "artifact_id",
+    "artifact_checksum",
+    "producer_run_id",
+    "auditor_run_id",
+    "independence_check",
+    "active_profile_reference",
+    "capability_results",
+    "overpromise_decision",
+    "unsupported_elements",
+    "platform_risk_summary",
+    "rights_reuse_summary",
+    "opening_readiness",
+    "duration_assessment",
+    "findings",
+    "required_changes",
+    "blocking_reasons",
+    "unresolved_items",
+    "publication_limit",
+    "decision",
+    "created_at"
+  ],
+  "properties": {
+    "review_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "episode_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_checksum": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "producer_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "auditor_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "independence_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "producer_actor_id",
+        "auditor_actor_id",
+        "producer_run_id",
+        "auditor_run_id",
+        "decision"
+      ],
+      "properties": {
+        "producer_actor_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "auditor_actor_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "producer_run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "auditor_run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision": {
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        }
+      }
+    },
+    "active_profile_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "profile_version",
+        "profile_checksum"
+      ],
+      "properties": {
+        "profile_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profile_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profile_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "capability_results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "YT_EARLY_AUDIENCE_FIT",
+        "YT_VISIBLE_PROMISE",
+        "YT_EARLY_PACKAGING_HYPOTHESIS",
+        "YT_PROMISE_CONTENT_ALIGNMENT",
+        "YT_OPENING_READINESS",
+        "YT_DURATION_ENVELOPE",
+        "YT_OVERPROMISE_REVIEW",
+        "YT_TEXT_PLATFORM_RISK",
+        "YT_SCRIPT_RIGHTS_REUSE_RISK"
+      ],
+      "properties": {
+        "YT_EARLY_AUDIENCE_FIT": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "rationale",
+            "evidence_refs",
+            "mitigation_or_pending",
+            "blocking_reason"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "PASS",
+                "WARN",
+                "REQUEST_CHANGES",
+                "BLOCK"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mitigation_or_pending": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "blocking_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "YT_VISIBLE_PROMISE": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "rationale",
+            "evidence_refs",
+            "mitigation_or_pending",
+            "blocking_reason"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "PASS",
+                "WARN",
+                "REQUEST_CHANGES",
+                "BLOCK"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mitigation_or_pending": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "blocking_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "YT_EARLY_PACKAGING_HYPOTHESIS": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "rationale",
+            "evidence_refs",
+            "mitigation_or_pending",
+            "blocking_reason"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "PASS",
+                "WARN",
+                "REQUEST_CHANGES",
+                "BLOCK"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mitigation_or_pending": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "blocking_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "YT_PROMISE_CONTENT_ALIGNMENT": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "rationale",
+            "evidence_refs",
+            "mitigation_or_pending",
+            "blocking_reason"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "PASS",
+                "WARN",
+                "REQUEST_CHANGES",
+                "BLOCK"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mitigation_or_pending": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "blocking_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "YT_OPENING_READINESS": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "rationale",
+            "evidence_refs",
+            "mitigation_or_pending",
+            "blocking_reason"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "PASS",
+                "WARN",
+                "REQUEST_CHANGES",
+                "BLOCK"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mitigation_or_pending": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "blocking_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "YT_DURATION_ENVELOPE": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "rationale",
+            "evidence_refs",
+            "mitigation_or_pending",
+            "blocking_reason"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "PASS",
+                "WARN",
+                "REQUEST_CHANGES",
+                "BLOCK"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mitigation_or_pending": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "blocking_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "YT_OVERPROMISE_REVIEW": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "rationale",
+            "evidence_refs",
+            "mitigation_or_pending",
+            "blocking_reason"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "PASS",
+                "WARN",
+                "REQUEST_CHANGES",
+                "BLOCK"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mitigation_or_pending": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "blocking_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "YT_TEXT_PLATFORM_RISK": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "rationale",
+            "evidence_refs",
+            "mitigation_or_pending",
+            "blocking_reason"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "PASS",
+                "WARN",
+                "REQUEST_CHANGES",
+                "BLOCK"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mitigation_or_pending": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "blocking_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "YT_SCRIPT_RIGHTS_REUSE_RISK": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "rationale",
+            "evidence_refs",
+            "mitigation_or_pending",
+            "blocking_reason"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "PASS",
+                "WARN",
+                "REQUEST_CHANGES",
+                "BLOCK"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mitigation_or_pending": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "blocking_reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "overpromise_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "rationale",
+        "evidence_refs",
+        "mitigation_or_pending",
+        "blocking_reason"
+      ],
+      "properties": {
+        "decision": {
+          "enum": [
+            "PASS",
+            "WARN",
+            "REQUEST_CHANGES",
+            "BLOCK"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "mitigation_or_pending": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "blocking_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "unsupported_elements": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "platform_risk_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "severity",
+        "summary",
+        "mitigations",
+        "uncertainties"
+      ],
+      "properties": {
+        "severity": {
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "UNRESOLVED"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mitigations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "rights_reuse_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "severity",
+        "summary",
+        "mitigations",
+        "unresolved_items"
+      ],
+      "properties": {
+        "severity": {
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "UNRESOLVED"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mitigations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "unresolved_items": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "opening_readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "rationale",
+        "pending_items"
+      ],
+      "properties": {
+        "decision": {
+          "enum": [
+            "PASS",
+            "WARN",
+            "REQUEST_CHANGES",
+            "BLOCK"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pending_items": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "duration_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "rationale",
+        "recommended_range"
+      ],
+      "properties": {
+        "decision": {
+          "enum": [
+            "PASS",
+            "WARN",
+            "REQUEST_CHANGES",
+            "BLOCK"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recommended_range": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required_changes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "blocking_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "unresolved_items": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "publication_limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "DOES_NOT_AUTHORIZE"
+      ],
+      "properties": {
+        "DOES_NOT_AUTHORIZE": {
+          "type": "array",
+          "minItems": 6,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "B5_I3",
+              "FINAL_PACKAGING",
+              "PRODUCTION",
+              "PUBLICATION",
+              "MONETIZATION_GUARANTEE",
+              "LEGAL_APPROVAL"
+            ]
+          }
+        }
+      }
+    },
+    "decision": {
+      "enum": [
+        "APPROVAL",
+        "APPROVAL_WITH_WARNINGS",
+        "REQUEST_CHANGES",
+        "BLOCK"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

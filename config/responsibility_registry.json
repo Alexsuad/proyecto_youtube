@@ -3,18 +3,511 @@
   "operational_agents": 1,
   "real_subagents": 0,
   "responsibilities": [
-    {"role_id":"ORCHESTRATION","contract_type":"BASE_RESPONSIBILITY","functional_owner":"TECHNICAL_GOVERNANCE","purpose":"Coordinar el flujo y sus gates.","when_used":"Al iniciar y cerrar cada handoff.","inputs":["mission_context","artifacts"],"outputs":["execution_plan","handoff_record"],"read_permissions":["contracts","statuses"],"write_permissions":["operational_state","handoff_record"],"forbidden_actions":["aprobar contenido editorial","crear subagentes reales"],"veto_conditions":["input obligatorio ausente","estado incoherente"],"evidence":["gate result","handoff record"],"handoff":["entrega a la siguiente responsabilidad"],"prompt_version":"1.0.0"},
-    {"role_id":"RESEARCH_AND_CURATION","contract_type":"BASE_RESPONSIBILITY","functional_owner":"SCRIPT_PRODUCT","purpose":"Investigar, verificar y seleccionar fuentes y obras.","when_used":"Durante investigación y curación.","inputs":["topic","source_access"],"outputs":["research_pack","curation_decision"],"read_permissions":["source material","brief"],"write_permissions":["research artifacts"],"forbidden_actions":["inventar fuentes","redactar el guion final"],"veto_conditions":["evidencia insuficiente","fuente no verificable"],"evidence":["claims ledger","source report"],"handoff":["research to narrative"],"prompt_version":"1.0.0"},
-    {"role_id":"NARRATIVE_ARCHITECTURE","contract_type":"BASE_RESPONSIBILITY","functional_owner":"SCRIPT_PRODUCT","purpose":"Convertir investigación en tesis y estructura narrativa.","when_used":"Después de investigación y antes de redacción.","inputs":["research_pack","curation_decision","brief"],"outputs":["narrative_plan","thesis_artifact"],"read_permissions":["research artifacts","brief"],"write_permissions":["narrative plan","thesis"],"forbidden_actions":["alterar fuentes","aprobar su propia entrega"],"veto_conditions":["tesis sin soporte","estructura incompleta"],"evidence":["narrative plan","thesis"],"handoff":["plan to writing"],"prompt_version":"1.0.0"},
-    {"role_id":"WRITING","contract_type":"BASE_RESPONSIBILITY","functional_owner":"SCRIPT_PRODUCT","purpose":"Redactar el guion conforme al perfil y plan aprobados.","when_used":"Con inputs narrativos completos.","inputs":["narrative_plan","thesis_artifact","editorial_profile"],"outputs":["script_draft"],"read_permissions":["narrative artifacts","active profile"],"write_permissions":["script draft"],"forbidden_actions":["saltarse gates","declarar aprobación"],"veto_conditions":["perfil ausente","input obligatorio ausente"],"evidence":["version manifest","script"],"handoff":["draft to editor"],"prompt_version":"1.0.0"},
-    {"role_id":"EDITOR","contract_type":"BASE_RESPONSIBILITY","functional_owner":"SCRIPT_PRODUCT","purpose":"Editar el guion y documentar correcciones.","when_used":"Después de una redacción completa.","inputs":["script_draft","editorial_profile"],"outputs":["edited_script","EditorialEditReport"],"read_permissions":["script","profile","brief"],"write_permissions":["script","EditorialEditReport"],"forbidden_actions":["autoaprobar","borrar trazabilidad"],"veto_conditions":["defecto crítico no corregido","cambio sin reporte"],"evidence":["EditorialEditReport","diff"],"handoff":["edited script to final audit"],"prompt_version":"1.0.0"},
-    {"role_id":"FINAL_EDITORIAL_AUDITOR","contract_type":"BASE_RESPONSIBILITY","functional_owner":"SCRIPT_PRODUCT","purpose":"Auditar de forma independiente el producto editorial final.","when_used":"Tras edición y en contexto limpio.","inputs":["edited_script","EditorialEditReport","profile","brief"],"outputs":["FinalEditorialAudit"],"read_permissions":["all approved inputs"],"write_permissions":["FinalEditorialAudit"],"forbidden_actions":["modificar el guion auditado","auditar su propia edición"],"veto_conditions":["incumplimiento crítico","evidencia ausente"],"evidence":["PASS|WARN|FAIL|BLOCKED","correction route"],"handoff":["audit to owner decision"],"prompt_version":"1.0.0"}
+    {
+      "role_id": "ORCHESTRATION",
+      "contract_type": "BASE_RESPONSIBILITY",
+      "functional_owner": "TECHNICAL_GOVERNANCE",
+      "purpose": "Coordinar el flujo y sus gates.",
+      "when_used": "Al iniciar y cerrar cada handoff.",
+      "inputs": [
+        "mission_context",
+        "artifacts"
+      ],
+      "outputs": [
+        "execution_plan",
+        "handoff_record"
+      ],
+      "read_permissions": [
+        "contracts",
+        "statuses"
+      ],
+      "write_permissions": [
+        "operational_state",
+        "handoff_record"
+      ],
+      "forbidden_actions": [
+        "aprobar contenido editorial",
+        "crear subagentes reales"
+      ],
+      "veto_conditions": [
+        "input obligatorio ausente",
+        "estado incoherente"
+      ],
+      "evidence": [
+        "gate result",
+        "handoff record"
+      ],
+      "handoff": [
+        "entrega a la siguiente responsabilidad"
+      ],
+      "prompt_version": "1.0.0"
+    },
+    {
+      "role_id": "RESEARCH_AND_CURATION",
+      "contract_type": "BASE_RESPONSIBILITY",
+      "functional_owner": "SCRIPT_PRODUCT",
+      "purpose": "Investigar, verificar y seleccionar fuentes y obras.",
+      "when_used": "Durante investigación y curación.",
+      "inputs": [
+        "topic",
+        "source_access"
+      ],
+      "outputs": [
+        "research_pack",
+        "curation_decision"
+      ],
+      "read_permissions": [
+        "source material",
+        "brief"
+      ],
+      "write_permissions": [
+        "research artifacts"
+      ],
+      "forbidden_actions": [
+        "inventar fuentes",
+        "redactar el guion final"
+      ],
+      "veto_conditions": [
+        "evidencia insuficiente",
+        "fuente no verificable"
+      ],
+      "evidence": [
+        "claims ledger",
+        "source report"
+      ],
+      "handoff": [
+        "research to narrative"
+      ],
+      "prompt_version": "1.0.0"
+    },
+    {
+      "role_id": "NARRATIVE_ARCHITECTURE",
+      "contract_type": "BASE_RESPONSIBILITY",
+      "functional_owner": "SCRIPT_PRODUCT",
+      "purpose": "Convertir investigación en tesis y estructura narrativa.",
+      "when_used": "Después de investigación y antes de redacción.",
+      "inputs": [
+        "research_pack",
+        "curation_decision",
+        "brief"
+      ],
+      "outputs": [
+        "narrative_plan",
+        "thesis_artifact"
+      ],
+      "read_permissions": [
+        "research artifacts",
+        "brief"
+      ],
+      "write_permissions": [
+        "narrative plan",
+        "thesis"
+      ],
+      "forbidden_actions": [
+        "alterar fuentes",
+        "aprobar su propia entrega"
+      ],
+      "veto_conditions": [
+        "tesis sin soporte",
+        "estructura incompleta"
+      ],
+      "evidence": [
+        "narrative plan",
+        "thesis"
+      ],
+      "handoff": [
+        "plan to writing"
+      ],
+      "prompt_version": "1.0.0"
+    },
+    {
+      "role_id": "WRITING",
+      "contract_type": "BASE_RESPONSIBILITY",
+      "functional_owner": "SCRIPT_PRODUCT",
+      "purpose": "Redactar el guion conforme al perfil y plan aprobados.",
+      "when_used": "Con inputs narrativos completos.",
+      "inputs": [
+        "narrative_plan",
+        "thesis_artifact",
+        "editorial_profile"
+      ],
+      "outputs": [
+        "script_draft"
+      ],
+      "read_permissions": [
+        "narrative artifacts",
+        "active profile"
+      ],
+      "write_permissions": [
+        "script draft"
+      ],
+      "forbidden_actions": [
+        "saltarse gates",
+        "declarar aprobación"
+      ],
+      "veto_conditions": [
+        "perfil ausente",
+        "input obligatorio ausente"
+      ],
+      "evidence": [
+        "version manifest",
+        "script"
+      ],
+      "handoff": [
+        "draft to editor"
+      ],
+      "prompt_version": "1.0.0"
+    },
+    {
+      "role_id": "EDITOR",
+      "contract_type": "BASE_RESPONSIBILITY",
+      "functional_owner": "SCRIPT_PRODUCT",
+      "purpose": "Editar el guion y documentar correcciones.",
+      "when_used": "Después de una redacción completa.",
+      "inputs": [
+        "script_draft",
+        "editorial_profile"
+      ],
+      "outputs": [
+        "edited_script",
+        "EditorialEditReport"
+      ],
+      "read_permissions": [
+        "script",
+        "profile",
+        "brief"
+      ],
+      "write_permissions": [
+        "script",
+        "EditorialEditReport"
+      ],
+      "forbidden_actions": [
+        "autoaprobar",
+        "borrar trazabilidad"
+      ],
+      "veto_conditions": [
+        "defecto crítico no corregido",
+        "cambio sin reporte"
+      ],
+      "evidence": [
+        "EditorialEditReport",
+        "diff"
+      ],
+      "handoff": [
+        "edited script to final audit"
+      ],
+      "prompt_version": "1.0.0"
+    },
+    {
+      "role_id": "FINAL_EDITORIAL_AUDITOR",
+      "contract_type": "BASE_RESPONSIBILITY",
+      "functional_owner": "SCRIPT_PRODUCT",
+      "purpose": "Auditar de forma independiente el producto editorial final.",
+      "when_used": "Tras edición y en contexto limpio.",
+      "inputs": [
+        "edited_script",
+        "EditorialEditReport",
+        "profile",
+        "brief"
+      ],
+      "outputs": [
+        "FinalEditorialAudit"
+      ],
+      "read_permissions": [
+        "all approved inputs"
+      ],
+      "write_permissions": [
+        "FinalEditorialAudit"
+      ],
+      "forbidden_actions": [
+        "modificar el guion auditado",
+        "auditar su propia edición"
+      ],
+      "veto_conditions": [
+        "incumplimiento crítico",
+        "evidencia ausente"
+      ],
+      "evidence": [
+        "PASS|WARN|FAIL|BLOCKED",
+        "correction route"
+      ],
+      "handoff": [
+        "audit to owner decision"
+      ],
+      "prompt_version": "1.0.0"
+    },
+    {
+      "role_id": "CHANNEL_INTELLIGENCE_PRODUCER",
+      "contract_type": "BASE_RESPONSIBILITY",
+      "functional_owner": "CHANNEL_INTELLIGENCE",
+      "purpose": "Evaluar la pertenencia temática y cerrar una recomendación para revisión independiente.",
+      "when_used": "Antes de desarrollar un episodio real.",
+      "inputs": [
+        "topic_belonging_input",
+        "active_editorial_profile",
+        "initial_evidence"
+      ],
+      "outputs": [
+        "TopicBelongingAssessment"
+      ],
+      "read_permissions": [
+        "active profile",
+        "topic proposal",
+        "evidence"
+      ],
+      "write_permissions": [
+        "TopicBelongingAssessment"
+      ],
+      "forbidden_actions": [
+        "aprobar",
+        "activar perfiles",
+        "modificar el perfil",
+        "revisar su propia entrega"
+      ],
+      "veto_conditions": [
+        "perfil ausente",
+        "checksum no verificable",
+        "evidencia insuficiente"
+      ],
+      "evidence": [
+        "closed assessment",
+        "provenance",
+        "artifact checksum"
+      ],
+      "handoff": [
+        "closed assessment to CHANNEL_INTELLIGENCE_REVIEWER"
+      ],
+      "prompt_version": "1.0.0"
+    },
+    {
+      "role_id": "CHANNEL_INTELLIGENCE_REVIEWER",
+      "contract_type": "BASE_RESPONSIBILITY",
+      "functional_owner": "CHANNEL_INTELLIGENCE",
+      "purpose": "Revisar de forma independiente una evaluación temática cerrada y emitir una decisión trazable.",
+      "when_used": "Después de recibir un assessment cerrado en un run independiente.",
+      "inputs": [
+        "TopicBelongingAssessment",
+        "active_editorial_profile"
+      ],
+      "outputs": [
+        "TopicBelongingDecision"
+      ],
+      "read_permissions": [
+        "closed assessment",
+        "provenance",
+        "active profile",
+        "evidence"
+      ],
+      "write_permissions": [
+        "TopicBelongingDecision only"
+      ],
+      "forbidden_actions": [
+        "modificar el assessment",
+        "revisar en el mismo run",
+        "autoaprobar",
+        "activar perfiles"
+      ],
+      "veto_conditions": [
+        "actor o run repetido",
+        "checksum distinto",
+        "provenance ausente",
+        "tema estratégico sin escalamiento"
+      ],
+      "evidence": [
+        "decision",
+        "reviewer input checksum",
+        "owner escalation when required"
+      ],
+      "handoff": [
+        "decision to owner or episode gate"
+      ],
+      "prompt_version": "1.0.0"
+    }
   ],
   "functional_families": [
-    {"role_id":"CHANNEL_INTELLIGENCE","contract_type":"TRANSVERSAL_FUNCTIONAL_FAMILY","functional_owner":"CHANNEL_INTELLIGENCE","purpose":"Agrupar conocimiento de audiencia, fuentes y contexto del canal.","when_used":"En investigación, curación y aprendizaje.","inputs":["channel context","sources"],"outputs":["evidence","insights"],"read_permissions":["channel inputs"],"write_permissions":["research artifacts"],"forbidden_actions":["inventar evidencia"],"veto_conditions":["evidencia insuficiente"],"evidence":["source reports"],"handoff":["evidence to script product"],"prompt_version":"1.0.0"},
-    {"role_id":"YOUTUBE_ADAPTATION","contract_type":"TRANSVERSAL_FUNCTIONAL_FAMILY","functional_owner":"YOUTUBE_ADAPTATION","purpose":"Adaptar el producto editorial a formatos y metadatos de YouTube.","when_used":"Después del guion y durante derivados.","inputs":["script","thesis","brief"],"outputs":["packaging","shorts","metadata"],"read_permissions":["approved script","profile"],"write_permissions":["adaptation artifacts"],"forbidden_actions":["cambiar la tesis sin autorización"],"veto_conditions":["promesa no correspondida","riesgo de plataforma no resuelto"],"evidence":["adaptation report"],"handoff":["adapted package to audit"],"prompt_version":"1.0.0"}
+    {
+      "role_id": "CHANNEL_INTELLIGENCE",
+      "contract_type": "TRANSVERSAL_FUNCTIONAL_FAMILY",
+      "functional_owner": "CHANNEL_INTELLIGENCE",
+      "purpose": "Gobernar la identidad editorial del canal: propósito, posicionamiento, audiencia matriz, promesa, territorios, persona autoral, voz, corpus, aprendizajes, EditorialProfile, pertenencia temática y deriva.",
+      "when_used": "Al definir o auditar identidad, pertenencia temática, cambios de perfil, voz o deriva; la evaluación de tema precede cualquier episodio real.",
+      "inputs": [
+        "active editorial profile",
+        "channel identity context",
+        "topic proposal",
+        "voice corpus",
+        "identity evidence"
+      ],
+      "outputs": [
+        "TopicBelongingAssessment",
+        "TopicBelongingDecision",
+        "identity change assessment",
+        "profile proposal",
+        "voice sample assessment",
+        "identity drift audit"
+      ],
+      "read_permissions": [
+        "active profile",
+        "channel identity inputs",
+        "voice corpus",
+        "topic evidence"
+      ],
+      "write_permissions": [
+        "channel intelligence assessments",
+        "review decisions only",
+        "identity audit artifacts"
+      ],
+      "forbidden_actions": [
+        "activar perfiles",
+        "modificar perfiles aprobados",
+        "aprobar su propia propuesta",
+        "decidir tesis",
+        "escribir el guion",
+        "decidir packaging final",
+        "decidir monetización o copyright",
+        "reemplazar al propietario"
+      ],
+      "veto_conditions": [
+        "evidencia insuficiente",
+        "desalineación de identidad",
+        "checksum no verificable",
+        "riesgo estratégico sin escalamiento"
+      ],
+      "evidence": [
+        "profile checksum",
+        "topic assessment",
+        "topic decision",
+        "provenance",
+        "identity audit evidence"
+      ],
+      "handoff": [
+        "topic decision to owner or episode gate",
+        "identity change to owner"
+      ],
+      "prompt_version": "1.0.0"
+    },
+    {
+      "role_id": "YOUTUBE_ADAPTATION",
+      "contract_type": "TRANSVERSAL_FUNCTIONAL_FAMILY",
+      "functional_owner": "YOUTUBE_ADAPTATION",
+      "purpose": "Adaptar tempranamente el producto editorial a YouTube durante B5-I2 y gobernar sus derivados futuros sin invadir producción, publicación ni aprobación jurídica.",
+      "when_used": "Después del guion y durante B5-I2 para posicionamiento, promesa visible, packaging temprano, riesgos y preparación futura de publicación.",
+      "inputs": [
+        "episode_brief",
+        "refined_thesis",
+        "editorial_script_promise",
+        "evidence_or_claims_reference",
+        "active_editorial_profile"
+      ],
+      "outputs": [
+        "youtube_adaptation_b5_i2_package",
+        "youtube_adaptation_review",
+        "future_packaging",
+        "future_shorts",
+        "future_metadata"
+      ],
+      "read_permissions": [
+        "approved script core artifacts",
+        "active profile",
+        "evidence and claims references"
+      ],
+      "write_permissions": [
+        "youtube adaptation assessment artifacts only"
+      ],
+      "forbidden_actions": [
+        "cambiar la tesis sin autorización",
+        "redactar apertura real en B5-I2",
+        "autorizar producción o publicación",
+        "garantizar monetización",
+        "emitir aprobación jurídica"
+      ],
+      "veto_conditions": [
+        "promesa no correspondida",
+        "riesgo de plataforma no resuelto",
+        "riesgo textual de reutilización no mitigable",
+        "contradicción con el perfil activo"
+      ],
+      "evidence": [
+        "package checksum",
+        "review decision",
+        "publication limits",
+        "risk summaries"
+      ],
+      "handoff": [
+        "adaptation package to audit",
+        "review decision to owner gate"
+      ],
+      "prompt_version": "1.0.0"
+    }
   ],
   "legacy_role_mapping": [
-    {"legacy_role":"Orquestador","responsibility_ids":["ORCHESTRATION"]}, {"legacy_role":"Investigador","responsibility_ids":["RESEARCH_AND_CURATION"]}, {"legacy_role":"Curador","responsibility_ids":["RESEARCH_AND_CURATION"]}, {"legacy_role":"Planner","responsibility_ids":["NARRATIVE_ARCHITECTURE"]}, {"legacy_role":"Analista","responsibility_ids":["NARRATIVE_ARCHITECTURE"]}, {"legacy_role":"Sintetizador","responsibility_ids":["NARRATIVE_ARCHITECTURE"]}, {"legacy_role":"Guionista","responsibility_ids":["WRITING"]}, {"legacy_role":"QA Editorial","responsibility_ids":["EDITOR","FINAL_EDITORIAL_AUDITOR"]}, {"legacy_role":"Shorts Writer","responsibility_ids":["YOUTUBE_ADAPTATION"]}, {"legacy_role":"Packaging","responsibility_ids":["NARRATIVE_ARCHITECTURE","YOUTUBE_ADAPTATION"]}, {"legacy_role":"SEO","responsibility_ids":["YOUTUBE_ADAPTATION"]}
+    {
+      "legacy_role": "Orquestador",
+      "responsibility_ids": [
+        "ORCHESTRATION"
+      ]
+    },
+    {
+      "legacy_role": "Investigador",
+      "responsibility_ids": [
+        "RESEARCH_AND_CURATION"
+      ]
+    },
+    {
+      "legacy_role": "Curador",
+      "responsibility_ids": [
+        "RESEARCH_AND_CURATION"
+      ]
+    },
+    {
+      "legacy_role": "Planner",
+      "responsibility_ids": [
+        "NARRATIVE_ARCHITECTURE"
+      ]
+    },
+    {
+      "legacy_role": "Analista",
+      "responsibility_ids": [
+        "NARRATIVE_ARCHITECTURE"
+      ]
+    },
+    {
+      "legacy_role": "Sintetizador",
+      "responsibility_ids": [
+        "NARRATIVE_ARCHITECTURE"
+      ]
+    },
+    {
+      "legacy_role": "Guionista",
+      "responsibility_ids": [
+        "WRITING"
+      ]
+    },
+    {
+      "legacy_role": "QA Editorial",
+      "responsibility_ids": [
+        "EDITOR",
+        "FINAL_EDITORIAL_AUDITOR"
+      ]
+    },
+    {
+      "legacy_role": "Shorts Writer",
+      "responsibility_ids": [
+        "YOUTUBE_ADAPTATION"
+      ]
+    },
+    {
+      "legacy_role": "Packaging",
+      "responsibility_ids": [
+        "NARRATIVE_ARCHITECTURE",
+        "YOUTUBE_ADAPTATION"
+      ]
+    },
+    {
+      "legacy_role": "SEO",
+      "responsibility_ids": [
+        "YOUTUBE_ADAPTATION"
+      ]
+    }
   ]
 }

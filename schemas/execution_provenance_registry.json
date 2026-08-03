@@ -24,6 +24,12 @@
       "items": {
         "$ref": "#/definitions/handoff"
       }
+    },
+    "attempts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/attempt"
+      }
     }
   },
   "definitions": {
@@ -301,6 +307,7 @@
             "refined_thesis",
             "script_promise",
             "semantic_audit",
+            "youtube_adaptation_b5_i2_package",
             "early_packaging_hypothesis",
             "youtube_adaptation_review",
             "execution_smoke_report"
@@ -428,7 +435,8 @@
           "enum": [
             "SUCCEEDED",
             "FAILED",
-            "BLOCKED_BY_SEMANTIC_EVALUATOR"
+            "BLOCKED_BY_SEMANTIC_EVALUATOR",
+            "BLOCKED_BY_RUNTIME_PROVIDER"
           ]
         },
         "execution_mode": {
@@ -584,6 +592,172 @@
         "handoff_target": {
           "type": "string",
           "minLength": 1
+        },
+        "prompt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "input_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "validation_result": {
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        },
+        "output_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt_id",
+        "run_id",
+        "status",
+        "error",
+        "role_id",
+        "provider",
+        "model",
+        "execution_profile",
+        "execution_route",
+        "actual_executor",
+        "actual_provider",
+        "actual_model",
+        "started_at",
+        "finished_at",
+        "latency",
+        "execution_mode",
+        "prompt_id",
+        "prompt_version",
+        "prompt_checksum",
+        "input_checksum",
+        "output_checksum",
+        "validation_result"
+      ],
+      "properties": {
+        "attempt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "FAILED",
+            "BLOCKED_BY_RUNTIME_PROVIDER",
+            "BLOCKED_BY_SEMANTIC_EVALUATOR"
+          ]
+        },
+        "error": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual_executor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual_provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual_model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "latency": {
+          "type": [
+            "number",
+            "integer"
+          ],
+          "minimum": 0
+        },
+        "execution_mode": {
+          "enum": [
+            "REAL",
+            "SYNTHETIC",
+            "DIAGNOSTIC"
+          ]
+        },
+        "prompt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "input_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "output_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "validation_result": {
+          "enum": [
+            "NOT_REACHED",
+            "FAIL"
+          ]
+        },
+        "metadata_origin": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     }

@@ -1,0 +1,231 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Topic Belonging Assessment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "assessment_id",
+    "strategic_triggers",
+    "topic_input_id",
+    "producer_actor_id",
+    "producer_run_id",
+    "producer_role_id",
+    "profile_id",
+    "profile_version",
+    "profile_checksum",
+    "topic",
+    "narrative_work",
+    "central_question",
+    "proposed_angle",
+    "proposed_territory",
+    "initial_evidence",
+    "sensitive_risks",
+    "territory_classification",
+    "identity_alignment",
+    "promise_alignment",
+    "risks",
+    "recommended_conditions",
+    "recommended_exclusions",
+    "owner_escalation_recommended",
+    "evidence",
+    "status",
+    "artifact_checksum",
+    "provenance"
+  ],
+  "properties": {
+    "assessment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producer_actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producer_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producer_role_id": {
+      "const": "CHANNEL_INTELLIGENCE_PRODUCER"
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_checksum": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1
+    },
+    "narrative_work": {
+      "type": "string",
+      "minLength": 1
+    },
+    "central_question": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposed_angle": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposed_territory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "initial_evidence": {
+      "type": "array",
+      "minItems": 1
+    },
+    "sensitive_risks": {
+      "type": "array"
+    },
+    "territory_classification": {
+      "enum": [
+        "ACTIVE",
+        "EXPERIMENTAL",
+        "EXCLUDED",
+        "UNCLASSIFIED"
+      ]
+    },
+    "identity_alignment": {
+      "enum": [
+        "ALIGNED",
+        "CONDITIONAL",
+        "MISALIGNED",
+        "INSUFFICIENT_EVIDENCE"
+      ]
+    },
+    "promise_alignment": {
+      "enum": [
+        "ALIGNED",
+        "CONDITIONAL",
+        "MISALIGNED",
+        "INSUFFICIENT_EVIDENCE"
+      ]
+    },
+    "risks": {
+      "type": "array"
+    },
+    "recommended_conditions": {
+      "type": "array"
+    },
+    "recommended_exclusions": {
+      "type": "array"
+    },
+    "owner_escalation_recommended": {
+      "type": "boolean"
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1
+    },
+    "status": {
+      "const": "CLOSED_FOR_REVIEW"
+    },
+    "artifact_checksum": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "topic_input_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "strategic_triggers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "political_partisan_sensitivity",
+        "high_sensitivity",
+        "audience_matrix_change",
+        "excluded_boundary_reinterpretation",
+        "new_personal_exposure",
+        "voice_or_author_persona_change",
+        "positioning_expansion",
+        "permanent_effect",
+        "high_precedent_risk",
+        "experimental_territory"
+      ],
+      "properties": {
+        "political_partisan_sensitivity": {
+          "type": "boolean"
+        },
+        "high_sensitivity": {
+          "type": "boolean"
+        },
+        "audience_matrix_change": {
+          "type": "boolean"
+        },
+        "excluded_boundary_reinterpretation": {
+          "type": "boolean"
+        },
+        "new_personal_exposure": {
+          "type": "boolean"
+        },
+        "voice_or_author_persona_change": {
+          "type": "boolean"
+        },
+        "positioning_expansion": {
+          "type": "boolean"
+        },
+        "permanent_effect": {
+          "type": "boolean"
+        },
+        "high_precedent_risk": {
+          "type": "boolean"
+        },
+        "experimental_territory": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actor_id",
+        "run_id",
+        "role_id",
+        "input_checksums",
+        "output_checksum"
+      ],
+      "properties": {
+        "actor_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role_id": {
+          "const": "CHANNEL_INTELLIGENCE_PRODUCER"
+        },
+        "input_checksums": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{64}$"
+          }
+        },
+        "output_checksum": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        }
+      }
+    }
+  }
+}

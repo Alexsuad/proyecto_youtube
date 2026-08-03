@@ -25,11 +25,11 @@ def approval(profile, checksum):
         "approval_status": "APPROVE",
         "reviewer_role": "CHANNEL_INTELLIGENCE",
         "approval_timestamp": "2026-07-27T12:00:00Z",
-        "review_scope": ["identidad", "voz", "l?mites"],
+        "review_scope": ["identidad", "voz", "límites"],
         "functional_owner_role": "CHANNEL_INTELLIGENCE",
         "voice_evidence_level": "AUTHENTIC_CORPUS_PARTIAL",
-        "evidence_summary": "Aprobaci?n final de fixture sint?tico.",
-        "limitations": ["Fixture de validaci?n."],
+        "evidence_summary": "Aprobación final de fixture sintético.",
+        "limitations": ["Fixture de validación."],
         "approved_by": "channel_intelligence_owner",
         "approved_at": "2026-07-27T12:00:00Z",
     }
@@ -95,8 +95,8 @@ def test_cli_pipeline_and_rejections(tmp_path: Path):
         "approval_status": "PENDING",
         "functional_owner_role": "CHANNEL_INTELLIGENCE",
         "voice_evidence_level": "AUTHENTIC_CORPUS_PARTIAL",
-        "evidence_summary": "Pendiente de revisi?n funcional.",
-        "limitations": ["Sin aprobaci?n funcional todav?a."],
+        "evidence_summary": "Pendiente de revisión funcional.",
+        "limitations": ["Sin aprobación funcional todavía."],
     }
     ap.write_text(json.dumps(pending_approval))
     assert run("activate_editorial_profile.py", "--profile", one, "--approval", ap, "--technical", te, "--output", tmp_path / f"pending_{token}.json", "--actor", "synthetic").returncode != 0

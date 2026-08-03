@@ -37,6 +37,23 @@ EDITORIAL_RUNTIME_FIELDS = {
     "created_at",
     "audit_method",
     "readiness",
+    "artifact_references",
+    "producer_run_reference",
+    "auditor_run_reference",
+    "producer_actor_id",
+    "auditor_actor_id",
+    "auditor_input_checksum",
+    "auditor_write_scope",
+    "independence_result",
+}
+EDITORIAL_RUNTIME_NORMALIZED_FIELDS = {
+    "required_changes",
+    "excluded_claims_detected",
+    "unsupported_inferences",
+    "redundancy_findings",
+    "progression_findings",
+    "blocking_reasons",
+    "reaudit_requirements",
 }
 EDITORIAL_ONLY_SCHEMAS = {
     "narrative_human_analysis",
@@ -45,6 +62,7 @@ EDITORIAL_ONLY_SCHEMAS = {
     "editorial_script_promise",
     "b5_i2_semantic_sufficiency_audit",
     "early_packaging_hypothesis",
+    "youtube_adaptation_b5_i2_package",
     "youtube_adaptation_review",
 }
 
@@ -64,6 +82,12 @@ def persist_execution_result(path: Path, result: ExecutionResult, request: Execu
     from src.ai.registry import append_result
 
     append_result(path, result, execution_mode=execution_mode, role=request.role or "UNSPECIFIED_PRODUCER", request=request)
+
+
+def persist_execution_attempt(path: Path, result: ExecutionResult, request: ExecutionRequest, *, execution_mode: str) -> None:
+    from src.ai.registry import append_attempt
+
+    append_attempt(path, result, execution_mode=execution_mode, role=request.role or "UNSPECIFIED_PRODUCER", request=request)
 
 
 def manifest_checksum(request: ExecutionRequest) -> str:
@@ -93,6 +117,10 @@ def _availability_metadata(error: str) -> dict[str, str]:
         "PROVIDER_UNAVAILABLE",
         "TIMEOUT",
         "INVALID_RESPONSE",
+        "MODEL_INVOCATION_FAILED",
+        "EMPTY_RESPONSE",
+        "INVALID_JSON",
+        "OUTPUT_CONTRACT_INVALID",
         "EXECUTOR_UNAVAILABLE",
         "ACTUAL_PROVIDER_AND_MODEL_REQUIRED",
         "BLOCKED_PENDING_OWNER_COST_AUTHORIZATION",
@@ -170,7 +198,8 @@ def _result(
 
 def validate_editorial_payload(payload: dict[str, Any], schema_name: str) -> list[str]:
     schema = load_schema(schema_name)
-    editorial_schema = {**schema, "required": [field for field in schema.get("required", []) if field not in EDITORIAL_RUNTIME_FIELDS]}
+    required_exempt = EDITORIAL_RUNTIME_FIELDS | EDITORIAL_RUNTIME_NORMALIZED_FIELDS
+    editorial_schema = {**schema, "required": [field for field in schema.get("required", []) if field not in required_exempt]}
     editorial_schema["properties"] = {key: value for key, value in schema.get("properties", {}).items() if key not in EDITORIAL_RUNTIME_FIELDS}
     errors = Draft7Validator(editorial_schema).iter_errors(payload)
     return [
@@ -186,7 +215,8 @@ def editorial_only_payload(payload: dict[str, Any]) -> dict[str, Any]:
 def editorial_projection_schema(schema_name: str) -> dict[str, Any]:
     schema = load_schema(schema_name)
     projected = dict(schema)
-    projected["required"] = [field for field in schema.get("required", []) if field not in EDITORIAL_RUNTIME_FIELDS]
+    required_exempt = EDITORIAL_RUNTIME_FIELDS | EDITORIAL_RUNTIME_NORMALIZED_FIELDS
+    projected["required"] = [field for field in schema.get("required", []) if field not in required_exempt]
     projected["properties"] = {key: value for key, value in schema.get("properties", {}).items() if key not in EDITORIAL_RUNTIME_FIELDS}
     return projected
 
@@ -332,10 +362,10 @@ def execute(request: ExecutionRequest) -> ExecutionResult:
         return _result(request, provider_name, ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=str(exc), usage=_availability_metadata(str(exc)))
     except (RuntimeError, ValueError) as exc:
         availability = _availability_metadata(str(exc))
-        status = ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR if availability.get("availability_status") in {"CREDENTIALS_MISSING", "MODEL_UNAVAILABLE", "PROVIDER_UNAVAILABLE", "TIMEOUT", "BLOCKED_PENDING_OWNER_COST_AUTHORIZATION", "EXECUTOR_UNAVAILABLE", "AGENT_HARNESS_SMOKE_ONLY_UNTIL_R6_B_RETRY"} else ExecutionStatus.FAILED
+        status = ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER if availability.get("availability_status") in {"CREDENTIALS_MISSING", "MODEL_UNAVAILABLE", "PROVIDER_UNAVAILABLE", "TIMEOUT", "MODEL_INVOCATION_FAILED"} else (ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR if availability.get("availability_status") in {"BLOCKED_PENDING_OWNER_COST_AUTHORIZATION", "EXECUTOR_UNAVAILABLE", "AGENT_HARNESS_SMOKE_ONLY_UNTIL_R6_B_RETRY"} else ExecutionStatus.FAILED)
         return _result(request, provider_name, status, started, manifest, error=str(exc), usage=availability)
     output = editorial_only_payload(output or {}) if request.output_schema in EDITORIAL_ONLY_SCHEMAS else (output or {})
     violations = validate_editorial_payload(output, request.output_schema) if request.output_schema in EDITORIAL_ONLY_SCHEMAS else validate_against_schema(output, request.output_schema)
     if violations:
-        return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, output=output, error="output inválido: " + "; ".join(violations), usage=usage)
+        return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, output=output, error="OUTPUT_CONTRACT_INVALID: " + "; ".join(violations), usage=usage)
     return _result(request, provider_name, ExecutionStatus.SUCCEEDED, started, manifest, output=output, usage=usage, real=provider_name not in {"mock", "agent_handoff"})

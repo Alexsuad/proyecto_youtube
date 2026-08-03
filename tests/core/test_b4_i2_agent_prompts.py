@@ -49,7 +49,8 @@ R6_ROLE_IDS = [
     "YOUTUBE_ADAPTATION_PRODUCER",
     "YOUTUBE_ADAPTATION_AUDITOR",
 ]
-ROLE_IDS = BASE_ROLE_IDS + R6_ROLE_IDS
+CI_ROLE_IDS = ["CHANNEL_INTELLIGENCE_PRODUCER", "CHANNEL_INTELLIGENCE_REVIEWER"]
+ROLE_IDS = BASE_ROLE_IDS + R6_ROLE_IDS + CI_ROLE_IDS
 
 
 def _read_json(path: Path):
@@ -76,7 +77,7 @@ def test_agent_prompt_registry_schema():
 def test_all_canonical_prompts_registered():
     registry = _read_json(ROOT / "config" / "agent_prompt_registry.json")
     prompts = registry["prompts"]
-    assert len(prompts) == 10
+    assert len(prompts) == 12
     assert [p["role_id"] for p in prompts] == ROLE_IDS
 
 
@@ -125,7 +126,7 @@ def test_no_provider_or_model_identifiers_in_prompts():
         "antigravity", "codex", "opencode", "notebooklm",
         "openai", "gemini", "claude", "gpt", "model",
     ]
-    for role_id in BASE_ROLE_IDS:
+    for role_id in BASE_ROLE_IDS + CI_ROLE_IDS:
         prompt_file = ROOT / "prompts" / "roles" / role_id / "1.0.0.md"
         content = prompt_file.read_text(encoding="utf-8").lower()
         for term in forbidden:
@@ -137,6 +138,12 @@ def test_no_provider_or_model_identifiers_in_prompts():
                 f"Termino prohibido '{term}' encontrado en {prompt_file}: {matches}"
             )
 
+
+
+
+def test_agent_prompt_registry_functional_metadata_is_utf8_clean():
+    text = (ROOT / "config" / "agent_prompt_registry.json").read_text(encoding="utf-8")
+    assert "?" not in text
 
 def test_no_provider_or_model_identifiers_in_registry():
     registry = _read_json(ROOT / "config" / "agent_prompt_registry.json")
@@ -241,7 +248,7 @@ def test_resolve_runtime_requires_explicit_mock_config(tmp_path):
 
 def test_resolve_runtime_all_roles_with_explicit_config(tmp_path):
     runtime_path = _write_mock_runtime(tmp_path)
-    for role_id in BASE_ROLE_IDS:
+    for role_id in BASE_ROLE_IDS + CI_ROLE_IDS:
         config = resolve_runtime(role_id, runtime_path)
         assert config["role_id"] == role_id
         assert config["provider"] == "mock"

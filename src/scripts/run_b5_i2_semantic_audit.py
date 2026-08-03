@@ -19,7 +19,7 @@ from src.core.contract_validation import validate_against_schema
 
 SKILL_PATH = Path(".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md")
 AUDITOR_CAPABILITY = "B5_I2_SEMANTIC_AUDITOR"
-AUDITOR_ROLE = "INDEPENDENT_EDITORIAL_AUDITOR"
+AUDITOR_ROLE = "SCRIPT_PRODUCT_AUDITOR"
 CRITICAL_CRITERIA = (
     "ANALYSIS_SPECIFICITY",
     "EVIDENCE_TRACEABILITY",
@@ -35,6 +35,18 @@ CRITICAL_CRITERIA = (
 )
 REQUIRED_AUDIT_INPUT_KINDS = {"research", "evidence_report", "provisional_thesis", "analysis", "curation", "refined_thesis", "script_promise"}
 OPTIONAL_AUDIT_INPUT_KINDS = {"early_packaging_hypothesis"}
+AUDIT_DIMENSIONS = (
+    "TRIVIAL_THESIS",
+    "INTERCHANGEABLE_ANALYSIS",
+    "DECORATIVE_OBJECTION",
+    "FALSE_DEPTH",
+    "REPHRASED_NOT_REFINED_THESIS",
+    "REDUNDANT_CURATION",
+    "NO_ARGUMENTATIVE_PROGRESSION",
+    "UNSUPPORTED_INFERENCE",
+    "SUMMARY_INSTEAD_OF_ANALYSIS",
+    "MISSING_INTERPRETIVE_LIMIT",
+)
 
 
 def _skill_text() -> str:
@@ -68,7 +80,7 @@ def build_editorial_prompt(request: ExecutionRequest) -> str:
         "Criterios críticos obligatorios: " + ", ".join(CRITICAL_CRITERIA) + ".",
         "No apliques reglas heredadas de QA de guion: ni número fijo de eventos, ni ejemplos obligatorios, ni re-hooks, ni regla 80/20, ni estructura de guion terminado.",
         "EarlyPackagingHypothesis es opcional, de solo lectura y no bloquea por ausencia. Si existe, solo permite una observación de honestidad para YOUTUBE_ADAPTATION; no evalúes título, miniatura, clic ni packaging.",
-        "Debes emitir solo el dictamen editorial: decision en PASS, WARN, FAIL o BLOCKED.",
+        "Debes emitir solo el dictamen editorial: decision en PASS, REQUEST_CHANGES, FAIL o BLOCKED.",
         "No decidas readiness operativo ni campos técnicos; eso lo inyecta el runtime.",
         "Esta auditoría no autoriza B5-I3.",
         "Distingue SEMANTIC_AUDIT_INTEGRITY (lo impondrá el runtime) de SEMANTIC_EDITORIAL_DECISION (tu dictamen).",
@@ -80,7 +92,7 @@ def build_editorial_prompt(request: ExecutionRequest) -> str:
 
 def _operational_readiness(result: ExecutionResult, editorial_decision: str) -> str:
     provider_kind = str(result.usage.get("provider_kind") or "").upper()
-    if editorial_decision == "FAIL":
+    if editorial_decision in {"FAIL", "REQUEST_CHANGES"}:
         return "NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW"
     if editorial_decision in {"BLOCKED", "NOT_EVALUATED"}:
         return "BLOCKED"
@@ -107,9 +119,41 @@ def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: E
         for ref in anchored.get("evidence_refs", [])
         if isinstance(ref, str) and ref
     })
+    producer_run_ids = sorted({item.get("producer_run_id") for item in artifact_checksums if item.get("producer_run_id")})
+    producer_run_reference = producer_run_ids[0] if len(producer_run_ids) == 1 else "MULTIPLE_PRODUCER_RUNS"
+    producer_actor_id = "SCRIPT_PRODUCT_PRODUCER" if len(producer_run_ids) == 1 else "MIXED_PRODUCER_ACTORS"
+    artifact_references = [f"{item['artifact_kind']}:{item['artifact_id']}" for item in artifact_checksums]
+    dimension_rows = [item for item in payload.get("dimension_results", []) if isinstance(item, dict)]
+    dimension_names = [item.get("dimension") for item in dimension_rows]
+    dimension_issues = []
+    if set(dimension_names) != set(AUDIT_DIMENSIONS) or len(dimension_names) != len(set(dimension_names)):
+        missing = [name for name in AUDIT_DIMENSIONS if name not in dimension_names]
+        duplicated = [name for name in set(dimension_names) if dimension_names.count(name) > 1]
+        unknown = [name for name in dimension_names if name not in AUDIT_DIMENSIONS]
+        dimension_issues = (
+            (["FALTAN DIMENSIONES: " + ", ".join(sorted(missing))] if missing else [])
+            + (["DIMENSIONES DUPLICADAS: " + ", ".join(sorted(duplicated))] if duplicated else [])
+            + (["DIMENSIONES DESCONOCIDAS: " + ", ".join(sorted(set(unknown)))] if unknown else [])
+        )
+    thesis_finding = payload.get("thesis_refinement_finding", {})
+    if not isinstance(thesis_finding, dict) or not thesis_finding.get("status") or not str(thesis_finding.get("summary", "")).strip():
+        dimension_issues.append("THESIS_REFINEMENT_FINDING_INCOMPLETO")
+    if not str(payload.get("auditor_statement", "")).strip():
+        dimension_issues.append("AUDITOR_STATEMENT_FALTANTE")
+    if dimension_issues:
+        blocking = list(audit.get("blocking_reasons", []))
+        audit["blocking_reasons"] = blocking + ["DIMENSION_RESULTS_DEBEN_PROVENIR_DEL_AUDITOR: " + "; ".join(dimension_issues)]
+        audit["decision"] = "BLOCKED"
+        audit["readiness"] = "BLOCKED"
     audit.update({
         "audit_id": audit.get("audit_id") or request.output_artifact_id,
         "episode_id": request.episode_id,
+        "artifact_references": artifact_references,
+        "artifact_checksums": artifact_checksums,
+        "producer_run_reference": audit.get("producer_run_reference") or producer_run_reference,
+        "auditor_run_reference": result.run_id,
+        "producer_actor_id": audit.get("producer_actor_id") or producer_actor_id,
+        "auditor_actor_id": AUDITOR_ROLE,
         "auditor_role": AUDITOR_ROLE,
         "auditor_run_id": result.run_id,
         "auditor_skill_id": request.skill_id,
@@ -118,7 +162,9 @@ def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: E
         "model_or_evaluator": result.model,
         "execution_timestamp": result.completed_at,
         "input_manifest_checksum": result.input_manifest_checksum,
-        "artifact_checksums": artifact_checksums,
+        "auditor_input_checksum": result.input_manifest_checksum,
+        "auditor_write_scope": "AUDIT_ONLY",
+        "independence_result": "PASS" if producer_run_reference != result.run_id and producer_actor_id != AUDITOR_ROLE else "FAIL",
         "audited_artifact_ids": [
             f"{item['artifact_kind']}:{item['artifact_id']}"
             for item in artifact_checksums
@@ -133,18 +179,36 @@ def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: E
             {"criterion": item.get("criterion", ""), "status": item.get("status", ""), "summary": item.get("rationale", "")}
             for item in findings
         ],
+        "dimension_results": dimension_rows,
+        "findings": findings,
         "blocking_defects": audit.get("blocking_defects", []),
         "non_blocking_defects": audit.get("non_blocking_defects", []),
         "cited_evidence": audit.get("cited_evidence", cited_evidence),
         "required_corrections": audit.get("required_corrections", []),
+        "required_changes": audit.get("required_changes") or audit.get("required_corrections", []),
+        "excluded_claims_detected": audit.get("excluded_claims_detected", []),
+        "unsupported_inferences": audit.get("unsupported_inferences", []),
+        "redundancy_findings": audit.get("redundancy_findings", []),
+        "progression_findings": audit.get("progression_findings", []),
+        "thesis_refinement_finding": audit.get("thesis_refinement_finding", {}),
+        "blocking_reasons": audit.get("blocking_reasons", []),
+        "reaudit_requirements": audit.get("reaudit_requirements", []),
         "unresolved_questions": audit.get("unresolved_questions", []),
         "inherited_restrictions_checked": audit.get("inherited_restrictions_checked", []),
-        "auditor_statement": audit.get("auditor_statement") or f"Decision {audit.get('decision', 'UNSPECIFIED')} emitida sobre artefactos B5-I2 con evidencia citada.",
+        "auditor_statement": audit.get("auditor_statement") or "",
         "audit_method": "AI_SEMANTIC_REVIEW",
         "readiness": _operational_readiness(result, str(audit.get("decision") or "")),
         "created_at": result.completed_at,
     })
     return audit
+
+
+def _dimension_block_reason(audit: dict[str, Any]) -> str | None:
+    reasons = audit.get("blocking_reasons", [])
+    for reason in reasons:
+        if str(reason).startswith("DIMENSION_RESULTS_DEBEN_PROVENIR_DEL_AUDITOR"):
+            return str(reason)
+    return None
 
 
 def _transaction_paths(output_path: Path, registry_path: Path) -> dict[str, Path]:
@@ -270,6 +334,9 @@ def execute_b5_i2_audit(*, artifacts: list[InputArtifact], output_path: Path, re
     if not result.is_real_editorial_execution:
         return replace(result, status=ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, error="mock solo valida el flujo estructural; no cierra la auditoría editorial")
     audit = _runtime_audit(result.output or {}, request, result)
+    block_reason = _dimension_block_reason(audit)
+    if block_reason:
+        return replace(result, status=ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, output=audit, error=block_reason)
     violations = validate_against_schema(audit, request.output_schema)
     if violations:
         return replace(result, status=ExecutionStatus.FAILED, output=audit, error="output B5-I2 inválido: " + "; ".join(violations))
@@ -305,6 +372,9 @@ def import_b5_i2_handoff(*, package_path: Path, result_path: Path, artifacts: li
     run_id, timestamp = f"RUN-AI-IMPORT-{package['handoff_id'].replace('RUN-AI-', '')}", _now()
     result = ExecutionResult(run_id, ExecutionStatus.SUCCEEDED, "handoff", provider, model, computed_manifest, editorial_payload, None, timestamp, timestamp, usage={"skill_id": request.skill_id, "skill_version": request.skill_version}, episode_id=request.episode_id, output_artifact_id=request.output_artifact_id, output_artifact_kind="semantic_audit", output_artifact_ref=request.output_artifact_ref, is_real_editorial_execution=True)
     audit = _runtime_audit(editorial_payload, request, result)
+    block_reason = _dimension_block_reason(audit)
+    if block_reason:
+        return replace(result, status=ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, output=audit, error=block_reason)
     violations = validate_against_schema(audit, request.output_schema)
     if violations:
         return replace(result, status=ExecutionStatus.FAILED, output=audit, error="output B5-I2 inválido: " + "; ".join(violations))

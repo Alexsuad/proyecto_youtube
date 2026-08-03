@@ -20,6 +20,7 @@ class ArtifactStatus(str, Enum):
 class GateStatus(str, Enum):
     PASS = "PASS"
     WARN = "WARN"
+    REQUEST_CHANGES = "REQUEST_CHANGES"
     FAIL = "FAIL"
     BLOCKED = "BLOCKED"
 

@@ -56,6 +56,8 @@ def _audit() -> dict:
         "audited_artifact_versions": [{"artifact_kind": "analysis", "artifact_id": "A-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "curation", "artifact_id": "C-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "refined_thesis", "artifact_id": "T-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "script_promise", "artifact_id": "SP-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}],
         "criteria_results": [{"criterion": criterion, "status": "SATISFIED", "summary": "hallazgo trazable"} for criterion in criteria],
         "findings": [{"criterion": criterion, "status": "SATISFIED", "anchored_findings": [anchored] if criterion in critical else [], "rationale": "hallazgo trazable"} for criterion in criteria],
+        "dimension_results": [{"dimension": name, "status": "PASS", "summary": "Dimensión controlada por fixture."} for name in ["TRIVIAL_THESIS", "INTERCHANGEABLE_ANALYSIS", "DECORATIVE_OBJECTION", "FALSE_DEPTH", "REPHRASED_NOT_REFINED_THESIS", "REDUNDANT_CURATION", "NO_ARGUMENTATIVE_PROGRESSION", "UNSUPPORTED_INFERENCE", "SUMMARY_INSTEAD_OF_ANALYSIS", "MISSING_INTERPRETIVE_LIMIT"]],
+        "thesis_refinement_finding": {"status": "PASS", "summary": "El fixture sintetiza el estado de refinamiento."},
         "blocking_defects": [], "non_blocking_defects": [], "cited_evidence": ["F-1"], "required_corrections": [], "unresolved_questions": [], "inherited_restrictions_checked": [], "auditor_statement": "Decision PASS emitida sobre artefactos B5-I2 con evidencia citada.",
         "decision": "PASS", "readiness": "BLOCKED", "created_at": "2026-07-25T08:00:00Z",
     }
@@ -130,7 +132,7 @@ def test_api_without_key_blocks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
 
 def test_local_unavailable_blocks(tmp_path: Path) -> None:
     result = execute(_request(tmp_path, provider="ollama", execution_mode="local", model="local", timeout=0.01, config={"base_url": "http://127.0.0.1:1"}))
-    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert result.status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER
 
 
 def test_agent_handoff_package_is_importable_and_rejects_bad_checksum(tmp_path: Path) -> None:
@@ -370,7 +372,7 @@ def test_auto_and_api_do_not_authorize_external_use_from_environment(tmp_path: P
     request = _request(tmp_path, provider=None, execution_mode="auto", config={"local_available": False})
     assert execute(request).status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
     request = _request(tmp_path, provider="openai_compatible", execution_mode="api")
-    assert execute(request).status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert execute(request).status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER
 
 
 def test_handoff_import_rejects_foreign_package_and_persists_valid_result(tmp_path: Path) -> None:
@@ -469,6 +471,8 @@ def test_provider_may_return_editorial_fields_only(tmp_path: Path, monkeypatch: 
         "audited_artifact_versions": [{"artifact_kind": "analysis", "artifact_id": "A-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "curation", "artifact_id": "C-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "refined_thesis", "artifact_id": "T-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "script_promise", "artifact_id": "SP-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}],
         "criteria_results": _audit()["criteria_results"],
         "findings": _audit()["findings"],
+        "dimension_results": _audit()["dimension_results"],
+        "thesis_refinement_finding": _audit()["thesis_refinement_finding"],
         "blocking_defects": [],
         "non_blocking_defects": [],
         "cited_evidence": ["F-1"],
@@ -587,7 +591,7 @@ def test_handoff_consume_failure_rolls_back_audit_and_registry(tmp_path: Path, m
 def test_auto_explicit_openai_provider_requires_authorization(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("AI_API_KEY", "present"); monkeypatch.setenv("AI_BASE_URL", "https://provider.invalid")
     result = execute(_request(tmp_path, provider="openai_compatible", execution_mode="auto", config={"local_available": False}))
-    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert result.status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER
 
 
 def test_deepseek_availability_and_response_errors_are_classified_explicitly(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -597,11 +601,11 @@ def test_deepseek_availability_and_response_errors_are_classified_explicitly(tmp
     request = _request(tmp_path, provider="deepseek", execution_mode="deepseek", model="deepseek-chat", config={"routing_policy_path": policy})
     monkeypatch.setattr(DeepSeekProvider, "execute", lambda self, req: (_ for _ in ()).throw(RuntimeError("PROVIDER_UNAVAILABLE")))
     result = execute(request)
-    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert result.status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER
     assert result.usage["availability_status"] == "PROVIDER_UNAVAILABLE"
     monkeypatch.setattr(DeepSeekProvider, "execute", lambda self, req: (_ for _ in ()).throw(RuntimeError("TIMEOUT")))
     timeout_result = execute(request)
-    assert timeout_result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert timeout_result.status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER
     assert timeout_result.usage["availability_status"] == "TIMEOUT"
     monkeypatch.setattr(DeepSeekProvider, "execute", lambda self, req: (_ for _ in ()).throw(ValueError("INVALID_RESPONSE")))
     invalid_result = execute(request)

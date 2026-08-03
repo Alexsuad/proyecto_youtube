@@ -477,6 +477,200 @@ for _name in ("responsibility_registry", "skill_catalog", "subagent_registry", "
         VALID_FIXTURES[_name] = json.load(_fixture)
 
 
+# CI: fixtures for capability and topic belonging schemas.
+with open(os.path.join(os.path.dirname(__file__), "..", "..", "config", "capability_registry.json"), encoding="utf-8") as _fixture:
+    VALID_FIXTURES["capability_registry"] = json.load(_fixture)
+_VALID_PROFILE_CHECKSUM = "a" * 64
+_VALID_PROVENANCE = {"actor_id": "producer-1", "run_id": "run-producer", "role_id": "CHANNEL_INTELLIGENCE_PRODUCER", "input_checksums": ["a" * 64], "output_checksum": "a" * 64}
+VALID_FIXTURES["topic_belonging_assessment"] = {
+    "assessment_id": "TBA-001", "producer_actor_id": "producer-1", "producer_run_id": "run-producer",
+    "producer_role_id": "CHANNEL_INTELLIGENCE_PRODUCER", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.1",
+    "profile_checksum": _VALID_PROFILE_CHECKSUM, "topic": "Tema de fixture", "narrative_work": "Obra de fixture",
+    "central_question": "Pregunta de fixture", "proposed_angle": "Ángulo de fixture", "proposed_territory": "Individuo e identidad",
+    "initial_evidence": ["evidence-1"], "sensitive_risks": [], "territory_classification": "ACTIVE",
+    "identity_alignment": "ALIGNED", "promise_alignment": "ALIGNED", "risks": [], "recommended_conditions": [],
+    "recommended_exclusions": [], "owner_escalation_recommended": False, "evidence": ["evidence-1"],
+    "status": "CLOSED_FOR_REVIEW", "artifact_checksum": _VALID_PROFILE_CHECKSUM, "provenance": _VALID_PROVENANCE
+}
+VALID_FIXTURES["topic_belonging_decision"] = {
+    "decision_id": "TBD-001", "assessment_id": "TBA-001", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.1",
+    "profile_checksum": _VALID_PROFILE_CHECKSUM, "producer_artifact_checksum": _VALID_PROFILE_CHECKSUM,
+    "reviewer_actor_id": "reviewer-1", "reviewer_run_id": "run-reviewer", "reviewer_role_id": "CHANNEL_INTELLIGENCE_REVIEWER",
+    "reviewer_input_checksum": _VALID_PROFILE_CHECKSUM, "decision": "APPROVE", "conditions": [], "exclusions": [], "risks": [],
+    "owner_escalation_required": False, "owner_escalation_reason": "", "strategic_dimensions_affected": [],
+    "temporary_or_permanent_effect": "NONE", "precedent_risk": "LOW", "evidence": ["evidence-1"],
+    "decided_at": "2026-07-30T10:00:00Z",
+    "provenance": {"actor_id": "reviewer-1", "run_id": "run-reviewer", "role_id": "CHANNEL_INTELLIGENCE_REVIEWER",
+                   "input_checksum": _VALID_PROFILE_CHECKSUM, "output_checksum": _VALID_PROFILE_CHECKSUM}
+}
+
+_TOPIC_TRIGGERS = {key: False for key in [
+    "political_partisan_sensitivity", "high_sensitivity", "audience_matrix_change",
+    "excluded_boundary_reinterpretation", "new_personal_exposure", "voice_or_author_persona_change",
+    "positioning_expansion", "permanent_effect", "high_precedent_risk", "experimental_territory",
+]}
+VALID_FIXTURES["topic_belonging_input"] = {
+    "topic_input_id": "TBI-FIXTURE", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.1",
+    "profile_checksum": "a" * 64, "topic": "Tema", "narrative_work": "Obra",
+    "central_question": "Pregunta", "proposed_angle": "?ngulo", "proposed_territory": "Territorio",
+    "initial_evidence": ["source-1"], "strategic_triggers": _TOPIC_TRIGGERS,
+    "submitted_at": "2026-07-31T10:00:00Z",
+}
+VALID_FIXTURES["topic_belonging_assessment"].update({
+    "topic_input_id": "TBI-FIXTURE", "strategic_triggers": _TOPIC_TRIGGERS,
+})
+VALID_FIXTURES["topic_belonging_owner_decision"] = {
+    "owner_decision_id": "TBO-FIXTURE", "topic_input_id": "TBI-FIXTURE", "assessment_id": "TBA-FIXTURE",
+    "review_decision_id": "TBD-FIXTURE", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.1",
+    "profile_checksum": "a" * 64, "assessment_checksum": "a" * 64, "review_decision_checksum": "a" * 64,
+    "owner_actor_id": "owner", "decision": "OWNER_APPROVE", "conditions": [], "limitations": [],
+    "decided_at": "2026-07-31T10:00:00Z", "owner_decision_checksum": "a" * 64,
+    "provenance": {"actor_id": "owner", "output_checksum": "a" * 64},
+}
+
+
+VALID_FIXTURES["youtube_adaptation_b5_i2_package"] = {
+    "package_id": "YT-PKG-1",
+    "episode_id": "EP-1",
+    "active_profile_reference": {"profile_id": "mas_alla_del_guion", "profile_version": "1.2.1", "profile_checksum": "a" * 64},
+    "input_references": {
+        "episode_brief": {"artifact_id": "EP-1", "version": "1.0.0", "checksum": "a" * 64},
+        "refined_thesis": {"artifact_id": "T-1", "version": "1.0.0", "checksum": "a" * 64},
+        "editorial_script_promise": {"artifact_id": "SP-1", "version": "1.0.0", "checksum": "a" * 64},
+        "evidence_or_claims_reference": {"artifact_id": "E-1", "version": "1.0.0", "checksum": "a" * 64},
+    },
+    "producer_run_id": "RUN-PROD-1",
+    "episode_youtube_positioning": {
+        "concrete_audience": {
+            "audience_segment": "Personas que ya conocen la obra pero no han articulado esta tensión narrativa.",
+            "prior_knowledge": "Conocimiento general de la obra.",
+            "recognized_tension": "Tensión emocional concreta.",
+            "relevance": "La lectura promete utilidad situada.",
+            "expected_language_level": "Medio.",
+            "likely_misinterpretation": "Confundir interpretación con hecho absoluto.",
+            "expectation_not_to_create": "No prometer certeza total."
+        },
+        "visible_promise": {
+            "promise_statement": "Promesa visible concreta.",
+            "viewer_gain": "Comprender una tensión narrativa.",
+            "scope": "Solo la lectura del episodio.",
+            "limits": ["No autoriza publicación."],
+            "supporting_claims": ["C1"],
+            "unsupported_elements": [],
+            "differentiation": "No es intercambiable entre episodios."
+        }
+    },
+    "early_packaging_hypothesis": VALID_FIXTURES["early_packaging_hypothesis"],
+    "youtube_design_constraints": {
+        "opening_readiness": {
+            "click_confirmation": "Confirmar promesa.",
+            "early_substance": "Aportar sustancia temprano.",
+            "minimum_context": "Contexto mínimo suficiente.",
+            "central_tension": "Tensión central clara.",
+            "viewer_relevance": "Relevancia explícita.",
+            "route_preview": "Ruta anticipada.",
+            "transition_obligation": "Transición obligatoria.",
+            "expectations_to_avoid": ["No prometer cierre total."],
+            "invalidated_by": ["Apertura final redactada."]
+        },
+        "duration_assessment": {
+            "recommended_range": "14-18 minutos",
+            "assumptions": ["Densidad media."],
+            "complexity_factors": ["Contradicción narrativa."],
+            "density_factors": ["Varias relaciones conceptuales."],
+            "audience_factors": ["Audiencia interesada no experta."],
+            "compression_risk": "Perder matices.",
+            "padding_risk": "Repetición.",
+            "mitigation_or_pending": "Ajustar tras outline."
+        }
+    },
+    "preliminary_youtube_risk_review": {
+        "platform_risk": {
+            "signals_detected": ["Tema sensible contextualizado."],
+            "surface": {"narration": "Narración analítica.", "working_title": "Título temprano.", "thumbnail_concept": "Miniatura prudente."},
+            "context": "Lectura cultural situada.",
+            "treatment": "Analítico.",
+            "advertising_risk": "LOW",
+            "community_guidelines_risk": "LOW",
+            "severity": "LOW",
+            "mitigations": ["Contextualizar."],
+            "uncertainties": ["Pendiente revisión audiovisual."],
+            "audiovisual_review_pending": True
+        },
+        "rights_reuse_risk": {
+            "quotes": "Breves.",
+            "paraphrases": "Orientadas a análisis.",
+            "dialogue_reproduction": "No estructural.",
+            "scene_dependency": "Parcial.",
+            "chronological_summary_dependency": "No sustitutiva.",
+            "transformative_function": "Interpretativa.",
+            "commentary_and_analysis": "Predominante.",
+            "summary_substitution_risk": "LOW",
+            "textual_risk": "LOW",
+            "audiovisual_review_pending": True,
+            "unresolved_items": [],
+            "mitigations": ["Citas breves."]
+        }
+    },
+    "unsupported_elements": [],
+    "unresolved_items": [],
+    "producer_limits": ["No autoriza B5-I3."],
+    "created_at": "2026-08-01T10:00:00Z"
+}
+
+VALID_FIXTURES["youtube_adaptation_review"] = {
+    "review_id": "YT-REV-1",
+    "episode_id": "EP-1",
+    "artifact_id": "YT-PKG-1",
+    "artifact_checksum": "a" * 64,
+    "producer_run_id": "RUN-PROD-1",
+    "auditor_run_id": "RUN-AUD-1",
+    "independence_check": {"producer_actor_id": "producer-1", "auditor_actor_id": "auditor-1", "producer_run_id": "RUN-PROD-1", "auditor_run_id": "RUN-AUD-1", "decision": "PASS"},
+    "active_profile_reference": {"profile_id": "mas_alla_del_guion", "profile_version": "1.2.1", "profile_checksum": "a" * 64},
+    "capability_results": {key: {"decision": "PASS", "rationale": "Evaluado.", "evidence_refs": ["E-1"], "mitigation_or_pending": "Mitigado.", "blocking_reason": None} for key in ["YT_EARLY_AUDIENCE_FIT", "YT_VISIBLE_PROMISE", "YT_EARLY_PACKAGING_HYPOTHESIS", "YT_PROMISE_CONTENT_ALIGNMENT", "YT_OPENING_READINESS", "YT_DURATION_ENVELOPE", "YT_OVERPROMISE_REVIEW", "YT_TEXT_PLATFORM_RISK", "YT_SCRIPT_RIGHTS_REUSE_RISK"]},
+    "overpromise_decision": {"decision": "PASS", "rationale": "Evaluado.", "evidence_refs": ["E-1"], "mitigation_or_pending": "Mitigado.", "blocking_reason": None},
+    "unsupported_elements": [],
+    "platform_risk_summary": {"severity": "LOW", "summary": "Riesgo bajo.", "mitigations": ["Contextualizar."], "uncertainties": ["Pendiente revisión audiovisual."]},
+    "rights_reuse_summary": {"severity": "LOW", "summary": "Uso transformativo preliminarmente aceptable.", "mitigations": ["Citas breves."], "unresolved_items": []},
+    "opening_readiness": {"decision": "PASS", "rationale": "Son obligaciones, no apertura redactada.", "pending_items": []},
+    "duration_assessment": {"decision": "PASS", "rationale": "Está justificada.", "recommended_range": "14-18 minutos"},
+    "findings": ["Sin hallazgos bloqueantes."],
+    "required_changes": [],
+    "blocking_reasons": [],
+    "unresolved_items": [],
+    "publication_limit": {"DOES_NOT_AUTHORIZE": ["B5_I3", "FINAL_PACKAGING", "PRODUCTION", "PUBLICATION", "MONETIZATION_GUARANTEE", "LEGAL_APPROVAL"]},
+    "decision": "APPROVAL",
+    "created_at": "2026-08-01T10:05:00Z"
+}
+
+VALID_FIXTURES["youtube_adaptation_r3_traceability"] = {
+    "registry_version": "1.0.0",
+    "capabilities": [
+        {"capability_id": "YT_EARLY_AUDIENCE_FIT", "producer_component": "episode_youtube_positioning.concrete_audience", "auditor_component": "capability_results.YT_EARLY_AUDIENCE_FIT", "input_contracts": ["episode_brief"], "output_contract": "youtube_adaptation_b5_i2_package", "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR", "veto_conditions": ["generic audience"], "evidence": ["package"], "invalidated_by": ["profile checksum change"], "real_execution_required": True, "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"},
+        {"capability_id": "YT_VISIBLE_PROMISE", "producer_component": "episode_youtube_positioning.visible_promise", "auditor_component": "capability_results.YT_VISIBLE_PROMISE", "input_contracts": ["refined_thesis"], "output_contract": "youtube_adaptation_b5_i2_package", "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR", "veto_conditions": ["unsupported promise"], "evidence": ["package"], "invalidated_by": ["thesis change"], "real_execution_required": True, "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"},
+        {"capability_id": "YT_EARLY_PACKAGING_HYPOTHESIS", "producer_component": "early_packaging_hypothesis", "auditor_component": "capability_results.YT_EARLY_PACKAGING_HYPOTHESIS", "input_contracts": ["early_packaging_hypothesis"], "output_contract": "youtube_adaptation_b5_i2_package", "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR", "veto_conditions": ["final packaging disguised"], "evidence": ["packaging hypothesis"], "invalidated_by": ["packaging checksum change"], "real_execution_required": True, "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"},
+        {"capability_id": "YT_PROMISE_CONTENT_ALIGNMENT", "producer_component": "visible promise + package", "auditor_component": "capability_results.YT_PROMISE_CONTENT_ALIGNMENT", "input_contracts": ["script promise"], "output_contract": "youtube_adaptation_review", "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR", "veto_conditions": ["promise mismatch"], "evidence": ["review"], "invalidated_by": ["promise change"], "real_execution_required": True, "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"},
+        {"capability_id": "YT_OPENING_READINESS", "producer_component": "youtube_design_constraints.opening_readiness", "auditor_component": "capability_results.YT_OPENING_READINESS", "input_contracts": ["episode_brief"], "output_contract": "youtube_adaptation_b5_i2_package", "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR", "veto_conditions": ["opening drafted"], "evidence": ["opening obligations"], "invalidated_by": ["brief change"], "real_execution_required": True, "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"},
+        {"capability_id": "YT_DURATION_ENVELOPE", "producer_component": "youtube_design_constraints.duration_assessment", "auditor_component": "capability_results.YT_DURATION_ENVELOPE", "input_contracts": ["episode_brief"], "output_contract": "youtube_adaptation_b5_i2_package", "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR", "veto_conditions": ["unjustified duration"], "evidence": ["duration assessment"], "invalidated_by": ["brief change"], "real_execution_required": True, "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"},
+        {"capability_id": "YT_OVERPROMISE_REVIEW", "producer_component": "early_packaging_hypothesis.overpromise_risk", "auditor_component": "capability_results.YT_OVERPROMISE_REVIEW", "input_contracts": ["packaging hypothesis"], "output_contract": "youtube_adaptation_review", "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR", "veto_conditions": ["blocking unresolved overpromise"], "evidence": ["review"], "invalidated_by": ["packaging change"], "real_execution_required": True, "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"},
+        {"capability_id": "YT_TEXT_PLATFORM_RISK", "producer_component": "preliminary_youtube_risk_review.platform_risk", "auditor_component": "capability_results.YT_TEXT_PLATFORM_RISK", "input_contracts": ["package"], "output_contract": "youtube_adaptation_review", "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR", "veto_conditions": ["high platform risk"], "evidence": ["risk summary"], "invalidated_by": ["surface change"], "real_execution_required": True, "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"},
+        {"capability_id": "YT_SCRIPT_RIGHTS_REUSE_RISK", "producer_component": "preliminary_youtube_risk_review.rights_reuse_risk", "auditor_component": "capability_results.YT_SCRIPT_RIGHTS_REUSE_RISK", "input_contracts": ["package"], "output_contract": "youtube_adaptation_review", "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR", "veto_conditions": ["summary substitution essential"], "evidence": ["rights summary"], "invalidated_by": ["script change"], "real_execution_required": True, "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"},
+        {"capability_id": "YT_B5_I2_FUNCTIONAL_DECISION", "producer_component": "youtube_adaptation_b5_i2_package", "auditor_component": "decision", "input_contracts": ["package", "review"], "output_contract": "youtube_adaptation_review", "decision_authority": "YOUTUBE_ADAPTATION_AUDITOR", "veto_conditions": ["independence not demonstrated"], "evidence": ["review decision"], "invalidated_by": ["review checksum change"], "real_execution_required": True, "availability_status": "IMPLEMENTED_NOT_DEMONSTRATED"}
+    ]
+}
+
+VALID_FIXTURES["narrative_human_analysis"] = {"analysis_id":"A-1","episode_id":"EP-1","research_id":"R-1","evidence_report_id":"E-1","semantic_audit_id":"S-1","material_id":"M-1","material_checksum":"a"*64,"inherited_constraint_ids":[],"findings":[{"finding_id":"F-1","claim_type":"INTERPRETATION","statement":"Lectura.","narrative_evidence_refs":["NE-1"],"source_refs":["S-1"],"human_dimension":"BELIEF","causal_relation":"Relación.","confidence":"HIGH"}],"rival_interpretations":["Rival."],"rival_interpretation_status":"PRESENT","rival_interpretation_justification":None,"limitations":["Límite."],"limits_status":"PRESENT","limits_justification":None,"demonstrates":"Demuestra una relación.","does_not_establish":"No demuestra causalidad universal.","material_function_candidate":"Complicación.","specific_scene_or_passage":"Escena específica.","observable_decision_or_action":"Acción observable.","conflict":"Conflicto claro.","consequence":"Consecuencia clara.","main_interpretation":"Interpretación principal.","supporting_evidence":["F-1"],"interpretive_limit":"Límite interpretativo.","relationship_to_provisional_thesis":"Relacionada con la tesis provisional.","potential_contribution_to_progression":"Aporta progresión.","created_at":"2026-07-24T20:00:00Z"}
+VALID_FIXTURES["material_curation"] = {"curation_id":"C-1","episode_id":"EP-1","research_id":"R-1","analysis_ids":["A-1"],"candidates":[{"material_id":"M-1","function":"Complicación","thesis_contribution":"Aporta.","new_perspective":"Nueva.","redundancy_with_selected":[],"context_cost":"Bajo.","narrative_evidence_strength":"HIGH","contradiction_or_nuance":"Matiz.","narrative_use":"COMPLICATION","selection_status":"SELECTED"}],"selected_material_ids":["M-1"],"selection_stage":"FINAL","exclusions":[],"sequence_rationale":"Secuencia justificada.","set_relationship":"Relación del conjunto.","unique_contributions":[{"material_id":"M-1","contribution":"Aporta."}],"function_overlap_justification":"No hay solapamiento.","progression_evidence":[{"material_id":"M-1","change_in_understanding":"Cambio.","evidence_refs":["F-1"],"non_substitutability":"No sustituible."}],"inherited_restrictions":[],"selected_materials":["M-1"],"excluded_materials":[],"function_of_each_selected_material":[{"material_id":"M-1","contribution":"Aporta."}],"reason_for_each_exclusion":[],"pairwise_redundancy_review":[],"contrast_map":[{"from_material_id":"M-1","to_material_id":"M-1","contrast":"Autocontraste mínimo de fixture."}],"progression_map":[{"material_id":"M-1","change_in_understanding":"Cambio.","evidence_refs":["F-1"],"non_substitutability":"No sustituible."}],"context_cost":"Bajo.","expected_order":["M-1"],"dependency_between_materials":[],"created_at":"2026-07-24T20:00:00Z"}
+VALID_FIXTURES["refined_thesis"] = {"thesis_id":"T-1","episode_id":"EP-1","brief_version":"1.0.0","research_id":"R-1","evidence_report_id":"E-1","semantic_audit_id":"S-1","provisional_thesis_id":"TP-1","analysis_ids":["A-1"],"curation_id":"C-1","statement":"Tesis.","supporting_evidence_refs":["F-1"],"counterevidence_refs":["R-1"],"rival_interpretations":["Rival."],"main_objection":"Objeción.","nuance":"Matiz.","material_contributions":[{"material_id":"M-1","contribution":"Aporta."}],"analysis_confirmed":["Confirmación."],"changes_from_provisional":["Cambio."],"discarded_from_provisional":["Descartado."],"refinement_rationale":"Razón.","refinement_dimensions":[{"dimension":"SCOPE","provisional_position":"Antes.","resulting_position":"Después.","evidence_refs":["F-1"],"rationale":"Razón."}],"inherited_constraint_ids":[],"statement_unchanged_justification":None,"limits":["Límite."],"revision_conditions":["Nueva evidencia."],"stage":"THESIS_REFINED","refined_position":"Posición refinada.","what_was_confirmed":["Confirmado."],"what_was_changed":["Cambiado."],"what_was_rejected":["Rechazado."],"what_was_limited":["Limitado."],"strongest_objection":"Objeción fuerte.","alternative_explanation":"Explicación alternativa.","conditions_of_validity":["Condición."],"remaining_uncertainties":["Incertidumbre."],"evidence_dependencies":["Dependencia."],"created_at":"2026-07-24T20:00:00Z"}
+VALID_FIXTURES["b5_i2_semantic_sufficiency_audit"].update({"artifact_references":["analysis:A-1","curation:C-1","refined_thesis:T-1","script_promise:SP-1"],"producer_run_reference":"RUN-P","auditor_run_reference":"RUN-AUDIT-1","producer_actor_id":"producer-1","auditor_actor_id":"auditor-1","auditor_input_checksum":"a"*64,"auditor_write_scope":"AUDIT_ONLY","independence_result":"PASS","dimension_results":[{"dimension":d,"status":"PASS","summary":"Evaluado."} for d in ["TRIVIAL_THESIS","INTERCHANGEABLE_ANALYSIS","DECORATIVE_OBJECTION","FALSE_DEPTH"]],"required_changes":[],"excluded_claims_detected":[],"unsupported_inferences":[],"redundancy_findings":[],"progression_findings":[],"thesis_refinement_finding":{"status":"PASS","summary":"Evaluado."},"blocking_reasons":[],"reaudit_requirements":[]})
+
+VALID_FIXTURES["execution_provenance_registry"]["runs"][0].update({
+    "prompt_id": "prompt_fixture",
+    "prompt_checksum": "a" * 64,
+    "input_checksum": "a" * 64,
+    "validation_result": "PASS",
+})
+
 class TestAllJSONSchemas(unittest.TestCase):
 
     def test_all_schemas_are_valid_draft7(self):

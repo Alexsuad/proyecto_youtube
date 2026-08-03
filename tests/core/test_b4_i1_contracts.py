@@ -6,7 +6,7 @@ ROOT = Path(__file__).parents[2]
 def read_json(path): return json.loads((ROOT / path).read_text(encoding='utf-8'))
 def test_responsibility_registry_schema_and_contracts():
     schema=read_json('schemas/responsibility_registry.json'); registry=read_json('config/responsibility_registry.json'); validate(registry,schema)
-    assert [r['role_id'] for r in registry['responsibilities']]==['ORCHESTRATION','RESEARCH_AND_CURATION','NARRATIVE_ARCHITECTURE','WRITING','EDITOR','FINAL_EDITORIAL_AUDITOR']
+    assert [r['role_id'] for r in registry['responsibilities']]==['ORCHESTRATION','RESEARCH_AND_CURATION','NARRATIVE_ARCHITECTURE','WRITING','EDITOR','FINAL_EDITORIAL_AUDITOR','CHANNEL_INTELLIGENCE_PRODUCER','CHANNEL_INTELLIGENCE_REVIEWER']
     assert [r['role_id'] for r in registry['functional_families']]==['CHANNEL_INTELLIGENCE','YOUTUBE_ADAPTATION']
     assert len(registry['legacy_role_mapping'])==11
     editor=next(r for r in registry['responsibilities'] if r['role_id']=='EDITOR'); auditor=next(r for r in registry['responsibilities'] if r['role_id']=='FINAL_EDITORIAL_AUDITOR')

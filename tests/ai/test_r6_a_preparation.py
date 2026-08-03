@@ -58,11 +58,17 @@ def test_r6_prompt_text_mentions_active_profile_and_forbids_silent_modification(
 
 
 def test_r6_subagent_registry_uses_agent_handoff_and_is_not_activatable() -> None:
+    expected_maturity = {
+        "SCRIPT_PRODUCT_PRODUCER": "AGENT_IMPLEMENTED",
+        "SCRIPT_PRODUCT_AUDITOR": "AGENT_IMPLEMENTED",
+        "YOUTUBE_ADAPTATION_PRODUCER": "AGENT_TESTED_IN_ISOLATION",
+        "YOUTUBE_ADAPTATION_AUDITOR": "AGENT_TESTED_IN_ISOLATION",
+    }
     for role_id in R6_ROLE_IDS:
         agent = get_agent_definition(role_id)
         assert agent["provider"] == "agent_handoff"
         assert agent["model"] == "handoff_only"
-        assert agent["maturity_status"] == "AGENT_IMPLEMENTED"
+        assert agent["maturity_status"] == expected_maturity[role_id]
         assert agent["synthetic_policy"]["can_authorize_readiness"] is False
         assert agent["provenance"]["registry_path"] == "output/execution_provenance_registry.json"
         assert any("subagentes anidados" in item for item in agent["failure_conditions"])

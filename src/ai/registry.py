@@ -19,7 +19,7 @@ B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
     "INDEPENDENT_EDITORIAL_AUDITOR": {"semantic_audit"},
     "SCRIPT_PRODUCT_PRODUCER": {"analysis", "curation", "refined_thesis", "script_promise"},
     "SCRIPT_PRODUCT_AUDITOR": {"semantic_audit"},
-    "YOUTUBE_ADAPTATION_PRODUCER": {"early_packaging_hypothesis"},
+    "YOUTUBE_ADAPTATION_PRODUCER": {"early_packaging_hypothesis", "youtube_adaptation_b5_i2_package"},
     "YOUTUBE_ADAPTATION_AUDITOR": {"youtube_adaptation_review"},
 }
 B5_I2_ARTIFACT_KINDS = {
@@ -29,15 +29,18 @@ B5_I2_ARTIFACT_KINDS = {
     "script_promise",
     "semantic_audit",
     "early_packaging_hypothesis",
+    "youtube_adaptation_b5_i2_package",
     "youtube_adaptation_review",
 }
 
 
 def load_registry(path: Path) -> dict[str, Any]:
     if not path.exists():
-        return {"registry_version": "1.0.0", "runs": [], "handoffs": []}
+        return {"registry_version": "1.0.0", "runs": [], "handoffs": [], "attempts": []}
     data = json.loads(path.read_text(encoding="utf-8"))
+    data.setdefault("runs", [])
     data.setdefault("handoffs", [])
+    data.setdefault("attempts", [])
     return data
 
 
@@ -151,6 +154,14 @@ def _provenance_fields(
         "blocking_reason": blocking_reason,
         "handoff_target": handoff_target,
     }
+
+
+def _attempt_status(result: ExecutionResult) -> str:
+    if result.status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER:
+        return "BLOCKED_BY_RUNTIME_PROVIDER"
+    if result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR:
+        return "BLOCKED_BY_SEMANTIC_EVALUATOR"
+    return "FAILED"
 
 
 def register_handoff(path: Path, package_path: Path, request: Any) -> None:
@@ -285,6 +296,7 @@ def append_result(
         prompt_version = str(result.usage.get("prompt_version") or result.usage["skill_version"])
         handoff_target = str(result.usage.get("handoff_target") or "NONE")
         execution_profile = str(result.usage.get("execution_profile") or "UNSPECIFIED_PROFILE")
+    provenance_config = request.config if request is not None else result.usage
     registry["runs"].append({
         "run_id": result.run_id,
         "episode_id": result.episode_id,
@@ -300,6 +312,11 @@ def append_result(
         "completed_at": result.completed_at,
         "status": "SUCCEEDED",
         "execution_mode": execution_mode,
+        "prompt_id": str(provenance_config.get("prompt_id") or "UNSPECIFIED_PROMPT"),
+        "prompt_checksum": str(provenance_config.get("prompt_checksum") or "0" * 64),
+        "input_checksum": str(provenance_config.get("input_checksum") or result.input_manifest_checksum),
+        "output_checksum": str(result.output_checksum),
+        "validation_result": str(provenance_config.get("validation_result") or "PASS"),
         **_provenance_fields(
             role=role,
             provider=result.provider,
@@ -320,6 +337,93 @@ def append_result(
             handoff_target=handoff_target,
         ),
     })
+    violations = validate_against_schema(registry, "execution_provenance_registry")
+    if violations:
+        raise ValueError("ExecutionProvenanceRegistry inválido: " + "; ".join(violations))
+    _write_registry(path, registry)
+
+def append_attempt(
+    path: Path,
+    result: ExecutionResult,
+    *,
+    execution_mode: str,
+    role: str = "UNSPECIFIED_PRODUCER",
+    request: Any | None = None,
+) -> None:
+    """Registra intentos fallidos o bloqueados sin contarlos como runs exitosos."""
+    if result.status is ExecutionStatus.SUCCEEDED:
+        return
+    if not result.error:
+        raise ValueError("ExecutionResult fallido requiere error")
+    registry = load_registry(path)
+    attempt_id = f"ATTEMPT-{result.run_id}"
+    if any(item.get("attempt_id") == attempt_id for item in registry["attempts"]):
+        raise ValueError(f"attempt_id duplicado en provenance: {attempt_id}")
+    provenance_config = request.config if request is not None else result.usage
+    prompt_id = str(provenance_config.get("prompt_id") or "UNSPECIFIED_PROMPT")
+    prompt_version = str(
+        provenance_config.get("prompt_version")
+        or result.usage.get("prompt_version")
+        or result.usage.get("skill_version")
+        or "UNSPECIFIED_PROMPT_VERSION"
+    )
+    execution_profile = str(
+        getattr(request, "execution_profile", None)
+        or provenance_config.get("execution_profile")
+        or result.usage.get("execution_profile")
+        or "UNSPECIFIED_PROFILE"
+    )
+    execution_route = str(
+        provenance_config.get("execution_route")
+        or getattr(request, "execution_route", None)
+        or result.usage.get("execution_route")
+        or f"native:{result.provider}"
+    )
+    record = {
+        "attempt_id": attempt_id,
+        "run_id": result.run_id,
+        "status": _attempt_status(result),
+        "error": str(result.error),
+        "role_id": role,
+        "provider": str(result.provider or "UNSPECIFIED_PROVIDER"),
+        "model": str(result.model or "UNSPECIFIED_MODEL"),
+        "execution_profile": execution_profile,
+        "execution_route": execution_route,
+        "actual_executor": str(
+            result.usage.get("actual_executor")
+            or provenance_config.get("resolved_actual_executor")
+            or "native_provider"
+        ),
+        "actual_provider": str(
+            result.usage.get("actual_provider")
+            or provenance_config.get("resolved_actual_provider")
+            or result.provider
+            or "UNSPECIFIED_PROVIDER"
+        ),
+        "actual_model": str(
+            result.usage.get("actual_model")
+            or provenance_config.get("resolved_actual_model")
+            or result.model
+            or "UNSPECIFIED_MODEL"
+        ),
+        "started_at": result.started_at,
+        "finished_at": result.completed_at,
+        "latency": _seconds_between(result.started_at, result.completed_at),
+        "execution_mode": execution_mode,
+        "prompt_id": prompt_id,
+        "prompt_version": prompt_version,
+        "prompt_checksum": str(provenance_config.get("prompt_checksum") or "0" * 64),
+        "input_checksum": str(provenance_config.get("input_checksum") or result.input_manifest_checksum or "0" * 64),
+        "output_checksum": str(result.output_checksum or "0" * 64),
+        "validation_result": str(provenance_config.get("validation_result") or "NOT_REACHED"),
+    }
+    if provenance_config.get("metadata_origin"):
+        record["metadata_origin"] = str(provenance_config["metadata_origin"])
+    if provenance_config.get("evidence_path"):
+        record["evidence_path"] = str(provenance_config["evidence_path"])
+    if provenance_config.get("notes"):
+        record["notes"] = [str(item) for item in provenance_config["notes"]]
+    registry["attempts"].append(record)
     violations = validate_against_schema(registry, "execution_provenance_registry")
     if violations:
         raise ValueError("ExecutionProvenanceRegistry inválido: " + "; ".join(violations))

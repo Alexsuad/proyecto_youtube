@@ -12,6 +12,7 @@ from src.core.status import GateStatus, is_valid_gate_status
 EXIT_CODE_MAP: Dict[GateStatus, int] = {
     GateStatus.PASS: 0,
     GateStatus.WARN: 0,
+    GateStatus.REQUEST_CHANGES: 1,
     GateStatus.FAIL: 1,
     GateStatus.BLOCKED: 2,
 }
@@ -37,7 +38,7 @@ class GateResult:
         # Convertir string a GateStatus si es necesario
         if isinstance(self.status, str):
             if not is_valid_gate_status(self.status):
-                raise ValueError(f"Estado de gate invalido: '{self.status}'. Debe ser PASS, WARN, FAIL o BLOCKED.")
+                raise ValueError(f"Estado de gate invalido: '{self.status}'. Debe ser PASS, WARN, REQUEST_CHANGES, FAIL o BLOCKED.")
             self.status = GateStatus(self.status)
 
         # Regla estricta: exit_code debe corresponder exactamente al status

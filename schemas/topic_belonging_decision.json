@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Topic Belonging Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision_id",
+    "assessment_id",
+    "profile_id",
+    "profile_version",
+    "profile_checksum",
+    "producer_artifact_checksum",
+    "reviewer_actor_id",
+    "reviewer_run_id",
+    "reviewer_role_id",
+    "reviewer_input_checksum",
+    "decision",
+    "conditions",
+    "exclusions",
+    "risks",
+    "owner_escalation_required",
+    "owner_escalation_reason",
+    "strategic_dimensions_affected",
+    "temporary_or_permanent_effect",
+    "precedent_risk",
+    "evidence",
+    "decided_at",
+    "provenance"
+  ],
+  "properties": {
+    "decision_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assessment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_checksum": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "producer_artifact_checksum": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "reviewer_actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer_role_id": {
+      "const": "CHANNEL_INTELLIGENCE_REVIEWER"
+    },
+    "reviewer_input_checksum": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "decision": {
+      "enum": [
+        "APPROVE",
+        "APPROVE_WITH_CONDITIONS",
+        "REQUEST_MORE_EVIDENCE",
+        "REJECT",
+        "BLOCK",
+        "ESCALATE_TO_OWNER"
+      ]
+    },
+    "conditions": {
+      "type": "array"
+    },
+    "exclusions": {
+      "type": "array"
+    },
+    "risks": {
+      "type": "array"
+    },
+    "owner_escalation_required": {
+      "type": "boolean"
+    },
+    "owner_escalation_reason": {
+      "type": "string"
+    },
+    "strategic_dimensions_affected": {
+      "type": "array"
+    },
+    "temporary_or_permanent_effect": {
+      "enum": [
+        "TEMPORARY",
+        "PERMANENT",
+        "NONE"
+      ]
+    },
+    "precedent_risk": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actor_id",
+        "run_id",
+        "role_id",
+        "input_checksum",
+        "output_checksum"
+      ],
+      "properties": {
+        "actor_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role_id": {
+          "const": "CHANNEL_INTELLIGENCE_REVIEWER"
+        },
+        "input_checksum": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        },
+        "output_checksum": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        }
+      }
+    }
+  }
+}

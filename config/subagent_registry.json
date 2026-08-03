@@ -2,326 +2,11 @@
   "registry_version": "1.0.0",
   "agents": [
     {
-      "agent_id": "ROOT_ORCHESTRATOR",
-      "version": "1.0.0",
-      "execution_role": "root",
-      "functional_role": "orchestrator",
-      "purpose": "Coordinar runs y handoffs sin producir ni aprobar artefactos editoriales.",
-      "maturity_status": "AGENT_TESTED_IN_ISOLATION",
-      "inputs": [
-        "mission_context",
-        "handoff_record",
-        "artifact_manifest"
-      ],
-      "outputs": [
-        "execution_plan",
-        "handoff_package",
-        "gate_decision"
-      ],
-      "allowed_context": [
-        "mission",
-        "contracts",
-        "runtime_registry"
-      ],
-      "allowed_memory": [
-        "current_run_only"
-      ],
-      "allowed_skills": [
-        "skill_auditoria_sistema",
-        "skill_control_integridad_pipeline"
-      ],
-      "allowed_tools": [
-        "read_registry",
-        "emit_gate",
-        "prepare_handoff"
-      ],
-      "permissions": {
-        "read": [
-          "plans/",
-          "config/",
-          "schemas/",
-          "src/"
-        ],
-        "write": [
-          ".runtime-tmp/subagents/",
-          "output/"
-        ]
-      },
-      "provider": "mock",
-      "model": "default",
-      "budget": {
-        "max_tokens": 12000,
-        "max_turns": 6,
-        "max_cost_usd": null
-      },
-      "timeout_seconds": 60,
-      "retries": 1,
-      "handoff": {
-        "accepts": [
-          "execution_plan",
-          "handoff_record"
-        ],
-        "emits": [
-          "handoff_package",
-          "gate_decision"
-        ],
-        "integrity": "ATOMIC_REQUIRED"
-      },
-      "provenance": {
-        "registry_path": "output/execution_provenance_registry.json",
-        "require_independent_run": true,
-        "require_output_checksum": true
-      },
-      "evidence_requirements": [
-        "run_id",
-        "input_manifest_checksum",
-        "output_checksum"
-      ],
-      "success_criteria": [
-        "Coordina sin autoaprobar",
-        "No altera artefactos editoriales"
-      ],
-      "blocking_conditions": [
-        "input obligatorio ausente",
-        "handoff inválido"
-      ],
-      "failure_conditions": [
-        "escritura fuera de alcance",
-        "intento de autoaprobación"
-      ],
-      "synthetic_policy": {
-        "allows_structural_tests": true,
-        "can_authorize_readiness": false
-      },
-      "loop_policy": {
-        "max_cycles": 3
-      },
-      "artifact_compatibility": [
-        "handoff_package",
-        "gate_decision"
-      ],
-      "immutable_targets": [
-        "config/subagent_registry.json"
-      ]
-    },
-    {
-      "agent_id": "EDITORIAL_DESIGN_PRODUCER",
-      "version": "1.0.0",
-      "execution_role": "subagent",
-      "functional_role": "producer",
-      "purpose": "Producir artefactos B5-I2 de diseño editorial dentro de su contrato.",
-      "maturity_status": "AGENT_TESTED_IN_ISOLATION",
-      "inputs": [
-        "research_pack",
-        "source_access_and_evidence_report",
-        "thesis_artifact"
-      ],
-      "outputs": [
-        "analysis",
-        "curation",
-        "refined_thesis",
-        "script_promise"
-      ],
-      "allowed_context": [
-        "episode_curated_context",
-        "active_profile_reference"
-      ],
-      "allowed_memory": [
-        "run_local_only"
-      ],
-      "allowed_skills": [
-        "skill_analisis_patrones",
-        "skill_curation_obras",
-        "skill_sintesis_tesis"
-      ],
-      "allowed_tools": [
-        "produce_artifact",
-        "prepare_handoff"
-      ],
-      "permissions": {
-        "read": [
-          "profiles/editorial/",
-          "schemas/",
-          "output/"
-        ],
-        "write": [
-          ".runtime-tmp/subagents/",
-          "output/"
-        ]
-      },
-      "provider": "mock",
-      "model": "default",
-      "budget": {
-        "max_tokens": 18000,
-        "max_turns": 4,
-        "max_cost_usd": null
-      },
-      "timeout_seconds": 90,
-      "retries": 1,
-      "handoff": {
-        "accepts": [
-          "research_pack",
-          "source_access_and_evidence_report",
-          "thesis_artifact"
-        ],
-        "emits": [
-          "analysis",
-          "curation",
-          "refined_thesis",
-          "script_promise"
-        ],
-        "integrity": "CHECKSUM_REQUIRED"
-      },
-      "provenance": {
-        "registry_path": "output/execution_provenance_registry.json",
-        "require_independent_run": true,
-        "require_output_checksum": true
-      },
-      "evidence_requirements": [
-        "run_id independiente",
-        "checksums por output",
-        "input_manifest_checksum"
-      ],
-      "success_criteria": [
-        "Produce artefactos compatibles",
-        "No aprueba su propia salida"
-      ],
-      "blocking_conditions": [
-        "perfil activo ausente",
-        "evidencia insuficiente"
-      ],
-      "failure_conditions": [
-        "autoaprobación",
-        "escritura fuera de alcance"
-      ],
-      "synthetic_policy": {
-        "allows_structural_tests": true,
-        "can_authorize_readiness": false
-      },
-      "loop_policy": {
-        "max_cycles": 2
-      },
-      "artifact_compatibility": [
-        "analysis",
-        "curation",
-        "refined_thesis",
-        "script_promise"
-      ],
-      "immutable_targets": [
-        "semantic_audit",
-        "config/subagent_registry.json"
-      ]
-    },
-    {
-      "agent_id": "INDEPENDENT_SEMANTIC_VERIFIER",
-      "version": "1.0.0",
-      "execution_role": "subagent",
-      "functional_role": "verifier",
-      "purpose": "Emitir dictamen semántico independiente sobre la versión exacta de B5-I2.",
-      "maturity_status": "AGENT_TESTED_IN_ISOLATION",
-      "inputs": [
-        "analysis",
-        "curation",
-        "refined_thesis",
-        "script_promise",
-        "handoff_package"
-      ],
-      "outputs": [
-        "semantic_audit"
-      ],
-      "allowed_context": [
-        "handoff_curated_context",
-        "exact_artifact_checksums"
-      ],
-      "allowed_memory": [
-        "run_local_only"
-      ],
-      "allowed_skills": [
-        "skill_auditar_suficiencia_semantica_b5_i2"
-      ],
-      "allowed_tools": [
-        "verify_semantics",
-        "record_provenance"
-      ],
-      "permissions": {
-        "read": [
-          "profiles/editorial/",
-          "schemas/",
-          "output/"
-        ],
-        "write": [
-          ".runtime-tmp/subagents/",
-          "output/semantic_audits/"
-        ]
-      },
-      "provider": "mock",
-      "model": "default",
-      "budget": {
-        "max_tokens": 14000,
-        "max_turns": 3,
-        "max_cost_usd": null
-      },
-      "timeout_seconds": 90,
-      "retries": 0,
-      "handoff": {
-        "accepts": [
-          "handoff_package",
-          "analysis",
-          "curation",
-          "refined_thesis",
-          "script_promise"
-        ],
-        "emits": [
-          "semantic_audit"
-        ],
-        "integrity": "CHECKSUM_REQUIRED"
-      },
-      "provenance": {
-        "registry_path": "output/execution_provenance_registry.json",
-        "require_independent_run": true,
-        "require_output_checksum": true
-      },
-      "evidence_requirements": [
-        "auditor_run_id",
-        "artifact_checksums",
-        "decision trazable"
-      ],
-      "success_criteria": [
-        "Dictamen independiente",
-        "No modifica artefactos auditados"
-      ],
-      "blocking_conditions": [
-        "handoff alterado",
-        "provider no autorizado"
-      ],
-      "failure_conditions": [
-        "escritura sobre artefacto auditado",
-        "autoauditoría"
-      ],
-      "synthetic_policy": {
-        "allows_structural_tests": true,
-        "can_authorize_readiness": false
-      },
-      "loop_policy": {
-        "max_cycles": 2
-      },
-      "artifact_compatibility": [
-        "semantic_audit"
-      ],
-      "immutable_targets": [
-        "analysis",
-        "curation",
-        "refined_thesis",
-        "script_promise",
-        "config/subagent_registry.json"
-      ]
-    },
-    {
       "agent_id": "SCRIPT_PRODUCT_PRODUCER",
       "version": "1.0.0",
       "execution_role": "subagent",
       "functional_role": "producer",
-      "purpose": "Preparar artefactos de Script Product sin aprobaci?n autom?tica ni ejecuci?n real a?n autorizada.",
+      "purpose": "Preparar artefactos de Script Product sin aprobación automática ni ejecución real aún autorizada.",
       "maturity_status": "AGENT_IMPLEMENTED",
       "inputs": [
         "episode_brief",
@@ -411,9 +96,9 @@
         "evidencia insuficiente"
       ],
       "failure_conditions": [
-        "autoaprobaci?n",
+        "autoaprobación",
         "escritura fuera de alcance",
-        "creaci?n de subagentes anidados"
+        "creación de subagentes anidados"
       ],
       "synthetic_policy": {
         "allows_structural_tests": true,
@@ -523,9 +208,9 @@
         "evidencia insuficiente"
       ],
       "failure_conditions": [
-        "modificaci?n silenciosa de artefactos",
-        "autoaprobaci?n",
-        "creaci?n de subagentes anidados"
+        "modificación silenciosa de artefactos",
+        "autoaprobación",
+        "creación de subagentes anidados"
       ],
       "synthetic_policy": {
         "allows_structural_tests": true,
@@ -550,28 +235,27 @@
       "version": "1.0.0",
       "execution_role": "subagent",
       "functional_role": "producer",
-      "purpose": "Preparar adaptaci?n temprana de YouTube sin activar publicaci?n ni alterar contratos previos.",
-      "maturity_status": "AGENT_IMPLEMENTED",
+      "purpose": "Preparar el paquete temprano de adaptación a YouTube para B5-I2 sin activar publicación ni alterar tesis, perfil o packaging final.",
+      "maturity_status": "AGENT_TESTED_IN_ISOLATION",
       "inputs": [
-        "refined_thesis",
-        "script_promise",
+        "active_editorial_profile_reference",
         "episode_brief",
-        "active_editorial_profile"
+        "refined_thesis",
+        "editorial_script_promise",
+        "evidence_or_claims_reference"
       ],
       "outputs": [
-        "early_packaging_hypothesis"
+        "youtube_adaptation_b5_i2_package"
       ],
       "allowed_context": [
         "active_profile_reference",
-        "youtube_constraints",
+        "youtube_adaptation_b5_i2_contracts",
         "input_manifest"
       ],
       "allowed_memory": [
         "run_local_only"
       ],
-      "allowed_skills": [
-        "skill_packaging_inicial"
-      ],
+      "allowed_skills": [],
       "allowed_tools": [
         "prepare_handoff",
         "produce_artifact",
@@ -601,13 +285,14 @@
       "retries": 1,
       "handoff": {
         "accepts": [
-          "refined_thesis",
-          "script_promise",
+          "active_editorial_profile_reference",
           "episode_brief",
-          "active_editorial_profile"
+          "refined_thesis",
+          "editorial_script_promise",
+          "evidence_or_claims_reference"
         ],
         "emits": [
-          "early_packaging_hypothesis"
+          "youtube_adaptation_b5_i2_package"
         ],
         "integrity": "CHECKSUM_REQUIRED"
       },
@@ -617,14 +302,14 @@
         "require_output_checksum": true
       },
       "evidence_requirements": [
-        "checksum de adaptaci?n",
+        "checksum de adaptación",
         "restricciones heredadas",
         "prompt version exacta"
       ],
       "success_criteria": [
-        "Produce adaptaci?n provisional compatible",
+        "Produce adaptación provisional compatible",
         "No autoaprueba",
-        "No activa publicaci?n"
+        "No activa publicación"
       ],
       "blocking_conditions": [
         "perfil activo ausente",
@@ -632,9 +317,9 @@
         "script_promise ausente"
       ],
       "failure_conditions": [
-        "autoaprobaci?n",
-        "modificaci?n silenciosa",
-        "creaci?n de subagentes anidados"
+        "autoaprobación",
+        "modificación silenciosa",
+        "creación de subagentes anidados"
       ],
       "synthetic_policy": {
         "allows_structural_tests": true,
@@ -644,6 +329,7 @@
         "max_cycles": 2
       },
       "artifact_compatibility": [
+        "youtube_adaptation_b5_i2_package",
         "early_packaging_hypothesis"
       ],
       "immutable_targets": [
@@ -657,13 +343,12 @@
       "version": "1.0.0",
       "execution_role": "subagent",
       "functional_role": "verifier",
-      "purpose": "Auditar adaptaci?n temprana de YouTube sin modificar artefactos ni activar publicaci?n.",
-      "maturity_status": "AGENT_IMPLEMENTED",
+      "purpose": "Auditar el paquete temprano de adaptación a YouTube para B5-I2 sin modificarlo ni autorizar producción o publicación.",
+      "maturity_status": "AGENT_TESTED_IN_ISOLATION",
       "inputs": [
-        "early_packaging_hypothesis",
-        "refined_thesis",
-        "script_promise",
-        "active_editorial_profile"
+        "youtube_adaptation_b5_i2_package",
+        "producer_run_reference",
+        "active_editorial_profile_reference"
       ],
       "outputs": [
         "youtube_adaptation_review"
@@ -671,14 +356,13 @@
       "allowed_context": [
         "active_profile_reference",
         "independent_audit_context",
-        "prior_provenance"
+        "prior_provenance",
+        "publication_limits"
       ],
       "allowed_memory": [
         "run_local_only"
       ],
-      "allowed_skills": [
-        "skill_auditoria_adaptacion_temprana"
-      ],
+      "allowed_skills": [],
       "allowed_tools": [
         "prepare_handoff",
         "verify_semantics",
@@ -708,10 +392,9 @@
       "retries": 0,
       "handoff": {
         "accepts": [
-          "early_packaging_hypothesis",
-          "refined_thesis",
-          "script_promise",
-          "active_editorial_profile"
+          "youtube_adaptation_b5_i2_package",
+          "producer_run_reference",
+          "active_editorial_profile_reference"
         ],
         "emits": [
           "youtube_adaptation_review"
@@ -731,7 +414,7 @@
       "success_criteria": [
         "No modifica artefactos",
         "No autoaprueba",
-        "Preserva l?mites de publicaci?n"
+        "Preserva límites de publicación"
       ],
       "blocking_conditions": [
         "contexto no independiente",
@@ -739,9 +422,9 @@
         "evidencia insuficiente"
       ],
       "failure_conditions": [
-        "modificaci?n silenciosa de artefactos",
-        "autoaprobaci?n",
-        "creaci?n de subagentes anidados"
+        "modificación silenciosa de artefactos",
+        "autoaprobación",
+        "creación de subagentes anidados"
       ],
       "synthetic_policy": {
         "allows_structural_tests": true,
@@ -754,6 +437,7 @@
         "youtube_adaptation_review"
       ],
       "immutable_targets": [
+        "youtube_adaptation_b5_i2_package",
         "early_packaging_hypothesis",
         "refined_thesis",
         "script_promise",

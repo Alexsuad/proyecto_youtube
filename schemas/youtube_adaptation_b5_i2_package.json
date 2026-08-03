@@ -1,0 +1,622 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "YouTubeAdaptationB5I2Package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "package_id",
+    "episode_id",
+    "active_profile_reference",
+    "input_references",
+    "producer_run_id",
+    "episode_youtube_positioning",
+    "early_packaging_hypothesis",
+    "youtube_design_constraints",
+    "preliminary_youtube_risk_review",
+    "unsupported_elements",
+    "unresolved_items",
+    "producer_limits",
+    "created_at"
+  ],
+  "properties": {
+    "package_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "episode_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "active_profile_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "profile_version",
+        "profile_checksum"
+      ],
+      "properties": {
+        "profile_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profile_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profile_checksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "input_references": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "episode_brief",
+        "refined_thesis",
+        "editorial_script_promise",
+        "evidence_or_claims_reference"
+      ],
+      "properties": {
+        "episode_brief": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "artifact_id",
+            "version",
+            "checksum"
+          ],
+          "properties": {
+            "artifact_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "checksum": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "refined_thesis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "artifact_id",
+            "version",
+            "checksum"
+          ],
+          "properties": {
+            "artifact_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "checksum": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "editorial_script_promise": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "artifact_id",
+            "version",
+            "checksum"
+          ],
+          "properties": {
+            "artifact_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "checksum": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "evidence_or_claims_reference": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "artifact_id",
+            "version",
+            "checksum"
+          ],
+          "properties": {
+            "artifact_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "checksum": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "producer_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "episode_youtube_positioning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "concrete_audience",
+        "visible_promise"
+      ],
+      "properties": {
+        "concrete_audience": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "audience_segment",
+            "prior_knowledge",
+            "recognized_tension",
+            "relevance",
+            "expected_language_level",
+            "likely_misinterpretation",
+            "expectation_not_to_create"
+          ],
+          "properties": {
+            "audience_segment": {
+              "type": "string",
+              "minLength": 1,
+              "not": {
+                "pattern": "^(todo el público del canal|toda la audiencia del canal)$"
+              }
+            },
+            "prior_knowledge": {
+              "type": "string",
+              "minLength": 1
+            },
+            "recognized_tension": {
+              "type": "string",
+              "minLength": 1
+            },
+            "relevance": {
+              "type": "string",
+              "minLength": 1
+            },
+            "expected_language_level": {
+              "type": "string",
+              "minLength": 1
+            },
+            "likely_misinterpretation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "expectation_not_to_create": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "visible_promise": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "promise_statement",
+            "viewer_gain",
+            "scope",
+            "limits",
+            "supporting_claims",
+            "unsupported_elements",
+            "differentiation"
+          ],
+          "properties": {
+            "promise_statement": {
+              "type": "string",
+              "minLength": 1
+            },
+            "viewer_gain": {
+              "type": "string",
+              "minLength": 1
+            },
+            "scope": {
+              "type": "string",
+              "minLength": 1
+            },
+            "limits": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "supporting_claims": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "unsupported_elements": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "differentiation": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "early_packaging_hypothesis": {
+      "type": "object"
+    },
+    "youtube_design_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "opening_readiness",
+        "duration_assessment"
+      ],
+      "properties": {
+        "opening_readiness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "click_confirmation",
+            "early_substance",
+            "minimum_context",
+            "central_tension",
+            "viewer_relevance",
+            "route_preview",
+            "transition_obligation",
+            "expectations_to_avoid",
+            "invalidated_by"
+          ],
+          "properties": {
+            "click_confirmation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "early_substance": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minimum_context": {
+              "type": "string",
+              "minLength": 1
+            },
+            "central_tension": {
+              "type": "string",
+              "minLength": 1
+            },
+            "viewer_relevance": {
+              "type": "string",
+              "minLength": 1
+            },
+            "route_preview": {
+              "type": "string",
+              "minLength": 1
+            },
+            "transition_obligation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "expectations_to_avoid": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "invalidated_by": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "duration_assessment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "recommended_range",
+            "assumptions",
+            "complexity_factors",
+            "density_factors",
+            "audience_factors",
+            "compression_risk",
+            "padding_risk",
+            "mitigation_or_pending"
+          ],
+          "properties": {
+            "recommended_range": {
+              "type": "string",
+              "minLength": 1
+            },
+            "assumptions": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "complexity_factors": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "density_factors": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "audience_factors": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "compression_risk": {
+              "type": "string",
+              "minLength": 1
+            },
+            "padding_risk": {
+              "type": "string",
+              "minLength": 1
+            },
+            "mitigation_or_pending": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "preliminary_youtube_risk_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platform_risk",
+        "rights_reuse_risk"
+      ],
+      "properties": {
+        "platform_risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "signals_detected",
+            "surface",
+            "context",
+            "treatment",
+            "advertising_risk",
+            "community_guidelines_risk",
+            "severity",
+            "mitigations",
+            "uncertainties",
+            "audiovisual_review_pending"
+          ],
+          "properties": {
+            "signals_detected": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "surface": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "narration",
+                "working_title",
+                "thumbnail_concept"
+              ],
+              "properties": {
+                "narration": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "working_title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "thumbnail_concept": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "context": {
+              "type": "string",
+              "minLength": 1
+            },
+            "treatment": {
+              "type": "string",
+              "minLength": 1
+            },
+            "advertising_risk": {
+              "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "UNRESOLVED"
+              ]
+            },
+            "community_guidelines_risk": {
+              "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "UNRESOLVED"
+              ]
+            },
+            "severity": {
+              "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "UNRESOLVED"
+              ]
+            },
+            "mitigations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "uncertainties": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "audiovisual_review_pending": {
+              "type": "boolean"
+            }
+          }
+        },
+        "rights_reuse_risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "quotes",
+            "paraphrases",
+            "dialogue_reproduction",
+            "scene_dependency",
+            "chronological_summary_dependency",
+            "transformative_function",
+            "commentary_and_analysis",
+            "summary_substitution_risk",
+            "textual_risk",
+            "audiovisual_review_pending",
+            "unresolved_items",
+            "mitigations"
+          ],
+          "properties": {
+            "quotes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "paraphrases": {
+              "type": "string",
+              "minLength": 1
+            },
+            "dialogue_reproduction": {
+              "type": "string",
+              "minLength": 1
+            },
+            "scene_dependency": {
+              "type": "string",
+              "minLength": 1
+            },
+            "chronological_summary_dependency": {
+              "type": "string",
+              "minLength": 1
+            },
+            "transformative_function": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commentary_and_analysis": {
+              "type": "string",
+              "minLength": 1
+            },
+            "summary_substitution_risk": {
+              "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "UNRESOLVED"
+              ]
+            },
+            "textual_risk": {
+              "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "UNRESOLVED"
+              ]
+            },
+            "audiovisual_review_pending": {
+              "type": "boolean"
+            },
+            "unresolved_items": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mitigations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "unsupported_elements": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "unresolved_items": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "producer_limits": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

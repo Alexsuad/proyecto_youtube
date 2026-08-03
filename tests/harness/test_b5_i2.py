@@ -502,8 +502,51 @@ def _write_case(tmp_path: Path, risk: str = "LOW") -> dict[str, Path]:
     script_promise["refined_thesis_checksum"] = _digest(paths["thesis"])
     paths["script_promise"] = _put(tmp_path / "script_promise.json", script_promise)
     analysis = _read(paths["analysis"])
+    analysis.update({
+        "material_function_candidate": "Complicación",
+        "specific_scene_or_passage": "Escena concreta donde el personaje cambia una decisión central.",
+        "observable_decision_or_action": "El personaje decide sostener la contradicción aun con coste visible.",
+        "conflict": "La decisión enfrenta deseo personal y presión social.",
+        "consequence": "La consecuencia modifica la lectura del material y la tesis provisional.",
+        "main_interpretation": "La escena muestra que el conflicto no se resuelve sin costo moral.",
+        "supporting_evidence": ["N1", "claim-1"],
+        "interpretive_limit": "La escena no demuestra por sí sola una regla universal.",
+        "relationship_to_provisional_thesis": "Confirma la intuición central pero la vuelve más condicional.",
+        "potential_contribution_to_progression": "Introduce la primera complicación real del recorrido argumental.",
+    })
     analysis["material_checksum"] = _material_checksum_from_research(research, analysis["material_id"])
     _put(paths["analysis"], analysis)
+    curation = _read(paths["curation"])
+    curation.update({
+        "selected_materials": ["M1"],
+        "excluded_materials": ["M2"],
+        "function_of_each_selected_material": [{"material_id": "M1", "contribution": "Complica la tesis provisional con un costo visible."}],
+        "reason_for_each_exclusion": [{"material_id": "M2", "reason": "Repite la misma función sin ampliar comprensión."}],
+        "pairwise_redundancy_review": [{"left_material_id": "M1", "right_material_id": "M2", "result": "M2 es redundante frente a M1."}],
+        "contrast_map": [{"from_material_id": "M1", "to_material_id": "M2", "contrast": "M2 no añade un giro nuevo frente a M1."}],
+        "progression_map": [{"material_id": "M1", "change_in_understanding": "La tesis gana tensión y límite.", "evidence_refs": ["F-M1"], "non_substitutability": "Sin M1 no aparece la complicación central."}],
+        "context_cost": "Bajo porque el material ya concentra la tensión necesaria.",
+        "expected_order": ["M1"],
+        "dependency_between_materials": [],
+    })
+    _put(paths["curation"], curation)
+    thesis = _read(paths["thesis"])
+    thesis.update({
+        "refined_position": "La tesis se sostiene, pero solo cuando el conflicto se lee junto con su costo explícito.",
+        "what_was_confirmed": ["La pregunta central sí se confirma en el material principal."],
+        "what_was_changed": ["La tesis ahora depende de una condición narrativa explícita."],
+        "what_was_rejected": ["Se descarta una lectura totalmente heroica del personaje."],
+        "what_was_limited": ["El material no permite generalizar la conclusión a todos los casos."],
+        "strongest_objection": "Otra lectura diría que el conflicto es circunstancial y no estructural.",
+        "alternative_explanation": "La conducta podría explicarse por miedo inmediato y no por convicción estable.",
+        "conditions_of_validity": ["La lectura vale solo si se conserva el costo visible como parte del análisis."],
+        "remaining_uncertainties": ["No puede saberse si la consecuencia habría sido igual en otro contexto."],
+        "evidence_dependencies": ["F-M1", "N1"],
+    })
+    _put(paths["thesis"], thesis)
+    script_promise = _read(paths["script_promise"])
+    script_promise["refined_thesis_checksum"] = _digest(paths["thesis"])
+    _put(paths["script_promise"], script_promise)
     _refresh_b5_i2_audit(paths)
     _refresh_execution_registry(paths)
     return paths
@@ -515,7 +558,7 @@ def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS", readine
         effective_readiness = readiness
     elif provider_or_adapter == "mock":
         effective_readiness = "BLOCKED"
-    elif decision in {"PASS", "WARN"}:
+    elif decision in {"PASS", "REQUEST_CHANGES"}:
         effective_readiness = "READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW"
     elif decision == "FAIL":
         effective_readiness = "NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW"
@@ -544,7 +587,15 @@ def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS", readine
     payload = {
         "audit_id": "B5I2-SSA-1",
         "episode_id": EP,
-        "auditor_role": "INDEPENDENT_EDITORIAL_AUDITOR",
+        "artifact_references": [f"{item['artifact_kind']}:{item['artifact_id']}" for item in artifact_rows],
+        "producer_run_reference": RUN_ANALYSIS,
+        "auditor_run_reference": RUN_AUDIT,
+        "producer_actor_id": "SCRIPT_PRODUCT_PRODUCER",
+        "auditor_actor_id": "SCRIPT_PRODUCT_AUDITOR",
+        "auditor_input_checksum": _canonical_manifest_checksum(EP, artifact_rows),
+        "auditor_write_scope": "AUDIT_ONLY",
+        "independence_result": "PASS",
+        "auditor_role": "SCRIPT_PRODUCT_AUDITOR",
         "auditor_run_id": RUN_AUDIT,
         "auditor_skill_id": "skill_auditar_suficiencia_semantica_b5_i2",
         "auditor_skill_version": "1.0.0",
@@ -557,11 +608,20 @@ def _refresh_b5_i2_audit(paths: dict[str, Path], decision: str = "PASS", readine
         "audited_artifact_ids": ["analysis:A-1", "curation:C-1", "refined_thesis:T-1", "script_promise:SP-1"],
         "audited_artifact_versions": [item for item in artifact_rows if item["artifact_kind"] in {"analysis", "curation", "refined_thesis", "script_promise"}],
         "criteria_results": criteria_results,
+        "dimension_results": [{"dimension": name, "status": "PASS" if decision == "PASS" else ("REQUEST_CHANGES" if decision == "REQUEST_CHANGES" else decision), "summary": "Dimensión controlada por fixture."} for name in ["TRIVIAL_THESIS", "INTERCHANGEABLE_ANALYSIS", "DECORATIVE_OBJECTION", "FALSE_DEPTH", "REPHRASED_NOT_REFINED_THESIS", "REDUNDANT_CURATION", "NO_ARGUMENTATIVE_PROGRESSION", "UNSUPPORTED_INFERENCE", "SUMMARY_INSTEAD_OF_ANALYSIS", "MISSING_INTERPRETIVE_LIMIT"]],
         "findings": findings,
         "blocking_defects": [],
         "non_blocking_defects": [],
         "cited_evidence": sorted({ref for criterion in CRITERIA for finding in _anchored(criterion) for ref in finding.get("evidence_refs", [])}),
         "required_corrections": [],
+        "required_changes": [],
+        "excluded_claims_detected": [EXCLUDED_CLAIM],
+        "unsupported_inferences": [],
+        "redundancy_findings": [],
+        "progression_findings": [],
+        "thesis_refinement_finding": {"status": "PASS" if decision == "PASS" else ("REQUEST_CHANGES" if decision == "REQUEST_CHANGES" else decision), "summary": "El fixture sintetiza el estado de refinamiento."},
+        "blocking_reasons": [] if decision != "BLOCKED" else ["Bloqueo de fixture"],
+        "reaudit_requirements": [],
         "unresolved_questions": [],
         "inherited_restrictions_checked": [CONSTRAINT, DISCLOSURE, EXCLUDED_CLAIM],
         "auditor_statement": "Decision PASS emitida sobre artefactos B5-I2 con evidencia citada.",
@@ -596,7 +656,7 @@ def _sync_auditor_run(paths: dict[str, Path]) -> None:
         run["output_versions"] = [RUN_AUDIT]
         run["output_checksums"] = [_digest(paths["b5_i2_audit"])]
         run["decision"] = audit["decision"]
-        run["blocking_reason"] = None if audit["decision"] in {"PASS", "WARN"} else audit["decision"]
+        run["blocking_reason"] = None if audit["decision"] in {"PASS", "REQUEST_CHANGES"} else audit["decision"]
         run["outputs"] = [
             {
                 "artifact_kind": "semantic_audit",
@@ -691,7 +751,7 @@ def _refresh_execution_registry(paths: dict[str, Path], auditor_status: str = "S
             make_run(RUN_PROMISE, "SCRIPT_PROMISE_PRODUCER", "skill_crear_brief_episodio", "script_promise", started_at="2026-07-25T07:06:00Z", completed_at="2026-07-25T07:07:00Z"),
             make_run(
                 RUN_AUDIT,
-                "INDEPENDENT_EDITORIAL_AUDITOR",
+                "SCRIPT_PRODUCT_AUDITOR",
                 "skill_auditar_suficiencia_semantica_b5_i2",
                 "semantic_audit",
                 provider_or_adapter=auditor_provider,
@@ -995,16 +1055,16 @@ def test_critical_editorial_failure_or_unresolved_fails(tmp_path: Path, status: 
 def test_limited_critical_editorial_decision_warns(tmp_path: Path) -> None:
     paths = _write_case(tmp_path)
     _refresh_execution_registry(paths, execution_mode="REAL", auditor_provider_kind="REAL", auditor_provider="openai_compatible")
-    _refresh_b5_i2_audit(paths, decision="WARN", readiness="READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", provider_or_adapter="openai_compatible")
+    _refresh_b5_i2_audit(paths, decision="REQUEST_CHANGES", readiness="NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", provider_or_adapter="openai_compatible")
     def mutate(audit: dict) -> None:
         _criterion(audit, "THESIS_REFINEMENT_SUBSTANCE")["status"] = "LIMITED"
         _criterion(audit, "THESIS_REFINEMENT_SUBSTANCE")["anchored_findings"][0]["decision"] = "LIMITED"
-        audit["decision"] = "WARN"
+        audit["decision"] = "REQUEST_CHANGES"
     _mutate(paths, "b5_i2_audit", mutate, refresh=False)
     _sync_auditor_run(paths)
     result = _evaluate(paths)
-    assert result.status is GateStatus.WARN
-    assert result.evidence["semantic_audit"]["SEMANTIC_EDITORIAL_DECISION"] == "WARN"
+    assert result.status is GateStatus.REQUEST_CHANGES
+    assert result.evidence["semantic_audit"]["SEMANTIC_EDITORIAL_DECISION"] == "REQUEST_CHANGES"
 
 
 def test_synthetic_complete_provenance_passes_technical_integrity(tmp_path: Path) -> None:
@@ -1041,8 +1101,8 @@ def test_medium_with_mitigation_warns(tmp_path: Path) -> None:
     paths = _write_case(tmp_path, risk="MEDIUM")
     _mutate(paths, "script_promise", lambda d: d["textual_overpromise_risk"].update(mitigation_or_pending="Revisar la formulación antes de escribir el guion."), refresh=False)
     _refresh_execution_registry(paths, execution_mode="REAL", auditor_provider_kind="REAL", auditor_provider="openai_compatible")
-    _refresh_b5_i2_audit(paths, decision="WARN", readiness="READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", provider_or_adapter="openai_compatible")
-    assert _evaluate(paths).status is GateStatus.WARN
+    _refresh_b5_i2_audit(paths, decision="REQUEST_CHANGES", readiness="NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", provider_or_adapter="openai_compatible")
+    assert _evaluate(paths).status is GateStatus.REQUEST_CHANGES
 
 
 def test_equal_provisional_thesis_with_justification_is_allowed(tmp_path: Path) -> None:
@@ -1093,7 +1153,7 @@ def test_b5_i3_not_started() -> None:
 
 def test_synthetic_warn_is_operationally_blocked(tmp_path: Path) -> None:
     paths = _write_case(tmp_path)
-    _refresh_b5_i2_audit(paths, decision="WARN", readiness="BLOCKED")
+    _refresh_b5_i2_audit(paths, decision="REQUEST_CHANGES", readiness="BLOCKED")
     result = _evaluate(paths)
     assert result.status is GateStatus.BLOCKED
     assert result.evidence["semantic_audit"]["SEMANTIC_EDITORIAL_DECISION"] == "NOT_EVALUATED"

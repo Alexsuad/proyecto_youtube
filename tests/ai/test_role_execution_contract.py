@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+import pytest
+
+from src.ai.contracts import ExecutionRequest, ExecutionStatus
+from src.ai.execution import execute
+from src.ai.providers.ollama import OllamaProvider
+from src.ai.role_execution import RoleExecutionContractError, build_model_prompt, resolve_role_execution_contract
+
+
+def _runtime_values() -> dict[str, object]:
+    return {"smoke_id":"SMOKE-1","role_id":"SCRIPT_PRODUCT_PRODUCER","execution_profile":"ollama_local","execution_route":"local_model","selected_executor":"native_provider","selected_provider":"ollama","selected_model":"Qwen2.5-Coder:latest","actual_executor":"native_provider","actual_provider":"ollama","actual_model":"Qwen2.5-Coder:latest","result":"SUCCEEDED","decision":"CONTRACTUAL_SMOKE_PASS","stdout_preview":"ok","stderr_preview":"","exit_code":0,"notes":[]}
+
+
+def _producer_input() -> dict[str, object]:
+    return {
+        "active_editorial_profile_reference": {"profile_id": "mas_alla_del_guion", "version": "1.2.1"},
+        "episode_brief": {"episode_id": "EP-1"},
+        "research_pack": {"research_id": "R-1"},
+        "source_access_and_evidence_report": {"report_id": "ER-1"},
+        "provisional_thesis": {"thesis_id": "TP-1"},
+        "semantic_sufficiency_audit": {"audit_id": "SSA-1"},
+        "claims_ledger": [{"claim_id": "C-1"}],
+        "approved_material_candidates": [{"material_id": "M-1"}],
+        "excluded_claims": [],
+        "limited_claims": [],
+        "mandatory_disclosures": [],
+    }
+
+
+def test_role_contract_loads_prompt_profile_and_output_schema() -> None:
+    contract=resolve_role_execution_contract("SCRIPT_PRODUCT_PRODUCER","execution_smoke_report",_producer_input(),_runtime_values())
+    prompt=build_model_prompt(contract)
+    assert contract["prompt_id"] == "prompt_script_product_producer"
+    assert len(contract["prompt_checksum"]) == 64
+    assert contract["compiled_profile"]["profile_checksum"]
+    assert '"execution_smoke_report"' in prompt and '"input_payload"' in prompt
+
+
+def test_invalid_input_and_missing_role_are_classified() -> None:
+    with pytest.raises(RoleExecutionContractError, match="INPUT_CONTRACT_INVALID"):
+        resolve_role_execution_contract("SCRIPT_PRODUCT_PRODUCER","execution_smoke_report",[],_runtime_values())
+    with pytest.raises(RoleExecutionContractError, match="ROLE_NOT_REGISTERED"):
+        resolve_role_execution_contract("UNKNOWN_ROLE","execution_smoke_report",{},_runtime_values())
+
+
+def test_ollama_response_parsing_allows_only_documented_fence_cleanup() -> None:
+    assert OllamaProvider._parse_response({"response":"```json" + chr(10) + '{"ok": true}' + chr(10) + "```"}) == {"ok":True}
+    with pytest.raises(ValueError, match="EMPTY_RESPONSE"): OllamaProvider._parse_response({"response":""})
+    with pytest.raises(ValueError, match="INVALID_JSON"): OllamaProvider._parse_response({"response":"not json"})
+
+
+
+
+def test_model_invocation_timeout_is_runtime_block(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _raise_timeout(self, request):
+        raise RuntimeError("MODEL_INVOCATION_FAILED: TIMEOUT")
+
+    monkeypatch.setattr(OllamaProvider, "execute", _raise_timeout)
+    request = ExecutionRequest(
+        capability_id="SCRIPT_PRODUCT_PRODUCER",
+        skill_id="test",
+        skill_version="1",
+        input_artifacts=[],
+        output_schema="execution_smoke_report",
+        provider="ollama",
+        model="Qwen2.5-Coder:latest",
+        role="SCRIPT_PRODUCT_PRODUCER",
+        config={"prompt": "{}"},
+    )
+    result = execute(request)
+    assert result.status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER
+    assert result.error == "MODEL_INVOCATION_FAILED: TIMEOUT"
+
+def test_output_contract_invalid_is_not_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(OllamaProvider,"execute",lambda self,request: ({"bad":True},{}))
+    request=ExecutionRequest(capability_id="SCRIPT_PRODUCT_PRODUCER",skill_id="test",skill_version="1",input_artifacts=[],output_schema="execution_smoke_report",provider="ollama",model="fake",role="SCRIPT_PRODUCT_PRODUCER",config={"prompt":"{}"})
+    result=execute(request)
+    assert result.status.value == "FAILED"
+    assert result.error and result.error.startswith("OUTPUT_CONTRACT_INVALID")

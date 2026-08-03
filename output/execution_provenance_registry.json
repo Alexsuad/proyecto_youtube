@@ -1,5 +1,67 @@
 {
   "registry_version": "1.0.0",
   "runs": [],
-  "handoffs": []
+  "handoffs": [],
+  "attempts": [
+    {
+      "attempt_id": "ATTEMPT-RUN-AI-R6-B-RETRY-TIMEOUT-20260731",
+      "run_id": "RUN-AI-R6-B-RETRY-TIMEOUT-20260731",
+      "status": "BLOCKED_BY_RUNTIME_PROVIDER",
+      "error": "MODEL_INVOCATION_FAILED: TIMEOUT",
+      "role_id": "SCRIPT_PRODUCT_PRODUCER",
+      "provider": "ollama",
+      "model": "Qwen2.5-Coder:latest",
+      "execution_profile": "ollama_local",
+      "execution_route": "local_model",
+      "actual_executor": "native_provider",
+      "actual_provider": "ollama",
+      "actual_model": "Qwen2.5-Coder:latest",
+      "started_at": "2026-07-31T15:57:15.758476Z",
+      "finished_at": "2026-07-31T16:02:15.758476Z",
+      "latency": 300.0,
+      "execution_mode": "REAL",
+      "prompt_id": "prompt_script_product_producer",
+      "prompt_version": "1.0.0",
+      "prompt_checksum": "cbc20f325562aaa317ca197694d9934324093045a97cf8d430a96e3d4d10a3c2",
+      "input_checksum": "0f4c1dc8e1abf56b3514ee5d04335f6f58513fe68ee84eafbca9d2f43e7080ae",
+      "output_checksum": "8880d56cf91015dc89f86c9bde11f39d231ec34381d6c3494e1fdf9b0662e372",
+      "validation_result": "NOT_REACHED",
+      "metadata_origin": "RECONSTRUCTED_FROM_RETRY_INPUT_AND_EVIDENCE",
+      "evidence_path": "output/r6_b/control_valid_producer_retry.json",
+      "notes": [
+        "Historical failed run reconstructed from retry input and preserved failure artifact.",
+        "started_at inferred as finished_at minus 300 seconds because the artifact records a 300-second timeout."
+      ]
+    },
+    {
+      "attempt_id": "ATTEMPT-RUN-AI-R6-B-LEGACY-INVALID-RESPONSE-20260731",
+      "run_id": "RUN-AI-R6-B-LEGACY-INVALID-RESPONSE-20260731",
+      "status": "FAILED",
+      "error": "INVALID_RESPONSE",
+      "role_id": "SCRIPT_PRODUCT_PRODUCER",
+      "provider": "ollama",
+      "model": "UNSPECIFIED_MODEL_FROM_LEGACY_EVIDENCE",
+      "execution_profile": "ollama_local",
+      "execution_route": "local_model",
+      "actual_executor": "native_provider",
+      "actual_provider": "ollama",
+      "actual_model": "UNSPECIFIED_MODEL_FROM_LEGACY_EVIDENCE",
+      "started_at": "2026-07-31T15:45:06.069642Z",
+      "finished_at": "2026-07-31T15:45:06.069642Z",
+      "latency": 0.0,
+      "execution_mode": "REAL",
+      "prompt_id": "UNAVAILABLE_FROM_LEGACY_EVIDENCE",
+      "prompt_version": "UNAVAILABLE_FROM_LEGACY_EVIDENCE",
+      "prompt_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "input_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "output_checksum": "5be8768d0178d8eab43e70136b7325a97b90d4a111ad7a4253b47e32125989df",
+      "validation_result": "NOT_REACHED",
+      "metadata_origin": "LEGACY_EVIDENCE_PARTIAL",
+      "evidence_path": "output/r6_b/control_valid_producer.json",
+      "notes": [
+        "Legacy INVALID_RESPONSE artifact preserved as historical evidence.",
+        "Prompt, input checksum, model, and latency were not recoverable from the artifact and are explicitly marked unavailable."
+      ]
+    }
+  ]
 }

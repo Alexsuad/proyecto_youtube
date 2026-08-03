@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Topic Belonging Input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "topic_input_id",
+    "profile_id",
+    "profile_version",
+    "profile_checksum",
+    "topic",
+    "narrative_work",
+    "central_question",
+    "proposed_angle",
+    "proposed_territory",
+    "initial_evidence",
+    "strategic_triggers",
+    "submitted_at"
+  ],
+  "properties": {
+    "topic_input_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_checksum": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1
+    },
+    "narrative_work": {
+      "type": "string",
+      "minLength": 1
+    },
+    "central_question": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposed_angle": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposed_territory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "initial_evidence": {
+      "type": "array",
+      "minItems": 1
+    },
+    "strategic_triggers": {
+      "$ref": "#/$defs/strategic_triggers"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "strategic_triggers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "political_partisan_sensitivity",
+        "high_sensitivity",
+        "audience_matrix_change",
+        "excluded_boundary_reinterpretation",
+        "new_personal_exposure",
+        "voice_or_author_persona_change",
+        "positioning_expansion",
+        "permanent_effect",
+        "high_precedent_risk",
+        "experimental_territory"
+      ],
+      "properties": {
+        "political_partisan_sensitivity": {
+          "type": "boolean"
+        },
+        "high_sensitivity": {
+          "type": "boolean"
+        },
+        "audience_matrix_change": {
+          "type": "boolean"
+        },
+        "excluded_boundary_reinterpretation": {
+          "type": "boolean"
+        },
+        "new_personal_exposure": {
+          "type": "boolean"
+        },
+        "voice_or_author_persona_change": {
+          "type": "boolean"
+        },
+        "positioning_expansion": {
+          "type": "boolean"
+        },
+        "permanent_effect": {
+          "type": "boolean"
+        },
+        "high_precedent_risk": {
+          "type": "boolean"
+        },
+        "experimental_territory": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -32,6 +32,7 @@
       "enum": [
         "PASS",
         "WARN",
+        "REQUEST_CHANGES",
         "FAIL",
         "BLOCKED"
       ]

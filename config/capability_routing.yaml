@@ -10,3 +10,12 @@ capabilities:
       auto_agent_handoff: false
       allow_external_api: false
       unavailable: BLOCKED_BY_SEMANTIC_EVALUATOR
+  TOPIC_BELONGING_ASSESSMENT:
+    entrypoint: src/scripts/topic_belonging_flow.py
+    output_schema: topic_belonging_decision
+    routing:
+      explicit_mode: respect_requested_route
+      auto_local: true
+      auto_agent_handoff: false
+      allow_external_api: false
+      unavailable: BLOCKED_UNTIL_MISSION_AUTHORIZED

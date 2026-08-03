@@ -48,10 +48,10 @@ CRITICAL_CRITERIA = {
     "B5_I3_READINESS",
 }
 INVALID_PROVENANCE = {"manual", "unknown", "unverified"}
-AUDITOR_ROLE = "INDEPENDENT_EDITORIAL_AUDITOR"
+AUDITOR_ROLE = "SCRIPT_PRODUCT_AUDITOR"
 REAL_PROVIDER_KIND = "REAL"
 SYNTHETIC_PROVIDER_KIND = "SYNTHETIC"
-READINESS_BY_DECISION = {"FAIL": "NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", "BLOCKED": "BLOCKED", "NOT_EVALUATED": "BLOCKED"}
+READINESS_BY_DECISION = {"REQUEST_CHANGES": "NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", "FAIL": "NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", "BLOCKED": "BLOCKED", "NOT_EVALUATED": "BLOCKED"}
 
 
 def checksum(path: Path) -> str:
@@ -236,7 +236,7 @@ def _semantic_editorial_decision(audit: dict[str, Any], auditor_run: dict[str, A
 def _operational_readiness(technical_integrity: str, semantic_decision: str, auditor_run: dict[str, Any] | None) -> str:
     if technical_integrity != "PASS":
         return "BLOCKED"
-    if semantic_decision in {"FAIL"}:
+    if semantic_decision in {"REQUEST_CHANGES", "FAIL"}:
         return "NOT_READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW"
     if semantic_decision in {"BLOCKED", "NOT_EVALUATED"}:
         return "BLOCKED"
@@ -253,6 +253,46 @@ def _operational_readiness(technical_integrity: str, semantic_decision: str, aud
 
 def _canonical_manifest_checksum(episode_id: str, artifacts: list[dict[str, Any]]) -> str:
     return _shared_manifest_checksum(episode_id, artifacts)
+
+
+def _looks_generic(text: Any) -> bool:
+    if not isinstance(text, str):
+        return True
+    normalized = _normalize_token(text)
+    generic_markers = {"tema", "tesis", "analisis", "lectura", "reflexion", "cambio", "relacion", "material", "profundo", "importante", "relevante", "general", "universal"}
+    if len(normalized.split()) < 5:
+        return True
+    return any(marker == normalized or f" {marker} " in f" {normalized} " for marker in generic_markers)
+
+
+def _append_functional_defects(violations: list[str], analyses: list[dict[str, Any]], curation: dict[str, Any], thesis: dict[str, Any], provisional: dict[str, Any]) -> None:
+    if _looks_generic(thesis.get("refined_position")) or _looks_generic(thesis.get("statement")):
+        violations.append("TRIVIAL_THESIS: la tesis refinada sigue siendo genérica o evidente")
+    if thesis.get("statement") == provisional.get("statement"):
+        violations.append("REPHRASED_NOT_REFINED_THESIS: la tesis final mantiene la misma proposición de la tesis provisional")
+    if not thesis.get("what_was_changed") or not thesis.get("what_was_rejected") or not thesis.get("what_was_limited"):
+        violations.append("REPHRASED_NOT_REFINED_THESIS: faltan cambios, rechazos o límites explícitos de la tesis refinada")
+    if _looks_generic(thesis.get("strongest_objection")) or _looks_generic(thesis.get("alternative_explanation")):
+        violations.append("DECORATIVE_OBJECTION: la objeción o la explicación alternativa no es sustantiva")
+    for analysis in analyses:
+        if any(_looks_generic(analysis.get(field)) for field in ("specific_scene_or_passage", "observable_decision_or_action", "conflict", "consequence", "main_interpretation")):
+            violations.append(f"INTERCHANGEABLE_ANALYSIS: el análisis {analysis.get('analysis_id')} sigue siendo genérico o intercambiable")
+        if not analysis.get("supporting_evidence"):
+            violations.append(f"UNSUPPORTED_INFERENCE: el análisis {analysis.get('analysis_id')} no declara supporting_evidence")
+        if _looks_generic(analysis.get("interpretive_limit")) or _looks_generic(analysis.get("does_not_establish")):
+            violations.append(f"MISSING_INTERPRETIVE_LIMIT: el análisis {analysis.get('analysis_id')} no declara límites interpretativos suficientes")
+        if _looks_generic(analysis.get("specific_scene_or_passage")) and _looks_generic(analysis.get("observable_decision_or_action")):
+            violations.append(f"SUMMARY_INSTEAD_OF_ANALYSIS: el análisis {analysis.get('analysis_id')} parece resumir en lugar de interpretar")
+        if _looks_generic(analysis.get("main_interpretation")) and _looks_generic(analysis.get("causal_relation")):
+            violations.append(f"FALSE_DEPTH: el análisis {analysis.get('analysis_id')} usa abstracción sin mecanismo verificable")
+    selected_materials = curation.get("selected_materials", [])
+    selected_functions = [item.get("contribution") for item in curation.get("function_of_each_selected_material", []) if isinstance(item, dict)]
+    if len(selected_functions) != len(set(selected_functions)):
+        violations.append("REDUNDANT_CURATION: hay funciones editoriales repetidas entre materiales seleccionados")
+    if len(curation.get("progression_map", [])) < len(selected_materials):
+        violations.append("NO_ARGUMENTATIVE_PROGRESSION: la progresión argumentativa no cubre todos los materiales seleccionados")
+    if not curation.get("contrast_map"):
+        violations.append("NO_ARGUMENTATIVE_PROGRESSION: falta contrast_map en la curación final")
 
 
 def _build_evidence_texts(research: dict, report: dict, constraints: set[str]) -> dict[str, list[str]]:
@@ -290,12 +330,12 @@ def _editorial_status(audit: dict, violations: list[str]) -> GateStatus:
         violations.append("Un criterio crítico NOT_SATISFIED o UNRESOLVED exige decision=FAIL o decision=BLOCKED")
     if any(value == "LIMITED" for value in critical_statuses.values()) and decision == "PASS":
         violations.append("Un criterio crítico LIMITED no permite decision=PASS")
-    if any(value == "UNRESOLVED" for value in statuses) and decision in ("PASS", "WARN"):
-        violations.append("Un criterio UNRESOLVED no permite PASS ni WARN")
-    if any(value == "NOT_SATISFIED" for value in statuses) and decision in ("PASS", "WARN"):
-        violations.append("Un criterio NOT_SATISFIED no permite PASS ni WARN")
+    if any(value == "UNRESOLVED" for value in statuses) and decision in ("PASS", "REQUEST_CHANGES"):
+        violations.append("Un criterio UNRESOLVED no permite PASS ni REQUEST_CHANGES")
+    if any(value == "NOT_SATISFIED" for value in statuses) and decision in ("PASS", "REQUEST_CHANGES"):
+        violations.append("Un criterio NOT_SATISFIED no permite PASS ni REQUEST_CHANGES")
     if any(value == "LIMITED" for value in statuses) and not any(value in ("NOT_SATISFIED", "UNRESOLVED") for value in statuses) and decision == "PASS":
-        violations.append("Un criterio LIMITED exige como mínimo decision=WARN")
+        violations.append("Un criterio LIMITED exige como mínimo decision=REQUEST_CHANGES")
     if all(value == "SATISFIED" for value in statuses) and decision == "FAIL":
         violations.append("Todos los criterios satisfechos no son compatibles con decision=FAIL")
     return GateStatus(decision) if decision in GateStatus._value2member_map_ else GateStatus.FAIL
@@ -356,7 +396,7 @@ def evaluate(
     for field, path in audit_checksum_sources.items():
         if data["audit"].get(field) != checksum(path):
             violations.append(f"audit.{field} no coincide con el checksum real de {path.name}")
-    if data["audit"].get("decision") not in ("PASS", "WARN"):
+    if data["audit"].get("decision") not in ("PASS", "REQUEST_CHANGES"):
         violations.append("Auditoría semántica B5-I1 no permite avanzar")
 
     brief, research, report, audit = data["brief"], data["research"], data["evidence"], data["audit"]
@@ -585,6 +625,10 @@ def evaluate(
             violations.append(f"B5I2SemanticSufficiencyAudit declara procedencia no verificable en {field}")
     if b5_audit.get("auditor_role") != AUDITOR_ROLE:
         violations.append(f"B5I2SemanticSufficiencyAudit exige auditor_role={AUDITOR_ROLE}")
+    if b5_audit.get("auditor_run_reference") != auditor_run_id:
+        violations.append("B5I2SemanticSufficiencyAudit no alinea auditor_run_reference con auditor_run_id")
+    if b5_audit.get("auditor_write_scope") != "AUDIT_ONLY":
+        violations.append("B5I2SemanticSufficiencyAudit exige auditor_write_scope=AUDIT_ONLY")
 
     artifact_rows = [item for item in b5_audit.get("artifact_checksums", []) if isinstance(item, dict)]
     artifact_refs = [
@@ -710,6 +754,12 @@ def evaluate(
         "TECHNICAL_INTEGRITY": integrity_status,
         "SEMANTIC_EDITORIAL_DECISION": semantic_editorial_decision,
         "OPERATIONAL_READINESS": operational_readiness,
+        "producer_output_schema": "PASS" if not any(item.startswith("analysis[") or item.startswith("curation:") or item.startswith("thesis:") or item.startswith("script_promise:") for item in violations) else "FAIL",
+        "producer_output_closed": "PASS" if not any("artefactos del productor" in item.lower() for item in violations) else "FAIL",
+        "auditor_output_schema": "PASS" if not any(item.startswith("b5_i2_audit:") for item in violations) else "FAIL",
+        "auditor_independence": "PASS" if b5_audit.get("independence_result") == "PASS" else "FAIL",
+        "artifact_checksum_match": "PASS" if not any("checksum" in item.lower() for item in violations) else "FAIL",
+        "provenance_complete": "PASS" if auditor_run else "FAIL",
         "AUDITOR_EXECUTION_MODE": auditor_run.get("execution_mode") if auditor_run else "",
         "AUDITOR_STATUS": auditor_run.get("status") if auditor_run else "",
         "AUDITOR_PROVIDER_KIND": _provider_kind(auditor_run) if auditor_run else "",
@@ -732,8 +782,8 @@ def evaluate(
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.BLOCKED, "La auditoría no tiene autorización operativa para pasar a SCRIPT_PRODUCT", evidence=evidence)
     if any(value in ("NOT_SATISFIED", "UNRESOLVED") for value in critical_statuses.values()) or semantic_editorial_decision == "FAIL":
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.FAIL, "La adjudicación editorial independiente no autoriza avanzar", evidence=evidence)
-    if any(value == "LIMITED" for value in critical_statuses.values()) or editorial_gate_status == GateStatus.WARN or risk == "MEDIUM" or semantic_editorial_decision == "WARN":
-        return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.WARN, "La auditoría editorial es trazable pero mantiene limitaciones no bloqueantes", evidence=evidence)
+    if any(value == "LIMITED" for value in critical_statuses.values()) or editorial_gate_status == GateStatus.REQUEST_CHANGES or risk == "MEDIUM" or semantic_editorial_decision == "REQUEST_CHANGES":
+        return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.REQUEST_CHANGES, "La auditoría editorial exige correcciones antes de avanzar", evidence=evidence)
     return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.PASS, "B5-I2 preparado para reauditoría funcional", evidence=evidence)
 
 
