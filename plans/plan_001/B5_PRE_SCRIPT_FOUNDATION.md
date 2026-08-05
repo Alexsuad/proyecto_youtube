@@ -1,6 +1,6 @@
 # PLAN-001 / B5_PRE — Planeación, investigación y curación previa al guion
 
-**PLAN_ID:** `B5_5`
+**PLAN_ID:** `B5_PRE`
 **PLAN_NAME:** Planeación, investigación y curación previa al guion
 **PLAN_RECTOR:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)
 **LIVE_STATE_AUTHORITY:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)
@@ -15,15 +15,20 @@
 ## 1. Identidad del plan
 
 ```text
-PLAN_ID              = B5_5
-PLAN_NAME            = Planeación, investigación y curación previa al guion
-PLAN_RECTOR          = Plan 001
-LIVE_STATE_AUTHORITY = plans/001_CONTROL_OPERATIVO.md
-PLAN_STATUS          = FUNCTIONAL_FOUNDATION
-IMPLEMENTATION       = NOT_STARTED
+PLAN_ID                       = B5_PRE
+PLAN_NAME                     = Planeación, investigación y curación previa al guion
+PLAN_RECTOR                   = Plan 001
+LIVE_STATE_AUTHORITY          = plans/001_CONTROL_OPERATIVO.md
+PLAN_STATUS                   = FUNCTIONAL_FOUNDATION_RECONCILED
+FUNCTIONAL_SCOPE              = SPECIFIED_AND_RECONCILED
+IMPLEMENTATION_STATUS         = PARTIAL_EXISTING_BASE_REQUIRES_LATER_DESIGN
+TECHNICAL_VALIDATION_STATUS   = PARTIAL
+OPERATIONAL_DEMONSTRATION_STATUS = NOT_DEMONSTRATED
+FUNCTIONAL_APPROVAL_STATUS    = NOT_APPROVED_AS_OPERATIONAL_CAPABILITY
+AUTHORIZED_FOR_PRODUCT_USE    = NO
 ```
 
-No se declara implementado ni demostrado durante esta misión.
+La base parcial existente no equivale a capacidad operativa implementada. Esta misión no implementa componentes ni demuestra una vertical real.
 
 ---
 
@@ -176,14 +181,14 @@ La **curación final** no puede realizarse antes del análisis sustantivo.
 La implementación posterior se organiza (sin ejecutarse en esta misión) en bloques equivalentes:
 
 ```text
-B5_5.1 — Entrada, modalidad y pertenencia
-B5_5.2 — Descubrimiento y especialistas
-B5_5.3 — Investigación y verificación de obras
-B5_5.4 — Cierre B5-I1
-B5_5.5 — Cierre semántico B5-I2
-B5_5.6 — Integración YouTube Adaptation
-B5_5.7 — Ejecución real controlada
-B5_5.8 — Auditoría funcional y técnica
+B5_PRE.1 — Entrada, modalidad y pertenencia
+B5_PRE.2 — Descubrimiento y especialistas
+B5_PRE.3 — Investigación y verificación de obras
+B5_PRE.4 — Cierre B5-I1
+B5_PRE.5 — Cierre semántico B5-I2
+B5_PRE.6 — Integración YouTube Adaptation
+B5_PRE.7 — Ejecución real controlada
+B5_PRE.8 — Auditoría funcional y técnica
 ```
 
 No se crea un archivo separado por incremento durante esta misión.
@@ -218,7 +223,7 @@ B5I1Package
 PreScriptReadinessDecision
 ```
 
-Destino: `B5_5_M2_TECHNICAL_OPERATIONAL_SANITATION`.
+Destino: `FUTURE_B5_PRE_TECHNICAL_IMPLEMENTATION_BACKLOG`.
 
 ---
 
@@ -226,7 +231,7 @@ Destino: `B5_5_M2_TECHNICAL_OPERATIONAL_SANITATION`.
 
 ```text
 THREE_ENTRY_MODES          = PASS
-TOPIC_BELONGING            = DEMONSTRATED
+TOPIC_BELONGING            = SPECIFIED_AND_RECONCILED
 DYNAMIC_RESEARCH_PLAN      = PASS
 CANDIDATE_WORKS             = 5_TO_8
 FINAL_WORKS               = 3_TO_5
@@ -234,7 +239,7 @@ WORK_VERIFICATION          = PASS
 B5_I1                     = PASS
 B5_I2_SCRIPT_PRODUCT      = PASS
 B5_I2_YOUTUBE_ADAPTATION  = PASS
-REAL_EXECUTION            = DEMONSTRATED
+REAL_EXECUTION            = NOT_DEMONSTRATED
 PROVENANCE                = PASS
 FALSE_EDITORIAL_PASS      = 0
 ```
@@ -242,8 +247,8 @@ FALSE_EDITORIAL_PASS      = 0
 Estado final futuro:
 
 ```text
-B5_5_STATUS                  = PASS
-PRE_SCRIPT_PLANNING          = DEMONSTRATED
+B5_PRE_STATUS                  = RECONCILED_NOT_IMPLEMENTED
+PRE_SCRIPT_PLANNING          = NOT_DEMONSTRATED
 READY_FOR_SCRIPT_ARCHITECTURE = YES
 SCRIPT_WRITTEN              = NO
 ```
@@ -256,7 +261,7 @@ No se declaran alcanzados en esta misión.
 
 Esta sección registra por hallazgo la relación entre cada fuente externa, el requisito funcional que la B5_PRE consolida y la evidencia actual en el repositorio. No copia auditorías completas al repositorio y no declara reconciliadas fuentes que no hayan podido leerse.
 
-**Estado global de fuentes:** todas las fuentes externas originales de esta misión estuvieron **indisponibles** durante esta ejecución (no están en el repositorio ni fueron adjuntadas al contexto). Por ello, **todos** sus hallazgos se registran con `current_status = NOT_VERIFIED` y `notes = source content unavailable during this execution`. No se declara `RESOLVED`, `SUPERSEDED` ni `CURRENT` para ninguna fuente no leída. La evidencia del repositorio indica el **destino canónico** donde B5_PRE consolidó el requisito funcional, no la verificación del contenido de la auditoría.
+**Estado global de fuentes:** las fuentes canónicas de P-08 utilizadas para esta reconciliación están disponibles localmente en `docs/reconciliation/p08/2026-08-05/`. Esta disponibilidad permite sostener la reconciliación documental de B5_PRE-M2. No convierte automáticamente cada hallazgo histórico de auditorías anteriores en verificado, implementado, demostrado o aprobado.
 
 ### 9.1 Matriz material por functional_owner
 
@@ -282,19 +287,19 @@ Fuente: `01.1 Auditoría Inteligencia Canal.txt` — `source_date_or_version: NO
 
 | finding_id | requirement_summary | current_repository_evidence | canonical_destination | implementation_phase |
 |---|---|---|---|---|
-| CI-01 | identidad y territorios | `policies/channel_intelligence/topic_belonging_policy.md` §1, §2 | topic_belonging_policy §1, §2 | B5_5_M1 (política) / M2 (implementación) |
-| CI-02 | puerta narrativa | `policies/channel_intelligence/topic_belonging_policy.md` §2 (dimensiones) | topic_belonging_policy §2 | B5_5_M1 (política) / M2 (implementación) |
-| CI-03 | pregunta central | `policies/channel_intelligence/topic_belonging_policy.md` §2; `plans/plan_001/B5_PRE_SCRIPT_FOUNDATION.md` §10.2.1 | topic_belonging_policy §2; B5_PRE §10.2.1 | B5_5_M1 (política) / M2 (implementación) |
-| CI-04 | valor más allá de la obra | `policies/channel_intelligence/topic_belonging_policy.md` §2, §6 | topic_belonging_policy §2, §6 | B5_5_M1 (política) / M2 (implementación) |
-| CI-05 | potencial de tesis | `policies/channel_intelligence/topic_belonging_policy.md` §2 | topic_belonging_policy §2 | B5_5_M1 (política) / M2 (implementación) |
-| CI-06 | audiencia matriz | `policies/channel_intelligence/topic_belonging_policy.md` §2 | topic_belonging_policy §2 | B5_5_M1 (política) / M2 (implementación) |
-| CI-07 | persona autoral | `policies/channel_intelligence/topic_belonging_policy.md` §2 | topic_belonging_policy §2 | B5_5_M1 (política) / M2 (implementación) |
-| CI-08 | límites permanentes | `policies/channel_intelligence/topic_belonging_policy.md` §2, §10 | topic_belonging_policy §2, §10 | B5_5_M1 (política) / M2 (implementación) |
-| CI-09 | sensibilidad | `policies/channel_intelligence/topic_belonging_policy.md` §9 (escalamiento) | topic_belonging_policy §9 | B5_5_M1 (política) / M2 (implementación) |
-| CI-10 | precedente | `policies/channel_intelligence/topic_belonging_policy.md` §9 | topic_belonging_policy §9 | B5_5_M1 (política) / M2 (implementación) |
-| CI-11 | viabilidad 3–5 obras | `policies/channel_intelligence/topic_belonging_policy.md` §10; `policies/script_product/main_episode_format_policy.md` §2 | topic_belonging_policy §10; main_episode_format_policy §2 | B5_5_M1 (política) / M2 (implementación) |
-| CI-12 | revisión independiente | `policies/channel_intelligence/topic_belonging_policy.md` §8; `prompts/roles/CHANNEL_INTELLIGENCE_REVIEWER/1.0.0.md` | topic_belonging_policy §8 | B5_5_M1 (política) / M2 (implementación) |
-| CI-13 | decisión efectiva | `policies/channel_intelligence/topic_belonging_policy.md` §5, §8; `schemas/topic_belonging_decision.json` | topic_belonging_policy §5, §8 | B5_5_M1 (política) / M2 (implementación) |
+| CI-01 | identidad y territorios | `policies/channel_intelligence/topic_belonging_policy.md` §1, §2 | topic_belonging_policy §1, §2 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-02 | puerta narrativa | `policies/channel_intelligence/topic_belonging_policy.md` §2 (dimensiones) | topic_belonging_policy §2 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-03 | pregunta central | `policies/channel_intelligence/topic_belonging_policy.md` §2; `plans/plan_001/B5_PRE_SCRIPT_FOUNDATION.md` §10.2.1 | topic_belonging_policy §2; B5_PRE §10.2.1 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-04 | valor más allá de la obra | `policies/channel_intelligence/topic_belonging_policy.md` §2, §6 | topic_belonging_policy §2, §6 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-05 | potencial de tesis | `policies/channel_intelligence/topic_belonging_policy.md` §2 | topic_belonging_policy §2 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-06 | audiencia matriz | `policies/channel_intelligence/topic_belonging_policy.md` §2 | topic_belonging_policy §2 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-07 | persona autoral | `policies/channel_intelligence/topic_belonging_policy.md` §2 | topic_belonging_policy §2 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-08 | límites permanentes | `policies/channel_intelligence/topic_belonging_policy.md` §2, §10 | topic_belonging_policy §2, §10 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-09 | sensibilidad | `policies/channel_intelligence/topic_belonging_policy.md` §9 (escalamiento) | topic_belonging_policy §9 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-10 | precedente | `policies/channel_intelligence/topic_belonging_policy.md` §9 | topic_belonging_policy §9 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-11 | viabilidad 3–5 obras | `policies/channel_intelligence/topic_belonging_policy.md` §10; `policies/script_product/main_episode_format_policy.md` §2 | topic_belonging_policy §10; main_episode_format_policy §2 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-12 | revisión independiente | `policies/channel_intelligence/topic_belonging_policy.md` §8; `prompts/roles/CHANNEL_INTELLIGENCE_REVIEWER/1.0.0.md` | topic_belonging_policy §8 | B5_PRE_M1 (política) / M2 (implementación) |
+| CI-13 | decisión efectiva | `policies/channel_intelligence/topic_belonging_policy.md` §5, §8; `schemas/topic_belonging_decision.json` | topic_belonging_policy §5, §8 | B5_PRE_M1 (política) / M2 (implementación) |
 | CI-14 | demostración real | `plans/001_CONTROL_OPERATIVO.md` (REAL_EXECUTION=NOT_DEMONSTRATED); `prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md` | control_operativo (REAL_EXECUTION) | M2 (demostración) |
 
 #### 9.1.2 Script Product — B5-I1
@@ -303,17 +308,17 @@ Fuente: `02.1 Auditoria de guiones.txt` — `source_date_or_version: NOT_AVAILAB
 
 | finding_id | requirement_summary | current_repository_evidence | canonical_destination | implementation_phase |
 |---|---|---|---|---|
-| SP-I1-01 | descubrimiento | `policies/script_product/episode_discovery_and_material_curation_policy.md` §1 | episode_discovery_policy §1 | B5_5_M1 (política) / M2 (implementación) |
-| SP-I1-02 | investigación adaptativa | `policies/script_product/episode_discovery_and_material_curation_policy.md` §2 | episode_discovery_policy §2 | B5_5_M1 (política) / M2 (implementación) |
-| SP-I1-03 | especialistas | `policies/script_product/episode_discovery_and_material_curation_policy.md` §3 | episode_discovery_policy §3 | B5_5_M1 (política) / M2 (implementación) |
-| SP-I1-04 | verificación de obras | `policies/script_product/episode_discovery_and_material_curation_policy.md` §4 | episode_discovery_policy §4 | B5_5_M1 (política) / M2 (implementación) |
-| SP-I1-05 | claims | `B5_PRE_SCRIPT_FOUNDATION.md` §10.2.6, §10.2.7; `schemas/claims_ledger.json` | B5_PRE §10.2.6–10.2.7 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I1-06 | evidencia | `B5_PRE_SCRIPT_FOUNDATION.md` §10.2.6; `schemas/research_pack.json`; `schemas/source_access_and_evidence_report.json` | B5_PRE §10.2.6 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I1-07 | acceso directo e indirecto | `B5_PRE_SCRIPT_FOUNDATION.md` §10.2.4, §10.2.5; `schemas/source_access_and_evidence_report.json` | B5_PRE §10.2.4–10.2.5 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I1-08 | tesis provisional | `B5_PRE_SCRIPT_FOUNDATION.md` §10.2.10; `schemas/thesis_artifact.json` | B5_PRE §10.2.10 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I1-09 | once dimensiones de auditoría | `B5_PRE_SCRIPT_FOUNDATION.md` §10.2.1–10.2.11 | B5_PRE §10.2 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I1-10 | independencia productor–auditor | `B5_PRE_SCRIPT_FOUNDATION.md` §10.3; `schemas/semantic_sufficiency_audit.json`; `prompts/roles/SCRIPT_PRODUCT_AUDITOR/1.0.0.md` | B5_PRE §10.3 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I1-11 | handoff | `B5_PRE_SCRIPT_FOUNDATION.md` §5 (orden funcional) | B5_PRE §5 | B5_5_M1 (plan) / M2 (implementación) |
+| SP-I1-01 | descubrimiento | `policies/script_product/episode_discovery_and_material_curation_policy.md` §1 | episode_discovery_policy §1 | B5_PRE_M1 (política) / M2 (implementación) |
+| SP-I1-02 | investigación adaptativa | `policies/script_product/episode_discovery_and_material_curation_policy.md` §2 | episode_discovery_policy §2 | B5_PRE_M1 (política) / M2 (implementación) |
+| SP-I1-03 | especialistas | `policies/script_product/episode_discovery_and_material_curation_policy.md` §3 | episode_discovery_policy §3 | B5_PRE_M1 (política) / M2 (implementación) |
+| SP-I1-04 | verificación de obras | `policies/script_product/episode_discovery_and_material_curation_policy.md` §4 | episode_discovery_policy §4 | B5_PRE_M1 (política) / M2 (implementación) |
+| SP-I1-05 | claims | `B5_PRE_SCRIPT_FOUNDATION.md` §10.2.6, §10.2.7; `schemas/claims_ledger.json` | B5_PRE §10.2.6–10.2.7 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I1-06 | evidencia | `B5_PRE_SCRIPT_FOUNDATION.md` §10.2.6; `schemas/research_pack.json`; `schemas/source_access_and_evidence_report.json` | B5_PRE §10.2.6 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I1-07 | acceso directo e indirecto | `B5_PRE_SCRIPT_FOUNDATION.md` §10.2.4, §10.2.5; `schemas/source_access_and_evidence_report.json` | B5_PRE §10.2.4–10.2.5 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I1-08 | tesis provisional | `B5_PRE_SCRIPT_FOUNDATION.md` §10.2.10; `schemas/thesis_artifact.json` | B5_PRE §10.2.10 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I1-09 | once dimensiones de auditoría | `B5_PRE_SCRIPT_FOUNDATION.md` §10.2.1–10.2.11 | B5_PRE §10.2 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I1-10 | independencia productor–auditor | `B5_PRE_SCRIPT_FOUNDATION.md` §10.3; `schemas/semantic_sufficiency_audit.json`; `prompts/roles/SCRIPT_PRODUCT_AUDITOR/1.0.0.md` | B5_PRE §10.3 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I1-11 | handoff | `B5_PRE_SCRIPT_FOUNDATION.md` §5 (orden funcional) | B5_PRE §5 | B5_PRE_M1 (plan) / M2 (implementación) |
 | SP-I1-12 | demostración real | `plans/001_CONTROL_OPERATIVO.md` (REAL_EXECUTION=NOT_DEMONSTRATED); `src/scripts/b5_i2_gate.py` | control_operativo (REAL_EXECUTION) | M2 (demostración) |
 
 #### 9.1.3 Script Product — B5-I2
@@ -322,15 +327,15 @@ Fuente: `Se ha pegado el markdown(42).md` — `source_date_or_version: NOT_AVAIL
 
 | finding_id | requirement_summary | current_repository_evidence | canonical_destination | implementation_phase |
 |---|---|---|---|---|
-| SP-I2-01 | análisis humano y narrativo | `B5_PRE_SCRIPT_FOUNDATION.md` §11.2.2, §11.2.9; `schemas/narrative_human_analysis.json` | B5_PRE §11.2.2, §11.2.9 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I2-02 | selección preliminar | `policies/script_product/episode_discovery_and_material_curation_policy.md` §5 | episode_discovery_policy §5 | B5_5_M1 (política) / M2 (implementación) |
-| SP-I2-03 | curación final | `policies/script_product/episode_discovery_and_material_curation_policy.md` §7, §8; `B5_PRE_SCRIPT_FOUNDATION.md` §11.2.6 | episode_discovery_policy §7–8 | B5_5_M1 (política) / M2 (implementación) |
-| SP-I2-04 | tesis refinada | `B5_PRE_SCRIPT_FOUNDATION.md` §11.2.1, §11.2.5; `schemas/refined_thesis.json` | B5_PRE §11.2.1, §11.2.5 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I2-05 | promesa editorial | `B5_PRE_SCRIPT_FOUNDATION.md` §11.2.1; `schemas/editorial_script_promise.json` | B5_PRE §11.2.1 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I2-06 | diez dimensiones | `B5_PRE_SCRIPT_FOUNDATION.md` §11.2.1–11.2.10; `schemas/b5_i2_semantic_sufficiency_audit.json` (dimension_results) | B5_PRE §11.2 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I2-07 | falsos PASS | `B5_PRE_SCRIPT_FOUNDATION.md` §11.3 (invariantes) | B5_PRE §11.3 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I2-08 | coherencia de decisión | `B5_PRE_SCRIPT_FOUNDATION.md` §11.4 | B5_PRE §11.4 | B5_5_M1 (plan) / M2 (implementación) |
-| SP-I2-09 | handoff | `B5_PRE_SCRIPT_FOUNDATION.md` §5 (orden funcional) | B5_PRE §5 | B5_5_M1 (plan) / M2 (implementación) |
+| SP-I2-01 | análisis humano y narrativo | `B5_PRE_SCRIPT_FOUNDATION.md` §11.2.2, §11.2.9; `schemas/narrative_human_analysis.json` | B5_PRE §11.2.2, §11.2.9 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I2-02 | selección preliminar | `policies/script_product/episode_discovery_and_material_curation_policy.md` §5 | episode_discovery_policy §5 | B5_PRE_M1 (política) / M2 (implementación) |
+| SP-I2-03 | curación final | `policies/script_product/episode_discovery_and_material_curation_policy.md` §7, §8; `B5_PRE_SCRIPT_FOUNDATION.md` §11.2.6 | episode_discovery_policy §7–8 | B5_PRE_M1 (política) / M2 (implementación) |
+| SP-I2-04 | tesis refinada | `B5_PRE_SCRIPT_FOUNDATION.md` §11.2.1, §11.2.5; `schemas/refined_thesis.json` | B5_PRE §11.2.1, §11.2.5 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I2-05 | promesa editorial | `B5_PRE_SCRIPT_FOUNDATION.md` §11.2.1; `schemas/editorial_script_promise.json` | B5_PRE §11.2.1 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I2-06 | diez dimensiones | `B5_PRE_SCRIPT_FOUNDATION.md` §11.2.1–11.2.10; `schemas/b5_i2_semantic_sufficiency_audit.json` (dimension_results) | B5_PRE §11.2 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I2-07 | falsos PASS | `B5_PRE_SCRIPT_FOUNDATION.md` §11.3 (invariantes) | B5_PRE §11.3 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I2-08 | coherencia de decisión | `B5_PRE_SCRIPT_FOUNDATION.md` §11.4 | B5_PRE §11.4 | B5_PRE_M1 (plan) / M2 (implementación) |
+| SP-I2-09 | handoff | `B5_PRE_SCRIPT_FOUNDATION.md` §5 (orden funcional) | B5_PRE §5 | B5_PRE_M1 (plan) / M2 (implementación) |
 | SP-I2-10 | demostración real | `plans/001_CONTROL_OPERATIVO.md` (REAL_EXECUTION=NOT_DEMONSTRATED); `src/scripts/run_b5_i2_semantic_audit.py` | control_operativo (REAL_EXECUTION) | M2 (demostración) |
 
 #### 9.1.4 YouTube Adaptation
@@ -339,16 +344,16 @@ Fuente: `03.1 Adaptación a YouTube.txt` — `source_date_or_version: NOT_AVAILA
 
 | finding_id | requirement_summary | current_repository_evidence | canonical_destination | implementation_phase |
 |---|---|---|---|---|
-| YT-01 | cinco resultados | `B5_PRE_SCRIPT_FOUNDATION.md` §12.1; `config/youtube_adaptation_r3_traceability.json` | B5_PRE §12.1 | B5_5_M1 (plan) / M2 (implementación) |
-| YT-02 | diez decisiones | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2; `schemas/youtube_adaptation_b5_i2_package.json` | B5_PRE §12.2 | B5_5_M1 (plan) / M2 (implementación) |
-| YT-03 | packaging temprano | `B5_PRE_SCRIPT_FOUNDATION.md` §12.1–12.2; `schemas/early_packaging_hypothesis.json` | B5_PRE §12.1–12.2 | B5_5_M1 (plan) / M2 (implementación) |
-| YT-04 | apertura futura | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2 (YT_OPENING_READINESS) | B5_PRE §12.2 | B5_5_M1 (plan) / M2 (implementación) |
-| YT-05 | duración | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2 (YT_DURATION_ENVELOPE) | B5_PRE §12.2 | B5_5_M1 (plan) / M2 (implementación) |
-| YT-06 | sobrepromesa | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2 (YT_OVERPROMISE_REVIEW) | B5_PRE §12.2 | B5_5_M1 (plan) / M2 (implementación) |
-| YT-07 | riesgo textual | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2 (YT_TEXT_PLATFORM_RISK) | B5_PRE §12.2 | B5_5_M1 (plan) / M2 (implementación) |
-| YT-08 | derechos y reutilización | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2 (YT_SCRIPT_RIGHTS_REUSE_RISK) | B5_PRE §12.2 | B5_5_M1 (plan) / M2 (implementación) |
-| YT-09 | límites de autoridad | `B5_PRE_SCRIPT_FOUNDATION.md` §12.3 | B5_PRE §12.3 | B5_5_M1 (plan) / M2 (implementación) |
-| YT-10 | estado técnico | `B5_PRE_SCRIPT_FOUNDATION.md` §12.4; `config/youtube_adaptation_r3_traceability.json` | B5_PRE §12.4 | B5_5_M1 (plan) / M2 (implementación) |
+| YT-01 | cinco resultados | `B5_PRE_SCRIPT_FOUNDATION.md` §12.1; `config/youtube_adaptation_r3_traceability.json` | B5_PRE §12.1 | B5_PRE_M1 (plan) / M2 (implementación) |
+| YT-02 | diez decisiones | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2; `schemas/youtube_adaptation_b5_i2_package.json` | B5_PRE §12.2 | B5_PRE_M1 (plan) / M2 (implementación) |
+| YT-03 | packaging temprano | `B5_PRE_SCRIPT_FOUNDATION.md` §12.1–12.2; `schemas/early_packaging_hypothesis.json` | B5_PRE §12.1–12.2 | B5_PRE_M1 (plan) / M2 (implementación) |
+| YT-04 | apertura futura | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2 (YT_OPENING_READINESS) | B5_PRE §12.2 | B5_PRE_M1 (plan) / M2 (implementación) |
+| YT-05 | duración | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2 (YT_DURATION_ENVELOPE) | B5_PRE §12.2 | B5_PRE_M1 (plan) / M2 (implementación) |
+| YT-06 | sobrepromesa | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2 (YT_OVERPROMISE_REVIEW) | B5_PRE §12.2 | B5_PRE_M1 (plan) / M2 (implementación) |
+| YT-07 | riesgo textual | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2 (YT_TEXT_PLATFORM_RISK) | B5_PRE §12.2 | B5_PRE_M1 (plan) / M2 (implementación) |
+| YT-08 | derechos y reutilización | `B5_PRE_SCRIPT_FOUNDATION.md` §12.2 (YT_SCRIPT_RIGHTS_REUSE_RISK) | B5_PRE §12.2 | B5_PRE_M1 (plan) / M2 (implementación) |
+| YT-09 | límites de autoridad | `B5_PRE_SCRIPT_FOUNDATION.md` §12.3 | B5_PRE §12.3 | B5_PRE_M1 (plan) / M2 (implementación) |
+| YT-10 | estado técnico | `B5_PRE_SCRIPT_FOUNDATION.md` §12.4; `config/youtube_adaptation_r3_traceability.json` | B5_PRE §12.4 | B5_PRE_M1 (plan) / M2 (implementación) |
 | YT-11 | demostración real | `plans/001_CONTROL_OPERATIVO.md` (REAL_EXECUTION=NOT_DEMONSTRATED); `src/scripts/youtube_adaptation_b5_i2_gate.py` | control_operativo (REAL_EXECUTION) | M2 (demostración) |
 
 #### 9.1.5 Infrastructure Governance
@@ -357,15 +362,15 @@ Fuentes: `Revisión equipo 04.txt`, `guia_base_para_gobernar_agentes.md`, `docum
 
 | finding_id | requirement_summary | current_repository_evidence | canonical_destination | implementation_phase |
 |---|---|---|---|---|
-| IG-01 | autoridad funcional vs. técnica | `B5_PRE_SCRIPT_FOUNDATION.md` §13; `docs/ALCANCE_Y_COORDINACION_EQUIPOS.md` | B5_PRE §13; ALCANCE_Y_COORDINACION_EQUIPOS.md | B5_5_M1 (plan) / M2 (implementación) |
+| IG-01 | autoridad funcional vs. técnica | `B5_PRE_SCRIPT_FOUNDATION.md` §13; `docs/ALCANCE_Y_COORDINACION_EQUIPOS.md` | B5_PRE §13; ALCANCE_Y_COORDINACION_EQUIPOS.md | B5_PRE_M1 (plan) / M2 (implementación) |
 | IG-02 | registries | `config/editorial_profile_registry.json`; `config/responsibility_registry.json`; `config/skill_catalog.json`; `config/capability_registry.json` | registries en `config/` | M2 (saneamiento) |
 | IG-03 | maturity | `plans/001_CONTROL_OPERATIVO.md` (estados de madurez de bloques) | control_operativo | M2 (saneamiento) |
-| IG-04 | availability | `B5_PRE_SCRIPT_FOUNDATION.md` §7 (componentes existentes/faltantes) | B5_PRE §7 | B5_5_M1 (plan) / M2 (saneamiento) |
+| IG-04 | availability | `B5_PRE_SCRIPT_FOUNDATION.md` §7 (componentes existentes/faltantes) | B5_PRE §7 | B5_PRE_M1 (plan) / M2 (saneamiento) |
 | IG-05 | gates | `src/scripts/b5_i2_gate.py`; `src/scripts/run_b5_i2_semantic_audit.py`; `src/scripts/topic_belonging_gate.py`; `src/scripts/youtube_adaptation_b5_i2_gate.py` | gates en `src/scripts/` | M2 (saneamiento) |
 | IG-06 | provenance | `schemas/execution_provenance_registry.json`; `output/execution_provenance_registry.json` | execution_provenance_registry | M2 (saneamiento) |
-| IG-07 | estado operativo | `plans/001_CONTROL_OPERATIVO.md` | control_operativo | B5_5_M1 (plan) / M2 (saneamiento) |
+| IG-07 | estado operativo | `plans/001_CONTROL_OPERATIVO.md` | control_operativo | B5_PRE_M1 (plan) / M2 (saneamiento) |
 | IG-08 | suite canónica | `tests/` (suite de tests del repositorio) | suite de tests | M2 (saneamiento) |
-| IG-09 | contaminación | `src/scripts/runtime_contamination_guard.py`; `config/runtime_contamination_policy.json` | runtime_contamination_guard.py | B5_5_M1 (verificación) / M2 (saneamiento) |
+| IG-09 | contaminación | `src/scripts/runtime_contamination_guard.py`; `config/runtime_contamination_policy.json` | runtime_contamination_guard.py | B5_PRE_M1 (verificación) / M2 (saneamiento) |
 
 ### 9.2 Resumen de cobertura de fuentes
 
@@ -1257,16 +1262,17 @@ INFRASTRUCTURE_GOVERNANCE → materialización técnica, contrato, schema, agent
 ```text
 PLAN_003                        = ACTIVE_RECOVERY_AUTHORITY
 PLAN_001                        = PRODUCT_PLAN_RECTOR
-B5_5_M2                         = NEXT_RECOVERY_ACTION_UNDER_PLAN_003
-B5_5_M2_DEFINED_AS_NEXT_ACTION  = YES
-B5_5_M2_OWNER_AUTHORIZATION     = PENDING
-B5_5_M2_STARTED                 = NO
-current_mission                 = NONE_PENDING_B5_5_M2_AUTHORIZATION
-B5_5_CANONICAL_FOUNDATION       = PASS
-B5_5_M1_STATUS                  = PASS
-TECHNICAL_SANITATION            = NOT_STARTED
-REAL_EXECUTION                  = NOT_DEMONSTRATED
-B5_I3                           = NOT_AUTHORIZED
+HISTORICAL_B5_PRE_M2                         = RECONCILED_NOT_IMPLEMENTED
+HISTORICAL_B5_PRE_M2_DEFINED_AS_NEXT_ACTION  = NO
+HISTORICAL_B5_PRE_M2_OWNER_AUTHORIZATION     = COMPLETED_FOR_RECONCILIATION_ONLY
+HISTORICAL_B5_PRE_M2_STARTED                 = NO
+HISTORICAL_CURRENT_MISSION                   = MISSION_01E_COMPLETED_PENDING_OWNER_REVIEW
+HISTORICAL_B5_PRE_CANONICAL_FOUNDATION       = RECONCILED_DOCUMENTATION
+HISTORICAL_B5_PRE_M1_STATUS                  = FUNCTIONAL_SCOPE_RECONCILED
+DOCUMENTARY_STATE_RECONCILIATION             = COMPLETED
+TECHNICAL_CAPABILITY_IMPLEMENTATION          = NOT_STARTED
+REAL_EXECUTION                               = NOT_DEMONSTRATED
+B5_I3                                        = NOT_AUTHORIZED
 ```
 
 El estado definitivo y la siguiente acción autorizada de este plan se registran únicamente en `plans/001_CONTROL_OPERATIVO.md`.
@@ -1274,8 +1280,7 @@ El estado definitivo y la siguiente acción autorizada de este plan se registran
 ---
 
 ## 15. Contradicciones técnicas deferidas a la Misión 2
-
-Estas son omisiones/discrepancias **técnicas** en superficies activas que **no** se corrigen en esta misión; se clasifican por componente y destino de corrección `B5_5_M2_TECHNICAL_OPERATIONAL_SANITATION`:
+Estas son omisiones/discrepancias **técnicas** en superficies activas que **no** se corrigen en esta misión; se clasifican por componente y destino de corrección `FUTURE_B5_PRE_TECHNICAL_IMPLEMENTATION_BACKLOG`:
 
 | # | Componente | Contradicción / carencia | Destino |
 |---|---|---|---|

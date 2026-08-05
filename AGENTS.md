@@ -4,30 +4,12 @@
 
 Repositorio canónico del núcleo profesional de Guion de Más Allá del Guion. La etapa activa termina en `EDITORIAL_SCRIPT_APPROVED`; S5 real de B5-I2 y B5-I3 siguen sin autorización en esta misión.
 
-Recuperación vigente:
+## Estado operativo
 
-```text
-PLAN_001 = PRODUCT_PLAN_RECTOR
-PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
-PLAN_002 = SUPERSEDED_BY_APPROVED_ARCHITECTURE
-   B5_PRE_M2 = TECHNICAL_OPERATIONAL_CLOSURE
-   B5_PRE_M2_DEFINED_AS_NEXT_ACTION = YES
-   B5_PRE_M2_OWNER_AUTHORIZATION = APPROVED
-   B5_PRE_M2_STARTED = YES
-```
+`plans/001_CONTROL_OPERATIVO.md` es la única sede del estado vivo, la misión vigente, la autorización de implementación y la siguiente acción permitida.
 
-Relación Plan 001 / Plan 003 (solución documentada única):
+Este archivo no duplica valores mutables de fases, misiones, autorizaciones ni demostraciones. Antes de actuar, el agente debe leer el estado actual directamente en el control operativo.
 
-```text
-PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
-   B5_PRE_M2 = TECHNICAL_OPERATIONAL_CLOSURE
-   B5_PRE_M2_DEFINED_AS_NEXT_ACTION = YES
-   B5_PRE_M2_OWNER_AUTHORIZATION = APPROVED
-   B5_PRE_M2_STARTED = YES
-PLAN_001 = PRODUCT_PLAN_RECTOR
-```
-
-La misión B5_PRE_M2, subordinada al Plan 001, se ejecuta como acción autorizada de recuperación bajo el Plan 003. No se declara Plan 001 como autoridad de ejecución autónoma mientras la recuperación siga vigente.
 
 ## Leer Primero
 
@@ -52,18 +34,9 @@ Decisiones expresas posteriores del OWNER
 → documentación histórica clasificada en workspace/
 ```
 
-Durante R0:
+## Regla de recuperación
 
-```text
-plans/001_CONTROL_OPERATIVO.md = única sede del estado vivo
-PLAN_003 = ACTIVE_RECOVERY_AUTHORITY
-PLAN_001 = PRODUCT_PLAN_RECTOR; implementación temporalmente pausada por recuperación
-PLAN_002 = SUPERSEDED_BY_APPROVED_ARCHITECTURE; sin autoridad operativa
-   B5_PRE_M2 = TECHNICAL_OPERATIONAL_CLOSURE
-   B5_PRE_M2_DEFINED_AS_NEXT_ACTION = YES
-   B5_PRE_M2_OWNER_AUTHORIZATION = APPROVED
-   B5_PRE_M2_STARTED = YES
-```
+Cuando exista una recuperación temporal, su autoridad y alcance se resolverán mediante la jerarquía documental y el estado vigente de plans/001_CONTROL_OPERATIVO.md. Ninguna referencia histórica constituye por sí sola autorización de ejecución.
 
 ## Fuentes Canónicas
 
@@ -92,7 +65,7 @@ Sin un perfil aprobado y activado:
 - ningún consumidor debe reconstruir identidad desde `workspace/`;
 - los consumidores productivos deben bloquearse de forma explícita.
 
-Restricciones operativas vigentes mientras la siguiente acción autorizada sea `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE` y `current_mission` sea `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`:
+Mientras `plans/001_CONTROL_OPERATIVO.md` no autorice expresamente la implementación o una vertical real permanezca sin demostración, se prohíbe:
 
 - iniciar `R1` o `R2`;
 - aprobar o activar perfiles;
