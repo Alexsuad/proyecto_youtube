@@ -4,7 +4,7 @@
 **PLAN_NAME:** Planeación, investigación y curación previa al guion
 **PLAN_RECTOR:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)
 **LIVE_STATE_AUTHORITY:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)
-**Índice del plan:** [`plans/plan_001/README.md`](README.md)
+**Índice del plan:** [`README.md`](README.md)
 
 > Este plan es un incremento subordinado a **Plan 001**. No es un nuevo plan rector y no compite con la sede del estado vivo. El estado operativo y la única siguiente acción autorizada se leen exclusivamente desde `plans/001_CONTROL_OPERATIVO.md`.
 >
@@ -1260,7 +1260,10 @@ INFRASTRUCTURE_GOVERNANCE → materialización técnica, contrato, schema, agent
 ## 14. Estado y autoridad de ejecución
 
 ```text
-PLAN_003                        = ACTIVE_RECOVERY_AUTHORITY
+LIVE_STATE_AUTHORITY:
+plans/001_CONTROL_OPERATIVO.md
+PLAN_003:
+HISTORICAL_CLOSED_NON_NORMATIVE
 PLAN_001                        = PRODUCT_PLAN_RECTOR
 HISTORICAL_B5_PRE_M2                         = RECONCILED_NOT_IMPLEMENTED
 HISTORICAL_B5_PRE_M2_DEFINED_AS_NEXT_ACTION  = NO

@@ -1,20 +1,22 @@
 # PLAN 003 — Recuperación, reconciliación y cierre de falsos positivos
 
 **Versión:** `1.0.0`
-**Estado:** `APPROVED_ACTIVE`
-**Implementación autorizada:** `COMPLETED_THROUGH_R6_B_POST_DIAGNOSTIC_RECONCILIATION`
-**Tipo:** Plan correctivo temporal
+**Estado:** `HISTORICAL_CLOSED_NON_NORMATIVE`
+**Implementación autorizada:** `HISTORICAL_STATE_NO_CURRENT_AUTHORIZATION_EFFECT`
+**Tipo:** Plan correctivo temporal histórico
 **Plan rector del producto:** `PLAN 001 — Reestructuración del sistema agéntico, del motor editorial y del arnés de control`
 **Plan relacionado:** `PLAN 002 — Cierre de arquitectura operativa y maduración del núcleo editorial`
 **Fecha de creación:** `2026-07-28`
 **Aprobación del propietario:** `2026-07-28`
-**current_phase:** `R6_B_POST_DIAGNOSTIC_RECONCILIATION_CLOSED`
-**implementation_completed_through:** `R6_B_POST_DIAGNOSTIC_RECONCILIATION`
-**next_phase:** `B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE`
-**R6_B_STATUS:** `BLOCKED_PENDING_TEAM_03_R3_IMPLEMENTATION`
-**R6_B_0_EXTERNAL_AUDIT:** `PASS`
-**PLAN_003_STATUS:** `APPROVED_ACTIVE`
-**PLAN_003_FINAL_CLOSURE:** `OPEN`
+**Clasificación actual:** `HISTORICAL | CLOSED | NON_NORMATIVE | NOT_LIVE_STATE_AUTHORITY`
+**Autoridad vigente del estado vivo:** `plans/001_CONTROL_OPERATIVO.md`
+**current_phase:** `HISTORICAL_STATE_NOT_CURRENT`
+**implementation_completed_through:** `HISTORICAL_STATE_NOT_CURRENT`
+**next_phase:** `HISTORICAL_STATE_NOT_CURRENT`
+**R6_B_STATUS:** `HISTORICAL_STATE_NOT_CURRENT`
+**R6_B_0_EXTERNAL_AUDIT:** `HISTORICAL_EVIDENCE_PRESERVED`
+**PLAN_003_STATUS:** `CLOSED_HISTORICAL`
+**PLAN_003_FINAL_CLOSURE:** `CLOSED`
 
 ---
 
@@ -74,11 +76,15 @@ El Plan 003 es temporal. Debe cerrarse cuando los bloques reabiertos queden reco
 ---
 
 
-## 1.1 Estado vivo reconciliado posterior a R6-B
+## 1.1 Snapshot histórico reconciliado posterior a R6-B
 
-El estado vivo posterior al diagnóstico de Ollama, la no recuperación de la evidencia real anterior de R6-B, la implementación técnica de `SCRIPT_PRODUCT` para B5-I2, la reparación transversal de integridad textual y la recepción de la ampliación funcional de `YOUTUBE_ADAPTATION` queda así:
+El siguiente bloque conserva un snapshot histórico del estado observado durante la recuperación. No representa estado vivo actual ni produce autorización vigente. El estado actual solo se consulta en `plans/001_CONTROL_OPERATIVO.md`.
 
 ```text
+HISTORICAL_STATE
+NOT_CURRENT
+NO_CURRENT_AUTHORIZATION_EFFECT
+
 OLLAMA = DEFERRED
 OLLAMA_DIAGNOSTIC = CLOSED
 OLLAMA_OPTIMIZATION = DEFERRED
@@ -107,7 +113,7 @@ TEXT_INTEGRITY_PREVENTION = ACTIVE
 NEXT_ALLOWED_ACTION = B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE
 ```
 
-Esta sección es una proyección sincronizada del estado vivo. La sede canónica única permanece en `plans/001_CONTROL_OPERATIVO.md`. Las menciones posteriores a `SELECTED_PROVIDER = ollama`, `SELECTED_MODEL = Qwen2.5-Coder:latest` o a la autorización y ejecución de R6-B deben leerse únicamente como snapshots históricos del estado observado en fases anteriores, no como estado operativo vigente.
+Esta sección conserva evidencia histórica. La sede canónica única del estado vivo permanece en `plans/001_CONTROL_OPERATIVO.md`. Las menciones posteriores a `SELECTED_PROVIDER = ollama`, `SELECTED_MODEL = Qwen2.5-Coder:latest` o a la autorización y ejecución de R6-B deben leerse únicamente como snapshots históricos del estado observado en fases anteriores, no como estado operativo vigente.
 
 ## 2. Alcance
 
@@ -212,16 +218,16 @@ Cuando un defecto esté diagnosticado, la siguiente intervención debe ser una c
 
 ---
 
-## 4. Jerarquía documental durante la recuperación
+## 4. Jerarquía documental histórica durante la recuperación
 
-Mientras el Plan 003 esté aprobado y abierto, la jerarquía será:
+La siguiente jerarquía conserva la referencia histórica utilizada durante la recuperación. No gobierna el estado vivo actual, que se consulta exclusivamente en `plans/001_CONTROL_OPERATIVO.md`.
 
 ```text
 1. Decisiones explícitas posteriores del OWNER
 2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 3. docs/product/MVP_BASELINE.md
 4. Decisiones funcionales aprobadas del dominio competente
-5. PLAN 003, solo para recuperación y reconciliación
+5. PLAN 003, solo como referencia histórica de recuperación y reconciliación
 6. PLAN 001, para secuencia y producto rector
 7. plans/001_CONTROL_OPERATIVO.md, para estado vivo y navegación
 8. Especificación activa del bloque
@@ -470,6 +476,10 @@ UNKNOWN_PRESERVED
 ### Snapshot histórico de cierre R4 (no vigente como estado vivo)
 
 ```text
+HISTORICAL_STATE
+NOT_CURRENT
+NO_CURRENT_AUTHORIZATION_EFFECT
+
 PLAN_AUTHORITY_RESOLVED = PASS
 RECOVERY_BASELINE_CAPTURED = PASS
 INCOMPATIBLE_WORK_FROZEN = PASS
@@ -483,6 +493,10 @@ NEXT_ALLOWED_ACTION_AT_R0_CLOSURE = R1_STATUS_AND_EVIDENCE_RECONCILIATION
 ## R1 — Reconciliación de estados, evidencias y falsos cierres
 
 ```text
+HISTORICAL_STATE
+NOT_CURRENT
+NO_CURRENT_AUTHORIZATION_EFFECT
+
 CURRENT_RECOVERY_PHASE_AT_R1_CLOSURE = R1_CLOSED
 PLAN_003_IMPLEMENTATION_AUTHORIZED = NO_PENDING_NEXT_MISSION
 R0_STATUS = PASS
@@ -562,6 +576,10 @@ EXTERNAL_COORDINATION_DOCUMENT
 ### Gate de salida
 
 ```text
+HISTORICAL_STATE
+NOT_CURRENT
+NO_CURRENT_AUTHORIZATION_EFFECT
+
 ACTIVE_PRODUCT_CONTAMINATION = 0
 CONTAMINATED_GENERATOR_SOURCE = 0
 MANUAL_REVIEW = 0
@@ -688,6 +706,10 @@ No puede permanecer simultáneamente como propuesta y autoridad.
 ### Snapshot histórico de cierre R4 (no vigente como estado vivo)
 
 ```text
+HISTORICAL_STATE
+NOT_CURRENT
+NO_CURRENT_AUTHORIZATION_EFFECT
+
 CAPABILITY_MATRIX = APPROVED
 AGENT_NECESSITY = DEMONSTRATED
 AGENT_OVERLAPS = RESOLVED
@@ -830,6 +852,10 @@ DEPENDENT_INVALIDATION = PASS
 ### Estado de preparación R6-A
 
 ```text
+HISTORICAL_STATE
+NOT_CURRENT
+NO_CURRENT_AUTHORIZATION_EFFECT
+
 R6_PREPARATION = COMPLETE
 R6_A_STATUS = CLOSED
 RUNTIME_FOUNDATION = PASS
@@ -1172,13 +1198,13 @@ next_plan_001_block: <BLOCK_ID>
 
 ## 15. Criterio de aprobación del Plan 003
 
-El propietario debe decidir explícitamente:
+El propietario debía decidir explícitamente lo siguiente dentro del contexto histórico de este plan:
 
 ```text
 PLAN_003 = APPROVED
 ```
 
-Estado ya materializado en esta sede:
+Estado histórico preservado en esta sede:
 
 1. se registra en `plans/001_CONTROL_OPERATIVO.md`;
 2. R0 se convierte en la única fase autorizada;
@@ -1235,4 +1261,4 @@ archivo histórico
 con especificación activa
 ```
 
-El Plan 003 existe para corregir precisamente esas confusiones y devolver el proyecto a una secuencia verificable dentro del Plan 001.
+El Plan 003 existe como evidencia histórica de esa corrección y no sustituye la consulta del estado actual en `plans/001_CONTROL_OPERATIVO.md`.

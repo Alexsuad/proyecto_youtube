@@ -10,17 +10,19 @@
 
 ```yaml
 PLAN_001: PRODUCT_PLAN_RECTOR
-PLAN_003: ACTIVE_RECOVERY_AUTHORITY
+PLAN_003: HISTORICAL_CLOSED_NON_NORMATIVE
 PLAN_002: SUPERSEDED_BY_APPROVED_ARCHITECTURE
-CURRENT_RECOVERY_PLAN: PLAN_003
-CURRENT_RECOVERY_PHASE: R6_B_POST_DIAGNOSTIC_RECONCILIATION_CLOSED
-PLAN_001_EXECUTION: TEMPORARILY_PAUSED_BY_RECOVERY
+CURRENT_RECOVERY_PLAN: NONE
+CURRENT_RECOVERY_PHASE: R0_DOCUMENTARY_CONVERGENCE_COMPLETED
+PLAN_001_EXECUTION: AWAITING_R1_AUTHORIZATION
 plan_id: PLAN-001
 plan_version: "1.4"
 plan_status: IN_PROGRESS
 authorized_blocks: [B0, B1, B2, B3, B4, B5]
 current_block: B5
-current_mission: NONE_PENDING_OWNER_REVIEW_OF_MISSION_01E
+CURRENT_MISSION: R0_DOCUMENTARY_CONVERGENCE_COMPLETED
+R0_STATUS: PASS
+R0_EXECUTION: COMPLETED
 P08_INTEGRATION_STATUS: COMPLETED
 B5_PRE_M2_STATUS: RECONCILED_NOT_IMPLEMENTED
 B5_PRE_M2_DEFINED_AS_NEXT_ACTION: NO
@@ -35,7 +37,8 @@ IMPLEMENTATION_AUTHORIZED: NO
 REAL_PRE_SCRIPT_VERTICAL: NOT_DEMONSTRATED
 B5_I3_AUTHORIZED: NO
 B5_5_PROTOTYPE_STATUS: PLANNED_NOT_STARTED
-NEXT_ALLOWED_ACTION: OWNER_REVIEW_OF_MISSION_01E_RESULT
+R1_IMPLEMENTATION: NOT_AUTHORIZED
+NEXT_ALLOWED_ACTION: OWNER_REVIEW_AND_SEPARATE_AUTHORIZATION_OF_R1
 ACTIVE_PRODUCT_STAGE: SCRIPT_CORE
 CURRENT_INCREMENT: B5-I2
 ACTIVE_EDITORIAL_PROFILE: mas_alla_del_guion@1.2.1
@@ -179,7 +182,7 @@ SANITATION:
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-El Plan 001 sigue siendo el plan rector del producto y el Plan 003 conserva la autoridad temporal de recuperación. La referencia histórica de B5_PRE_M2 queda desactivada y no constituye misión activa. `ACTIVE_EDITORIAL_PROFILE` permanece en `mas_alla_del_guion@1.2.1` con checksum activo `d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1`; la voz sigue en `AUTHENTIC_CORPUS_PARTIAL` y `NOT_VALIDATED` a nivel global. El diagnóstico de Ollama quedó cerrado y diferido: no existe ruta contractual completa viable en el hardware actual, no se recuperó la evidencia real anterior de R6-B y la independencia productor–auditor sigue `NOT_DEMONSTRATED`. La implementación técnica de `SCRIPT_PRODUCT` para B5-I2 y la reparación transversal de integridad textual ya están cerradas. La fase previa al guion queda consolidada solo como referencia histórica. B5-I3, S5 real, una nueva ejecución real de R6-B, packaging final, producción y publicación permanecen no autorizados.
+El Plan 001 sigue siendo el plan rector del producto y `plans/001_CONTROL_OPERATIVO.md` es la única autoridad del estado vivo. Plan 003 queda cerrado como referencia histórica no normativa. La referencia histórica de B5_PRE_M2 queda desactivada y no constituye misión activa. `ACTIVE_EDITORIAL_PROFILE` permanece en `mas_alla_del_guion@1.2.1` con checksum activo `d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1`; la voz sigue en `AUTHENTIC_CORPUS_PARTIAL` y `NOT_VALIDATED` a nivel global. El diagnóstico de Ollama quedó cerrado y diferido: no existe ruta contractual completa viable en el hardware actual, no se recuperó la evidencia real anterior de R6-B y la independencia productor–auditor sigue `NOT_DEMONSTRATED`. La implementación técnica de `SCRIPT_PRODUCT` para B5-I2 y la reparación transversal de integridad textual ya están cerradas. La fase previa al guion queda consolidada solo como referencia histórica. B5-I3, S5 real, una nueva ejecución real de R6-B, packaging final, producción y publicación permanecen no autorizados.
 
 ## 2. Autoridad documental
 
@@ -188,7 +191,7 @@ El Plan 001 sigue siendo el plan rector del producto y el Plan 003 conserva la a
 2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 3. docs/product/MVP_BASELINE.md
 4. Decisiones funcionales aprobadas de la responsabilidad competente
-5. PLAN 003 para recuperación y reconciliación temporales
+5. Plan 003 como referencia histórica de recuperación y reconciliación
 6. Plan 001 v1.4 como plan rector del producto
 7. PLAN 002 sustituido por la arquitectura aprobada; sin autoridad operativa
 8. Este control operativo como única sede del estado vivo
@@ -331,10 +334,11 @@ Una modificación del plan rector debe:
 4. actualizar las proyecciones operativas afectadas;
 5. validar que no aparezcan requisitos nuevos fuera del plan rector.
 
-## 10. Próxima decisión
+## 10. Historial de próxima decisión
 
 ```text
-PLAN_003: ACTIVE_RECOVERY_AUTHORITY
+HISTORICAL_STATE: YES
+PLAN_003: HISTORICAL_CLOSED_NON_NORMATIVE
 PLAN_001: PRODUCT_PLAN_RECTOR
 HISTORICAL_B5_PRE_M2_STATUS: RECONCILED_NOT_IMPLEMENTED
 HISTORICAL_B5_PRE_M2_DEFINED_AS_NEXT_ACTION: NO

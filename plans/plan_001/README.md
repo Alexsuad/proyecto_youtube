@@ -3,21 +3,10 @@
 **Plan rector:** [`../001_reestructuracion_motor_agentico_editorial_y_harness.md`](../001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Control operativo:** [`../001_CONTROL_OPERATIVO.md`](../001_CONTROL_OPERATIVO.md)  
 **Versión:** `1.4`
-PLAN_001_EXECUTION: TEMPORARILY_PAUSED_BY_RECOVERY
-CURRENT_RECOVERY_PLAN: PLAN_003
-CURRENT_RECOVERY_PHASE: R6_B_POST_DIAGNOSTIC_RECONCILIATION_CLOSED
-B5_PRE_M2: TECHNICAL_OPERATIONAL_CLOSURE
-B5_PRE_M2_DEFINED_AS_NEXT_ACTION: YES
-B5_PRE_M2_OWNER_AUTHORIZATION: APPROVED
-B5_PRE_M2_STARTED: YES
-IMPLEMENTATION_AUTHORIZED: YES
-current_mission: B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE
-NEXT_ALLOWED_ACTION: B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE
-R6_B_0_EXTERNAL_AUDIT: PASS
 
 ## 1A. Prioridad y etapas
 
-La fuente canónica es el Plan 001 principal. Tras R1 del Plan 003, el Plan 001 conserva autoridad como plan rector del producto, pero su continuación de implementación permanece temporalmente pausada hasta una misión posterior autorizada. B5-I2 sigue siendo el incremento pendiente; B5-I3 no está autorizado. B7.5, B8 y B8.5 se conservan como Etapa 2 diferida, no como continuación automática. Audio pertenece a un repositorio externo futuro y Video queda fuera del repositorio.
+La fuente canónica del estado vivo es `../001_CONTROL_OPERATIVO.md`. Este README funciona solo como índice estable de navegación de `plans/plan_001/` y no publica misiones activas, autorizaciones ni siguiente acción.
 
 ## 1. Propósito
 
@@ -69,7 +58,14 @@ Los archivos de esta carpeta:
 - el archivo del bloque remita a una sección concreta;
 - una corrección pueda afectar a más de un bloque.
 
-## 3. Índice de bloques
+## 3. Documentos de integración post-P08
+
+| Documento | Archivo | Descripción |
+|---|---|---|
+| `B0_1` | [B0_1_roadmap_implementacion_post_p08.md](B0_1_roadmap_implementacion_post_p08.md) | roadmap maestro de implementación posterior a P-08 |
+| `B0_2` | [B0_2_cierre_documental_recuperacion_post_p08.md](B0_2_cierre_documental_recuperacion_post_p08.md) | plan detallado para el cierre documental y la recuperación R0 |
+
+## 4. Índice de bloques
 
 | Bloque | Archivo | Dependencia | Estado | Gate resumido |
 |---|---|---|---|---|
@@ -90,11 +86,11 @@ Los archivos de esta carpeta:
 | `B9.5` | [B9_5_aprendizaje_controlado.md](B9_5_aprendizaje_controlado.md) | B9 | `PLANNED` | Aprendizaje editorial; distribución diferida |
 | `B10` | [B10_lean_portabilidad_cierre.md](B10_lean_portabilidad_cierre.md) | B9 + aprendizaje editorial B9.5 | `PLANNED` | Cierre de Etapa 1 y portabilidad |
 
-## 4. Versiones derivadas
+## 5. Versiones derivadas
 
 La versión derivada de cada bloque indica la última versión del plan que modificó materialmente su contenido. Un bloque puede conservar v1.3 si v1.4 no lo afectó.
 
-## 5. Regla de sincronización
+## 6. Regla de sincronización
 
 Cuando cambie el Plan 001:
 
@@ -107,54 +103,4 @@ Cuando cambie el Plan 001:
 
 Una modificación aislada de un archivo de bloque no cambia el plan rector.
 
-## 6. Estado actual
-
-```text
-PLAN_STATUS: IN_PROGRESS
-PLAN_001_ROLE: PRODUCT_PLAN_RECTOR
-PLAN_001_EXECUTION: TEMPORARILY_PAUSED_BY_RECOVERY
-CURRENT_RECOVERY_PLAN: PLAN_003
-CURRENT_RECOVERY_PHASE: R6_B_POST_DIAGNOSTIC_RECONCILIATION_CLOSED
-B5_PRE_M2: TECHNICAL_OPERATIONAL_CLOSURE
-B5_PRE_M2_DEFINED_AS_NEXT_ACTION: YES
-B5_PRE_M2_OWNER_AUTHORIZATION: APPROVED
-B5_PRE_M2_STARTED: YES
-IMPLEMENTATION_AUTHORIZED: YES
-current_mission: B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE
-PLAN_001_SUSPENDED_AT_BLOCK: B5-I2
-PLAN_001_SUSPENDED_AT_INCREMENT: B5-I2
-CURRENT_ACTIVE_PLAN: PLAN_003
-CURRENT_ACTIVE_PHASE: R6_B_POST_DIAGNOSTIC_RECONCILIATION_CLOSED
-B4_I1_STATUS: PASS
-B4_I1_AUDIT: PASS
-B4_I2_STATUS: PASS
-B4_I2_AUDIT: PASS
-B5_STATUS: IN_PROGRESS
-B5_I1_STATUS: OPEN
-B5_I2_IMPLEMENTATION: COMPLETED
-B5_I2_TECHNICAL_CORRECTION: PASS_WITH_RESIDUAL_RISK
-B5_I2_REAL_SEMANTIC_AUDIT: NOT_DEMONSTRATED
-B5_I2_SCRIPT_PRODUCT_FUNCTIONAL_REAUDIT: PENDING
-B5_I2_FINAL_STATUS: OPEN
-B5_I3: NOT_AUTHORIZED
-B5_PRE_SCRIPT_FOUNDATION: B5_PRE_SCRIPT_FOUNDATION.md
-B5_5_CANONICAL_FOUNDATION: PASS
-B5_5_M1_STATUS: PASS
-B5_5_STATUS: FUNCTIONAL_FOUNDATION
-B5_PRE_M2_STATUS: IN_PROGRESS
-B5_PRE_M2_PHASE_1: PASS
-B5_PRE_M2_PHASE_2: PASS
-B5_PRE_M2_CURRENT_PHASE: PHASE_3
-TECHNICAL_OPERATIONAL_CLOSURE: IN_PROGRESS
-B5_PRE_M2_STARTED: YES
-REAL_EXECUTION: NOT_DEMONSTRATED
-STAGE_2_YOUTUBE_DISTRIBUTION: DEFERRED_NOT_AUTHORIZED
-AUDIO_INTEGRATION: EXTERNAL_REPOSITORY_FUTURE_CONTRACT
-VIDEO_PRODUCTION: OUT_OF_REPOSITORY_SCOPE
-PLAN_002_DOCUMENT_STATUS: SUPERSEDED_BY_APPROVED_ARCHITECTURE
-PLAN_002_OPERATIONAL_AUTHORITY: NOT_GRANTED
-PLAN_002_AGENT_ARCHITECTURE: APPROVED_REPLACEMENT_MODEL
-PLAN_002_FINAL_DECISION: SUPERSEDED_BY_APPROVED_ARCHITECTURE
-NEXT_ALLOWED_ACTION: B5_PRE_M2_TECHNICAL_OPERATIONAL_CLOSURE
-R6_B_0_EXTERNAL_AUDIT: PASS
-```
+Estado vivo, autorizaciones y siguiente acción: consultar exclusivamente `../001_CONTROL_OPERATIVO.md`.

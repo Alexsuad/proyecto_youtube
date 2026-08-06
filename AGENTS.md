@@ -15,33 +15,39 @@ Este archivo no duplica valores mutables de fases, misiones, autorizaciones ni d
 
 1. `plans/001_CONTROL_OPERATIVO.md`
 2. `docs/product/MVP_BASELINE.md`
-3. `plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md`
-4. `plans/plan_002/002_CIERRE_ARQUITECTURA_OPERATIVA_Y_MADURACION_EDITORIAL.md`
-5. `config/editorial_profile_registry.json`
-6. Solo después, los archivos concretos de la misión activa
+3. `plans/plan_001/README.md`
+4. `plans/plan_001/B0_1_roadmap_implementacion_post_p08.md` y `plans/plan_001/B0_2_cierre_documental_recuperacion_post_p08.md` cuando la misión afecte la integración post-P08 o R0 documental
+5. `plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md` solo como antecedente histórico de recuperación
+6. `plans/plan_002/002_CIERRE_ARQUITECTURA_OPERATIVA_Y_MADURACION_EDITORIAL.md`
+7. `config/editorial_profile_registry.json`
+8. Solo después, los archivos concretos de la misión activa
 
 ## Jerarquía De Autoridad
 
 ```text
 Decisiones expresas posteriores del OWNER
-→ plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md (solo recuperación temporal aprobada)
 → docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 → docs/product/MVP_BASELINE.md
 → plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
-→ plans/001_CONTROL_OPERATIVO.md
+→ plans/001_CONTROL_OPERATIVO.md (única autoridad del estado vivo)
+→ plans/plan_001/README.md + `B0_1`/`B0_2` para navegación documental de Plan 001 cuando aplique
 → plans/plan_002/002_CIERRE_ARQUITECTURA_OPERATIVA_Y_MADURACION_EDITORIAL.md (solo propuesta; sin autoridad operativa)
 → contratos en schemas/ + config/ + src/
+→ plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md (histórico, cerrado y no normativo)
 → documentación histórica clasificada en workspace/
 ```
 
 ## Regla de recuperación
 
-Cuando exista una recuperación temporal, su autoridad y alcance se resolverán mediante la jerarquía documental y el estado vigente de plans/001_CONTROL_OPERATIVO.md. Ninguna referencia histórica constituye por sí sola autorización de ejecución.
+Cuando exista una recuperación temporal documentada, su alcance vigente se resuelve exclusivamente mediante `plans/001_CONTROL_OPERATIVO.md`. Ninguna referencia histórica constituye por sí sola autorización de ejecución.
 
 ## Fuentes Canónicas
 
 - Estado operativo y siguiente acción autorizada: `plans/001_CONTROL_OPERATIVO.md`
-- Autoridad temporal de recuperación: `plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md`
+- Navegación documental de Plan 001: `plans/plan_001/README.md`
+- Roadmap maestro post-P08: `plans/plan_001/B0_1_roadmap_implementacion_post_p08.md`
+- Plan documental de R0: `plans/plan_001/B0_2_cierre_documental_recuperacion_post_p08.md`
+- Registro histórico de recuperación: `plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md`
 - Plan rector del producto: `plans/001_reestructuracion_motor_agentico_editorial_y_harness.md`
 - Alcance y frontera del MVP: `docs/product/MVP_BASELINE.md`
 - Estado de perfiles editoriales: `config/editorial_profile_registry.json`
