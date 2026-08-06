@@ -71,14 +71,22 @@ Sin un perfil aprobado y activado:
 - ningún consumidor debe reconstruir identidad desde `workspace/`;
 - los consumidores productivos deben bloquearse de forma explícita.
 
-Mientras `plans/001_CONTROL_OPERATIVO.md` no autorice expresamente la implementación o una vertical real permanezca sin demostración, se prohíbe:
+### Implementación técnica
 
-- iniciar `R1` o `R2`;
-- aprobar o activar perfiles;
-- iniciar B5-I3;
-- ejecutar S5 real;
+`R1` o `R2` solo pueden iniciarse cuando `plans/001_CONTROL_OPERATIVO.md` autorice expresamente la misión concreta. Crear agentes o subagentes solo se permite cuando la misión autorizada lo incluya expresamente. OpenCode/Codex no pueden ampliar por inferencia el bloqueo ni el alcance.
+
+### Uso productivo y madurez
+
+Aunque exista una misión técnica autorizada, mientras una vertical real no esté demostrada y aprobada permanecen prohibidos:
+
 - producir episodios reales;
-- crear agentes o subagentes nuevos.
+- ejecutar S5 real;
+- iniciar B5-I3;
+- la publicación o producción;
+- las declaraciones de readiness operacional o productiva;
+- la promoción a `OPERATIONALLY_DEMONSTRATED`, `FUNCTIONALLY_APPROVED`, `AUTHORIZED_FOR_PRODUCT_USE` o `ACTIVE` sin evidencia y aprobación correspondientes.
+
+La ausencia de una vertical demostrada bloquea el uso productivo y la promoción de madurez, no la implementación técnica expresamente autorizada necesaria para construir esa vertical.
 
 ## Comandos Canónicos
 
