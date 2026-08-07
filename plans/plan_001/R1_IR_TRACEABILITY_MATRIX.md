@@ -11,7 +11,7 @@ R1_STATUS: IN_PROGRESS
 R1_M1_STATUS: COMPLETED_PENDING_REVIEW
 IR_TRACEABILITY_MATRIX: CREATED
 FUNCTIONAL_DECISIONS_REINTERPRETED: NO
-TECHNICAL_COMPONENTS_IMPLEMENTED: R1_M2_CONTRACT_EXTENSIONS_PARTIAL_BY_IR4_DEPENDENCY
+TECHNICAL_COMPONENTS_IMPLEMENTED: R1_M2_AND_R1_M3_CONTRACT_EXTENSIONS_PARTIAL_BY_IR4_IR7_DEPENDENCIES
 PRODUCT_USE_AUTHORIZED: NO (siempre durante R1)
 ```
 
@@ -123,7 +123,7 @@ PARTIAL_COUNT: 31
 MISSING_COUNT: 32
 OUT_OF_SCOPE_TECHNICAL: 1
 FUNCTIONAL_DECISIONS_REQUIRED: 0
-IMPLEMENTATION_AUTHORIZED: R1_M1_AND_R1_M2_CONTRACT_SCOPE_ONLY
+IMPLEMENTATION_AUTHORIZED: R1_M1_M2_AND_M3_CONTRACT_SCOPE_ONLY
 ```
 
 ## Posibles duplicaciones a evitar
@@ -153,4 +153,17 @@ R1-M2 fue ejecutada con autorización explícita para IR1-001, IR1-002, IR1-003,
 - No se implementaron scripts, agentes, prompts ni skills; R1-M2 solo extendió contratos, schemas y validación estructural/cruzada.
 - Los artefactos IR-0 aprobados no se alteraron.
 - R1-M2 queda `COMPLETED` con revisión del OWNER `APPROVED` y resultado `PASS`; IR4/R1-M6 conserva la responsabilidad de suficiencia funcional.
-- R1-M3 y R1-M6 no fueron abiertas.
+- R1-M6 no fue abierta.
+
+## Cierre de R1-M3
+
+R1-M3 fue ejecutada con autorización explícita para IR1-007, IR1-008, IR1-009, IR1-010, IR1-011 e IR1-012.
+
+- NEW justificado: `schemas/work_research_dossier.json`; no existía contrato que consolidara la identificación/versionado por obra y sus referencias sin crear una segunda autoridad.
+- REUSE: `narrative_human_analysis.json`, `material_curation.json`, `claims_ledger.json` y `source_access_and_evidence_report.json` se conservan como fuentes; el dossier los referencia y no copia su contenido.
+- IR1-008, IR1-009 e IR1-011 se resuelven mediante referencias validadas a `NarrativeHumanAnalysis` del mismo episodio, investigación, evidencia y obra.
+- IR1-010 conserva los claims en `ClaimsLedger`; las listas del dossier son candidatas con `REPRESENTATION_ONLY_IR4_PENDING`, sin emitir una decisión IR4.
+- IR1-012 solo representa suficiencia no funcional y una auditoría de fidelidad nula con dependencia `DEFERRED_TO_R1_M10_R1_M11`; no declara auditoría independiente implementada ni aprobada.
+- Evidencia de validación: `29 passed`, `166 subtests passed` en los tests dirigidos de schemas y contratos.
+
+R1-M3 queda `COMPLETED_PENDING_REVIEW`. R1-M4, R1-M5 y R1-M6 permanecen sin abrir.

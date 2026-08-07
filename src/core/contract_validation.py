@@ -414,6 +414,94 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
     return violations
 
 
+def validate_work_research_dossier(
+    data: Dict[str, Any],
+    claims_ledger: Optional[Dict[str, Any]] = None,
+    narrative_analyses: Optional[List[Dict[str, Any]]] = None,
+) -> List[str]:
+    """Valida referencias internas del WorkResearchDossier sin duplicar sus contratos fuente."""
+    violations = validate_against_schema(data, "work_research_dossier")
+
+    if claims_ledger is None or narrative_analyses is None:
+        violations.append("WorkResearchDossier requiere ClaimsLedger y NarrativeHumanAnalysis para validar referencias canónicas.")
+        return violations
+
+    analyses_by_id = {
+        analysis.get("analysis_id"): analysis for analysis in narrative_analyses
+        if isinstance(analysis, dict) and analysis.get("analysis_id")
+    }
+    work = data.get("work") if isinstance(data.get("work"), dict) else {}
+    declared_analysis_ids = {
+        entry.get("analysis_id") for entry in data.get("analysis_references", [])
+        if isinstance(entry, dict) and entry.get("analysis_id")
+    }
+    for reference in data.get("analysis_references", []):
+        if not isinstance(reference, dict):
+            continue
+        analysis_id = reference.get("analysis_id")
+        analysis = analyses_by_id.get(analysis_id)
+        if analysis is None:
+            violations.append(f"WorkResearchDossier.analysis_references referencia análisis inexistente: '{analysis_id}'.")
+            continue
+        for field in ("episode_id", "research_id", "evidence_report_id"):
+            if data.get(field) != analysis.get(field):
+                violations.append(f"WorkResearchDossier y análisis '{analysis_id}' difieren en '{field}'.")
+        if reference.get("material_id") != analysis.get("material_id"):
+            violations.append(f"WorkResearchDossier.analysis_references no conserva material_id de '{analysis_id}'.")
+        if reference.get("material_id") != work.get("material_id"):
+            violations.append(f"WorkResearchDossier.analysis_references no pertenece a la obra del dossier: '{analysis_id}'.")
+        analysis_violations = validate_against_schema(analysis, "narrative_human_analysis")
+        violations.extend(f"NarrativeHumanAnalysis '{analysis_id}': {violation}" for violation in analysis_violations)
+    relation = data.get("question_and_thesis_relation", {})
+    if isinstance(relation, dict):
+        for field in (
+            "demonstrates_analysis_ref",
+            "does_not_establish_analysis_ref",
+            "main_interpretation_analysis_ref",
+        ):
+            if relation.get(field) and relation[field] not in declared_analysis_ids:
+                violations.append(f"WorkResearchDossier.{field} referencia análisis no declarado: '{relation[field]}'.")
+        for analysis_id in relation.get("rival_interpretation_analysis_refs", []):
+            if analysis_id not in declared_analysis_ids:
+                violations.append(
+                    f"WorkResearchDossier.rival_interpretation_analysis_refs referencia análisis no declarado: '{analysis_id}'."
+                )
+    function_ref = data.get("candidate_editorial_function_analysis_ref")
+    if function_ref not in declared_analysis_ids:
+        violations.append(f"WorkResearchDossier.candidate_editorial_function_analysis_ref referencia análisis no declarado: '{function_ref}'.")
+    for entry in data.get("locators", []):
+        if isinstance(entry, dict) and entry.get("analysis_id") not in declared_analysis_ids:
+            violations.append(f"WorkResearchDossier.locators referencia análisis no declarado: '{entry.get('analysis_id')}'.")
+
+    dispositions = data.get("claim_dispositions", {})
+    if not isinstance(dispositions, dict):
+        return violations
+    disposition_sets = {
+        name: set(dispositions.get(name, []))
+        for name in ("candidate_allowed_claim_ids", "candidate_limited_claim_ids", "candidate_blocked_claim_ids")
+    }
+    names = list(disposition_sets)
+    for index, name in enumerate(names):
+        for other in names[index + 1:]:
+            overlap = disposition_sets[name] & disposition_sets[other]
+            if overlap:
+                violations.append(
+                    f"WorkResearchDossier.claim_dispositions no permite claims en {name} y {other}: {', '.join(sorted(overlap))}."
+                )
+
+    if dispositions.get("claims_ledger_id") != claims_ledger.get("ledger_id"):
+        violations.append("WorkResearchDossier referencia un claims_ledger_id distinto del ledger suministrado.")
+    known_claim_ids = {
+        claim.get("claim_id") for claim in claims_ledger.get("claims", [])
+        if isinstance(claim, dict) and claim.get("claim_id")
+    }
+    for claim_id in set().union(*disposition_sets.values()):
+        if claim_id not in known_claim_ids:
+            violations.append(f"WorkResearchDossier referencia claim inexistente en ledger: '{claim_id}'.")
+
+    return violations
+
+
 def validate_thesis_artifact(data: Dict[str, Any], research: Dict[str, Any], evidence_report: Dict[str, Any]) -> List[str]:
     violations = validate_against_schema(data, "thesis_artifact")
 

@@ -18,6 +18,7 @@ from src.core.contract_validation import (
     validate_research_pack,
     validate_claims_ledger,
     validate_source_access_and_evidence_report,
+    validate_work_research_dossier,
 )
 
 VALID_FIXTURES = {
@@ -675,6 +676,20 @@ VALID_FIXTURES["narrative_human_analysis"] = {"analysis_id":"A-1","episode_id":"
 VALID_FIXTURES["material_curation"] = {"curation_id":"C-1","episode_id":"EP-1","research_id":"R-1","analysis_ids":["A-1"],"candidates":[{"material_id":"M-1","function":"Complicación","thesis_contribution":"Aporta.","new_perspective":"Nueva.","redundancy_with_selected":[],"context_cost":"Bajo.","narrative_evidence_strength":"HIGH","contradiction_or_nuance":"Matiz.","narrative_use":"COMPLICATION","selection_status":"SELECTED"}],"selected_material_ids":["M-1"],"selection_stage":"FINAL","exclusions":[],"sequence_rationale":"Secuencia justificada.","set_relationship":"Relación del conjunto.","unique_contributions":[{"material_id":"M-1","contribution":"Aporta."}],"function_overlap_justification":"No hay solapamiento.","progression_evidence":[{"material_id":"M-1","change_in_understanding":"Cambio.","evidence_refs":["F-1"],"non_substitutability":"No sustituible."}],"inherited_restrictions":[],"selected_materials":["M-1"],"excluded_materials":[],"function_of_each_selected_material":[{"material_id":"M-1","contribution":"Aporta."}],"reason_for_each_exclusion":[],"pairwise_redundancy_review":[],"contrast_map":[{"from_material_id":"M-1","to_material_id":"M-1","contrast":"Autocontraste mínimo de fixture."}],"progression_map":[{"material_id":"M-1","change_in_understanding":"Cambio.","evidence_refs":["F-1"],"non_substitutability":"No sustituible."}],"context_cost":"Bajo.","expected_order":["M-1"],"dependency_between_materials":[],"created_at":"2026-07-24T20:00:00Z"}
 VALID_FIXTURES["refined_thesis"] = {"thesis_id":"T-1","episode_id":"EP-1","brief_version":"1.0.0","research_id":"R-1","evidence_report_id":"E-1","semantic_audit_id":"S-1","provisional_thesis_id":"TP-1","analysis_ids":["A-1"],"curation_id":"C-1","statement":"Tesis.","supporting_evidence_refs":["F-1"],"counterevidence_refs":["R-1"],"rival_interpretations":["Rival."],"main_objection":"Objeción.","nuance":"Matiz.","material_contributions":[{"material_id":"M-1","contribution":"Aporta."}],"analysis_confirmed":["Confirmación."],"changes_from_provisional":["Cambio."],"discarded_from_provisional":["Descartado."],"refinement_rationale":"Razón.","refinement_dimensions":[{"dimension":"SCOPE","provisional_position":"Antes.","resulting_position":"Después.","evidence_refs":["F-1"],"rationale":"Razón."}],"inherited_constraint_ids":[],"statement_unchanged_justification":None,"limits":["Límite."],"revision_conditions":["Nueva evidencia."],"stage":"THESIS_REFINED","refined_position":"Posición refinada.","what_was_confirmed":["Confirmado."],"what_was_changed":["Cambiado."],"what_was_rejected":["Rechazado."],"what_was_limited":["Limitado."],"strongest_objection":"Objeción fuerte.","alternative_explanation":"Explicación alternativa.","conditions_of_validity":["Condición."],"remaining_uncertainties":["Incertidumbre."],"evidence_dependencies":["Dependencia."],"created_at":"2026-07-24T20:00:00Z"}
 VALID_FIXTURES["b5_i2_semantic_sufficiency_audit"].update({"artifact_references":["analysis:A-1","curation:C-1","refined_thesis:T-1","script_promise:SP-1"],"producer_run_reference":"RUN-P","auditor_run_reference":"RUN-AUDIT-1","producer_actor_id":"producer-1","auditor_actor_id":"auditor-1","auditor_input_checksum":"a"*64,"auditor_write_scope":"AUDIT_ONLY","independence_result":"PASS","dimension_results":[{"dimension":d,"status":"PASS","summary":"Evaluado."} for d in ["TRIVIAL_THESIS","INTERCHANGEABLE_ANALYSIS","DECORATIVE_OBJECTION","FALSE_DEPTH"]],"required_changes":[],"excluded_claims_detected":[],"unsupported_inferences":[],"redundancy_findings":[],"progression_findings":[],"thesis_refinement_finding":{"status":"PASS","summary":"Evaluado."},"blocking_reasons":[],"reaudit_requirements":[]})
+VALID_FIXTURES["work_research_dossier"] = {
+    "dossier_id": "WRD-001", "dossier_version": "1.0.0", "episode_id": "EP-1", "research_id": "R-1", "evidence_report_id": "E-1",
+    "work": {"material_id": "M-1", "title": "Obra de fixture", "creator": "Autor", "consulted_representations": [{"representation_kind": "ORIGINAL_WORK", "edition_or_version": "Edición 1", "consulted_locator": "Capítulo 1"}]},
+    "dossier_stage": "RESEARCH_IN_PROGRESS",
+    "analysis_references": [{"analysis_id": "A-1", "material_id": "M-1"}],
+    "question_and_thesis_relation": {"central_question_ref": "EP-1.pregunta_central", "provisional_thesis_ref": "TP-1", "demonstrates_analysis_ref": "A-1", "does_not_establish_analysis_ref": "A-1", "main_interpretation_analysis_ref": "A-1", "rival_interpretation_analysis_refs": ["A-1"]},
+    "claim_dispositions": {"claims_ledger_id": "CL-001", "authority_status": "REPRESENTATION_ONLY_IR4_PENDING", "candidate_allowed_claim_ids": ["CLAIM-001"], "candidate_limited_claim_ids": [], "candidate_blocked_claim_ids": []},
+    "overinterpretation_risk": {"level": "MEDIUM", "rationale": "Requiere mantener el límite interpretativo."},
+    "candidate_editorial_function_analysis_ref": "A-1", "locators": [{"analysis_id": "A-1", "locator": "Escena 3"}],
+    "pending_items": [], "confidence": "HIGH",
+    "work_use_sufficiency": {"intended_use": "NARRATIVE_MATERIAL", "status": "IR7_FIDELITY_AUDIT_REQUIRED"},
+    "independent_fidelity_audit": {"audit_reference": None, "dependency": "DEFERRED_TO_R1_M10_R1_M11"},
+    "created_at": "2026-08-07T10:00:00Z"
+}
 
 VALID_FIXTURES["execution_provenance_registry"]["runs"][0].update({
     "prompt_id": "prompt_fixture",
@@ -752,6 +767,9 @@ class TestAllJSONSchemas(unittest.TestCase):
             "research_pack": validate_research_pack,
             "claims_ledger": validate_claims_ledger,
             "source_access_and_evidence_report": validate_source_access_and_evidence_report,
+            "work_research_dossier": lambda dossier: validate_work_research_dossier(
+                dossier, VALID_FIXTURES["claims_ledger"], [VALID_FIXTURES["narrative_human_analysis"]]
+            ),
         }
         for name, validator in mapper.items():
             with self.subTest(schema=name):
