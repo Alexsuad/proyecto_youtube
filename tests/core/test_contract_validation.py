@@ -9,6 +9,7 @@ from src.core.contract_validation import (
     validate_human_publication_approval,
     validate_research_pack,
     validate_claims_ledger,
+    validate_source_access_and_evidence_report,
 )
 from tests.fixtures.synthetic_contracts import (
     VALID_EDITORIAL_SCRIPT_APPROVAL,
@@ -60,6 +61,64 @@ class TestContractValidation(unittest.TestCase):
     def test_claims_ledger_no_source_fails(self):
         violations = validate_claims_ledger(INVALID_CLAIMS_LEDGER_NO_SOURCE)
         self.assertTrue(any("sin fuente ni estado de verificacion" in v for v in violations))
+
+    def test_research_pack_phenomenon_extensions_validate(self):
+        pack = {
+            **VALID_RESEARCH_PACK,
+            "research_pack_kind": "PHENOMENON",
+            "phenomenon": {
+                "phenomenon_id": "PH-001",
+                "phenomenon_kind": "CULTURAL",
+            },
+            "claims_by_criticality": {"C-001": "CENTRAL"},
+            "editorial_uses": {
+                "intended_uses": ["CENTRAL_CLAIM_SUPPORT"],
+                "criticality_map": {"claims": [{"claim_id": "C-001", "criticality": "CENTRAL", "intended_use": "CENTRAL_CLAIM_SUPPORT"}]},
+            },
+            "claims_candidates": [
+                {"item_id": "C-001", "statement": "Claim", "source_refs": ["S1"], "locator": "p. 1", "confidence": "HIGH"}
+            ],
+            "rival_analysis": [{
+                "rival_explanation_id": "R-001",
+                "statement": "Explicación rival",
+                "agreement_status": "DISAGREEMENT",
+                "disagreement_kind": "RIVAL_OPEN",
+                "claim_ids": ["C-001"],
+                "source_refs": ["S1"],
+            }],
+            "semantic_status": {
+                "status_per_claim": [{"claim_id": "C-001", "semantic_level": "PLAUSIBLE", "intended_use": "CENTRAL_CLAIM_SUPPORT"}],
+                "ir4_dependency": "DEFERRED_TO_R1_M6",
+            },
+        }
+        self.assertEqual(validate_research_pack(pack), [])
+
+    def test_research_pack_rejects_unknown_claim_reference(self):
+        pack = {**VALID_RESEARCH_PACK, "claims_by_criticality": {"UNKNOWN": "CENTRAL"}}
+        violations = validate_research_pack(pack)
+        self.assertTrue(any("claims_by_criticality referencia claim no declarada" in v for v in violations))
+
+    def test_source_report_rejects_unknown_dependent_claim(self):
+        report = {
+            "can_proceed": True,
+            "claims_sostenibles": [],
+            "claims_pendientes": [],
+            "excluded_claims": [],
+            "critical_claim_assessments": [],
+            "claim_dependent_source_evaluations": [{
+                "claim_id": "UNKNOWN",
+                "source_id": "UNKNOWN-SOURCE",
+                "object_relation": "Directa",
+                "claim_authority": "Alta",
+                "access_level": "DIRECT",
+                "independence": "INDEPENDENT",
+                "currency": "Vigente",
+                "locator": "p. 1",
+                "assessment": "SUPPORTED",
+            }],
+        }
+        violations = validate_source_access_and_evidence_report(report)
+        self.assertTrue(any("claim no declarada" in v for v in violations))
 
 
 if __name__ == "__main__":

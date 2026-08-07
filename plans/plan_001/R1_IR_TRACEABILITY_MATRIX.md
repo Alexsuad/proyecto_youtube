@@ -11,7 +11,7 @@ R1_STATUS: IN_PROGRESS
 R1_M1_STATUS: COMPLETED_PENDING_REVIEW
 IR_TRACEABILITY_MATRIX: CREATED
 FUNCTIONAL_DECISIONS_REINTERPRETED: NO
-TECHNICAL_COMPONENTS_IMPLEMENTED: NO
+TECHNICAL_COMPONENTS_IMPLEMENTED: R1_M2_CONTRACT_EXTENSIONS_PARTIAL_BY_IR4_DEPENDENCY
 PRODUCT_USE_AUTHORIZED: NO (siempre durante R1)
 ```
 
@@ -123,7 +123,7 @@ PARTIAL_COUNT: 31
 MISSING_COUNT: 32
 OUT_OF_SCOPE_TECHNICAL: 1
 FUNCTIONAL_DECISIONS_REQUIRED: 0
-IMPLEMENTATION_AUTHORIZED: R1_M1_DOCUMENTARY_TECHNICAL_SCOPE_ONLY
+IMPLEMENTATION_AUTHORIZED: R1_M1_AND_R1_M2_CONTRACT_SCOPE_ONLY
 ```
 
 ## Posibles duplicaciones a evitar
@@ -137,9 +137,20 @@ IMPLEMENTATION_AUTHORIZED: R1_M1_DOCUMENTARY_TECHNICAL_SCOPE_ONLY
 
 La decisión `REUSE/EXTEND/REPLACE/RETIRE` detallada se toma en cada misión R1 correspondiente; esta matriz solo la anticipa en `resolution_hint`.
 
+## Cierre de R1-M2
+
+R1-M2 fue ejecutada con autorización explícita para IR1-001, IR1-002, IR1-003, IR1-004, IR1-005, IR1-006 e IR1-013.
+
+- IR1-001, IR1-002, IR1-004, IR1-005 e IR1-013: contratos extendidos en los schemas existentes, sin crear una autoridad paralela.
+- IR1-003: REUSE; `research_pack.json` ya separa `facts`, `interpretations` e `hypotheses`.
+- IR1-004: `research_pack.json` incorpora análisis rival con consenso, desacuerdo, contraejemplo e incertidumbre; `refined_thesis.json` permanece REUSE.
+- IR1-006: se materializa el estado semántico por claim y la dependencia `DEFERRED_TO_R1_M6`; no se valida suficiencia funcional ni se abre R1-M6.
+- `src/core/contract_validation.py` solo se extendió para referencias cruzadas que JSON Schema no puede resolver por sí solo.
+- Evidencia de validación: `18 passed`, `162 subtests passed` en los tests dirigidos de schemas y contratos.
+
 ## Límites
 
-- No se implementaron contratos, schemas, scripts, agentes, prompts, skills ni gates.
+- No se implementaron scripts, agentes, prompts ni skills; R1-M2 solo extendió contratos, schemas y validación estructural/cruzada.
 - Los artefactos IR-0 aprobados no se alteraron.
-- R1-M2 no fue abierta.
-- Sin commits ni push.
+- R1-M2 queda `COMPLETED_PENDING_REVIEW`; IR4/R1-M6 conserva la responsabilidad de suficiencia funcional.
+- R1-M3 y R1-M6 no fueron abiertas.

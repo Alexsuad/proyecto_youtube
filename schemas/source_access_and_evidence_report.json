@@ -131,6 +131,22 @@
     "critical_claim_assessments": {"type": "array", "items": {"$ref": "#/definitions/criticalClaimAssessment"}},
     "critical_claims_propagation": {"$ref": "#/definitions/criticalClaimsPropagation"},
     "sufficiency_basis": {"type": "object", "additionalProperties": false, "required": ["central_question", "critical_claims", "analysis_type", "material_roles", "requested_depth", "research_coverage"], "properties": {"central_question": {"type": "string", "minLength": 1}, "critical_claims": {"type": "array", "items": {"type": "string", "minLength": 1}}, "analysis_type": {"type": "string", "minLength": 1}, "material_roles": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "requested_depth": {"type": "string", "minLength": 1}, "research_coverage": {"type": "string", "minLength": 1}}},
+    "independence_groups": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/independenceGroup"}
+    },
+    "coverage_gaps": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/coverageGap"}
+    },
+    "reopening_conditions": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/reopeningCondition"}
+    },
+    "claim_dependent_source_evaluations": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/claimDependentSourceEvaluation"}
+    },
     "created_at": {
       "type": "string",
       "format": "date-time"
@@ -328,6 +344,77 @@
             "HIGH"
           ]
         }
+      }
+    },
+    "independenceGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "group_id",
+        "source_ids",
+        "independence"
+      ],
+      "properties": {
+        "group_id": {"type": "string", "minLength": 1},
+        "source_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "independence": {"type": "string", "enum": ["INDEPENDENT", "DERIVED", "SAME_ORIGIN"]},
+        "rationale": {"type": ["string", "null"]}
+      }
+    },
+    "coverageGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dimension",
+        "reason",
+        "impact"
+      ],
+      "properties": {
+        "dimension": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "impact": {"type": "string", "enum": ["NON_CRITICAL", "MATERIAL", "CRITICAL"]},
+        "mitigation": {"type": ["string", "null"]}
+      }
+    },
+    "reopeningCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition_id",
+        "trigger_type",
+        "description"
+      ],
+      "properties": {
+        "condition_id": {"type": "string", "minLength": 1},
+        "trigger_type": {"type": "string", "enum": ["NEW_EVIDENCE", "CLAIM_REOPENED", "SUPPLEMENTAL_ACCESS", "TRANSLATION_REVIEWED", "VERIFICATION_UPDATED"]},
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "claimDependentSourceEvaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "source_id",
+        "object_relation",
+        "claim_authority",
+        "access_level",
+        "independence",
+        "currency",
+        "locator",
+        "assessment"
+      ],
+      "properties": {
+        "claim_id": {"type": "string", "minLength": 1},
+        "source_id": {"type": "string", "minLength": 1},
+        "object_relation": {"type": "string", "minLength": 1},
+        "claim_authority": {"type": "string", "minLength": 1},
+        "access_level": {"type": "string", "enum": ["DIRECT", "INDIRECT", "SECONDARY_ONLY"]},
+        "independence": {"type": "string", "enum": ["INDEPENDENT", "DERIVED", "SINGLE_ORIGIN"]},
+        "currency": {"type": "string", "minLength": 1},
+        "locator": {"type": "string", "minLength": 1},
+        "assessment": {"type": "string", "enum": ["SUPPORTED", "LIMITED", "EXCLUDED", "INSUFFICIENT"]},
+        "notes": {"type": ["string", "null"]}
       }
     }
   }

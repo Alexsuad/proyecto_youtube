@@ -17,6 +17,7 @@ from src.core.contract_validation import (
     validate_human_publication_approval,
     validate_research_pack,
     validate_claims_ledger,
+    validate_source_access_and_evidence_report,
 )
 
 VALID_FIXTURES = {
@@ -174,7 +175,9 @@ VALID_FIXTURES = {
                 "source_refs": [
                     "REF-001"
                 ],
-                "verification_status": "VERIFIED"
+                "verification_status": "VERIFIED",
+                "criticality": "CENTRAL",
+                "intended_use": "CENTRAL_CLAIM_SUPPORT"
             }
         ]
     },
@@ -394,10 +397,16 @@ VALID_FIXTURES = {
         "narrative_evidence": [{"item_id": "N1", "statement": "Escena.", "source_refs": ["S1"], "locator": "00:10", "confidence": "HIGH", "evidence_kind": "SCENE"}],
         "external_reality_evidence": [{"item_id": "E1", "statement": "Estudio.", "source_refs": ["S1"], "locator": "p. 11", "confidence": "HIGH", "evidence_kind": "STUDY"}],
         "source_registry": [{"source_id": "S1", "title": "Fuente oficial", "source_type": "PRIMARY", "url": "https://example.com/source", "access_type": "DIRECT", "locator": "documento completo", "confidence": "HIGH"}],
-        "claims_candidates": [],
+        "claims_candidates": [{"item_id": "CLAIM-X", "statement": "Claim candidata del fenómeno.", "source_refs": ["S1"], "locator": "escena 3", "confidence": "MEDIUM"}],
         "unsupported_claims": [],
         "narrative_opportunities": [],
         "limitations": [],
+        "research_pack_kind": "PHENOMENON",
+        "phenomenon": {"phenomenon_id": "PHEN-001", "phenomenon_kind": "CULTURAL", "definition": "Fenómeno de fixture."},
+        "claims_by_criticality": {"CLAIM-X": "CENTRAL"},
+        "editorial_uses": {"intended_uses": ["CENTRAL_CLAIM_SUPPORT", "CONTEXTUAL_BACKGROUND"], "criticality_map": {"claims": [{"claim_id": "CLAIM-X", "criticality": "CENTRAL", "intended_use": "CENTRAL_CLAIM_SUPPORT"}]}},
+        "rival_analysis": [{"rival_explanation_id": "RIVAL-1", "statement": "Explicación rival.", "agreement_status": "DISAGREEMENT", "disagreement_kind": "RIVAL_OPEN", "claim_ids": ["CLAIM-X"], "source_refs": ["S1"]}],
+        "semantic_status": {"status_per_claim": [{"claim_id": "CLAIM-X", "semantic_level": "PLAUSIBLE", "intended_use": "CENTRAL_CLAIM_SUPPORT"}], "ir4_dependency": "DEFERRED_TO_R1_M6"},
         "created_at": "2026-07-21T22:00:00Z"
     },
     "script_block_contract": {
@@ -427,12 +436,16 @@ VALID_FIXTURES = {
         "fuentes_secundarias": [],
         "escenas_verificadas": [{"scene_id": "SC1", "description": "Escena verificada.", "source_id": "S1", "locator": "00:10:00", "verification_mode": "DIRECT"}],
         "escenas_descritas_indirectamente": [],
-        "claims_sostenibles": [],
+        "claims_sostenibles": [{"claim_id": "CLAIM-001", "claim_text": "Claim sostenible.", "source_refs": ["S1"], "locator": "p. 15", "confidence": "HIGH"}],
         "claims_pendientes": [],
         "limitaciones": [],
         "nivel_de_confianza": "HIGH",
         "can_proceed": True,
         "required_disclosures": [],
+        "independence_groups": [{"group_id": "GRP-1", "source_ids": ["S1"], "independence": "INDEPENDENT", "rationale": "Fuente primaria."}],
+        "coverage_gaps": [{"dimension": "CONTEXTO", "reason": "Solo una fuente.", "impact": "NON_CRITICAL", "mitigation": "Complementar."}],
+        "reopening_conditions": [{"condition_id": "REO-1", "trigger_type": "NEW_EVIDENCE", "description": "Nueva evidencia."}],
+        "claim_dependent_source_evaluations": [{"claim_id": "CLAIM-001", "source_id": "S1", "object_relation": "Directa", "claim_authority": "Alta", "access_level": "DIRECT", "independence": "INDEPENDENT", "currency": "Vigente", "locator": "p.15", "assessment": "SUPPORTED"}],
         "allowed_analyses": ["CONTEXTUAL_ANALYSIS"], "limited_analyses": [], "prohibited_analyses": [], "excluded_claims": [], "propagated_constraints": [], "critical_claim_assessments": [], "critical_claims_propagation": {"status": "NONE_JUSTIFIED", "claim_ids": [], "justification": "Fixture sin claims críticos.", "editorial_impact": "LIMITED", "scope_decision": "REDUCED_SCOPE"},
         "sufficiency_basis": {"central_question": "Pregunta", "critical_claims": [], "analysis_type": "CONTEXTUAL_ANALYSIS", "material_roles": ["PRIMARY_NARRATIVE_MATERIAL"], "requested_depth": "PROFUNDO", "research_coverage": "Cobertura revisada"},
         "created_at": "2026-07-23T20:00:00Z"
@@ -733,6 +746,21 @@ class TestAllJSONSchemas(unittest.TestCase):
                 elif name == "research_pack":
                     business_violations = validate_research_pack(fixture)
                     self.assertEqual(len(business_violations), 0, f"Fixture de research_pack falló validaciones de negocio: {business_violations}")
+
+    def test_every_research_contract_schema_has_valid_fixture(self):
+        """Valida que los schemas de investigación de R1-M2 pasen sus validadores de negocio."""
+        mapper = {
+            "research_pack": validate_research_pack,
+            "claims_ledger": validate_claims_ledger,
+            "source_access_and_evidence_report": validate_source_access_and_evidence_report,
+        }
+        for name, validator in mapper.items():
+            with self.subTest(schema=name):
+                violations = validator(VALID_FIXTURES[name])
+                self.assertEqual(
+                    len(violations), 0,
+                    f"Fixture válido de {name} falló validaciones de negocio: {violations}",
+                )
 
     def test_representative_invalid_fixtures(self):
         """Valida casos inválidos representativos para asegurar que las fallas sean detectadas."""

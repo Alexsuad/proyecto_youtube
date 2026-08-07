@@ -68,6 +68,28 @@
           },
           "limitations": {
             "type": "string"
+          },
+          "criticality": {
+            "type": "string",
+            "enum": [
+              "CENTRAL",
+              "SECONDARY",
+              "SENSITIVE",
+              "CONTROVERSIAL"
+            ],
+            "description": "IR1-002: tipificación de criticidad ligada al uso editorial previsto."
+          },
+          "intended_use": {
+            "type": "string",
+            "enum": [
+              "CENTRAL_CLAIM_SUPPORT",
+              "SECONDARY_CONTEXT",
+              "SENSITIVE_HANDLING",
+              "CONTROVERSIAL_BALANCE",
+              "NARRATIVE_MATERIAL",
+              "CONTEXTUAL_BACKGROUND"
+            ],
+            "description": "IR1-002: uso editorial previsto de la claim, ligado a su criticidad."
           }
         }
       }
