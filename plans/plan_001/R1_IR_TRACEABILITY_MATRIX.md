@@ -152,5 +152,5 @@ R1-M2 fue ejecutada con autorización explícita para IR1-001, IR1-002, IR1-003,
 
 - No se implementaron scripts, agentes, prompts ni skills; R1-M2 solo extendió contratos, schemas y validación estructural/cruzada.
 - Los artefactos IR-0 aprobados no se alteraron.
-- R1-M2 queda `COMPLETED_PENDING_REVIEW`; IR4/R1-M6 conserva la responsabilidad de suficiencia funcional.
+- R1-M2 queda `COMPLETED` con revisión del OWNER `APPROVED` y resultado `PASS`; IR4/R1-M6 conserva la responsabilidad de suficiencia funcional.
 - R1-M3 y R1-M6 no fueron abiertas.
