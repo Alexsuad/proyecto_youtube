@@ -403,10 +403,9 @@ VALID_FIXTURES = {
         "limitations": [],
         "research_pack_kind": "PHENOMENON",
         "phenomenon": {"phenomenon_id": "PHEN-001", "phenomenon_kind": "CULTURAL", "definition": "Fenómeno de fixture."},
-        "claims_by_criticality": {"CLAIM-X": "CENTRAL"},
         "editorial_uses": {"intended_uses": ["CENTRAL_CLAIM_SUPPORT", "CONTEXTUAL_BACKGROUND"], "criticality_map": {"claims": [{"claim_id": "CLAIM-X", "criticality": "CENTRAL", "intended_use": "CENTRAL_CLAIM_SUPPORT"}]}},
         "rival_analysis": [{"rival_explanation_id": "RIVAL-1", "statement": "Explicación rival.", "agreement_status": "DISAGREEMENT", "disagreement_kind": "RIVAL_OPEN", "claim_ids": ["CLAIM-X"], "source_refs": ["S1"]}],
-        "semantic_status": {"status_per_claim": [{"claim_id": "CLAIM-X", "semantic_level": "PLAUSIBLE", "intended_use": "CENTRAL_CLAIM_SUPPORT"}], "ir4_dependency": "DEFERRED_TO_R1_M6"},
+        "semantic_status": {"status_per_claim": [{"claim_id": "CLAIM-X", "semantic_level": "PLAUSIBLE", "intended_use": "CENTRAL_CLAIM_SUPPORT", "sufficiency_for_intended_use": "NOT_FUNCTIONALLY_VALIDATED"}], "ir4_dependency": "DEFERRED_TO_R1_M6"},
         "created_at": "2026-07-21T22:00:00Z"
     },
     "script_block_contract": {

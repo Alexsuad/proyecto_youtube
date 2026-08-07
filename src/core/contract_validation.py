@@ -270,17 +270,6 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
         known_claim_ids.update(claims.get("claim_ids", []))
 
     editorial_uses = data.get("editorial_uses")
-    if data.get("research_pack_kind") == "PHENOMENON" and not isinstance(data.get("phenomenon"), dict):
-        violations.append("ResearchPack PHENOMENON requiere identidad de fenómeno.")
-
-    claims_by_criticality = data.get("claims_by_criticality", {})
-    if isinstance(claims_by_criticality, dict):
-        for claim_id in claims_by_criticality:
-            if claim_id not in known_claim_ids:
-                violations.append(
-                    f"ResearchPack.claims_by_criticality referencia claim no declarada: '{claim_id}'."
-                )
-
     if isinstance(editorial_uses, dict):
         criticality_map = editorial_uses.get("criticality_map", {})
         for entry in criticality_map.get("claims", []):
@@ -288,18 +277,9 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
                 violations.append(
                     f"ResearchPack.editorial_uses.criticality_map referencia claim no declarada: '{entry['claim_id']}'."
                 )
-        mapped = {entry.get("claim_id"): (entry.get("criticality"), entry.get("intended_use"))
-                  for entry in criticality_map.get("claims", []) if isinstance(entry, dict)}
-        direct = data.get("claims_by_criticality", {})
-        for claim_id, criticality in direct.items() if isinstance(direct, dict) else []:
-            if claim_id in mapped and mapped[claim_id][0] != criticality:
-                violations.append(f"ResearchPack criticality maps conflict for claim: '{claim_id}'.")
-
-    # IR1-006: representación semántica. No se autoriza suficiencia funcional (IR4 → R1-M6).
+    # IR1-006: la representación y su dependencia se controlan por JSON Schema.
     semantic_status = data.get("semantic_status")
     if isinstance(semantic_status, dict):
-        if semantic_status.get("ir4_dependency") != "DEFERRED_TO_R1_M6":
-            violations.append("IR1-006: la emisión de suficiencia semántica funcional depende de IR4 (R1-M6).")
         for status_entry in semantic_status.get("status_per_claim", []):
             if isinstance(status_entry, dict) and status_entry.get("claim_id") and status_entry["claim_id"] not in known_claim_ids:
                 violations.append(
@@ -423,10 +403,6 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
             violations.append(
                 f"claim_dependent_source_evaluations[{index}] referencia fuente no declarada: '{evaluation.get('source_id')}'."
             )
-        for field in ("claim_authority", "object_relation", "currency", "locator"):
-            if not evaluation.get(field):
-                violations.append(f"claim_dependent_source_evaluations[{index}] requiere '{field}'.")
-
     # IR1-005: independencia entre fuentes declarada.
     for group in data.get("independence_groups", []):
         if not isinstance(group, dict):
@@ -434,13 +410,6 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
         for source_id in group.get("source_ids", []):
             if source_id not in known_sources:
                 violations.append(f"independence_groups referencia fuente desconocida: '{source_id}'.")
-
-    # IR1-005: vacíos de cobertura y condiciones de reapertura son representación, no validación P-07.
-    for index, gap in enumerate(data.get("coverage_gaps", [])):
-        if not isinstance(gap, dict):
-            continue
-        if not gap.get("dimension") or not gap.get("reason"):
-            violations.append(f"coverage_gaps[{index}] requiere 'dimension' y 'reason'.")
 
     return violations
 

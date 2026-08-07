@@ -70,7 +70,6 @@ class TestContractValidation(unittest.TestCase):
                 "phenomenon_id": "PH-001",
                 "phenomenon_kind": "CULTURAL",
             },
-            "claims_by_criticality": {"C-001": "CENTRAL"},
             "editorial_uses": {
                 "intended_uses": ["CENTRAL_CLAIM_SUPPORT"],
                 "criticality_map": {"claims": [{"claim_id": "C-001", "criticality": "CENTRAL", "intended_use": "CENTRAL_CLAIM_SUPPORT"}]},
@@ -87,16 +86,39 @@ class TestContractValidation(unittest.TestCase):
                 "source_refs": ["S1"],
             }],
             "semantic_status": {
-                "status_per_claim": [{"claim_id": "C-001", "semantic_level": "PLAUSIBLE", "intended_use": "CENTRAL_CLAIM_SUPPORT"}],
+                "status_per_claim": [{"claim_id": "C-001", "semantic_level": "PLAUSIBLE", "intended_use": "CENTRAL_CLAIM_SUPPORT", "sufficiency_for_intended_use": "NOT_FUNCTIONALLY_VALIDATED"}],
                 "ir4_dependency": "DEFERRED_TO_R1_M6",
             },
         }
         self.assertEqual(validate_research_pack(pack), [])
 
     def test_research_pack_rejects_unknown_claim_reference(self):
-        pack = {**VALID_RESEARCH_PACK, "claims_by_criticality": {"UNKNOWN": "CENTRAL"}}
+        pack = {**VALID_RESEARCH_PACK, "editorial_uses": {"intended_uses": ["CENTRAL_CLAIM_SUPPORT"], "criticality_map": {"claims": [{"claim_id": "UNKNOWN", "criticality": "CENTRAL", "intended_use": "CENTRAL_CLAIM_SUPPORT"}]}}}
         violations = validate_research_pack(pack)
-        self.assertTrue(any("claims_by_criticality referencia claim no declarada" in v for v in violations))
+        self.assertTrue(any("criticality_map referencia claim no declarada" in v for v in violations))
+
+    def test_research_pack_rejects_functional_sufficiency_before_ir4(self):
+        pack = {
+            **VALID_RESEARCH_PACK,
+            "claims_candidates": [{
+                "item_id": "C-001",
+                "statement": "Claim",
+                "source_refs": ["S1"],
+                "locator": "p. 1",
+                "confidence": "HIGH",
+            }],
+            "semantic_status": {
+                "status_per_claim": [{
+                    "claim_id": "C-001",
+                    "semantic_level": "PLAUSIBLE",
+                    "intended_use": "CENTRAL_CLAIM_SUPPORT",
+                    "sufficiency_for_intended_use": "PASS",
+                }],
+                "ir4_dependency": "DEFERRED_TO_R1_M6",
+            },
+        }
+        violations = validate_research_pack(pack)
+        self.assertTrue(any("sufficiency_for_intended_use" in v for v in violations))
 
     def test_source_report_rejects_unknown_dependent_claim(self):
         report = {

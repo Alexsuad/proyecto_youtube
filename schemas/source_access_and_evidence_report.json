@@ -410,7 +410,7 @@
         "object_relation": {"type": "string", "minLength": 1},
         "claim_authority": {"type": "string", "minLength": 1},
         "access_level": {"type": "string", "enum": ["DIRECT", "INDIRECT", "SECONDARY_ONLY"]},
-        "independence": {"type": "string", "enum": ["INDEPENDENT", "DERIVED", "SINGLE_ORIGIN"]},
+        "independence": {"type": "string", "enum": ["INDEPENDENT", "DERIVED", "SAME_ORIGIN"]},
         "currency": {"type": "string", "minLength": 1},
         "locator": {"type": "string", "minLength": 1},
         "assessment": {"type": "string", "enum": ["SUPPORTED", "LIMITED", "EXCLUDED", "INSUFFICIENT"]},

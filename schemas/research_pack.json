@@ -130,7 +130,6 @@
     },
     "phenomenon": {"$ref": "#/definitions/phenomenonScope"},
     "editorial_uses": {"$ref": "#/definitions/editorialUses"},
-    "claims_by_criticality": {"$ref": "#/definitions/claimsByCriticality"},
     "rival_analysis": {
       "type": "array",
       "items": {"$ref": "#/definitions/rivalAnalysis"}
@@ -151,7 +150,6 @@
         "required": [
           "phenomenon",
           "editorial_uses",
-          "claims_by_criticality",
           "rival_analysis",
           "semantic_status"
         ]
@@ -402,13 +400,6 @@
         }
       }
     },
-    "claimsByCriticality": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "string",
-        "enum": ["CENTRAL", "SECONDARY", "SENSITIVE", "CONTROVERSIAL"]
-      }
-    },
     "claimCriticality": {
       "type": "object",
       "additionalProperties": false,
@@ -547,7 +538,8 @@
         },
         "sufficiency_for_intended_use": {
           "type": ["string", "null"],
-          "description": "IR1-006: campo representacional opcional. No autoriza lectura funcional hasta R1-M6 (IR4)."
+          "enum": ["NOT_FUNCTIONALLY_VALIDATED", "IR4_REQUIRED", null],
+          "description": "IR1-006: representación no funcional; R1-M6 debe extender este enum antes de emitir suficiencia."
         }
       }
     }
