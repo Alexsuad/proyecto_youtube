@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import re
 import subprocess
@@ -33,8 +34,10 @@ class MissionContract:
     artifact_version: str
     authorized_paths: tuple[str, ...]
     protected_untracked_paths: tuple[str, ...]
+    protected_untracked_baseline: tuple[tuple[str, str], ...]
     required_tests: tuple[RequiredTest, ...]
     push_allowed: bool
+    push_guard: tuple[str, str, str]
     control_path: str
     required_state: dict[str, str]
     forbidden_state: dict[str, tuple[str, ...]]
@@ -51,6 +54,8 @@ class MissionContract:
             key: (value,) if isinstance(value, str) else tuple(value)
             for key, value in state["forbidden"].items()
         }
+        baseline = tuple((_normalize_path(item["path"]), item["sha256"].lower()) for item in data["protected_untracked_baseline"])
+        push_guard = data["push_guard"]
         tests = tuple(
             RequiredTest(
                 label=item["label"],
@@ -65,14 +70,27 @@ class MissionContract:
             artifact_version=data["artifact_version"],
             authorized_paths=tuple(_normalize_path(item) for item in data["authorized_paths"]),
             protected_untracked_paths=tuple(_normalize_path(item) for item in data["protected_untracked_paths"]),
+            protected_untracked_baseline=baseline,
             required_tests=tests,
             push_allowed=data["push_allowed"],
+            push_guard=(push_guard["remote"], push_guard["ref"], push_guard["baseline_remote_commit"].lower()),
             control_path=_normalize_path(state["control_path"]),
             required_state=dict(state["required"]),
             forbidden_state=forbidden,
             schema_checks=tuple((_normalize_path(item["path"]), item["schema"]) for item in data["schema_checks"]),
         )
 
+
+def load_verified_completion_gate(path: str | Path) -> GateResult:
+    result_path = Path(path)
+    try:
+        data = json.loads(result_path.read_text(encoding="utf-8"))
+        result = GateResult.from_dict(data)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise PermissionError(f"MISSION_COMPLETION_GATE_REQUIRED: {exc}") from exc
+    if result.gate_id != "MISSION_COMPLETION" or result.status is not GateStatus.PASS or result.exit_code != 0 or result.violations:
+        raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: result is not PASS")
+    return result
 
 def load_mission_contract(path: str | Path) -> MissionContract:
     contract_path = Path(path)
@@ -126,15 +144,32 @@ def run_mission_completion_gate(contract: MissionContract, repo_root: str | Path
         path for path in contract.protected_untracked_paths
         if not _has_untracked_match(path, untracked)
     ]
-    if protected_missing:
-        violations.append("PROTECTED_UNTRACKED_NOT_PRESERVED")
+    baseline_paths = {path for path, _ in contract.protected_untracked_baseline}
+    baseline_missing = sorted(
+        path for path in contract.protected_untracked_paths
+        if not any(_in_protected(candidate, (path,)) for candidate in baseline_paths)
+    )
+    checksum_mismatches = []
+    for path, expected_checksum in contract.protected_untracked_baseline:
+        target = root / Path(path)
+        if not _has_untracked_match(path, untracked) or not target.is_file():
+            checksum_mismatches.append({"path": path, "expected": expected_checksum, "observed": None})
+            continue
+        observed_checksum = _file_checksum(target)
+        if _file_checksum(target) != expected_checksum:
+            checksum_mismatches.append({"path": path, "expected": expected_checksum, "observed": _file_checksum(target)})
+    if protected_missing or baseline_missing or checksum_mismatches:
+        violations.append("PROTECTED_UNTRACKED_INTEGRITY_FAILED")
     evidence["protected_untracked"] = {
         "declared": list(contract.protected_untracked_paths),
         "missing": protected_missing,
-        "preserved": not protected_missing,
+        "baseline_missing": baseline_missing,
+        "checksum_mismatches": checksum_mismatches,
+        "preserved": not (protected_missing or baseline_missing or checksum_mismatches),
     }
 
-    structural = _run_structural_checks(root, changed, contract.schema_checks)
+    structural_paths = sorted(set(changed + [contract.control_path]))
+    structural = _run_structural_checks(root, structural_paths, contract.schema_checks)
     violations.extend(structural["violations"])
     evidence["structural"] = structural["evidence"]
 
@@ -151,11 +186,9 @@ def run_mission_completion_gate(contract: MissionContract, repo_root: str | Path
     violations.extend(state_violations)
     evidence["state"] = state_evidence
 
-    if contract.push_allowed:
-        evidence["push_policy"] = {"push_allowed": True, "enforced": False}
-        violations.append("PUSH_POLICY_NOT_RESTRICTED")
-    else:
-        evidence["push_policy"] = {"push_allowed": False, "enforced": True, "push_invoked_by_gate": False}
+    push_evidence, push_violations = _check_push_policy(root, contract)
+    violations.extend(push_violations)
+    evidence["push_policy"] = push_evidence
 
     status = GateStatus.FAIL if violations else GateStatus.PASS
     return GateResult(
@@ -172,7 +205,7 @@ def run_mission_completion_gate(contract: MissionContract, repo_root: str | Path
 
 def _run_structural_checks(root: Path, changed: Sequence[str], schema_checks: Sequence[tuple[str, str]]) -> dict[str, Any]:
     violations: list[str] = []
-    evidence: dict[str, Any] = {"json": [], "yaml": [], "python": [], "schemas": []}
+    evidence: dict[str, Any] = {"json": [], "yaml": [], "yaml_markdown": [], "python": [], "schemas": []}
     for relative in changed:
         path = root / Path(relative)
         if not path.is_file():
@@ -185,6 +218,11 @@ def _run_structural_checks(root: Path, changed: Sequence[str], schema_checks: Se
             except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
                 violations.append("INVALID_JSON")
                 evidence["json"].append({"path": relative, "valid": False, "error": str(exc)})
+        elif suffix == ".md":
+            markdown_results = _validate_markdown_yaml(path)
+            evidence["yaml_markdown"].append({"path": relative, "blocks": markdown_results})
+            if any(not item["valid"] for item in markdown_results):
+                violations.append("DUPLICATE_YAML_KEY" if any(item.get("error", "").startswith("duplicate key:") for item in markdown_results) else "INVALID_YAML")
         elif suffix in {".yaml", ".yml"}:
             valid, error = _validate_yaml(path)
             evidence["yaml"].append({"path": relative, "valid": valid, **({"error": error} if error else {})})
@@ -248,7 +286,32 @@ def _read_declared_values(path: Path) -> dict[str, str]:
     return values
 
 
-def _validate_yaml(path: Path) -> tuple[bool, str | None]:
+def _validate_markdown_yaml(path: Path) -> list[dict[str, Any]]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    blocks: list[dict[str, Any]] = []
+    in_yaml = False
+    buffer: list[str] = []
+    fence = chr(96) * 3
+    for line in lines:
+        marker = line.strip().lower()
+        if not in_yaml and marker in {fence + "yaml", fence + "yml"}:
+            in_yaml = True
+            buffer = []
+            continue
+        if in_yaml and marker == fence:
+            valid, error = _validate_yaml_text("\n".join(buffer))
+            blocks.append({"valid": valid, **({"error": error} if error else {})})
+            in_yaml = False
+            buffer = []
+            continue
+        if in_yaml:
+            buffer.append(line)
+    if in_yaml:
+        blocks.append({"valid": False, "error": "unterminated yaml fence"})
+    return blocks
+
+
+def _validate_yaml_text(content: str) -> tuple[bool, str | None]:
     try:
         import yaml
     except ImportError as exc:
@@ -268,11 +331,57 @@ def _validate_yaml(path: Path) -> tuple[bool, str | None]:
 
     UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
     try:
-        yaml.load(path.read_text(encoding="utf-8"), Loader=UniqueKeyLoader)
-    except (OSError, UnicodeDecodeError, ValueError, yaml.YAMLError) as exc:
+        yaml.load(content, Loader=UniqueKeyLoader)
+    except (ValueError, yaml.YAMLError) as exc:
         return False, str(exc)
     return True, None
 
+def _validate_yaml(path: Path) -> tuple[bool, str | None]:
+    try:
+        return _validate_yaml_text(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError) as exc:
+        return False, str(exc)
+
+
+
+def _file_checksum(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _check_push_policy(root: Path, contract: MissionContract) -> tuple[dict[str, Any], list[str]]:
+    if contract.push_allowed:
+        return {"push_allowed": True, "verified": False, "enforced": False}, ["PUSH_POLICY_NOT_RESTRICTED"]
+    remote, ref, baseline = contract.push_guard
+    if remote == "LOCAL":
+        command = ["git", "rev-parse", ref]
+        result = _run_git(root, ["rev-parse", ref])
+        verification = "LOCAL_REF"
+    else:
+        command = ["git", "ls-remote", remote, ref]
+        result = _run_git(root, ["ls-remote", remote, ref])
+        verification = "REMOTE_REF"
+    evidence = {
+        "push_allowed": False,
+        "verification": verification,
+        "remote": remote,
+        "ref": ref,
+        "baseline_remote_commit": baseline,
+        "command": command,
+        "returncode": result["returncode"],
+        "stdout": result["stdout"],
+        "stderr": result["stderr"],
+        "verified": False,
+        "enforced": False,
+    }
+    if result["returncode"] != 0:
+        return evidence, ["PUSH_POLICY_UNVERIFIABLE"]
+    observed = result["stdout"].split()[0].lower() if result["stdout"].split() else ""
+    evidence["observed_remote_commit"] = observed
+    evidence["verified"] = bool(observed) and observed == baseline
+    evidence["enforced"] = evidence["verified"]
+    if not evidence["verified"]:
+        return evidence, ["PUSH_DETECTED_OR_REMOTE_CHANGED"]
+    return evidence, []
 
 def _run_command(root: Path, command: Sequence[str], timeout_seconds: int) -> dict[str, Any]:
     try:

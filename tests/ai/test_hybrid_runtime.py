@@ -63,12 +63,42 @@ def _audit() -> dict:
     }
 
 
+def _completion_gate(tmp_path: Path) -> str:
+    path = tmp_path / "completion_gate.json"
+    path.write_text(json.dumps({
+        "gate_id": "MISSION_COMPLETION",
+        "artifact_id": "test-mission",
+        "artifact_version": "1.0.0",
+        "status": "PASS",
+        "summary": "deterministic test gate",
+        "violations": [],
+        "warnings": [],
+        "evidence": {},
+        "checked_at": "2026-08-08T00:00:00Z",
+        "checker_version": "1.0.0",
+        "exit_code": 0,
+    }), encoding="utf-8")
+    return str(path)
+
+
 def _request(tmp_path: Path, **overrides) -> ExecutionRequest:
     source = tmp_path / "analysis.json"
     source.write_text('{"analysis_id":"A-1"}', encoding="utf-8")
-    kwargs = {"capability_id": CAPABILITY, "skill_id": SKILL_ID, "skill_version": SKILL_VERSION, "input_artifacts": [InputArtifact("analysis", "A-1", source, "RUN-P")], "output_schema": "b5_i2_semantic_sufficiency_audit", "execution_mode": "mock", "provider": "mock", "mock_output": _audit(), "output_artifact_kind": "semantic_audit", "output_artifact_id": "B5I2-SSA-1", "output_artifact_ref": "semantic_audit:B5I2-SSA-1", "episode_id": "EP-1", "role": AUDITOR_ROLE}
+    kwargs = {"capability_id": CAPABILITY, "skill_id": SKILL_ID, "skill_version": SKILL_VERSION, "input_artifacts": [InputArtifact("analysis", "A-1", source, "RUN-P")], "output_schema": "b5_i2_semantic_sufficiency_audit", "execution_mode": "mock", "provider": "mock", "mock_output": _audit(), "output_artifact_kind": "semantic_audit", "output_artifact_id": "B5I2-SSA-1", "output_artifact_ref": "semantic_audit:B5I2-SSA-1", "episode_id": "EP-1", "role": AUDITOR_ROLE, "config": {"completion_gate_result_path": _completion_gate(tmp_path)}}
     kwargs.update(overrides)
     return ExecutionRequest(**kwargs)
+
+
+def test_handoff_without_completion_gate_is_blocked(tmp_path: Path) -> None:
+    result = execute(_request(
+        tmp_path,
+        provider="agent_handoff",
+        execution_mode="agent_handoff",
+        handoff_directory=tmp_path / "handoff",
+        config={},
+    ))
+    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert "MISSION_COMPLETION_GATE_REQUIRED" in (result.error or "")
 
 
 def _four_artifacts(tmp_path: Path) -> list[InputArtifact]:
@@ -377,7 +407,7 @@ def test_auto_and_api_do_not_authorize_external_use_from_environment(tmp_path: P
 
 def test_handoff_import_rejects_foreign_package_and_persists_valid_result(tmp_path: Path) -> None:
     artifacts = _four_artifacts(tmp_path)
-    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={"prompt": "instrucciones editoriales", "execution_registry_path": str(tmp_path / "registry.json")}, role=AUDITOR_ROLE)
+    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={"completion_gate_result_path": _completion_gate(tmp_path), "prompt": "instrucciones editoriales", "execution_registry_path": str(tmp_path / "registry.json")}, role=AUDITOR_ROLE)
     prepared = execute(request)
     package = Path(prepared.usage["package"])
     data = json.loads(package.read_text(encoding="utf-8"))
@@ -516,7 +546,7 @@ def test_runner_accepts_optional_early_packaging_when_present(tmp_path: Path) ->
 
 def test_fabricated_self_consistent_handoff_without_registry_is_rejected(tmp_path: Path) -> None:
     artifacts = _four_artifacts(tmp_path)
-    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={"prompt": "prompt"}, role=AUDITOR_ROLE)
+    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={"completion_gate_result_path": _completion_gate(tmp_path), "prompt": "prompt"}, role=AUDITOR_ROLE)
     prepared = execute(request)
     package = Path(prepared.usage["package"])
     registry = tmp_path / "missing-registry.json"
@@ -533,7 +563,7 @@ def test_fabricated_self_consistent_handoff_without_registry_is_rejected(tmp_pat
 def test_modified_package_with_recalculated_checksum_is_rejected_against_registry(tmp_path: Path) -> None:
     registry = tmp_path / "registry.json"
     artifacts = _four_artifacts(tmp_path)
-    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={"prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
+    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={"completion_gate_result_path": _completion_gate(tmp_path), "prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
     prepared = execute(request); package = Path(prepared.usage["package"])
     package_data = json.loads(package.read_text(encoding="utf-8")); package_data["prompt"] = "altered"; package_data["package_checksum"] = _checksum({key: value for key, value in package_data.items() if key != "package_checksum"}); package.write_text(json.dumps(package_data), encoding="utf-8")
     result_file = tmp_path / "result.json"; payload = {"handoff_id": prepared.run_id, "package_checksum": package_data["package_checksum"], "skill_id": package_data["skill_id"], "skill_version": package_data["skill_version"], "input_manifest_checksum": package_data["input_manifest_checksum"], "output": _audit()}; payload["output_checksum"] = _checksum(payload["output"]); result_file.write_text(json.dumps(payload), encoding="utf-8")
@@ -544,7 +574,7 @@ def test_modified_package_with_recalculated_checksum_is_rejected_against_registr
 
 def test_handoff_cannot_be_consumed_twice(tmp_path: Path) -> None:
     registry = tmp_path / "registry.json"; artifacts = _four_artifacts(tmp_path)
-    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={"prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
+    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={"completion_gate_result_path": _completion_gate(tmp_path), "prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
     prepared = execute(request); package = Path(prepared.usage["package"]); data = json.loads(package.read_text(encoding="utf-8")); result_file = tmp_path / "result.json"; payload = {"handoff_id": prepared.run_id, "package_checksum": data["package_checksum"], "skill_id": data["skill_id"], "skill_version": data["skill_version"], "input_manifest_checksum": data["input_manifest_checksum"], "output": _audit()}; payload["output_checksum"] = _checksum(payload["output"]); result_file.write_text(json.dumps(payload), encoding="utf-8")
     first = import_b5_i2_handoff(package_path=package, result_path=result_file, artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=registry, episode_id="EP-1")
     second = import_b5_i2_handoff(package_path=package, result_path=result_file, artifacts=artifacts, output_path=tmp_path / "audit2.json", registry_path=registry, episode_id="EP-1")
@@ -553,7 +583,7 @@ def test_handoff_cannot_be_consumed_twice(tmp_path: Path) -> None:
 
 def _registered_handoff_fixture(tmp_path: Path):
     registry = tmp_path / "registry.json"; artifacts = _four_artifacts(tmp_path)
-    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={"prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
+    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={"completion_gate_result_path": _completion_gate(tmp_path), "prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
     prepared = execute(request); package = Path(prepared.usage["package"]); data = json.loads(package.read_text(encoding="utf-8")); result_file = tmp_path / "result.json"; payload = {"handoff_id": prepared.run_id, "package_checksum": data["package_checksum"], "skill_id": data["skill_id"], "skill_version": data["skill_version"], "input_manifest_checksum": data["input_manifest_checksum"], "output": _audit()}; payload["output_checksum"] = _checksum(payload["output"]); result_file.write_text(json.dumps(payload), encoding="utf-8")
     return package, result_file, artifacts, registry
 

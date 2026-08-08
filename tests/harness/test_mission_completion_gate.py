@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -31,19 +32,22 @@ def _repo(tmp_path: Path, *, state: str = "NO") -> Path:
     (root / "README.md").write_text("base\n", encoding="utf-8")
     _git(root, "add", ".")
     _git(root, "commit", "-m", "base", "--quiet")
+
     (root / "protected.txt").write_text("preserve me\n", encoding="utf-8")
     return root
 
 
-def _contract(*, authorized: list[str] | None = None, tests: list[dict[str, object]] | None = None, forbidden: dict[str, object] | None = None) -> MissionContract:
+def _contract(root: Path, *, authorized: list[str] | None = None, tests: list[dict[str, object]] | None = None, forbidden: dict[str, object] | None = None) -> MissionContract:
     data = {
         "mission_id": "TECHNICAL_HARDENING",
         "artifact_id": "mission-completion-gate",
         "artifact_version": "1.0.0",
         "authorized_paths": authorized or ["src/", "control.md"],
         "protected_untracked_paths": ["protected.txt"],
+        "protected_untracked_baseline": [{"path": "protected.txt", "sha256": hashlib.sha256((root / "protected.txt").read_bytes()).hexdigest()}],
         "required_tests": tests or [{"label": "required smoke", "command": [sys.executable, "-c", "raise SystemExit(0)"]}],
         "push_allowed": False,
+        "push_guard": {"remote": "LOCAL", "ref": "HEAD", "baseline_remote_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True).stdout.strip()},
         "state_requirements": {
             "control_path": "control.md",
             "required": {"CURRENT_MISSION": "TECHNICAL_HARDENING"},
@@ -59,7 +63,7 @@ def test_valid_mission_gets_pass_and_preserves_protected_untracked(tmp_path: Pat
     (root / "src").mkdir()
     (root / "src" / "new.py").write_text("answer = 42\n", encoding="utf-8")
 
-    result = run_mission_completion_gate(_contract(), root)
+    result = run_mission_completion_gate(_contract(root), root)
 
     assert result.status is GateStatus.PASS
     assert result.evidence["protected_untracked"]["preserved"] is True
@@ -72,7 +76,7 @@ def test_diff_check_failure_prevents_pass(tmp_path: Path) -> None:
     (root / "src" / "new.py").write_text("answer = 42  \n", encoding="utf-8")
     _git(root, "add", "src/new.py")
 
-    result = run_mission_completion_gate(_contract(), root)
+    result = run_mission_completion_gate(_contract(root), root)
 
     assert result.status is GateStatus.FAIL
     assert "DIFF_CHECK_FAILED" in result.violations
@@ -82,7 +86,7 @@ def test_out_of_scope_change_prevents_pass(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     (root / "README.md").write_text("outside\n", encoding="utf-8")
 
-    result = run_mission_completion_gate(_contract(), root)
+    result = run_mission_completion_gate(_contract(root), root)
 
     assert result.status is GateStatus.FAIL
     assert "UNEXPECTED_FILE_MODIFIED" in result.violations
@@ -93,7 +97,7 @@ def test_duplicate_yaml_key_is_detected(tmp_path: Path) -> None:
     (root / "src").mkdir()
     (root / "src" / "config.yml").write_text("name: one\nname: two\n", encoding="utf-8")
 
-    result = run_mission_completion_gate(_contract(), root)
+    result = run_mission_completion_gate(_contract(root), root)
 
     assert result.status is GateStatus.FAIL
     assert "DUPLICATE_YAML_KEY" in result.violations
@@ -103,7 +107,7 @@ def test_required_test_failure_prevents_pass(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     failing = [{"label": "required failure", "command": [sys.executable, "-c", "raise SystemExit(9)"]}]
 
-    result = run_mission_completion_gate(_contract(tests=failing), root)
+    result = run_mission_completion_gate(_contract(root, tests=failing), root)
 
     assert result.status is GateStatus.FAIL
     assert "REQUIRED_TEST_FAILED" in result.violations
@@ -113,7 +117,7 @@ def test_required_test_failure_prevents_pass(tmp_path: Path) -> None:
 def test_forbidden_state_transition_prevents_pass(tmp_path: Path) -> None:
     root = _repo(tmp_path, state="YES")
 
-    result = run_mission_completion_gate(_contract(), root)
+    result = run_mission_completion_gate(_contract(root), root)
 
     assert result.status is GateStatus.FAIL
     assert "UNAUTHORIZED_STATE_TRANSITION" in result.violations
@@ -140,6 +144,7 @@ def test_contract_rejects_free_form_llm_claims() -> None:
         "protected_untracked_paths": [],
         "required_tests": [],
         "push_allowed": False,
+        "push_guard": {"remote": "LOCAL", "ref": "HEAD", "baseline_remote_commit": "0" * 40},
         "state_requirements": {"control_path": "control.md", "required": {}, "forbidden": {}},
         "schema_checks": [],
         "llm_claim": "PASS",
@@ -150,7 +155,7 @@ def test_contract_rejects_free_form_llm_claims() -> None:
 
 def test_gate_is_provider_and_ide_agnostic(tmp_path: Path) -> None:
     root = _repo(tmp_path)
-    result = run_mission_completion_gate(_contract(), root)
+    result = run_mission_completion_gate(_contract(root), root)
 
     assert result.status is GateStatus.PASS
     assert "OpenCode" not in json.dumps(result.to_dict())
@@ -165,10 +170,46 @@ def test_schema_check_uses_real_json_validation(tmp_path: Path) -> None:
         json.dumps({"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}}}) + "\n",
         encoding="utf-8",
     )
-    contract = _contract(authorized=["src/", "control.md"])
+    contract = _contract(root, authorized=["src/", "control.md"])
     object.__setattr__(contract, "schema_checks", (("src/payload.json", "src/payload.schema.json"),))
 
     result = run_mission_completion_gate(contract, root)
 
     assert result.status is GateStatus.FAIL
     assert "SCHEMA_VALIDATION_FAILED" in result.violations
+
+
+def test_duplicate_yaml_key_inside_markdown_is_detected(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "src").mkdir()
+    (root / "src" / "control.md").write_text("```yaml\nR1_M1_STATUS: COMPLETED\nR1_M1_STATUS: BROKEN\n```\n", encoding="utf-8")
+
+    result = run_mission_completion_gate(_contract(root), root)
+
+    assert result.status is GateStatus.FAIL
+    assert "DUPLICATE_YAML_KEY" in result.violations
+    assert result.evidence["structural"]["yaml_markdown"]
+
+
+def test_protected_untracked_content_change_prevents_pass(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    contract = _contract(root)
+    (root / "protected.txt").write_text("tampered\n", encoding="utf-8")
+
+    result = run_mission_completion_gate(contract, root)
+
+    assert result.status is GateStatus.FAIL
+    assert "PROTECTED_UNTRACKED_INTEGRITY_FAILED" in result.violations
+    assert result.evidence["protected_untracked"]["checksum_mismatches"]
+
+
+def test_changed_remote_reference_prevents_pass(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    contract = _contract(root)
+    object.__setattr__(contract, "push_guard", ("LOCAL", "HEAD", "0" * 40))
+
+    result = run_mission_completion_gate(contract, root)
+
+    assert result.status is GateStatus.FAIL
+    assert "PUSH_DETECTED_OR_REMOTE_CHANGED" in result.violations
+    assert result.evidence["push_policy"]["enforced"] is False

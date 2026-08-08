@@ -704,8 +704,10 @@ VALID_FIXTURES["mission_contract"] = {
     "artifact_version": "1.0.0",
     "authorized_paths": ["src/"],
     "protected_untracked_paths": [],
+    "protected_untracked_baseline": [],
     "required_tests": [{"label": "fixture", "command": ["python", "-c", "pass"]}],
     "push_allowed": False,
+    "push_guard": {"remote": "origin", "ref": "refs/heads/master", "baseline_remote_commit": "0000000000000000000000000000000000000000"},
     "state_requirements": {"control_path": "plans/001_CONTROL_OPERATIVO.md", "required": {}, "forbidden": {}},
     "schema_checks": []
 }

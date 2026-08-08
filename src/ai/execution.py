@@ -343,7 +343,10 @@ def execute(request: ExecutionRequest) -> ExecutionResult:
         return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, error="provider desconocido")
     if provider_name == "agent_handoff":
         run_id = f"RUN-AI-{uuid.uuid4().hex}"
-        package = AgentHandoffProvider().prepare(request, manifest, run_id)
+        try:
+            package = AgentHandoffProvider().prepare(request, manifest, run_id)
+        except PermissionError as exc:
+            return _result(request, provider_name, ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=str(exc), usage=_availability_metadata(str(exc)))
         if request.config.get("execution_registry_path"):
             from src.ai.registry import register_handoff
 

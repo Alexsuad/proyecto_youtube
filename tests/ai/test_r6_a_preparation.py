@@ -29,11 +29,28 @@ def _artifact(tmp_path: Path, name: str, payload: dict) -> Path:
     return path
 
 
+def _completion_gate_path(tmp_path: Path) -> str:
+    path = tmp_path / "completion_gate.json"
+    path.write_text(json.dumps({
+        "gate_id": "MISSION_COMPLETION",
+        "artifact_id": "test-mission",
+        "artifact_version": "1.0.0",
+        "status": "PASS",
+        "summary": "deterministic test gate",
+        "violations": [],
+        "warnings": [],
+        "evidence": {},
+        "checked_at": "2026-08-08T00:00:00Z",
+        "checker_version": "1.0.0",
+        "exit_code": 0,
+    }), encoding="utf-8")
+    return str(path)
+
+
 def test_provenance_schema_supports_r6_registry_file() -> None:
     data = _read_json(ROOT / "output" / "execution_provenance_registry.json")
     violations = validate_against_schema(data, "execution_provenance_registry")
     assert not violations
-
 
 def test_r6_prompt_registry_entries_and_files_exist() -> None:
     registry = _read_json(ROOT / "config" / "agent_prompt_registry.json")
@@ -72,7 +89,6 @@ def test_r6_subagent_registry_uses_agent_handoff_and_is_not_activatable() -> Non
         assert agent["synthetic_policy"]["can_authorize_readiness"] is False
         assert agent["provenance"]["registry_path"] == "output/execution_provenance_registry.json"
         assert any("subagentes anidados" in item for item in agent["failure_conditions"])
-
 
 def test_append_result_records_extended_r6_provenance_fields(tmp_path: Path) -> None:
     source = _artifact(tmp_path, "research.json", {"id": "R-1", "content": "evidencia"})
@@ -138,7 +154,7 @@ def test_agent_handoff_registers_extended_preparation_fields(tmp_path: Path) -> 
         provider="agent_handoff",
         episode_id="EP-1",
         role="SCRIPT_PRODUCT_AUDITOR",
-        config={"prompt": "auditar sin modificar", "prompt_version": "1.0.0", "execution_registry_path": str(registry_path), "handoff_target": "OWNER_REVIEW"},
+        config={"completion_gate_result_path": _completion_gate_path(tmp_path), "prompt": "auditar sin modificar", "prompt_version": "1.0.0", "execution_registry_path": str(registry_path), "handoff_target": "OWNER_REVIEW"},
         handoff_directory=tmp_path / "handoff",
     )
     result = execute(request)

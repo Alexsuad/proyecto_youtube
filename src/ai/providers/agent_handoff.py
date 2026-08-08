@@ -9,6 +9,21 @@ from typing import Any
 from src.ai.contracts import ExecutionRequest
 from src.ai.manifest import build_input_manifest, canonical_json, file_checksum
 from src.ai.registry import skill_checksum
+from src.core.mission_completion_gate import load_verified_completion_gate
+
+
+def load_verified_completion_gate_from_payload(data: dict[str, Any] | None):
+    if not isinstance(data, dict):
+        raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: package lacks completion gate")
+    try:
+        from src.core.gate_result import GateResult
+        from src.core.status import GateStatus
+        result = GateResult.from_dict(data)
+    except (ValueError, TypeError) as exc:
+        raise PermissionError(f"MISSION_COMPLETION_GATE_REQUIRED: {exc}") from exc
+    if result.gate_id != "MISSION_COMPLETION" or result.status is not GateStatus.PASS or result.exit_code != 0 or result.violations:
+        raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: package gate is not PASS")
+    return result
 
 
 def checksum(value: bytes) -> str:
@@ -19,6 +34,10 @@ class AgentHandoffProvider:
     name = "agent_handoff"
 
     def prepare(self, request: ExecutionRequest, manifest_checksum: str, run_id: str) -> Path:
+        gate_path = request.config.get("completion_gate_result_path")
+        if not gate_path:
+            raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: handoff requires a verified PASS result path")
+        completion_gate = load_verified_completion_gate(gate_path)
         directory = request.handoff_directory or Path("handoff")
         directory.mkdir(parents=True, exist_ok=True)
         artifacts = [
@@ -39,6 +58,7 @@ class AgentHandoffProvider:
             "prompt": request.config.get("prompt", ""),
             "expected_provider_or_agent": request.config.get("expected_provider_or_agent"),
             "artifacts": artifacts,
+            "completion_gate": completion_gate.to_dict(),
         }
         package["package_checksum"] = checksum(canonical_json(package))
         path = directory / f"{run_id}.json"
@@ -51,6 +71,10 @@ class AgentHandoffProvider:
         expected_checksum = package.pop("package_checksum", None)
         if expected_checksum != checksum(canonical_json(package)):
             raise ValueError("checksum incorrecto en paquete de handoff")
+        try:
+            load_verified_completion_gate_from_payload(package.get("completion_gate"))
+        except PermissionError as exc:
+            raise PermissionError(str(exc)) from exc
         if (payload.get("handoff_id") != package["handoff_id"] or payload.get("package_checksum") != expected_checksum
                 or payload.get("input_manifest_checksum") != package["input_manifest_checksum"]
                 or payload.get("skill_id") != package["skill_id"] or payload.get("skill_version") != package["skill_version"]):
