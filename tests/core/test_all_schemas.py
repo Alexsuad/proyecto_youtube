@@ -698,6 +698,18 @@ VALID_FIXTURES["execution_provenance_registry"]["runs"][0].update({
     "validation_result": "PASS",
 })
 
+VALID_FIXTURES["mission_contract"] = {
+    "mission_id": "TECHNICAL_HARDENING",
+    "artifact_id": "mission-completion-gate",
+    "artifact_version": "1.0.0",
+    "authorized_paths": ["src/"],
+    "protected_untracked_paths": [],
+    "required_tests": [{"label": "fixture", "command": ["python", "-c", "pass"]}],
+    "push_allowed": False,
+    "state_requirements": {"control_path": "plans/001_CONTROL_OPERATIVO.md", "required": {}, "forbidden": {}},
+    "schema_checks": []
+}
+
 class TestAllJSONSchemas(unittest.TestCase):
 
     def test_all_schemas_are_valid_draft7(self):
