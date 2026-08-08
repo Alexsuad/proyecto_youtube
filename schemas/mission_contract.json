@@ -13,6 +13,7 @@
     "protected_untracked_baseline",
     "required_tests",
     "push_allowed",
+    "push_guard",
     "state_requirements",
     "schema_checks"
   ],

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 import hashlib
 import json
 import subprocess
@@ -202,6 +203,27 @@ def test_protected_untracked_content_change_prevents_pass(tmp_path: Path) -> Non
     assert "PROTECTED_UNTRACKED_INTEGRITY_FAILED" in result.violations
     assert result.evidence["protected_untracked"]["checksum_mismatches"]
 
+
+def test_new_file_inside_protected_tree_prevents_pass(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    protected_dir = root / "protected-dir"
+    protected_dir.mkdir()
+    base = protected_dir / "base.txt"
+    base.write_text("base\n", encoding="utf-8")
+    contract = replace(
+        _contract(root),
+        protected_untracked_paths=("protected.txt", "protected-dir"),
+        protected_untracked_baseline=(
+            ("protected.txt", hashlib.sha256((root / "protected.txt").read_bytes()).hexdigest()),
+            ("protected-dir/base.txt", hashlib.sha256(base.read_bytes()).hexdigest()),
+        ),
+    )
+    (protected_dir / "new.txt").write_text("new\n", encoding="utf-8")
+
+    result = run_mission_completion_gate(contract, root)
+
+    assert result.status is GateStatus.FAIL
+    assert "protected-dir/new.txt" in result.evidence["protected_untracked"]["unexpected_files"]
 
 def test_changed_remote_reference_prevents_pass(tmp_path: Path) -> None:
     root = _repo(tmp_path)

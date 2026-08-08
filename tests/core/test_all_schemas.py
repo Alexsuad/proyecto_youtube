@@ -839,6 +839,12 @@ class TestAllJSONSchemas(unittest.TestCase):
         self.assertTrue(len(violations) > 0, "Se esperaba que fallara con checksum inválido")
         self.assertTrue(any("checksum" in v for v in violations))
 
+        # E. MissionContract sin push_guard debe fallar también en el schema
+        contract_fixture = dict(VALID_FIXTURES["mission_contract"])
+        del contract_fixture["push_guard"]
+        violations = validate_against_schema(contract_fixture, "mission_contract")
+        self.assertTrue(any("push_guard" in v for v in violations))
+
 
 if __name__ == "__main__":
     unittest.main()

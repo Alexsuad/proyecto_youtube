@@ -9,6 +9,7 @@ from src.ai.execution import execute, persist_execution_result
 from src.ai.registry import load_registry
 from src.ai.subagents import assert_no_self_approval, assert_not_immutable_target, get_agent_definition
 from src.core.contract_validation import validate_against_schema
+from tests.ai.test_hybrid_runtime import _completion_gate_config
 
 ROOT = Path(__file__).parents[2]
 R6_ROLE_IDS = [
@@ -27,24 +28,6 @@ def _artifact(tmp_path: Path, name: str, payload: dict) -> Path:
     path = tmp_path / name
     path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     return path
-
-
-def _completion_gate_path(tmp_path: Path) -> str:
-    path = tmp_path / "completion_gate.json"
-    path.write_text(json.dumps({
-        "gate_id": "MISSION_COMPLETION",
-        "artifact_id": "test-mission",
-        "artifact_version": "1.0.0",
-        "status": "PASS",
-        "summary": "deterministic test gate",
-        "violations": [],
-        "warnings": [],
-        "evidence": {},
-        "checked_at": "2026-08-08T00:00:00Z",
-        "checker_version": "1.0.0",
-        "exit_code": 0,
-    }), encoding="utf-8")
-    return str(path)
 
 
 def test_provenance_schema_supports_r6_registry_file() -> None:
@@ -154,7 +137,7 @@ def test_agent_handoff_registers_extended_preparation_fields(tmp_path: Path) -> 
         provider="agent_handoff",
         episode_id="EP-1",
         role="SCRIPT_PRODUCT_AUDITOR",
-        config={"completion_gate_result_path": _completion_gate_path(tmp_path), "prompt": "auditar sin modificar", "prompt_version": "1.0.0", "execution_registry_path": str(registry_path), "handoff_target": "OWNER_REVIEW"},
+        config={**_completion_gate_config(tmp_path), "prompt": "auditar sin modificar", "prompt_version": "1.0.0", "execution_registry_path": str(registry_path), "handoff_target": "OWNER_REVIEW"},
         handoff_directory=tmp_path / "handoff",
     )
     result = execute(request)

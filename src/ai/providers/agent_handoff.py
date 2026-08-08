@@ -9,7 +9,7 @@ from typing import Any
 from src.ai.contracts import ExecutionRequest
 from src.ai.manifest import build_input_manifest, canonical_json, file_checksum
 from src.ai.registry import skill_checksum
-from src.core.mission_completion_gate import load_verified_completion_gate
+from src.core.mission_completion_gate import validate_verified_completion_gate, verify_completion_gate_for_repository
 
 
 def load_verified_completion_gate_from_payload(data: dict[str, Any] | None):
@@ -17,13 +17,11 @@ def load_verified_completion_gate_from_payload(data: dict[str, Any] | None):
         raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: package lacks completion gate")
     try:
         from src.core.gate_result import GateResult
-        from src.core.status import GateStatus
+
         result = GateResult.from_dict(data)
     except (ValueError, TypeError) as exc:
         raise PermissionError(f"MISSION_COMPLETION_GATE_REQUIRED: {exc}") from exc
-    if result.gate_id != "MISSION_COMPLETION" or result.status is not GateStatus.PASS or result.exit_code != 0 or result.violations:
-        raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: package gate is not PASS")
-    return result
+    return validate_verified_completion_gate(result)
 
 
 def checksum(value: bytes) -> str:
@@ -35,9 +33,13 @@ class AgentHandoffProvider:
 
     def prepare(self, request: ExecutionRequest, manifest_checksum: str, run_id: str) -> Path:
         gate_path = request.config.get("completion_gate_result_path")
-        if not gate_path:
-            raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: handoff requires a verified PASS result path")
-        completion_gate = load_verified_completion_gate(gate_path)
+        contract_path = request.config.get("mission_contract_path")
+        repo_root = request.config.get("mission_repo_root")
+        if not gate_path or not contract_path or not repo_root:
+            raise PermissionError(
+                "MISSION_COMPLETION_GATE_REQUIRED: handoff requires gate result, mission contract and repository root"
+            )
+        completion_gate = verify_completion_gate_for_repository(gate_path, contract_path, repo_root)
         directory = request.handoff_directory or Path("handoff")
         directory.mkdir(parents=True, exist_ok=True)
         artifacts = [

@@ -42,6 +42,7 @@ class MissionContract:
     required_state: dict[str, str]
     forbidden_state: dict[str, tuple[str, ...]]
     schema_checks: tuple[tuple[str, str], ...]
+    contract_sha256: str
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "MissionContract":
@@ -78,6 +79,7 @@ class MissionContract:
             required_state=dict(state["required"]),
             forbidden_state=forbidden,
             schema_checks=tuple((_normalize_path(item["path"]), item["schema"]) for item in data["schema_checks"]),
+            contract_sha256=_json_checksum(data),
         )
 
 
@@ -88,9 +90,56 @@ def load_verified_completion_gate(path: str | Path) -> GateResult:
         result = GateResult.from_dict(data)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         raise PermissionError(f"MISSION_COMPLETION_GATE_REQUIRED: {exc}") from exc
+    return validate_verified_completion_gate(result)
+
+
+def validate_verified_completion_gate(result: GateResult) -> GateResult:
     if result.gate_id != "MISSION_COMPLETION" or result.status is not GateStatus.PASS or result.exit_code != 0 or result.violations:
         raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: result is not PASS")
+    _validate_gate_evidence(result)
     return result
+
+
+def verify_completion_gate_for_repository(
+    path: str | Path,
+    contract_path: str | Path,
+    repo_root: str | Path,
+) -> GateResult:
+    supplied = load_verified_completion_gate(path)
+    contract = load_mission_contract(contract_path)
+    fresh = run_mission_completion_gate(contract, repo_root)
+    if fresh.status is not GateStatus.PASS:
+        raise PermissionError(
+            "MISSION_COMPLETION_GATE_REQUIRED: fresh gate is not PASS: "
+            + ", ".join(fresh.violations)
+        )
+    if _gate_semantic_payload(supplied) != _gate_semantic_payload(fresh):
+        raise PermissionError(
+            "MISSION_COMPLETION_GATE_REQUIRED: supplied result does not match a fresh gate execution"
+        )
+    return fresh
+
+
+def _validate_gate_evidence(result: GateResult) -> None:
+    evidence = result.evidence
+    required_sections = {"binding", "git", "protected_untracked", "structural", "required_tests", "state", "push_policy"}
+    if not isinstance(evidence, dict) or not required_sections.issubset(evidence):
+        raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: mandatory evidence is missing")
+    binding = evidence.get("binding")
+    required_binding = {"binding_version", "gate_source", "mission_contract_sha256", "git_head", "git_status_sha256", "repo_root"}
+    if not isinstance(binding, dict) or not required_binding.issubset(binding):
+        raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: binding evidence is missing")
+    if binding["binding_version"] != "1.0.0" or binding["gate_source"] != "run_mission_completion_gate":
+        raise PermissionError("MISSION_COMPLETION_GATE_REQUIRED: invalid gate binding")
+    for key in ("mission_contract_sha256", "git_status_sha256"):
+        if not re.fullmatch(r"[0-9a-f]{64}", str(binding[key]).lower()):
+            raise PermissionError(f"MISSION_COMPLETION_GATE_REQUIRED: invalid binding checksum {key}")
+
+
+def _gate_semantic_payload(result: GateResult) -> dict[str, Any]:
+    data = result.to_dict()
+    data.pop("checked_at", None)
+    return data
 
 def load_mission_contract(path: str | Path) -> MissionContract:
     contract_path = Path(path)
@@ -108,6 +157,17 @@ def run_mission_completion_gate(contract: MissionContract, repo_root: str | Path
     evidence: dict[str, Any] = {"mission_id": contract.mission_id}
 
     status_porcelain = _run_git(root, ["status", "--porcelain=v1", "--untracked-files=all"])
+    head_result = _run_git(root, ["rev-parse", "HEAD"])
+    if head_result["returncode"] != 0:
+        violations.append("GIT_HEAD_UNAVAILABLE")
+    evidence["binding"] = {
+        "binding_version": "1.0.0",
+        "gate_source": "run_mission_completion_gate",
+        "mission_contract_sha256": contract.contract_sha256,
+        "git_head": head_result["stdout"].strip(),
+        "git_status_sha256": _sha256_bytes(status_porcelain["stdout"].encode("utf-8")),
+        "repo_root": str(root),
+    }
     if status_porcelain["returncode"] != 0:
         violations.append("GIT_STATUS_FAILED")
         status_lines: list[str] = []
@@ -149,6 +209,18 @@ def run_mission_completion_gate(contract: MissionContract, repo_root: str | Path
         path for path in contract.protected_untracked_paths
         if not any(_in_protected(candidate, (path,)) for candidate in baseline_paths)
     )
+    baseline_outside_scope = sorted(
+        path for path in baseline_paths
+        if not _in_protected(path, contract.protected_untracked_paths)
+    )
+    protected_untracked_files = sorted(
+        path for path in untracked
+        if _in_protected(path, contract.protected_untracked_paths)
+    )
+    unexpected_files = sorted(
+        path for path in protected_untracked_files
+        if not _in_protected(path, baseline_paths)
+    )
     checksum_mismatches = []
     for path, expected_checksum in contract.protected_untracked_baseline:
         target = root / Path(path)
@@ -156,16 +228,22 @@ def run_mission_completion_gate(contract: MissionContract, repo_root: str | Path
             checksum_mismatches.append({"path": path, "expected": expected_checksum, "observed": None})
             continue
         observed_checksum = _file_checksum(target)
-        if _file_checksum(target) != expected_checksum:
-            checksum_mismatches.append({"path": path, "expected": expected_checksum, "observed": _file_checksum(target)})
-    if protected_missing or baseline_missing or checksum_mismatches:
+        if observed_checksum != expected_checksum:
+            checksum_mismatches.append({"path": path, "expected": expected_checksum, "observed": observed_checksum})
+    protected_failed = bool(
+        protected_missing or baseline_missing or baseline_outside_scope or unexpected_files or checksum_mismatches
+    )
+    if protected_failed:
         violations.append("PROTECTED_UNTRACKED_INTEGRITY_FAILED")
     evidence["protected_untracked"] = {
         "declared": list(contract.protected_untracked_paths),
         "missing": protected_missing,
         "baseline_missing": baseline_missing,
+        "baseline_outside_scope": baseline_outside_scope,
+        "untracked_files": protected_untracked_files,
+        "unexpected_files": unexpected_files,
         "checksum_mismatches": checksum_mismatches,
-        "preserved": not (protected_missing or baseline_missing or checksum_mismatches),
+        "preserved": not protected_failed,
     }
 
     structural_paths = sorted(set(changed + [contract.control_path]))
@@ -343,6 +421,12 @@ def _validate_yaml(path: Path) -> tuple[bool, str | None]:
         return False, str(exc)
 
 
+
+def _sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+def _json_checksum(value: Any) -> str:
+    return _sha256_bytes(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8"))
 
 def _file_checksum(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
