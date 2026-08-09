@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.core.contract_validation import validate_against_schema
+from src.core.capability_governance import validate_capability_registry as validate_capability_registry_core
 
 ACTIVE = ROOT / "config" / "active_editorial_profile.json"
 REGISTRY = ROOT / "config" / "editorial_profile_registry.json"
@@ -85,9 +86,24 @@ def _profile_binding(data: dict[str, Any], prefix: str) -> list[str]:
     return [f"{prefix}_{key.upper()}_MISMATCH" for key in ("profile_id", "profile_version", "profile_checksum") if data.get(key) != profile[key]]
 
 
+def _entry_mode_violations(data: dict[str, Any]) -> list[str]:
+    mode, work = data.get("entry_mode"), data.get("narrative_work")
+    if not mode:
+        return []
+    if mode == "TOPIC_FIRST" and work == "NO_WORK_YET":
+        return []
+    if mode == "ANCHOR_WORK_FIRST" and work == "NO_WORK_YET":
+        return ["ENTRY_MODE_REQUIRES_ANCHOR_WORK"]
+    if mode == "CORPUS_FIRST" and not data.get("corpus_ref"):
+        return ["ENTRY_MODE_REQUIRES_CORPUS"]
+    if mode == "TOPIC_FIRST" and work and work != "NO_WORK_YET":
+        return ["TOPIC_FIRST_REAL_WORK_REQUIRES_FUNCTIONAL_CLARIFICATION"]
+    return []
+
 def validate_topic_input(data: dict[str, Any]) -> list[str]:
     violations = validate_against_schema(data, "topic_belonging_input")
     violations.extend(_profile_binding(data, "INPUT"))
+    violations.extend(_entry_mode_violations(data))
     return violations
 
 
@@ -99,6 +115,7 @@ def strategic_trigger_names(assessment: dict[str, Any]) -> list[str]:
 def validate_assessment(data: dict[str, Any], topic_input: dict[str, Any] | None = None) -> list[str]:
     violations = validate_against_schema(data, "topic_belonging_assessment")
     violations.extend(_profile_binding(data, "ASSESSMENT"))
+    violations.extend(_entry_mode_violations(data))
     provenance = data.get("provenance", {})
     if provenance.get("actor_id") != data.get("producer_actor_id") or provenance.get("run_id") != data.get("producer_run_id"):
         violations.append("ASSESSMENT_PROVENANCE_MISMATCH")
@@ -116,7 +133,7 @@ def validate_assessment(data: dict[str, Any], topic_input: dict[str, Any] | None
         violations.append("ASSESSMENT_STRATEGIC_ESCALATION_REQUIRED")
     if topic_input is not None:
         violations.extend(f"INPUT_INVALID: {v}" for v in validate_topic_input(topic_input))
-        for key in ("topic_input_id", "profile_id", "profile_version", "profile_checksum", "topic", "narrative_work", "central_question", "proposed_angle", "proposed_territory", "initial_evidence", "strategic_triggers"):
+        for key in ("topic_input_id", "profile_id", "profile_version", "profile_checksum", "topic", "entry_mode", "corpus_ref", "narrative_work", "central_question", "proposed_angle", "proposed_territory", "initial_evidence", "strategic_triggers"):
             if data.get(key) != topic_input.get(key):
                 violations.append(f"ASSESSMENT_INPUT_{key.upper()}_MISMATCH")
     return violations
@@ -213,7 +230,7 @@ def evaluate_topic_belonging_gate(decision: dict[str, Any], assessment: dict[str
 
 def validate_capability_registry() -> list[str]:
     import yaml
-    violations = validate_against_schema(_load(CAPABILITIES), "capability_registry")
+    violations = validate_capability_registry_core(CAPABILITIES)
     capability = next((x for x in _load(CAPABILITIES).get("capabilities", []) if x.get("capability_id") == "TOPIC_BELONGING_ASSESSMENT"), None)
     if not capability: return violations + ["TOPIC_BELONGING_CAPABILITY_MISSING"]
     routing = yaml.safe_load(ROUTING.read_text(encoding="utf-8")); route = routing.get("capabilities", {}).get("TOPIC_BELONGING_ASSESSMENT", {})

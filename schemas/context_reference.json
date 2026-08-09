@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/context_reference.json",
+  "title": "ContextReference",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ref_id", "context_class", "artifact_path", "artifact_type", "artifact_version", "artifact_sha256", "authority_domain", "required"],
+  "properties": {
+    "ref_id": {"type": "string", "minLength": 1},
+    "context_class": {"enum": ["NORMATIVE", "EVIDENTIARY", "HISTORICAL"]},
+    "artifact_path": {"type": "string", "minLength": 1},
+    "artifact_type": {"type": "string", "minLength": 1},
+    "artifact_version": {"type": "string", "minLength": 1},
+    "artifact_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "canonical_payload_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "authority_domain": {"type": "string", "minLength": 1},
+    "required": {"type": "boolean"}
+  }
+}

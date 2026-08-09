@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/resolved_context_manifest.json",
+  "title": "ResolvedContextManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifest_id", "manifest_schema_version", "capability_id", "role_id", "run_id", "normative_refs", "evidentiary_refs", "historical_refs", "unresolved_optional_refs", "manifest_sha256"],
+  "properties": {
+    "manifest_id": {"type": "string", "minLength": 1},
+    "manifest_schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "capability_id": {"type": "string", "minLength": 1},
+    "role_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "normative_refs": {"type": "array", "items": {"type":"object","additionalProperties":false,"required":["ref_id","context_class","artifact_path","artifact_type","artifact_version","artifact_sha256","authority_domain","required"],"properties":{"ref_id":{"type":"string","minLength":1},"context_class":{"enum":["NORMATIVE","EVIDENTIARY","HISTORICAL"]},"artifact_path":{"type":"string","minLength":1},"artifact_type":{"type":"string","minLength":1},"artifact_version":{"type":"string","minLength":1},"artifact_sha256":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"},"canonical_payload_sha256":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"},"authority_domain":{"type":"string","minLength":1},"required":{"type":"boolean"}}}},
+    "evidentiary_refs": {"type": "array", "items": {"type":"object","additionalProperties":false,"required":["ref_id","context_class","artifact_path","artifact_type","artifact_version","artifact_sha256","authority_domain","required"],"properties":{"ref_id":{"type":"string","minLength":1},"context_class":{"enum":["NORMATIVE","EVIDENTIARY","HISTORICAL"]},"artifact_path":{"type":"string","minLength":1},"artifact_type":{"type":"string","minLength":1},"artifact_version":{"type":"string","minLength":1},"artifact_sha256":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"},"canonical_payload_sha256":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"},"authority_domain":{"type":"string","minLength":1},"required":{"type":"boolean"}}}},
+    "historical_refs": {"type": "array", "items": {"type":"object","additionalProperties":false,"required":["ref_id","context_class","artifact_path","artifact_type","artifact_version","artifact_sha256","authority_domain","required"],"properties":{"ref_id":{"type":"string","minLength":1},"context_class":{"enum":["NORMATIVE","EVIDENTIARY","HISTORICAL"]},"artifact_path":{"type":"string","minLength":1},"artifact_type":{"type":"string","minLength":1},"artifact_version":{"type":"string","minLength":1},"artifact_sha256":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"},"canonical_payload_sha256":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"},"authority_domain":{"type":"string","minLength":1},"required":{"type":"boolean"}}}},
+    "unresolved_optional_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "manifest_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "resolved_at": {"type": "string", "format": "date-time"}
+  }
+}

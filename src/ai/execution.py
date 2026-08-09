@@ -15,6 +15,8 @@ from src.ai.providers import AgentExecutorProvider, AgentHandoffProvider, DeepSe
 from src.ai.router import KNOWN_PROVIDERS, resolve_provider
 from src.ai.runtime_profiles import AgentRuntimePort, READY
 from src.core.contract_validation import load_schema, validate_against_schema
+from src.core.execution_preflight import preflight_controlled_execution
+from src.core.replay_protection import mark_mission_reservation
 
 B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
     "ANALYSIS_PRODUCER": "analysis",
@@ -278,8 +280,14 @@ def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
     }
 
 
-def execute(request: ExecutionRequest) -> ExecutionResult:
+def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
     started, manifest = _now(), manifest_checksum(request)
+    try:
+        preflight = preflight_controlled_execution(request, root=Path(__file__).resolve().parents[2])
+        if preflight.get("context_manifest") is not None:
+            request.config = {**request.config, "resolved_context_manifest": preflight["context_manifest"], "resolved_context_manifest_sha256": preflight["context_manifest"]["manifest_sha256"], "mission_contract_sha256": preflight["authorization"].contract_sha256}
+    except (PermissionError, ValueError) as exc:
+        return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=str(exc))
     runtime_port = AgentRuntimePort(Path(request.config["execution_profiles_path"]) if request.config.get("execution_profiles_path") else None)
     run_configuration = _normalized_run_configuration(request)
     if run_configuration:
@@ -372,3 +380,22 @@ def execute(request: ExecutionRequest) -> ExecutionResult:
     if violations:
         return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, output=output, error="OUTPUT_CONTRACT_INVALID: " + "; ".join(violations), usage=usage)
     return _result(request, provider_name, ExecutionStatus.SUCCEEDED, started, manifest, output=output, usage=usage, real=provider_name not in {"mock", "agent_handoff"})
+
+
+def _finalize_mission_reservation(request: ExecutionRequest, result: ExecutionResult) -> ExecutionResult:
+    reservation_id = request.config.get("_mission_reservation_id")
+    registry_path = request.config.get("execution_registry_path")
+    if not reservation_id or not registry_path or request.config.get("_mission_reservation_status") != "RESERVED":
+        return result
+    status = "CONSUMED" if result.status in {ExecutionStatus.SUCCEEDED, ExecutionStatus.HANDOFF_PREPARED} else "FAILED"
+    try:
+        mark_mission_reservation(registry_path, reservation_id, status)
+        request.config = {**request.config, "_mission_reservation_status": status}
+        result.usage["mission_reservation_status"] = status
+    except (OSError, ValueError, PermissionError) as exc:
+        result.usage["provenance_error"] = f"MISSION_RESERVATION_FINALIZATION_FAILED: {exc}"
+    return result
+
+
+def execute(request: ExecutionRequest) -> ExecutionResult:
+    return _finalize_mission_reservation(request, _execute_unfinalized(request))

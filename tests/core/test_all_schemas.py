@@ -498,7 +498,7 @@ _VALID_PROVENANCE = {"actor_id": "producer-1", "run_id": "run-producer", "role_i
 VALID_FIXTURES["topic_belonging_assessment"] = {
     "assessment_id": "TBA-001", "producer_actor_id": "producer-1", "producer_run_id": "run-producer",
     "producer_role_id": "CHANNEL_INTELLIGENCE_PRODUCER", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.1",
-    "profile_checksum": _VALID_PROFILE_CHECKSUM, "topic": "Tema de fixture", "narrative_work": "Obra de fixture",
+    "profile_checksum": _VALID_PROFILE_CHECKSUM, "topic": "Tema de fixture", "entry_mode": "ANCHOR_WORK_FIRST", "narrative_work": "Obra de fixture",
     "central_question": "Pregunta de fixture", "proposed_angle": "Ángulo de fixture", "proposed_territory": "Individuo e identidad",
     "initial_evidence": ["evidence-1"], "sensitive_risks": [], "territory_classification": "ACTIVE",
     "identity_alignment": "ALIGNED", "promise_alignment": "ALIGNED", "risks": [], "recommended_conditions": [],
@@ -524,13 +524,13 @@ _TOPIC_TRIGGERS = {key: False for key in [
 ]}
 VALID_FIXTURES["topic_belonging_input"] = {
     "topic_input_id": "TBI-FIXTURE", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.1",
-    "profile_checksum": "a" * 64, "topic": "Tema", "narrative_work": "Obra",
+    "profile_checksum": "a" * 64, "topic": "Tema", "entry_mode": "ANCHOR_WORK_FIRST", "narrative_work": "Obra",
     "central_question": "Pregunta", "proposed_angle": "?ngulo", "proposed_territory": "Territorio",
     "initial_evidence": ["source-1"], "strategic_triggers": _TOPIC_TRIGGERS,
     "submitted_at": "2026-07-31T10:00:00Z",
 }
 VALID_FIXTURES["topic_belonging_assessment"].update({
-    "topic_input_id": "TBI-FIXTURE", "strategic_triggers": _TOPIC_TRIGGERS,
+    "topic_input_id": "TBI-FIXTURE", "entry_mode": "ANCHOR_WORK_FIRST", "strategic_triggers": _TOPIC_TRIGGERS,
 })
 VALID_FIXTURES["topic_belonging_owner_decision"] = {
     "owner_decision_id": "TBO-FIXTURE", "topic_input_id": "TBI-FIXTURE", "assessment_id": "TBA-FIXTURE",
@@ -712,6 +712,49 @@ VALID_FIXTURES["mission_contract"] = {
     "schema_checks": []
 }
 
+
+_FIXTURE_SHA = "a" * 64
+VALID_FIXTURES["context_reference"] = {
+    "ref_id": "CTX-1",
+    "context_class": "NORMATIVE",
+    "artifact_path": "plans/plan_001/README.md",
+    "artifact_type": "MARKDOWN",
+    "artifact_version": "1.0.0",
+    "artifact_sha256": _FIXTURE_SHA,
+    "authority_domain": "INFRASTRUCTURE_GOVERNANCE",
+    "required": True,
+}
+VALID_FIXTURES["resolved_context_manifest"] = {
+    "manifest_id": "RCM-1",
+    "manifest_schema_version": "1.0.0",
+    "capability_id": "CAPABILITY_FIXTURE",
+    "role_id": "ROLE_FIXTURE",
+    "run_id": "RUN-FIXTURE",
+    "normative_refs": [VALID_FIXTURES["context_reference"]],
+    "evidentiary_refs": [],
+    "historical_refs": [],
+    "unresolved_optional_refs": [],
+    "manifest_sha256": _FIXTURE_SHA,
+}
+VALID_FIXTURES["mission_authorization_contract"] = {
+    "mission_id": "MISSION-FIXTURE",
+    "contract_sha256": _FIXTURE_SHA,
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": _FIXTURE_SHA,
+    "capability_ids": ["CAPABILITY_FIXTURE"],
+    "execution_profile_ids": ["PROFILE_FIXTURE"],
+    "execution_interface": "INTERFACE_FIXTURE",
+    "role_ids": ["ROLE_FIXTURE"],
+    "allowed_operations": ["READ"],
+    "allowed_paths": ["src/"],
+    "allowed_routes": ["ANY"],
+    "execution_mode": "TECHNICAL_VALIDATION",
+    "single_use": True,
+    "authority_ref": "plans/authority_fixture.json",
+    "authority_sha256": _FIXTURE_SHA,
+    "authorized_scope_sha256": _FIXTURE_SHA,
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+}
 class TestAllJSONSchemas(unittest.TestCase):
 
     def test_all_schemas_are_valid_draft7(self):

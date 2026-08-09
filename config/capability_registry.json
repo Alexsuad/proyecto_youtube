@@ -2,8 +2,27 @@
   "registry_version": "1.0.0",
   "authority": "CAPABILITY_FUNCTIONAL_AUTHORITY",
   "routing_consumer": "config/capability_routing.yaml",
+  "compatibility_tokens": {
+    "maturity": {"DEFINED": "DEFINED", "REGISTERED": "REGISTERED", "IMPLEMENTED": "IMPLEMENTED", "DEMONSTRATED": "DEMONSTRATED", "AGENT_TESTED_IN_ISOLATION": "IMPLEMENTED"},
+    "availability": {"NON_EXECUTABLE": "NON_EXECUTABLE_CURRENT", "IMPLEMENTED_NOT_DEMONSTRATED": "UNMAPPED_IMPLEMENTED_NOT_DEMONSTRATED", "ACTIVE": "ACTIVE", "BLOCKED": "SUSPENDED", "DEFERRED": "NON_EXECUTABLE_CURRENT"},
+    "assurance": {"PASS": "PASS", "FAIL": "FAIL", "NOT_TESTED": "NOT_TESTED", "UNAVAILABLE": "UNAVAILABLE"},
+    "approval": {"APPROVED": "APPROVED", "PENDING": "PENDING", "REJECTED": "REJECTED", "NOT_APPROVED": "PENDING"},
+    "evidence": {"PRESENT": "PRESENT", "MISSING": "MISSING", "NOT_TESTED": "NOT_TESTED"}
+  },
   "capabilities": [
     {
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "functional_requirements": ["CAPABILITY_SCOPE_DECLARED"],
+      "implementation_kind": "SEMANTIC",
+      "implementation_refs": ["src/scripts/channel_intelligence.py"],
+      "contract_refs": ["schemas/topic_belonging_input.json", "schemas/topic_belonging_decision.json"],
+      "profile_refs": ["config/active_editorial_profile.json", "config/editorial_profile_registry.json"],
+      "execution_profile_refs": ["config/agent_execution_profiles.json"],
+      "routing_ref": "config/capability_routing.yaml",
+      "routing_required": true,
+      "assurance": {"technical": "PASS", "semantic": "PASS", "functional_approval": "PENDING", "operational_evidence": "NOT_TESTED"},
+      "executability_evidence": {"contracts_resolvable": true, "implementation_present": true, "roles_resolvable": true, "prompts_resolvable": true, "execution_profiles_resolvable": true, "routing_resolvable": true, "context_resolvable": true, "dependencies_satisfied": true},
+      "evidence_refs": [],
       "capability_id": "TOPIC_BELONGING_ASSESSMENT",
       "domain": "CHANNEL_INTELLIGENCE",
       "purpose": "Evaluar y decidir si una propuesta temática pertenece al canal antes de desarrollar un episodio real.",
@@ -26,7 +45,7 @@
         "precedent risk"
       ],
       "maturity_status": "IMPLEMENTED",
-      "availability_status": "READY_NOT_AUTHORIZED",
+      "availability_status": "NON_EXECUTABLE_CURRENT",
       "dependencies": [
         "config/active_editorial_profile.json",
         "config/editorial_profile_registry.json",
@@ -47,6 +66,13 @@
       "activation_rule": "ACTIVE_ONLY_AFTER_R6_B_AUTHORIZED_CONTROLLED_DEMONSTRATIONS_FUNCTIONAL_AUDIT_AND_OWNER_ACTIVATION"
     },
     {
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "functional_requirements": ["CAPABILITY_SCOPE_DECLARED"],
+      "implementation_kind": "DEFERRED",
+      "implementation_refs": [],
+      "contract_refs": [],
+      "profile_refs": [],
+      "execution_profile_refs": [],
       "capability_id": "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT",
       "domain": "CHANNEL_INTELLIGENCE",
       "purpose": "Evaluar cambios estratégicos de identidad; diferida.",
@@ -67,6 +93,13 @@
       "schema_reference": []
     },
     {
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "functional_requirements": ["CAPABILITY_SCOPE_DECLARED"],
+      "implementation_kind": "DEFERRED",
+      "implementation_refs": [],
+      "contract_refs": [],
+      "profile_refs": [],
+      "execution_profile_refs": [],
       "capability_id": "EDITORIAL_PROFILE_PROPOSAL",
       "domain": "CHANNEL_INTELLIGENCE",
       "purpose": "Proponer cambios de perfil; diferida.",
@@ -87,6 +120,13 @@
       "schema_reference": []
     },
     {
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "functional_requirements": ["CAPABILITY_SCOPE_DECLARED"],
+      "implementation_kind": "DEFERRED",
+      "implementation_refs": [],
+      "contract_refs": [],
+      "profile_refs": [],
+      "execution_profile_refs": [],
       "capability_id": "EDITORIAL_PROFILE_FUNCTIONAL_REVIEW",
       "domain": "CHANNEL_INTELLIGENCE",
       "purpose": "Revisar funcionalmente un perfil; diferida.",
@@ -107,6 +147,13 @@
       "schema_reference": []
     },
     {
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "functional_requirements": ["CAPABILITY_SCOPE_DECLARED"],
+      "implementation_kind": "DEFERRED",
+      "implementation_refs": [],
+      "contract_refs": [],
+      "profile_refs": [],
+      "execution_profile_refs": [],
       "capability_id": "PROFILE_CHANGE_IMPACT_ASSESSMENT",
       "domain": "CHANNEL_INTELLIGENCE",
       "purpose": "Evaluar impacto de cambios de perfil; diferida.",
@@ -128,6 +175,13 @@
       "schema_reference": []
     },
     {
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "functional_requirements": ["CAPABILITY_SCOPE_DECLARED"],
+      "implementation_kind": "DEFERRED",
+      "implementation_refs": [],
+      "contract_refs": [],
+      "profile_refs": [],
+      "execution_profile_refs": [],
       "capability_id": "VOICE_CORPUS_SAMPLE_ASSESSMENT",
       "domain": "CHANNEL_INTELLIGENCE",
       "purpose": "Evaluar muestras del corpus de voz; diferida.",
@@ -149,6 +203,13 @@
       "schema_reference": []
     },
     {
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "functional_requirements": ["CAPABILITY_SCOPE_DECLARED"],
+      "implementation_kind": "DEFERRED",
+      "implementation_refs": [],
+      "contract_refs": [],
+      "profile_refs": [],
+      "execution_profile_refs": [],
       "capability_id": "VOICE_LEARNING_CANDIDATE_REVIEW",
       "domain": "CHANNEL_INTELLIGENCE",
       "purpose": "Revisar candidatos de aprendizaje de voz; diferida.",
@@ -169,6 +230,13 @@
       "schema_reference": []
     },
     {
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "functional_requirements": ["CAPABILITY_SCOPE_DECLARED"],
+      "implementation_kind": "DEFERRED",
+      "implementation_refs": [],
+      "contract_refs": [],
+      "profile_refs": [],
+      "execution_profile_refs": [],
       "capability_id": "IDENTITY_DRIFT_AUDIT",
       "domain": "CHANNEL_INTELLIGENCE",
       "purpose": "Auditar deriva de identidad; diferida.",

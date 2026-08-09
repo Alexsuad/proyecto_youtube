@@ -25,12 +25,8 @@
         "$ref": "#/definitions/handoff"
       }
     },
-    "attempts": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/attempt"
-      }
-    }
+    "attempts": {"type": "array", "items": {"$ref": "#/definitions/attempt"}},
+    "reservations": {"type": "array", "items": {"$ref": "#/definitions/reservation"}}
   },
   "definitions": {
     "handoff": {
@@ -605,12 +601,55 @@
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
         },
-        "validation_result": {
-          "enum": [
-            "PASS",
-            "FAIL"
-          ]
+        "mission_id": {"type": "string", "minLength": 1},
+        "capability_id": {"type": "string", "minLength": 1},
+        "execution_profile_id": {"type": "string", "minLength": 1},
+        "mission_contract_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "resolved_context_manifest": {"type": "object"},
+        "resolved_context_manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "input_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "output_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "prompt_artifact_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "result_status": {"type": "string", "minLength": 1},
+        "functional_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mission_id": {"type": "string", "minLength": 1},
+            "capability_id": {"type": "string", "minLength": 1},
+            "role_id": {"type": "string", "minLength": 1},
+            "execution_profile_id": {"type": "string", "minLength": 1}
+          }
         },
+        "reproducibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mission_contract_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "context_manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "prompt_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "input_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "output_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+          }
+        },
+        "operational_telemetry": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "provider": {"type": "string", "minLength": 1},
+            "model": {"type": "string", "minLength": 1},
+            "actual_provider": {"type": "string", "minLength": 1},
+            "actual_model": {"type": "string", "minLength": 1},
+            "input_tokens": {"type": ["integer", "string"]},
+            "output_tokens": {"type": ["integer", "string"]},
+            "cached_tokens": {"type": ["integer", "string"]},
+            "cost": {"type": ["number", "string"]},
+            "currency": {"type": "string", "minLength": 1},
+            "latency": {"type": ["number", "integer"], "minimum": 0},
+            "fallback": {"type": ["string", "boolean", "object", "null"]}
+          }
+        },
+        "validation_result": {"enum": ["PASS", "FAIL"]},
         "output_checksum": {
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
@@ -759,6 +798,19 @@
             "minLength": 1
           }
         }
+      }
+    },
+    "reservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reservation_id", "mission_id", "contract_sha256", "run_id", "status", "reserved_at"],
+      "properties": {
+        "reservation_id": {"type": "string", "minLength": 1},
+        "mission_id": {"type": "string", "minLength": 1},
+        "contract_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "run_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["RESERVED", "CONSUMED", "FAILED"]},
+        "reserved_at": {"type": "string", "format": "date-time"}
       }
     }
   }

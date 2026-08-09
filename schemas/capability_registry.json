@@ -1,6 +1,80 @@
 {
-  "$schema":"http://json-schema.org/draft-07/schema#","title":"Capability Registry","type":"object","additionalProperties":false,
-  "required":["registry_version","authority","routing_consumer","capabilities"],
-  "properties":{"registry_version":{"type":"string"},"authority":{"const":"CAPABILITY_FUNCTIONAL_AUTHORITY"},"routing_consumer":{"const":"config/capability_routing.yaml"},"capabilities":{"type":"array","minItems":8,"items":{"$ref":"#/$defs/capability"}}},
-  "$defs":{"capability":{"type":"object","additionalProperties":false,"required":["capability_id","domain","purpose","assigned_role","input_contract","output_contract","decision_authority","veto_authority","owner_escalation_conditions","maturity_status","availability_status","dependencies","prompt_reference","schema_reference"],"properties":{"capability_id":{"type":"string","pattern":"^[A-Z0-9_]+$"},"domain":{"const":"CHANNEL_INTELLIGENCE"},"purpose":{"type":"string","minLength":1},"assigned_role":{"type":"array","minItems":1,"items":{"type":"string","pattern":"^[A-Z0-9_]+$"}},"input_contract":{"type":"string"},"output_contract":{"type":"string"},"decision_authority":{"type":"string"},"veto_authority":{"type":"string"},"owner_escalation_conditions":{"type":"array","items":{"type":"string"}},"maturity_status":{"enum":["DEFINED","REGISTERED","IMPLEMENTED","DEMONSTRATED"]},"availability_status":{"enum":["NON_EXECUTABLE_CURRENT","READY_NOT_AUTHORIZED","ACTIVE","SUSPENDED","DEPRECATED"]},"dependencies":{"type":"array","items":{"type":"string"}},"prompt_reference":{"type":"array","items":{"type":"string"}},"schema_reference":{"type":"array","items":{"type":"string"}},"activation_rule":{"type":"string"}}}}
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Capability Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["registry_version", "authority", "routing_consumer", "compatibility_tokens", "capabilities"],
+  "properties": {
+    "registry_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "authority": {"const": "CAPABILITY_FUNCTIONAL_AUTHORITY"},
+    "routing_consumer": {"type": "string", "minLength": 1},
+    "compatibility_tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maturity", "availability", "assurance", "approval", "evidence"],
+      "properties": {
+        "maturity": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}},
+        "availability": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}},
+        "assurance": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}},
+        "approval": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}},
+        "evidence": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}}
+      }
+    },
+    "capabilities": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/capability"}}
+  },
+  "$defs": {
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_id", "domain", "functional_authority_domain", "purpose", "functional_requirements", "implementation_kind", "maturity_status"],
+      "properties": {
+        "capability_id": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+        "domain": {"enum": ["CHANNEL_INTELLIGENCE", "SCRIPT_PRODUCT", "YOUTUBE_ADAPTATION", "INFRASTRUCTURE_GOVERNANCE"]},
+        "functional_authority_domain": {"enum": ["CHANNEL_INTELLIGENCE", "SCRIPT_PRODUCT", "YOUTUBE_ADAPTATION", "INFRASTRUCTURE_GOVERNANCE"]},
+        "purpose": {"type": "string", "minLength": 1},
+        "functional_requirements": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "implementation_kind": {"enum": ["DETERMINISTIC", "SEMANTIC", "DEFERRED"]},
+        "implementation_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "contract_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "profile_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "execution_profile_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "assigned_role": {"type": "array", "items": {"type": "string", "pattern": "^[A-Z0-9_]+$"}},
+        "input_contract": {"type": "string", "minLength": 1},
+        "output_contract": {"type": "string", "minLength": 1},
+        "decision_authority": {"type": "string", "minLength": 1},
+        "veto_authority": {"type": "string", "minLength": 1},
+        "owner_escalation_conditions": {"type": "array", "items": {"type": "string"}},
+        "maturity_status": {"enum": ["DEFINED", "REGISTERED", "IMPLEMENTED", "DEMONSTRATED"]},
+        "availability_status": {"enum": ["NON_EXECUTABLE_CURRENT", "READY_NOT_AUTHORIZED", "ACTIVE", "SUSPENDED", "DEPRECATED"]},
+        "dependencies": {"type": "array", "items": {"type": "string"}},
+        "prompt_reference": {"type": "array", "items": {"type": "string"}},
+        "schema_reference": {"type": "array", "items": {"type": "string"}},
+        "routing_ref": {"type": "string", "minLength": 1},
+        "routing_required": {"type": "boolean"},
+        "assurance": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "technical": {"enum": ["PASS", "FAIL", "NOT_TESTED", "UNAVAILABLE"]},
+            "semantic": {"enum": ["PASS", "FAIL", "NOT_TESTED", "UNAVAILABLE"]},
+            "functional_approval": {"enum": ["APPROVED", "PENDING", "REJECTED", "NOT_TESTED"]},
+            "operational_evidence": {"enum": ["PRESENT", "MISSING", "NOT_TESTED"]}
+          }
+        },
+        "executability_evidence": {"type": "object", "additionalProperties": {"type": "boolean"}},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "execution_evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "functional_approval_ref": {"type": "string", "minLength": 1},
+        "activation_rule": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {"if": {"properties": {"maturity_status": {"enum": ["REGISTERED", "IMPLEMENTED", "DEMONSTRATED"]}}}, "then": {"required": ["availability_status"]}},
+        {"if": {"properties": {"maturity_status": {"enum": ["IMPLEMENTED", "DEMONSTRATED"]}}}, "then": {"required": ["implementation_refs"]}},
+        {"if": {"required": ["implementation_kind", "maturity_status"], "properties": {"implementation_kind": {"const": "SEMANTIC"}, "maturity_status": {"enum": ["IMPLEMENTED", "DEMONSTRATED"]}}}, "then": {"required": ["assigned_role", "prompt_reference", "execution_profile_refs"]}},
+        {"if": {"required": ["routing_required"], "properties": {"routing_required": {"const": true}}}, "then":
+        {"required": ["routing_ref"]}},
+        {"if": {"properties": {"maturity_status": {"const": "DEMONSTRATED"}}}, "then": {"required": ["evidence_refs", "execution_evidence_refs"]}}
+      ]
+    }
+  }
 }

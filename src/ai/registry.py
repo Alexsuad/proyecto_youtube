@@ -164,6 +164,11 @@ def _attempt_status(result: ExecutionResult) -> str:
     return "FAILED"
 
 
+def _non_null(values: dict[str, Any]) -> dict[str, Any]:
+    """Keep provenance groups explicit without emitting null telemetry."""
+    return {key: value for key, value in values.items() if value is not None}
+
+
 def register_handoff(path: Path, package_path: Path, request: Any) -> None:
     package = json.loads(package_path.read_text(encoding="utf-8"))
     registry = load_registry(path)
@@ -297,6 +302,32 @@ def append_result(
         handoff_target = str(result.usage.get("handoff_target") or "NONE")
         execution_profile = str(result.usage.get("execution_profile") or "UNSPECIFIED_PROFILE")
     provenance_config = request.config if request is not None else result.usage
+    functional_identity = _non_null({
+        "mission_id": provenance_config.get("mission_id"),
+        "capability_id": provenance_config.get("capability_id") or getattr(request, "capability_id", None),
+        "role_id": provenance_config.get("role_id") or role,
+        "execution_profile_id": provenance_config.get("execution_profile_id") or execution_profile,
+    })
+    reproducibility = _non_null({
+        "mission_contract_sha256": provenance_config.get("mission_contract_sha256"),
+        "context_manifest_sha256": provenance_config.get("resolved_context_manifest_sha256"),
+        "prompt_sha256": provenance_config.get("prompt_artifact_sha256") or provenance_config.get("prompt_checksum"),
+        "input_sha256": provenance_config.get("input_sha256") or provenance_config.get("input_checksum"),
+        "output_sha256": provenance_config.get("output_sha256") or result.output_checksum,
+    })
+    operational_telemetry = _non_null({
+        "provider": result.provider,
+        "model": result.model,
+        "actual_provider": result.usage.get("actual_provider") or provenance_config.get("resolved_actual_provider"),
+        "actual_model": result.usage.get("actual_model") or provenance_config.get("resolved_actual_model"),
+        "input_tokens": result.usage.get("input_tokens"),
+        "output_tokens": result.usage.get("output_tokens"),
+        "cached_tokens": result.usage.get("cached_tokens"),
+        "cost": result.usage.get("cost") or result.usage.get("estimated_cost"),
+        "currency": result.usage.get("currency"),
+        "latency": result.usage.get("latency"),
+        "fallback": result.usage.get("fallback"),
+    })
     registry["runs"].append({
         "run_id": result.run_id,
         "episode_id": result.episode_id,
@@ -317,6 +348,10 @@ def append_result(
         "input_checksum": str(provenance_config.get("input_checksum") or result.input_manifest_checksum),
         "output_checksum": str(result.output_checksum),
         "validation_result": str(provenance_config.get("validation_result") or "PASS"),
+        "functional_identity": functional_identity,
+        "reproducibility": reproducibility,
+        "operational_telemetry": operational_telemetry,
+        **{key: provenance_config[key] for key in ("mission_id", "capability_id", "execution_profile_id", "mission_contract_sha256", "resolved_context_manifest", "resolved_context_manifest_sha256", "input_sha256", "output_sha256", "prompt_artifact_sha256", "result_status") if provenance_config.get(key)},
         **_provenance_fields(
             role=role,
             provider=result.provider,

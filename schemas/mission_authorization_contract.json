@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/mission_authorization_contract.json",
+  "title": "MissionAuthorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mission_id", "contract_sha256", "live_state_path", "live_state_sha256", "capability_ids", "role_ids", "execution_profile_ids", "execution_interface", "allowed_operations", "allowed_paths", "allowed_routes", "execution_mode", "single_use", "authority_ref", "authority_sha256", "authorized_scope_sha256", "executor_substitution_policy"],
+  "properties": {
+    "mission_id": {"type": "string", "minLength": 1},
+    "contract_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "live_state_path": {"type": "string", "minLength": 1},
+    "live_state_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "capability_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "role_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "execution_profile_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "execution_interface": {"type": "string", "minLength": 1},
+    "allowed_operations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "allowed_paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "allowed_routes": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "execution_mode": {"type": "string", "minLength": 1},
+    "single_use": {"type": "boolean"},
+    "authority_ref": {"type": "string", "minLength": 1},
+    "authority_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "authorized_scope_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "executor_substitution_policy": {"const": "COMPATIBLE_INTERFACE_ONLY"}
+  }
+}

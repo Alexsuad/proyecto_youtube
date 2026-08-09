@@ -86,7 +86,7 @@ def test_append_result_records_extended_r6_provenance_fields(tmp_path: Path) -> 
         provider="mock",
         episode_id="EP-1",
         role="SCRIPT_PRODUCT_PRODUCER",
-        config={"prompt_version": "1.0.0", "handoff_target": "SCRIPT_PRODUCT_AUDITOR"},
+        config={"prompt_version": "1.0.0", "handoff_target": "SCRIPT_PRODUCT_AUDITOR", "mission_id": "M-R6", "execution_profile_id": "PROFILE-R6", "mission_contract_sha256": "a" * 64, "resolved_context_manifest_sha256": "b" * 64, "input_sha256": "c" * 64, "prompt_artifact_sha256": "d" * 64},
         mock_output=_read_json(output_path),
         output_artifact_kind="analysis",
         output_artifact_id="A-1",
@@ -104,7 +104,7 @@ def test_append_result_records_extended_r6_provenance_fields(tmp_path: Path) -> 
         output_checksum=hashlib.sha256(output_path.read_bytes()).hexdigest(),
         started_at="2026-07-29T10:00:00Z",
         completed_at="2026-07-29T10:00:05Z",
-        usage={"skill_id": "skill_analysis", "skill_version": "1.0.0", "prompt_version": "1.0.0", "retry_count": 0},
+        usage={"skill_id": "skill_analysis", "skill_version": "1.0.0", "prompt_version": "1.0.0", "retry_count": 0, "input_tokens": 12, "output_tokens": 7, "cost": 0.25, "currency": "EUR", "actual_provider": "provider-x", "actual_model": "model-y"},
         episode_id="EP-1",
         output_artifact_id="A-1",
         output_artifact_kind="analysis",
@@ -122,6 +122,19 @@ def test_append_result_records_extended_r6_provenance_fields(tmp_path: Path) -> 
     assert run["input_artifact_ids"] == ["research:R-1"]
     assert run["output_artifact_ids"] == ["analysis:A-1"]
     assert run["handoff_target"] == "SCRIPT_PRODUCT_AUDITOR"
+    assert run["functional_identity"] == {
+        "mission_id": "M-R6", "capability_id": "SCRIPT_PRODUCT_PRODUCER", "role_id": "SCRIPT_PRODUCT_PRODUCER",
+        "execution_profile_id": "PROFILE-R6",
+    }
+    assert run["reproducibility"]["mission_contract_sha256"] == "a" * 64
+    assert run["reproducibility"]["context_manifest_sha256"] == "b" * 64
+    assert run["reproducibility"]["input_sha256"] == "c" * 64
+    assert run["reproducibility"]["prompt_sha256"] == "d" * 64
+    assert run["operational_telemetry"]["provider"] == "agent_handoff"
+    assert run["operational_telemetry"]["model"] == "handoff_only"
+    assert run["operational_telemetry"]["actual_provider"] == "provider-x"
+    assert run["operational_telemetry"]["actual_model"] == "model-y"
+    assert run["operational_telemetry"]["cost"] == 0.25
 
 
 def test_agent_handoff_registers_extended_preparation_fields(tmp_path: Path) -> None:

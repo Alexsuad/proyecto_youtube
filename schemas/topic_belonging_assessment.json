@@ -14,6 +14,7 @@
     "profile_version",
     "profile_checksum",
     "topic",
+    "entry_mode",
     "narrative_work",
     "central_question",
     "proposed_angle",
@@ -63,6 +64,13 @@
     "topic": {
       "type": "string",
       "minLength": 1
+    },
+    "corpus_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entry_mode": {
+      "enum": ["TOPIC_FIRST", "ANCHOR_WORK_FIRST", "CORPUS_FIRST"]
     },
     "narrative_work": {
       "type": "string",

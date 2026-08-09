@@ -32,13 +32,13 @@ def bind(data, kind, field):
 
 def topic_input(**overrides):
     profile = active_profile()
-    data = {"topic_input_id":"TBI-001", **{key: profile[key] for key in ("profile_id", "profile_version", "profile_checksum")}, "topic":"Tema ordinario", "narrative_work":"Obra", "central_question":"Pregunta humana", "proposed_angle":"Ángulo interpretativo", "proposed_territory":"Individuo e identidad", "initial_evidence":["source-1"], "strategic_triggers":{key:False for key in TRIGGER_KEYS}, "submitted_at":"2026-07-31T10:00:00Z"}
+    data = {"topic_input_id":"TBI-001", **{key: profile[key] for key in ("profile_id", "profile_version", "profile_checksum")}, "topic":"Tema ordinario", "entry_mode":"ANCHOR_WORK_FIRST", "narrative_work":"Obra", "central_question":"Pregunta humana", "proposed_angle":"Ángulo interpretativo", "proposed_territory":"Individuo e identidad", "initial_evidence":["source-1"], "strategic_triggers":{key:False for key in TRIGGER_KEYS}, "submitted_at":"2026-07-31T10:00:00Z"}
     data.update(overrides); return data
 
 
 def assessment(inp=None, **overrides):
     inp = inp or topic_input(); profile = active_profile()
-    data = {"assessment_id":"TBA-001", "topic_input_id":inp["topic_input_id"], "producer_actor_id":"producer-1", "producer_run_id":"run-producer", "producer_role_id":"CHANNEL_INTELLIGENCE_PRODUCER", **{key: profile[key] for key in ("profile_id", "profile_version", "profile_checksum")}, **{key: inp[key] for key in ("topic", "narrative_work", "central_question", "proposed_angle", "proposed_territory", "initial_evidence", "strategic_triggers")}, "sensitive_risks":[], "territory_classification":"ACTIVE", "identity_alignment":"ALIGNED", "promise_alignment":"ALIGNED", "risks":[], "recommended_conditions":[], "recommended_exclusions":[], "owner_escalation_recommended":False, "evidence":["source-1"], "status":"CLOSED_FOR_REVIEW", "artifact_checksum":"", "provenance":{"actor_id":"producer-1", "run_id":"run-producer", "role_id":"CHANNEL_INTELLIGENCE_PRODUCER", "input_checksums":["a"*64], "output_checksum":""}}
+    data = {"assessment_id":"TBA-001", "topic_input_id":inp["topic_input_id"], "producer_actor_id":"producer-1", "producer_run_id":"run-producer", "producer_role_id":"CHANNEL_INTELLIGENCE_PRODUCER", **{key: profile[key] for key in ("profile_id", "profile_version", "profile_checksum")}, **{key: inp[key] for key in ("topic", "narrative_work", "central_question", "proposed_angle", "proposed_territory", "initial_evidence", "strategic_triggers", "entry_mode")}, "sensitive_risks":[], "territory_classification":"ACTIVE", "identity_alignment":"ALIGNED", "promise_alignment":"ALIGNED", "risks":[], "recommended_conditions":[], "recommended_exclusions":[], "owner_escalation_recommended":False, "evidence":["source-1"], "status":"CLOSED_FOR_REVIEW", "artifact_checksum":"", "provenance":{"actor_id":"producer-1", "run_id":"run-producer", "role_id":"CHANNEL_INTELLIGENCE_PRODUCER", "input_checksums":["a"*64], "output_checksum":""}}
     data.update(overrides); return bind(data, "assessment", "artifact_checksum")
 
 
