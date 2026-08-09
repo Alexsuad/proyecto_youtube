@@ -194,3 +194,27 @@ def test_optional_executor_catalog_is_visible_but_non_blocking(tmp_path: Path):
     assert {item["category"] for item in catalog_findings} == {"OPTIONAL_EXECUTOR_CATALOG"}
     assert result["counts"]["ACTIVE_PRODUCT_CONTAMINATION"] == 1
     assert result["exit_code"] == 1
+
+
+def test_optional_adapter_surfaces_and_negative_assertions_are_non_blocking(tmp_path: Path):
+    policy_path = _write_policy(tmp_path)
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    policy["optional_adapter_test_roots"] = ["tests/opencode"]
+    policy["optional_adapter_implementation_roots"] = [".opencode/agents"]
+    policy_path.write_text(json.dumps(policy), encoding="utf-8")
+
+    adapter_test = tmp_path / "tests" / "opencode" / "test_adapter.py"
+    adapter_test.parent.mkdir(parents=True, exist_ok=True)
+    adapter_test.write_text('assert "Codex" not in payload\n', encoding="utf-8")
+    adapter_impl = tmp_path / ".opencode" / "agents" / "reviewer.md"
+    adapter_impl.parent.mkdir(parents=True, exist_ok=True)
+    adapter_impl.write_text("OpenCode adapter integration\n", encoding="utf-8")
+    negative_assertion = tmp_path / "tests" / "test_negative.py"
+    negative_assertion.write_text('assert "OpenCode" not in payload\n', encoding="utf-8")
+
+    result = scan(tmp_path, policy_path, collect_all_findings=True)
+    findings = result["all_findings"]
+    assert {item["category"] for item in findings if item["path"] == "tests/opencode/test_adapter.py"} == {"OPTIONAL_ADAPTER_TEST"}
+    assert {item["category"] for item in findings if item["path"] == ".opencode/agents/reviewer.md"} == {"OPTIONAL_ADAPTER_IMPLEMENTATION"}
+    assert {item["category"] for item in findings if item["path"] == "tests/test_negative.py"} == {"NEGATIVE_CONTAMINATION_ASSERTION"}
+    assert result["exit_code"] == 0

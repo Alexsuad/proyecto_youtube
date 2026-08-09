@@ -25,6 +25,13 @@
                             "src/scripts",
                             "tests"
                         ],
+    "optional_adapter_implementation_roots":  [
+                                                   ".opencode/agents",
+                                                   ".opencode/commands"
+                                               ],
+    "optional_adapter_test_roots":  [
+                                         "tests/opencode"
+                                     ],
     "historical_roots":  [
                              "workspace",
                              "output",
@@ -45,6 +52,9 @@
     "optional_executor_catalogs":  [
                                         "config/agent_execution_profiles.json"
                                     ],
+    "negative_contamination_assertion_patterns":  [
+                                                       "assert\\s+[\"'](?:ChatGPT|Antigravity|Codex|OpenCode|NotebookLM)[\"']\\s+not\\s+in"
+                                                   ],
     "false_positive_paths":  [
                                  "tests/core/test_runtime_contamination_guard.py",
                                  "tests/core/test_b4_i1_contracts.py",

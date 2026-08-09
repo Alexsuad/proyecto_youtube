@@ -73,7 +73,7 @@ Sin un perfil aprobado y activado:
 
 ### Implementación técnica
 
-`R1` o `R2` solo pueden iniciarse cuando `plans/001_CONTROL_OPERATIVO.md` autorice expresamente la misión concreta. Crear agentes o subagentes solo se permite cuando la misión autorizada lo incluya expresamente. OpenCode/Codex no pueden ampliar por inferencia el bloqueo ni el alcance.
+`R1` o `R2` solo pueden iniciarse cuando `plans/001_CONTROL_OPERATIVO.md` autorice expresamente la misión concreta. Crear agentes o subagentes solo se permite cuando la misión autorizada lo incluya expresamente. El ejecutor autorizado no puede ampliar por inferencia el bloqueo ni el alcance.
 
 ### Uso productivo y madurez
 

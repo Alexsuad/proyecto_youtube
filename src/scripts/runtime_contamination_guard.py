@@ -38,6 +38,9 @@ SKIP_DIR_NAMES = {
 CATEGORY_PRIORITIES = {
     "FALSE_POSITIVE": 0,
     "OPTIONAL_EXECUTOR_CATALOG": 1,
+    "OPTIONAL_ADAPTER_TEST": 1,
+    "OPTIONAL_ADAPTER_IMPLEMENTATION": 1,
+    "NEGATIVE_CONTAMINATION_ASSERTION": 1,
     "ALLOWED_EXTERNAL_COORDINATION": 2,
     "HISTORICAL_REFERENCE": 3,
     "CONTAMINATED_GENERATOR_SOURCE": 4,
@@ -73,6 +76,8 @@ def _path_category(rel: str, policy: dict[str, Any]) -> str:
             matches.append((len(item.split("/")), CATEGORY_PRIORITIES["FALSE_POSITIVE"], "FALSE_POSITIVE"))
     for category, key in (
         ("OPTIONAL_EXECUTOR_CATALOG", "optional_executor_catalogs"),
+        ("OPTIONAL_ADAPTER_TEST", "optional_adapter_test_roots"),
+        ("OPTIONAL_ADAPTER_IMPLEMENTATION", "optional_adapter_implementation_roots"),
         ("ALLOWED_EXTERNAL_COORDINATION", "allowed_external_coordination"),
         ("HISTORICAL_REFERENCE", "historical_roots"),
         ("CONTAMINATED_GENERATOR_SOURCE", "generator_roots"),
@@ -119,6 +124,8 @@ def _iter_policy_paths(root: Path, policy: dict[str, Any], *, include_historical
         *policy.get("generator_roots", []),
         *policy.get("allowed_external_coordination", []),
         *policy.get("optional_executor_catalogs", []),
+        *policy.get("optional_adapter_test_roots", []),
+        *policy.get("optional_adapter_implementation_roots", []),
         *policy.get("false_positive_paths", []),
     ]
     if include_historical_details:
@@ -171,6 +178,15 @@ def _is_field_level_exception(rel: str, label: str, excerpt: str, policy: dict[s
     return False
 
 
+def _finding_category(rel: str, excerpt: str, category: str, policy: dict[str, Any]) -> str:
+    if category != "CONTAMINATED_GENERATOR_SOURCE":
+        return category
+    for pattern in policy.get("negative_contamination_assertion_patterns", []):
+        if re.search(pattern, excerpt, re.IGNORECASE):
+            return "NEGATIVE_CONTAMINATION_ASSERTION"
+    return category
+
+
 def _limited_samples(findings: list[Finding], sample_limit: int, *, include_historical_details: bool) -> list[dict[str, Any]]:
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for finding in findings:
@@ -186,6 +202,9 @@ def _limited_samples(findings: list[Finding], sample_limit: int, *, include_hist
         "MANUAL_REVIEW",
         "HISTORICAL_REFERENCE",
         "OPTIONAL_EXECUTOR_CATALOG",
+        "OPTIONAL_ADAPTER_TEST",
+        "OPTIONAL_ADAPTER_IMPLEMENTATION",
+        "NEGATIVE_CONTAMINATION_ASSERTION",
         "ALLOWED_EXTERNAL_COORDINATION",
         "FALSE_POSITIVE",
     ):
@@ -219,6 +238,9 @@ def scan(
         "CONTAMINATED_GENERATOR_SOURCE": 0,
         "HISTORICAL_REFERENCE": 0,
         "OPTIONAL_EXECUTOR_CATALOG": 0,
+        "OPTIONAL_ADAPTER_TEST": 0,
+        "OPTIONAL_ADAPTER_IMPLEMENTATION": 0,
+        "NEGATIVE_CONTAMINATION_ASSERTION": 0,
         "ALLOWED_EXTERNAL_COORDINATION": 0,
         "FALSE_POSITIVE": 0,
         "MANUAL_REVIEW": 0,
@@ -241,9 +263,10 @@ def scan(
                 excerpt = _line_excerpt(text, line)
                 if _is_field_level_exception(rel, item["label"], excerpt, policy):
                     continue
-                finding = Finding(rel, line, item["pattern"], item["label"], item["severity"], category, excerpt)
-                counts[category] += 1
-                if category != "HISTORICAL_REFERENCE" or include_historical_details:
+                finding_category = _finding_category(rel, excerpt, category, policy)
+                finding = Finding(rel, line, item["pattern"], item["label"], item["severity"], finding_category, excerpt)
+                counts[finding_category] += 1
+                if finding_category != "HISTORICAL_REFERENCE" or include_historical_details:
                     visible_findings.append(finding)
                 if collect_all_findings or include_historical_details:
                     detailed_findings.append(finding)
