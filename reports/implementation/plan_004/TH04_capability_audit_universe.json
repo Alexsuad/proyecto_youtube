@@ -1,0 +1,2205 @@
+{
+  "artifact_type": "CAPABILITY_AUDIT_UNIVERSE",
+  "candidates": [
+    {
+      "aliases": [
+        "B5_I2_SEMANTIC_AUDITOR"
+      ],
+      "candidate_id": "B5_I2_SEMANTIC_AUDITOR",
+      "canonical_identity": "B5_I2_SEMANTIC_AUDITOR",
+      "classification_reason": "Routing-declared candidate absent from canonical registry.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UNRESOLVED_CANDIDATE",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [
+          "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR"
+        ]
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "UNREGISTERED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR"
+      ],
+      "source_type": "CAPABILITY_ROUTING"
+    },
+    {
+      "aliases": [
+        "EDITORIAL_PROFILE_FUNCTIONAL_REVIEW"
+      ],
+      "candidate_id": "EDITORIAL_PROFILE_FUNCTIONAL_REVIEW",
+      "canonical_identity": "EDITORIAL_PROFILE_FUNCTIONAL_REVIEW",
+      "classification_reason": "Canonical capability registry entry.",
+      "current_registry_presence": true,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/capability_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": "DEFINED",
+      "object_class": "EXECUTABLE_CAPABILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [
+          "CHANNEL_INTELLIGENCE_REVIEWER"
+        ],
+        "routes": []
+      },
+      "owner_observation": {
+        "decision_authority": "CHANNEL_INTELLIGENCE_FUNCTIONAL_REVIEW",
+        "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "REGISTERED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/capability_registry.json"
+      ],
+      "source_type": "CAPABILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "EDITORIAL_PROFILE_PROPOSAL"
+      ],
+      "candidate_id": "EDITORIAL_PROFILE_PROPOSAL",
+      "canonical_identity": "EDITORIAL_PROFILE_PROPOSAL",
+      "classification_reason": "Canonical capability registry entry.",
+      "current_registry_presence": true,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "config/capability_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": "DEFINED",
+      "object_class": "EXECUTABLE_CAPABILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [
+          "CHANNEL_INTELLIGENCE_PRODUCER"
+        ],
+        "routes": []
+      },
+      "owner_observation": {
+        "decision_authority": "CHANNEL_INTELLIGENCE_PROPOSAL",
+        "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "REGISTERED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/capability_registry.json"
+      ],
+      "source_type": "CAPABILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "IDENTITY_DRIFT_AUDIT"
+      ],
+      "candidate_id": "IDENTITY_DRIFT_AUDIT",
+      "canonical_identity": "IDENTITY_DRIFT_AUDIT",
+      "classification_reason": "Canonical capability registry entry.",
+      "current_registry_presence": true,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/capability_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": "DEFINED",
+      "object_class": "EXECUTABLE_CAPABILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [
+          "CHANNEL_INTELLIGENCE_REVIEWER"
+        ],
+        "routes": []
+      },
+      "owner_observation": {
+        "decision_authority": "CHANNEL_INTELLIGENCE_AUDIT",
+        "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "REGISTERED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/capability_registry.json"
+      ],
+      "source_type": "CAPABILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROFILE_CHANGE_IMPACT_ASSESSMENT"
+      ],
+      "candidate_id": "PROFILE_CHANGE_IMPACT_ASSESSMENT",
+      "canonical_identity": "PROFILE_CHANGE_IMPACT_ASSESSMENT",
+      "classification_reason": "Canonical capability registry entry.",
+      "current_registry_presence": true,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/capability_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": "DEFINED",
+      "object_class": "EXECUTABLE_CAPABILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [
+          "CHANNEL_INTELLIGENCE_PRODUCER",
+          "CHANNEL_INTELLIGENCE_REVIEWER"
+        ],
+        "routes": []
+      },
+      "owner_observation": {
+        "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
+        "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "REGISTERED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/capability_registry.json"
+      ],
+      "source_type": "CAPABILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROFILE:CHANNEL_INTELLIGENCE_PRODUCER"
+      ],
+      "candidate_id": "PROFILE:CHANNEL_INTELLIGENCE_PRODUCER",
+      "canonical_identity": "PROFILE_CHANNEL_INTELLIGENCE_PRODUCER",
+      "classification_reason": "Execution profile is routing configuration, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "source_type": "EXECUTION_PROFILE_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROFILE:CHANNEL_INTELLIGENCE_REVIEWER"
+      ],
+      "candidate_id": "PROFILE:CHANNEL_INTELLIGENCE_REVIEWER",
+      "canonical_identity": "PROFILE_CHANNEL_INTELLIGENCE_REVIEWER",
+      "classification_reason": "Execution profile is routing configuration, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "source_type": "EXECUTION_PROFILE_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROFILE:SCRIPT_PRODUCT_AUDITOR"
+      ],
+      "candidate_id": "PROFILE:SCRIPT_PRODUCT_AUDITOR",
+      "canonical_identity": "PROFILE_SCRIPT_PRODUCT_AUDITOR",
+      "classification_reason": "Execution profile is routing configuration, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "source_type": "EXECUTION_PROFILE_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROFILE:SCRIPT_PRODUCT_PRODUCER"
+      ],
+      "candidate_id": "PROFILE:SCRIPT_PRODUCT_PRODUCER",
+      "canonical_identity": "PROFILE_SCRIPT_PRODUCT_PRODUCER",
+      "classification_reason": "Execution profile is routing configuration, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "source_type": "EXECUTION_PROFILE_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_channel_intelligence_producer"
+      ],
+      "candidate_id": "PROMPT:prompt_channel_intelligence_producer",
+      "canonical_identity": "PROMPT_PROMPT_CHANNEL_INTELLIGENCE_PRODUCER",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_channel_intelligence_reviewer"
+      ],
+      "candidate_id": "PROMPT:prompt_channel_intelligence_reviewer",
+      "canonical_identity": "PROMPT_PROMPT_CHANNEL_INTELLIGENCE_REVIEWER",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_editor"
+      ],
+      "candidate_id": "PROMPT:prompt_editor",
+      "canonical_identity": "PROMPT_PROMPT_EDITOR",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_final_editorial_auditor"
+      ],
+      "candidate_id": "PROMPT:prompt_final_editorial_auditor",
+      "canonical_identity": "PROMPT_PROMPT_FINAL_EDITORIAL_AUDITOR",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_narrative_architecture"
+      ],
+      "candidate_id": "PROMPT:prompt_narrative_architecture",
+      "canonical_identity": "PROMPT_PROMPT_NARRATIVE_ARCHITECTURE",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_orchestration"
+      ],
+      "candidate_id": "PROMPT:prompt_orchestration",
+      "canonical_identity": "PROMPT_PROMPT_ORCHESTRATION",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_research_curation"
+      ],
+      "candidate_id": "PROMPT:prompt_research_curation",
+      "canonical_identity": "PROMPT_PROMPT_RESEARCH_CURATION",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_script_product_auditor"
+      ],
+      "candidate_id": "PROMPT:prompt_script_product_auditor",
+      "canonical_identity": "PROMPT_PROMPT_SCRIPT_PRODUCT_AUDITOR",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_script_product_producer"
+      ],
+      "candidate_id": "PROMPT:prompt_script_product_producer",
+      "canonical_identity": "PROMPT_PROMPT_SCRIPT_PRODUCT_PRODUCER",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_writing"
+      ],
+      "candidate_id": "PROMPT:prompt_writing",
+      "canonical_identity": "PROMPT_PROMPT_WRITING",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_youtube_adaptation_auditor"
+      ],
+      "candidate_id": "PROMPT:prompt_youtube_adaptation_auditor",
+      "canonical_identity": "PROMPT_PROMPT_YOUTUBE_ADAPTATION_AUDITOR",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROMPT:prompt_youtube_adaptation_producer"
+      ],
+      "candidate_id": "PROMPT:prompt_youtube_adaptation_producer",
+      "canonical_identity": "PROMPT_PROMPT_YOUTUBE_ADAPTATION_PRODUCER",
+      "classification_reason": "Prompt is supporting mechanism, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "source_type": "PROMPT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "ROLE:CHANNEL_INTELLIGENCE_PRODUCER"
+      ],
+      "candidate_id": "ROLE:CHANNEL_INTELLIGENCE_PRODUCER",
+      "canonical_identity": "ROLE_CHANNEL_INTELLIGENCE_PRODUCER",
+      "classification_reason": "Registered responsibility is not a capability by itself.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "source_type": "RESPONSIBILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "ROLE:CHANNEL_INTELLIGENCE_REVIEWER"
+      ],
+      "candidate_id": "ROLE:CHANNEL_INTELLIGENCE_REVIEWER",
+      "canonical_identity": "ROLE_CHANNEL_INTELLIGENCE_REVIEWER",
+      "classification_reason": "Registered responsibility is not a capability by itself.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "source_type": "RESPONSIBILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "ROLE:EDITOR"
+      ],
+      "candidate_id": "ROLE:EDITOR",
+      "canonical_identity": "ROLE_EDITOR",
+      "classification_reason": "Registered responsibility is not a capability by itself.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "functional_authority_domain": "SCRIPT_PRODUCT",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "source_type": "RESPONSIBILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "ROLE:FINAL_EDITORIAL_AUDITOR"
+      ],
+      "candidate_id": "ROLE:FINAL_EDITORIAL_AUDITOR",
+      "canonical_identity": "ROLE_FINAL_EDITORIAL_AUDITOR",
+      "classification_reason": "Registered responsibility is not a capability by itself.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "functional_authority_domain": "SCRIPT_PRODUCT",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "source_type": "RESPONSIBILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "ROLE:NARRATIVE_ARCHITECTURE"
+      ],
+      "candidate_id": "ROLE:NARRATIVE_ARCHITECTURE",
+      "canonical_identity": "ROLE_NARRATIVE_ARCHITECTURE",
+      "classification_reason": "Registered responsibility is not a capability by itself.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "functional_authority_domain": "SCRIPT_PRODUCT",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "source_type": "RESPONSIBILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "ROLE:ORCHESTRATION"
+      ],
+      "candidate_id": "ROLE:ORCHESTRATION",
+      "canonical_identity": "ROLE_ORCHESTRATION",
+      "classification_reason": "Registered responsibility is not a capability by itself.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "functional_authority_domain": "TECHNICAL_GOVERNANCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "source_type": "RESPONSIBILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "ROLE:RESEARCH_AND_CURATION"
+      ],
+      "candidate_id": "ROLE:RESEARCH_AND_CURATION",
+      "canonical_identity": "ROLE_RESEARCH_AND_CURATION",
+      "classification_reason": "Registered responsibility is not a capability by itself.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "functional_authority_domain": "SCRIPT_PRODUCT",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "source_type": "RESPONSIBILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "ROLE:WRITING"
+      ],
+      "candidate_id": "ROLE:WRITING",
+      "canonical_identity": "ROLE_WRITING",
+      "classification_reason": "Registered responsibility is not a capability by itself.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "functional_authority_domain": "SCRIPT_PRODUCT",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "source_type": "RESPONSIBILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_analisis_patrones"
+      ],
+      "candidate_id": "SKILL:skill_analisis_patrones",
+      "canonical_identity": "SKILL_SKILL_ANALISIS_PATRONES",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_analisis_patrones.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_analisis_patrones.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_analisis_patrones.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_auditar_suficiencia_semantica_b5_i2"
+      ],
+      "candidate_id": "SKILL:skill_auditar_suficiencia_semantica_b5_i2",
+      "canonical_identity": "SKILL_SKILL_AUDITAR_SUFICIENCIA_SEMANTICA_B5_I2",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_auditoria_sistema"
+      ],
+      "candidate_id": "SKILL:skill_auditoria_sistema",
+      "canonical_identity": "SKILL_SKILL_AUDITORIA_SISTEMA",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_auditoria_sistema.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_auditoria_sistema.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_auditoria_sistema.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_cerrar_episodio"
+      ],
+      "candidate_id": "SKILL:skill_cerrar_episodio",
+      "canonical_identity": "SKILL_SKILL_CERRAR_EPISODIO",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_cerrar_episodio.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_cerrar_episodio.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_cerrar_episodio.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_control_integridad_pipeline"
+      ],
+      "candidate_id": "SKILL:skill_control_integridad_pipeline",
+      "canonical_identity": "SKILL_SKILL_CONTROL_INTEGRIDAD_PIPELINE",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_control_integridad_pipeline.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_control_integridad_pipeline.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_control_integridad_pipeline.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_crear_brief_episodio"
+      ],
+      "candidate_id": "SKILL:skill_crear_brief_episodio",
+      "canonical_identity": "SKILL_SKILL_CREAR_BRIEF_EPISODIO",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_crear_brief_episodio.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_crear_brief_episodio.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_crear_brief_episodio.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_curation_obras"
+      ],
+      "candidate_id": "SKILL:skill_curation_obras",
+      "canonical_identity": "SKILL_SKILL_CURATION_OBRAS",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_curation_obras.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_curation_obras.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_curation_obras.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_extraer_voice_learnings"
+      ],
+      "candidate_id": "SKILL:skill_extraer_voice_learnings",
+      "canonical_identity": "SKILL_SKILL_EXTRAER_VOICE_LEARNINGS",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        ".agent/skills/skill_extraer_voice_learnings.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_extraer_voice_learnings.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_extraer_voice_learnings.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_guion_longform"
+      ],
+      "candidate_id": "SKILL:skill_guion_longform",
+      "canonical_identity": "SKILL_SKILL_GUION_LONGFORM",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        ".agent/skills/skill_guion_longform.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_guion_longform.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_guion_longform.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_iniciar_episodio"
+      ],
+      "candidate_id": "SKILL:skill_iniciar_episodio",
+      "canonical_identity": "SKILL_SKILL_INICIAR_EPISODIO",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_iniciar_episodio.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_iniciar_episodio.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_iniciar_episodio.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_mapa_eventos_y_outline"
+      ],
+      "candidate_id": "SKILL:skill_mapa_eventos_y_outline",
+      "canonical_identity": "SKILL_SKILL_MAPA_EVENTOS_Y_OUTLINE",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        ".agent/skills/skill_mapa_eventos_y_outline.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_mapa_eventos_y_outline.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_mapa_eventos_y_outline.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_owner_report"
+      ],
+      "candidate_id": "SKILL:skill_owner_report",
+      "canonical_identity": "SKILL_SKILL_OWNER_REPORT",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_owner_report.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_owner_report.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_owner_report.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_packaging"
+      ],
+      "candidate_id": "SKILL:skill_packaging",
+      "canonical_identity": "SKILL_SKILL_PACKAGING",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        ".agent/skills/skill_packaging.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_packaging.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_packaging.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_qa_brief_research"
+      ],
+      "candidate_id": "SKILL:skill_qa_brief_research",
+      "canonical_identity": "SKILL_SKILL_QA_BRIEF_RESEARCH",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_qa_brief_research.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_qa_brief_research.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_qa_brief_research.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_qa_editorial"
+      ],
+      "candidate_id": "SKILL:skill_qa_editorial",
+      "canonical_identity": "SKILL_SKILL_QA_EDITORIAL",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        ".agent/skills/skill_qa_editorial.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_qa_editorial.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_qa_editorial.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_qa_lenguaje_youtube"
+      ],
+      "candidate_id": "SKILL:skill_qa_lenguaje_youtube",
+      "canonical_identity": "SKILL_SKILL_QA_LENGUAJE_YOUTUBE",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_qa_lenguaje_youtube.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_qa_lenguaje_youtube.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_qa_lenguaje_youtube.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_qa_lenguaje_youtube_ultra"
+      ],
+      "candidate_id": "SKILL:skill_qa_lenguaje_youtube_ultra",
+      "canonical_identity": "SKILL_SKILL_QA_LENGUAJE_YOUTUBE_ULTRA",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_qa_lenguaje_youtube_ultra.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_qa_lenguaje_youtube_ultra.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_qa_lenguaje_youtube_ultra.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_research_tema_y_obras"
+      ],
+      "candidate_id": "SKILL:skill_research_tema_y_obras",
+      "canonical_identity": "SKILL_SKILL_RESEARCH_TEMA_Y_OBRAS",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_research_tema_y_obras.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_research_tema_y_obras.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_research_tema_y_obras.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_seo_youtube"
+      ],
+      "candidate_id": "SKILL:skill_seo_youtube",
+      "canonical_identity": "SKILL_SKILL_SEO_YOUTUBE",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        ".agent/skills/skill_seo_youtube.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_seo_youtube.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_seo_youtube.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_shorts"
+      ],
+      "candidate_id": "SKILL:skill_shorts",
+      "canonical_identity": "SKILL_SKILL_SHORTS",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        ".agent/skills/skill_shorts.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_shorts.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_shorts.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_sintesis_tesis"
+      ],
+      "candidate_id": "SKILL:skill_sintesis_tesis",
+      "canonical_identity": "SKILL_SKILL_SINTESIS_TESIS",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        ".agent/skills/skill_sintesis_tesis.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_sintesis_tesis.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_sintesis_tesis.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "SKILL:skill_verificacion_veracidad_fuente_externa_historica"
+      ],
+      "candidate_id": "SKILL:skill_verificacion_veracidad_fuente_externa_historica",
+      "canonical_identity": "SKILL_SKILL_VERIFICACION_VERACIDAD_FUENTE_EXTERNA_HISTORICA",
+      "classification_reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory.",
+      "current_registry_presence": false,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md",
+        "config/skill_catalog.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "UTILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [
+          ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md"
+        ],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md"
+      ],
+      "source_refs": [
+        "config/skill_catalog.json"
+      ],
+      "source_type": "SKILL_CATALOG"
+    },
+    {
+      "aliases": [
+        "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT"
+      ],
+      "candidate_id": "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT",
+      "canonical_identity": "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT",
+      "classification_reason": "Canonical capability registry entry.",
+      "current_registry_presence": true,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "config/capability_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": "DEFINED",
+      "object_class": "EXECUTABLE_CAPABILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [
+          "CHANNEL_INTELLIGENCE_PRODUCER"
+        ],
+        "routes": []
+      },
+      "owner_observation": {
+        "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
+        "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "REGISTERED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/capability_registry.json"
+      ],
+      "source_type": "CAPABILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "SUBAGENT:SCRIPT_PRODUCT_AUDITOR"
+      ],
+      "candidate_id": "SUBAGENT:SCRIPT_PRODUCT_AUDITOR",
+      "canonical_identity": "SUBAGENT_SCRIPT_PRODUCT_AUDITOR",
+      "classification_reason": "Subagent record is an execution participant, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/subagent_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/subagent_registry.json"
+      ],
+      "source_type": "SUBAGENT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "SUBAGENT:SCRIPT_PRODUCT_PRODUCER"
+      ],
+      "candidate_id": "SUBAGENT:SCRIPT_PRODUCT_PRODUCER",
+      "canonical_identity": "SUBAGENT_SCRIPT_PRODUCT_PRODUCER",
+      "classification_reason": "Subagent record is an execution participant, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/subagent_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/subagent_registry.json"
+      ],
+      "source_type": "SUBAGENT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "SUBAGENT:YOUTUBE_ADAPTATION_AUDITOR"
+      ],
+      "candidate_id": "SUBAGENT:YOUTUBE_ADAPTATION_AUDITOR",
+      "canonical_identity": "SUBAGENT_YOUTUBE_ADAPTATION_AUDITOR",
+      "classification_reason": "Subagent record is an execution participant, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/subagent_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/subagent_registry.json"
+      ],
+      "source_type": "SUBAGENT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "SUBAGENT:YOUTUBE_ADAPTATION_PRODUCER"
+      ],
+      "candidate_id": "SUBAGENT:YOUTUBE_ADAPTATION_PRODUCER",
+      "canonical_identity": "SUBAGENT_YOUTUBE_ADAPTATION_PRODUCER",
+      "classification_reason": "Subagent record is an execution participant, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/subagent_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": []
+      },
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/subagent_registry.json"
+      ],
+      "source_type": "SUBAGENT_REGISTRY"
+    },
+    {
+      "aliases": [
+        "TOPIC_BELONGING_ASSESSMENT"
+      ],
+      "candidate_id": "TOPIC_BELONGING_ASSESSMENT",
+      "canonical_identity": "TOPIC_BELONGING_ASSESSMENT",
+      "classification_reason": "Canonical capability registry entry.",
+      "current_registry_presence": true,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/active_editorial_profile.json",
+        "config/agent_execution_profiles.json",
+        "config/capability_registry.json",
+        "config/capability_routing.yaml",
+        "config/capability_routing.yaml#TOPIC_BELONGING_ASSESSMENT",
+        "config/editorial_profile_registry.json",
+        "prompt_channel_intelligence_producer",
+        "prompt_channel_intelligence_reviewer",
+        "schemas/topic_belonging_decision.json",
+        "schemas/topic_belonging_input.json",
+        "src/scripts/channel_intelligence.py",
+        "src/scripts/topic_belonging_flow.py"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": "IMPLEMENTED",
+      "object_class": "EXECUTABLE_CAPABILITY",
+      "observed_refs": {
+        "contracts": [
+          "schemas/topic_belonging_decision.json",
+          "schemas/topic_belonging_input.json"
+        ],
+        "implementation": [
+          "src/scripts/channel_intelligence.py",
+          "src/scripts/topic_belonging_flow.py"
+        ],
+        "profiles": [
+          "config/active_editorial_profile.json",
+          "config/agent_execution_profiles.json",
+          "config/editorial_profile_registry.json"
+        ],
+        "prompts": [
+          "prompt_channel_intelligence_producer",
+          "prompt_channel_intelligence_reviewer"
+        ],
+        "roles": [
+          "CHANNEL_INTELLIGENCE_PRODUCER",
+          "CHANNEL_INTELLIGENCE_REVIEWER"
+        ],
+        "routes": [
+          "config/capability_routing.yaml",
+          "config/capability_routing.yaml#TOPIC_BELONGING_ASSESSMENT"
+        ]
+      },
+      "owner_observation": {
+        "decision_authority": "CHANNEL_INTELLIGENCE_REVIEWER_FOR_ORDINARY_TOPICS",
+        "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "REGISTERED",
+      "resolved_artifacts": [
+        "config/active_editorial_profile.json",
+        "config/agent_execution_profiles.json",
+        "config/capability_routing.yaml",
+        "config/editorial_profile_registry.json",
+        "schemas/topic_belonging_decision.json",
+        "schemas/topic_belonging_input.json",
+        "src/scripts/channel_intelligence.py",
+        "src/scripts/topic_belonging_flow.py"
+      ],
+      "source_refs": [
+        "config/capability_registry.json",
+        "config/capability_routing.yaml#TOPIC_BELONGING_ASSESSMENT"
+      ],
+      "source_type": "CAPABILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "VOICE_CORPUS_SAMPLE_ASSESSMENT"
+      ],
+      "candidate_id": "VOICE_CORPUS_SAMPLE_ASSESSMENT",
+      "canonical_identity": "VOICE_CORPUS_SAMPLE_ASSESSMENT",
+      "classification_reason": "Canonical capability registry entry.",
+      "current_registry_presence": true,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/capability_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": "DEFINED",
+      "object_class": "EXECUTABLE_CAPABILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [
+          "CHANNEL_INTELLIGENCE_PRODUCER",
+          "CHANNEL_INTELLIGENCE_REVIEWER"
+        ],
+        "routes": []
+      },
+      "owner_observation": {
+        "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
+        "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "REGISTERED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/capability_registry.json"
+      ],
+      "source_type": "CAPABILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "VOICE_LEARNING_CANDIDATE_REVIEW"
+      ],
+      "candidate_id": "VOICE_LEARNING_CANDIDATE_REVIEW",
+      "canonical_identity": "VOICE_LEARNING_CANDIDATE_REVIEW",
+      "classification_reason": "Canonical capability registry entry.",
+      "current_registry_presence": true,
+      "disposition": "DEFERRED",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/capability_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": "DEFINED",
+      "object_class": "EXECUTABLE_CAPABILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [
+          "CHANNEL_INTELLIGENCE_REVIEWER"
+        ],
+        "routes": []
+      },
+      "owner_observation": {
+        "decision_authority": "CHANNEL_INTELLIGENCE_REVIEW",
+        "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "REGISTERED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/capability_registry.json"
+      ],
+      "source_type": "CAPABILITY_REGISTRY"
+    }
+  ],
+  "discovery_scope_ref": "TH04_capability_discovery_scope.json",
+  "evidence_refs": [
+    "config/capability_registry.json",
+    "config/responsibility_registry.json",
+    "config/agent_prompt_registry.json",
+    "config/agent_execution_profiles.json",
+    "config/subagent_registry.json",
+    "config/capability_routing.yaml",
+    "config/skill_catalog.json"
+  ],
+  "generated_at": "2026-08-10T00:00:00Z",
+  "limitations": [],
+  "mission_id": "TH-04",
+  "plan_id": "PLAN_004",
+  "repository_revision": "b1d49f9abdcf64e8739f45d90392c7e823ffe2e3",
+  "result": "COMPLETED_WITH_FINDINGS",
+  "schema_version": "1.0.0",
+  "source_inputs": [
+    {
+      "path": "config/capability_registry.json",
+      "sha256": "929d87458288eaa047f10b9aa592a5e913ae27d1fa76bb8cd9ac3f974ee2ac5b"
+    },
+    {
+      "path": "config/responsibility_registry.json",
+      "sha256": "6bc780a031af3e17b10351546acfb4dfeae23e93467afeaaf80b85f6649826db"
+    },
+    {
+      "path": "config/agent_prompt_registry.json",
+      "sha256": "a34c020e853a8c64968dbdef5905a8952ef369e835b1d54afe77e706801fe369"
+    },
+    {
+      "path": "config/agent_execution_profiles.json",
+      "sha256": "6f1809d92fc658a8c5f5afe1946fd85328fab24c7da2cdc753a78d48bf9fc6ff"
+    },
+    {
+      "path": "config/subagent_registry.json",
+      "sha256": "3a7df2e743e315ffc0b6ca6e20bc5dbec5a5119a257b318a33f113fa4d735cee"
+    },
+    {
+      "path": "config/capability_routing.yaml",
+      "sha256": "2bde00fe7d432e5cfb1990ee86d8bda912c8bde166bcc4e4041fa9d990097397"
+    },
+    {
+      "path": "config/skill_catalog.json",
+      "sha256": "9081b8754be0a511ca4ec1c5c55f46959cba95383cee7daa0b92635edb5d4135"
+    }
+  ],
+  "unresolved_candidates": [
+    "B5_I2_SEMANTIC_AUDITOR"
+  ]
+}

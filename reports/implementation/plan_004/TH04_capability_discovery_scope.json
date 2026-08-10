@@ -1,0 +1,72 @@
+{
+  "artifact_type": "CAPABILITY_DISCOVERY_SCOPE",
+  "evidence_refs": [
+    "config/capability_registry.json",
+    "config/responsibility_registry.json",
+    "config/agent_prompt_registry.json",
+    "config/agent_execution_profiles.json",
+    "config/subagent_registry.json",
+    "config/capability_routing.yaml",
+    "config/skill_catalog.json"
+  ],
+  "generated_at": "2026-08-10T00:00:00Z",
+  "limitations": [],
+  "mission_id": "TH-04",
+  "plan_id": "PLAN_004",
+  "repository_revision": "b1d49f9abdcf64e8739f45d90392c7e823ffe2e3",
+  "resolvable_roots": [
+    "schemas",
+    "src",
+    "prompts",
+    ".agent/skills",
+    ".agents/skills"
+  ],
+  "result": "PASS",
+  "rules": [
+    "FOLLOW_EXPLICIT_REFERENCES_ONLY",
+    "PRESERVE_ORIGINAL_IDENTIFIER",
+    "NORMALIZE_FOR_COMPARISON_ONLY",
+    "NO_RECURSIVE_ROOT_SCAN",
+    "ENGINEERING_SKILLS_ARE_NOT_PRODUCT_CAPABILITIES"
+  ],
+  "schema_version": "1.0.0",
+  "seed_paths": [
+    "config/capability_registry.json",
+    "config/responsibility_registry.json",
+    "config/agent_prompt_registry.json",
+    "config/agent_execution_profiles.json",
+    "config/subagent_registry.json",
+    "config/capability_routing.yaml",
+    "config/skill_catalog.json"
+  ],
+  "source_inputs": [
+    {
+      "path": "config/capability_registry.json",
+      "sha256": "929d87458288eaa047f10b9aa592a5e913ae27d1fa76bb8cd9ac3f974ee2ac5b"
+    },
+    {
+      "path": "config/responsibility_registry.json",
+      "sha256": "6bc780a031af3e17b10351546acfb4dfeae23e93467afeaaf80b85f6649826db"
+    },
+    {
+      "path": "config/agent_prompt_registry.json",
+      "sha256": "a34c020e853a8c64968dbdef5905a8952ef369e835b1d54afe77e706801fe369"
+    },
+    {
+      "path": "config/agent_execution_profiles.json",
+      "sha256": "6f1809d92fc658a8c5f5afe1946fd85328fab24c7da2cdc753a78d48bf9fc6ff"
+    },
+    {
+      "path": "config/subagent_registry.json",
+      "sha256": "3a7df2e743e315ffc0b6ca6e20bc5dbec5a5119a257b318a33f113fa4d735cee"
+    },
+    {
+      "path": "config/capability_routing.yaml",
+      "sha256": "2bde00fe7d432e5cfb1990ee86d8bda912c8bde166bcc4e4041fa9d990097397"
+    },
+    {
+      "path": "config/skill_catalog.json",
+      "sha256": "9081b8754be0a511ca4ec1c5c55f46959cba95383cee7daa0b92635edb5d4135"
+    }
+  ]
+}

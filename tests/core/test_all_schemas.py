@@ -496,6 +496,23 @@ for _name in ("responsibility_registry", "skill_catalog", "subagent_registry", "
 # CI: fixtures for capability and topic belonging schemas.
 with open(os.path.join(os.path.dirname(__file__), "..", "..", "config", "capability_registry.json"), encoding="utf-8") as _fixture:
     VALID_FIXTURES["capability_registry"] = json.load(_fixture)
+VALID_FIXTURES["capability_audit_universe"] = {
+    "schema_version": "1.0.0", "plan_id": "PLAN_004", "mission_id": "TH-04",
+    "repository_revision": "a" * 40, "generated_at": "2026-08-10T00:00:00Z",
+    "source_inputs": [{"path": "config/capability_registry.json", "sha256": "a" * 64}],
+    "evidence_refs": ["config/capability_registry.json"], "limitations": [], "result": "PASS",
+    "artifact_type": "CAPABILITY_AUDIT_UNIVERSE", "discovery_scope_ref": "TH04_capability_discovery_scope.json",
+    "candidates": [{
+        "candidate_id": "CAP", "canonical_identity": "CAP", "aliases": ["CAP"],
+        "source_type": "CAPABILITY_REGISTRY", "source_refs": ["config/capability_registry.json"],
+        "current_registry_presence": True, "object_class": "EXECUTABLE_CAPABILITY", "disposition": "CURRENT",
+        "registry_state": "REGISTERED", "classification_reason": "fixture", "owner_observation": {
+            "status": "RESOLVED_FROM_CANONICAL_FIELD", "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+            "decision_authority": "REVIEWER"}, "maturity_observed": "IMPLEMENTED",
+        "observed_refs": {"roles": [], "prompts": [], "profiles": [], "routes": [], "contracts": [], "implementation": []},
+        "resolved_artifacts": [], "inconsistencies": [], "evidence_refs": ["config/capability_registry.json"],
+    }], "unresolved_candidates": [],
+}
 _VALID_PROFILE_CHECKSUM = "a" * 64
 _VALID_PROVENANCE = {"actor_id": "producer-1", "run_id": "run-producer", "role_id": "CHANNEL_INTELLIGENCE_PRODUCER", "input_checksums": ["a" * 64], "output_checksum": "a" * 64}
 VALID_FIXTURES["topic_belonging_assessment"] = {

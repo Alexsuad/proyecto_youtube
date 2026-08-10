@@ -1,0 +1,574 @@
+{
+  "artifact_type": "CAPABILITY_REGISTRY_DELTA_PROPOSAL",
+  "evidence_refs": [
+    "config/capability_registry.json",
+    "config/responsibility_registry.json",
+    "config/agent_prompt_registry.json",
+    "config/agent_execution_profiles.json",
+    "config/subagent_registry.json",
+    "config/capability_routing.yaml",
+    "config/skill_catalog.json"
+  ],
+  "forbidden_operations": [
+    "ACTIVATE",
+    "CHANGE_FUNCTIONAL_AUTHORITY",
+    "FUNCTIONALLY_APPROVE",
+    "PROMOTE_TO_DEMONSTRATED"
+  ],
+  "generated_at": "2026-08-10T00:00:00Z",
+  "limitations": [],
+  "mission_id": "TH-04",
+  "operations": [
+    {
+      "candidate_id": "B5_I2_SEMANTIC_AUDITOR",
+      "evidence_refs": [
+        "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Routing-declared candidate absent from canonical registry."
+    },
+    {
+      "candidate_id": "EDITORIAL_PROFILE_FUNCTIONAL_REVIEW",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/capability_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Canonical capability registry entry."
+    },
+    {
+      "candidate_id": "EDITORIAL_PROFILE_PROPOSAL",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "config/capability_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Canonical capability registry entry."
+    },
+    {
+      "candidate_id": "IDENTITY_DRIFT_AUDIT",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/capability_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Canonical capability registry entry."
+    },
+    {
+      "candidate_id": "PROFILE_CHANGE_IMPACT_ASSESSMENT",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/capability_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Canonical capability registry entry."
+    },
+    {
+      "candidate_id": "PROFILE:CHANNEL_INTELLIGENCE_PRODUCER",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Execution profile is routing configuration, not a product capability."
+    },
+    {
+      "candidate_id": "PROFILE:CHANNEL_INTELLIGENCE_REVIEWER",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Execution profile is routing configuration, not a product capability."
+    },
+    {
+      "candidate_id": "PROFILE:SCRIPT_PRODUCT_AUDITOR",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Execution profile is routing configuration, not a product capability."
+    },
+    {
+      "candidate_id": "PROFILE:SCRIPT_PRODUCT_PRODUCER",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Execution profile is routing configuration, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_channel_intelligence_producer",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_channel_intelligence_reviewer",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_editor",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_final_editorial_auditor",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_narrative_architecture",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_orchestration",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_research_curation",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_script_product_auditor",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_script_product_producer",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_writing",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_youtube_adaptation_auditor",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "PROMPT:prompt_youtube_adaptation_producer",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Prompt is supporting mechanism, not a product capability."
+    },
+    {
+      "candidate_id": "ROLE:CHANNEL_INTELLIGENCE_PRODUCER",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Registered responsibility is not a capability by itself."
+    },
+    {
+      "candidate_id": "ROLE:CHANNEL_INTELLIGENCE_REVIEWER",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Registered responsibility is not a capability by itself."
+    },
+    {
+      "candidate_id": "ROLE:EDITOR",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Registered responsibility is not a capability by itself."
+    },
+    {
+      "candidate_id": "ROLE:FINAL_EDITORIAL_AUDITOR",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Registered responsibility is not a capability by itself."
+    },
+    {
+      "candidate_id": "ROLE:NARRATIVE_ARCHITECTURE",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Registered responsibility is not a capability by itself."
+    },
+    {
+      "candidate_id": "ROLE:ORCHESTRATION",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Registered responsibility is not a capability by itself."
+    },
+    {
+      "candidate_id": "ROLE:RESEARCH_AND_CURATION",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Registered responsibility is not a capability by itself."
+    },
+    {
+      "candidate_id": "ROLE:WRITING",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Registered responsibility is not a capability by itself."
+    },
+    {
+      "candidate_id": "SKILL:skill_analisis_patrones",
+      "evidence_refs": [
+        ".agent/skills/skill_analisis_patrones.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_auditar_suficiencia_semantica_b5_i2",
+      "evidence_refs": [
+        ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_auditoria_sistema",
+      "evidence_refs": [
+        ".agent/skills/skill_auditoria_sistema.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_cerrar_episodio",
+      "evidence_refs": [
+        ".agent/skills/skill_cerrar_episodio.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_control_integridad_pipeline",
+      "evidence_refs": [
+        ".agent/skills/skill_control_integridad_pipeline.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_crear_brief_episodio",
+      "evidence_refs": [
+        ".agent/skills/skill_crear_brief_episodio.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_curation_obras",
+      "evidence_refs": [
+        ".agent/skills/skill_curation_obras.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_extraer_voice_learnings",
+      "evidence_refs": [
+        ".agent/skills/skill_extraer_voice_learnings.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_guion_longform",
+      "evidence_refs": [
+        ".agent/skills/skill_guion_longform.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_iniciar_episodio",
+      "evidence_refs": [
+        ".agent/skills/skill_iniciar_episodio.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_mapa_eventos_y_outline",
+      "evidence_refs": [
+        ".agent/skills/skill_mapa_eventos_y_outline.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_owner_report",
+      "evidence_refs": [
+        ".agent/skills/skill_owner_report.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_packaging",
+      "evidence_refs": [
+        ".agent/skills/skill_packaging.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_qa_brief_research",
+      "evidence_refs": [
+        ".agent/skills/skill_qa_brief_research.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_qa_editorial",
+      "evidence_refs": [
+        ".agent/skills/skill_qa_editorial.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_qa_lenguaje_youtube",
+      "evidence_refs": [
+        ".agent/skills/skill_qa_lenguaje_youtube.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_qa_lenguaje_youtube_ultra",
+      "evidence_refs": [
+        ".agent/skills/skill_qa_lenguaje_youtube_ultra.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_research_tema_y_obras",
+      "evidence_refs": [
+        ".agent/skills/skill_research_tema_y_obras.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_seo_youtube",
+      "evidence_refs": [
+        ".agent/skills/skill_seo_youtube.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_shorts",
+      "evidence_refs": [
+        ".agent/skills/skill_shorts.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_sintesis_tesis",
+      "evidence_refs": [
+        ".agent/skills/skill_sintesis_tesis.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "SKILL:skill_verificacion_veracidad_fuente_externa_historica",
+      "evidence_refs": [
+        ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md",
+        "config/skill_catalog.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Product skill is a supporting artifact; engineering skills are excluded from product capability inventory."
+    },
+    {
+      "candidate_id": "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "config/capability_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Canonical capability registry entry."
+    },
+    {
+      "candidate_id": "SUBAGENT:SCRIPT_PRODUCT_AUDITOR",
+      "evidence_refs": [
+        "config/subagent_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Subagent record is an execution participant, not a product capability."
+    },
+    {
+      "candidate_id": "SUBAGENT:SCRIPT_PRODUCT_PRODUCER",
+      "evidence_refs": [
+        "config/subagent_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Subagent record is an execution participant, not a product capability."
+    },
+    {
+      "candidate_id": "SUBAGENT:YOUTUBE_ADAPTATION_AUDITOR",
+      "evidence_refs": [
+        "config/subagent_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Subagent record is an execution participant, not a product capability."
+    },
+    {
+      "candidate_id": "SUBAGENT:YOUTUBE_ADAPTATION_PRODUCER",
+      "evidence_refs": [
+        "config/subagent_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Subagent record is an execution participant, not a product capability."
+    },
+    {
+      "candidate_id": "TOPIC_BELONGING_ASSESSMENT",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/active_editorial_profile.json",
+        "config/agent_execution_profiles.json",
+        "config/capability_registry.json",
+        "config/capability_routing.yaml",
+        "config/capability_routing.yaml#TOPIC_BELONGING_ASSESSMENT",
+        "config/editorial_profile_registry.json",
+        "prompt_channel_intelligence_producer",
+        "prompt_channel_intelligence_reviewer",
+        "schemas/topic_belonging_decision.json",
+        "schemas/topic_belonging_input.json",
+        "src/scripts/channel_intelligence.py",
+        "src/scripts/topic_belonging_flow.py"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Canonical capability registry entry."
+    },
+    {
+      "candidate_id": "VOICE_CORPUS_SAMPLE_ASSESSMENT",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/capability_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Canonical capability registry entry."
+    },
+    {
+      "candidate_id": "VOICE_LEARNING_CANDIDATE_REVIEW",
+      "evidence_refs": [
+        "CHANNEL_INTELLIGENCE_REVIEWER",
+        "config/capability_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Canonical capability registry entry."
+    }
+  ],
+  "plan_id": "PLAN_004",
+  "registry_write_mode": "READ_ONLY",
+  "repository_revision": "b1d49f9abdcf64e8739f45d90392c7e823ffe2e3",
+  "result": "PROPOSAL_ONLY",
+  "schema_version": "1.0.0",
+  "source_inputs": [
+    {
+      "path": "config/capability_registry.json",
+      "sha256": "929d87458288eaa047f10b9aa592a5e913ae27d1fa76bb8cd9ac3f974ee2ac5b"
+    },
+    {
+      "path": "config/responsibility_registry.json",
+      "sha256": "6bc780a031af3e17b10351546acfb4dfeae23e93467afeaaf80b85f6649826db"
+    },
+    {
+      "path": "config/agent_prompt_registry.json",
+      "sha256": "a34c020e853a8c64968dbdef5905a8952ef369e835b1d54afe77e706801fe369"
+    },
+    {
+      "path": "config/agent_execution_profiles.json",
+      "sha256": "6f1809d92fc658a8c5f5afe1946fd85328fab24c7da2cdc753a78d48bf9fc6ff"
+    },
+    {
+      "path": "config/subagent_registry.json",
+      "sha256": "3a7df2e743e315ffc0b6ca6e20bc5dbec5a5119a257b318a33f113fa4d735cee"
+    },
+    {
+      "path": "config/capability_routing.yaml",
+      "sha256": "2bde00fe7d432e5cfb1990ee86d8bda912c8bde166bcc4e4041fa9d990097397"
+    },
+    {
+      "path": "config/skill_catalog.json",
+      "sha256": "9081b8754be0a511ca4ec1c5c55f46959cba95383cee7daa0b92635edb5d4135"
+    }
+  ]
+}
