@@ -30,7 +30,6 @@
     {
       "candidate_id": "EDITORIAL_PROFILE_FUNCTIONAL_REVIEW",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/capability_registry.json"
       ],
       "operation": "NO_CHANGE",
@@ -39,7 +38,6 @@
     {
       "candidate_id": "EDITORIAL_PROFILE_PROPOSAL",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_PRODUCER",
         "config/capability_registry.json"
       ],
       "operation": "NO_CHANGE",
@@ -48,17 +46,24 @@
     {
       "candidate_id": "IDENTITY_DRIFT_AUDIT",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/capability_registry.json"
       ],
       "operation": "NO_CHANGE",
       "reason": "Canonical capability registry entry."
     },
     {
+      "candidate_id": "POLICY:policies/channel_intelligence/topic_belonging_policy.md",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json#prompts[10].required_context[3]",
+        "config/agent_prompt_registry.json#prompts[11].required_context[3]",
+        "config/capability_registry.json#capabilities[0].dependencies[3]"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Explicitly reachable policy reference; not a capability."
+    },
+    {
       "candidate_id": "PROFILE_CHANGE_IMPACT_ASSESSMENT",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_PRODUCER",
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/capability_registry.json"
       ],
       "operation": "NO_CHANGE",
@@ -457,7 +462,6 @@
     {
       "candidate_id": "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_PRODUCER",
         "config/capability_registry.json"
       ],
       "operation": "NO_CHANGE",
@@ -498,18 +502,17 @@
     {
       "candidate_id": "TOPIC_BELONGING_ASSESSMENT",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_PRODUCER",
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/active_editorial_profile.json",
         "config/agent_execution_profiles.json",
         "config/capability_registry.json",
         "config/capability_routing.yaml",
         "config/capability_routing.yaml#TOPIC_BELONGING_ASSESSMENT",
         "config/editorial_profile_registry.json",
-        "prompt_channel_intelligence_producer",
-        "prompt_channel_intelligence_reviewer",
+        "policies/channel_intelligence/topic_belonging_policy.md",
+        "profiles/voice/corpus_manifest.json",
         "schemas/topic_belonging_decision.json",
         "schemas/topic_belonging_input.json",
+        "schemas/topic_belonging_owner_decision.json",
         "src/scripts/channel_intelligence.py",
         "src/scripts/topic_belonging_flow.py"
       ],
@@ -519,8 +522,6 @@
     {
       "candidate_id": "VOICE_CORPUS_SAMPLE_ASSESSMENT",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_PRODUCER",
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/capability_registry.json"
       ],
       "operation": "NO_CHANGE",
@@ -529,7 +530,6 @@
     {
       "candidate_id": "VOICE_LEARNING_CANDIDATE_REVIEW",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/capability_registry.json"
       ],
       "operation": "NO_CHANGE",
@@ -538,7 +538,7 @@
   ],
   "plan_id": "PLAN_004",
   "registry_write_mode": "READ_ONLY",
-  "repository_revision": "b1d49f9abdcf64e8739f45d90392c7e823ffe2e3",
+  "repository_revision": "3b1dc5071d62cfaf83c8e67aed580a5bafceae25",
   "result": "PROPOSAL_ONLY",
   "schema_version": "1.0.0",
   "source_inputs": [

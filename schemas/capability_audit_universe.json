@@ -3,7 +3,7 @@
   "title": "TH-04 Capability Audit Universe",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "plan_id", "mission_id", "repository_revision", "generated_at", "source_inputs", "evidence_refs", "limitations", "result", "artifact_type", "discovery_scope_ref", "candidates", "unresolved_candidates"],
+  "required": ["schema_version", "plan_id", "mission_id", "repository_revision", "generated_at", "source_inputs", "evidence_refs", "limitations", "result", "artifact_type", "discovery_scope_ref", "resolved_references", "candidates", "unresolved_candidates"],
   "properties": {
     "schema_version": {"const": "1.0.0"},
     "plan_id": {"const": "PLAN_004"},
@@ -16,6 +16,7 @@
     "result": {"enum": ["PASS", "COMPLETED_WITH_FINDINGS", "LIMITATION"]},
     "artifact_type": {"const": "CAPABILITY_AUDIT_UNIVERSE"},
     "discovery_scope_ref": {"const": "TH04_capability_discovery_scope.json"},
+    "resolved_references": {"type": "array", "items": {"$ref": "#/$defs/resolved_reference"}},
     "candidates": {"type": "array", "items": {"$ref": "#/$defs/candidate"}},
     "unresolved_candidates": {"type": "array", "items": {"type": "string", "minLength": 1}}
   },
@@ -32,7 +33,7 @@
     "candidate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["candidate_id", "canonical_identity", "aliases", "source_type", "source_refs", "current_registry_presence", "object_class", "disposition", "registry_state", "classification_reason", "owner_observation", "maturity_observed", "observed_refs", "resolved_artifacts", "inconsistencies", "evidence_refs"],
+      "required": ["candidate_id", "canonical_identity", "aliases", "source_type", "source_refs", "current_registry_presence", "object_class", "disposition", "registry_state", "classification_reason", "owner_observation", "maturity_observed", "maturity_observed_raw", "observed_refs", "observed_tests", "resolved_artifacts", "inconsistencies", "evidence_refs"],
       "properties": {
         "candidate_id": {"type": "string", "minLength": 1},
         "canonical_identity": {"type": "string", "minLength": 1},
@@ -45,13 +46,28 @@
         "registry_state": {"enum": ["REGISTERED", "UNREGISTERED", "NOT_OBSERVED", "UNRESOLVED", "CONFLICTING"]},
         "classification_reason": {"type": "string", "minLength": 1},
         "owner_observation": {"type": "object", "required": ["status"], "properties": {"status": {"enum": ["RESOLVED_FROM_CANONICAL_FIELD", "UNRESOLVED", "CONFLICTING_CLAIMS"]}, "functional_authority_domain": {"type": ["string", "null"]}, "decision_authority": {"type": ["string", "null"]}}, "additionalProperties": false},
-        "maturity_observed": {"type": ["string", "null"]},
-        "observed_refs": {"type": "object", "additionalProperties": false, "required": ["roles", "prompts", "profiles", "routes", "contracts", "implementation"], "properties": {"roles": {"$ref": "#/$defs/strings"}, "prompts": {"$ref": "#/$defs/strings"}, "profiles": {"$ref": "#/$defs/strings"}, "routes": {"$ref": "#/$defs/strings"}, "contracts": {"$ref": "#/$defs/strings"}, "implementation": {"$ref": "#/$defs/strings"}}},
+        "maturity_observed": {"type": ["string", "null"], "enum": ["DEFINED", "REGISTERED", "IMPLEMENTED", "DEMONSTRATED", null]},
+        "maturity_observed_raw": {"type": ["string", "null"]},
+        "observed_refs": {"type": "object", "additionalProperties": false, "required": ["roles", "prompts", "profiles", "routes", "contracts", "implementation", "tests"], "properties": {"roles": {"$ref": "#/$defs/strings"}, "prompts": {"$ref": "#/$defs/strings"}, "profiles": {"$ref": "#/$defs/strings"}, "routes": {"$ref": "#/$defs/strings"}, "contracts": {"$ref": "#/$defs/strings"}, "implementation": {"$ref": "#/$defs/strings"}, "tests": {"$ref": "#/$defs/strings"}}},
+        "observed_tests": {"$ref": "#/$defs/strings"},
         "resolved_artifacts": {"$ref": "#/$defs/strings"},
         "inconsistencies": {"$ref": "#/$defs/strings"},
         "evidence_refs": {"$ref": "#/$defs/strings"}
       }
     },
-    "strings": {"type": "array", "items": {"type": "string", "minLength": 1}}
+    "strings": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "resolved_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_ref", "reference", "resolved_path", "status", "object_class", "provenance_chain"],
+      "properties": {
+        "source_ref": {"type": "string", "minLength": 1},
+        "reference": {"type": "string", "minLength": 1},
+        "resolved_path": {"type": ["string", "null"]},
+        "status": {"enum": ["RESOLVED", "UNRESOLVED"]},
+        "object_class": {"type": ["string", "null"], "enum": ["POLICY", "GATE", null]},
+        "provenance_chain": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    }
   }
 }

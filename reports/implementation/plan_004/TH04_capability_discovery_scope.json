@@ -13,7 +13,7 @@
   "limitations": [],
   "mission_id": "TH-04",
   "plan_id": "PLAN_004",
-  "repository_revision": "b1d49f9abdcf64e8739f45d90392c7e823ffe2e3",
+  "repository_revision": "3b1dc5071d62cfaf83c8e67aed580a5bafceae25",
   "resolvable_roots": [
     "schemas",
     "src",
@@ -23,6 +23,7 @@
   ],
   "result": "PASS",
   "rules": [
+    "VALIDATE_SEEDS_BEFORE_DISCOVERY",
     "FOLLOW_EXPLICIT_REFERENCES_ONLY",
     "PRESERVE_ORIGINAL_IDENTIFIER",
     "NORMALIZE_FOR_COMPARISON_ONLY",
@@ -39,6 +40,7 @@
     "config/capability_routing.yaml",
     "config/skill_catalog.json"
   ],
+  "seed_validation_errors": [],
   "source_inputs": [
     {
       "path": "config/capability_registry.json",

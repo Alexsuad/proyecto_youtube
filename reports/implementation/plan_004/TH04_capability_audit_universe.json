@@ -15,6 +15,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UNRESOLVED_CANDIDATE",
       "observed_refs": {
         "contracts": [],
@@ -24,8 +25,10 @@
         "roles": [],
         "routes": [
           "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR"
-        ]
+        ],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -46,22 +49,22 @@
       "current_registry_presence": true,
       "disposition": "DEFERRED",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/capability_registry.json"
       ],
       "inconsistencies": [],
       "maturity_observed": "DEFINED",
+      "maturity_observed_raw": "DEFINED",
       "object_class": "EXECUTABLE_CAPABILITY",
       "observed_refs": {
         "contracts": [],
         "implementation": [],
         "profiles": [],
         "prompts": [],
-        "roles": [
-          "CHANNEL_INTELLIGENCE_REVIEWER"
-        ],
-        "routes": []
+        "roles": [],
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "decision_authority": "CHANNEL_INTELLIGENCE_FUNCTIONAL_REVIEW",
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
@@ -84,22 +87,22 @@
       "current_registry_presence": true,
       "disposition": "DEFERRED",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_PRODUCER",
         "config/capability_registry.json"
       ],
       "inconsistencies": [],
       "maturity_observed": "DEFINED",
+      "maturity_observed_raw": "DEFINED",
       "object_class": "EXECUTABLE_CAPABILITY",
       "observed_refs": {
         "contracts": [],
         "implementation": [],
         "profiles": [],
         "prompts": [],
-        "roles": [
-          "CHANNEL_INTELLIGENCE_PRODUCER"
-        ],
-        "routes": []
+        "roles": [],
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "decision_authority": "CHANNEL_INTELLIGENCE_PROPOSAL",
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
@@ -122,22 +125,22 @@
       "current_registry_presence": true,
       "disposition": "DEFERRED",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/capability_registry.json"
       ],
       "inconsistencies": [],
       "maturity_observed": "DEFINED",
+      "maturity_observed_raw": "DEFINED",
       "object_class": "EXECUTABLE_CAPABILITY",
       "observed_refs": {
         "contracts": [],
         "implementation": [],
         "profiles": [],
         "prompts": [],
-        "roles": [
-          "CHANNEL_INTELLIGENCE_REVIEWER"
-        ],
-        "routes": []
+        "roles": [],
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "decision_authority": "CHANNEL_INTELLIGENCE_AUDIT",
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
@@ -152,6 +155,48 @@
     },
     {
       "aliases": [
+        "POLICY:policies/channel_intelligence/topic_belonging_policy.md"
+      ],
+      "candidate_id": "POLICY:policies/channel_intelligence/topic_belonging_policy.md",
+      "canonical_identity": "POLICY_POLICIES_CHANNEL_INTELLIGENCE_TOPIC_BELONGING_POLICY_MD",
+      "classification_reason": "Explicitly reachable policy reference; not a capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_prompt_registry.json#prompts[10].required_context[3]",
+        "config/agent_prompt_registry.json#prompts[11].required_context[3]",
+        "config/capability_registry.json#capabilities[0].dependencies[3]"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "POLICY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        "policies/channel_intelligence/topic_belonging_policy.md"
+      ],
+      "source_refs": [
+        "config/agent_prompt_registry.json#prompts[10].required_context[3]",
+        "config/agent_prompt_registry.json#prompts[11].required_context[3]",
+        "config/capability_registry.json#capabilities[0].dependencies[3]"
+      ],
+      "source_type": "EXPLICIT_REACHABLE_REFERENCE"
+    },
+    {
+      "aliases": [
         "PROFILE_CHANGE_IMPACT_ASSESSMENT"
       ],
       "candidate_id": "PROFILE_CHANGE_IMPACT_ASSESSMENT",
@@ -160,24 +205,22 @@
       "current_registry_presence": true,
       "disposition": "DEFERRED",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_PRODUCER",
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/capability_registry.json"
       ],
       "inconsistencies": [],
       "maturity_observed": "DEFINED",
+      "maturity_observed_raw": "DEFINED",
       "object_class": "EXECUTABLE_CAPABILITY",
       "observed_refs": {
         "contracts": [],
         "implementation": [],
         "profiles": [],
         "prompts": [],
-        "roles": [
-          "CHANNEL_INTELLIGENCE_PRODUCER",
-          "CHANNEL_INTELLIGENCE_REVIEWER"
-        ],
-        "routes": []
+        "roles": [],
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
@@ -204,6 +247,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "ORCHESTRATION_ONLY",
       "observed_refs": {
         "contracts": [],
@@ -211,8 +255,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -237,6 +283,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "ORCHESTRATION_ONLY",
       "observed_refs": {
         "contracts": [],
@@ -244,8 +291,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -270,6 +319,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "ORCHESTRATION_ONLY",
       "observed_refs": {
         "contracts": [],
@@ -277,8 +327,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -303,6 +355,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "ORCHESTRATION_ONLY",
       "observed_refs": {
         "contracts": [],
@@ -310,8 +363,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -336,6 +391,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -343,8 +399,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -369,6 +427,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -376,8 +435,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -402,6 +463,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -409,8 +471,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -435,6 +499,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -442,8 +507,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -468,6 +535,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -475,8 +543,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -501,6 +571,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -508,8 +579,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -534,6 +607,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -541,8 +615,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -567,6 +643,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -574,8 +651,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -600,6 +679,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -607,8 +687,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -633,6 +715,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -640,8 +723,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -666,6 +751,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -673,8 +759,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -699,6 +787,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -706,8 +795,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -732,6 +823,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
       "observed_refs": {
         "contracts": [],
@@ -739,8 +831,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
         "status": "RESOLVED_FROM_CANONICAL_FIELD"
@@ -766,6 +860,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
       "observed_refs": {
         "contracts": [],
@@ -773,8 +868,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
         "status": "RESOLVED_FROM_CANONICAL_FIELD"
@@ -800,6 +897,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
       "observed_refs": {
         "contracts": [],
@@ -807,8 +905,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "functional_authority_domain": "SCRIPT_PRODUCT",
         "status": "RESOLVED_FROM_CANONICAL_FIELD"
@@ -834,6 +934,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
       "observed_refs": {
         "contracts": [],
@@ -841,8 +942,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "functional_authority_domain": "SCRIPT_PRODUCT",
         "status": "RESOLVED_FROM_CANONICAL_FIELD"
@@ -868,6 +971,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
       "observed_refs": {
         "contracts": [],
@@ -875,8 +979,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "functional_authority_domain": "SCRIPT_PRODUCT",
         "status": "RESOLVED_FROM_CANONICAL_FIELD"
@@ -902,6 +1008,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
       "observed_refs": {
         "contracts": [],
@@ -909,8 +1016,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "functional_authority_domain": "TECHNICAL_GOVERNANCE",
         "status": "RESOLVED_FROM_CANONICAL_FIELD"
@@ -936,6 +1045,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
       "observed_refs": {
         "contracts": [],
@@ -943,8 +1053,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "functional_authority_domain": "SCRIPT_PRODUCT",
         "status": "RESOLVED_FROM_CANONICAL_FIELD"
@@ -970,6 +1082,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
       "observed_refs": {
         "contracts": [],
@@ -977,8 +1090,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "functional_authority_domain": "SCRIPT_PRODUCT",
         "status": "RESOLVED_FROM_CANONICAL_FIELD"
@@ -1005,6 +1120,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1014,8 +1130,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1043,6 +1161,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1052,8 +1171,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1081,6 +1202,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1090,8 +1212,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1119,6 +1243,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1128,8 +1253,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1157,6 +1284,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1166,8 +1294,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1195,6 +1325,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1204,8 +1335,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1233,6 +1366,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1242,8 +1376,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1271,6 +1407,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1280,8 +1417,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1309,6 +1448,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1318,8 +1458,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1347,6 +1489,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1356,8 +1499,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1385,6 +1530,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1394,8 +1540,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1423,6 +1571,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1432,8 +1581,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1461,6 +1612,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1470,8 +1622,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1499,6 +1653,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1508,8 +1663,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1537,6 +1694,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1546,8 +1704,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1575,6 +1735,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1584,8 +1745,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1613,6 +1776,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1622,8 +1786,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1651,6 +1817,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1660,8 +1827,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1689,6 +1858,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1698,8 +1868,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1727,6 +1899,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1736,8 +1909,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1765,6 +1940,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1774,8 +1950,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1803,6 +1981,7 @@
       ],
       "inconsistencies": [],
       "maturity_observed": null,
+      "maturity_observed_raw": null,
       "object_class": "UTILITY",
       "observed_refs": {
         "contracts": [],
@@ -1812,8 +1991,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1836,22 +2017,22 @@
       "current_registry_presence": true,
       "disposition": "DEFERRED",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_PRODUCER",
         "config/capability_registry.json"
       ],
       "inconsistencies": [],
       "maturity_observed": "DEFINED",
+      "maturity_observed_raw": "DEFINED",
       "object_class": "EXECUTABLE_CAPABILITY",
       "observed_refs": {
         "contracts": [],
         "implementation": [],
         "profiles": [],
         "prompts": [],
-        "roles": [
-          "CHANNEL_INTELLIGENCE_PRODUCER"
-        ],
-        "routes": []
+        "roles": [],
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
@@ -1876,8 +2057,11 @@
       "evidence_refs": [
         "config/subagent_registry.json"
       ],
-      "inconsistencies": [],
+      "inconsistencies": [
+        "NON_CANONICAL_MATURITY:AGENT_IMPLEMENTED"
+      ],
       "maturity_observed": null,
+      "maturity_observed_raw": "AGENT_IMPLEMENTED",
       "object_class": "ORCHESTRATION_ONLY",
       "observed_refs": {
         "contracts": [],
@@ -1885,8 +2069,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1909,8 +2095,11 @@
       "evidence_refs": [
         "config/subagent_registry.json"
       ],
-      "inconsistencies": [],
+      "inconsistencies": [
+        "NON_CANONICAL_MATURITY:AGENT_IMPLEMENTED"
+      ],
       "maturity_observed": null,
+      "maturity_observed_raw": "AGENT_IMPLEMENTED",
       "object_class": "ORCHESTRATION_ONLY",
       "observed_refs": {
         "contracts": [],
@@ -1918,8 +2107,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1942,8 +2133,11 @@
       "evidence_refs": [
         "config/subagent_registry.json"
       ],
-      "inconsistencies": [],
+      "inconsistencies": [
+        "NON_CANONICAL_MATURITY:AGENT_TESTED_IN_ISOLATION"
+      ],
       "maturity_observed": null,
+      "maturity_observed_raw": "AGENT_TESTED_IN_ISOLATION",
       "object_class": "ORCHESTRATION_ONLY",
       "observed_refs": {
         "contracts": [],
@@ -1951,8 +2145,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -1975,8 +2171,11 @@
       "evidence_refs": [
         "config/subagent_registry.json"
       ],
-      "inconsistencies": [],
+      "inconsistencies": [
+        "NON_CANONICAL_MATURITY:AGENT_TESTED_IN_ISOLATION"
+      ],
       "maturity_observed": null,
+      "maturity_observed_raw": "AGENT_TESTED_IN_ISOLATION",
       "object_class": "ORCHESTRATION_ONLY",
       "observed_refs": {
         "contracts": [],
@@ -1984,8 +2183,10 @@
         "profiles": [],
         "prompts": [],
         "roles": [],
-        "routes": []
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "status": "UNRESOLVED"
       },
@@ -2006,23 +2207,23 @@
       "current_registry_presence": true,
       "disposition": "CURRENT",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_PRODUCER",
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/active_editorial_profile.json",
         "config/agent_execution_profiles.json",
         "config/capability_registry.json",
         "config/capability_routing.yaml",
         "config/capability_routing.yaml#TOPIC_BELONGING_ASSESSMENT",
         "config/editorial_profile_registry.json",
-        "prompt_channel_intelligence_producer",
-        "prompt_channel_intelligence_reviewer",
+        "policies/channel_intelligence/topic_belonging_policy.md",
+        "profiles/voice/corpus_manifest.json",
         "schemas/topic_belonging_decision.json",
         "schemas/topic_belonging_input.json",
+        "schemas/topic_belonging_owner_decision.json",
         "src/scripts/channel_intelligence.py",
         "src/scripts/topic_belonging_flow.py"
       ],
       "inconsistencies": [],
       "maturity_observed": "IMPLEMENTED",
+      "maturity_observed_raw": "IMPLEMENTED",
       "object_class": "EXECUTABLE_CAPABILITY",
       "observed_refs": {
         "contracts": [
@@ -2030,6 +2231,11 @@
           "schemas/topic_belonging_input.json"
         ],
         "implementation": [
+          "config/active_editorial_profile.json",
+          "config/editorial_profile_registry.json",
+          "policies/channel_intelligence/topic_belonging_policy.md",
+          "profiles/voice/corpus_manifest.json",
+          "schemas/topic_belonging_owner_decision.json",
           "src/scripts/channel_intelligence.py",
           "src/scripts/topic_belonging_flow.py"
         ],
@@ -2038,19 +2244,15 @@
           "config/agent_execution_profiles.json",
           "config/editorial_profile_registry.json"
         ],
-        "prompts": [
-          "prompt_channel_intelligence_producer",
-          "prompt_channel_intelligence_reviewer"
-        ],
-        "roles": [
-          "CHANNEL_INTELLIGENCE_PRODUCER",
-          "CHANNEL_INTELLIGENCE_REVIEWER"
-        ],
+        "prompts": [],
+        "roles": [],
         "routes": [
           "config/capability_routing.yaml",
           "config/capability_routing.yaml#TOPIC_BELONGING_ASSESSMENT"
-        ]
+        ],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "decision_authority": "CHANNEL_INTELLIGENCE_REVIEWER_FOR_ORDINARY_TOPICS",
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
@@ -2062,8 +2264,11 @@
         "config/agent_execution_profiles.json",
         "config/capability_routing.yaml",
         "config/editorial_profile_registry.json",
+        "policies/channel_intelligence/topic_belonging_policy.md",
+        "profiles/voice/corpus_manifest.json",
         "schemas/topic_belonging_decision.json",
         "schemas/topic_belonging_input.json",
+        "schemas/topic_belonging_owner_decision.json",
         "src/scripts/channel_intelligence.py",
         "src/scripts/topic_belonging_flow.py"
       ],
@@ -2083,24 +2288,22 @@
       "current_registry_presence": true,
       "disposition": "DEFERRED",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_PRODUCER",
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/capability_registry.json"
       ],
       "inconsistencies": [],
       "maturity_observed": "DEFINED",
+      "maturity_observed_raw": "DEFINED",
       "object_class": "EXECUTABLE_CAPABILITY",
       "observed_refs": {
         "contracts": [],
         "implementation": [],
         "profiles": [],
         "prompts": [],
-        "roles": [
-          "CHANNEL_INTELLIGENCE_PRODUCER",
-          "CHANNEL_INTELLIGENCE_REVIEWER"
-        ],
-        "routes": []
+        "roles": [],
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
@@ -2123,22 +2326,22 @@
       "current_registry_presence": true,
       "disposition": "DEFERRED",
       "evidence_refs": [
-        "CHANNEL_INTELLIGENCE_REVIEWER",
         "config/capability_registry.json"
       ],
       "inconsistencies": [],
       "maturity_observed": "DEFINED",
+      "maturity_observed_raw": "DEFINED",
       "object_class": "EXECUTABLE_CAPABILITY",
       "observed_refs": {
         "contracts": [],
         "implementation": [],
         "profiles": [],
         "prompts": [],
-        "roles": [
-          "CHANNEL_INTELLIGENCE_REVIEWER"
-        ],
-        "routes": []
+        "roles": [],
+        "routes": [],
+        "tests": []
       },
+      "observed_tests": [],
       "owner_observation": {
         "decision_authority": "CHANNEL_INTELLIGENCE_REVIEW",
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
@@ -2166,7 +2369,1749 @@
   "limitations": [],
   "mission_id": "TH-04",
   "plan_id": "PLAN_004",
-  "repository_revision": "b1d49f9abdcf64e8739f45d90392c7e823ffe2e3",
+  "repository_revision": "3b1dc5071d62cfaf83c8e67aed580a5bafceae25",
+  "resolved_references": [
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[0]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[10].required_context[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json"
+      ],
+      "reference": "config/editorial_profile_registry.json",
+      "resolved_path": "config/editorial_profile_registry.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[3]",
+        "policies/channel_intelligence/topic_belonging_policy.md"
+      ],
+      "reference": "policies/channel_intelligence/topic_belonging_policy.md",
+      "resolved_path": "policies/channel_intelligence/topic_belonging_policy.md",
+      "source_ref": "config/agent_prompt_registry.json#prompts[10].required_context[3]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[11].required_context[0]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[11].required_context[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[11].required_context[1]",
+        "config/editorial_profile_registry.json"
+      ],
+      "reference": "config/editorial_profile_registry.json",
+      "resolved_path": "config/editorial_profile_registry.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[11].required_context[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[11].required_context[3]",
+        "policies/channel_intelligence/topic_belonging_policy.md"
+      ],
+      "reference": "policies/channel_intelligence/topic_belonging_policy.md",
+      "resolved_path": "policies/channel_intelligence/topic_belonging_policy.md",
+      "source_ref": "config/agent_prompt_registry.json#prompts[11].required_context[3]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[6].required_context[0]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[6].required_context[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[7].required_context[0]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[7].required_context[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[8].required_context[0]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[8].required_context[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[8].required_context[1]",
+        "schemas/youtube_adaptation_b5_i2_package.json"
+      ],
+      "reference": "schemas/youtube_adaptation_b5_i2_package.json",
+      "resolved_path": "schemas/youtube_adaptation_b5_i2_package.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[8].required_context[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[8].required_context[2]",
+        "schemas/early_packaging_hypothesis.json"
+      ],
+      "reference": "schemas/early_packaging_hypothesis.json",
+      "resolved_path": "schemas/early_packaging_hypothesis.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[8].required_context[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[9].required_context[0]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[9].required_context[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[9].required_context[1]",
+        "schemas/youtube_adaptation_review.json"
+      ],
+      "reference": "schemas/youtube_adaptation_review.json",
+      "resolved_path": "schemas/youtube_adaptation_review.json",
+      "source_ref": "config/agent_prompt_registry.json#prompts[9].required_context[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[9].required_context[2]"
+      ],
+      "reference": "rules of producer/auditor independence",
+      "resolved_path": null,
+      "source_ref": "config/agent_prompt_registry.json#prompts[9].required_context[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].contract_refs[0]",
+        "schemas/topic_belonging_input.json"
+      ],
+      "reference": "schemas/topic_belonging_input.json",
+      "resolved_path": "schemas/topic_belonging_input.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].contract_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].contract_refs[1]",
+        "schemas/topic_belonging_decision.json"
+      ],
+      "reference": "schemas/topic_belonging_decision.json",
+      "resolved_path": "schemas/topic_belonging_decision.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].contract_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].dependencies[0]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].dependencies[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].dependencies[1]",
+        "config/editorial_profile_registry.json"
+      ],
+      "reference": "config/editorial_profile_registry.json",
+      "resolved_path": "config/editorial_profile_registry.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].dependencies[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].dependencies[2]",
+        "profiles/voice/corpus_manifest.json"
+      ],
+      "reference": "profiles/voice/corpus_manifest.json",
+      "resolved_path": "profiles/voice/corpus_manifest.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].dependencies[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].dependencies[3]",
+        "policies/channel_intelligence/topic_belonging_policy.md"
+      ],
+      "reference": "policies/channel_intelligence/topic_belonging_policy.md",
+      "resolved_path": "policies/channel_intelligence/topic_belonging_policy.md",
+      "source_ref": "config/capability_registry.json#capabilities[0].dependencies[3]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].dependencies[4]",
+        "schemas/topic_belonging_owner_decision.json"
+      ],
+      "reference": "schemas/topic_belonging_owner_decision.json",
+      "resolved_path": "schemas/topic_belonging_owner_decision.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].dependencies[4]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].execution_profile_refs[0]",
+        "config/agent_execution_profiles.json"
+      ],
+      "reference": "config/agent_execution_profiles.json",
+      "resolved_path": "config/agent_execution_profiles.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].execution_profile_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].implementation_refs[0]",
+        "src/scripts/channel_intelligence.py"
+      ],
+      "reference": "src/scripts/channel_intelligence.py",
+      "resolved_path": "src/scripts/channel_intelligence.py",
+      "source_ref": "config/capability_registry.json#capabilities[0].implementation_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].input_contract",
+        "schemas/topic_belonging_input.json"
+      ],
+      "reference": "schemas/topic_belonging_input.json",
+      "resolved_path": "schemas/topic_belonging_input.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].input_contract",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].output_contract",
+        "schemas/topic_belonging_decision.json"
+      ],
+      "reference": "schemas/topic_belonging_decision.json",
+      "resolved_path": "schemas/topic_belonging_decision.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].output_contract",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].profile_refs[0]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].profile_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].profile_refs[1]",
+        "config/editorial_profile_registry.json"
+      ],
+      "reference": "config/editorial_profile_registry.json",
+      "resolved_path": "config/editorial_profile_registry.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].profile_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].routing_ref",
+        "config/capability_routing.yaml"
+      ],
+      "reference": "config/capability_routing.yaml",
+      "resolved_path": "config/capability_routing.yaml",
+      "source_ref": "config/capability_registry.json#capabilities[0].routing_ref",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#routing_consumer",
+        "config/capability_routing.yaml"
+      ],
+      "reference": "config/capability_routing.yaml",
+      "resolved_path": "config/capability_routing.yaml",
+      "source_ref": "config/capability_registry.json#routing_consumer",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_routing.yaml",
+        "config/capability_routing.yaml#capabilities.TOPIC_BELONGING_ASSESSMENT.entrypoint",
+        "src/scripts/topic_belonging_flow.py"
+      ],
+      "reference": "src/scripts/topic_belonging_flow.py",
+      "resolved_path": "src/scripts/topic_belonging_flow.py",
+      "source_ref": "config/capability_routing.yaml#capabilities.TOPIC_BELONGING_ASSESSMENT.entrypoint",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.approval_path",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.approval_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.pending_decisions[3]"
+      ],
+      "reference": "La versión 1.1.0 incorpora RC-01 a RC-06 y su activación productiva se gobierna por `functional_approval.json`, `technical_validation.json` y `config/active_editorial_profile.json`.",
+      "resolved_path": null,
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.pending_decisions[3]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[1].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[1].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[2].locator",
+        "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[2].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.technical_validation_path",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/technical_validation.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/technical_validation.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/technical_validation.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.technical_validation_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.approval_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/functional_approval.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.0/functional_approval.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.0/functional_approval.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.approval_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.compiled_profile_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile.source_lineage[0].locator",
+        "docs/specifications/B3_editorial_profile_functional_specification.md"
+      ],
+      "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile.source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile.source_lineage[1].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile.source_lineage[1].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.technical_validation_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/technical_validation.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.0/technical_validation.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.0/technical_validation.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.technical_validation_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.approval_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/functional_approval.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.1/functional_approval.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.1/functional_approval.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.approval_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.compiled_profile_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile.source_lineage[0].locator",
+        "docs/specifications/B3_editorial_profile_functional_specification.md"
+      ],
+      "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile.source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile.source_lineage[1].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile.source_lineage[1].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.technical_validation_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/technical_validation.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.1/technical_validation.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.1/technical_validation.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.technical_validation_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[0].path",
+        ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md"
+      ],
+      "reference": ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
+      "resolved_path": ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
+      "source_ref": "config/skill_catalog.json#skills[0].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[10].path",
+        ".agent/skills/skill_mapa_eventos_y_outline.md"
+      ],
+      "reference": ".agent/skills/skill_mapa_eventos_y_outline.md",
+      "resolved_path": ".agent/skills/skill_mapa_eventos_y_outline.md",
+      "source_ref": "config/skill_catalog.json#skills[10].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[11].path",
+        ".agent/skills/skill_owner_report.md"
+      ],
+      "reference": ".agent/skills/skill_owner_report.md",
+      "resolved_path": ".agent/skills/skill_owner_report.md",
+      "source_ref": "config/skill_catalog.json#skills[11].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[12].path",
+        ".agent/skills/skill_packaging.md"
+      ],
+      "reference": ".agent/skills/skill_packaging.md",
+      "resolved_path": ".agent/skills/skill_packaging.md",
+      "source_ref": "config/skill_catalog.json#skills[12].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[13].path",
+        ".agent/skills/skill_qa_brief_research.md"
+      ],
+      "reference": ".agent/skills/skill_qa_brief_research.md",
+      "resolved_path": ".agent/skills/skill_qa_brief_research.md",
+      "source_ref": "config/skill_catalog.json#skills[13].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[14].path",
+        ".agent/skills/skill_qa_editorial.md"
+      ],
+      "reference": ".agent/skills/skill_qa_editorial.md",
+      "resolved_path": ".agent/skills/skill_qa_editorial.md",
+      "source_ref": "config/skill_catalog.json#skills[14].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[15].path",
+        ".agent/skills/skill_qa_lenguaje_youtube.md"
+      ],
+      "reference": ".agent/skills/skill_qa_lenguaje_youtube.md",
+      "resolved_path": ".agent/skills/skill_qa_lenguaje_youtube.md",
+      "source_ref": "config/skill_catalog.json#skills[15].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[16].path",
+        ".agent/skills/skill_qa_lenguaje_youtube_ultra.md"
+      ],
+      "reference": ".agent/skills/skill_qa_lenguaje_youtube_ultra.md",
+      "resolved_path": ".agent/skills/skill_qa_lenguaje_youtube_ultra.md",
+      "source_ref": "config/skill_catalog.json#skills[16].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[17].path",
+        ".agent/skills/skill_research_tema_y_obras.md"
+      ],
+      "reference": ".agent/skills/skill_research_tema_y_obras.md",
+      "resolved_path": ".agent/skills/skill_research_tema_y_obras.md",
+      "source_ref": "config/skill_catalog.json#skills[17].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[18].path",
+        ".agent/skills/skill_seo_youtube.md"
+      ],
+      "reference": ".agent/skills/skill_seo_youtube.md",
+      "resolved_path": ".agent/skills/skill_seo_youtube.md",
+      "source_ref": "config/skill_catalog.json#skills[18].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[19].path",
+        ".agent/skills/skill_shorts.md"
+      ],
+      "reference": ".agent/skills/skill_shorts.md",
+      "resolved_path": ".agent/skills/skill_shorts.md",
+      "source_ref": "config/skill_catalog.json#skills[19].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[1].path",
+        ".agent/skills/skill_analisis_patrones.md"
+      ],
+      "reference": ".agent/skills/skill_analisis_patrones.md",
+      "resolved_path": ".agent/skills/skill_analisis_patrones.md",
+      "source_ref": "config/skill_catalog.json#skills[1].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[20].path",
+        ".agent/skills/skill_sintesis_tesis.md"
+      ],
+      "reference": ".agent/skills/skill_sintesis_tesis.md",
+      "resolved_path": ".agent/skills/skill_sintesis_tesis.md",
+      "source_ref": "config/skill_catalog.json#skills[20].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[21].path",
+        ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md"
+      ],
+      "reference": ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md",
+      "resolved_path": ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md",
+      "source_ref": "config/skill_catalog.json#skills[21].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[2].path",
+        ".agent/skills/skill_auditoria_sistema.md"
+      ],
+      "reference": ".agent/skills/skill_auditoria_sistema.md",
+      "resolved_path": ".agent/skills/skill_auditoria_sistema.md",
+      "source_ref": "config/skill_catalog.json#skills[2].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[3].path",
+        ".agent/skills/skill_cerrar_episodio.md"
+      ],
+      "reference": ".agent/skills/skill_cerrar_episodio.md",
+      "resolved_path": ".agent/skills/skill_cerrar_episodio.md",
+      "source_ref": "config/skill_catalog.json#skills[3].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[4].path",
+        ".agent/skills/skill_control_integridad_pipeline.md"
+      ],
+      "reference": ".agent/skills/skill_control_integridad_pipeline.md",
+      "resolved_path": ".agent/skills/skill_control_integridad_pipeline.md",
+      "source_ref": "config/skill_catalog.json#skills[4].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[5].path",
+        ".agent/skills/skill_crear_brief_episodio.md"
+      ],
+      "reference": ".agent/skills/skill_crear_brief_episodio.md",
+      "resolved_path": ".agent/skills/skill_crear_brief_episodio.md",
+      "source_ref": "config/skill_catalog.json#skills[5].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[6].path",
+        ".agent/skills/skill_curation_obras.md"
+      ],
+      "reference": ".agent/skills/skill_curation_obras.md",
+      "resolved_path": ".agent/skills/skill_curation_obras.md",
+      "source_ref": "config/skill_catalog.json#skills[6].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[7].path",
+        ".agent/skills/skill_extraer_voice_learnings.md"
+      ],
+      "reference": ".agent/skills/skill_extraer_voice_learnings.md",
+      "resolved_path": ".agent/skills/skill_extraer_voice_learnings.md",
+      "source_ref": "config/skill_catalog.json#skills[7].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[8].path",
+        ".agent/skills/skill_guion_longform.md"
+      ],
+      "reference": ".agent/skills/skill_guion_longform.md",
+      "resolved_path": ".agent/skills/skill_guion_longform.md",
+      "source_ref": "config/skill_catalog.json#skills[8].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/skill_catalog.json",
+        "config/skill_catalog.json#skills[9].path",
+        ".agent/skills/skill_iniciar_episodio.md"
+      ],
+      "reference": ".agent/skills/skill_iniciar_episodio.md",
+      "resolved_path": ".agent/skills/skill_iniciar_episodio.md",
+      "source_ref": "config/skill_catalog.json#skills[9].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].immutable_targets[2]",
+        "config/subagent_registry.json"
+      ],
+      "reference": "config/subagent_registry.json",
+      "resolved_path": "config/subagent_registry.json",
+      "source_ref": "config/subagent_registry.json#agents[0].immutable_targets[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].permissions.read[0]"
+      ],
+      "reference": "profiles/editorial/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[0].permissions.read[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].permissions.read[1]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/subagent_registry.json#agents[0].permissions.read[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].permissions.read[2]"
+      ],
+      "reference": "schemas/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[0].permissions.read[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].permissions.read[3]"
+      ],
+      "reference": "output/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[0].permissions.read[3]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].permissions.write[0]"
+      ],
+      "reference": ".runtime-tmp/subagents/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[0].permissions.write[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].permissions.write[1]"
+      ],
+      "reference": "handoff/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[0].permissions.write[1]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].permissions.write[2]"
+      ],
+      "reference": "output/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[0].permissions.write[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].provenance.registry_path",
+        "output/execution_provenance_registry.json"
+      ],
+      "reference": "output/execution_provenance_registry.json",
+      "resolved_path": "output/execution_provenance_registry.json",
+      "source_ref": "config/subagent_registry.json#agents[0].provenance.registry_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[1].immutable_targets[4]",
+        "config/subagent_registry.json"
+      ],
+      "reference": "config/subagent_registry.json",
+      "resolved_path": "config/subagent_registry.json",
+      "source_ref": "config/subagent_registry.json#agents[1].immutable_targets[4]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[1].permissions.read[0]"
+      ],
+      "reference": "profiles/editorial/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[1].permissions.read[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[1].permissions.read[1]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/subagent_registry.json#agents[1].permissions.read[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[1].permissions.read[2]"
+      ],
+      "reference": "schemas/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[1].permissions.read[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[1].permissions.read[3]"
+      ],
+      "reference": "output/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[1].permissions.read[3]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[1].permissions.write[0]"
+      ],
+      "reference": ".runtime-tmp/subagents/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[1].permissions.write[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[1].permissions.write[1]"
+      ],
+      "reference": "handoff/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[1].permissions.write[1]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[1].permissions.write[2]"
+      ],
+      "reference": "output/semantic_audits/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[1].permissions.write[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[1].provenance.registry_path",
+        "output/execution_provenance_registry.json"
+      ],
+      "reference": "output/execution_provenance_registry.json",
+      "resolved_path": "output/execution_provenance_registry.json",
+      "source_ref": "config/subagent_registry.json#agents[1].provenance.registry_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[2].immutable_targets[2]",
+        "config/subagent_registry.json"
+      ],
+      "reference": "config/subagent_registry.json",
+      "resolved_path": "config/subagent_registry.json",
+      "source_ref": "config/subagent_registry.json#agents[2].immutable_targets[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[2].permissions.read[0]"
+      ],
+      "reference": "profiles/editorial/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[2].permissions.read[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[2].permissions.read[1]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/subagent_registry.json#agents[2].permissions.read[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[2].permissions.read[2]"
+      ],
+      "reference": "schemas/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[2].permissions.read[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[2].permissions.read[3]"
+      ],
+      "reference": "output/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[2].permissions.read[3]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[2].permissions.write[0]"
+      ],
+      "reference": ".runtime-tmp/subagents/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[2].permissions.write[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[2].permissions.write[1]"
+      ],
+      "reference": "handoff/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[2].permissions.write[1]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[2].permissions.write[2]"
+      ],
+      "reference": "output/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[2].permissions.write[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[2].provenance.registry_path",
+        "output/execution_provenance_registry.json"
+      ],
+      "reference": "output/execution_provenance_registry.json",
+      "resolved_path": "output/execution_provenance_registry.json",
+      "source_ref": "config/subagent_registry.json#agents[2].provenance.registry_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[3].immutable_targets[4]",
+        "config/subagent_registry.json"
+      ],
+      "reference": "config/subagent_registry.json",
+      "resolved_path": "config/subagent_registry.json",
+      "source_ref": "config/subagent_registry.json#agents[3].immutable_targets[4]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[3].permissions.read[0]"
+      ],
+      "reference": "profiles/editorial/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[3].permissions.read[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[3].permissions.read[1]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/subagent_registry.json#agents[3].permissions.read[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[3].permissions.read[2]"
+      ],
+      "reference": "schemas/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[3].permissions.read[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[3].permissions.read[3]"
+      ],
+      "reference": "output/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[3].permissions.read[3]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[3].permissions.write[0]"
+      ],
+      "reference": ".runtime-tmp/subagents/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[3].permissions.write[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[3].permissions.write[1]"
+      ],
+      "reference": "handoff/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[3].permissions.write[1]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[3].permissions.write[2]"
+      ],
+      "reference": "output/",
+      "resolved_path": null,
+      "source_ref": "config/subagent_registry.json#agents[3].permissions.write[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[3].provenance.registry_path",
+        "output/execution_provenance_registry.json"
+      ],
+      "reference": "output/execution_provenance_registry.json",
+      "resolved_path": "output/execution_provenance_registry.json",
+      "source_ref": "config/subagent_registry.json#agents[3].provenance.registry_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].provenance.registry_path",
+        "output/execution_provenance_registry.json",
+        "output/execution_provenance_registry.json#attempts[0].evidence_path"
+      ],
+      "reference": "output/r6_b/control_valid_producer_retry.json",
+      "resolved_path": null,
+      "source_ref": "output/execution_provenance_registry.json#attempts[0].evidence_path",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/subagent_registry.json",
+        "config/subagent_registry.json#agents[0].provenance.registry_path",
+        "output/execution_provenance_registry.json",
+        "output/execution_provenance_registry.json#attempts[1].evidence_path"
+      ],
+      "reference": "output/r6_b/control_valid_producer.json",
+      "resolved_path": null,
+      "source_ref": "output/execution_provenance_registry.json#attempts[1].evidence_path",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[2].locator",
+        "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
+        "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json#source_lineage[0].locator",
+        "docs/specifications/B3_especificacion_funcional_equipo_01.md"
+      ],
+      "reference": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
+      "resolved_path": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json#source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.pending_decisions[3]"
+      ],
+      "reference": "La versión 1.1.0 incorpora RC-01 a RC-06 y su activación productiva se gobierna por `functional_approval.json`, `technical_validation.json` y `config/active_editorial_profile.json`.",
+      "resolved_path": null,
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.pending_decisions[3]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[0].locator",
+        "docs/specifications/B3_especificacion_funcional_equipo_01.md"
+      ],
+      "reference": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
+      "resolved_path": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[1].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[1].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[2].locator",
+        "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[2].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#pending_decisions[3]"
+      ],
+      "reference": "La versión 1.1.0 incorpora RC-01 a RC-06 y su activación productiva se gobierna por `functional_approval.json`, `technical_validation.json` y `config/active_editorial_profile.json`.",
+      "resolved_path": null,
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#pending_decisions[3]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[0].locator",
+        "docs/specifications/B3_especificacion_funcional_equipo_01.md"
+      ],
+      "reference": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
+      "resolved_path": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[1].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[1].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[2].locator",
+        "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[2].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json#profile.source_lineage[0].locator",
+        "docs/specifications/B3_editorial_profile_functional_specification.md"
+      ],
+      "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json#profile.source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json#profile.source_lineage[1].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json#profile.source_lineage[1].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json#source_lineage[0].locator",
+        "docs/specifications/B3_editorial_profile_functional_specification.md"
+      ],
+      "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json#source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json",
+        "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json#source_lineage[1].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json#source_lineage[1].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json#profile.source_lineage[0].locator",
+        "docs/specifications/B3_editorial_profile_functional_specification.md"
+      ],
+      "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json#profile.source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json#profile.source_lineage[1].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json#profile.source_lineage[1].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json#source_lineage[0].locator",
+        "docs/specifications/B3_editorial_profile_functional_specification.md"
+      ],
+      "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json#source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json",
+        "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json#source_lineage[1].locator",
+        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json#source_lineage[1].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].dependencies[2]",
+        "profiles/voice/corpus_manifest.json",
+        "profiles/voice/corpus_manifest.json#source_lineage[0].locator",
+        "docs/specifications/B3_editorial_profile_functional_specification.md"
+      ],
+      "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "source_ref": "profiles/voice/corpus_manifest.json#source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].dependencies[2]",
+        "profiles/voice/corpus_manifest.json",
+        "profiles/voice/corpus_manifest.json#voice_samples[0].locator",
+        "profiles/voice/samples/authentic/muestra_001_reflexion_infancia_y_tecnologia.md"
+      ],
+      "reference": "profiles/voice/samples/authentic/muestra_001_reflexion_infancia_y_tecnologia.md",
+      "resolved_path": "profiles/voice/samples/authentic/muestra_001_reflexion_infancia_y_tecnologia.md",
+      "source_ref": "profiles/voice/corpus_manifest.json#voice_samples[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].dependencies[2]",
+        "profiles/voice/corpus_manifest.json",
+        "profiles/voice/corpus_manifest.json#voice_samples[1].locator",
+        "profiles/voice/samples/authentic/muestra_002_texto_personal.md"
+      ],
+      "reference": "profiles/voice/samples/authentic/muestra_002_texto_personal.md",
+      "resolved_path": "profiles/voice/samples/authentic/muestra_002_texto_personal.md",
+      "source_ref": "profiles/voice/corpus_manifest.json#voice_samples[1].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].dependencies[2]",
+        "profiles/voice/corpus_manifest.json",
+        "profiles/voice/corpus_manifest.json#voice_samples[2].locator",
+        "profiles/voice/samples/authentic/muestra_003_reflexion_generacional.md"
+      ],
+      "reference": "profiles/voice/samples/authentic/muestra_003_reflexion_generacional.md",
+      "resolved_path": "profiles/voice/samples/authentic/muestra_003_reflexion_generacional.md",
+      "source_ref": "profiles/voice/corpus_manifest.json#voice_samples[2].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[8].required_context[2]",
+        "schemas/early_packaging_hypothesis.json",
+        "schemas/early_packaging_hypothesis.json#properties.audience.$ref"
+      ],
+      "reference": "#/definitions/audience",
+      "resolved_path": null,
+      "source_ref": "schemas/early_packaging_hypothesis.json#properties.audience.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[8].required_context[2]",
+        "schemas/early_packaging_hypothesis.json",
+        "schemas/early_packaging_hypothesis.json#properties.honesty_assessment.$ref"
+      ],
+      "reference": "#/definitions/honesty",
+      "resolved_path": null,
+      "source_ref": "schemas/early_packaging_hypothesis.json#properties.honesty_assessment.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[8].required_context[2]",
+        "schemas/early_packaging_hypothesis.json",
+        "schemas/early_packaging_hypothesis.json#properties.platform_constraints.items.$ref"
+      ],
+      "reference": "#/definitions/platformConstraint",
+      "resolved_path": null,
+      "source_ref": "schemas/early_packaging_hypothesis.json#properties.platform_constraints.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].contract_refs[1]",
+        "schemas/topic_belonging_decision.json",
+        "schemas/topic_belonging_decision.json#properties.provenance.$ref"
+      ],
+      "reference": "#/$defs/provenance",
+      "resolved_path": null,
+      "source_ref": "schemas/topic_belonging_decision.json#properties.provenance.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].contract_refs[0]",
+        "schemas/topic_belonging_input.json",
+        "schemas/topic_belonging_input.json#properties.strategic_triggers.$ref"
+      ],
+      "reference": "#/$defs/strategic_triggers",
+      "resolved_path": null,
+      "source_ref": "schemas/topic_belonging_input.json#properties.strategic_triggers.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].dependencies[4]",
+        "schemas/topic_belonging_owner_decision.json",
+        "schemas/topic_belonging_owner_decision.json#properties.provenance.$ref"
+      ],
+      "reference": "#/$defs/provenance",
+      "resolved_path": null,
+      "source_ref": "schemas/topic_belonging_owner_decision.json#properties.provenance.$ref",
+      "status": "UNRESOLVED"
+    }
+  ],
   "result": "COMPLETED_WITH_FINDINGS",
   "schema_version": "1.0.0",
   "source_inputs": [
@@ -2200,6 +4145,10 @@
     }
   ],
   "unresolved_candidates": [
-    "B5_I2_SEMANTIC_AUDITOR"
+    "B5_I2_SEMANTIC_AUDITOR",
+    "SUBAGENT:SCRIPT_PRODUCT_AUDITOR",
+    "SUBAGENT:SCRIPT_PRODUCT_PRODUCER",
+    "SUBAGENT:YOUTUBE_ADAPTATION_AUDITOR",
+    "SUBAGENT:YOUTUBE_ADAPTATION_PRODUCER"
   ]
 }

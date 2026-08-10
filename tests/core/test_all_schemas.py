@@ -502,14 +502,16 @@ VALID_FIXTURES["capability_audit_universe"] = {
     "source_inputs": [{"path": "config/capability_registry.json", "sha256": "a" * 64}],
     "evidence_refs": ["config/capability_registry.json"], "limitations": [], "result": "PASS",
     "artifact_type": "CAPABILITY_AUDIT_UNIVERSE", "discovery_scope_ref": "TH04_capability_discovery_scope.json",
+    "resolved_references": [],
     "candidates": [{
         "candidate_id": "CAP", "canonical_identity": "CAP", "aliases": ["CAP"],
         "source_type": "CAPABILITY_REGISTRY", "source_refs": ["config/capability_registry.json"],
         "current_registry_presence": True, "object_class": "EXECUTABLE_CAPABILITY", "disposition": "CURRENT",
         "registry_state": "REGISTERED", "classification_reason": "fixture", "owner_observation": {
             "status": "RESOLVED_FROM_CANONICAL_FIELD", "functional_authority_domain": "CHANNEL_INTELLIGENCE",
-            "decision_authority": "REVIEWER"}, "maturity_observed": "IMPLEMENTED",
-        "observed_refs": {"roles": [], "prompts": [], "profiles": [], "routes": [], "contracts": [], "implementation": []},
+            "decision_authority": "REVIEWER"}, "maturity_observed": "IMPLEMENTED", "maturity_observed_raw": "IMPLEMENTED",
+        "observed_refs": {"roles": [], "prompts": [], "profiles": [], "routes": [], "contracts": [], "implementation": [], "tests": []},
+        "observed_tests": [],
         "resolved_artifacts": [], "inconsistencies": [], "evidence_refs": ["config/capability_registry.json"],
     }], "unresolved_candidates": [],
 }
