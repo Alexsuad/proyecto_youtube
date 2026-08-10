@@ -55,6 +55,15 @@ Cuando exista una recuperación temporal documentada, su alcance vigente se resu
 - Runtime y contratos ejecutables: `src/`, `schemas/`, `config/`
 - Entrada operativa para agentes: este `AGENTS.md`
 
+## Skills de ingeniería
+
+Las skills de procedimiento para desarrollo, auditoría y verificación se descubren en `.agents/skills/`. Esta sede es neutral y no forma parte del runtime editorial.
+
+- `.agent/skills/` contiene únicamente skills funcionales/editoriales gobernadas por `config/skill_catalog.json`.
+- `.agents/skills/` contiene únicamente procedimiento de ingeniería reutilizable; no se incorpora al catálogo productivo ni crea capabilities runtime.
+- Para una misión técnica, `technical-implementer`, `technical-reviewer` y `mission-preflight` deben consultar la skill de procedimiento pertinente después de leer la autoridad viva y antes de ampliar el alcance.
+- Las skills de ingeniería remiten a los gates, schemas, tests y contratos existentes; no sustituyen `MissionAuthorization`, `MissionCompletionGate`, `RepairIntegrity` ni la autoridad viva.
+
 
 
 Estado actual de activación:
