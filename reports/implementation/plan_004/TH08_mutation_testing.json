@@ -2,39 +2,185 @@
   "schema_version": "1.0.0",
   "plan_id": "PLAN_004",
   "mission_id": "TH-08",
-  "repository_revision": "e52b0996de3b75687ab1d0ae168dfa770a9d7751",
-  "generated_at": "2026-08-10T22:51:20.878747Z",
+  "repository_revision": "9c31ca200a3a025f66e7c09188cb882ed225cd35",
+  "generated_at": "2026-08-10T23:33:23.810983Z",
   "source_inputs": [
     {
       "path": "src/core/context_resolution.py",
-      "sha256": null
-    },
-    {
-      "path": "tests/core/test_context_hardening.py",
-      "sha256": null
+      "sha256": "7ba6b480cecaff143a8e893f0526f425aaf3f977adad39b00dfc41704e69e795"
     }
   ],
   "evidence_refs": [
-    "TH07_quality_baseline.json"
+    "reports/implementation/plan_004/TH07_quality_baseline.json"
   ],
   "limitations": [],
-  "result": "PASS",
+  "result": "COMPLETED_WITH_FINDINGS",
   "artifact_type": "MUTATION_TESTING",
   "scope": {
     "modules": [
       "src/core/context_resolution.py"
     ],
-    "tests": [
-      "tests/core/test_context_hardening.py"
-    ],
-    "budget": "2 targeted security mutants; no network or cost"
+    "budget": "4 isolated mutations; no network or paid execution"
   },
-  "mutants_generated": 2,
+  "mutants_generated": 4,
+  "baseline_valid": 4,
   "mutants_killed": 2,
-  "survivors": [],
-  "runtime": "local subprocess",
+  "survivors": [
+    {
+      "mutant_id": "ERROR_TOKEN_TEXT_ONLY",
+      "baseline": {
+        "status": "BASELINE_VALID",
+        "returncode": 0,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmp8mgyz_4s\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"BLOCKED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmp8mgyz_4s\\src\\core\\context_resolution.py",
+        "observed": "BLOCKED",
+        "reason": null
+      },
+      "mutation": {
+        "status": "BASELINE_VALID",
+        "returncode": 0,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmptboesh6f\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"BLOCKED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmptboesh6f\\src\\core\\context_resolution.py",
+        "observed": "BLOCKED",
+        "reason": null
+      },
+      "status": "SURVIVED",
+      "classification": "LOW_VALUE_MUTATION",
+      "reason": "MUTANT_PRESERVED_BASELINE_BEHAVIOR"
+    }
+  ],
+  "equivalent_mutants": [
+    {
+      "mutant_id": "EMPTY_PATH_BOOLEAN_EQUIVALENT",
+      "baseline": {
+        "status": "BASELINE_VALID",
+        "returncode": 0,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmpsmgvqmhy\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"BLOCKED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmpsmgvqmhy\\src\\core\\context_resolution.py",
+        "observed": "BLOCKED",
+        "reason": null
+      },
+      "mutation": {
+        "status": "BASELINE_VALID",
+        "returncode": 0,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmp6260uyao\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"BLOCKED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmp6260uyao\\src\\core\\context_resolution.py",
+        "observed": "BLOCKED",
+        "reason": null
+      },
+      "status": "EQUIVALENT_MUTANT",
+      "classification": "EQUIVALENT_MUTANT",
+      "reason": "MUTANT_PRESERVED_BASELINE_BEHAVIOR"
+    }
+  ],
+  "infrastructure_errors": [],
+  "mutation_records": [
+    {
+      "mutant_id": "ALLOWED_ROOT_POLICY_BYPASS",
+      "baseline": {
+        "status": "BASELINE_VALID",
+        "returncode": 0,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmpgp0jgecj\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"BLOCKED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmpgp0jgecj\\src\\core\\context_resolution.py",
+        "observed": "BLOCKED",
+        "reason": null
+      },
+      "mutation": {
+        "status": "SURVIVED",
+        "returncode": 1,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmpzrsjpp80\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"ALLOWED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmpzrsjpp80\\src\\core\\context_resolution.py",
+        "observed": "ALLOWED",
+        "reason": null
+      },
+      "status": "KILLED",
+      "classification": null,
+      "reason": "MUTANT_CHANGED_PROBE_BEHAVIOR"
+    },
+    {
+      "mutant_id": "CHECKSUM_GUARD_BYPASS",
+      "baseline": {
+        "status": "BASELINE_VALID",
+        "returncode": 0,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmp09mltkl3\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"BLOCKED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmp09mltkl3\\src\\core\\context_resolution.py",
+        "observed": "BLOCKED",
+        "reason": null
+      },
+      "mutation": {
+        "status": "SURVIVED",
+        "returncode": 1,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmpu9x67rz5\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"ALLOWED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmpu9x67rz5\\src\\core\\context_resolution.py",
+        "observed": "ALLOWED",
+        "reason": null
+      },
+      "status": "KILLED",
+      "classification": null,
+      "reason": "MUTANT_CHANGED_PROBE_BEHAVIOR"
+    },
+    {
+      "mutant_id": "ERROR_TOKEN_TEXT_ONLY",
+      "baseline": {
+        "status": "BASELINE_VALID",
+        "returncode": 0,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmp8mgyz_4s\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"BLOCKED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmp8mgyz_4s\\src\\core\\context_resolution.py",
+        "observed": "BLOCKED",
+        "reason": null
+      },
+      "mutation": {
+        "status": "BASELINE_VALID",
+        "returncode": 0,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmptboesh6f\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"BLOCKED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmptboesh6f\\src\\core\\context_resolution.py",
+        "observed": "BLOCKED",
+        "reason": null
+      },
+      "status": "SURVIVED",
+      "classification": "LOW_VALUE_MUTATION",
+      "reason": "MUTANT_PRESERVED_BASELINE_BEHAVIOR"
+    },
+    {
+      "mutant_id": "EMPTY_PATH_BOOLEAN_EQUIVALENT",
+      "baseline": {
+        "status": "BASELINE_VALID",
+        "returncode": 0,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmpsmgvqmhy\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"BLOCKED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmpsmgvqmhy\\src\\core\\context_resolution.py",
+        "observed": "BLOCKED",
+        "reason": null
+      },
+      "mutation": {
+        "status": "BASELINE_VALID",
+        "returncode": 0,
+        "stdout": "{\"module\": \"C:\\\\Users\\\\nalex\\\\AppData\\\\Local\\\\Temp\\\\tmp6260uyao\\\\src\\\\core\\\\context_resolution.py\", \"observed\": \"BLOCKED\"}\n",
+        "stderr": "",
+        "imported_module": "C:\\Users\\nalex\\AppData\\Local\\Temp\\tmp6260uyao\\src\\core\\context_resolution.py",
+        "observed": "BLOCKED",
+        "reason": null
+      },
+      "status": "EQUIVALENT_MUTANT",
+      "classification": "EQUIVALENT_MUTANT",
+      "reason": "MUTANT_PRESERVED_BASELINE_BEHAVIOR"
+    }
+  ],
+  "runtime": "local isolated subprocess",
   "cost": "0",
   "useful_findings": [],
-  "noisy_findings": [],
+  "noisy_findings": [
+    "ERROR_TOKEN_TEXT_ONLY"
+  ],
   "recommendation": "KEEP_SELECTIVELY"
 }
