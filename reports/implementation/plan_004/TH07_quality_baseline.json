@@ -1,0 +1,245 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_004",
+  "mission_id": "TH-07",
+  "repository_revision": "6685649afcb31c3bbf13425ffbf806472a06328a",
+  "generated_at": "2026-08-10T22:49:43.971963Z",
+  "source_inputs": [
+    {
+      "path": "src",
+      "sha256": null
+    },
+    {
+      "path": "tests",
+      "sha256": null
+    }
+  ],
+  "evidence_refs": [
+    "src",
+    "tests"
+  ],
+  "limitations": [
+    "COVERAGE_TOOL_NOT_DECLARED_PORTABLE"
+  ],
+  "result": "PASS",
+  "artifact_type": "QUALITY_BASELINE",
+  "dimensions": [
+    {
+      "dimension": "test_coverage",
+      "status": "LIMITATION",
+      "reason": "coverage tool is not a declared portable dependency",
+      "evidence": []
+    },
+    {
+      "dimension": "complexity",
+      "status": "MEASURED",
+      "tool": "python_ast",
+      "version": "stdlib",
+      "scope": "src/**/*.py",
+      "value": {
+        "functions": 430,
+        "hotspots": [
+          {
+            "path": "src/scripts/b5_i2_gate.py",
+            "function": "evaluate",
+            "cyclomatic_proxy": 148
+          },
+          {
+            "path": "src/scripts/youtube_adaptation_b5_i2_gate.py",
+            "function": "evaluate",
+            "cyclomatic_proxy": 78
+          },
+          {
+            "path": "src/core/repair_integrity.py",
+            "function": "validate_repair_integrity",
+            "cyclomatic_proxy": 65
+          },
+          {
+            "path": "src/scripts/cerrar_episodio.py",
+            "function": "evaluate",
+            "cyclomatic_proxy": 60
+          },
+          {
+            "path": "src/core/contract_validation.py",
+            "function": "validate_source_access_and_evidence_report",
+            "cyclomatic_proxy": 57
+          },
+          {
+            "path": "src/ai/runtime_profiles.py",
+            "function": "resolve_run_configuration",
+            "cyclomatic_proxy": 53
+          },
+          {
+            "path": "src/core/capability_governance.py",
+            "function": "validate_capability_registry",
+            "cyclomatic_proxy": 39
+          },
+          {
+            "path": "src/ai/registry.py",
+            "function": "append_result",
+            "cyclomatic_proxy": 38
+          },
+          {
+            "path": "src/core/contract_validation.py",
+            "function": "validate_research_pack",
+            "cyclomatic_proxy": 36
+          },
+          {
+            "path": "src/core/mission_authorization.py",
+            "function": "verify",
+            "cyclomatic_proxy": 31
+          }
+        ]
+      }
+    },
+    {
+      "dimension": "duplication",
+      "status": "MEASURED",
+      "tool": "python_ast",
+      "version": "stdlib",
+      "scope": "function AST identity",
+      "value": {
+        "duplicate_groups": [
+          [
+            "src/ai/execution.py:_now",
+            "src/ai/registry.py:_now",
+            "src/core/replay_protection.py:_now"
+          ],
+          [
+            "src/ai/manifest.py:canonical_json",
+            "src/core/context_resolution.py:canonical_json"
+          ],
+          [
+            "src/core/capability_audit.py:_revision",
+            "src/core/cross_registry_integrity.py:_revision"
+          ],
+          [
+            "src/core/capability_governance.py:_load",
+            "src/scripts/channel_intelligence.py:_load"
+          ],
+          [
+            "src/core/context_hardening.py:_sha",
+            "src/core/cross_registry_integrity.py:_sha",
+            "src/core/quality_baseline.py:_sha"
+          ],
+          [
+            "src/core/invalidation.py:to_dict",
+            "src/core/version_manifest.py:to_dict"
+          ],
+          [
+            "src/core/mission_completion_gate.py:_file_checksum",
+            "src/scripts/check_b3_i4_readiness.py:_file_checksum"
+          ],
+          [
+            "src/scripts/gate0_auditoria.py:main",
+            "src/scripts/gate0_integridad.py:main"
+          ],
+          [
+            "src/scripts/semantic_sufficiency_gate.py:_checksum",
+            "src/scripts/youtube_adaptation_b5_i2_gate.py:_checksum"
+          ]
+        ]
+      }
+    },
+    {
+      "dimension": "dead_unreachable_code",
+      "status": "MEASURED",
+      "tool": "python_ast",
+      "version": "stdlib",
+      "scope": "statements after return or raise",
+      "value": {
+        "findings": []
+      }
+    },
+    {
+      "dimension": "static_analysis",
+      "status": "MEASURED",
+      "tool": "ast.parse",
+      "version": "stdlib",
+      "scope": "src/**/*.py",
+      "value": {
+        "syntax_errors": [
+          {
+            "path": "src/ai/providers/deepseek.py",
+            "error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+          },
+          {
+            "path": "src/ai/providers/ollama.py",
+            "error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+          }
+        ]
+      }
+    },
+    {
+      "dimension": "critical_path_test_distribution",
+      "status": "MEASURED",
+      "tool": "filesystem_inventory",
+      "version": "stdlib",
+      "scope": "tests/test_*.py",
+      "value": {
+        "test_files": 38,
+        "context_tests": [
+          "tests/core/test_context_hardening.py"
+        ],
+        "governance_tests": [
+          "tests/core/test_repair_integrity.py",
+          "tests/core/test_transversal_capability_governance.py"
+        ]
+      }
+    }
+  ],
+  "risk_hotspots": [
+    {
+      "path": "src/scripts/b5_i2_gate.py",
+      "function": "evaluate",
+      "cyclomatic_proxy": 148
+    },
+    {
+      "path": "src/scripts/youtube_adaptation_b5_i2_gate.py",
+      "function": "evaluate",
+      "cyclomatic_proxy": 78
+    },
+    {
+      "path": "src/core/repair_integrity.py",
+      "function": "validate_repair_integrity",
+      "cyclomatic_proxy": 65
+    },
+    {
+      "path": "src/scripts/cerrar_episodio.py",
+      "function": "evaluate",
+      "cyclomatic_proxy": 60
+    },
+    {
+      "path": "src/core/contract_validation.py",
+      "function": "validate_source_access_and_evidence_report",
+      "cyclomatic_proxy": 57
+    },
+    {
+      "path": "src/ai/runtime_profiles.py",
+      "function": "resolve_run_configuration",
+      "cyclomatic_proxy": 53
+    },
+    {
+      "path": "src/core/capability_governance.py",
+      "function": "validate_capability_registry",
+      "cyclomatic_proxy": 39
+    },
+    {
+      "path": "src/ai/registry.py",
+      "function": "append_result",
+      "cyclomatic_proxy": 38
+    },
+    {
+      "path": "src/core/contract_validation.py",
+      "function": "validate_research_pack",
+      "cyclomatic_proxy": 36
+    },
+    {
+      "path": "src/core/mission_authorization.py",
+      "function": "verify",
+      "cyclomatic_proxy": 31
+    }
+  ],
+  "recommendation": "KEEP_INFORMATIONAL",
+  "thresholds": "NONE"
+}
