@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_004",
+  "mission_id": "TH-05",
+  "repository_revision": "9c92546e597025d84a5c6c6604bae021309a352d",
+  "generated_at": "2026-08-10T22:17:11.476957Z",
+  "source_inputs": [
+    {
+      "path": "config/capability_registry.json",
+      "sha256": "929d87458288eaa047f10b9aa592a5e913ae27d1fa76bb8cd9ac3f974ee2ac5b"
+    },
+    {
+      "path": "config/responsibility_registry.json",
+      "sha256": "6bc780a031af3e17b10351546acfb4dfeae23e93467afeaaf80b85f6649826db"
+    },
+    {
+      "path": "config/agent_prompt_registry.json",
+      "sha256": "a34c020e853a8c64968dbdef5905a8952ef369e835b1d54afe77e706801fe369"
+    },
+    {
+      "path": "config/agent_execution_profiles.json",
+      "sha256": "6f1809d92fc658a8c5f5afe1946fd85328fab24c7da2cdc753a78d48bf9fc6ff"
+    },
+    {
+      "path": "config/capability_routing.yaml",
+      "sha256": "2bde00fe7d432e5cfb1990ee86d8bda912c8bde166bcc4e4041fa9d990097397"
+    },
+    {
+      "path": "reports/implementation/plan_004/TH04_capability_audit_universe.json",
+      "sha256": "4880f2839060a153c4dc3f9a6ba018a6afc753cfd1f0e3954e82983666601b09"
+    }
+  ],
+  "evidence_refs": [
+    "config/capability_registry.json",
+    "config/responsibility_registry.json",
+    "config/agent_prompt_registry.json",
+    "config/agent_execution_profiles.json",
+    "config/capability_routing.yaml",
+    "reports/implementation/plan_004/TH04_capability_audit_universe.json"
+  ],
+  "limitations": [],
+  "result": "PASS",
+  "artifact_type": "AUTHORITY_RESOLUTION",
+  "authorities": [
+    {
+      "capability_id": "TOPIC_BELONGING_ASSESSMENT",
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "decision_authority": "CHANNEL_INTELLIGENCE_REVIEWER_FOR_ORDINARY_TOPICS",
+      "authority_resolution": "RESOLVED",
+      "evidence_refs": [
+        "config/capability_registry.json",
+        "config/responsibility_registry.json"
+      ]
+    },
+    {
+      "capability_id": "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT",
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
+      "authority_resolution": "RESOLVED",
+      "evidence_refs": [
+        "config/capability_registry.json",
+        "config/responsibility_registry.json"
+      ]
+    },
+    {
+      "capability_id": "EDITORIAL_PROFILE_PROPOSAL",
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "decision_authority": "CHANNEL_INTELLIGENCE_PROPOSAL",
+      "authority_resolution": "RESOLVED",
+      "evidence_refs": [
+        "config/capability_registry.json",
+        "config/responsibility_registry.json"
+      ]
+    },
+    {
+      "capability_id": "EDITORIAL_PROFILE_FUNCTIONAL_REVIEW",
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "decision_authority": "CHANNEL_INTELLIGENCE_FUNCTIONAL_REVIEW",
+      "authority_resolution": "RESOLVED",
+      "evidence_refs": [
+        "config/capability_registry.json",
+        "config/responsibility_registry.json"
+      ]
+    },
+    {
+      "capability_id": "PROFILE_CHANGE_IMPACT_ASSESSMENT",
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
+      "authority_resolution": "RESOLVED",
+      "evidence_refs": [
+        "config/capability_registry.json",
+        "config/responsibility_registry.json"
+      ]
+    },
+    {
+      "capability_id": "VOICE_CORPUS_SAMPLE_ASSESSMENT",
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "decision_authority": "CHANNEL_INTELLIGENCE_RECOMMENDATION",
+      "authority_resolution": "RESOLVED",
+      "evidence_refs": [
+        "config/capability_registry.json",
+        "config/responsibility_registry.json"
+      ]
+    },
+    {
+      "capability_id": "VOICE_LEARNING_CANDIDATE_REVIEW",
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "decision_authority": "CHANNEL_INTELLIGENCE_REVIEW",
+      "authority_resolution": "RESOLVED",
+      "evidence_refs": [
+        "config/capability_registry.json",
+        "config/responsibility_registry.json"
+      ]
+    },
+    {
+      "capability_id": "IDENTITY_DRIFT_AUDIT",
+      "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+      "decision_authority": "CHANNEL_INTELLIGENCE_AUDIT",
+      "authority_resolution": "RESOLVED",
+      "evidence_refs": [
+        "config/capability_registry.json",
+        "config/responsibility_registry.json"
+      ]
+    }
+  ],
+  "findings": []
+}
