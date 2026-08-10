@@ -6,7 +6,7 @@
   "result": "HARDENING_COMPLETED_PENDING_OWNER_REVIEW",
   "limitations": ["FINAL_EXTERNAL_INDEPENDENT_REVIEW_PENDING"],
   "dimensions": [
-    {"name":"DETERMINISTIC_CONTROLS_OPERATIONAL","status":"PASS","evidence":["33 TH05 tests","26 TH06 tests","TH08 mutation probes"]},
+    {"name":"DETERMINISTIC_CONTROLS_OPERATIONAL","status":"PASS","evidence":["tests/core/test_cross_registry_integrity.py","tests/core/test_context_hardening.py","tests/core/test_mutation_baseline.py"]},
     {"name":"MISSION_SCOPE_VERIFIABLE","status":"PASS","evidence":["isolated branch codex/plan004-th05-th08"]},
     {"name":"EXECUTION_PROVENANCE_VERIFIABLE","status":"PASS","evidence":["TH05/TH06/TH07/TH08 reports"]},
     {"name":"CONTEXT_RESOLUTION_VERIFIABLE","status":"PASS","evidence":["resolved_context_manifest deterministic identity and budget"]},
@@ -16,7 +16,7 @@
     {"name":"CAPABILITY_REGISTRY_COHERENT","status":"PASS","evidence":["TH04 inventory and unchanged registry"]},
     {"name":"CROSS_REGISTRY_INTEGRITY","status":"PASS","evidence":["TH05_cross_registry_integrity.json"]},
     {"name":"QUALITY_BASELINE_AVAILABLE","status":"PASS","evidence":["TH07_quality_baseline.json"]},
-    {"name":"MUTATION_DECISION_RECORDED","status":"PASS","evidence":["TH08_mutation_testing.json"]},
+    {"name":"MUTATION_DECISION_RECORDED","status":"PASS","evidence":["TH08_mutation_testing.json: 4 BASELINE_VALID, 2 KILLED, 1 LOW_VALUE_MUTATION survivor, 1 EQUIVALENT_MUTANT, 0 INFRASTRUCTURE_ERROR"]},
     {"name":"PROVIDER_PORTABILITY_PRESERVED","status":"PASS","evidence":["stdlib-only TH06-TH08 controls"]}
   ],
   "owner_decision_required": true,
