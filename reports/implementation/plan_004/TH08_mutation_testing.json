@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_004",
+  "mission_id": "TH-08",
+  "repository_revision": "e52b0996de3b75687ab1d0ae168dfa770a9d7751",
+  "generated_at": "2026-08-10T22:51:20.878747Z",
+  "source_inputs": [
+    {
+      "path": "src/core/context_resolution.py",
+      "sha256": null
+    },
+    {
+      "path": "tests/core/test_context_hardening.py",
+      "sha256": null
+    }
+  ],
+  "evidence_refs": [
+    "TH07_quality_baseline.json"
+  ],
+  "limitations": [],
+  "result": "PASS",
+  "artifact_type": "MUTATION_TESTING",
+  "scope": {
+    "modules": [
+      "src/core/context_resolution.py"
+    ],
+    "tests": [
+      "tests/core/test_context_hardening.py"
+    ],
+    "budget": "2 targeted security mutants; no network or cost"
+  },
+  "mutants_generated": 2,
+  "mutants_killed": 2,
+  "survivors": [],
+  "runtime": "local subprocess",
+  "cost": "0",
+  "useful_findings": [],
+  "noisy_findings": [],
+  "recommendation": "KEEP_SELECTIVELY"
+}
