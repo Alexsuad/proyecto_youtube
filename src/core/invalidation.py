@@ -33,7 +33,10 @@ class InvalidationEngine:
     def __init__(self, registry=None):
         self.invalidation_log: List[InvalidationRecord] = []
         self.registry = registry
-        self.dependencies: Dict[str, Set[str]] = {} if registry is None else {key: set(value) for key, value in registry.data.get("dependencies", {}).items()}
+        registry_data = {} if registry is None else (registry.data if hasattr(registry, "data") else registry)
+        self.dependencies: Dict[str, Set[str]] = {
+            key: set(value) for key, value in registry_data.get("dependencies", {}).items()
+        }
 
     def register_dependency(self, parent_id: str, child_id: str):
         """
@@ -43,7 +46,7 @@ class InvalidationEngine:
         if parent_id not in self.dependencies:
             self.dependencies[parent_id] = set()
         self.dependencies[parent_id].add(child_id)
-        if self.registry:
+        if self.registry is not None and hasattr(self.registry, "add_dependency"):
             self.registry.add_dependency(parent_id, child_id)
 
     def classify_profile_change(self, change_type: str) -> str:

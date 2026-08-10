@@ -49,6 +49,94 @@ def _write_registry(path: Path, registry: dict[str, Any]) -> None:
     path.write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def _repository_root(request: Any) -> Path:
+    configured = request.config.get("repository_root") if request is not None else None
+    if configured:
+        return Path(str(configured)).resolve()
+    return Path(__file__).resolve().parents[2]
+
+
+def _workspace_snapshot(root: Path, authorized_paths: list[str] | tuple[str, ...] | None = None) -> dict[str, str]:
+    snapshot: dict[str, str] = {}
+    if not root.is_dir():
+        return snapshot
+    if not authorized_paths:
+        return snapshot
+    candidates: set[Path] = set()
+    for raw_path in authorized_paths:
+        relative = Path(str(raw_path).replace("\\", "/"))
+        if relative.is_absolute() or ".." in relative.parts:
+            continue
+        target = (root / relative).resolve()
+        try:
+            target.relative_to(root)
+        except ValueError:
+            continue
+        if target.is_file():
+            candidates.add(target)
+        elif target.is_dir():
+            candidates.update(path for path in target.rglob("*") if path.is_file())
+    for candidate in candidates:
+        if any(part == ".git" for part in candidate.relative_to(root).parts):
+            continue
+        try:
+            snapshot[candidate.relative_to(root).as_posix()] = file_checksum(candidate)
+        except OSError:
+            continue
+    return snapshot
+
+
+def capture_pre_run_snapshot(request: Any, *, authorization: Any = None, root: Path | None = None) -> None:
+    """Capture the authorized write scope before execution; the reviewer cannot supply it."""
+    root = (root or _repository_root(request)).resolve()
+    authorized_paths = tuple(str(path) for path in getattr(authorization, "allowed_paths", ()) or ())
+    request.config = {
+        **request.config,
+        "_workspace_root": str(root),
+        "_authorized_write_scope": list(authorized_paths),
+        "_pre_run_snapshot": _workspace_snapshot(root, authorized_paths),
+    }
+
+
+def _modification_manifest(request: Any) -> dict[str, Any]:
+    pre_snapshot = request.config.get("_pre_run_snapshot")
+    root_value = request.config.get("_workspace_root")
+    authorized_paths = request.config.get("_authorized_write_scope")
+    if not isinstance(pre_snapshot, dict) or not root_value or not isinstance(authorized_paths, list) or not authorized_paths:
+        return {
+            "source": "RUNTIME_PRE_POST_DIFF_UNAVAILABLE",
+            "modified_artifact_ids": [],
+            "modified_artifact_paths": [],
+        }
+    root = Path(str(root_value)).resolve()
+    authorized_paths = request.config.get("_authorized_write_scope")
+    post_snapshot = _workspace_snapshot(root, authorized_paths if isinstance(authorized_paths, list) else None)
+    changed_paths = sorted(
+        path for path in set(pre_snapshot) | set(post_snapshot)
+        if pre_snapshot.get(path) != post_snapshot.get(path)
+    )
+    path_to_ids: dict[str, set[str]] = {}
+    for item in getattr(request, "input_artifacts", []) or []:
+        try:
+            path_to_ids[Path(item.path).resolve().relative_to(root).as_posix()] = {str(item.artifact_id)}
+        except ValueError:
+            continue
+    output_path = getattr(request, "output_artifact_path", None)
+    if output_path:
+        try:
+            path_to_ids.setdefault(Path(output_path).resolve().relative_to(root).as_posix(), set()).add(str(request.output_artifact_id))
+        except ValueError:
+            pass
+    modified_ids = sorted({artifact_id for path in changed_paths for artifact_id in path_to_ids.get(path, set()) if artifact_id})
+    return {
+        "source": "RUNTIME_PRE_POST_DIFF",
+        "modified_artifact_ids": modified_ids,
+        "modified_artifact_paths": changed_paths,
+        "pre_run_snapshot_sha256": hashlib.sha256(canonical_json(pre_snapshot)).hexdigest(),
+        "post_run_snapshot_sha256": hashlib.sha256(canonical_json(post_snapshot)).hexdigest(),
+    }
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -302,6 +390,11 @@ def append_result(
         handoff_target = str(result.usage.get("handoff_target") or "NONE")
         execution_profile = str(result.usage.get("execution_profile") or "UNSPECIFIED_PROFILE")
     provenance_config = request.config if request is not None else result.usage
+    modification_manifest = _modification_manifest(request) if request is not None else {
+        "source": "RUNTIME_PRE_POST_DIFF_UNAVAILABLE",
+        "modified_artifact_ids": [],
+        "modified_artifact_paths": [],
+    }
     functional_identity = _non_null({
         "mission_id": provenance_config.get("mission_id"),
         "capability_id": provenance_config.get("capability_id") or getattr(request, "capability_id", None),
@@ -348,6 +441,9 @@ def append_result(
         "input_checksum": str(provenance_config.get("input_checksum") or result.input_manifest_checksum),
         "output_checksum": str(result.output_checksum),
         "validation_result": str(provenance_config.get("validation_result") or "PASS"),
+        "modification_manifest_source": modification_manifest["source"],
+        "modified_artifact_ids": modification_manifest["modified_artifact_ids"],
+        "modified_artifact_paths": modification_manifest["modified_artifact_paths"],
         "functional_identity": functional_identity,
         "reproducibility": reproducibility,
         "operational_telemetry": operational_telemetry,

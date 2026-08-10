@@ -88,6 +88,7 @@ def _completion_gate_config(tmp_path: Path) -> dict[str, str]:
         "protected_untracked_baseline": [],
         "required_tests": [{"label": "fixture", "command": [sys.executable, "-c", "pass"]}],
         "push_allowed": False,
+        "contains_material_repair": False,
         "push_guard": {"remote": "LOCAL", "ref": "HEAD~1", "baseline_remote_commit": baseline_commit},
         "state_requirements": {"control_path": "control.md", "required": {"CURRENT_MISSION": "TEST_MISSION"}, "forbidden": {}},
         "schema_checks": [],

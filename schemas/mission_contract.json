@@ -14,6 +14,7 @@
     "required_tests",
     "push_allowed",
     "push_guard",
+    "contains_material_repair",
     "state_requirements",
     "schema_checks"
   ],
@@ -38,6 +39,10 @@
       }
     },
     "push_allowed": {"type": "boolean"},
+    "contains_material_repair": {"type": "boolean"},
+    "repair_integrity_evidence_path": {"type": "string", "minLength": 1},
+    "mission_authorization_path": {"type": "string", "minLength": 1},
+    "mission_authorization_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
     "push_guard": {
       "type": "object",
       "additionalProperties": false,

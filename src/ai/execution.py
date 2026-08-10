@@ -282,8 +282,12 @@ def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
 
 def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
     started, manifest = _now(), manifest_checksum(request)
+    repository_root = Path(str(request.config.get("repository_root") or Path(__file__).resolve().parents[2])).resolve()
     try:
-        preflight = preflight_controlled_execution(request, root=Path(__file__).resolve().parents[2])
+        preflight = preflight_controlled_execution(request, root=repository_root)
+        from src.ai.registry import capture_pre_run_snapshot
+
+        capture_pre_run_snapshot(request, authorization=preflight.get("authorization"), root=repository_root)
         if preflight.get("context_manifest") is not None:
             request.config = {**request.config, "resolved_context_manifest": preflight["context_manifest"], "resolved_context_manifest_sha256": preflight["context_manifest"]["manifest_sha256"], "mission_contract_sha256": preflight["authorization"].contract_sha256}
     except (PermissionError, ValueError) as exc:

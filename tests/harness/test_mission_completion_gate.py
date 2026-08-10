@@ -14,6 +14,9 @@ import pytest
 from src.core.gate_result import GateResult
 from src.core.mission_completion_gate import MissionContract, MissionContractError, run_mission_completion_gate
 from src.core.status import GateStatus
+from src.core.repair_integrity import evidence_checksum
+from src.core.mission_authorization import scope_checksum
+from tests.core.test_repair_integrity import valid_evidence
 
 
 def _git(root: Path, *args: str) -> None:
@@ -38,16 +41,46 @@ def _repo(tmp_path: Path, *, state: str = "NO") -> Path:
     return root
 
 
-def _contract(root: Path, *, authorized: list[str] | None = None, tests: list[dict[str, object]] | None = None, forbidden: dict[str, object] | None = None) -> MissionContract:
+def _contract(root: Path, *, authorized: list[str] | None = None, tests: list[dict[str, object]] | None = None, forbidden: dict[str, object] | None = None, material_auth: bool = False) -> MissionContract:
+    state_sha256 = hashlib.sha256((root / "control.md").read_bytes()).hexdigest()
+    authorization_scope = {
+        "mission_id": "TECHNICAL_HARDENING", "capability_ids": ["CAP"], "role_ids": ["ROLE"],
+        "execution_profile_ids": ["PROFILE"], "execution_interface": "ANY",
+        "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output"],
+        "allowed_routes": ["ANY"], "execution_mode": "ANY", "live_state_sha256": state_sha256,
+        "contains_material_repair": True, "repair_integrity_evidence_path": "repair.json",
+    }
+    authority_decision = root / "authorization-decision.json"
+    authority_decision.write_text(json.dumps({
+        "mission_id": "TECHNICAL_HARDENING", "decision": "APPROVE", "artifact_version": "1.0.0",
+        "authorized_scope_sha256": scope_checksum(authorization_scope),
+    }) + "\n", encoding="utf-8")
+    authorization_path = root / "mission-authorization.json"
+    authorization_path.write_text(json.dumps({"mission_id": "TECHNICAL_HARDENING", "authorization": {
+        "live_state_path": "control.md", "live_state_sha256": state_sha256,
+        "capability_ids": ["CAP"], "role_ids": ["ROLE"], "execution_profile_ids": ["PROFILE"],
+        "execution_interface": "ANY", "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output"],
+        "allowed_routes": ["ANY"], "execution_mode": "ANY", "single_use": False,
+        "authority_ref": "authorization-decision.json", "authority_sha256": hashlib.sha256(authority_decision.read_bytes()).hexdigest(),
+        "authorized_scope_sha256": scope_checksum(authorization_scope), "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+        "contains_material_repair": True, "repair_integrity_evidence_path": "repair.json",
+    }}) + "\n", encoding="utf-8")
+    authorized_paths = list(authorized or ["src/", "control.md"])
+    for path in ("mission-authorization.json", "authorization-decision.json", "repair.json"):
+        if path not in authorized_paths:
+            authorized_paths.append(path)
     data = {
         "mission_id": "TECHNICAL_HARDENING",
         "artifact_id": "mission-completion-gate",
         "artifact_version": "1.0.0",
-        "authorized_paths": authorized or ["src/", "control.md"],
+        "authorized_paths": authorized_paths,
         "protected_untracked_paths": ["protected.txt"],
         "protected_untracked_baseline": [{"path": "protected.txt", "sha256": hashlib.sha256((root / "protected.txt").read_bytes()).hexdigest()}],
         "required_tests": tests or [{"label": "required smoke", "command": [sys.executable, "-c", "raise SystemExit(0)"]}],
         "push_allowed": False,
+        "contains_material_repair": material_auth,
+        **({"repair_integrity_evidence_path": "repair.json", "mission_authorization_path": "mission-authorization.json"} if material_auth else {}),
+        **({"mission_authorization_sha256": hashlib.sha256(authorization_path.read_bytes()).hexdigest()} if material_auth else {}),
         "push_guard": {"remote": "LOCAL", "ref": "HEAD", "baseline_remote_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True).stdout.strip()},
         "state_requirements": {
             "control_path": "control.md",
@@ -69,6 +102,114 @@ def test_valid_mission_gets_pass_and_preserves_protected_untracked(tmp_path: Pat
     assert result.status is GateStatus.PASS
     assert result.evidence["protected_untracked"]["preserved"] is True
     assert result.evidence["push_policy"]["push_allowed"] is False
+
+
+def test_material_repair_requires_an_evidence_path(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    with pytest.raises(MissionContractError, match="REPAIR_EVIDENCE_PATH_REQUIRED"):
+        MissionContract.from_dict({
+            "mission_id": "TECHNICAL_HARDENING", "artifact_id": "repair", "artifact_version": "1.0.0",
+            "authorized_paths": ["src/", "control.md"], "protected_untracked_paths": [],
+            "protected_untracked_baseline": [], "required_tests": [], "push_allowed": False,
+            "push_guard": {"remote": "LOCAL", "ref": "HEAD", "baseline_remote_commit": "0" * 40},
+            "contains_material_repair": True,
+            "state_requirements": {"control_path": "control.md", "required": {}, "forbidden": {}}, "schema_checks": [],
+        })
+
+
+def test_material_repair_without_resolvable_evidence_blocks_completion(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    contract = replace(_contract(root, material_auth=True), contains_material_repair=True, repair_integrity_evidence_path="missing-repair.json")
+    result = run_mission_completion_gate(contract, root)
+    assert result.status is GateStatus.FAIL
+    assert "REPAIR_COMPLETION_BLOCKED" in result.violations
+    assert "REQUIRED_REFERENCE_UNRESOLVED" in result.violations
+
+
+def test_material_repair_with_verified_evidence_can_complete(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    contract = replace(
+        _contract(root, authorized=["src/", "control.md", "config/", "output/", "repair.json", "origin.md", "regression.txt", "review.txt", "review-output.json", "invalidation.txt", "revalidation.txt"], material_auth=True),
+        contains_material_repair=True,
+        repair_integrity_evidence_path="repair.json",
+    )
+    evidence = valid_evidence(root)
+    evidence["mission_id"] = contract.mission_id
+    evidence["mission_contract_sha256"] = contract.contract_sha256
+    evidence["evidence_sha256"] = evidence_checksum(evidence)
+    (root / "repair.json").write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    result = run_mission_completion_gate(contract, root)
+    assert result.status is GateStatus.PASS, result.to_dict()
+    assert result.evidence["repair_integrity"]["status"] == "PASS"
+
+
+def test_material_completion_blocks_dependency_omitted_from_canonical_registry(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    contract = replace(
+        _contract(root, authorized=["src/", "control.md", "config/", "output/", "repair.json", "origin.md", "regression.txt", "review.txt", "review-output.json", "invalidation.txt", "revalidation.txt"], material_auth=True),
+        contains_material_repair=True,
+        repair_integrity_evidence_path="repair.json",
+    )
+    evidence = valid_evidence(root)
+    provenance_path = root / "output" / "execution_provenance_registry.json"
+    provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+    provenance["dependencies"] = {"origin_001": ["artifact_003"]}
+    provenance_path.write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
+    evidence["provenance"]["registry_sha256"] = hashlib.sha256(provenance_path.read_bytes()).hexdigest()
+    evidence["mission_id"] = contract.mission_id
+    evidence["mission_contract_sha256"] = contract.contract_sha256
+    evidence["evidence_sha256"] = evidence_checksum(evidence)
+    (root / "repair.json").write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    result = run_mission_completion_gate(contract, root)
+    assert result.status is GateStatus.FAIL
+    assert "REPAIR_DOWNSTREAM_DEPENDENCY_OMITTED" in result.violations
+
+
+def test_material_completion_blocks_unknown_canonical_downstream(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    contract = replace(
+        _contract(root, authorized=["src/", "control.md", "config/", "output/", "repair.json", "origin.md", "regression.txt", "review.txt", "review-output.json", "invalidation.txt", "revalidation.txt"], material_auth=True),
+        contains_material_repair=True,
+        repair_integrity_evidence_path="repair.json",
+    )
+    evidence = valid_evidence(root)
+    provenance_path = root / "output" / "execution_provenance_registry.json"
+    provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+    provenance.pop("dependencies", None)
+    provenance_path.write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
+    evidence["provenance"]["registry_sha256"] = hashlib.sha256(provenance_path.read_bytes()).hexdigest()
+    evidence["mission_id"] = contract.mission_id
+    evidence["mission_contract_sha256"] = contract.contract_sha256
+    evidence["evidence_sha256"] = evidence_checksum(evidence)
+    (root / "repair.json").write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    result = run_mission_completion_gate(contract, root)
+    assert result.status is GateStatus.FAIL
+    assert "REPAIR_DOWNSTREAM_KNOWLEDGE_UNKNOWN" in result.violations
+
+
+def test_mission_scope_boolean_mismatch_blocks(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    contract = replace(_contract(root, material_auth=True), contains_material_repair=False, repair_integrity_evidence_path="NONE")
+    result = run_mission_completion_gate(contract, root)
+    assert "MISSION_SCOPE_AUTHORIZATION_MISMATCH" in result.violations
+
+
+def test_mission_scope_evidence_path_mismatch_blocks(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    contract = replace(_contract(root, material_auth=True), repair_integrity_evidence_path="other-repair.json")
+    result = run_mission_completion_gate(contract, root)
+    assert "MISSION_SCOPE_AUTHORIZATION_MISMATCH" in result.violations
+
+
+def test_post_authorization_tampering_invalidates_authorization(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    contract = _contract(root, material_auth=True)
+    authorization_path = root / contract.mission_authorization_path
+    tampered = json.loads(authorization_path.read_text(encoding="utf-8"))
+    tampered["authorization"]["contains_material_repair"] = False
+    authorization_path.write_text(json.dumps(tampered) + "\n", encoding="utf-8")
+    result = run_mission_completion_gate(contract, root)
+    assert "MISSION_AUTHORIZATION_INVALID" in result.violations
 
 
 def test_diff_check_failure_prevents_pass(tmp_path: Path) -> None:
@@ -145,6 +286,7 @@ def test_contract_rejects_free_form_llm_claims() -> None:
         "protected_untracked_paths": [],
         "required_tests": [],
         "push_allowed": False,
+        "contains_material_repair": False,
         "push_guard": {"remote": "LOCAL", "ref": "HEAD", "baseline_remote_commit": "0" * 40},
         "state_requirements": {"control_path": "control.md", "required": {}, "forbidden": {}},
         "schema_checks": [],

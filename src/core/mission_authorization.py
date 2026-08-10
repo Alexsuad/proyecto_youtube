@@ -45,6 +45,9 @@ class MissionAuthorization:
     authority_sha256: str
     authorized_scope_sha256: str
     executor_substitution_policy: str
+    contains_material_repair: bool
+    repair_integrity_evidence_path: str
+    contract_path: str | None = None
 
     def scope_payload(self) -> dict[str, Any]:
         return {
@@ -58,10 +61,18 @@ class MissionAuthorization:
             "allowed_routes": list(self.allowed_routes),
             "execution_mode": self.execution_mode,
             "live_state_sha256": self.live_state_sha256,
+            "contains_material_repair": self.contains_material_repair,
+            "repair_integrity_evidence_path": self.repair_integrity_evidence_path,
         }
 
     @classmethod
-    def from_contract(cls, data: dict[str, Any], *, contract_sha256: str) -> "MissionAuthorization":
+    def from_contract(
+        cls,
+        data: dict[str, Any],
+        *,
+        contract_sha256: str,
+        contract_path: str | None = None,
+    ) -> "MissionAuthorization":
         auth = data.get("authorization")
         if not isinstance(auth, dict) or not isinstance(data.get("mission_id"), str):
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authorization missing")
@@ -70,7 +81,8 @@ class MissionAuthorization:
             "execution_profile_ids", "execution_interface", "allowed_operations",
             "allowed_paths", "allowed_routes", "execution_mode", "single_use",
             "authority_ref", "authority_sha256", "authorized_scope_sha256",
-            "executor_substitution_policy",
+            "executor_substitution_policy", "contains_material_repair",
+            "repair_integrity_evidence_path",
         )
         missing = [key for key in required if key not in auth]
         if missing:
@@ -101,6 +113,9 @@ class MissionAuthorization:
             authority_sha256=str(auth["authority_sha256"]).lower(),
             authorized_scope_sha256=str(auth["authorized_scope_sha256"]).lower(),
             executor_substitution_policy=str(auth["executor_substitution_policy"]),
+            contains_material_repair=bool(auth["contains_material_repair"]),
+            repair_integrity_evidence_path=str(auth["repair_integrity_evidence_path"]),
+            contract_path=contract_path,
         )
         if scope_checksum(instance.scope_payload()) != instance.authorized_scope_sha256:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authorized scope checksum")
@@ -120,6 +135,19 @@ class MissionAuthorization:
         execution_interface: str | None = None,
     ) -> None:
         repository_root = Path(root).resolve()
+        if self.contract_path:
+            contract_file = Path(self.contract_path)
+            if not contract_file.is_absolute():
+                contract_file = repository_root / contract_file
+            try:
+                contract_file = contract_file.resolve(strict=True)
+                contract_file.relative_to(repository_root)
+                current_contract = json.loads(contract_file.read_text(encoding="utf-8"))
+                current_checksum = hashlib.sha256(canonical_scope(current_contract)).hexdigest()
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError):
+                raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: contract unavailable")
+            if current_checksum != self.contract_sha256:
+                raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: contract checksum")
         state = (repository_root / self.live_state_path).resolve()
         authority = (repository_root / self.authority_ref).resolve()
         for candidate in (state, authority):
@@ -165,4 +193,8 @@ def load_mission_authorization(path: str | Path) -> MissionAuthorization:
     contract_path = Path(path)
     data = json.loads(contract_path.read_text(encoding="utf-8"))
     canonical = canonical_scope(data)
-    return MissionAuthorization.from_contract(data, contract_sha256=hashlib.sha256(canonical).hexdigest())
+    return MissionAuthorization.from_contract(
+        data,
+        contract_sha256=hashlib.sha256(canonical).hexdigest(),
+        contract_path=str(contract_path),
+    )

@@ -70,12 +70,14 @@ def test_mission_authorization_binds_live_state_and_authority(tmp_path: Path) ->
         "mission_id": "M-1", "capability_ids": ["CAP"], "role_ids": ["ROLE"], "execution_profile_ids": ["PROFILE"],
         "execution_interface": "INTERFACE", "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output"],
         "allowed_routes": ["ANY"], "execution_mode": "SYNTHETIC", "live_state_sha256": state_digest,
+        "contains_material_repair": False, "repair_integrity_evidence_path": "NONE",
     }
     contract = {"mission_id": "M-1", "authorization": {
         "live_state_path": "state.md", "live_state_sha256": state_digest,
         "capability_ids": ["CAP"], "role_ids": ["ROLE"], "execution_profile_ids": ["PROFILE"],
         "execution_interface": "INTERFACE", "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output"],
         "allowed_routes": ["ANY"], "execution_mode": "SYNTHETIC", "single_use": True,
+        "contains_material_repair": False, "repair_integrity_evidence_path": "NONE",
         "authority_ref": "authority.json", "authority_sha256": "0" * 64,
         "authorized_scope_sha256": scope_checksum(scope), "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
     }}
@@ -87,6 +89,19 @@ def test_mission_authorization_binds_live_state_and_authority(tmp_path: Path) ->
     contract_path = tmp_path / "mission.json"
     contract_path.write_text(json.dumps(contract), encoding="utf-8")
     auth = load_mission_authorization(contract_path)
+    for field, value in (("contains_material_repair", True), ("repair_integrity_evidence_path", "other-repair.json")):
+        tampered = json.loads(json.dumps(contract))
+        tampered["authorization"][field] = value
+        contract_path.write_text(json.dumps(tampered), encoding="utf-8")
+        with pytest.raises(MissionAuthorizationError, match="authorized scope checksum"):
+            load_mission_authorization(contract_path)
+    contract_path.write_text(json.dumps(contract), encoding="utf-8")
+    tampered = json.loads(json.dumps(contract))
+    tampered["authorization"]["contains_material_repair"] = True
+    contract_path.write_text(json.dumps(tampered), encoding="utf-8")
+    with pytest.raises(MissionAuthorizationError, match="contract checksum"):
+        auth.verify(tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY")
+    contract_path.write_text(json.dumps(contract), encoding="utf-8")
     auth.verify(tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
                path="output/result.json", execution_mode="SYNTHETIC", execution_route="route_a",
                execution_profile_id="PROFILE", execution_interface="INTERFACE")
@@ -175,6 +190,7 @@ def test_compatible_executor_substitution_does_not_change_functional_authority(t
         "mission_id": "M-EXEC", "capability_ids": ["CAP"], "role_ids": ["ROLE"], "execution_profile_ids": ["PROFILE"],
         "execution_interface": "INTERFACE", "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output"],
         "allowed_routes": ["route_a"], "execution_mode": "SYNTHETIC", "live_state_sha256": state_digest,
+        "contains_material_repair": False, "repair_integrity_evidence_path": "NONE",
     }
     authority_digest = _write(authority, json.dumps({
         "decision": "APPROVE", "artifact_version": "1.0.0", "mission_id": "M-EXEC",
@@ -185,6 +201,7 @@ def test_compatible_executor_substitution_does_not_change_functional_authority(t
         "role_ids": ["ROLE"], "execution_profile_ids": ["PROFILE"], "execution_interface": "INTERFACE",
         "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output"], "allowed_routes": ["route_a"],
         "execution_mode": "SYNTHETIC", "single_use": True, "authority_ref": "authority.json",
+        "contains_material_repair": False, "repair_integrity_evidence_path": "NONE",
         "authority_sha256": authority_digest, "authorized_scope_sha256": scope_checksum(scope),
         "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
     }}

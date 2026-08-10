@@ -4,7 +4,7 @@
   "title": "MissionAuthorization",
   "type": "object",
   "additionalProperties": false,
-  "required": ["mission_id", "contract_sha256", "live_state_path", "live_state_sha256", "capability_ids", "role_ids", "execution_profile_ids", "execution_interface", "allowed_operations", "allowed_paths", "allowed_routes", "execution_mode", "single_use", "authority_ref", "authority_sha256", "authorized_scope_sha256", "executor_substitution_policy"],
+  "required": ["mission_id", "contract_sha256", "live_state_path", "live_state_sha256", "capability_ids", "role_ids", "execution_profile_ids", "execution_interface", "allowed_operations", "allowed_paths", "allowed_routes", "execution_mode", "single_use", "authority_ref", "authority_sha256", "authorized_scope_sha256", "executor_substitution_policy", "contains_material_repair", "repair_integrity_evidence_path"],
   "properties": {
     "mission_id": {"type": "string", "minLength": 1},
     "contract_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
@@ -22,6 +22,8 @@
     "authority_ref": {"type": "string", "minLength": 1},
     "authority_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "authorized_scope_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
-    "executor_substitution_policy": {"const": "COMPATIBLE_INTERFACE_ONLY"}
+    "executor_substitution_policy": {"const": "COMPATIBLE_INTERFACE_ONLY"},
+    "contains_material_repair": {"type": "boolean"},
+    "repair_integrity_evidence_path": {"type": "string", "minLength": 1}
   }
 }

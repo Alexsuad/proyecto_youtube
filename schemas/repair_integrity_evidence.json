@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RepairIntegrityEvidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "repair_id", "finding_id", "mission_id", "mission_contract_sha256",
+    "contains_material_repair", "capability_id", "domain", "symptom", "root_cause",
+    "root_cause_class", "origin_artifact", "affected_artifacts", "repair_depth",
+    "repair_actions", "downstream_impact", "downstream_invalidations", "downstream_revalidations",
+    "detector_impact", "detector_change_required", "detector_changes", "sensitive_detector_changes",
+    "regression_evidence", "compensating_changes", "governance_change_requested", "governance_resolution",
+    "provenance", "executor_id", "reviewer_id", "review_status", "review_evidence",
+    "created_at", "evidence_sha256"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "repair_id": {"type": "string", "minLength": 1},
+    "finding_id": {"type": "string", "minLength": 1},
+    "mission_id": {"type": "string", "minLength": 1},
+    "mission_contract_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "contains_material_repair": {"const": true},
+    "capability_id": {"type": "string", "minLength": 1},
+    "domain": {"type": "string", "minLength": 1},
+    "symptom": {"type": "string", "minLength": 1},
+    "root_cause": {"type": "string", "minLength": 1},
+    "root_cause_class": {"enum": ["L0_PRESENTATION", "L1_OUTPUT", "L2_STRUCTURE", "L3_DECISION", "L4_EVIDENCE", "L5_REQUIREMENT_OR_POLICY"]},
+    "origin_artifact": {"$ref": "#/definitions/artifact_ref"},
+    "affected_artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "repair_depth": {"enum": ["L0_PRESENTATION", "L1_OUTPUT", "L2_STRUCTURE", "L3_DECISION", "L4_EVIDENCE", "L5_REQUIREMENT_OR_POLICY"]},
+    "repair_actions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "downstream_impact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["affected_artifacts", "no_impact_justification"],
+      "properties": {
+        "affected_artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "no_impact_justification": {"type": "string"}
+      }
+    },
+    "downstream_invalidations": {"type": "array", "items": {"$ref": "#/definitions/downstream_evidence"}},
+    "downstream_revalidations": {"type": "array", "items": {"$ref": "#/definitions/downstream_evidence"}},
+    "detector_impact": {"enum": ["YES", "NO"]},
+    "detector_change_required": {"enum": ["YES", "NO"]},
+    "detector_changes": {"type": "array", "items": {"$ref": "#/definitions/detector_change"}},
+    "sensitive_detector_changes": {
+      "type": "object", "additionalProperties": false,
+      "required": ["changed", "justification", "before_behavior", "after_behavior", "reason_change_is_valid", "regression_evidence_ref"],
+      "properties": {
+        "changed": {"type": "boolean"}, "justification": {"type": "string"},
+        "before_behavior": {"type": "string"}, "after_behavior": {"type": "string"},
+        "reason_change_is_valid": {"type": "string"},
+        "regression_evidence_ref": {"type": "array", "items": {"$ref": "#/definitions/evidence_ref"}}
+      }
+    },
+    "regression_evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["defect_no_longer_occurs", "neighboring_valid_behavior", "evidence_refs"],
+      "properties": {
+        "defect_no_longer_occurs": {"type": "boolean"},
+        "neighboring_valid_behavior": {"type": "boolean"},
+        "evidence_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/evidence_ref"}}
+      }
+    },
+    "compensating_changes": {"type": "array", "items": {"$ref": "#/definitions/compensating_change"}},
+    "governance_change_requested": {"type": "boolean"},
+    "governance_resolution": {"anyOf": [{"type": "null"}, {"$ref": "#/definitions/governance_resolution"}]},
+    "provenance": {"$ref": "#/definitions/provenance"},
+    "executor_id": {"type": "string", "minLength": 1},
+    "reviewer_id": {"type": "string", "minLength": 1},
+    "review_status": {"enum": ["PENDING", "APPROVED", "REJECTED", "INVALIDATED"]},
+    "review_evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reviewer_id", "decision", "evidence_refs", "protected_artifact_refs", "reviewer_modified_under_review"],
+      "properties": {
+        "reviewer_id": {"type": "string", "minLength": 1},
+        "decision": {"enum": ["APPROVED", "REJECTED"]},
+        "evidence_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/evidence_ref"}},
+        "protected_artifact_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/artifact_ref"}, "uniqueItems": true},
+        "reviewer_modified_under_review": {"type": "boolean"}
+      }
+    },
+    "created_at": {"type": "string", "minLength": 1},
+    "evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "definitions": {
+    "artifact_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref_id", "artifact_path", "artifact_type", "artifact_version", "artifact_sha256", "required"],
+      "properties": {
+        "ref_id": {"type": "string", "minLength": 1}, "artifact_path": {"type": "string", "minLength": 1},
+        "artifact_type": {"type": "string", "minLength": 1}, "artifact_version": {"type": "string", "minLength": 1},
+        "artifact_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}, "canonical_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "required": {"type": "boolean"}
+      }
+    },
+    "evidence_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref_id", "artifact_path", "artifact_type", "artifact_version", "artifact_sha256", "result", "required"],
+      "properties": {
+        "ref_id": {"type": "string", "minLength": 1}, "artifact_path": {"type": "string", "minLength": 1},
+        "artifact_type": {"type": "string", "minLength": 1}, "artifact_version": {"type": "string", "minLength": 1},
+        "artifact_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}, "canonical_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "result": {"type": "string", "minLength": 1}, "required": {"type": "boolean"}
+      }
+    },
+    "downstream_evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_id", "status", "evidence_ref", "justification"],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["COMPLETED", "NOT_REQUIRED"]},
+        "evidence_ref": {"$ref": "#/definitions/evidence_ref"},
+        "justification": {"type": "string"}
+      }
+    },
+    "detector_change": {
+      "type": "object", "additionalProperties": false, "required": ["path", "change"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "change": {"type": "string", "minLength": 1}}
+    },
+    "compensating_change": {
+      "type": "object", "additionalProperties": false,
+      "required": ["change", "justification", "root_cause_relationship", "evidence_refs", "regression_refs", "review_result"],
+      "properties": {
+        "change": {"type": "string", "minLength": 1}, "justification": {"type": "string", "minLength": 1},
+        "root_cause_relationship": {"type": "string", "minLength": 1},
+        "evidence_refs": {"type": "array", "items": {"$ref": "#/definitions/evidence_ref"}},
+        "regression_refs": {"type": "array", "items": {"$ref": "#/definitions/evidence_ref"}},
+        "review_result": {"enum": ["APPROVED", "REJECTED", "PENDING"]}
+      }
+    },
+    "governance_resolution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["approval_ref", "approved_artifact_ref", "approved_version", "approved_artifact_sha256", "approval_sha256", "authority_ref", "authority_sha256", "decision", "resolved_at", "requirement_ref"],
+      "properties": {
+        "approval_ref": {"$ref": "#/definitions/artifact_ref"}, "approved_artifact_ref": {"$ref": "#/definitions/artifact_ref"}, "approved_version": {"type": "string", "minLength": 1},
+        "approved_artifact_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "approval_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}, "authority_ref": {"type": "string", "minLength": 1},
+        "authority_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "decision": {"enum": ["APPROVE", "AUTHORIZED"]}, "resolved_at": {"type": "string", "minLength": 1},
+        "requirement_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["registry_path", "registry_sha256", "repair_run_id", "review_run_id"],
+      "properties": {
+        "registry_path": {"type": "string", "minLength": 1}, "registry_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "repair_run_id": {"type": "string", "minLength": 1}, "review_run_id": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

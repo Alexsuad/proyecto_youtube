@@ -119,6 +119,9 @@ VALID_FIXTURES = {
                 "output_artifact_ids": ["semantic_audit:AUD-1"],
                 "output_versions": ["RUN-001"],
                 "output_checksums": ["a" * 64],
+                "modification_manifest_source": "RUNTIME_PRE_POST_DIFF",
+                "modified_artifact_ids": [],
+                "modified_artifact_paths": [],
                 "finished_at": "2026-07-25T08:01:00Z",
                 "latency": 60,
                 "input_tokens": 0,
@@ -707,6 +710,7 @@ VALID_FIXTURES["mission_contract"] = {
     "protected_untracked_baseline": [],
     "required_tests": [{"label": "fixture", "command": ["python", "-c", "pass"]}],
     "push_allowed": False,
+    "contains_material_repair": False,
     "push_guard": {"remote": "origin", "ref": "refs/heads/master", "baseline_remote_commit": "0000000000000000000000000000000000000000"},
     "state_requirements": {"control_path": "plans/001_CONTROL_OPERATIVO.md", "required": {}, "forbidden": {}},
     "schema_checks": []
@@ -754,7 +758,34 @@ VALID_FIXTURES["mission_authorization_contract"] = {
     "authority_sha256": _FIXTURE_SHA,
     "authorized_scope_sha256": _FIXTURE_SHA,
     "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": False,
+    "repair_integrity_evidence_path": "NONE",
 }
+
+from src.core.repair_integrity import evidence_checksum
+
+VALID_FIXTURES["repair_integrity_evidence"] = {
+    "schema_version": "1.0.0", "repair_id": "repair_fixture", "finding_id": "finding_fixture",
+    "mission_id": "TH_03", "mission_contract_sha256": "a" * 64, "contains_material_repair": True,
+    "capability_id": "REPAIR_INTEGRITY", "domain": "INFRASTRUCTURE_GOVERNANCE",
+    "symptom": "Fixture symptom.", "root_cause": "Fixture root cause.", "root_cause_class": "L4_EVIDENCE",
+    "origin_artifact": {"ref_id": "origin_fixture", "artifact_path": "src/core/repair_integrity.py", "artifact_type": "TEXT", "artifact_version": "UNDECLARED", "artifact_sha256": "a" * 64, "required": True},
+    "affected_artifacts": ["artifact_fixture"], "repair_depth": "L4_EVIDENCE",
+    "repair_actions": ["Fixture repair action."],
+    "downstream_impact": {"affected_artifacts": ["artifact_fixture"], "no_impact_justification": ""},
+    "downstream_invalidations": [{"artifact_id": "artifact_fixture", "status": "COMPLETED", "evidence_ref": {"ref_id": "inv_fixture", "artifact_path": "src/core/repair_integrity.py", "artifact_type": "TEXT", "artifact_version": "UNDECLARED", "artifact_sha256": "a" * 64, "result": "COMPLETED", "required": True}, "justification": "Fixture."}],
+    "downstream_revalidations": [{"artifact_id": "artifact_fixture", "status": "COMPLETED", "evidence_ref": {"ref_id": "reval_fixture", "artifact_path": "src/core/repair_integrity.py", "artifact_type": "TEXT", "artifact_version": "UNDECLARED", "artifact_sha256": "a" * 64, "result": "PASS", "required": True}, "justification": "Fixture."}],
+    "detector_impact": "NO", "detector_change_required": "NO", "detector_changes": [],
+    "sensitive_detector_changes": {"changed": False, "justification": "No detector changed.", "before_behavior": "", "after_behavior": "", "reason_change_is_valid": "", "regression_evidence_ref": []},
+    "regression_evidence": {"defect_no_longer_occurs": True, "neighboring_valid_behavior": True, "evidence_refs": [{"ref_id": "test_fixture", "artifact_path": "src/core/repair_integrity.py", "artifact_type": "TEXT", "artifact_version": "UNDECLARED", "artifact_sha256": "a" * 64, "result": "PASS", "required": True}]},
+    "compensating_changes": [], "governance_change_requested": False, "governance_resolution": None,
+    "provenance": {"registry_path": "output/execution_provenance_registry.json", "registry_sha256": "a" * 64, "repair_run_id": "RUN-REPAIR", "review_run_id": "RUN-REVIEW"},
+    "executor_id": "id_a1b2c3d4", "reviewer_id": "id_e5f6a7b8",
+    "review_status": "APPROVED", "review_evidence": {"reviewer_id": "id_e5f6a7b8", "decision": "APPROVED", "evidence_refs": [{"ref_id": "review_fixture", "artifact_path": "src/core/repair_integrity.py", "artifact_type": "TEXT", "artifact_version": "UNDECLARED", "artifact_sha256": "a" * 64, "result": "PASS", "required": True}], "protected_artifact_refs": [{"ref_id": "origin_fixture", "artifact_path": "src/core/repair_integrity.py", "artifact_type": "TEXT", "artifact_version": "UNDECLARED", "artifact_sha256": "a" * 64, "required": True}], "reviewer_modified_under_review": False},
+    "created_at": "2026-08-09T00:00:00Z"
+}
+VALID_FIXTURES["repair_integrity_evidence"]["evidence_sha256"] = evidence_checksum(VALID_FIXTURES["repair_integrity_evidence"])
+
 class TestAllJSONSchemas(unittest.TestCase):
 
     def test_all_schemas_are_valid_draft7(self):

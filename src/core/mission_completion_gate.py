@@ -13,6 +13,7 @@ from typing import Any, Sequence
 
 from src.core.contract_validation import validate_against_schema
 from src.core.gate_result import GateResult
+from src.core.mission_authorization import MissionAuthorizationError, load_mission_authorization, scope_checksum, sha256_file
 from src.core.status import GateStatus
 
 
@@ -38,6 +39,10 @@ class MissionContract:
     required_tests: tuple[RequiredTest, ...]
     push_allowed: bool
     push_guard: tuple[str, str, str]
+    contains_material_repair: bool
+    repair_integrity_evidence_path: str | None
+    mission_authorization_path: str | None
+    mission_authorization_sha256: str | None
     control_path: str
     required_state: dict[str, str]
     forbidden_state: dict[str, tuple[str, ...]]
@@ -49,6 +54,19 @@ class MissionContract:
         violations = validate_against_schema(data, "mission_contract")
         if violations:
             raise MissionContractError("MissionContract inválido: " + "; ".join(violations))
+
+        contains_material_repair = data["contains_material_repair"]
+        repair_path = data.get("repair_integrity_evidence_path")
+        if contains_material_repair and not repair_path:
+            raise MissionContractError("REPAIR_EVIDENCE_PATH_REQUIRED")
+        if repair_path and not _in_scope(_normalize_path(repair_path), data["authorized_paths"]):
+            raise MissionContractError("REPAIR_EVIDENCE_PATH_OUT_OF_SCOPE")
+        authorization_path = data.get("mission_authorization_path")
+        authorization_sha256 = data.get("mission_authorization_sha256")
+        if contains_material_repair and not authorization_path:
+            raise MissionContractError("MISSION_AUTHORIZATION_PATH_REQUIRED")
+        if contains_material_repair and not authorization_sha256:
+            raise MissionContractError("MISSION_AUTHORIZATION_CHECKSUM_REQUIRED")
 
         state = data["state_requirements"]
         forbidden = {
@@ -75,6 +93,10 @@ class MissionContract:
             required_tests=tests,
             push_allowed=data["push_allowed"],
             push_guard=(push_guard["remote"], push_guard["ref"], push_guard["baseline_remote_commit"].lower()),
+            contains_material_repair=contains_material_repair,
+            repair_integrity_evidence_path=_normalize_path(repair_path) if repair_path else None,
+            mission_authorization_path=_normalize_path(authorization_path) if authorization_path else None,
+            mission_authorization_sha256=str(authorization_sha256).lower() if authorization_sha256 else None,
             control_path=_normalize_path(state["control_path"]),
             required_state=dict(state["required"]),
             forbidden_state=forbidden,
@@ -251,6 +273,14 @@ def run_mission_completion_gate(contract: MissionContract, repo_root: str | Path
     violations.extend(structural["violations"])
     evidence["structural"] = structural["evidence"]
 
+    authorization_result = _verify_mission_scope_authorization(contract, root)
+    evidence["mission_authorization"] = authorization_result["evidence"]
+    violations.extend(authorization_result["violations"])
+
+    repair_result = _run_repair_integrity_if_required(contract, root)
+    evidence["repair_integrity"] = repair_result["evidence"]
+    violations.extend(repair_result["violations"])
+
     tests = []
     for required_test in contract.required_tests:
         result = _run_command(root, required_test.command, required_test.timeout_seconds)
@@ -325,6 +355,86 @@ def _run_structural_checks(root: Path, changed: Sequence[str], schema_checks: Se
         if schema_violations:
             violations.append("SCHEMA_VALIDATION_FAILED")
     return {"violations": violations, "evidence": evidence}
+
+
+def _run_repair_integrity_if_required(contract: MissionContract, root: Path) -> dict[str, Any]:
+    if not contract.contains_material_repair and (
+        not contract.mission_authorization_path or contract.mission_authorization_path == "NONE"
+    ):
+        return {"violations": [], "evidence": {"required": False, "status": "NOT_REQUIRED"}}
+    from src.scripts.repair_integrity_gate import run_repair_integrity_gate
+
+    path = root / Path(contract.repair_integrity_evidence_path or "")
+    if not path.is_file():
+        return {
+            "violations": ["REPAIR_COMPLETION_BLOCKED", "REQUIRED_REFERENCE_UNRESOLVED"],
+            "evidence": {"required": True, "status": "UNRESOLVED", "path": contract.repair_integrity_evidence_path},
+        }
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return {
+            "violations": ["REPAIR_COMPLETION_BLOCKED", "REQUIRED_REFERENCE_UNRESOLVED"],
+            "evidence": {"required": True, "status": "UNRESOLVED", "path": contract.repair_integrity_evidence_path, "error": str(exc)},
+        }
+    result = run_repair_integrity_gate(
+        payload,
+        repo_root=root,
+        expected_mission_id=contract.mission_id,
+        expected_contract_sha256=contract.contract_sha256,
+        protected_paths=(contract.repair_integrity_evidence_path or "",),
+        repair_evidence_path=contract.repair_integrity_evidence_path,
+    )
+    violations = list(result.violations)
+    if result.status is not GateStatus.PASS:
+        violations.extend(["REPAIR_COMPLETION_BLOCKED"])
+    return {"violations": sorted(set(violations)), "evidence": result.to_dict()}
+
+
+def _verify_mission_scope_authorization(contract: MissionContract, root: Path) -> dict[str, Any]:
+    if not contract.contains_material_repair and (
+        not contract.mission_authorization_path or contract.mission_authorization_path == "NONE"
+    ):
+        return {"violations": [], "evidence": {"required": False, "status": "NOT_REQUIRED"}}
+    if not contract.mission_authorization_path:
+        return {"violations": ["MISSION_AUTHORIZATION_INVALID"], "evidence": {"required": True, "status": "UNRESOLVED"}}
+    path = root / Path(contract.mission_authorization_path)
+    evidence: dict[str, Any] = {
+        "required": True,
+        "path": contract.mission_authorization_path,
+        "expected_sha256": contract.mission_authorization_sha256,
+    }
+    try:
+        path = path.resolve(strict=True)
+        path.relative_to(root)
+        actual_sha256 = sha256_file(path)
+        evidence["actual_sha256"] = actual_sha256
+        if actual_sha256.lower() != str(contract.mission_authorization_sha256).lower():
+            return {"violations": ["MISSION_AUTHORIZATION_INVALID"], "evidence": {**evidence, "status": "CHECKSUM_MISMATCH"}}
+        authorization = load_mission_authorization(path)
+        evidence.update({
+            "mission_id": authorization.mission_id,
+            "contains_material_repair": authorization.contains_material_repair,
+            "repair_integrity_evidence_path": authorization.repair_integrity_evidence_path,
+            "authorized_scope_sha256": authorization.authorized_scope_sha256,
+        })
+        if authorization.mission_id != contract.mission_id:
+            return {"violations": ["MISSION_SCOPE_AUTHORIZATION_MISMATCH"], "evidence": {**evidence, "status": "MISMATCH"}}
+        if authorization.contains_material_repair != contract.contains_material_repair:
+            return {"violations": ["MISSION_SCOPE_AUTHORIZATION_MISMATCH"], "evidence": {**evidence, "status": "MISMATCH"}}
+        if _normalize_path(authorization.repair_integrity_evidence_path) != _normalize_path(contract.repair_integrity_evidence_path or "NONE"):
+            return {"violations": ["MISSION_SCOPE_AUTHORIZATION_MISMATCH"], "evidence": {**evidence, "status": "MISMATCH"}}
+        if scope_checksum(authorization.scope_payload()) != authorization.authorized_scope_sha256:
+            return {"violations": ["MISSION_AUTHORIZATION_INVALID"], "evidence": {**evidence, "status": "SCOPE_CHECKSUM_MISMATCH"}}
+        authorization.verify(
+            root,
+            capability_id=authorization.capability_ids[0],
+            role_id=authorization.role_ids[0],
+            operation=authorization.allowed_operations[0],
+        )
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError, MissionAuthorizationError, IndexError):
+        return {"violations": ["MISSION_AUTHORIZATION_INVALID"], "evidence": {**evidence, "status": "INVALID"}}
+    return {"violations": [], "evidence": {**evidence, "status": "PASS"}}
 
 
 def _check_state(root: Path, contract: MissionContract) -> tuple[dict[str, Any], list[str]]:
