@@ -3,8 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import uuid
-from datetime import datetime, timezone
+import math
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -19,10 +18,6 @@ class ContextResolutionError(ValueError):
 
 def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def _load_policy(root: Path, policy_path: str | Path | None) -> dict[str, list[str]]:
@@ -99,6 +94,11 @@ def resolve_context(
     role_id: str,
     run_id: str,
     policy_path: str | Path | None = None,
+    mission_id: str | None = None,
+    execution_profile_id: str | None = None,
+    prompt_id: str | None = None,
+    input_refs: list[str] | None = None,
+    output_refs: list[str] | None = None,
 ) -> dict[str, Any]:
     """Resolve context with raw-byte identity and optional canonical JSON identity."""
     repository_root = Path(root).resolve()
@@ -111,6 +111,11 @@ def resolve_context(
                 raise ContextResolutionError("CONTEXT_REQUIRED_UNRESOLVED")
             context_class = reference.get("context_class")
             if context_class not in grouped:
+                raise ContextResolutionError("CONTEXT_REQUIRED_UNRESOLVED")
+            layer = reference.get("precedence_layer")
+            if layer and layer not in {"NORMATIVE_CONTEXT", "OWNER_AUTHORIZED_MISSION_SCOPE", "CASE_INPUT", "OPTIONAL_EVIDENCE"}:
+                raise ContextResolutionError("CONTEXT_REQUIRED_UNRESOLVED")
+            if context_class == "NORMATIVE" and layer and layer != "NORMATIVE_CONTEXT":
                 raise ContextResolutionError("CONTEXT_REQUIRED_UNRESOLVED")
             resolved = _safe_path(repository_root, str(reference.get("artifact_path", "")))
             if not _allowed(resolved, repository_root, policy[f"{context_class.lower()}_allowed_roots"]):
@@ -129,8 +134,9 @@ def resolve_context(
             ref_id = str(reference.get("ref_id", "UNSPECIFIED_REF")) if isinstance(reference, dict) else "UNSPECIFIED_REF"
             unresolved.append(f"CONTEXT_OPTIONAL_UNRESOLVED:{ref_id}")
 
+    resolved_rows = [row for rows in grouped.values() for row in rows]
+    resolved_size = sum((repository_root / row["artifact_path"]).stat().st_size for row in resolved_rows)
     body = {
-        "manifest_id": f"CTX-{uuid.uuid4().hex}",
         "manifest_schema_version": "1.0.0",
         "capability_id": capability_id,
         "role_id": role_id,
@@ -139,8 +145,21 @@ def resolve_context(
         "evidentiary_refs": grouped["EVIDENTIARY"],
         "historical_refs": grouped["HISTORICAL"],
         "unresolved_optional_refs": sorted(unresolved),
-        "resolved_at": _now(),
+        "required_context_count": sum(1 for row in resolved_rows if row["required"]),
+        "resolved_context_size": resolved_size,
+        "estimated_tokens": math.ceil(resolved_size / 4),
+        "token_estimation_method": "UTF8_BYTES_DIVIDED_BY_4",
     }
-    manifest = dict(body)
-    manifest["manifest_sha256"] = _sha256_bytes(canonical_json(body))
+    if mission_id is not None:
+        body["mission_id"] = mission_id
+    if execution_profile_id is not None:
+        body["execution_profile_id"] = execution_profile_id
+    if prompt_id is not None:
+        body["prompt_id"] = prompt_id
+    if input_refs is not None:
+        body["input_refs"] = list(input_refs)
+    if output_refs is not None:
+        body["output_refs"] = list(output_refs)
+    manifest = {"manifest_id": "CTX-" + _sha256_bytes(canonical_json(body))[:32], **body}
+    manifest["manifest_sha256"] = _sha256_bytes(canonical_json(manifest))
     return manifest

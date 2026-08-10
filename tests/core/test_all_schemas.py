@@ -757,6 +757,10 @@ VALID_FIXTURES["resolved_context_manifest"] = {
     "evidentiary_refs": [],
     "historical_refs": [],
     "unresolved_optional_refs": [],
+    "required_context_count": 1,
+    "resolved_context_size": 1,
+    "estimated_tokens": 1,
+    "token_estimation_method": "UTF8_BYTES_DIVIDED_BY_4",
     "manifest_sha256": _FIXTURE_SHA,
 }
 VALID_FIXTURES["mission_authorization_contract"] = {

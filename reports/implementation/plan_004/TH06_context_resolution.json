@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_004",
+  "mission_id": "TH-06",
+  "repository_revision": "083e6565e0f3d9545f6ee6b4933f94e220ac1422",
+  "generated_at": "2026-08-10T22:48:44.841050Z",
+  "source_inputs": [
+    {
+      "path": "config/context_resolution_policy.json",
+      "sha256": "58a6c2a7e881cf44f6ad5c8f8650389ab8b77cc6e758d80e1870c8155869e20d"
+    },
+    {
+      "path": "schemas/resolved_context_manifest.json",
+      "sha256": "f8f8885a8d2f017b771e3fcb20b26ac4038f65e9b573f000233eea7695740c72"
+    },
+    {
+      "path": "src/core/context_resolution.py",
+      "sha256": "3211c70d62d93420e3c6517d66d49e5aaf524adebc0726bc0b6c6a396350159e"
+    },
+    {
+      "path": "src/core/execution_preflight.py",
+      "sha256": "653b9883eac6ab09a388c8b2b11ffe0431c3c3efadf0d5bddf5119c7a511bad8"
+    }
+  ],
+  "evidence_refs": [
+    "config/context_resolution_policy.json",
+    "schemas/resolved_context_manifest.json",
+    "src/core/context_resolution.py",
+    "src/core/execution_preflight.py"
+  ],
+  "limitations": [],
+  "result": "PASS",
+  "artifact_type": "CONTEXT_RESOLUTION",
+  "precedence": [
+    "NORMATIVE_CONTEXT",
+    "OWNER_AUTHORIZED_MISSION_SCOPE",
+    "CASE_INPUT",
+    "OPTIONAL_EVIDENCE"
+  ],
+  "resolution_controls": {
+    "absolute_paths": "BLOCK",
+    "drive_letter_paths": "BLOCK",
+    "unc_paths": "BLOCK",
+    "traversal": "BLOCK",
+    "symlink_or_reparse_escape": "BLOCK",
+    "required_unresolved": "BLOCK",
+    "checksum_mismatch": "BLOCK"
+  },
+  "allowed_roots": {
+    "schema_version": "1.0.0",
+    "repository_root": ".",
+    "normative_allowed_roots": [
+      "policies",
+      "schemas",
+      "config",
+      "plans",
+      "prompts",
+      "skills"
+    ],
+    "evidentiary_allowed_roots": [
+      "input",
+      "fixtures",
+      "output",
+      "reports",
+      "workspace"
+    ],
+    "historical_allowed_roots": [
+      "workspace",
+      "reports",
+      "plans"
+    ]
+  },
+  "resolved_context_manifest_schema": "schemas/resolved_context_manifest.json",
+  "context_budget": {
+    "required_context_count": "DERIVED_FROM_RESOLVED_REQUIRED_REFS",
+    "resolved_context_size": "DERIVED_FROM_RESOLVED_UTF8_BYTES",
+    "estimated_tokens": "ceil(resolved_context_size/4)",
+    "thresholds": "NONE"
+  },
+  "reproducibility": {
+    "manifest_identity": "SHA256_CANONICAL_INPUTS",
+    "volatile_metadata": "EXCLUDED_FROM_NORMATIVE_MANIFEST"
+  }
+}
