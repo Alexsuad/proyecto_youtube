@@ -42,6 +42,7 @@ CATEGORY_PRIORITIES = {
     "OPTIONAL_ADAPTER_IMPLEMENTATION": 1,
     "NEGATIVE_CONTAMINATION_ASSERTION": 1,
     "ALLOWED_EXTERNAL_COORDINATION": 2,
+    "LIVE_AUTHORITY": 0,
     "HISTORICAL_REFERENCE": 3,
     "CONTAMINATED_GENERATOR_SOURCE": 4,
     "ACTIVE_PRODUCT_CONTAMINATION": 5,
@@ -79,6 +80,7 @@ def _path_category(rel: str, policy: dict[str, Any]) -> str:
         ("OPTIONAL_ADAPTER_TEST", "optional_adapter_test_roots"),
         ("OPTIONAL_ADAPTER_IMPLEMENTATION", "optional_adapter_implementation_roots"),
         ("ALLOWED_EXTERNAL_COORDINATION", "allowed_external_coordination"),
+        ("LIVE_AUTHORITY", "live_authority_paths"),
         ("HISTORICAL_REFERENCE", "historical_roots"),
         ("CONTAMINATED_GENERATOR_SOURCE", "generator_roots"),
         ("ACTIVE_PRODUCT_CONTAMINATION", "product_roots"),
@@ -123,6 +125,7 @@ def _iter_policy_paths(root: Path, policy: dict[str, Any], *, include_historical
         *policy.get("product_roots", []),
         *policy.get("generator_roots", []),
         *policy.get("allowed_external_coordination", []),
+        *policy.get("live_authority_paths", []),
         *policy.get("optional_executor_catalogs", []),
         *policy.get("optional_adapter_test_roots", []),
         *policy.get("optional_adapter_implementation_roots", []),
@@ -198,6 +201,7 @@ def _limited_samples(findings: list[Finding], sample_limit: int, *, include_hist
     ordered: list[dict[str, Any]] = []
     for category in (
         "ACTIVE_PRODUCT_CONTAMINATION",
+        "LIVE_AUTHORITY",
         "CONTAMINATED_GENERATOR_SOURCE",
         "MANUAL_REVIEW",
         "HISTORICAL_REFERENCE",
@@ -235,6 +239,7 @@ def scan(
     blocked: list[str] = []
     counts = {
         "ACTIVE_PRODUCT_CONTAMINATION": 0,
+        "LIVE_AUTHORITY": 0,
         "CONTAMINATED_GENERATOR_SOURCE": 0,
         "HISTORICAL_REFERENCE": 0,
         "OPTIONAL_EXECUTOR_CATALOG": 0,
@@ -274,6 +279,7 @@ def scan(
     exit_code = 2 if blocked else (
         1
         if counts["ACTIVE_PRODUCT_CONTAMINATION"]
+        or counts["LIVE_AUTHORITY"]
         or counts["CONTAMINATED_GENERATOR_SOURCE"]
         or counts["MANUAL_REVIEW"]
         else 0

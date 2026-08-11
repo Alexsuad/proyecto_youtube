@@ -292,6 +292,9 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
             request.config = {**request.config, "resolved_context_manifest": preflight["context_manifest"], "resolved_context_manifest_sha256": preflight["context_manifest"]["manifest_sha256"], "mission_contract_sha256": preflight["authorization"].contract_sha256}
     except (PermissionError, ValueError) as exc:
         return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=str(exc))
+    mission_contract = preflight.get("mission_contract")
+    if mission_contract is not None and mission_contract.mission_mode == "REDUCED":
+        return _execute_reduced_mission(request, started, manifest, mission_contract)
     runtime_port = AgentRuntimePort(Path(request.config["execution_profiles_path"]) if request.config.get("execution_profiles_path") else None)
     run_configuration = _normalized_run_configuration(request)
     if run_configuration:
@@ -386,12 +389,37 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
     return _result(request, provider_name, ExecutionStatus.SUCCEEDED, started, manifest, output=output, usage=usage, real=provider_name not in {"mock", "agent_handoff"})
 
 
+def _execute_reduced_mission(request: ExecutionRequest, started: str, manifest: str, mission_contract: Any) -> ExecutionResult:
+    """Run the canonical reduced-mission loop after authorization and preflight."""
+    from src.core.mission_convergence import BLOCKED, CONVERGED, MAX_ITERATIONS_REACHED, run_convergence_loop
+
+    callbacks = request.config.get("convergence_callbacks")
+    required = ("implement", "verify", "adversarial_review", "repair")
+    if not isinstance(callbacks, dict) or any(not callable(callbacks.get(name)) for name in required):
+        return _result(request, "mission_convergence", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error="REDUCED_MISSION_CALLBACKS_REQUIRED")
+    try:
+        outcome = run_convergence_loop(
+            implement=callbacks["implement"], verify=callbacks["verify"],
+            adversarial_review=callbacks["adversarial_review"], repair=callbacks["repair"],
+            max_iterations=int(request.config.get("convergence_max_iterations", 3)),
+            review_policy=mission_contract.reduced_fields["review_policy"],
+            sensitive_change=bool(mission_contract.contains_material_repair), governed=True,
+        )
+    except (TypeError, ValueError) as exc:
+        return _result(request, "mission_convergence", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=f"MISSION_CONVERGENCE_INVALID:{exc}")
+    usage = {"mission_convergence": outcome.to_dict(), "next_review_stage": outcome.review_stage, "mission_contract_mode": "REDUCED"}
+    if outcome.status == CONVERGED:
+        return _result(request, "mission_convergence", ExecutionStatus.CONVERGED, started, manifest, usage=usage)
+    status = ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR if outcome.status == BLOCKED else ExecutionStatus.FAILED
+    return _result(request, "mission_convergence", status, started, manifest, error=f"MISSION_CONVERGENCE_{outcome.status}", usage=usage)
+
+
 def _finalize_mission_reservation(request: ExecutionRequest, result: ExecutionResult) -> ExecutionResult:
     reservation_id = request.config.get("_mission_reservation_id")
     registry_path = request.config.get("execution_registry_path")
     if not reservation_id or not registry_path or request.config.get("_mission_reservation_status") != "RESERVED":
         return result
-    status = "CONSUMED" if result.status in {ExecutionStatus.SUCCEEDED, ExecutionStatus.HANDOFF_PREPARED} else "FAILED"
+    status = "CONSUMED" if result.status in {ExecutionStatus.SUCCEEDED, ExecutionStatus.HANDOFF_PREPARED, ExecutionStatus.CONVERGED} else "FAILED"
     try:
         mark_mission_reservation(registry_path, reservation_id, status)
         request.config = {**request.config, "_mission_reservation_status": status}

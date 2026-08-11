@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast, hashlib, json, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+from src.core.evidence_freshness import sha256_path
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -14,7 +15,7 @@ def build_quality_baseline(root: Path=ROOT)->dict:
     files=_py(root); complexities=[]; duplicates={}; unreachable=[]; syntax=[]
     for path in files:
         relative=path.relative_to(root).as_posix()
-        try: tree=ast.parse(path.read_text(encoding="utf-8"))
+        try: tree=ast.parse(path.read_text(encoding="utf-8-sig"))
         except SyntaxError as exc: syntax.append({"path":relative,"error":str(exc)}); continue
         for node in ast.walk(tree):
             if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)):
@@ -34,7 +35,8 @@ def build_quality_baseline(root: Path=ROOT)->dict:
       {"dimension":"static_analysis","status":"MEASURED","tool":"ast.parse","version":"stdlib","scope":"src/**/*.py","value":{"syntax_errors":syntax}},
       {"dimension":"critical_path_test_distribution","status":"MEASURED","tool":"filesystem_inventory","version":"stdlib","scope":"tests/test_*.py","value":{"test_files":len(test_files),"context_tests":[x for x in test_files if 'context' in x],"governance_tests":[x for x in test_files if 'governance' in x or 'repair' in x]}},
     ]
-    return {"schema_version":"1.0.0","plan_id":"PLAN_004","mission_id":"TH-07","repository_revision":revision,"generated_at":datetime.now(timezone.utc).isoformat().replace('+00:00','Z'),"source_inputs":[{"path":"src","sha256":None},{"path":"tests","sha256":None}],"evidence_refs":["src","tests"],"limitations":["COVERAGE_TOOL_NOT_DECLARED_PORTABLE"],"result":"PASS","artifact_type":"QUALITY_BASELINE","dimensions":dimensions,"risk_hotspots":[x for x in sorted(complexities,key=lambda x:x['cyclomatic_proxy'],reverse=True)[:10]],"recommendation":"KEEP_INFORMATIONAL","thresholds":"NONE"}
+    source_inputs = [{"path": name, "sha256": sha256_path(root / name)} for name in ("src", "tests") if (root / name).exists()]
+    return {"schema_version":"1.0.0","plan_id":"PLAN_004","mission_id":"TH-07","repository_revision":revision,"generated_at":datetime.now(timezone.utc).isoformat().replace('+00:00','Z'),"source_inputs":source_inputs,"evidence_refs":[item["path"] for item in source_inputs],"limitations":["COVERAGE_TOOL_NOT_DECLARED_PORTABLE"],"result":"PASS","artifact_type":"QUALITY_BASELINE","dimensions":dimensions,"risk_hotspots":[x for x in sorted(complexities,key=lambda x:x['cyclomatic_proxy'],reverse=True)[:10]],"recommendation":"KEEP_INFORMATIONAL","thresholds":"NONE"}
 
 def write_th07_artifact(root: Path=ROOT)->Path:
     path=root/"reports/implementation/plan_004/TH07_quality_baseline.json"; path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(build_quality_baseline(root),indent=2)+"\n",encoding="utf-8"); return path

@@ -48,12 +48,33 @@ class MissionContract:
     forbidden_state: dict[str, tuple[str, ...]]
     schema_checks: tuple[tuple[str, str], ...]
     contract_sha256: str
+    mission_mode: str
+    objective: str | None
+    reduced_fields: dict[str, Any]
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "MissionContract":
         violations = validate_against_schema(data, "mission_contract")
         if violations:
             raise MissionContractError("MissionContract inválido: " + "; ".join(violations))
+
+        mission_mode = str(data.get("mission_mode", "LEGACY")).upper()
+        if mission_mode == "REDUCED":
+            required_reduced = (
+                "objective", "canonical_inputs", "allowed_files", "expected_outputs",
+                "deterministic_validations", "stop_conditions", "review_policy", "owner_closure",
+            )
+            missing = [key for key in required_reduced if key not in data]
+            if missing:
+                raise MissionContractError("REDUCED_MISSION_FIELDS_MISSING:" + ",".join(missing))
+            if any(not _in_scope(path, data["authorized_paths"]) for path in data["allowed_files"]):
+                raise MissionContractError("REDUCED_ALLOWED_FILES_OUTSIDE_AUTHORIZED_SCOPE")
+            if not isinstance(data["review_policy"], dict) or data["review_policy"].get("required_review") not in {"SELF_ONLY", "INDEPENDENT_REVIEW", "OWNER_REVIEW"}:
+                raise MissionContractError("REDUCED_REVIEW_POLICY_UNRESOLVED")
+            if not isinstance(data["owner_closure"], dict) or not isinstance(data["owner_closure"].get("required"), bool):
+                raise MissionContractError("REDUCED_OWNER_CLOSURE_UNRESOLVED")
+        elif mission_mode != "LEGACY":
+            raise MissionContractError("MISSION_MODE_UNRESOLVED")
 
         contains_material_repair = data["contains_material_repair"]
         repair_path = data.get("repair_integrity_evidence_path")
@@ -102,6 +123,9 @@ class MissionContract:
             forbidden_state=forbidden,
             schema_checks=tuple((_normalize_path(item["path"]), item["schema"]) for item in data["schema_checks"]),
             contract_sha256=_json_checksum(data),
+            mission_mode=mission_mode,
+            objective=data.get("objective"),
+            reduced_fields={key: data[key] for key in ("preconditions", "canonical_inputs", "allowed_files", "non_objectives", "expected_outputs", "deterministic_validations", "adversarial_cases", "stop_conditions", "review_policy", "owner_closure") if key in data},
         )
 
 
@@ -608,7 +632,11 @@ def _normalize_path(path: str) -> str:
 
 def _in_scope(path: str, allowed: Sequence[str]) -> bool:
     normalized = _normalize_path(path)
-    return any(normalized == item or normalized.startswith(item.rstrip("/") + "/") for item in allowed)
+    return any(
+        normalized == _normalize_path(item)
+        or normalized.startswith(_normalize_path(item).rstrip("/") + "/")
+        for item in allowed
+    )
 
 
 def _in_protected(path: str, protected: Sequence[str]) -> bool:

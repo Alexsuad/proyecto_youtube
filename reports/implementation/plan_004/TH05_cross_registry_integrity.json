@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "plan_id": "PLAN_004",
   "mission_id": "TH-05",
-  "repository_revision": "9c92546e597025d84a5c6c6604bae021309a352d",
-  "generated_at": "2026-08-10T22:17:11.380420Z",
+  "repository_revision": "fd594e032bcab8d1567e7351223eca5d8e248d20",
+  "generated_at": "2026-08-11T00:00:00Z",
   "source_inputs": [
     {
       "path": "config/capability_registry.json",
@@ -11,11 +11,11 @@
     },
     {
       "path": "config/responsibility_registry.json",
-      "sha256": "6bc780a031af3e17b10351546acfb4dfeae23e93467afeaaf80b85f6649826db"
+      "sha256": "d950488039410870ccf97d4e435ca3071ab43078cf592c24d1a9b73da100d6c4"
     },
     {
       "path": "config/agent_prompt_registry.json",
-      "sha256": "a34c020e853a8c64968dbdef5905a8952ef369e835b1d54afe77e706801fe369"
+      "sha256": "f441aa3703bf8b69f7b2c5ab79f256549de6d9e9f1cff33b508415fb7da3477a"
     },
     {
       "path": "config/agent_execution_profiles.json",
@@ -23,11 +23,11 @@
     },
     {
       "path": "config/capability_routing.yaml",
-      "sha256": "2bde00fe7d432e5cfb1990ee86d8bda912c8bde166bcc4e4041fa9d990097397"
+      "sha256": "a5b1dda9c8c08a7ed457d9e39b326bbe16fa8f036c6ac664369d5f6a85dd8e2b"
     },
     {
       "path": "reports/implementation/plan_004/TH04_capability_audit_universe.json",
-      "sha256": "4880f2839060a153c4dc3f9a6ba018a6afc753cfd1f0e3954e82983666601b09"
+      "sha256": "de573052b66f3f99f435480352a37f07e0416f6943da356eaf6b7f9cf66f7bfc"
     }
   ],
   "evidence_refs": [

@@ -49,14 +49,20 @@
                                           "plans/plan_003",
                                           "plans/001_CONTROL_OPERATIVO.md"
                                       ],
+    "live_authority_paths":  [
+                                 "plans/001_CONTROL_OPERATIVO.md"
+                             ],
     "optional_executor_catalogs":  [
                                         "config/agent_execution_profiles.json"
                                     ],
     "negative_contamination_assertion_patterns":  [
-                                                       "assert\\s+[\"'](?:ChatGPT|Antigravity|Codex|OpenCode|NotebookLM)[\"']\\s+not\\s+in"
+                                                       "assert\\s+[\"'](?:ChatGPT|Antigravity|Codex|OpenCode|NotebookLM)[\"']\\s+not\\s+in",
+                                                       "FORBIDDEN_PROVIDER_MARKERS\\s*=",
+                                                       "codex\\|opencode\\|chatgpt\\|antigravity\\|notebooklm\\|laboratorios"
                                                    ],
     "false_positive_paths":  [
                                  "tests/core/test_runtime_contamination_guard.py",
+                                 "tests/core/test_repair_integrity.py",
                                  "tests/core/test_b4_i1_contracts.py",
                                  "tests/core/test_b4_i2_agent_prompts.py",
                                  "config/runtime_contamination_policy.json",
@@ -70,12 +76,12 @@
                            ],
     "patterns":  [
                      {
-                         "pattern":  "\\bEquipo 0[1-4]\\b",
+                         "pattern":  "(?<![A-Za-z0-9_])Equipo 0[1-4](?=[^A-Za-z0-9]|$)",
                          "label":  "human_team_name",
                          "severity":  "HIGH"
                      },
                      {
-                         "pattern":  "\\bTEAM[_ ]?0[1-4]\\b",
+                         "pattern":  "(?<![A-Za-z0-9_])TEAM[_ ]?0[1-4](?=[^A-Za-z0-9]|$)",
                          "label":  "human_team_code",
                          "severity":  "HIGH"
                      },

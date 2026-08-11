@@ -20,6 +20,7 @@ def _write_policy(tmp_path: Path) -> Path:
     policy["generator_roots"] = ["tests", "src/scripts"]
     policy["historical_roots"] = ["workspace", "output", "profiles/editorial/mas_alla_del_guion/1.0.0"]
     policy["allowed_external_coordination"] = []
+    policy["live_authority_paths"] = ["plans/001_CONTROL_OPERATIVO.md"]
     policy["optional_executor_catalogs"] = []
     policy["false_positive_paths"] = [
         "tests/core/test_runtime_contamination_guard.py",
@@ -218,3 +219,31 @@ def test_optional_adapter_surfaces_and_negative_assertions_are_non_blocking(tmp_
     assert {item["category"] for item in findings if item["path"] == ".opencode/agents/reviewer.md"} == {"OPTIONAL_ADAPTER_IMPLEMENTATION"}
     assert {item["category"] for item in findings if item["path"] == "tests/test_negative.py"} == {"NEGATIVE_CONTAMINATION_ASSERTION"}
     assert result["exit_code"] == 0
+
+
+def test_negative_provider_regex_is_non_blocking(tmp_path: Path):
+    policy_path = _write_policy(tmp_path)
+    negative = tmp_path / "tests" / "core" / "test_engineering_skills.py"
+    negative.parent.mkdir(parents=True, exist_ok=True)
+    negative.write_text('FORBIDDEN_PROVIDER_MARKERS = re.compile(r"codex|opencode|chatgpt|antigravity|notebooklm|laboratorios")\n', encoding="utf-8")
+    result = scan(tmp_path, policy_path, collect_all_findings=True)
+    findings = [item for item in result["all_findings"] if item["path"] == "tests/core/test_engineering_skills.py"]
+    assert findings and {item["category"] for item in findings} == {"NEGATIVE_CONTAMINATION_ASSERTION"}
+    assert result["exit_code"] == 0
+
+
+def test_live_authority_catches_suffixed_human_team_identifier(tmp_path: Path):
+    policy_path = _write_policy(tmp_path)
+    control = tmp_path / "plans" / "001_CONTROL_OPERATIVO.md"
+    control.parent.mkdir(parents=True, exist_ok=True)
+    control.write_text(
+        "## 10. Historial de próxima decisión\n"
+        "HISTORICAL_STATE: YES\n"
+        "TEAM_02_B5_I2_FUNCTIONAL_SPECIFICATION: COMPLETE\n",
+        encoding="utf-8",
+    )
+    result = scan(tmp_path, policy_path, collect_all_findings=True)
+    findings = [item for item in result["all_findings"] if item["path"] == "plans/001_CONTROL_OPERATIVO.md"]
+    assert findings
+    assert {item["category"] for item in findings} == {"LIVE_AUTHORITY"}
+    assert result["exit_code"] == 1

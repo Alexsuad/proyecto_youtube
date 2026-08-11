@@ -2365,11 +2365,11 @@
     "config/capability_routing.yaml",
     "config/skill_catalog.json"
   ],
-  "generated_at": "2026-08-10T00:00:00Z",
+  "generated_at": "2026-08-11T00:00:00Z",
   "limitations": [],
   "mission_id": "TH-04",
   "plan_id": "PLAN_004",
-  "repository_revision": "3b1dc5071d62cfaf83c8e67aed580a5bafceae25",
+  "repository_revision": "fd594e032bcab8d1567e7351223eca5d8e248d20",
   "resolved_references": [
     {
       "object_class": null,
@@ -3687,12 +3687,13 @@
         "config/subagent_registry.json",
         "config/subagent_registry.json#agents[0].provenance.registry_path",
         "output/execution_provenance_registry.json",
-        "output/execution_provenance_registry.json#attempts[0].evidence_path"
+        "output/execution_provenance_registry.json#attempts[0].evidence_path",
+        "output/r6_b/control_valid_producer_retry.json"
       ],
       "reference": "output/r6_b/control_valid_producer_retry.json",
-      "resolved_path": null,
+      "resolved_path": "output/r6_b/control_valid_producer_retry.json",
       "source_ref": "output/execution_provenance_registry.json#attempts[0].evidence_path",
-      "status": "UNRESOLVED"
+      "status": "RESOLVED"
     },
     {
       "object_class": null,
@@ -3700,12 +3701,13 @@
         "config/subagent_registry.json",
         "config/subagent_registry.json#agents[0].provenance.registry_path",
         "output/execution_provenance_registry.json",
-        "output/execution_provenance_registry.json#attempts[1].evidence_path"
+        "output/execution_provenance_registry.json#attempts[1].evidence_path",
+        "output/r6_b/control_valid_producer.json"
       ],
       "reference": "output/r6_b/control_valid_producer.json",
-      "resolved_path": null,
+      "resolved_path": "output/r6_b/control_valid_producer.json",
       "source_ref": "output/execution_provenance_registry.json#attempts[1].evidence_path",
-      "status": "UNRESOLVED"
+      "status": "RESOLVED"
     },
     {
       "object_class": null,
@@ -4121,11 +4123,11 @@
     },
     {
       "path": "config/responsibility_registry.json",
-      "sha256": "6bc780a031af3e17b10351546acfb4dfeae23e93467afeaaf80b85f6649826db"
+      "sha256": "d950488039410870ccf97d4e435ca3071ab43078cf592c24d1a9b73da100d6c4"
     },
     {
       "path": "config/agent_prompt_registry.json",
-      "sha256": "a34c020e853a8c64968dbdef5905a8952ef369e835b1d54afe77e706801fe369"
+      "sha256": "f441aa3703bf8b69f7b2c5ab79f256549de6d9e9f1cff33b508415fb7da3477a"
     },
     {
       "path": "config/agent_execution_profiles.json",
@@ -4133,15 +4135,15 @@
     },
     {
       "path": "config/subagent_registry.json",
-      "sha256": "3a7df2e743e315ffc0b6ca6e20bc5dbec5a5119a257b318a33f113fa4d735cee"
+      "sha256": "896410fd230d0e6c6b3d4a9b926968191dcca10d2b42fe5f1f7ec5af15772d52"
     },
     {
       "path": "config/capability_routing.yaml",
-      "sha256": "2bde00fe7d432e5cfb1990ee86d8bda912c8bde166bcc4e4041fa9d990097397"
+      "sha256": "a5b1dda9c8c08a7ed457d9e39b326bbe16fa8f036c6ac664369d5f6a85dd8e2b"
     },
     {
       "path": "config/skill_catalog.json",
-      "sha256": "9081b8754be0a511ca4ec1c5c55f46959cba95383cee7daa0b92635edb5d4135"
+      "sha256": "1180a3ec5c57d646b9f5286d882a28303d22064341d0123f17e7413b88e39db6"
     }
   ],
   "unresolved_candidates": [

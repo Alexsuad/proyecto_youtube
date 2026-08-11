@@ -109,6 +109,7 @@ def _run_probe(module_source: str, *, path_mode: str, checksum_mode: str, expect
             result = subprocess.run(
                 [sys.executable, "-c", PROBE, str(case), path_mode, checksum_mode, expected],
                 cwd=temp, env={**os.environ, "PYTHONPATH": str(temp)}, capture_output=True, text=True,
+                timeout=30,
             )
             try:
                 payload = json.loads(result.stdout.strip())
@@ -161,7 +162,7 @@ def build_mutation_report(root: Path = ROOT) -> dict:
     return {
         "schema_version": "1.0.0", "plan_id": "PLAN_004", "mission_id": "TH-08", "repository_revision": revision,
         "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "source_inputs": [{"path": "src/core/context_resolution.py", "sha256": hashlib.sha256(original.encode()).hexdigest()}],
+        "source_inputs": [{"path": "src/core/context_resolution.py", "sha256": hashlib.sha256((root / "src/core/context_resolution.py").read_bytes()).hexdigest()}],
         "evidence_refs": ["reports/implementation/plan_004/TH07_quality_baseline.json"], "limitations": [],
         "result": "PASS" if not survivors and not infrastructure else "COMPLETED_WITH_FINDINGS",
         "artifact_type": "MUTATION_TESTING", "scope": {"modules": ["src/core/context_resolution.py"], "budget": "4 isolated mutations; no network or paid execution"},

@@ -8,6 +8,7 @@ from typing import Any
 from src.core.capability_governance import validate_capability_registry
 from src.core.context_resolution import resolve_context
 from src.core.mission_authorization import load_mission_authorization
+from src.core.mission_completion_gate import load_mission_contract
 from src.core.replay_protection import mark_mission_reservation, reserve_mission_execution
 
 
@@ -50,6 +51,20 @@ def preflight_controlled_execution(request: Any, *, root: str | Path) -> dict[st
     except ValueError as exc:
         raise PermissionError("MISSION_CONTRACT_INVALID: authorization path outside repository") from exc
     authorization = load_mission_authorization(authorization_file)
+    mission_contract = None
+    contract_path = config.get("mission_contract_path")
+    if contract_path:
+        contract_candidate = Path(str(contract_path))
+        if contract_candidate.is_absolute() or ".." in contract_candidate.parts:
+            raise PermissionError("MISSION_CONTRACT_INVALID: mission contract outside repository")
+        contract_file = (repository_root / contract_candidate).resolve()
+        try:
+            contract_file.relative_to(repository_root)
+        except ValueError as exc:
+            raise PermissionError("MISSION_CONTRACT_INVALID: mission contract outside repository") from exc
+        mission_contract = load_mission_contract(contract_file)
+        if mission_contract.mission_mode == "REDUCED" and mission_contract.mission_id != authorization.mission_id:
+            raise PermissionError("MISSION_CONTRACT_INVALID: reduced mission id does not match authorization")
 
     output_path = getattr(request, "output_artifact_path", None)
     relative_output = None
@@ -105,8 +120,13 @@ def preflight_controlled_execution(request: Any, *, root: str | Path) -> dict[st
             role_id=str(getattr(request, "role", "")),
             run_id=str(config.get("run_id") or "PENDING_RUN"),
             policy_path=config.get("context_policy_path"),
+            mission_id=str(config.get("mission_id") or authorization.mission_id),
+            execution_profile_id=requested_profile,
+            prompt_id=str(config.get("prompt_id") or "UNSPECIFIED_PROMPT"),
+            input_refs=[str(item) for item in config.get("input_refs", [])],
+            output_refs=[str(item) for item in config.get("output_refs", ([relative_output] if relative_output else []))],
         )
     except Exception:
         _mark_failed(registry_path, reservation, request)
         raise
-    return {"authorization": authorization, "context_manifest": context_manifest, "reservation": reservation}
+    return {"authorization": authorization, "context_manifest": context_manifest, "reservation": reservation, "mission_contract": mission_contract}

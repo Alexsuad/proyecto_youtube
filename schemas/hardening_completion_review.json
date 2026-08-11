@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/hardening_completion_review.json",
+  "title": "HardeningCompletionReview",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "plan_id", "mission_id", "repository_revision", "generated_at", "source_inputs", "evidence_refs", "limitations", "result", "dimensions", "owner_decision_required", "r1_m4_opened", "product_use_authorized", "evidence_identity_sha256"],
+  "properties": {
+    "schema_version": {"type": "string", "minLength": 1},
+    "plan_id": {"const": "PLAN_004"},
+    "mission_id": {"const": "HARDENING_COMPLETION_REVIEW"},
+    "repository_revision": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "minLength": 1},
+    "source_inputs": {"type": "array", "items": {"type": "object", "required": ["path", "sha256"], "properties": {"path": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}}},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "result": {"type": "string", "enum": ["HARDENING_COMPLETED_PENDING_OWNER_REVIEW", "HARDENING_COMPLETED_WITH_EVIDENCE_LIMITATION"]},
+    "dimensions": {"type": "array", "items": {"type": "object", "required": ["name", "status", "evidence"], "properties": {"name": {"type": "string"}, "status": {"enum": ["PASS", "FAIL", "LIMITATION", "NOT_APPLICABLE"]}, "evidence": {"type": "array", "items": {"type": "string"}}}}},
+    "owner_decision_required": {"type": "boolean"},
+    "r1_m4_opened": {"const": false},
+    "product_use_authorized": {"const": false},
+    "evidence_identity_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

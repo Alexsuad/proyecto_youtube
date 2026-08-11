@@ -48,6 +48,21 @@ La skill orienta el procedimiento; no reimplementa esos controles ni los sustitu
 - afirmación validada y afirmación no validada;
 - limitaciones ambientales o temporales.
 
+## Convergencia de misión reducida
+
+Cuando un `MissionContract` declare `mission_mode: REDUCED`, el executor debe
+usar el flujo canónico de `src/core/mission_convergence.py` tras
+`MissionAuthorization` y `execution_preflight`:
+
+```text
+IMPLEMENT → VERIFY → SELF_ADVERSARIAL_REVIEW → REPAIR → REVERIFY
+```
+
+En modo gobernado, cada fase decisiva entrega `passed` y referencias de
+evidencia estructuradas. Un booleano o una declaración textual no autoriza
+`CONVERGED`. El resultado técnico indica el escalado exigido por
+`review_policy`; no equivale a `INDEPENDENT_REVIEW` ni a aprobación del owner.
+
 ## Límites
 
 No crear un segundo registry, contrato, gate o autoridad para cubrir una comprobación que ya existe. No convertir un resultado técnico en autorización de ejecución, aprobación funcional o readiness productivo.

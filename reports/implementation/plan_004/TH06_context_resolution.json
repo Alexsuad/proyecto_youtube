@@ -2,24 +2,24 @@
   "schema_version": "1.0.0",
   "plan_id": "PLAN_004",
   "mission_id": "TH-06",
-  "repository_revision": "083e6565e0f3d9545f6ee6b4933f94e220ac1422",
-  "generated_at": "2026-08-10T22:48:44.841050Z",
+  "repository_revision": "fd594e032bcab8d1567e7351223eca5d8e248d20",
+  "generated_at": "2026-08-11T12:19:18.648255Z",
   "source_inputs": [
     {
       "path": "config/context_resolution_policy.json",
-      "sha256": "58a6c2a7e881cf44f6ad5c8f8650389ab8b77cc6e758d80e1870c8155869e20d"
+      "sha256": "f6877a0d69b7e198e08eeca81139666a43fd2c0aec0a167f849a340056f4070b"
     },
     {
       "path": "schemas/resolved_context_manifest.json",
-      "sha256": "f8f8885a8d2f017b771e3fcb20b26ac4038f65e9b573f000233eea7695740c72"
+      "sha256": "2a9156d3b53734165e7e9b75c5c6d2548becbb796d2b0c3a461d078c95ca0836"
     },
     {
       "path": "src/core/context_resolution.py",
-      "sha256": "3211c70d62d93420e3c6517d66d49e5aaf524adebc0726bc0b6c6a396350159e"
+      "sha256": "29c175b58c80d76be18d84a73b8669e719dc73e3da8a10df9278f5ddd0e9f126"
     },
     {
       "path": "src/core/execution_preflight.py",
-      "sha256": "653b9883eac6ab09a388c8b2b11ffe0431c3c3efadf0d5bddf5119c7a511bad8"
+      "sha256": "bce196f922d413ed518c339732804907dc910a2cf7bbc801a7341f83d45ab80e"
     }
   ],
   "evidence_refs": [

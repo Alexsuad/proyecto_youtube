@@ -47,3 +47,15 @@ def test_report_counts_are_reproducible_and_derived_from_records():
     assert [(row["mutant_id"], row["status"], row.get("classification")) for row in first["mutation_records"]] == [(row["mutant_id"], row["status"], row.get("classification")) for row in second["mutation_records"]]
     assert first["mutants_killed"] == sum(row["status"] == KILLED for row in first["mutation_records"])
     assert all(row["status"] != KILLED for row in first["infrastructure_errors"])
+
+
+def test_probe_timeout_is_infrastructure_error(monkeypatch):
+    import subprocess
+
+    def timeout(*args, **kwargs):
+        assert kwargs["timeout"] == 30
+        raise subprocess.TimeoutExpired(kwargs.get("args", args[0] if args else "probe"), 30)
+
+    monkeypatch.setattr(subprocess, "run", timeout)
+    result = _run_probe("source", path_mode="inside", checksum_mode="valid", expected="BLOCKED")
+    assert result.status == INFRASTRUCTURE_ERROR

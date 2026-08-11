@@ -734,6 +734,33 @@ VALID_FIXTURES["mission_contract"] = {
     "state_requirements": {"control_path": "plans/001_CONTROL_OPERATIVO.md", "required": {}, "forbidden": {}},
     "schema_checks": []
 }
+VALID_FIXTURES["hardening_completion_review"] = {
+    "schema_version": "1.0.0",
+    "plan_id": "PLAN_004",
+    "mission_id": "HARDENING_COMPLETION_REVIEW",
+    "repository_revision": "a" * 40,
+    "generated_at": "2026-08-11T00:00:00Z",
+    "source_inputs": [{"path": "reports/implementation/plan_004/TH08_mutation_testing.json", "sha256": "a" * 64}],
+    "evidence_refs": ["reports/implementation/plan_004/TH08_mutation_testing.json"],
+    "limitations": ["FINAL_EXTERNAL_INDEPENDENT_REVIEW_PENDING"],
+    "result": "HARDENING_COMPLETED_PENDING_OWNER_REVIEW",
+    "dimensions": [{"name": "MUTATION_DECISION_RECORDED", "status": "PASS", "evidence": ["TH08_mutation_testing.json"]}],
+    "owner_decision_required": True,
+    "r1_m4_opened": False,
+    "product_use_authorized": False,
+    "evidence_identity_sha256": "a" * 64,
+}
+VALID_FIXTURES["hardening_report_envelope"] = {
+    "schema_version": "1.0.0",
+    "plan_id": "PLAN_004",
+    "mission_id": "TH-99",
+    "repository_revision": "a" * 40,
+    "generated_at": "2026-08-11T00:00:00Z",
+    "source_inputs": [{"path": "src/core/example.py", "sha256": "a" * 64}],
+    "evidence_refs": ["src/core/example.py"],
+    "limitations": [],
+    "result": "PASS",
+}
 
 
 _FIXTURE_SHA = "a" * 64
