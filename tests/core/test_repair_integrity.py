@@ -56,6 +56,8 @@ def _registry(root: Path) -> tuple[str, str]:
     review["modified_artifact_paths"] = []
     repair["modification_manifest_source"] = "RUNTIME_PRE_POST_DIFF"
     review["modification_manifest_source"] = "RUNTIME_PRE_POST_DIFF"
+    repair["modified_artifact_ids"] = ["origin_001"]
+    repair["modified_artifact_paths"] = ["origin.md"]
     registry["runs"] = [repair, review]
     registry["dependencies"] = {"origin_001": ["artifact_002"]}
     path = root / "output" / "execution_provenance_registry.json"
@@ -453,3 +455,64 @@ def test_th02_regression_fixture_is_real_guard_coverage():
     policy = json.loads(Path("config/runtime_contamination_policy.json").read_text(encoding="utf-8"))
     assert any("TEAM" in item["pattern"] for item in policy["patterns"])
     assert scan(Path("."), Path("config/runtime_contamination_policy.json"))["exit_code"] == 0
+
+
+def _cosmetic_evidence(tmp_path: Path) -> dict:
+    evidence = valid_evidence(tmp_path)
+    evidence["provenance"]["registry_path"] = _registry(tmp_path)[0]
+    return evidence
+
+
+def test_cosmetic_repair_that_does_not_change_origin_is_blocked(tmp_path):
+    evidence = valid_evidence(tmp_path)
+    repair_registry = copy.deepcopy(VALID_FIXTURES["execution_provenance_registry"])
+    base = repair_registry["runs"][0]
+    repair = copy.deepcopy(base)
+    review = copy.deepcopy(base)
+    repair["run_id"] = "RUN-REPAIR"
+    repair["actual_executor"] = "id_executor"
+    repair["agent_id"] = "id_executor"
+    repair["modification_manifest_source"] = "RUNTIME_PRE_POST_DIFF"
+    repair["modified_artifact_ids"] = []
+    repair["modified_artifact_paths"] = []
+    review["run_id"] = "RUN-REVIEW"
+    review["actual_executor"] = "id_reviewer"
+    review["agent_id"] = "id_reviewer"
+    review_output = tmp_path / "review-output.json"
+    review_output.write_text('{"review": true}\n', encoding="utf-8")
+    review["outputs"] = [{"artifact_kind": "semantic_audit", "artifact_id": "review-output", "artifact_ref": "review-output", "artifact_path": "review-output.json", "checksum": _sha(review_output)}]
+    review["output_artifact_ids"] = ["review-output"]
+    review["output_checksums"] = [_sha(review_output)]
+    review["modified_artifact_ids"] = []
+    review["modified_artifact_paths"] = []
+    review["modification_manifest_source"] = "RUNTIME_PRE_POST_DIFF"
+    repair_registry["runs"] = [repair, review]
+    repair_registry["dependencies"] = {"origin_001": ["artifact_002"]}
+    path = tmp_path / "output" / "execution_provenance_registry.json"
+    path.write_text(json.dumps(repair_registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    evidence["provenance"] = {"registry_path": "output/execution_provenance_registry.json", "registry_sha256": _sha(path), "repair_run_id": "RUN-REPAIR", "review_run_id": "RUN-REVIEW"}
+    evidence["evidence_sha256"] = evidence_checksum(evidence)
+    assert "REPAIR_COSMETIC_ORIGIN_UNMODIFIED" in validate_repair_integrity(evidence, tmp_path)
+
+
+def test_repair_without_real_diff_is_unverifiable(tmp_path):
+    evidence = valid_evidence(tmp_path)
+    registry_path, registry_sha = _registry(tmp_path)
+    registry = json.loads(Path(tmp_path / registry_path).read_text(encoding="utf-8"))
+    registry["runs"][0]["modification_manifest_source"] = "RUNTIME_PRE_POST_DIFF_UNAVAILABLE"
+    Path(tmp_path / registry_path).write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    evidence["provenance"] = {"registry_path": registry_path, "registry_sha256": _sha(tmp_path / registry_path), "repair_run_id": "RUN-REPAIR", "review_run_id": "RUN-REVIEW"}
+    evidence["evidence_sha256"] = evidence_checksum(evidence)
+    assert "REPAIR_CHANGE_UNVERIFIABLE" in validate_repair_integrity(evidence, tmp_path)
+
+
+def test_repair_changing_unrelated_artifact_is_not_the_origin(tmp_path):
+    evidence = valid_evidence(tmp_path)
+    registry_path, registry_sha = _registry(tmp_path)
+    registry = json.loads(Path(tmp_path / registry_path).read_text(encoding="utf-8"))
+    registry["runs"][0]["modified_artifact_ids"] = ["other_artifact"]
+    registry["runs"][0]["modified_artifact_paths"] = ["other.txt"]
+    Path(tmp_path / registry_path).write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    evidence["provenance"] = {"registry_path": registry_path, "registry_sha256": _sha(tmp_path / registry_path), "repair_run_id": "RUN-REPAIR", "review_run_id": "RUN-REVIEW"}
+    evidence["evidence_sha256"] = evidence_checksum(evidence)
+    assert "REPAIR_COSMETIC_ORIGIN_UNMODIFIED" in validate_repair_integrity(evidence, tmp_path)

@@ -346,6 +346,27 @@ def resolve_canonical_downstream(
         return None, ["REPAIR_DOWNSTREAM_KNOWLEDGE_UNKNOWN"]
 
 
+def _repair_material_change(provenance: dict[str, Any], evidence: dict[str, Any]) -> list[str]:
+    """Anti-cosmetic: a material repair must show the origin artifact was really changed.
+
+    A repair that claims to fix an artifact but whose runtime pre/post diff does
+    not record that artifact as modified is cosmetic and cannot close the change.
+    """
+    if evidence.get("contains_material_repair") is not True:
+        return []
+    repair_run = provenance["repair"]
+    manifest_source = str(repair_run.get("modification_manifest_source") or "")
+    if manifest_source != "RUNTIME_PRE_POST_DIFF":
+        return ["REPAIR_CHANGE_UNVERIFIABLE"]
+    origin_path = str(evidence["origin_artifact"].get("artifact_path", "")).replace("\\", "/")
+    origin_id = str(evidence["origin_artifact"].get("ref_id", ""))
+    modified_paths = {str(value).replace("\\", "/") for value in repair_run.get("modified_artifact_paths", [])}
+    modified_ids = {str(value) for value in repair_run.get("modified_artifact_ids", [])}
+    if origin_path and origin_path not in modified_paths and origin_id not in modified_ids:
+        return ["REPAIR_COSMETIC_ORIGIN_UNMODIFIED"]
+    return []
+
+
 def validate_repair_integrity(
     evidence: dict[str, Any],
     repo_root: str | Path = ".",
@@ -394,6 +415,7 @@ def validate_repair_integrity(
                 registered_capability = linked[0]
         if registered_capability is not None and registered_capability != evidence["capability_id"]:
             violations.append("REPAIR_CAPABILITY_PROVENANCE_MISMATCH")
+        violations.extend(_repair_material_change(provenance, evidence))
 
     for ref in evidence["regression_evidence"]["evidence_refs"]:
         violations.extend(_resolve_ref(ref, root, evidence_code="REPAIR_EVIDENCE_UNRESOLVED"))
