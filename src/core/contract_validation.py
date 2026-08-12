@@ -8,7 +8,7 @@ import json
 from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 import jsonschema
-from jsonschema import Draft7Validator, draft7_format_checker
+from jsonschema import Draft7Validator, RefResolver, draft7_format_checker
 
 # Registrar un validador personalizado para el formato "date-time"
 @draft7_format_checker.checks("date-time")
@@ -36,6 +36,214 @@ from src.core.status import (
 
 # Directorio de esquemas
 SCHEMAS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "schemas"))
+REPOSITORY_ROOT = os.path.abspath(os.path.join(SCHEMAS_DIR, ".."))
+RESPONSIBILITY_REGISTRY_PATH = os.path.join(REPOSITORY_ROOT, "config", "responsibility_registry.json")
+RESPONSIBILITY_REGISTRY_REF_PREFIX = "config/responsibility_registry.json#responsibilities/"
+
+
+def _load_responsibility_registry() -> Dict[str, Dict[str, Any]]:
+    try:
+        with open(RESPONSIBILITY_REGISTRY_PATH, encoding="utf-8") as handle:
+            registry = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {
+        item.get("role_id"): item
+        for item in registry.get("responsibilities", [])
+        if isinstance(item, dict) and item.get("role_id")
+    }
+
+
+def _validate_source_provenance(
+    records: List[Dict[str, Any]],
+    context: str,
+    claim_evaluations: Optional[List[Dict[str, Any]]] = None,
+) -> List[str]:
+    """Valida provenance editorial de fuentes sin mezclarla con execution provenance."""
+    violations: List[str] = []
+    by_id = {
+        record.get("source_id"): record
+        for record in records
+        if isinstance(record, dict) and isinstance(record.get("source_id"), str)
+    }
+    provenance_by_id = {
+        source_id: record.get("provenance")
+        for source_id, record in by_id.items()
+        if isinstance(record.get("provenance"), dict)
+    }
+
+    for source_id, provenance in provenance_by_id.items():
+        kind = provenance.get("source_kind")
+        parent_id = provenance.get("derived_from_source_ref")
+        original_id = provenance.get("original_source_ref")
+        if kind == "SOURCE_ORIGINAL" and (parent_id is not None or original_id is not None):
+            violations.append(f"{context} fuente original '{source_id}' no puede declarar lineage derivado.")
+        if kind != "SOURCE_ORIGINAL":
+            for field, referenced_id in (("original_source_ref", original_id), ("derived_from_source_ref", parent_id)):
+                if not referenced_id:
+                    violations.append(f"{context} derivado '{source_id}' requiere {field}.")
+                elif referenced_id not in by_id:
+                    violations.append(f"{context} derivado '{source_id}' referencia {field} inexistente: '{referenced_id}'.")
+            if parent_id == source_id or original_id == source_id:
+                violations.append(f"{context} derivado '{source_id}' no puede referenciarse a sí mismo.")
+
+        if kind != "SOURCE_ORIGINAL" and parent_id in by_id:
+            parent_provenance = provenance_by_id.get(parent_id)
+            parent_kind = parent_provenance.get("source_kind") if isinstance(parent_provenance, dict) else None
+            allowed_parent_kinds = {
+                "TRANSCRIPT": {"SOURCE_ORIGINAL"},
+                "TRANSLATION": {"SOURCE_ORIGINAL", "TRANSCRIPT"},
+                "SUMMARY": {"SOURCE_ORIGINAL", "TRANSCRIPT", "TRANSLATION", "REVIEW", "INDIRECT_QUOTE"},
+                "REVIEW": {"SOURCE_ORIGINAL", "TRANSCRIPT", "TRANSLATION"},
+                "INDIRECT_QUOTE": {"SOURCE_ORIGINAL", "TRANSCRIPT", "TRANSLATION", "SUMMARY", "REVIEW"},
+            }
+            if parent_kind is not None and kind in allowed_parent_kinds and parent_kind not in allowed_parent_kinds[kind]:
+                violations.append(
+                    f"{context} lineage de '{source_id}' no permite {kind} derivado de {parent_kind}."
+                )
+            visited = {source_id}
+            current = parent_id
+            while current in provenance_by_id and current not in visited:
+                visited.add(current)
+                current_provenance = provenance_by_id[current]
+                if current_provenance.get("source_kind") == "SOURCE_ORIGINAL":
+                    if original_id and original_id != current:
+                        violations.append(
+                            f"{context} lineage de '{source_id}' tiene original_source_ref inconsistente: "
+                            f"'{original_id}' frente a raíz '{current}'."
+                        )
+                    break
+                current = current_provenance.get("derived_from_source_ref")
+            else:
+                if current in visited:
+                    violations.append(f"{context} lineage de '{source_id}' contiene un ciclo.")
+                elif current not in provenance_by_id:
+                    violations.append(f"{context} lineage de '{source_id}' no alcanza una FUENTE_ORIGINAL.")
+
+        uses = set(provenance.get("permitted_uses", []))
+        reviewed = provenance.get("primary_verification_performed") is True or provenance.get("verification_status") == "PRIMARY_VERIFIED"
+        if provenance.get("source_kind") == "TRANSCRIPT" and provenance.get("transcription_type") == "AUTOMATIC" and not reviewed and "EXACT_QUOTE" in uses:
+            violations.append(
+                f"{context} fuente '{source_id}' bloqueada: transcripción automática no revisada no puede sostener EXACT_QUOTE."
+            )
+        if provenance.get("material_transcription_error") is True and not reviewed:
+            violations.append(
+                f"{context} fuente '{source_id}' bloqueada: error material de transcripción requiere verificación primaria."
+            )
+        if provenance.get("source_kind") == "TRANSLATION" and "EXACT_QUOTE" in uses and not reviewed:
+            violations.append(
+                f"{context} fuente '{source_id}' bloqueada: traducción no verificada no sustituye el original para formulación exacta."
+            )
+        if provenance.get("source_kind") in {"SUMMARY", "REVIEW", "INDIRECT_QUOTE"} and "PROVE_WORK_CONTENT" in uses:
+            violations.append(
+                f"{context} fuente '{source_id}' bloqueada: {provenance.get('source_kind')} no prueba por sí sola el contenido de la obra."
+            )
+        if (
+            "YOUTUBE_POLICY" in uses
+            and (
+                provenance.get("authority_domain") != "YOUTUBE_ADAPTATION"
+                or provenance.get("official_primary") is not True
+                or provenance.get("claim_authority") != "PRIMARY"
+            )
+        ):
+            violations.append(
+                f"{context} fuente '{source_id}' bloqueada: una fuente no primaria/oficial no puede presentarse como política oficial de YouTube."
+            )
+
+    for evaluation in claim_evaluations or []:
+        if not isinstance(evaluation, dict):
+            continue
+        source_id = evaluation.get("source_id")
+        provenance = provenance_by_id.get(source_id)
+        if not isinstance(provenance, dict):
+            continue
+        intended_use = evaluation.get("intended_use")
+        reviewed = provenance.get("primary_verification_performed") is True or provenance.get("verification_status") == "PRIMARY_VERIFIED"
+        if intended_use == "EXACT_QUOTE" and (
+            (provenance.get("source_kind") == "TRANSCRIPT" and provenance.get("transcription_type") == "AUTOMATIC" and not reviewed)
+            or (provenance.get("source_kind") == "TRANSLATION" and not reviewed)
+        ):
+            violations.append(
+                f"{context} evaluación del claim '{evaluation.get('claim_id')}' bloqueada: EXACT_QUOTE requiere verificación primaria del original."
+            )
+        if intended_use == "PROVE_WORK_CONTENT" and provenance.get("source_kind") in {"SUMMARY", "REVIEW", "INDIRECT_QUOTE"}:
+            violations.append(
+                f"{context} evaluación del claim '{evaluation.get('claim_id')}' bloqueada: la fuente derivada no prueba contenido de obra."
+            )
+        if intended_use == "YOUTUBE_POLICY" and (
+            provenance.get("authority_domain") != "YOUTUBE_ADAPTATION"
+            or provenance.get("official_primary") is not True
+            or provenance.get("claim_authority") != "PRIMARY"
+        ):
+            violations.append(
+                f"{context} evaluación del claim '{evaluation.get('claim_id')}' bloqueada: requiere fuente oficial primaria de YouTube."
+            )
+    return violations
+
+
+def _validate_multilingual_research(
+    decision: Any,
+    context: str,
+    known_source_ids: set[str],
+    known_claim_ids: set[str],
+) -> List[str]:
+    """Valida la decisión SP-IR0-MULTILINGUAL_RESEARCH_THRESHOLD fail-closed."""
+    if decision is None:
+        return []
+    if not isinstance(decision, dict):
+        return [f"{context}.multilingual_research debe ser un objeto."]
+    violations: List[str] = []
+    status = decision.get("activation_status")
+    triggers = decision.get("triggers", [])
+    non_triggers = decision.get("non_trigger_examples", [])
+    if status == "ACTIVATED":
+        if not triggers:
+            violations.append(f"{context}.multilingual_research ACTIVATED requiere triggers concretos.")
+        if not decision.get("required_language"):
+            violations.append(f"{context}.multilingual_research ACTIVATED requiere idioma requerido.")
+        if not decision.get("affected_source_ids") or not decision.get("affected_claim_ids"):
+            violations.append(f"{context}.multilingual_research ACTIVATED requiere fuentes y claims afectados.")
+        if not decision.get("material_risk"):
+            violations.append(f"{context}.multilingual_research ACTIVATED requiere riesgo material.")
+        if decision.get("consultation_result") == "NOT_APPLICABLE" or decision.get("return_route") == "NOT_APPLICABLE":
+            violations.append(f"{context}.multilingual_research ACTIVATED requiere resultado y ruta de retorno.")
+    elif status == "NOT_ACTIVATED":
+        if triggers:
+            violations.append(f"{context}.multilingual_research NOT_ACTIVATED no puede declarar triggers de activación.")
+        if not non_triggers:
+            violations.append(f"{context}.multilingual_research NOT_ACTIVATED requiere un ejemplo explícito de NON_TRIGGER.")
+        if (
+            decision.get("required_language") is not None
+            or decision.get("affected_source_ids")
+            or decision.get("affected_claim_ids")
+            or decision.get("material_risk")
+        ):
+            violations.append(f"{context}.multilingual_research NOT_ACTIVATED no puede conservar impactos de una activación inexistente.")
+        if decision.get("consultation_result") != "NOT_APPLICABLE" or decision.get("return_route") != "NOT_APPLICABLE":
+            violations.append(f"{context}.multilingual_research NOT_ACTIVATED requiere resultado y retorno NOT_APPLICABLE.")
+    elif status == "REEVALUATION_REQUIRED":
+        if not decision.get("invalidators"):
+            violations.append(f"{context}.multilingual_research REEVALUATION_REQUIRED requiere invalidadores concretos.")
+        if decision.get("return_route") == "NOT_APPLICABLE":
+            violations.append(f"{context}.multilingual_research invalidada requiere ruta de retorno.")
+    expected_route = {
+        "ORIGINAL_CONSULTED_RISK_RESOLVED": "ORIGINAL_CONSULTED_RISK_RESOLVED",
+        "LIMITED_BUT_USABLE": "LIMITED_BUT_USABLE",
+        "MORE_RESEARCH_REQUIRED": "MORE_RESEARCH_REQUIRED",
+        "BLOCKED_BY_EVIDENCE": "BLOCKED_BY_EVIDENCE",
+        "CHANNEL_INTELLIGENCE_REVIEW_REQUIRED": "CHANNEL_INTELLIGENCE_REVIEW_REQUIRED",
+        "YOUTUBE_ADAPTATION_REVIEW_REQUIRED": "YOUTUBE_ADAPTATION_REVIEW_REQUIRED",
+    }.get(decision.get("consultation_result"))
+    if expected_route and decision.get("return_route") != expected_route:
+        violations.append(
+            f"{context}.multilingual_research consultation_result y return_route deben coincidir: "
+            f"se esperaba '{expected_route}'."
+        )
+    for field, known_ids in (("affected_source_ids", known_source_ids), ("affected_claim_ids", known_claim_ids)):
+        for value in decision.get(field, []) if isinstance(decision.get(field), list) else []:
+            if value not in known_ids:
+                violations.append(f"{context}.multilingual_research.{field} referencia identificador desconocido: '{value}'.")
+    return violations
 
 
 class ContractValidationError(Exception):
@@ -63,7 +271,14 @@ def validate_against_schema(data: Dict[str, Any], schema_name: str) -> List[str]
     Rechaza schema inexistente lanzando FileNotFoundError.
     """
     schema = load_schema(schema_name)
-    validator = Draft7Validator(schema, format_checker=draft7_format_checker)
+    # SourceAccessAndEvidenceReport reuses the editorial provenance definitions
+    # owned by ResearchPack; the store resolves that existing schema locally.
+    store = {schema.get("$id"): schema}
+    if schema_name.removesuffix(".json") == "source_access_and_evidence_report":
+        canonical_provenance_schema = load_schema("research_pack")
+        store[canonical_provenance_schema["$id"]] = canonical_provenance_schema
+    resolver = RefResolver.from_schema(schema, store=store)
+    validator = Draft7Validator(schema, resolver=resolver, format_checker=draft7_format_checker)
     errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
     violations = []
     for error in errors:
@@ -285,6 +500,15 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
                 violations.append(
                     f"ResearchPack.semantic_status referencia claim no declarada: '{status_entry['claim_id']}'."
                 )
+    violations.extend(_validate_source_provenance(data.get("source_registry", []), "ResearchPack"))
+    violations.extend(
+        _validate_multilingual_research(
+            data.get("multilingual_research"),
+            "ResearchPack",
+            known_sources,
+            known_claim_ids,
+        )
+    )
     return violations
 
 
@@ -305,6 +529,25 @@ def validate_claims_ledger(data: Dict[str, Any]) -> List[str]:
             # Verificar que source_refs no este vacio
             if "source_refs" in claim and isinstance(claim["source_refs"], list) and len(claim["source_refs"]) == 0:
                 violations.append(f"Claim '{claim.get('claim_id')}' rechazada: No se permiten claims sin fuente ni estado de verificacion.")
+            intended_use = claim.get("intended_use")
+            if intended_use in {"EXACT_QUOTE", "PROVE_WORK_CONTENT", "YOUTUBE_POLICY"}:
+                if not claim.get("provenance_evidence_refs"):
+                    violations.append(
+                        f"Claim '{claim.get('claim_id')}' con uso {intended_use} requiere provenance_evidence_refs."
+                    )
+                elif not set(claim["provenance_evidence_refs"]).issubset(set(claim.get("source_refs", []))):
+                    violations.append(
+                        f"Claim '{claim.get('claim_id')}' con uso {intended_use} requiere provenance_evidence_refs incluidas en source_refs."
+                    )
+                if claim.get("provenance_status") != "PRIMARY_VERIFIED":
+                    violations.append(
+                        f"Claim '{claim.get('claim_id')}' con uso {intended_use} requiere provenance_status=PRIMARY_VERIFIED."
+                    )
+                required_authority = "YOUTUBE_OFFICIAL_PRIMARY" if intended_use == "YOUTUBE_POLICY" else "PRIMARY_SOURCE"
+                if claim.get("authority_basis") != required_authority:
+                    violations.append(
+                        f"Claim '{claim.get('claim_id')}' con uso {intended_use} requiere authority_basis={required_authority}."
+                    )
 
     return violations
 
@@ -411,6 +654,27 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
             if source_id not in known_sources:
                 violations.append(f"independence_groups referencia fuente desconocida: '{source_id}'.")
 
+    violations.extend(
+        _validate_source_provenance(
+            [
+                item
+                for field in ("fuentes_primarias", "fuentes_secundarias")
+                for item in data.get(field, [])
+                if isinstance(item, dict)
+            ],
+            "SourceAccessAndEvidenceReport",
+            data.get("claim_dependent_source_evaluations", []),
+        )
+    )
+    violations.extend(
+        _validate_multilingual_research(
+            data.get("multilingual_research"),
+            "SourceAccessAndEvidenceReport",
+            known_sources,
+            declared_claim_ids,
+        )
+    )
+
     return violations
 
 
@@ -498,6 +762,253 @@ def validate_work_research_dossier(
     for claim_id in set().union(*disposition_sets.values()):
         if claim_id not in known_claim_ids:
             violations.append(f"WorkResearchDossier referencia claim inexistente en ledger: '{claim_id}'.")
+
+    return violations
+
+
+def validate_work_lifecycle(
+    data: Dict[str, Any],
+    dossiers: Optional[List[Dict[str, Any]]] = None,
+    material_curation: Optional[Dict[str, Any]] = None,
+) -> List[str]:
+    """Valida el lifecycle de obras sin duplicar dossier ni curación."""
+    violations = validate_against_schema(data, "work_lifecycle")
+    works = [item for item in data.get("works", []) if isinstance(item, dict)]
+    works_by_id = {item.get("work_id"): item for item in works if item.get("work_id")}
+    if len(works_by_id) != len(works):
+        violations.append("WorkLifecycle no permite work_id duplicados o ausentes.")
+
+    entry_mode = data.get("entry_mode")
+    anchor_id = data.get("anchor_work_id")
+    if entry_mode == "ANCHOR_WORK_FIRST":
+        if not anchor_id or anchor_id not in works_by_id:
+            violations.append("ANCHOR_WORK_FIRST requiere anchor_work_id declarado en works.")
+        elif works_by_id[anchor_id].get("is_anchor") is not True:
+            violations.append("La obra ancla declarada debe conservar is_anchor=true.")
+    elif anchor_id is not None:
+        violations.append("anchor_work_id solo puede existir con entrada ANCHOR_WORK_FIRST.")
+
+    states = {"DISCOVERED_WORK", "SCREENED_WORK", "FINALIST_WORK", "FINAL_SELECTED_WORK", "EXCLUDED_WORK", "INVALIDATED_WORK"}
+    promotion_targets = {
+        "DISCOVERED_WORK": "SCREENED_WORK",
+        "SCREENED_WORK": "FINALIST_WORK",
+        "FINALIST_WORK": "FINAL_SELECTED_WORK",
+    }
+    transitions_by_work: Dict[str, List[Dict[str, Any]]] = {}
+    transitions_by_id: Dict[str, Dict[str, Any]] = {}
+    transition_indexes: Dict[str, int] = {}
+    registry = _load_responsibility_registry()
+    for transition_index, transition in enumerate(data.get("transitions", [])):
+        if not isinstance(transition, dict):
+            continue
+        work_id = transition.get("work_id")
+        transition_id = transition.get("transition_id")
+        if transition_id in transitions_by_id:
+            violations.append(f"WorkLifecycle no permite transition_id duplicado: '{transition_id}'.")
+        else:
+            transitions_by_id[transition_id] = transition
+            transition_indexes[transition_id] = transition_index
+        transitions_by_work.setdefault(work_id, []).append(transition)
+        if work_id not in works_by_id:
+            violations.append(f"WorkLifecycle.transition referencia obra desconocida: '{work_id}'.")
+        previous = transition.get("previous_state")
+        target = transition.get("target_state")
+        transition_type = transition.get("transition_type")
+        authority_role = transition.get("authority_role")
+        authority_ref = transition.get("transition_authority_ref")
+        authority = registry.get(authority_role)
+        expected_authority_ref = f"{RESPONSIBILITY_REGISTRY_REF_PREFIX}{authority_role}" if authority_role else None
+        if authority is None:
+            violations.append(f"Transición '{transition_id}' referencia una authority_role inexistente: '{authority_role}'.")
+        elif authority.get("functional_owner") != "SCRIPT_PRODUCT":
+            violations.append(f"Transición '{transition_id}' referencia una autoridad fuera de SCRIPT_PRODUCT.")
+        elif authority_role != "RESEARCH_AND_CURATION":
+            violations.append(f"Transición '{transition_id}' usa una responsabilidad no válida para lifecycle de obras.")
+        if expected_authority_ref != authority_ref:
+            violations.append(f"Transición '{transition_id}' debe referenciar canónicamente la autoridad declarada.")
+        if previous not in states or target not in states or previous == target:
+            violations.append(f"Transición '{transition.get('transition_id')}' tiene estados inválidos o iguales.")
+        if transition_type == "PROMOTION":
+            if promotion_targets.get(previous) != target:
+                violations.append(
+                    f"Transición promocional '{transition.get('transition_id')}' no respeta la progresión ordenada."
+                )
+        elif transition_type == "EXCLUSION" and target != "EXCLUDED_WORK":
+            violations.append(f"La transición de exclusión '{transition.get('transition_id')}' debe terminar en EXCLUDED_WORK.")
+        elif transition_type == "INVALIDATION" and target != "INVALIDATED_WORK":
+            violations.append(f"La transición de invalidación '{transition.get('transition_id')}' debe terminar en INVALIDATED_WORK.")
+        elif target in {"FINALIST_WORK", "FINAL_SELECTED_WORK"}:
+            violations.append(f"La promoción a '{target}' debe usar transition_type=PROMOTION.")
+        if transition_type == "REOPENED":
+            if not transition.get("previous_transition_ref") or not transition.get("authorized_return_state"):
+                violations.append(f"Reapertura '{transition.get('transition_id')}' requiere lineage y estado de retorno.")
+            previous_transition_ref = transition.get("previous_transition_ref")
+            previous_transition = transitions_by_id.get(previous_transition_ref)
+            if previous_transition is None:
+                violations.append(f"Reapertura '{transition_id}' referencia una transición inexistente.")
+            else:
+                if previous_transition.get("work_id") != work_id:
+                    violations.append(f"Reapertura '{transition_id}' referencia una transición de otra obra.")
+                if transition_indexes.get(previous_transition_ref, transition_index) >= transition_index:
+                    violations.append(f"Reapertura '{transition_id}' debe referenciar una transición anterior.")
+                if previous_transition.get("target_state") != previous:
+                    violations.append(f"Reapertura '{transition_id}' no enlaza su estado previo con la transición referenciada.")
+            if transition.get("authorized_return_state") != target:
+                violations.append(f"Reapertura '{transition.get('transition_id')}' debe coincidir con su estado de retorno.")
+            if previous in {"EXCLUDED_WORK", "INVALIDATED_WORK"} and target == "FINAL_SELECTED_WORK":
+                violations.append("Una obra excluida o invalidada no puede reabrirse directamente como final seleccionada.")
+        if transition_type in {"PROMOTION", "EXCLUSION", "INVALIDATION", "REOPENED"} and not transition.get("decision", {}).get("status") == "EXPLICIT":
+            violations.append(f"Transición '{transition.get('transition_id')}' requiere una decisión explícita.")
+
+    for work_id, work in works_by_id.items():
+        history = transitions_by_work.get(work_id, [])
+        if work.get("state") != "DISCOVERED_WORK" and not history:
+            violations.append(f"'{work_id}' en estado derivado requiere una transición explícita.")
+        if history and history[0].get("previous_state") != "DISCOVERED_WORK":
+            violations.append(f"El lineage de '{work_id}' no reconstruye su origen DISCOVERED_WORK.")
+        for history_index, (previous_transition, next_transition) in enumerate(zip(history, history[1:]), start=1):
+            if next_transition.get("previous_state") != previous_transition.get("target_state"):
+                violations.append(f"El lineage de transiciones de '{work_id}' no conserva continuidad de estado.")
+            if next_transition.get("transition_type") == "REOPENED" and next_transition.get("previous_transition_ref") != previous_transition.get("transition_id"):
+                violations.append(f"Reapertura '{next_transition.get('transition_id')}' debe referenciar la transición inmediata anterior de '{work_id}'.")
+        if history and history[-1].get("target_state") != work.get("state"):
+            violations.append(f"El estado actual de '{work_id}' no coincide con la última transición registrada.")
+        state = work.get("state")
+        if state == "SCREENED_WORK" and not work.get("screening_ref"):
+            violations.append(f"SCREENED_WORK '{work_id}' requiere referencia de screening.")
+        if state == "FINALIST_WORK" and not work.get("dossier_ref"):
+            violations.append(f"FINALIST_WORK '{work_id}' requiere referencia a WorkResearchDossier.")
+        if state == "FINAL_SELECTED_WORK":
+            for field in ("dossier_ref", "differentiated_function_ref", "comparative_decision_ref"):
+                if not work.get(field):
+                    violations.append(f"FINAL_SELECTED_WORK '{work_id}' requiere {field}.")
+        if state in {"FINALIST_WORK", "FINAL_SELECTED_WORK"} and not history:
+            violations.append(f"'{work_id}' no puede aparecer promocionada sin transición explícita.")
+
+    screening = data.get("screening", {})
+    candidate_ids = set(screening.get("candidate_work_ids", [])) if isinstance(screening, dict) else set()
+    if not candidate_ids.issubset(works_by_id):
+        violations.append("Screening referencia obras no declaradas en WorkLifecycle.")
+    screening_status = screening.get("range_status") if isinstance(screening, dict) else None
+    screening_exception = screening.get("exception") if isinstance(screening, dict) else None
+    if candidate_ids:
+        if screening_status == "NOT_APPLICABLE":
+            violations.append("Un screening con candidatas declaradas no puede ser NOT_APPLICABLE.")
+        if screening_status == "NORMAL" and not 5 <= len(candidate_ids) <= 8:
+            violations.append("El screening NORMAL requiere entre 5 y 8 candidatas.")
+        if screening_status == "EXCEPTION" and not screening_exception:
+            violations.append("El screening EXCEPTION requiere referencia explícita de excepción aprobada.")
+        if len(candidate_ids) not in range(5, 9) and screening_status not in {"EXCEPTION"}:
+            violations.append("Un screening fuera del rango 5–8 requiere excepción explícita.")
+        if screening_exception and screening_status != "EXCEPTION":
+            violations.append("Una excepción de screening debe declararse como EXCEPTION.")
+    elif screening_status == "NORMAL":
+        violations.append("Un screening NORMAL requiere candidatas declaradas.")
+
+    final_selection = data.get("final_selection", {})
+    selected_ids = set(final_selection.get("selected_work_ids", [])) if isinstance(final_selection, dict) else set()
+    if not selected_ids.issubset(works_by_id):
+        violations.append("Final selection referencia obras no declaradas en WorkLifecycle.")
+    final_status = final_selection.get("range_status") if isinstance(final_selection, dict) else None
+    final_exception = final_selection.get("exception") if isinstance(final_selection, dict) else None
+    if selected_ids:
+        if final_status == "NOT_APPLICABLE":
+            violations.append("Una selección final con obras declaradas no puede ser NOT_APPLICABLE.")
+        if final_status == "NORMAL" and not 3 <= len(selected_ids) <= 5:
+            violations.append("La selección final NORMAL requiere entre 3 y 5 obras sustantivas.")
+        if final_status == "EXCEPTION" and not final_exception:
+            violations.append("La selección final EXCEPTION requiere referencia explícita de excepción aprobada.")
+        if len(selected_ids) not in range(3, 6) and final_status != "EXCEPTION":
+            violations.append("Una selección final fuera del rango 3–5 requiere excepción explícita.")
+        if final_exception and final_status != "EXCEPTION":
+            violations.append("Una excepción de selección final debe declararse como EXCEPTION.")
+    if selected_ids:
+        for work_id in selected_ids:
+            if works_by_id[work_id].get("state") != "FINAL_SELECTED_WORK":
+                violations.append(f"La obra '{work_id}' seleccionada debe estar en FINAL_SELECTED_WORK.")
+        if not final_selection.get("curation_ref"):
+            violations.append("La selección final requiere referencia a MaterialCuration.")
+        if material_curation is not None:
+            curation_id = material_curation.get("curation_id")
+            if curation_id != final_selection.get("curation_ref"):
+                violations.append("La selección final referencia una MaterialCuration distinta de la suministrada.")
+            curation_selected = set(material_curation.get("selected_material_ids", [])) | set(material_curation.get("selected_materials", []))
+            if selected_ids != curation_selected:
+                violations.append("Las obras seleccionadas no coinciden con MaterialCuration.")
+            selected_materials = {
+                item.get("material_id"): item
+                for item in material_curation.get("candidates", [])
+                if isinstance(item, dict) and item.get("material_id")
+            }
+            contributions = {item.get("material_id") for item in material_curation.get("function_of_each_selected_material", []) if isinstance(item, dict)}
+            progression = {item.get("material_id") for item in material_curation.get("progression_evidence", []) if isinstance(item, dict)}
+            for work_id in selected_ids:
+                material = selected_materials.get(work_id)
+                if not material or material.get("selection_status") != "SELECTED" or work_id not in contributions or work_id not in progression:
+                    violations.append(f"La obra '{work_id}' no demuestra función y progresión sustantivas en MaterialCuration.")
+    elif final_status == "NORMAL":
+        violations.append("Una selección final NORMAL requiere obras declaradas.")
+
+    dossier_by_id = {item.get("dossier_id"): item for item in (dossiers or []) if isinstance(item, dict) and item.get("dossier_id")}
+    for work in works:
+        dossier_ref = work.get("dossier_ref")
+        if dossier_ref and dossiers is not None:
+            dossier = dossier_by_id.get(dossier_ref)
+            if dossier is None:
+                violations.append(f"WorkLifecycle referencia WorkResearchDossier inexistente: '{dossier_ref}'.")
+            elif dossier.get("work", {}).get("material_id") != work.get("work_id"):
+                violations.append(f"WorkLifecycle y WorkResearchDossier difieren para la obra '{work.get('work_id')}'.")
+
+    for doubt in data.get("critical_doubts", []):
+        if not isinstance(doubt, dict):
+            continue
+        work_id = doubt.get("work_id")
+        if work_id not in works_by_id:
+            violations.append(f"CriticalWorkDoubt referencia obra desconocida: '{work_id}'.")
+            continue
+        status = doubt.get("authorization_status")
+        return_trigger = doubt.get("return_trigger")
+        return_route = doubt.get("return_route")
+        external_routes = {"CHANNEL_INTELLIGENCE_REVIEW_REQUIRED", "YOUTUBE_ADAPTATION_REVIEW_REQUIRED"}
+        trigger_routes = {
+            "MATERIAL_QUESTION_INTENT_TERRITORY_CHANGE": "CHANNEL_INTELLIGENCE_REVIEW_REQUIRED",
+            "VISIBLE_PROMISE_OR_EARLY_PACKAGING_IMPACT": "YOUTUBE_ADAPTATION_REVIEW_REQUIRED",
+        }
+        expected_external_route = trigger_routes.get(return_trigger)
+        if return_route in external_routes and expected_external_route != return_route:
+            violations.append("Una ruta externa de duda crítica requiere su trigger externo correspondiente.")
+        if return_trigger is not None and return_route != expected_external_route:
+            violations.append("El trigger externo de duda crítica debe corresponder exactamente a su ruta.")
+        if return_route not in external_routes and return_trigger is not None:
+            violations.append("Un trigger externo de duda crítica no puede retornar silenciosamente a una ruta interna.")
+        if status in {"ACTIVE", "RESOLVED"}:
+            if works_by_id[work_id].get("state") in {"FINALIST_WORK", "FINAL_SELECTED_WORK"}:
+                violations.append("Una duda crítica activa o resuelta solo puede afectar una obra no finalista.")
+            if status == "ACTIVE":
+                if not doubt.get("activation_criteria") or not doubt.get("evidence_refs") or not doubt.get("authorized_actions") or not doubt.get("authorization_ref"):
+                    violations.append("Una duda crítica activa requiere criterio, evidencia, acciones y autorización.")
+                if doubt.get("outcome") not in doubt.get("authorized_actions", []):
+                    violations.append("El resultado de una duda crítica activa debe estar entre sus acciones autorizadas.")
+            else:
+                if not doubt.get("activation_criteria") or not doubt.get("authorization_ref") or not doubt.get("evidence_refs") or not doubt.get("authorized_actions") or not doubt.get("scope") or doubt.get("outcome") == "NOT_APPLICABLE":
+                    violations.append("Una duda crítica RESOLVED requiere conservar activación, autorización, evidencia, alcance, acciones y resultado.")
+                if doubt.get("outcome") not in doubt.get("authorized_actions", []):
+                    violations.append("El resultado de una duda crítica RESOLVED debe estar entre las acciones autorizadas.")
+            expected_route = {
+                "CONTINUE_SCREENING": "RETURN_TO_SCREENING",
+                "PROMOTE_TO_FINALIST_CONSIDERATION": "RETURN_TO_SCREENING",
+                "EXCLUDE_FOR_CURRENT_EPISODE": "EXCLUDED_WORK",
+                "REQUIRE_MORE_TARGETED_RESEARCH": "MORE_TARGETED_RESEARCH_REQUIRED",
+                "BLOCK_BY_EVIDENCE": "BLOCKED_BY_EVIDENCE",
+            }.get(doubt.get("outcome"))
+            if expected_route and doubt.get("return_route") != expected_route and doubt.get("return_route") not in external_routes:
+                violations.append("La duda crítica activa debe conservar una ruta de retorno coherente con su resultado.")
+        elif status == "NOT_ACTIVATED":
+            if not doubt.get("non_trigger_examples") or doubt.get("activation_criteria") or doubt.get("authorized_actions") or doubt.get("authorization_ref") or doubt.get("outcome") != "NOT_APPLICABLE":
+                violations.append("Una duda NOT_ACTIVATED solo puede conservar NON_TRIGGER y no autoriza profundización.")
+        elif status == "INVALIDATED":
+            if not doubt.get("invalidators") or doubt.get("authorization_ref") or doubt.get("authorized_actions") or doubt.get("outcome") != "NOT_APPLICABLE":
+                violations.append("Una duda INVALIDATED debe conservar invalidadores y cortar la autorización.")
 
     return violations
 

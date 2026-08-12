@@ -3,6 +3,7 @@ Pruebas Unitarias para la Validación Determinista de Contratos (contract_valida
 """
 
 import unittest
+from copy import deepcopy
 from src.core.contract_validation import (
     validate_editorial_script_approval,
     validate_human_production_approval,
@@ -26,6 +27,134 @@ from tests.fixtures.synthetic_contracts import (
 
 
 class TestContractValidation(unittest.TestCase):
+
+    @staticmethod
+    def _provenance(source_kind="SOURCE_ORIGINAL", **overrides):
+        value = {
+            "source_kind": source_kind,
+            "original_source_ref": None,
+            "derived_from_source_ref": None,
+            "version": "1.0.0",
+            "original_language": "en",
+            "derivative_language": None,
+            "locator": "documento completo",
+            "acquisition_method": "DIRECT_ACCESS",
+            "transformation_method": "NONE",
+            "transcription_type": "NOT_APPLICABLE",
+            "verification_status": "PRIMARY_VERIFIED",
+            "translation_transcription_risk": "NONE",
+            "limitations": [],
+            "permitted_uses": ["CONTEXT_ONLY"],
+            "primary_verification_required": False,
+            "primary_verification_performed": True,
+            "claim_authority": "PRIMARY",
+            "authority_domain": "GENERAL",
+            "official_primary": False,
+        }
+        value.update(overrides)
+        return value
+
+    def _pack_with_sources(self, sources):
+        pack = deepcopy(VALID_RESEARCH_PACK)
+        pack["source_registry"] = sources
+        return pack
+
+    def test_source_original_and_derived_lineage_is_valid(self):
+        root = {"source_id": "S1", "title": "Audio original", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "00:00", "confidence": "HIGH", "provenance": self._provenance()}
+        transcript = {"source_id": "S2", "title": "Transcripción manual", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "00:00", "confidence": "HIGH", "provenance": self._provenance("TRANSCRIPT", original_source_ref="S1", derived_from_source_ref="S1", derivative_language="en", transcription_type="MANUAL", transformation_method="MANUAL_TRANSCRIPTION")}
+        self.assertEqual(validate_research_pack(self._pack_with_sources([root, transcript])), [])
+
+    def test_derived_source_without_origin_fails(self):
+        source = {"source_id": "S1", "title": "Traducción huérfana", "source_type": "SECONDARY", "access_type": "INDIRECT", "locator": "p. 1", "confidence": "MEDIUM", "provenance": self._provenance("TRANSLATION", derivative_language="es", transformation_method="MACHINE_TRANSLATION")}
+        violations = validate_research_pack(self._pack_with_sources([source]))
+        self.assertTrue(any("original_source_ref" in violation for violation in violations))
+
+    def test_audiovisual_provenance_keeps_timestamp(self):
+        source = {"source_id": "S1", "title": "Vídeo original", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "00:10:00-00:10:30", "confidence": "HIGH", "provenance": self._provenance(locator="00:10:00-00:10:30", timestamp={"start": "00:10:00", "end": "00:10:30"})}
+        self.assertEqual(validate_research_pack(self._pack_with_sources([source])), [])
+
+    def test_transcription_types_are_distinguished(self):
+        root = {"source_id": "S1", "title": "Audio original", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "00:00", "confidence": "HIGH", "provenance": self._provenance()}
+        sources = [root]
+        for index, transcription_type in enumerate(("OFFICIAL", "CREATOR_PROVIDED", "AUTOMATIC", "MANUAL"), start=2):
+            sources.append({"source_id": f"S{index}", "title": transcription_type, "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "00:01", "confidence": "HIGH", "provenance": self._provenance("TRANSCRIPT", original_source_ref="S1", derived_from_source_ref="S1", transcription_type=transcription_type, transformation_method=f"{transcription_type}_TRANSCRIPTION", verification_status="REVIEWED" if transcription_type == "AUTOMATIC" else "PRIMARY_VERIFIED")})
+        self.assertEqual(validate_research_pack(self._pack_with_sources(sources)), [])
+
+    def test_unreviewed_automatic_transcript_cannot_support_exact_quote(self):
+        root = {"source_id": "S1", "title": "Audio original", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "00:00", "confidence": "HIGH", "provenance": self._provenance()}
+        transcript = {"source_id": "S2", "title": "Transcripción automática", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "00:01", "confidence": "MEDIUM", "provenance": self._provenance("TRANSCRIPT", original_source_ref="S1", derived_from_source_ref="S1", transcription_type="AUTOMATIC", verification_status="NOT_REVIEWED", primary_verification_performed=False, permitted_uses=["EXACT_QUOTE"], translation_transcription_risk="HIGH")}
+        violations = validate_research_pack(self._pack_with_sources([root, transcript]))
+        self.assertTrue(any("EXACT_QUOTE" in violation for violation in violations))
+
+    def test_material_transcription_error_requires_primary_verification(self):
+        root = {"source_id": "S1", "title": "Audio original", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "00:00", "confidence": "HIGH", "provenance": self._provenance()}
+        transcript = {"source_id": "S2", "title": "Transcripción con duda material", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "00:02", "confidence": "LOW", "provenance": self._provenance("TRANSCRIPT", original_source_ref="S1", derived_from_source_ref="S1", transcription_type="MANUAL", verification_status="NOT_REVIEWED", primary_verification_performed=False, material_transcription_error=True, translation_transcription_risk="MATERIAL")}
+        violations = validate_research_pack(self._pack_with_sources([root, transcript]))
+        self.assertTrue(any("error material" in violation for violation in violations))
+
+    def test_unverified_translation_cannot_replace_original_exact_formulation(self):
+        root = {"source_id": "S1", "title": "Original", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "p. 1", "confidence": "HIGH", "provenance": self._provenance()}
+        translation = {"source_id": "S2", "title": "Traducción", "source_type": "SECONDARY", "access_type": "INDIRECT", "locator": "p. 1", "confidence": "MEDIUM", "provenance": self._provenance("TRANSLATION", original_source_ref="S1", derived_from_source_ref="S1", derivative_language="es", transformation_method="HUMAN_TRANSLATION", verification_status="REVIEWED", primary_verification_performed=False, permitted_uses=["EXACT_QUOTE"], translation_transcription_risk="MATERIAL")}
+        violations = validate_research_pack(self._pack_with_sources([root, translation]))
+        self.assertTrue(any("formulación exacta" in violation for violation in violations))
+
+    def test_summary_or_review_cannot_prove_work_content(self):
+        root = {"source_id": "S1", "title": "Obra original", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "obra", "confidence": "HIGH", "provenance": self._provenance()}
+        review = {"source_id": "S2", "title": "Reseña", "source_type": "SECONDARY", "access_type": "SECONDARY_ONLY", "locator": "p. 2", "confidence": "MEDIUM", "provenance": self._provenance("REVIEW", original_source_ref="S1", derived_from_source_ref="S1", derivative_language="es", transformation_method="HUMAN_REVIEW", claim_authority="INTERPRETIVE", permitted_uses=["PROVE_WORK_CONTENT"])}
+        violations = validate_research_pack(self._pack_with_sources([root, review]))
+        self.assertTrue(any("no prueba por sí sola" in violation for violation in violations))
+
+    def test_secondary_youtube_source_cannot_self_declare_youtube_policy_authority(self):
+        source = {"source_id": "S1", "title": "Comentario sobre YouTube", "source_type": "SECONDARY", "access_type": "SECONDARY_ONLY", "locator": "p. 1", "confidence": "MEDIUM", "provenance": self._provenance(claim_authority="SECONDARY", authority_domain="YOUTUBE_ADAPTATION", official_primary=False, permitted_uses=["YOUTUBE_POLICY"])}
+        violations = validate_research_pack(self._pack_with_sources([source]))
+        self.assertTrue(any("política oficial de YouTube" in violation for violation in violations))
+
+    def test_multilingual_trigger_is_valid_and_tracks_affected_claims(self):
+        pack = deepcopy(VALID_RESEARCH_PACK)
+        pack["multilingual_research"] = {"activation_status": "ACTIVATED", "triggers": ["TRANSLATION_SEMANTIC_RISK"], "non_trigger_examples": [], "affected_source_ids": ["S1"], "affected_claim_ids": ["C1"], "required_language": "en", "material_risk": ["CLAIM_VALIDITY", "WORK_INTERPRETATION"], "consultation_result": "LIMITED_BUT_USABLE", "limitations": ["El matiz sigue pendiente de revisión primaria."], "invalidators": ["CLAIM_OR_USE_CHANGED"], "return_route": "LIMITED_BUT_USABLE", "decision_basis": "La formulación original puede cambiar la interpretación."}
+        pack["critical_claims_assessment"] = {"status": "IDENTIFIED", "claim_ids": ["C1"], "justification": None, "editorial_impact": "MATERIAL"}
+        self.assertEqual(validate_research_pack(pack), [])
+
+    def test_multilingual_non_trigger_does_not_activate(self):
+        pack = deepcopy(VALID_RESEARCH_PACK)
+        pack["multilingual_research"] = {"activation_status": "NOT_ACTIVATED", "triggers": [], "non_trigger_examples": ["FIXED_LANGUAGE_QUOTA"], "affected_source_ids": [], "affected_claim_ids": [], "required_language": None, "material_risk": [], "consultation_result": "NOT_APPLICABLE", "limitations": [], "invalidators": [], "return_route": "NOT_APPLICABLE", "decision_basis": "No existe diferencia lingüística material para el uso previsto."}
+        self.assertEqual(validate_research_pack(pack), [])
+
+    def test_multilingual_not_activated_cannot_declare_material_risk(self):
+        pack = deepcopy(VALID_RESEARCH_PACK)
+        pack["multilingual_research"]["material_risk"] = ["CLAIM_VALIDITY"]
+        violations = validate_research_pack(pack)
+        self.assertTrue(any("NOT_ACTIVATED" in violation and "impactos" in violation for violation in violations))
+
+    def test_multilingual_invalidation_requires_reevaluation_route(self):
+        pack = deepcopy(VALID_RESEARCH_PACK)
+        pack["multilingual_research"] = {"activation_status": "REEVALUATION_REQUIRED", "triggers": ["ORIGINAL_SOURCE_NOT_IN_SPANISH"], "non_trigger_examples": [], "affected_source_ids": ["S1"], "affected_claim_ids": [], "required_language": "en", "material_risk": ["SUFFICIENCY"], "consultation_result": "MORE_RESEARCH_REQUIRED", "limitations": ["Apareció una fuente primaria en español suficiente."], "invalidators": ["PRIMARY_SPANISH_SOURCE_RECOVERED"], "return_route": "MORE_RESEARCH_REQUIRED", "decision_basis": "La decisión previa dejó de ser válida y debe reevaluarse."}
+        self.assertEqual(validate_research_pack(pack), [])
+
+    def test_multilingual_decision_preserves_complete_catalogs_and_route_coherence(self):
+        pack = deepcopy(VALID_RESEARCH_PACK)
+        pack["critical_claims_assessment"] = {"status": "IDENTIFIED", "claim_ids": ["C1"], "justification": None, "editorial_impact": "MATERIAL"}
+        pack["multilingual_research"] = {
+            "activation_status": "ACTIVATED",
+            "triggers": ["ORIGINAL_SOURCE_NOT_IN_SPANISH", "SPANISH_COVERAGE_DEPENDS_ON_DERIVATIVES", "MATERIAL_SOURCE_GAP", "TRANSLATION_SEMANTIC_RISK", "CONFLICTING_TRANSLATIONS", "LINGUISTICALLY_SPLIT_CONTROVERSY", "LOCAL_CONTEXT_REQUIRED", "AUTHORIAL_OR_CREATOR_STATEMENT", "PRIMARY_VERIFICATION_REQUIRED", "EVIDENCE_SUFFICIENCY_BLOCKED_BY_LANGUAGE"],
+            "non_trigger_examples": ["FIXED_LANGUAGE_QUOTA", "SOURCE_VOLUME_ONLY", "OFFICIAL_TRANSLATION_SUFFICIENT", "DUPLICATED_FOREIGN_COVERAGE", "UNRELATED_INTERNATIONAL_PERSPECTIVE", "TRANSLATE_ALL_AUTOMATICALLY", "LANGUAGE_AS_AUTHORITY_SIGNAL", "NO_LINGUISTIC_DIFFERENCE_REQUIRED", "TECHNICAL_CAPABILITY_DEMO"],
+            "affected_source_ids": ["S1"],
+            "affected_claim_ids": ["C1"],
+            "required_language": "en",
+            "material_risk": ["CLAIM_VALIDITY", "WORK_INTERPRETATION", "CONTRADICTION", "SUFFICIENCY", "WORK_SELECTION", "THESIS", "DISCLOSURE_OR_LIMITATION"],
+            "consultation_result": "YOUTUBE_ADAPTATION_REVIEW_REQUIRED",
+            "limitations": ["La consulta reveló un impacto sobre una política de plataforma."],
+            "invalidators": ["CLAIM_OR_USE_CHANGED", "PRIMARY_SPANISH_SOURCE_RECOVERED", "AUTHORIZED_TRANSLATION_RESOLVES_RISK", "SAME_ORIGIN_DISCOVERED", "TRANSLATION_LINEAGE_OR_METHOD_LOST", "FOREIGN_SOURCE_LACKS_AUTHORITY", "VERSION_ADAPTATION_OR_CONTEXT_CHANGED", "NEW_CONTROVERSY_INTRODUCED", "TRANSLATED_CONTENT_NOT_VERIFIABLE", "LANGUAGE_QUERY_MASKS_GENERAL_INSUFFICIENCY"],
+            "return_route": "YOUTUBE_ADAPTATION_REVIEW_REQUIRED",
+            "decision_basis": "La ausencia de consulta lingüística puede cambiar la suficiencia y el disclosure de plataforma.",
+        }
+        self.assertEqual(validate_research_pack(pack), [])
+
+    def test_multilingual_result_and_return_route_mismatch_fails(self):
+        pack = deepcopy(VALID_RESEARCH_PACK)
+        pack["multilingual_research"] = {"activation_status": "ACTIVATED", "triggers": ["MATERIAL_SOURCE_GAP"], "non_trigger_examples": [], "affected_source_ids": ["S1"], "affected_claim_ids": ["C1"], "required_language": "en", "material_risk": ["SUFFICIENCY"], "consultation_result": "MORE_RESEARCH_REQUIRED", "limitations": ["Falta una fuente relevante."], "invalidators": ["CLAIM_OR_USE_CHANGED"], "return_route": "LIMITED_BUT_USABLE", "decision_basis": "La cobertura es insuficiente."}
+        pack["critical_claims_assessment"] = {"status": "IDENTIFIED", "claim_ids": ["C1"], "justification": None, "editorial_impact": "MATERIAL"}
+        self.assertTrue(any("return_route" in violation for violation in validate_research_pack(pack)))
 
     def test_editorial_script_approval_valid(self):
         violations = validate_editorial_script_approval(VALID_EDITORIAL_SCRIPT_APPROVAL)
@@ -62,6 +191,21 @@ class TestContractValidation(unittest.TestCase):
     def test_claims_ledger_no_source_fails(self):
         violations = validate_claims_ledger(INVALID_CLAIMS_LEDGER_NO_SOURCE)
         self.assertTrue(any("sin fuente ni estado de verificacion" in v for v in violations))
+
+    def test_claims_ledger_exact_quote_requires_provenance_evidence(self):
+        ledger = {"ledger_id": "CL-001", "script_version": "1.0.0", "claims": [{"claim_id": "C1", "script_location": "B1", "claim_text": "Cita", "claim_type": "QUOTE", "source_refs": ["S1"], "verification_status": "VERIFIED", "intended_use": "EXACT_QUOTE"}]}
+        violations = validate_claims_ledger(ledger)
+        self.assertTrue(any("provenance_evidence_refs" in violation for violation in violations))
+
+    def test_claims_ledger_provenance_evidence_must_reference_claim_source(self):
+        ledger = {"ledger_id": "CL-001", "script_version": "1.0.0", "claims": [{"claim_id": "C1", "script_location": "B1", "claim_text": "Cita", "claim_type": "QUOTE", "source_refs": ["S1"], "verification_status": "VERIFIED", "intended_use": "EXACT_QUOTE", "provenance_evidence_refs": ["UNRELATED"], "provenance_status": "PRIMARY_VERIFIED", "authority_basis": "PRIMARY_SOURCE"}]}
+        violations = validate_claims_ledger(ledger)
+        self.assertTrue(any("incluidas en source_refs" in violation for violation in violations))
+
+    def test_claims_ledger_youtube_policy_requires_official_primary_authority(self):
+        ledger = {"ledger_id": "CL-001", "script_version": "1.0.0", "claims": [{"claim_id": "C1", "script_location": "B1", "claim_text": "Política", "claim_type": "PLATFORM_POLICY", "source_refs": ["S1"], "verification_status": "VERIFIED", "intended_use": "YOUTUBE_POLICY", "provenance_evidence_refs": ["S1"], "provenance_status": "PRIMARY_VERIFIED", "authority_basis": "PRIMARY_SOURCE"}]}
+        violations = validate_claims_ledger(ledger)
+        self.assertTrue(any("YOUTUBE_OFFICIAL_PRIMARY" in violation for violation in violations))
 
     def test_research_pack_phenomenon_extensions_validate(self):
         pack = {

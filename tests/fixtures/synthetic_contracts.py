@@ -124,11 +124,12 @@ VALID_RESEARCH_PACK: Dict[str, Any] = {
     "critical_claims_assessment": {"status": "NONE_JUSTIFIED", "claim_ids": [], "justification": "Fixture sin claim central.", "editorial_impact": "LIMITED"},
     "narrative_evidence": [{"item_id": "N1", "statement": "Escena.", "source_refs": ["S1"], "locator": "escena", "confidence": "HIGH", "evidence_kind": "SCENE"}],
     "external_reality_evidence": [{"item_id": "E1", "statement": "Estudio.", "source_refs": ["S1"], "locator": "p. 11", "confidence": "HIGH", "evidence_kind": "STUDY"}],
-    "source_registry": [{"source_id": "S1", "title": "Entrevista oficial", "source_type": "PRIMARY", "url": "https://example.com/source", "access_type": "DIRECT", "locator": "documento completo", "confidence": "HIGH"}],
+    "source_registry": [{"source_id": "S1", "title": "Entrevista oficial", "source_type": "PRIMARY", "url": "https://example.com/source", "access_type": "DIRECT", "locator": "documento completo", "confidence": "HIGH", "provenance": {"source_kind": "SOURCE_ORIGINAL", "original_source_ref": None, "derived_from_source_ref": None, "version": "1.0.0", "original_language": "es", "derivative_language": None, "locator": "documento completo", "acquisition_method": "DIRECT_ACCESS", "transformation_method": "NONE", "transcription_type": "NOT_APPLICABLE", "verification_status": "PRIMARY_VERIFIED", "translation_transcription_risk": "NONE", "limitations": [], "permitted_uses": ["CONTEXT_ONLY"], "primary_verification_required": False, "primary_verification_performed": True, "claim_authority": "PRIMARY", "authority_domain": "GENERAL", "official_primary": False}}],
     "claims_candidates": [],
     "unsupported_claims": [],
     "narrative_opportunities": [],
     "limitations": [],
+    "multilingual_research": {"activation_status": "NOT_ACTIVATED", "triggers": [], "non_trigger_examples": ["NO_LINGUISTIC_DIFFERENCE_REQUIRED"], "affected_source_ids": [], "affected_claim_ids": [], "required_language": None, "material_risk": [], "consultation_result": "NOT_APPLICABLE", "limitations": [], "invalidators": [], "return_route": "NOT_APPLICABLE", "decision_basis": "No depende de una diferencia lingüística material."},
     "created_at": "2026-07-21T20:00:00Z",
 }
 

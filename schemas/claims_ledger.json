@@ -87,12 +87,29 @@
               "SENSITIVE_HANDLING",
               "CONTROVERSIAL_BALANCE",
               "NARRATIVE_MATERIAL",
-              "CONTEXTUAL_BACKGROUND"
+              "CONTEXTUAL_BACKGROUND",
+              "EXACT_QUOTE",
+              "PROVE_WORK_CONTENT",
+              "YOUTUBE_POLICY"
             ],
             "description": "IR1-002: uso editorial previsto de la claim, ligado a su criticidad."
+          },
+          "provenance_evidence_refs": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "provenance_status": {
+            "type": "string",
+            "enum": ["PRIMARY_VERIFIED", "DERIVED_LIMITED", "BLOCKED"]
+          },
+          "authority_basis": {
+            "type": "string",
+            "enum": ["PRIMARY_SOURCE", "YOUTUBE_OFFICIAL_PRIMARY", "SECONDARY_ONLY", "INTERPRETIVE_ONLY", "NOT_APPLICABLE"]
           }
-        }
       }
     }
   }
+}
 }

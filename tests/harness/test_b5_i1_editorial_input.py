@@ -69,6 +69,7 @@ def source(source_id: str) -> dict:
         "access_type": "DIRECT",
         "locator": "documento completo",
         "confidence": "HIGH",
+        "provenance": provenance(),
     }
 
 
@@ -103,6 +104,7 @@ def valid_research(source_count: int = 3) -> dict:
         "unsupported_claims": [],
         "narrative_opportunities": [],
         "limitations": [],
+        "multilingual_research": {"activation_status": "NOT_ACTIVATED", "triggers": [], "non_trigger_examples": ["NO_LINGUISTIC_DIFFERENCE_REQUIRED"], "affected_source_ids": [], "affected_claim_ids": [], "required_language": None, "material_risk": [], "consultation_result": "NOT_APPLICABLE", "limitations": [], "invalidators": [], "return_route": "NOT_APPLICABLE", "decision_basis": "No depende de una diferencia lingüística material."},
         "created_at": "2026-07-23T20:00:00Z",
     }
 
@@ -119,10 +121,12 @@ def valid_report() -> dict:
             {
                 "source_id": "S1",
                 "title": "Fuente oficial",
+                "source_type": "PRIMARY",
                 "url": "https://example.com/S1",
                 "access_type": "DIRECT",
                 "locator": "documento completo",
                 "confidence": "HIGH",
+                "provenance": provenance(),
             }
         ],
         "fuentes_secundarias": [],
@@ -150,8 +154,35 @@ def valid_report() -> dict:
         "critical_claim_assessments": [{"claim_id": "C1", "claim_text": "Claim central.", "support_status": "SUPPORTED", "confidence": "HIGH", "allowed_scope": "Contexto del episodio", "evidence_refs": ["S1"]}],
         "critical_claims_propagation": {"status": "IDENTIFIED", "claim_ids": ["C1"], "justification": None, "editorial_impact": "MATERIAL", "scope_decision": "CONTINUE_WITH_REVIEW"},
         "sufficiency_basis": {"central_question": "¿Por qué evitamos aquello que más deseamos?", "critical_claims": [], "analysis_type": "CONTEXTUAL_ANALYSIS", "material_roles": ["PRIMARY_NARRATIVE_MATERIAL"], "requested_depth": "PROFUNDO", "research_coverage": "Cobertura revisada"},
+        "multilingual_research": {"activation_status": "NOT_ACTIVATED", "triggers": [], "non_trigger_examples": ["NO_LINGUISTIC_DIFFERENCE_REQUIRED"], "affected_source_ids": [], "affected_claim_ids": [], "required_language": None, "material_risk": [], "consultation_result": "NOT_APPLICABLE", "limitations": [], "invalidators": [], "return_route": "NOT_APPLICABLE", "decision_basis": "No depende de una diferencia lingüística material."},
         "created_at": "2026-07-23T20:00:00Z",
     }
+
+
+def provenance(source_kind: str = "SOURCE_ORIGINAL", **overrides: object) -> dict:
+    value = {
+        "source_kind": source_kind,
+        "original_source_ref": None,
+        "derived_from_source_ref": None,
+        "version": "1.0.0",
+        "original_language": "en",
+        "derivative_language": None,
+        "locator": "00:00",
+        "acquisition_method": "DIRECT_ACCESS",
+        "transformation_method": "NONE",
+        "transcription_type": "NOT_APPLICABLE",
+        "verification_status": "PRIMARY_VERIFIED",
+        "translation_transcription_risk": "NONE",
+        "limitations": [],
+        "permitted_uses": ["CONTEXT_ONLY"],
+        "primary_verification_required": False,
+        "primary_verification_performed": True,
+        "claim_authority": "PRIMARY",
+        "authority_domain": "GENERAL",
+        "official_primary": False,
+    }
+    value.update(overrides)
+    return value
 
 
 def write_inputs(tmp_path: Path, brief: dict | None = None, research: dict | None = None) -> tuple[Path, Path]:
@@ -222,6 +253,50 @@ def test_formal_but_empty_evidence_does_not_pass(tmp_path: Path) -> None:
     path.write_text(json.dumps(report), encoding="utf-8")
     result = evaluate_evidence(path, "EP-001")
     assert result.status is GateStatus.FAIL
+
+
+def test_source_report_accepts_video_timestamp_and_lineage_metadata() -> None:
+    report = valid_report()
+    report["fuentes_primarias"][0]["provenance"] = provenance(timestamp={"start": "00:10:00", "end": "00:10:30"})
+    assert validate_source_access_and_evidence_report(report) == []
+
+
+def test_evidence_gate_blocks_exact_quote_from_unreviewed_automatic_transcript(tmp_path: Path) -> None:
+    report = valid_report()
+    report["fuentes_primarias"][0]["provenance"] = provenance()
+    report["fuentes_secundarias"] = [{
+        "source_id": "S2",
+        "title": "Transcripción automática",
+        "source_type": "PRIMARY",
+        "access_type": "DIRECT",
+        "locator": "00:10:00",
+        "confidence": "MEDIUM",
+        "provenance": provenance(
+            "TRANSCRIPT",
+            original_source_ref="S1",
+            derived_from_source_ref="S1",
+            transcription_type="AUTOMATIC",
+            verification_status="NOT_REVIEWED",
+            primary_verification_performed=False,
+            permitted_uses=["CONTEXT_ONLY"],
+            translation_transcription_risk="HIGH",
+        ),
+    }]
+    report["claim_dependent_source_evaluations"] = [{
+        "claim_id": "C1",
+        "source_id": "S2",
+        "object_relation": "Directa",
+        "claim_authority": "Limitada",
+        "access_level": "DIRECT",
+        "independence": "DERIVED",
+        "currency": "Vigente",
+        "locator": "00:10:00",
+        "assessment": "LIMITED",
+        "intended_use": "EXACT_QUOTE",
+    }]
+    result = evaluate_evidence(write_report(report, tmp_path), "EP-001")
+    assert result.status is GateStatus.FAIL
+    assert any("EXACT_QUOTE" in violation for violation in result.violations)
 
 
 def test_can_proceed_false_blocks(tmp_path: Path) -> None:
@@ -403,13 +478,14 @@ def _valid_research_dict() -> dict:
         "narrative_evidence": [{"item_id": "N1", "statement": "Escena.", "source_refs": ["S1"], "locator": "00:10", "confidence": "HIGH", "evidence_kind": "SCENE"}],
         "external_reality_evidence": [{"item_id": "E1", "statement": "Estudio.", "source_refs": ["S2"], "locator": "web", "confidence": "MEDIUM", "evidence_kind": "STUDY"}],
         "source_registry": [
-            {"source_id": "S1", "title": "Fuente 1", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "doc", "confidence": "HIGH"},
-            {"source_id": "S2", "title": "Fuente 2", "source_type": "SECONDARY", "access_type": "INDIRECT", "locator": "web", "confidence": "MEDIUM"},
+            {"source_id": "S1", "title": "Fuente 1", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "doc", "confidence": "HIGH", "provenance": provenance()},
+            {"source_id": "S2", "title": "Fuente 2", "source_type": "SECONDARY", "access_type": "INDIRECT", "locator": "web", "confidence": "MEDIUM", "provenance": provenance("SOURCE_ORIGINAL", claim_authority="SECONDARY", permitted_uses=["CONTEXT_ONLY"], primary_verification_performed=False, verification_status="NOT_REVIEWED")},
         ],
         "claims_candidates": [],
         "unsupported_claims": [],
         "narrative_opportunities": [],
         "limitations": [],
+        "multilingual_research": {"activation_status": "NOT_ACTIVATED", "triggers": [], "non_trigger_examples": ["NO_LINGUISTIC_DIFFERENCE_REQUIRED"], "affected_source_ids": [], "affected_claim_ids": [], "required_language": None, "material_risk": [], "consultation_result": "NOT_APPLICABLE", "limitations": [], "invalidators": [], "return_route": "NOT_APPLICABLE", "decision_basis": "No depende de una diferencia lingüística material."},
         "created_at": "2026-07-23T20:00:00Z",
     }
 
@@ -423,10 +499,10 @@ def _valid_evidence_dict() -> dict:
         "material_principal_disponible": True,
         "tipo_de_acceso": "DIRECT",
         "fuentes_primarias": [
-            {"source_id": "S1", "title": "Fuente 1", "access_type": "DIRECT", "locator": "doc", "confidence": "HIGH"},
+            {"source_id": "S1", "title": "Fuente 1", "source_type": "PRIMARY", "access_type": "DIRECT", "locator": "doc", "confidence": "HIGH", "provenance": provenance()},
         ],
         "fuentes_secundarias": [
-            {"source_id": "S2", "title": "Fuente 2", "access_type": "INDIRECT", "locator": "web", "confidence": "MEDIUM"},
+            {"source_id": "S2", "title": "Fuente 2", "source_type": "SECONDARY", "access_type": "INDIRECT", "locator": "web", "confidence": "MEDIUM", "provenance": provenance("SOURCE_ORIGINAL", claim_authority="SECONDARY", permitted_uses=["CONTEXT_ONLY"], primary_verification_performed=False, verification_status="NOT_REVIEWED")},
         ],
         "escenas_verificadas": [
             {"scene_id": "SC1", "description": "Escena.", "source_id": "S1", "locator": "00:10", "verification_mode": "DIRECT"},
@@ -446,6 +522,7 @@ def _valid_evidence_dict() -> dict:
         "critical_claim_assessments": [{"claim_id": "C1", "claim_text": "Claim central.", "support_status": "SUPPORTED", "confidence": "HIGH", "allowed_scope": "Contexto del episodio", "evidence_refs": ["S1"]}],
         "critical_claims_propagation": {"status": "IDENTIFIED", "claim_ids": ["C1"], "justification": None, "editorial_impact": "MATERIAL", "scope_decision": "CONTINUE_WITH_REVIEW"},
         "sufficiency_basis": {"central_question": "Pregunta", "critical_claims": [], "analysis_type": "CONTEXTUAL_ANALYSIS", "material_roles": ["PRIMARY_NARRATIVE_MATERIAL"], "requested_depth": "ESTANDAR", "research_coverage": "Cobertura revisada"},
+        "multilingual_research": {"activation_status": "NOT_ACTIVATED", "triggers": [], "non_trigger_examples": ["NO_LINGUISTIC_DIFFERENCE_REQUIRED"], "affected_source_ids": [], "affected_claim_ids": [], "required_language": None, "material_risk": [], "consultation_result": "NOT_APPLICABLE", "limitations": [], "invalidators": [], "return_route": "NOT_APPLICABLE", "decision_basis": "No depende de una diferencia lingüística material."},
         "created_at": "2026-07-23T20:00:00Z",
     }
 

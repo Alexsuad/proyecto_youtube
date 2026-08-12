@@ -1,5 +1,5 @@
 """
-Pruebas Unitarias de Integridad y Validación de los 24 JSON Schemas y sus Fixtures Válidos
+Pruebas Unitarias de Integridad y Validación de los 25 JSON Schemas y sus Fixtures Válidos
 """
 
 import os
@@ -19,6 +19,7 @@ from src.core.contract_validation import (
     validate_claims_ledger,
     validate_source_access_and_evidence_report,
     validate_work_research_dossier,
+    validate_work_lifecycle,
 )
 
 VALID_FIXTURES = {
@@ -400,11 +401,12 @@ VALID_FIXTURES = {
         "critical_claims_assessment": {"status": "NONE_JUSTIFIED", "claim_ids": [], "justification": "Fixture sin claim central.", "editorial_impact": "LIMITED"},
         "narrative_evidence": [{"item_id": "N1", "statement": "Escena.", "source_refs": ["S1"], "locator": "00:10", "confidence": "HIGH", "evidence_kind": "SCENE"}],
         "external_reality_evidence": [{"item_id": "E1", "statement": "Estudio.", "source_refs": ["S1"], "locator": "p. 11", "confidence": "HIGH", "evidence_kind": "STUDY"}],
-        "source_registry": [{"source_id": "S1", "title": "Fuente oficial", "source_type": "PRIMARY", "url": "https://example.com/source", "access_type": "DIRECT", "locator": "documento completo", "confidence": "HIGH"}],
+        "source_registry": [{"source_id": "S1", "title": "Fuente oficial", "source_type": "PRIMARY", "url": "https://example.com/source", "access_type": "DIRECT", "locator": "documento completo", "confidence": "HIGH", "provenance": {"source_kind": "SOURCE_ORIGINAL", "original_source_ref": None, "derived_from_source_ref": None, "version": "1.0.0", "original_language": "es", "derivative_language": None, "locator": "documento completo", "acquisition_method": "DIRECT_ACCESS", "transformation_method": "NONE", "transcription_type": "NOT_APPLICABLE", "verification_status": "PRIMARY_VERIFIED", "translation_transcription_risk": "NONE", "limitations": [], "permitted_uses": ["CONTEXT_ONLY"], "primary_verification_required": False, "primary_verification_performed": True, "claim_authority": "PRIMARY", "authority_domain": "GENERAL", "official_primary": False}}],
         "claims_candidates": [{"item_id": "CLAIM-X", "statement": "Claim candidata del fenómeno.", "source_refs": ["S1"], "locator": "escena 3", "confidence": "MEDIUM"}],
         "unsupported_claims": [],
         "narrative_opportunities": [],
         "limitations": [],
+        "multilingual_research": {"activation_status": "NOT_ACTIVATED", "triggers": [], "non_trigger_examples": ["NO_LINGUISTIC_DIFFERENCE_REQUIRED"], "affected_source_ids": [], "affected_claim_ids": [], "required_language": None, "material_risk": [], "consultation_result": "NOT_APPLICABLE", "limitations": [], "invalidators": [], "return_route": "NOT_APPLICABLE", "decision_basis": "No depende de una diferencia lingüística material."},
         "research_pack_kind": "PHENOMENON",
         "phenomenon": {"phenomenon_id": "PHEN-001", "phenomenon_kind": "CULTURAL", "definition": "Fenómeno de fixture."},
         "editorial_uses": {"intended_uses": ["CENTRAL_CLAIM_SUPPORT", "CONTEXTUAL_BACKGROUND"], "criticality_map": {"claims": [{"claim_id": "CLAIM-X", "criticality": "CENTRAL", "intended_use": "CENTRAL_CLAIM_SUPPORT"}]}},
@@ -435,7 +437,7 @@ VALID_FIXTURES = {
         "brief_version": "1.0.0",
         "material_principal_disponible": True,
         "tipo_de_acceso": "DIRECT",
-        "fuentes_primarias": [{"source_id": "S1", "title": "Fuente oficial", "url": "https://example.com/source", "access_type": "DIRECT", "locator": "documento completo", "confidence": "HIGH"}],
+        "fuentes_primarias": [{"source_id": "S1", "title": "Fuente oficial", "source_type": "PRIMARY", "url": "https://example.com/source", "access_type": "DIRECT", "locator": "documento completo", "confidence": "HIGH", "provenance": {"source_kind": "SOURCE_ORIGINAL", "original_source_ref": None, "derived_from_source_ref": None, "version": "1.0.0", "original_language": "es", "derivative_language": None, "locator": "documento completo", "acquisition_method": "DIRECT_ACCESS", "transformation_method": "NONE", "transcription_type": "NOT_APPLICABLE", "verification_status": "PRIMARY_VERIFIED", "translation_transcription_risk": "NONE", "limitations": [], "permitted_uses": ["CONTEXT_ONLY"], "primary_verification_required": False, "primary_verification_performed": True, "claim_authority": "PRIMARY", "authority_domain": "GENERAL", "official_primary": False}}],
         "fuentes_secundarias": [],
         "escenas_verificadas": [{"scene_id": "SC1", "description": "Escena verificada.", "source_id": "S1", "locator": "00:10:00", "verification_mode": "DIRECT"}],
         "escenas_descritas_indirectamente": [],
@@ -451,6 +453,7 @@ VALID_FIXTURES = {
         "claim_dependent_source_evaluations": [{"claim_id": "CLAIM-001", "source_id": "S1", "object_relation": "Directa", "claim_authority": "Alta", "access_level": "DIRECT", "independence": "INDEPENDENT", "currency": "Vigente", "locator": "p.15", "assessment": "SUPPORTED"}],
         "allowed_analyses": ["CONTEXTUAL_ANALYSIS"], "limited_analyses": [], "prohibited_analyses": [], "excluded_claims": [], "propagated_constraints": [], "critical_claim_assessments": [], "critical_claims_propagation": {"status": "NONE_JUSTIFIED", "claim_ids": [], "justification": "Fixture sin claims críticos.", "editorial_impact": "LIMITED", "scope_decision": "REDUCED_SCOPE"},
         "sufficiency_basis": {"central_question": "Pregunta", "critical_claims": [], "analysis_type": "CONTEXTUAL_ANALYSIS", "material_roles": ["PRIMARY_NARRATIVE_MATERIAL"], "requested_depth": "PROFUNDO", "research_coverage": "Cobertura revisada"},
+        "multilingual_research": {"activation_status": "NOT_ACTIVATED", "triggers": [], "non_trigger_examples": ["NO_LINGUISTIC_DIFFERENCE_REQUIRED"], "affected_source_ids": [], "affected_claim_ids": [], "required_language": None, "material_risk": [], "consultation_result": "NOT_APPLICABLE", "limitations": [], "invalidators": [], "return_route": "NOT_APPLICABLE", "decision_basis": "No depende de una diferencia lingüística material."},
         "created_at": "2026-07-23T20:00:00Z"
     },
     "thesis_artifact": {
@@ -734,6 +737,15 @@ VALID_FIXTURES["mission_contract"] = {
     "state_requirements": {"control_path": "plans/001_CONTROL_OPERATIVO.md", "required": {}, "forbidden": {}},
     "schema_checks": []
 }
+VALID_FIXTURES["work_lifecycle"] = {
+    "lifecycle_id": "WL-001", "lifecycle_version": "1.0.0", "episode_id": "EP-1", "research_id": "R-1",
+    "entry_mode": "TOPIC_FIRST", "anchor_work_id": None,
+    "works": [{"work_id": "M-1", "state": "DISCOVERED_WORK", "state_version": "1.0.0", "identity_ref": "candidate:M-1", "version_ref": None, "is_anchor": False, "lineage_refs": ["candidate-set:C-1"], "stage_evidence_refs": []}],
+    "transitions": [],
+    "screening": {"candidate_work_ids": [], "format_policy_ref": "policies/script_product/main_episode_format_policy.md", "range_status": "NOT_APPLICABLE", "exception": None},
+    "final_selection": {"selected_work_ids": [], "format_policy_ref": "policies/script_product/main_episode_format_policy.md", "range_status": "NOT_APPLICABLE", "curation_ref": None, "exception": None},
+    "critical_doubts": [], "created_at": "2026-08-12T20:00:00Z",
+}
 VALID_FIXTURES["hardening_completion_review"] = {
     "schema_version": "1.0.0",
     "plan_id": "PLAN_004",
@@ -898,6 +910,9 @@ class TestAllJSONSchemas(unittest.TestCase):
                 elif name == "research_pack":
                     business_violations = validate_research_pack(fixture)
                     self.assertEqual(len(business_violations), 0, f"Fixture de research_pack falló validaciones de negocio: {business_violations}")
+                elif name == "work_lifecycle":
+                    business_violations = validate_work_lifecycle(fixture)
+                    self.assertEqual(len(business_violations), 0, f"Fixture de work_lifecycle falló validaciones de negocio: {business_violations}")
 
     def test_every_research_contract_schema_has_valid_fixture(self):
         """Valida que los schemas de investigación de R1-M2 pasen sus validadores de negocio."""
@@ -908,6 +923,7 @@ class TestAllJSONSchemas(unittest.TestCase):
             "work_research_dossier": lambda dossier: validate_work_research_dossier(
                 dossier, VALID_FIXTURES["claims_ledger"], [VALID_FIXTURES["narrative_human_analysis"]]
             ),
+            "work_lifecycle": validate_work_lifecycle,
         }
         for name, validator in mapper.items():
             with self.subTest(schema=name):

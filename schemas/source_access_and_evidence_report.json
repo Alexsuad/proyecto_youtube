@@ -29,6 +29,7 @@
     "critical_claim_assessments",
     "critical_claims_propagation",
     "sufficiency_basis",
+    "multilingual_research",
     "created_at"
   ],
   "properties": {
@@ -130,6 +131,7 @@
     "propagated_constraints": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "critical_claim_assessments": {"type": "array", "items": {"$ref": "#/definitions/criticalClaimAssessment"}},
     "critical_claims_propagation": {"$ref": "#/definitions/criticalClaimsPropagation"},
+    "multilingual_research": {"$ref": "https://masalladelguion.com/schemas/research_pack.json#/definitions/multilingualResearch"},
     "sufficiency_basis": {"type": "object", "additionalProperties": false, "required": ["central_question", "critical_claims", "analysis_type", "material_roles", "requested_depth", "research_coverage"], "properties": {"central_question": {"type": "string", "minLength": 1}, "critical_claims": {"type": "array", "items": {"type": "string", "minLength": 1}}, "analysis_type": {"type": "string", "minLength": 1}, "material_roles": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "requested_depth": {"type": "string", "minLength": 1}, "research_coverage": {"type": "string", "minLength": 1}}},
     "independence_groups": {
       "type": "array",
@@ -182,9 +184,11 @@
       "required": [
         "source_id",
         "title",
+        "source_type",
         "access_type",
         "locator",
-        "confidence"
+        "confidence",
+        "provenance"
       ],
       "properties": {
         "source_id": {
@@ -195,6 +199,7 @@
           "type": "string",
           "minLength": 1
         },
+        "source_type": {"type": "string", "minLength": 1},
         "url": {
           "type": [
             "string",
@@ -221,7 +226,8 @@
             "MEDIUM",
             "HIGH"
           ]
-        }
+        },
+        "provenance": {"$ref": "https://masalladelguion.com/schemas/research_pack.json#/definitions/sourceProvenance"}
       }
     },
     "sceneEntry": {
@@ -414,7 +420,8 @@
         "currency": {"type": "string", "minLength": 1},
         "locator": {"type": "string", "minLength": 1},
         "assessment": {"type": "string", "enum": ["SUPPORTED", "LIMITED", "EXCLUDED", "INSUFFICIENT"]},
-        "notes": {"type": ["string", "null"]}
+        "notes": {"type": ["string", "null"]},
+        "intended_use": {"type": "string", "enum": ["EXACT_QUOTE", "PROVE_WORK_CONTENT", "YOUTUBE_POLICY", "CONTEXT_ONLY", "INTERPRETATION", "LOCALIZER", "HYPOTHESIS"]}
       }
     }
   }

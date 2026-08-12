@@ -23,6 +23,7 @@
     "unsupported_claims",
     "narrative_opportunities",
     "limitations",
+    "multilingual_research",
     "created_at"
   ],
   "properties": {
@@ -123,6 +124,7 @@
       },
       "uniqueItems": true
     },
+    "multilingual_research": {"$ref": "#/definitions/multilingualResearch"},
     "research_pack_kind": {
       "type": "string",
       "enum": ["GENERIC", "PHENOMENON"],
@@ -203,7 +205,8 @@
         "source_type",
         "access_type",
         "locator",
-        "confidence"
+        "confidence",
+        "provenance"
       ],
       "properties": {
         "source_id": {
@@ -248,9 +251,8 @@
         "notes": {
           "type": "string"
         },
-        "evidence_kind": {
-          "type": "string"
-        }
+        "evidence_kind": {"type": "string"},
+        "provenance": {"$ref": "#/definitions/sourceProvenance"}
       }
     },
     "researchItem": {
@@ -541,6 +543,81 @@
           "enum": ["NOT_FUNCTIONALLY_VALIDATED", "IR4_REQUIRED", null],
           "description": "IR1-006: representación no funcional; R1-M6 debe extender este enum antes de emitir suficiencia."
         }
+      }
+    },
+    "sourceProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_kind",
+        "version",
+        "original_language",
+        "derivative_language",
+        "locator",
+        "acquisition_method",
+        "transformation_method",
+        "transcription_type",
+        "verification_status",
+        "translation_transcription_risk",
+        "limitations",
+        "permitted_uses",
+        "primary_verification_required",
+        "primary_verification_performed",
+        "claim_authority",
+        "authority_domain",
+        "official_primary"
+      ],
+      "properties": {
+        "source_kind": {"type": "string", "enum": ["SOURCE_ORIGINAL", "TRANSCRIPT", "TRANSLATION", "SUMMARY", "REVIEW", "INDIRECT_QUOTE"]},
+        "original_source_ref": {"type": ["string", "null"], "minLength": 1},
+        "derived_from_source_ref": {"type": ["string", "null"], "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "original_language": {"type": "string", "minLength": 1},
+        "derivative_language": {"type": ["string", "null"], "minLength": 1},
+        "locator": {"type": "string", "minLength": 1},
+        "timestamp": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["start"],
+          "properties": {"start": {"type": "string", "minLength": 1}, "end": {"type": ["string", "null"], "minLength": 1}}
+        },
+        "acquisition_method": {"type": "string", "minLength": 1},
+        "transformation_method": {"type": "string", "minLength": 1},
+        "transcription_type": {"type": "string", "enum": ["OFFICIAL", "CREATOR_PROVIDED", "AUTOMATIC", "MANUAL", "NOT_APPLICABLE"]},
+        "verification_status": {"type": "string", "enum": ["NOT_REVIEWED", "REVIEWED", "PRIMARY_VERIFIED", "CREATOR_VERIFIED"]},
+        "translation_transcription_risk": {"type": "string", "enum": ["NONE", "LOW", "MEDIUM", "HIGH", "MATERIAL"]},
+        "material_transcription_error": {"type": "boolean"},
+        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "permitted_uses": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "primary_verification_required": {"type": "boolean"},
+        "primary_verification_performed": {"type": "boolean"},
+        "claim_authority": {"type": "string", "enum": ["PRIMARY", "SECONDARY", "INTERPRETIVE", "LOCAL_CONTEXT", "NONE"]},
+        "authority_domain": {"type": "string", "enum": ["GENERAL", "YOUTUBE_ADAPTATION", "OTHER"]},
+        "official_primary": {"type": "boolean"}
+      },
+      "allOf": [
+        {"if": {"properties": {"source_kind": {"enum": ["TRANSCRIPT", "TRANSLATION", "SUMMARY", "REVIEW", "INDIRECT_QUOTE"]}}, "required": ["source_kind"]}, "then": {"required": ["original_source_ref", "derived_from_source_ref"]}},
+        {"if": {"properties": {"source_kind": {"const": "TRANSCRIPT"}}, "required": ["source_kind"]}, "then": {"properties": {"transcription_type": {"enum": ["OFFICIAL", "CREATOR_PROVIDED", "AUTOMATIC", "MANUAL"]}}}},
+        {"if": {"properties": {"source_kind": {"const": "SOURCE_ORIGINAL"}}, "required": ["source_kind"]}, "then": {"properties": {"original_source_ref": {"type": "null"}, "derived_from_source_ref": {"type": "null"}}}}
+      ]
+    },
+    "multilingualResearch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["activation_status", "triggers", "non_trigger_examples", "affected_source_ids", "affected_claim_ids", "required_language", "material_risk", "consultation_result", "limitations", "invalidators", "return_route", "decision_basis"],
+      "properties": {
+        "activation_status": {"type": "string", "enum": ["ACTIVATED", "NOT_ACTIVATED", "REEVALUATION_REQUIRED"]},
+        "triggers": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["ORIGINAL_SOURCE_NOT_IN_SPANISH", "SPANISH_COVERAGE_DEPENDS_ON_DERIVATIVES", "MATERIAL_SOURCE_GAP", "TRANSLATION_SEMANTIC_RISK", "CONFLICTING_TRANSLATIONS", "LINGUISTICALLY_SPLIT_CONTROVERSY", "LOCAL_CONTEXT_REQUIRED", "AUTHORIAL_OR_CREATOR_STATEMENT", "PRIMARY_VERIFICATION_REQUIRED", "EVIDENCE_SUFFICIENCY_BLOCKED_BY_LANGUAGE"]}},
+        "non_trigger_examples": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["FIXED_LANGUAGE_QUOTA", "SOURCE_VOLUME_ONLY", "OFFICIAL_TRANSLATION_SUFFICIENT", "DUPLICATED_FOREIGN_COVERAGE", "UNRELATED_INTERNATIONAL_PERSPECTIVE", "TRANSLATE_ALL_AUTOMATICALLY", "LANGUAGE_AS_AUTHORITY_SIGNAL", "NO_LINGUISTIC_DIFFERENCE_REQUIRED", "TECHNICAL_CAPABILITY_DEMO"]}},
+        "affected_source_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "affected_claim_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "required_language": {"type": ["string", "null"], "minLength": 1},
+        "material_risk": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["CLAIM_VALIDITY", "WORK_INTERPRETATION", "CONTRADICTION", "SUFFICIENCY", "WORK_SELECTION", "THESIS", "DISCLOSURE_OR_LIMITATION"]}},
+        "consultation_result": {"type": "string", "enum": ["ORIGINAL_CONSULTED_RISK_RESOLVED", "LIMITED_BUT_USABLE", "MORE_RESEARCH_REQUIRED", "BLOCKED_BY_EVIDENCE", "CHANNEL_INTELLIGENCE_REVIEW_REQUIRED", "YOUTUBE_ADAPTATION_REVIEW_REQUIRED", "NOT_APPLICABLE"]},
+        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "invalidators": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["CLAIM_OR_USE_CHANGED", "PRIMARY_SPANISH_SOURCE_RECOVERED", "AUTHORIZED_TRANSLATION_RESOLVES_RISK", "SAME_ORIGIN_DISCOVERED", "TRANSLATION_LINEAGE_OR_METHOD_LOST", "FOREIGN_SOURCE_LACKS_AUTHORITY", "VERSION_ADAPTATION_OR_CONTEXT_CHANGED", "NEW_CONTROVERSY_INTRODUCED", "TRANSLATED_CONTENT_NOT_VERIFIABLE", "LANGUAGE_QUERY_MASKS_GENERAL_INSUFFICIENCY"]}},
+        "return_route": {"type": "string", "enum": ["ORIGINAL_CONSULTED_RISK_RESOLVED", "LIMITED_BUT_USABLE", "MORE_RESEARCH_REQUIRED", "BLOCKED_BY_EVIDENCE", "CHANNEL_INTELLIGENCE_REVIEW_REQUIRED", "YOUTUBE_ADAPTATION_REVIEW_REQUIRED", "NOT_APPLICABLE"]},
+        "decision_basis": {"type": "string", "minLength": 1}
       }
     }
   }
