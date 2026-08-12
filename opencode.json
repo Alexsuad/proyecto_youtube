@@ -3,6 +3,37 @@
   "instructions": ["AGENTS.md"],
   "share": "disabled",
   "subagent_depth": 1,
+  "agent": {
+    "build": {
+      "permission": {
+        "edit": "allow",
+        "external_directory": "ask",
+        "bash": {
+          "*": "allow",
+          "git add*": "allow",
+          "git commit*": "allow",
+          "git push*": "deny",
+          "git reset*": "deny",
+          "git clean*": "deny",
+          "git restore*": "deny",
+          "git checkout --*": "deny",
+          "git branch -D*": "deny",
+          "git branch --delete --force*": "deny",
+          "rm *": "deny",
+          "Remove-Item*": "deny",
+          "del *": "deny",
+          "erase *": "deny",
+          "rmdir *": "deny",
+          "rd *": "deny",
+          "format *": "deny",
+          "pip install*": "deny",
+          "python -m pip install*": "deny",
+          "py -m pip install*": "deny",
+          "npm install*": "deny"
+        }
+      }
+    }
+  },
   "permission": {
     "read": "allow",
     "glob": "allow",
