@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "PLAN_005_CONTROLLED_E2E",
+  "plan_id": "PLAN_005",
+  "repository_revision": "WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-12T14:16:16.855277Z",
+  "demonstration_class": "CONTROLLED_TECHNICAL_HARNESS_E2E",
+  "real_product_operation": false,
+  "real_operational_subagents_promotion": false,
+  "real_multiagent_runtime_promotion": false,
+  "functional_readiness_claim": false,
+  "source_inputs": [
+    {
+      "path": "tests/core/test_plan_005_demos.py",
+      "sha256": "493bad88326678554efeaee54e1a2ffbdc61efa7cab26200e47d255ae04f166d"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml",
+      "sha256": "810a252b0fef1395bfd0c8eb4ff251183838adf914883f5293fb29bd1be37ccf"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_E2E.json",
+      "sha256": "deede256ae02ed13ff771f7e33812142f73492f402456f63c80ddb84bc646f8a"
+    }
+  ],
+  "evidence_refs": [
+    "tests/core/test_plan_005_demos.py",
+    "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml",
+    "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_E2E.json"
+  ],
+  "demonstrations": {
+    "D1": {
+      "status": "PASS",
+      "test_nodeid": "tests/core/test_plan_005_demos.py::test_d1_small_task_inline",
+      "evidence_refs": [
+        "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml"
+      ]
+    },
+    "D2": {
+      "status": "PASS",
+      "test_nodeid": "tests/core/test_plan_005_demos.py::test_d2_wide_separable_task_delegates",
+      "evidence_refs": [
+        "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml"
+      ]
+    },
+    "D3": {
+      "status": "PASS",
+      "test_nodeid": "tests/core/test_plan_005_demos.py::test_d3_internal_review_and_repair_converge",
+      "evidence_refs": [
+        "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml"
+      ]
+    },
+    "D4": {
+      "status": "PASS",
+      "test_nodeid": "tests/core/test_plan_005_demos.py::test_d4_authority_condition_escalates",
+      "evidence_refs": [
+        "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml"
+      ]
+    },
+    "D5": {
+      "status": "PASS",
+      "test_nodeid": "tests/core/test_plan_005_demos.py::test_d5_recovery_after_restart_continues_without_duplication",
+      "evidence_refs": [
+        "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml",
+        "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_E2E.json"
+      ]
+    },
+    "D6": {
+      "status": "PASS",
+      "test_nodeid": "tests/core/test_plan_005_demos.py::test_d6_route_stays_inside_authorized_candidate_set",
+      "evidence_refs": [
+        "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml"
+      ]
+    }
+  },
+  "status": "PASS",
+  "limitations": []
+}

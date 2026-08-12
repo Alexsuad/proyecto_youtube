@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0.0",
+  "repair_id": "PLAN_005_REPAIR_INTEGRITY",
+  "finding_id": "AUDIT_CHAIN_OF_TRUST_PARTIAL",
+  "mission_id": "PLAN_005_CHAIN_OF_TRUST_CORRECTION",
+  "mission_contract_sha256": "7b494b0ac36d63c4685fabf2b9e51049dfee6477cb05af68fe3d6139aeca2d34",
+  "contains_material_repair": true,
+  "capability_id": "PLAN_005_CHAIN_OF_TRUST",
+  "domain": "CHAIN_OF_TRUST_GOVERNANCE",
+  "symptom": "Delegation and evidence consumers accepted partially unbound authority.",
+  "root_cause": "Authority and evidence provenance were validated structurally but not at point of use.",
+  "root_cause_class": "L4_EVIDENCE",
+  "origin_artifact": {
+    "ref_id": "plan005_chain_trust",
+    "artifact_path": "src/core/delegation_policy.py",
+    "artifact_type": "PYTHON",
+    "artifact_version": "UNDECLARED",
+    "artifact_sha256": "f7d0611580c19bf88f1603c530ca7ff13661f2a71853065d6609becc7fb2d1be",
+    "required": true
+  },
+  "affected_artifacts": [
+    "plan005_completion"
+  ],
+  "repair_depth": "L4_EVIDENCE",
+  "repair_actions": [
+    "Verify MissionAuthorization at delegation use.",
+    "Derive child authority only from canonical parent.",
+    "Bind skill evidence and test receipts to real artifacts.",
+    "Expand completion freshness graph."
+  ],
+  "downstream_impact": {
+    "affected_artifacts": [
+      "plan005_completion"
+    ],
+    "no_impact_justification": ""
+  },
+  "downstream_invalidations": [
+    {
+      "artifact_id": "plan005_completion",
+      "status": "COMPLETED",
+      "evidence_ref": {
+        "ref_id": "plan005_test_run",
+        "artifact_path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_EVIDENCE.json",
+        "artifact_type": "EVIDENCE_REPORT",
+        "artifact_version": "1.0.0",
+        "artifact_sha256": "d0ef8b811b5fcc755ea86046477bc392fd48f884c861aaf54ffb4497b64aa5dc",
+        "result": "PASS",
+        "required": true
+      },
+      "justification": "Completion evidence regenerated after chain-of-trust changes."
+    }
+  ],
+  "downstream_revalidations": [
+    {
+      "artifact_id": "plan005_completion",
+      "status": "COMPLETED",
+      "evidence_ref": {
+        "ref_id": "plan005_test_run",
+        "artifact_path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_EVIDENCE.json",
+        "artifact_type": "EVIDENCE_REPORT",
+        "artifact_version": "1.0.0",
+        "artifact_sha256": "d0ef8b811b5fcc755ea86046477bc392fd48f884c861aaf54ffb4497b64aa5dc",
+        "result": "PASS",
+        "required": true
+      },
+      "justification": "Completion report regenerated and direct/transitive freshness verified."
+    }
+  ],
+  "detector_impact": "YES",
+  "detector_change_required": "YES",
+  "detector_changes": [
+    {
+      "path": "src/core/plan_005_evidence.py",
+      "change": "Added execution receipt and command/selection/count consistency checks."
+    }
+  ],
+  "sensitive_detector_changes": {
+    "changed": true,
+    "justification": "Evidence validators were hardened against declarative test claims.",
+    "before_behavior": "Declared test counts and selected files were accepted without receipt binding.",
+    "after_behavior": "Receipt hashes and command-selection-count consistency are required.",
+    "reason_change_is_valid": "Closes a reproduced chain-of-trust bypass.",
+    "regression_evidence_ref": [
+      {
+        "ref_id": "plan005_test_run",
+        "artifact_path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_EVIDENCE.json",
+        "artifact_type": "EVIDENCE_REPORT",
+        "artifact_version": "1.0.0",
+        "artifact_sha256": "d0ef8b811b5fcc755ea86046477bc392fd48f884c861aaf54ffb4497b64aa5dc",
+        "result": "PASS",
+        "required": true
+      }
+    ]
+  },
+  "regression_evidence": {
+    "defect_no_longer_occurs": true,
+    "neighboring_valid_behavior": true,
+    "evidence_refs": [
+      {
+        "ref_id": "plan005_test_run",
+        "artifact_path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_EVIDENCE.json",
+        "artifact_type": "EVIDENCE_REPORT",
+        "artifact_version": "1.0.0",
+        "artifact_sha256": "d0ef8b811b5fcc755ea86046477bc392fd48f884c861aaf54ffb4497b64aa5dc",
+        "result": "PASS",
+        "required": true
+      }
+    ]
+  },
+  "compensating_changes": [],
+  "governance_change_requested": false,
+  "governance_resolution": null,
+  "provenance": {
+    "registry_path": "output/execution_provenance_registry.json",
+    "registry_sha256": "5d186f2c7b05937fe5784a40d092cc74fc48a6c57bdcd035510a582badddb037",
+    "repair_run_id": "PLAN005-REPAIR-20260812",
+    "review_run_id": "PLAN005-REVIEW-20260812"
+  },
+  "executor_id": "codex_technical_implementer",
+  "reviewer_id": "independent_reviewer",
+  "review_status": "APPROVED",
+  "review_evidence": {
+    "reviewer_id": "independent_reviewer",
+    "decision": "APPROVED",
+    "evidence_refs": [
+      {
+        "ref_id": "plan005_test_run",
+        "artifact_path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_EVIDENCE.json",
+        "artifact_type": "EVIDENCE_REPORT",
+        "artifact_version": "1.0.0",
+        "artifact_sha256": "d0ef8b811b5fcc755ea86046477bc392fd48f884c861aaf54ffb4497b64aa5dc",
+        "result": "PASS",
+        "required": true
+      }
+    ],
+    "protected_artifact_refs": [
+      {
+        "ref_id": "plan005_chain_trust",
+        "artifact_path": "src/core/delegation_policy.py",
+        "artifact_type": "PYTHON",
+        "artifact_version": "UNDECLARED",
+        "artifact_sha256": "f7d0611580c19bf88f1603c530ca7ff13661f2a71853065d6609becc7fb2d1be",
+        "required": true
+      }
+    ],
+    "reviewer_modified_under_review": false
+  },
+  "created_at": "2026-08-12T00:00:00Z",
+  "evidence_sha256": "058ef1ad3d091a95d6275961de6ed1edd220ca68752673ab7780c0a8280730ed"
+}

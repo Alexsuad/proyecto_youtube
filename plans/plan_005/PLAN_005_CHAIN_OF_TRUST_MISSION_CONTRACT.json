@@ -1,0 +1,197 @@
+{
+  "mission_id": "PLAN_005_CHAIN_OF_TRUST_CORRECTION",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN_005_CHAIN_OF_TRUST",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/plan_005/",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "reports/implementation/plan_004/",
+    "reports/implementation/plan_005/",
+    "schemas/",
+    "src/core/",
+    "src/ai/",
+    "config/",
+    "tests/core/",
+    "tests/ai/",
+    "tests/harness/",
+    "tests/support/",
+    "output/"
+  ],
+  "protected_untracked_paths": [
+    "output/r6_b/",
+    "reference/Ejemplo_01.md",
+    "reference/estilo_usuario/Ejemplo_02.md"
+  ],
+  "protected_untracked_baseline": [
+    {
+      "path": "output/r6_b/control_valid_producer.json",
+      "sha256": "5be8768d0178d8eab43e70136b7325a97b90d4a111ad7a4253b47e32125989df"
+    },
+    {
+      "path": "output/r6_b/control_valid_producer_retry.json",
+      "sha256": "8880d56cf91015dc89f86c9bde11f39d231ec34381d6c3494e1fdf9b0662e372"
+    },
+    {
+      "path": "output/r6_b/control_valid_producer_retry_input.json",
+      "sha256": "0a818ba7b8b234fa91aa051e2cf850db4319f8bcfed50451108caebf3edd54e5"
+    },
+    {
+      "path": "output/r6_b/ollama_timeout_diagnostic.json",
+      "sha256": "97801336b6269eae001f3bc8f851468aace350bb25b1cc60815366129b785437"
+    },
+    {
+      "path": "reference/Ejemplo_01.md",
+      "sha256": "a235f09df6384603d86ad63df1c8ed03035aaee01d9ab5f3d532c60d944048ef"
+    },
+    {
+      "path": "reference/estilo_usuario/Ejemplo_02.md",
+      "sha256": "41a3b00cda622d30148f89c522b00d3399ffee541a444fd4729ae4f22ee0057f"
+    }
+  ],
+  "required_tests": [
+    {
+      "label": "PLAN005_CHAIN_OF_TRUST_FOCUSED",
+      "command": [
+        "py",
+        "-3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/core/test_plan_005_invariants.py",
+        "tests/core/test_delegation_policy_and_contract.py",
+        "tests/core/test_context_manifest_lineage.py",
+        "tests/core/test_skill_digest_and_feedback.py",
+        "tests/core/test_review_workload_and_recovery.py",
+        "tests/core/test_plan_005_demos.py",
+        "tests/core/test_plan_005_transitive_freshness.py",
+        "tests/core/test_all_schemas.py",
+        "tests/core/test_plan_005_real_consumer_integration.py",
+        "tests/harness/test_mission_completion_gate.py"
+      ],
+      "timeout_seconds": 180
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "fddc35caae8ba30553f204e9abb140035ac0c716"
+  },
+  "contains_material_repair": true,
+  "mission_authorization_path": "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_AUTHORIZATION.json",
+  "mission_authorization_sha256": "b014600831e8b4fa77efc79d8aeb8c4a0866e7fc15c0c4529599af986ef49fa0",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "PLAN_005_STATUS": "OWNER_CLOSED",
+      "PLAN_005_IMPLEMENTATION_AUTHORIZED": "NO",
+      "PLAN_005_PRODUCT_USE_AUTHORIZED": "NO"
+    },
+    "forbidden": {
+      "PLAN_005_RUNTIME_PROMOTION_AUTHORIZED": [
+        "YES"
+      ],
+      "AUTHORIZED_FOR_PRODUCT_USE": [
+        "YES"
+      ]
+    }
+  },
+  "schema_checks": [
+    {
+      "path": "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_MISSION_CONTRACT.json",
+      "schema": "mission_contract"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_COMPLETION_REVIEW.json",
+      "schema": "plan_005_completion_review"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_CONTROLLED_E2E.json",
+      "schema": "plan_005_e2e_demonstration"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_E2E.json",
+      "schema": "plan_005_d5_recovery_evidence"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_REPAIR_INTEGRITY.json",
+      "schema": "repair_integrity_evidence"
+    }
+  ],
+  "completion_requirements": [
+    {
+      "requirement_id": "PLAN005_CONTROLLED_E2E_D1_D6",
+      "evidence_path": "reports/implementation/plan_005/PLAN_005_CONTROLLED_E2E.json",
+      "status_field": "status",
+      "required_status": "PASS",
+      "required_demonstration_class": "CONTROLLED_TECHNICAL_HARNESS_E2E",
+      "require_freshness": true
+    }
+  ],
+  "objective": "Cerrar la cadena de confianza de PLAN 005 sin activar producto ni runtime multiagente.",
+  "preconditions": [
+    "Owner authorization persisted in live control."
+  ],
+  "canonical_inputs": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_005/005_autonomia_delegacion_contexto_y_eficiencia_operativa.md"
+  ],
+  "allowed_files": [
+    "plans/plan_005/",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "reports/implementation/plan_004/",
+    "reports/implementation/plan_005/",
+    "schemas/",
+    "src/core/",
+    "src/ai/",
+    "config/",
+    "tests/core/",
+    "tests/ai/",
+    "tests/harness/",
+    "tests/support/"
+  ],
+  "non_objectives": [
+    "Product activation",
+    "real multiagent runtime",
+    "publication",
+    "PLAN 004 reopening"
+  ],
+  "expected_outputs": [
+    "Verified authority derivation",
+    "mechanical evidence",
+    "freshness graph",
+    "canonical completion-gate integration"
+  ],
+  "deterministic_validations": [
+    "pytest",
+    "schema validation",
+    "identity verification",
+    "transitive freshness",
+    "git diff --check"
+  ],
+  "adversarial_cases": [
+    "caller asserted scope",
+    "forged parent",
+    "depth widening",
+    "fake skill evidence",
+    "tampered completion",
+    "missing lineage"
+  ],
+  "stop_conditions": [
+    "Any unauthorized product promotion",
+    "unverifiable authority",
+    "protected untracked mutation",
+    "gate failure"
+  ],
+  "review_policy": {
+    "required_review": "INDEPENDENT_REVIEW",
+    "independent_review": "REQUIRED",
+    "owner_review": true
+  },
+  "owner_closure": {
+    "required": true,
+    "artifact": "plans/001_CONTROL_OPERATIVO.md"
+  },
+  "repair_integrity_evidence_path": "reports/implementation/plan_005/PLAN_005_REPAIR_INTEGRITY.json"
+}

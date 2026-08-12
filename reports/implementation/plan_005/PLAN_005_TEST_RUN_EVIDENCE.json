@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "PLAN_005_TEST_RUN_EVIDENCE",
+  "plan_id": "PLAN_005",
+  "repository_revision": "WORKTREE_UNCOMMITTED",
+  "command": [
+    "C:\\Users\\nalex\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+    "-m",
+    "pytest",
+    "tests/core/test_plan_005_invariants.py",
+    "tests/core/test_delegation_policy_and_contract.py",
+    "tests/core/test_context_manifest_lineage.py",
+    "tests/core/test_skill_digest_and_feedback.py",
+    "tests/core/test_review_workload_and_recovery.py",
+    "tests/core/test_plan_005_demos.py",
+    "tests/core/test_plan_005_transitive_freshness.py",
+    "tests/core/test_all_schemas.py",
+    "tests/core/test_plan_005_real_consumer_integration.py",
+    "tests/harness/test_mission_completion_gate.py",
+    "--junitxml=reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml"
+  ],
+  "exit_code": 0,
+  "selected_tests": [
+    "tests/core/test_plan_005_invariants.py",
+    "tests/core/test_delegation_policy_and_contract.py",
+    "tests/core/test_context_manifest_lineage.py",
+    "tests/core/test_skill_digest_and_feedback.py",
+    "tests/core/test_review_workload_and_recovery.py",
+    "tests/core/test_plan_005_demos.py",
+    "tests/core/test_plan_005_transitive_freshness.py",
+    "tests/core/test_all_schemas.py",
+    "tests/core/test_plan_005_real_consumer_integration.py",
+    "tests/harness/test_mission_completion_gate.py"
+  ],
+  "executed_count": 127,
+  "passed_count": 127,
+  "failed_count": 0,
+  "skipped_count": 0,
+  "source_inputs": [
+    {
+      "path": "tests/core/test_plan_005_invariants.py",
+      "sha256": "aebd2377943f7c895bb67b26b0cae36f5aad3f9fe7289d764ec3796eebc80fd0"
+    },
+    {
+      "path": "tests/core/test_delegation_policy_and_contract.py",
+      "sha256": "9e3f13c0bd3bfdf597c7911e1ec7ec4dfb910d491eef4482ec8c1666fa2d153b"
+    },
+    {
+      "path": "tests/core/test_context_manifest_lineage.py",
+      "sha256": "65cc5a162392ce20339867ec3c16600d3e2a651d07cf747d7fef361abb49551d"
+    },
+    {
+      "path": "tests/core/test_skill_digest_and_feedback.py",
+      "sha256": "7587ca9d6661072d49c43b02243434bf7e11a8e0ea8cde3081014f6cfdfd0e71"
+    },
+    {
+      "path": "tests/core/test_review_workload_and_recovery.py",
+      "sha256": "c44d4ac6e53337c8423dbca1fdecf963e77f26169e8e36da1158f27fba6aba21"
+    },
+    {
+      "path": "tests/core/test_plan_005_demos.py",
+      "sha256": "493bad88326678554efeaee54e1a2ffbdc61efa7cab26200e47d255ae04f166d"
+    },
+    {
+      "path": "tests/core/test_plan_005_transitive_freshness.py",
+      "sha256": "ef89d151c190347bb3fae377b45a649d4b1f3222025ba44911e3558d785860f2"
+    },
+    {
+      "path": "tests/core/test_all_schemas.py",
+      "sha256": "5a920d5c2b5003cfc6adbb4e886eaacc35c426b56b3bfea115d03fbc5ed97fcd"
+    },
+    {
+      "path": "tests/core/test_plan_005_real_consumer_integration.py",
+      "sha256": "15447bf32e425108731a401048ec97f461df2efb509f7e8f24e5c13e7adb3b94"
+    },
+    {
+      "path": "tests/harness/test_mission_completion_gate.py",
+      "sha256": "bab25693430ce024809adb37d70ab5eb031a5abcb8cf597dcf0e6eb1cdf8e434"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml",
+      "sha256": "810a252b0fef1395bfd0c8eb4ff251183838adf914883f5293fb29bd1be37ccf"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_STDOUT.txt",
+      "sha256": "db253cd8e2bdfb54d0ec53aa1cbc00c549f53985e2cd16c7c7d3c8f873a28614"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_STDERR.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "execution_receipt": {
+    "runner": "pytest",
+    "command_sha256": "471a7ff8ae0f2a03443e6b06f3775d755f353db5ecba8430db7b6ed23e8fd354",
+    "selected_tests_sha256": "7c68af8e0e2d91da8106423a396a6f1117c391009e650c47b2396f9a45d371ce",
+    "stdout_ref": "reports/implementation/plan_005/PLAN_005_TEST_RUN_STDOUT.txt",
+    "stderr_ref": "reports/implementation/plan_005/PLAN_005_TEST_RUN_STDERR.txt",
+    "stdout_sha256": "db253cd8e2bdfb54d0ec53aa1cbc00c549f53985e2cd16c7c7d3c8f873a28614",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "junit_xml_ref": "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml",
+    "junit_xml_sha256": "810a252b0fef1395bfd0c8eb4ff251183838adf914883f5293fb29bd1be37ccf",
+    "result_summary_sha256": "a550f15ff5dd9c112357119c1ba8d4f33691644f17c63a0c31507f8381691ffb",
+    "executed_at": "2026-08-12T14:16:16.754646Z"
+  },
+  "generated_at": "2026-08-12T14:16:16.754646Z"
+}

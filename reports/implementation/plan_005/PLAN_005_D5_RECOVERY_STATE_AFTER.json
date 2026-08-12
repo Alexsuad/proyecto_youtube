@@ -1,0 +1,37 @@
+{
+  "recovery_id": "RECOVERY-D5",
+  "mission_id": "P5_D5",
+  "contract_ref": "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_MISSION_CONTRACT.json",
+  "contract_sha256": "28bfa245167322b9d6c8008ab1d3e3b81353556f234a1663b81b7b6bde7a2d0c",
+  "current_state": "PARTIAL",
+  "completed_units": [
+    "D5-A",
+    "D5-B",
+    "D5-C"
+  ],
+  "current_unit": "D5-D",
+  "remaining_units": [
+    "D5-D"
+  ],
+  "open_findings": [
+    "FINDING-1"
+  ],
+  "resolved_findings": [],
+  "latest_evidence_refs": [
+    "reports/implementation/plan_005/P5_A6_RECOVERY_EVIDENCE.json",
+    "reports/implementation/plan_005/PLAN_005_D5_UNIT_RESULT.json"
+  ],
+  "active_context_refs": [
+    "reports/implementation/plan_005/"
+  ],
+  "critical_decisions_to_preserve": [
+    "no product promotion"
+  ],
+  "last_verified_revision": "WORKTREE_UNCOMMITTED",
+  "next_allowed_action": "CONTINUE_D5-D",
+  "review_stage": "INDEPENDENT_REVIEW",
+  "delegation_lineage_summary": [
+    "P5_D5 -> D5-C"
+  ],
+  "recovery_sha256": "c8a8199a3c185239de0dc5501221a539db879c463e8ccce3cfd1a27d304edf52"
+}

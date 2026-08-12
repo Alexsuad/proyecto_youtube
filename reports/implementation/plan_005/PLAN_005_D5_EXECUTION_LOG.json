@@ -1,0 +1,17 @@
+{
+  "entries": [
+    {
+      "unit": "D5-C",
+      "run_id": "RUN-P5-D5-RECOVERY",
+      "result": {
+        "status": "PASS",
+        "unit": "D5-C",
+        "run_id": "RUN-P5-D5-RECOVERY",
+        "evidence_refs": [
+          "reports/implementation/plan_005/PLAN_005_D5_UNIT_RESULT.json"
+        ],
+        "side_effect_count": 1
+      }
+    }
+  ]
+}

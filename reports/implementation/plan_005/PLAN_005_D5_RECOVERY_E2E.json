@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "PLAN_005_D5_RECOVERY_E2E",
+  "plan_id": "PLAN_005",
+  "generated_at": "2026-08-12T14:16:16.828271Z",
+  "demonstration_class": "CONTROLLED_TECHNICAL_HARNESS_E2E",
+  "real_product_operation": false,
+  "real_operational_subagents_promotion": false,
+  "real_multiagent_runtime_promotion": false,
+  "functional_readiness_claim": false,
+  "source_inputs": [
+    {
+      "path": "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_AUTHORIZATION.json",
+      "sha256": "b014600831e8b4fa77efc79d8aeb8c4a0866e7fc15c0c4529599af986ef49fa0"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_STATE_BEFORE.json",
+      "sha256": "e1862ec978829485a2ce2bfc7b5a3c4c4d418cfc1e499691985c61e7f52fa830"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_STATE_AFTER.json",
+      "sha256": "0d33f73785e24be992623e06f2edf063e182991d303909c426349158a2f316f2"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_D5_EXECUTION_LOG.json",
+      "sha256": "b5f5f65b562ce5ab3c886e49abee1a44c11f2bdac138e0d0b06a3c2504eea4d8"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_D5_SECOND_RESUME_ATTEMPT.json",
+      "sha256": "d7276192799a834536485fe24b127e63e29026e1cd956adae83a80c80cc86599"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_D5_UNIT_RESULT.json",
+      "sha256": "2404c4a78a105c1d31c452e7ba43f2ff5a107d0a6a5cd8d0e2e4cde75e7e0147"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml",
+      "sha256": "810a252b0fef1395bfd0c8eb4ff251183838adf914883f5293fb29bd1be37ccf"
+    },
+    {
+      "path": "tests/core/test_plan_005_demos.py",
+      "sha256": "493bad88326678554efeaee54e1a2ffbdc61efa7cab26200e47d255ae04f166d"
+    }
+  ],
+  "evidence_refs": [
+    "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_AUTHORIZATION.json",
+    "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_STATE_BEFORE.json",
+    "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_STATE_AFTER.json",
+    "reports/implementation/plan_005/PLAN_005_D5_EXECUTION_LOG.json",
+    "reports/implementation/plan_005/PLAN_005_D5_SECOND_RESUME_ATTEMPT.json",
+    "reports/implementation/plan_005/PLAN_005_D5_UNIT_RESULT.json",
+    "reports/implementation/plan_005/PLAN_005_TEST_RUN_JUNIT.xml",
+    "tests/core/test_plan_005_demos.py"
+  ],
+  "status": "PASS",
+  "recovery_id": "RECOVERY-D5",
+  "recovery_mission_id": "PLAN_005_CHAIN_OF_TRUST_CORRECTION",
+  "capability_id": "PLAN_005_CHAIN_OF_TRUST",
+  "role_id": "ENGINEERING_IMPLEMENTER",
+  "authorization_path": "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_AUTHORIZATION.json",
+  "authorization_sha256": "b014600831e8b4fa77efc79d8aeb8c4a0866e7fc15c0c4529599af986ef49fa0",
+  "original_run_id": "RUN-P5-D5",
+  "resumed_run_id": "RUN-P5-D5-RECOVERY",
+  "recovery_state_before_ref": "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_STATE_BEFORE.json",
+  "recovery_state_before_sha256": "e1862ec978829485a2ce2bfc7b5a3c4c4d418cfc1e499691985c61e7f52fa830",
+  "completed_units_before": [
+    "D5-A",
+    "D5-B"
+  ],
+  "remaining_units_before": [
+    "D5-C",
+    "D5-D"
+  ],
+  "selected_unit": "D5-C",
+  "execution_result": {
+    "status": "PASS",
+    "unit": "D5-C",
+    "run_id": "RUN-P5-D5-RECOVERY",
+    "evidence_refs": [
+      "reports/implementation/plan_005/PLAN_005_D5_UNIT_RESULT.json"
+    ],
+    "side_effect_count": 1
+  },
+  "execution_log_ref": "reports/implementation/plan_005/PLAN_005_D5_EXECUTION_LOG.json",
+  "execution_log_sha256": "b5f5f65b562ce5ab3c886e49abee1a44c11f2bdac138e0d0b06a3c2504eea4d8",
+  "recovery_state_after_ref": "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_STATE_AFTER.json",
+  "recovery_state_after_sha256": "0d33f73785e24be992623e06f2edf063e182991d303909c426349158a2f316f2",
+  "completed_units_after": [
+    "D5-A",
+    "D5-B",
+    "D5-C"
+  ],
+  "remaining_units_after": [
+    "D5-D"
+  ],
+  "second_resume": {
+    "target_unit": "D5-C",
+    "status": "BLOCKED_BY_DUPLICATE_GUARD",
+    "attempt_ref": "reports/implementation/plan_005/PLAN_005_D5_SECOND_RESUME_ATTEMPT.json",
+    "error": "RECOVERY_DUPLICATE_EXECUTION_BLOCKED"
+  },
+  "no_duplicate_execution": true,
+  "limitations": []
+}

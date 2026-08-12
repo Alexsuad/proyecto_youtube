@@ -1,0 +1,84 @@
+{
+  "mission_id": "PLAN_005_CHAIN_OF_TRUST_CORRECTION",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "5acad77d0ea85042523c817ca76fb56f3da73c28e8ee6fc5e0e0939cca82daaa",
+    "capability_ids": [
+      "PLAN_005_CHAIN_OF_TRUST"
+    ],
+    "role_ids": [
+      "ENGINEERING_IMPLEMENTER"
+    ],
+    "execution_profile_ids": [
+      "ANY"
+    ],
+    "execution_interface": "ANY",
+    "allowed_operations": [
+      "DELEGATE",
+      "EXECUTE_CAPABILITY",
+      "VERIFY_EVIDENCE",
+      "COMPLETE_MISSION"
+    ],
+    "allowed_paths": [
+      "plans/plan_005/",
+      "plans/001_CONTROL_OPERATIVO.md",
+      "reports/implementation/plan_004/",
+      "reports/implementation/plan_005/",
+      "schemas/",
+      "src/core/",
+      "src/ai/",
+      "config/",
+      "tests/core/",
+      "tests/ai/",
+      "tests/harness/",
+      "tests/support/",
+      "output/"
+    ],
+    "allowed_routes": [
+      "ANY"
+    ],
+    "execution_mode": "SYNTHETIC",
+    "single_use": false,
+    "authority_ref": "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_AUTHORITY.json",
+    "authority_sha256": "69335786fea6252a19fb2cf7b5bc3937b6ea4826ea050066ae05006b817b6f1c",
+    "authorized_scope_sha256": "0744fba41e35033355426f1b7e08759bd545e1d7b75549ccd67b724549d0cefa",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": true,
+    "repair_integrity_evidence_path": "reports/implementation/plan_005/PLAN_005_REPAIR_INTEGRITY.json",
+    "delegation_sha256": "f85297f358158aecfc39ac4d2d71438fa483b5e3d434270d22e3b718951b699a"
+  },
+  "allowed_files": [
+    "plans/plan_005/",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "reports/implementation/plan_004/",
+    "reports/implementation/plan_005/",
+    "schemas/",
+    "src/core/",
+    "src/ai/",
+    "config/",
+    "tests/core/",
+    "tests/ai/",
+    "tests/harness/",
+    "tests/support/",
+    "output/"
+  ],
+  "delegation": {
+    "authorized_context_refs": [
+      "plans/plan_005/",
+      "plans/001_CONTROL_OPERATIVO.md",
+      "reports/implementation/plan_004/",
+      "reports/implementation/plan_005/",
+      "schemas/",
+      "src/core/",
+      "src/ai/",
+      "config/",
+      "tests/core/",
+      "tests/ai/",
+      "tests/harness/",
+      "tests/support/",
+      "output/"
+    ],
+    "delegation_depth": 0,
+    "max_delegation_depth": 1
+  }
+}

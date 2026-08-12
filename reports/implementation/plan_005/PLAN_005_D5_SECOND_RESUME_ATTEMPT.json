@@ -1,0 +1,6 @@
+{
+  "status": "BLOCKED_BY_DUPLICATE_GUARD",
+  "target_unit": "D5-C",
+  "resumed_run_id": "RUN-P5-D5-RECOVERY-REPLAY",
+  "error": "RECOVERY_DUPLICATE_EXECUTION_BLOCKED"
+}

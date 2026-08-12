@@ -1,0 +1,326 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_005",
+  "mission_id": "PLAN_005_COMPLETION_REVIEW",
+  "repository_revision": "fddc35caae8ba30553f204e9abb140035ac0c716",
+  "generated_at": "2026-08-12T14:26:09.339406Z",
+  "source_inputs": [
+    {
+      "path": "reports/implementation/plan_005/P5_A0_BASELINE_AND_REUSE_INVENTORY.json",
+      "sha256": "439ce5a039d1d9f807e99be4605f8fa87a086e9c58244c67ff93564ed1c258aa"
+    },
+    {
+      "path": "reports/implementation/plan_005/P5_A1_DELEGATION_POLICY_EVIDENCE.json",
+      "sha256": "5d4fd0a25df0c99db428196cecada859fff3c32f3aedace59b36ec364e23a712"
+    },
+    {
+      "path": "reports/implementation/plan_005/P5_A2_DELEGATED_CONTEXT_AND_LINEAGE.json",
+      "sha256": "2602bce8c25ab38f09a1ef7e04dbc165f4183e010138d78e5e46b9e62b5055c9"
+    },
+    {
+      "path": "reports/implementation/plan_005/P5_A3_SKILL_DIGESTION_EVIDENCE.json",
+      "sha256": "4c697718cd0041b33ed75c013b3e914f62591c1263fb9de2d98ef05e4f3024bb"
+    },
+    {
+      "path": "reports/implementation/plan_005/P5_A4_SKILL_RESOLUTION_FEEDBACK.json",
+      "sha256": "755f1ef6f3a764f3a3a66648252c25de9c6bae263ed4dd036e952394cb8782e5"
+    },
+    {
+      "path": "reports/implementation/plan_005/P5_A5_REVIEW_AUTONOMY_EVIDENCE.json",
+      "sha256": "901a921916f201a96c275f65f0c5351eb4b3dd9bda9c20c863abf3d326ce53e2"
+    },
+    {
+      "path": "reports/implementation/plan_005/P5_A6_RECOVERY_EVIDENCE.json",
+      "sha256": "d2acb3770e969ef6ee65093c4a9cb9ef5fd6a441b7798e03828ee784fc105db3"
+    },
+    {
+      "path": "reports/implementation/plan_005/P5_A7_EFFICIENCY_COMPARISON.json",
+      "sha256": "8056ce6ae03c8c0034173856607ecfebf2df11240d8cf58050a4d98c0a359ead"
+    },
+    {
+      "path": "plans/001_CONTROL_OPERATIVO.md",
+      "sha256": "5acad77d0ea85042523c817ca76fb56f3da73c28e8ee6fc5e0e0939cca82daaa"
+    },
+    {
+      "path": "plans/plan_005/005_autonomia_delegacion_contexto_y_eficiencia_operativa.md",
+      "sha256": "7f0a41f579e3ca27e66108e9079bf1441d9ee855e49da50b30e3b7a5a8bfc871"
+    },
+    {
+      "path": "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_AUTHORITY.json",
+      "sha256": "69335786fea6252a19fb2cf7b5bc3937b6ea4826ea050066ae05006b817b6f1c"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_TEST_RUN_EVIDENCE.json",
+      "sha256": "d0ef8b811b5fcc755ea86046477bc392fd48f884c861aaf54ffb4497b64aa5dc"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_CONTROLLED_E2E.json",
+      "sha256": "64efba09fc4bcde2be57e12eb0cf8e1678854451f3ad327d8fa7876193ef00ea"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_E2E.json",
+      "sha256": "deede256ae02ed13ff771f7e33812142f73492f402456f63c80ddb84bc646f8a"
+    },
+    {
+      "path": "reports/implementation/plan_005/PLAN_005_REPAIR_INTEGRITY.json",
+      "sha256": "181d639099f132632ed0ecaa8743afd378b6678d5ae118a1e8a5ea699a92666f"
+    },
+    {
+      "path": "output/execution_provenance_registry.json",
+      "sha256": "5d186f2c7b05937fe5784a40d092cc74fc48a6c57bdcd035510a582badddb037"
+    },
+    {
+      "path": "config/execution_provenance_policy.json",
+      "sha256": "850ab0453d576a9df81dc906e4b9ee15c541235a5359780e8d6d11130e9f7313"
+    },
+    {
+      "path": "src/core/plan_005_invariants.py",
+      "sha256": "e49600550e831ed7eeeeab0041126148cd58444c18c3897593b184e9d640f8da"
+    },
+    {
+      "path": "src/core/delegation_policy.py",
+      "sha256": "f7d0611580c19bf88f1603c530ca7ff13661f2a71853065d6609becc7fb2d1be"
+    },
+    {
+      "path": "src/core/mission_authorization.py",
+      "sha256": "17528906cc743e851e0df094c604f1eda7ba717300ea70e098bd6fcb717bd905"
+    },
+    {
+      "path": "src/core/repair_integrity.py",
+      "sha256": "59ab261d7d541185e08aacf0b7a669bbc8d723567571f6c5c14f7777234496fc"
+    },
+    {
+      "path": "src/scripts/repair_integrity_gate.py",
+      "sha256": "8b2234f2d0b727613abce5216b44eae2893abea517d4c86e0207b658cc455534"
+    },
+    {
+      "path": "src/core/delegation_contract.py",
+      "sha256": "3149e02f6b96f6af9d61232ed45c45ab933ddd7de3dd2324ca26d7b7c688ae01"
+    },
+    {
+      "path": "src/core/session_recovery.py",
+      "sha256": "6451113427aae61ce03485e0448f03fdca2a085ec3fd02d9470fc6cbc3cd8a37"
+    },
+    {
+      "path": "src/core/skill_digest.py",
+      "sha256": "629278e3ed8d5fbdce48ad4c53e87a48f99a260e881ff122811e26055c5d085c"
+    },
+    {
+      "path": "src/core/context_resolution.py",
+      "sha256": "2afa0fb140338ec2d5b042a94efe97f6907f52e8b11162dd1f9c5d0da284c73c"
+    },
+    {
+      "path": "src/core/review_workload.py",
+      "sha256": "eeed27f25a4be16792af5e04bdd5b6fea6a80b43818cd9db262255b74b37f13a"
+    },
+    {
+      "path": "tests/core/test_plan_005_invariants.py",
+      "sha256": "aebd2377943f7c895bb67b26b0cae36f5aad3f9fe7289d764ec3796eebc80fd0"
+    },
+    {
+      "path": "tests/core/test_delegation_policy_and_contract.py",
+      "sha256": "9e3f13c0bd3bfdf597c7911e1ec7ec4dfb910d491eef4482ec8c1666fa2d153b"
+    },
+    {
+      "path": "tests/core/test_skill_digest_and_feedback.py",
+      "sha256": "7587ca9d6661072d49c43b02243434bf7e11a8e0ea8cde3081014f6cfdfd0e71"
+    },
+    {
+      "path": "tests/core/test_review_workload_and_recovery.py",
+      "sha256": "c44d4ac6e53337c8423dbca1fdecf963e77f26169e8e36da1158f27fba6aba21"
+    },
+    {
+      "path": "tests/core/test_context_manifest_lineage.py",
+      "sha256": "65cc5a162392ce20339867ec3c16600d3e2a651d07cf747d7fef361abb49551d"
+    },
+    {
+      "path": "tests/core/test_plan_005_demos.py",
+      "sha256": "493bad88326678554efeaee54e1a2ffbdc61efa7cab26200e47d255ae04f166d"
+    },
+    {
+      "path": "src/core/plan_005_completion_review.py",
+      "sha256": "bf49a019228da3f74ecb1512df41d6cd09e30bfdca685e13ed21b40c34aec66e"
+    },
+    {
+      "path": "schemas/plan_005_completion_review.json",
+      "sha256": "fa9b35d60363af509f51626f62d9a7c936f3264bcf7cb35130f2b6b1ba3f23bb"
+    },
+    {
+      "path": "src/core/evidence_freshness.py",
+      "sha256": "34ad41dd2ad12c6c5ca8a897382126929584c154107143ead5b2dba70c28f11c"
+    },
+    {
+      "path": "src/core/mission_completion_gate.py",
+      "sha256": "997e57c6dc190e6c1d489a209575d27a61d4a57036f1f047c123ab7ef79c7d4b"
+    },
+    {
+      "path": "src/ai/execution.py",
+      "sha256": "e9bab0390ef7b3bc310e6de336d71a464c08b64a2b0ec5ab59a04dce49bfa8f9"
+    },
+    {
+      "path": "src/core/routing_policy.py",
+      "sha256": "69afe9d2ef2c3456e871d2959fa1ac12b7d6c8d20f885fb36a2c482df5725dc8"
+    },
+    {
+      "path": "schemas/delegated_task_result.json",
+      "sha256": "6bc2541e396cfc8529984cbe600533371104d3815bb97b6505005802a6b00d45"
+    },
+    {
+      "path": "schemas/resolved_context_manifest.json",
+      "sha256": "2d0fefa7abe146b4a5f500afa2b42bd0547b3f4a67bc7b06d1426779ed9403b8"
+    },
+    {
+      "path": "schemas/skill_application_evidence.json",
+      "sha256": "c72ebf54958721bee499d4031834a3b708a60488af10572536e760314b29bb38"
+    },
+    {
+      "path": "schemas/execution_provenance_registry.json",
+      "sha256": "efccbc0d98fca146f7065f0344a24abf5123abb23f1b07f7ba3f225c01ef33bb"
+    },
+    {
+      "path": "schemas/delegated_task_contract.json",
+      "sha256": "07cbc381ecc1c61e73e5d4102abb9c092bfe5aba5d3747ca81599bde30334cef"
+    },
+    {
+      "path": "schemas/skill_resolution_feedback.json",
+      "sha256": "822235c0fb8ae465a930da30ef5e34a160f8bac549ae99627da553dc05f5faa0"
+    },
+    {
+      "path": "schemas/repair_integrity_evidence.json",
+      "sha256": "6db0a90c16e60205f854ac4b6b209eb6f497c56c15d5460b7ab9668b4b1a01aa"
+    },
+    {
+      "path": "reports/implementation/plan_005/P5_A4_RESOLUTION_EVIDENCE.json",
+      "sha256": "7a817416d1e1fe52cfc7104074139a9a788e186dc3c3e60e80796d8568adfeac"
+    },
+    {
+      "path": "reports/implementation/plan_005/P5_A4_APPLICATION_EVIDENCE.json",
+      "sha256": "d8fa5b751f828a24b47a2a9cbdb99dd877e3dd0be388ed65d722459d9a402531"
+    },
+    {
+      "path": "config/delegation_policy.json",
+      "sha256": "b9cce40e20e64143335cd9e24ed749ebb3a9607d8652dfffb170075b532ad239"
+    },
+    {
+      "path": "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_MISSION_CONTRACT.json",
+      "sha256": "28bfa245167322b9d6c8008ab1d3e3b81353556f234a1663b81b7b6bde7a2d0c"
+    },
+    {
+      "path": "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_AUTHORIZATION.json",
+      "sha256": "b014600831e8b4fa77efc79d8aeb8c4a0866e7fc15c0c4529599af986ef49fa0"
+    },
+    {
+      "path": "tests/core/test_plan_005_real_consumer_integration.py",
+      "sha256": "15447bf32e425108731a401048ec97f461df2efb509f7e8f24e5c13e7adb3b94"
+    },
+    {
+      "path": "tests/harness/test_mission_completion_gate.py",
+      "sha256": "bab25693430ce024809adb37d70ab5eb031a5abcb8cf597dcf0e6eb1cdf8e434"
+    },
+    {
+      "path": "src/core/plan_005_evidence.py",
+      "sha256": "5c541ea4205644f04b7d73e8ab746ce49b4772ce88a2000590105138c2023e0f"
+    },
+    {
+      "path": "schemas/plan_005_test_run_evidence.json",
+      "sha256": "1c79e2ce1373e727d516082b42e711399ebdad9739ffdbff36f0b8cf1b4980e2"
+    }
+  ],
+  "evidence_refs": [
+    "reports/implementation/plan_005/P5_A0_BASELINE_AND_REUSE_INVENTORY.json",
+    "reports/implementation/plan_005/P5_A1_DELEGATION_POLICY_EVIDENCE.json",
+    "reports/implementation/plan_005/P5_A2_DELEGATED_CONTEXT_AND_LINEAGE.json",
+    "reports/implementation/plan_005/P5_A3_SKILL_DIGESTION_EVIDENCE.json",
+    "reports/implementation/plan_005/P5_A4_SKILL_RESOLUTION_FEEDBACK.json",
+    "reports/implementation/plan_005/P5_A5_REVIEW_AUTONOMY_EVIDENCE.json",
+    "reports/implementation/plan_005/P5_A6_RECOVERY_EVIDENCE.json",
+    "reports/implementation/plan_005/P5_A7_EFFICIENCY_COMPARISON.json",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_005/005_autonomia_delegacion_contexto_y_eficiencia_operativa.md",
+    "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_AUTHORITY.json",
+    "reports/implementation/plan_005/PLAN_005_TEST_RUN_EVIDENCE.json",
+    "reports/implementation/plan_005/PLAN_005_CONTROLLED_E2E.json",
+    "reports/implementation/plan_005/PLAN_005_D5_RECOVERY_E2E.json",
+    "reports/implementation/plan_005/PLAN_005_REPAIR_INTEGRITY.json",
+    "output/execution_provenance_registry.json",
+    "config/execution_provenance_policy.json",
+    "src/core/plan_005_invariants.py",
+    "src/core/delegation_policy.py",
+    "src/core/mission_authorization.py",
+    "src/core/repair_integrity.py",
+    "src/scripts/repair_integrity_gate.py",
+    "src/core/delegation_contract.py",
+    "src/core/session_recovery.py",
+    "src/core/skill_digest.py",
+    "src/core/context_resolution.py",
+    "src/core/review_workload.py",
+    "tests/core/test_plan_005_invariants.py",
+    "tests/core/test_delegation_policy_and_contract.py",
+    "tests/core/test_skill_digest_and_feedback.py",
+    "tests/core/test_review_workload_and_recovery.py",
+    "tests/core/test_context_manifest_lineage.py",
+    "tests/core/test_plan_005_demos.py",
+    "src/core/plan_005_completion_review.py",
+    "schemas/plan_005_completion_review.json",
+    "src/core/evidence_freshness.py",
+    "src/core/mission_completion_gate.py",
+    "src/ai/execution.py",
+    "src/core/routing_policy.py",
+    "schemas/delegated_task_result.json",
+    "schemas/resolved_context_manifest.json",
+    "schemas/skill_application_evidence.json",
+    "schemas/execution_provenance_registry.json",
+    "schemas/delegated_task_contract.json",
+    "schemas/skill_resolution_feedback.json",
+    "schemas/repair_integrity_evidence.json",
+    "reports/implementation/plan_005/P5_A4_RESOLUTION_EVIDENCE.json",
+    "reports/implementation/plan_005/P5_A4_APPLICATION_EVIDENCE.json",
+    "config/delegation_policy.json",
+    "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_MISSION_CONTRACT.json",
+    "plans/plan_005/PLAN_005_CHAIN_OF_TRUST_AUTHORIZATION.json",
+    "tests/core/test_plan_005_real_consumer_integration.py",
+    "tests/harness/test_mission_completion_gate.py",
+    "src/core/plan_005_evidence.py",
+    "schemas/plan_005_test_run_evidence.json"
+  ],
+  "limitations": [
+    "Controlled harness evidence does not promote real operational subagents or product readiness.",
+    "Provider token/cost and real mission intervention metrics remain NOT_OBSERVABLE.",
+    "Downstream PLAN_004 completion evidence is STALE transitively and remains outside this mission's reopening authority."
+  ],
+  "result": "TECHNICALLY_COMPLETED_PENDING_OWNER_REVIEW",
+  "technical_result": "PASS_WITH_LIMITATIONS",
+  "semantic_result": {
+    "invariant_count": 12,
+    "valid_snapshot_violations": [],
+    "negative_probe_count": 12,
+    "negative_probes_blocked": true,
+    "consumer_regression_status": "PASS",
+    "e2e_demonstration_status": "PASS",
+    "downstream_plan_004_freshness": "STALE",
+    "product_readiness_claim": false,
+    "completion_requirements": [
+      {
+        "requirement_id": "PLAN005_CONTROLLED_E2E_D1_D6",
+        "required": true,
+        "evidence_ref": "reports/implementation/plan_005/PLAN_005_CONTROLLED_E2E.json",
+        "validation_result": "PASS",
+        "freshness_result": "FRESH"
+      }
+    ],
+    "source_report_statuses": {
+      "P5_A0_BASELINE_AND_REUSE_INVENTORY": "PASS_WITH_OBSERVABILITY_LIMITATIONS",
+      "P5_A1_DELEGATION_POLICY_EVIDENCE": "PASS",
+      "P5_A2_DELEGATED_CONTEXT_AND_LINEAGE": "PASS",
+      "P5_A3_SKILL_DIGESTION_EVIDENCE": "PASS",
+      "P5_A4_SKILL_RESOLUTION_FEEDBACK": "PASS",
+      "P5_A5_REVIEW_AUTONOMY_EVIDENCE": "PASS",
+      "P5_A6_RECOVERY_EVIDENCE": "PASS_WITH_FAIL_CLOSED_LIMITATION",
+      "P5_A7_EFFICIENCY_COMPARISON": "PASS_WITH_OBSERVABILITY_LIMITATIONS"
+    },
+    "source_reports_valid": true,
+    "canonical_completion_gate_status": "PASS",
+    "canonical_completion_gate_violations": []
+  },
+  "evidence_identity_sha256": "ade1e352e507bb37d3f5426e730a3c79776643c98013b789a968c9dd026f8424"
+}

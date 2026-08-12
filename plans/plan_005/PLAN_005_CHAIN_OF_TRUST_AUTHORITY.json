@@ -1,0 +1,8 @@
+{
+  "mission_id": "PLAN_005_CHAIN_OF_TRUST_CORRECTION",
+  "decision": "APPROVE",
+  "artifact_version": "1.0.0",
+  "authorized_scope_sha256": "0744fba41e35033355426f1b7e08759bd545e1d7b75549ccd67b724549d0cefa",
+  "authorization_source": "EXPLICIT_OWNER_AUTHORIZATION_RECORDED_2026-08-12",
+  "historical_note": "Prior technical work is not retroactively reclassified; this records authorization for the corrective chain-of-trust mission."
+}

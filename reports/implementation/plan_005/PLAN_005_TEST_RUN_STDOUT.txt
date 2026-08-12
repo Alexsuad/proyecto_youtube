@@ -1,0 +1,27 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Mis Documentos\Proyectos_Wds\proyecto_youtube
+plugins: anyio-4.8.0, langsmith-0.6.6
+collected 127 items
+
+tests\core\test_plan_005_invariants.py ................................. [ 25%]
+..........                                                               [ 33%]
+tests\core\test_delegation_policy_and_contract.py .............          [ 44%]
+tests\core\test_context_manifest_lineage.py ....                         [ 47%]
+tests\core\test_skill_digest_and_feedback.py .......                     [ 52%]
+tests\core\test_review_workload_and_recovery.py .......                  [ 58%]
+tests\core\test_plan_005_demos.py ........                               [ 64%]
+tests\core\test_plan_005_transitive_freshness.py ..........              [ 72%]
+tests\core\test_all_schemas.py .......                                   [ 77%]
+tests\core\test_plan_005_real_consumer_integration.py ....               [ 81%]
+tests\harness\test_mission_completion_gate.py ........................   [100%]
+
+============================== warnings summary ===============================
+src\core\contract_validation.py:11
+src\core\contract_validation.py:11
+  C:\Mis Documentos\Proyectos_Wds\proyecto_youtube\src\core\contract_validation.py:11: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.
+    from jsonschema import Draft7Validator, draft7_format_checker
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: C:\Mis Documentos\Proyectos_Wds\proyecto_youtube\reports\implementation\plan_005\PLAN_005_TEST_RUN_JUNIT.xml -
+====================== 127 passed, 2 warnings in 48.50s =======================
