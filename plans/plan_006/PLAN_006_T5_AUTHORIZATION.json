@@ -1,0 +1,59 @@
+{
+  "mission_id": "PLAN_006_T5_MEASURED_OPENCODE_PILOT",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25",
+    "capability_ids": [
+      "PLAN_006_T5_PILOT"
+    ],
+    "role_ids": [
+      "ENGINEERING_IMPLEMENTER"
+    ],
+    "execution_profile_ids": [
+      "ANY"
+    ],
+    "execution_interface": "ANY",
+    "allowed_operations": [
+      "DELEGATE",
+      "EXECUTE_CAPABILITY",
+      "VERIFY_EVIDENCE",
+      "COMPLETE_MISSION"
+    ],
+    "allowed_paths": [
+      "plans/plan_006/",
+      "plans/001_CONTROL_OPERATIVO.md",
+      "reports/implementation/plan_006/",
+      "schemas/",
+      "src/core/",
+      "config/",
+      "tests/core/",
+      "tools/"
+    ],
+    "allowed_routes": [
+      "ANY"
+    ],
+    "execution_mode": "SYNTHETIC",
+    "single_use": false,
+    "authority_ref": "plans/plan_006/PLAN_006_T5_AUTHORITY.json",
+    "authority_sha256": "d4b74d0d590f180fd42d06b44c40f25a679226a54cc34e5a18f2fb0d7e490cca",
+    "authorized_scope_sha256": "d1dae76671036f2ff782f6755439cd92cbaf10b7e553ba6eaa3b6067eaedcab6",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false,
+    "repair_integrity_evidence_path": "NONE",
+    "delegation_sha256": "c9b10b44733963168fe380caaf6cb77aa1cbd28c96f8233079671df857e969fc"
+  },
+  "delegation": {
+    "authorized_context_refs": [
+      "plans/plan_006/",
+      "plans/001_CONTROL_OPERATIVO.md",
+      "reports/implementation/plan_006/",
+      "schemas/",
+      "src/core/",
+      "config/",
+      "tests/core/",
+      "tools/"
+    ],
+    "delegation_depth": 0,
+    "max_delegation_depth": 1
+  }
+}

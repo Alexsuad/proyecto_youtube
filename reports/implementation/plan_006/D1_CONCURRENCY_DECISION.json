@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_006",
+  "artifact_id": "PLAN_006_D1",
+  "mission_id": "PLAN_006_D1_CONCURRENCY_DECISION",
+  "increment": "D1",
+  "repository_revision": "WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T11:51:38.798573Z",
+  "source_inputs": [
+    {
+      "path": "plans/001_CONTROL_OPERATIVO.md",
+      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+    },
+    {
+      "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+    },
+    {
+      "path": "reports/implementation/plan_006/T0_BASELINE.json",
+      "sha256": "1c16afa636e58261dadb6ba3e00d017f3f1d8a1640acd775ee6fe13bab4cf793"
+    },
+    {
+      "path": "reports/implementation/plan_006/T5_PILOT.json",
+      "sha256": "72fbbaa5df2bb7aaac7e27167ce5e41df837dfab7cc9a6cf74f6b4fd6ef75bae"
+    }
+  ],
+  "evidence_refs": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+    "reports/implementation/plan_006/T0_BASELINE.json",
+    "reports/implementation/plan_006/T5_PILOT.json"
+  ],
+  "limitations": [
+    "Decision documented as artifact; no canonical enum created for D1 outcomes (PLAN 006 §14.6)"
+  ],
+  "result": "PASS",
+  "metrics": {
+    "mission_wall_time": "NOT_OBSERVABLE",
+    "commands_executed": 0,
+    "unique_tests_or_test_groups_executed": 0,
+    "tests_repeated_equivalently": 0,
+    "full_suite_runs": 0,
+    "targeted_suite_runs": 0,
+    "gates_executed": 0,
+    "resolved_context_size": "NOT_OBSERVABLE",
+    "estimated_tokens_method": "UTF8_BYTES_DIVIDED_BY_4",
+    "context_references_count": 2,
+    "context_expansions": 0,
+    "delegation_decision": "NOT_APPLICABLE",
+    "additional_actors_used": 0,
+    "parallel_or_sequential": "SEQUENTIAL",
+    "repair_iterations": 0,
+    "revalidation_iterations": 0,
+    "findings_before_completion": 0,
+    "findings_after_completion": 0,
+    "false_convergence_events": 0,
+    "initial_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "final_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "actual_git_diff_files": 1,
+    "staged_files": 0,
+    "commit_count": 0,
+    "concurrency_decision_json": "{\"decision\": \"NO_CONCURRENCY_NEEDED\", \"evidence_considered\": [\"T0_BASELINE: wall time/cost NOT_OBSERVABLE from harness\", \"T5_PILOT: parallel discovery delegated to 2 temporary subagents; benefit not measurable in wall time/cost\"], \"outcome\": \"Documented as decision only; no implementation created\", \"question\": \"Does concurrency measurably reduce wall time or cost without degrading assurance, traceability or product?\", \"reasoning\": [\"No measured wall-time or cost delta exists to justify a general scheduler (\\u00a714.1)\", \"Default applies: NO EVIDENCE OF BENEFIT -> BUILD NOTHING (\\u00a714.2)\", \"No ACTIVE_WAVE/ACTIVE_MISSIONS/MISSION_DEPENDENCIES/multi-mission scheduler created (\\u00a714.3)\", \"Plan may close with NO_CONCURRENCY_NEEDED without being a failure (\\u00a714.7)\"], \"trade_off\": \"Parallel delegation may reduce wall time in some tasks but cost/overhead is not observable; measured decision deferred until observability exists\"}"
+  },
+  "phases": {
+    "context_discovery": {
+      "present": true
+    },
+    "planning_reasoning": {
+      "present": true
+    },
+    "implementation": {
+      "present": false
+    },
+    "deterministic_validation": {
+      "present": true
+    },
+    "independent_review": {
+      "status": "PENDING"
+    },
+    "repair": {
+      "iterations": 0
+    },
+    "revalidation": {
+      "present": true
+    },
+    "git_operations": {
+      "status": "PENDING"
+    }
+  },
+  "measurement_contracts": [
+    {
+      "metric": "concurrency_decision",
+      "baseline": "NO EVIDENCE OF BENEFIT -> BUILD NOTHING (PLAN 006 §14.2)",
+      "comparison_unit": "decision",
+      "capture_method": "D1 based on T0 baseline and T5 measured pilot; wall time/cost NOT_OBSERVABLE",
+      "observability": "MEASURED",
+      "decision_rule": "no scheduler/lifecycle/wave creation; NO_CONCURRENCY_NEEDED acceptable (§14.7)",
+      "evidence_reference": "reports/implementation/plan_006/D1_CONCURRENCY_DECISION.json"
+    }
+  ],
+  "authority": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
+  },
+  "evidence_identity_sha256": "cff73edea52c565d53e2b1905a01868e58551539c36ee9f5a472493927882479"
+}
