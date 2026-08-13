@@ -1,35 +1,6 @@
 ---
 description: Applies only explicitly authorized technical changes within a mission's declared file scope.
 mode: primary
-permission:
-  read: allow
-  glob: allow
-  grep: allow
-  list: allow
-  edit: allow
-  external_directory: ask
-  bash:
-    "*": allow
-    "git add*": allow
-    "git commit*": allow
-    "git push*": deny
-    "git reset*": deny
-    "git clean*": deny
-    "git restore*": deny
-    "git checkout --*": deny
-    "git branch -D*": deny
-    "git branch --delete --force*": deny
-    "rm *": deny
-    "Remove-Item*": deny
-    "del *": deny
-    "erase *": deny
-    "rmdir *": deny
-    "rd *": deny
-    "format *": deny
-    "pip install*": deny
-    "python -m pip install*": deny
-    "py -m pip install*": deny
-    "npm install*": deny
 ---
 
 You are the technical implementer for this repository.

@@ -65,39 +65,10 @@ class ControlledOpenCodeIntegrationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.config = json.loads((ROOT / "opencode.json").read_text(encoding="utf-8"))
 
-    def test_global_fallback_stays_restricted_and_build_is_operational(self) -> None:
+    def test_repository_does_not_impose_opencode_permissions(self) -> None:
         self.assertEqual(self.config["$schema"], "https://opencode.ai/config.json")
-        self.assertEqual(self.config["permission"]["edit"], "deny")
-        self.assertEqual(self.config["permission"]["bash"]["*"], "deny")
-        self.assertEqual(self.config["permission"]["bash"]["git push*"], "deny")
-
-        build = self.config["agent"]["build"]["permission"]
-        self.assertEqual(build["edit"], "allow")
-        self.assertEqual(build["external_directory"], "ask")
-        self.assertEqual(build["bash"]["*"], "allow")
-        self.assertEqual(build["bash"]["git add*"], "allow")
-        self.assertEqual(build["bash"]["git commit*"], "allow")
-        for pattern in (
-            "git push*",
-            "git reset*",
-            "git clean*",
-            "git restore*",
-            "git checkout --*",
-            "git branch -D*",
-            "git branch --delete --force*",
-            "rm *",
-            "Remove-Item*",
-            "del *",
-            "erase *",
-            "rmdir *",
-            "rd *",
-            "format *",
-            "pip install*",
-            "python -m pip install*",
-            "py -m pip install*",
-            "npm install*",
-        ):
-            self.assertEqual(build["bash"][pattern], "deny", pattern)
+        self.assertNotIn("permission", self.config)
+        self.assertNotIn("agent", self.config)
 
         implementer, _ = read_frontmatter(ROOT / ".opencode/agents/technical-implementer.md")
         reviewer, _ = read_frontmatter(ROOT / ".opencode/agents/technical-reviewer.md")
@@ -106,20 +77,12 @@ class ControlledOpenCodeIntegrationTests(unittest.TestCase):
 
         reviewer_text = (ROOT / ".opencode/agents/technical-reviewer.md").read_text(encoding="utf-8")
         implementer_text = (ROOT / ".opencode/agents/technical-implementer.md").read_text(encoding="utf-8")
-        self.assertIn('"*": allow', implementer_text)
-        self.assertIn("edit: allow", implementer_text)
-        self.assertIn("external_directory: ask", implementer_text)
-        self.assertIn("git add*\": allow", implementer_text)
-        self.assertIn("git commit*\": allow", implementer_text)
-        self.assertIn("git push*\": deny", implementer_text)
-        self.assertIn("git reset*\": deny", implementer_text)
-        self.assertIn("pip install*\": deny", implementer_text)
+        self.assertNotIn("\npermission:", implementer_text)
+        self.assertNotIn("\npermission:", reviewer_text)
         self.assertIn("Once the mission preflight has confirmed authorization", implementer_text)
-        self.assertNotIn("Ask for edit permission before every write", implementer_text)
-        self.assertIn("edit: deny", reviewer_text)
-        self.assertIn("task: deny", reviewer_text)
-        self.assertIn('"*": deny', reviewer_text)
-        self.assertIn('"git push*": deny', reviewer_text)
+        self.assertIn("independent, read-only technical reviewer", reviewer_text)
+        self.assertIn("Never edit, correct, commit", reviewer_text)
+        self.assertIn("Never push", implementer_text)
 
     def test_opencode_discovers_the_configured_agents(self) -> None:
         result = subprocess.run(
@@ -160,6 +123,13 @@ class ControlledOpenCodeIntegrationTests(unittest.TestCase):
         self.assertIn("Do not edit files", body)
         self.assertIn("PROCEED", body)
         self.assertIn("STOP", body)
+        unchanged = subprocess.run(
+            ["git", "diff", "--exit-code", "--", ".opencode/commands/mission-preflight.md"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(unchanged.returncode, 0, unchanged.stdout + unchanged.stderr)
 
 
 if __name__ == "__main__":

@@ -1,26 +1,6 @@
 ---
 description: Independently reviews a scoped technical diff without editing files or approving functional criteria.
 mode: subagent
-permission:
-  read: allow
-  glob: allow
-  grep: allow
-  list: allow
-  edit: deny
-  task: deny
-  bash:
-    "*": deny
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
-    "python -m pytest tests/**": allow
-    "py -m pytest tests/**": allow
-    "python src/scripts/**": allow
-    "py src/scripts/**": allow
-    "git push*": deny
-    "git commit*": deny
-    "git reset --hard*": deny
-    "git clean*": deny
 ---
 
 You are an independent, read-only technical reviewer.
