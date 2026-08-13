@@ -22,9 +22,14 @@
     "token_estimation_method": {"const": "UTF8_BYTES_DIVIDED_BY_4"},
     "resolved_at": {"type": "string", "format": "date-time"},
     "mission_id": {"type": "string", "minLength": 1},
+    "parent_run_id": {"type": "string", "minLength": 1},
+    "child_run_id": {"type": "string", "minLength": 1},
+    "delegation_lineage_ref": {"type": "string", "minLength": 1},
+    "conversation_history_inherited": {"type": "boolean"},
     "execution_profile_id": {"type": "string", "minLength": 1},
     "prompt_id": {"type": "string", "minLength": 1},
     "input_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "output_refs": {"type": "array", "items": {"type": "string", "minLength": 1}}
-  }
+  },
+  "allOf": [{"if": {"required": ["child_run_id"]}, "then": {"required": ["parent_run_id", "delegation_lineage_ref", "conversation_history_inherited"]}}]
 }

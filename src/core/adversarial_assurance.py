@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
@@ -88,11 +89,11 @@ def _lineage_check(observation: dict[str, Any]) -> list[str]:
     violations: list[str] = []
     works = observation.get("works") or []
     transitions = observation.get("transitions") or []
-    known_transitions = {str(tr.get("transition_id") or "") for tr in transitions if isinstance(tr, dict)}
-    by_work: dict[str, dict[str, Any]] = {}
-    for work in works:
-        if isinstance(work, dict) and work.get("work_id"):
-            by_work[str(work["work_id"])] = work
+    known_transitions = {
+        str(tr.get("transition_id") or ""): tr
+        for tr in transitions
+        if isinstance(tr, dict) and tr.get("transition_id")
+    }
     seen_ids: set[str] = set()
     for transition in transitions:
         if not isinstance(transition, dict):
@@ -112,10 +113,25 @@ def _lineage_check(observation: dict[str, Any]) -> list[str]:
             violations.append(f"TARGET_STATE_INVALID:{transition_id}:{target_state}")
         # previous_state must equal the lineage target if lineage is resolvable
         if lineage_ref and lineage_ref in known_transitions:
-            lineage = next((tr for tr in transitions if isinstance(tr, dict) and str(tr.get("transition_id")) == lineage_ref), None)
-            if lineage and str(lineage.get("target_state") or "") != previous_state:
+            lineage = known_transitions[lineage_ref]
+            if str(lineage.get("target_state") or "") != previous_state:
                 violations.append(f"LINEAGE_STATE_MISMATCH:{transition_id}")
+            if str(lineage.get("work_id") or "") != str(transition.get("work_id") or ""):
+                violations.append(f"LINEAGE_WORK_MISMATCH:{transition_id}:{lineage_ref}")
+            try:
+                parent_time = _parse_occurred_at(str(lineage.get("occurred_at") or ""))
+                transition_time = _parse_occurred_at(str(transition.get("occurred_at") or ""))
+                if parent_time >= transition_time:
+                    violations.append(f"LINEAGE_NOT_STRICTLY_PRIOR:{transition_id}:{lineage_ref}")
+            except ValueError:
+                violations.append(f"LINEAGE_TIME_UNVERIFIABLE:{transition_id}:{lineage_ref}")
     return violations
+
+
+def _parse_occurred_at(value: str) -> datetime:
+    if not value:
+        raise ValueError("missing occurred_at")
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
 def _authority_check(observation: dict[str, Any]) -> list[str]:
@@ -123,19 +139,24 @@ def _authority_check(observation: dict[str, Any]) -> list[str]:
     against the canonical responsibility registry."""
     violations: list[str] = []
     transitions = observation.get("transitions") or []
-    registry = observation.get("responsibility_registry") or {}
-    if not isinstance(registry, dict):
+    registry = observation.get("responsibility_registry")
+    if not isinstance(registry, dict) or not isinstance(registry.get("responsibilities"), list):
         violations.append("RESPONSIBILITY_REGISTRY_MISSING")
         return violations
-    roles = {item.get("role_id") for item in registry.get("responsibilities", []) if isinstance(item, dict)}
+    roles = {str(item.get("role_id")) for item in registry["responsibilities"] if isinstance(item, dict) and item.get("role_id")}
+    if not roles:
+        violations.append("RESPONSIBILITY_REGISTRY_EMPTY")
+        return violations
     for transition in transitions:
         if not isinstance(transition, dict):
             continue
         authority_ref = str(transition.get("transition_authority_ref") or "")
         authority_role = str(transition.get("authority_role") or "")
-        if not authority_ref or not authority_ref.startswith("approvals/"):
-            violations.append(f"INVENTED_AUTHORITY:{str(transition.get('transition_id'))}:{authority_ref}")
-        if authority_role and roles and authority_role not in roles:
+        transition_id = str(transition.get("transition_id") or "")
+        expected_ref = f"config/responsibility_registry.json#responsibilities/{authority_role}"
+        if not authority_ref or authority_ref != expected_ref:
+            violations.append(f"AUTHORITY_REF_UNRESOLVABLE:{transition_id}:{authority_ref}")
+        if not authority_role or authority_role not in roles:
             violations.append(f"AUTHORITY_ROLE_UNRESOLVABLE:{str(transition.get('transition_id'))}:{authority_role}")
     return violations
 

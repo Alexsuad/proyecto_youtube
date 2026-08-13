@@ -225,10 +225,11 @@ def evaluate_evidence_reuse(
                 provenance={"current_applicability": applicability.to_dict()},
             )
 
-    if not _coverage_compatible(intended_use, str(evidence_path)):
+    compatibility = _semantic_compatibility(intended_use, evidence_path)
+    if compatibility:
         return ReuseDecision(
             TARGETED_REVERIFY,
-            ("COVERAGE_NOT_CONTAINED",),
+            tuple(compatibility),
             evidence_ref=evidence_ref,
             provenance={"intended_use": intended_use.__dict__},
         )
@@ -242,28 +243,28 @@ def evaluate_evidence_reuse(
     )
 
 
-def _coverage_compatible(intended_use: IntendedUse, evidence_ref: str) -> bool:
-    """Coverage containment check against the evidence's declared coverage.
+def _semantic_compatibility(intended_use: IntendedUse, evidence_path: Path) -> list[str]:
+    """Return semantic incompatibilities against declared evidence metadata.
 
-    REUSE is only granted when the intended scope is contained in the evidence's
-    declared coverage dimension (source_inputs paths / scope tokens). When the
-    evidence cannot be read or declares no coverage, reuse is denied in favor of
-    a targeted reverify: FRESH alone never grants reuse without a demonstrated
-    coverage containment (PLAN 006 §10A.6).
+    FRESH evidence is reusable only if it declares compatible scope, coverage,
+    assurance, environment and revision. Older envelopes lacking that semantic
+    declaration are intentionally downgraded to TARGETED_REVERIFY.
     """
-    scope_token = intended_use.scope.replace("\\", "/")
-    if not scope_token:
-        return False
     try:
-        data = json.loads(Path(evidence_ref).read_text(encoding="utf-8"))
+        data = json.loads(evidence_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-        return False
-    declared = []
-    for entry in data.get("source_inputs", []):
-        if isinstance(entry, dict) and entry.get("path"):
-            declared.append(str(entry["path"]).replace("\\", "/"))
-    declared.extend(str(ref).replace("\\", "/") for ref in data.get("evidence_refs", []) if isinstance(ref, str))
-    declared.extend(tok for tok in data.get("coverage", []) if isinstance(tok, str))
-    if not declared:
-        return False
-    return any(scope_token == token or scope_token in token or token in scope_token for token in declared)
+        return ["SEMANTIC_DECLARATION_UNVERIFIABLE"]
+    declared = data.get("semantic_applicability")
+    if not isinstance(declared, dict):
+        return ["SEMANTIC_DECLARATION_MISSING"]
+    required = ("scope", "coverage_required", "intended_assurance", "environment", "repository_revision")
+    if any(not isinstance(declared.get(key), str) or not declared[key] for key in required):
+        return ["SEMANTIC_DECLARATION_INCOMPLETE"]
+    mismatches: list[str] = []
+    for field in required:
+        expected = getattr(intended_use, field)
+        if expected is None:
+            continue
+        if declared[field] != expected:
+            mismatches.append(f"SEMANTIC_{field.upper()}_MISMATCH")
+    return mismatches

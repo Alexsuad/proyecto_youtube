@@ -4,6 +4,8 @@ from __future__ import annotations
 from typing import Any
 
 from src.core.contract_validation import validate_against_schema
+from src.core.mission_convergence import required_review_stage
+from src.core.plan_005_invariants import verify_invariants
 
 
 LEVELS = {"SELF_ONLY", "INDEPENDENT_REVIEW", "OWNER_REVIEW"}
@@ -32,15 +34,25 @@ def choose_review_workload(policy: dict[str, Any] | None = None, *, risk: str = 
     else:
         level, origin = "SELF_ONLY", "NOT_APPLICABLE"
         reasons.append("LOW_RISK_SELF_REVIEW_SUFFICIENT")
-    if required_review:
-        if str(required_review).upper() not in LEVELS:
-            raise ValueError("REVIEW_LEVEL_INVALID")
-        floor = str(required_review).upper()
-        if RANK[floor] > RANK[level]:
-            level = floor
-            reasons.append("ELEVATED_TO_MISSION_REVIEW_FLOOR")
-        reasons.append("RECONCILED_WITH_MISSION_REVIEW_AUTHORITY")
+    canonical_floor = str(required_review).upper() if required_review is not None else required_review_stage(policy, sensitive_change=sensitive, findings=findings)
+    if canonical_floor not in LEVELS:
+        raise ValueError("REVIEW_LEVEL_INVALID")
+    if RANK[canonical_floor] > RANK[level]:
+        level = canonical_floor
+        reasons.append("ELEVATED_TO_MISSION_REVIEW_FLOOR")
+    reasons.append("RECONCILED_WITH_MISSION_REVIEW_AUTHORITY")
     decision = {"review_level": level, "review_origin": origin, "reasons": reasons, "evidence_refs": list(evidence_refs or [])}
+    invariant_violations = verify_invariants(
+        ["REVIEW_NEVER_DOWNGRADED", "REVIEW_ORIGIN_IS_PROVENANCE"],
+        {
+            "required_review": canonical_floor,
+            "selected_review": decision["review_level"],
+            "review_level": decision["review_level"],
+            "review_origin": decision["review_origin"],
+        },
+    )
+    if invariant_violations:
+        raise ValueError("REVIEW_INVARIANT_VIOLATION:" + ",".join(invariant_violations))
     violations = validate_against_schema(decision, "review_workload_decision")
     if violations:
         raise ValueError("REVIEW_WORKLOAD_DECISION_INVALID: " + "; ".join(violations))

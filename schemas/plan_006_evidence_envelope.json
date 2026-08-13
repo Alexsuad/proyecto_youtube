@@ -58,6 +58,18 @@
     "functional_approval_claim": {"type": "boolean"},
     "product_readiness_claim": {"type": "boolean"},
     "owner_closure": {"type": "object", "additionalProperties": true},
+    "semantic_applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "coverage_required", "intended_assurance", "environment", "repository_revision"],
+      "properties": {
+        "scope": {"type": "string", "minLength": 1},
+        "coverage_required": {"type": "string", "minLength": 1},
+        "intended_assurance": {"type": "string", "minLength": 1},
+        "environment": {"type": "string", "minLength": 1},
+        "repository_revision": {"type": "string", "minLength": 1}
+      }
+    },
     "measurement_contracts": {
       "type": "array",
       "items": {

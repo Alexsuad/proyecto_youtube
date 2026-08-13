@@ -19,6 +19,7 @@ from typing import Any
 from src.core.delegation_policy import DelegationDecision, choose_delegation
 from src.core.proportional_verification import build_verification_plan
 from src.core.review_workload import choose_review_workload
+from src.core.routing_policy import choose_authorized_route
 
 INLINE = "INLINE"
 DELEGATE = "DELEGATE"
@@ -48,6 +49,10 @@ REVIEW_RANK = {SELF_ONLY: 0, INDEPENDENT_REVIEW: 1, OWNER_REVIEW: 2}
 PROFILE_TRACEABLE = "TRACEABLE"
 PROFILE_NOT_OBSERVABLE = "NOT_OBSERVABLE"
 
+CONTEXT_WITHIN_BUDGET = "WITHIN_BUDGET"
+CONTEXT_BUDGET_EXCEEDED = "BUDGET_EXCEEDED"
+CONTEXT_NOT_OBSERVABLE = "NOT_OBSERVABLE"
+
 
 @dataclass(frozen=True)
 class ExecutionDecision:
@@ -60,6 +65,9 @@ class ExecutionDecision:
     sequential_or_parallel: str
     evidence_reuse_decision: str | None = None
     decision_order: tuple[str, ...] = field(default_factory=tuple)
+    routing_status: str = "NOT_APPLICABLE"
+    selected_profile: str | None = None
+    context_budget_status: str = CONTEXT_NOT_OBSERVABLE
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -72,6 +80,9 @@ class ExecutionDecision:
             "sequential_or_parallel": self.sequential_or_parallel,
             "evidence_reuse_decision": self.evidence_reuse_decision,
             "decision_order": list(self.decision_order),
+            "routing_status": self.routing_status,
+            "selected_profile": self.selected_profile,
+            "context_budget_status": self.context_budget_status,
         }
 
 
@@ -95,6 +106,14 @@ def _choose_review_floor(
     if level not in REVIEW_LEVELS:
         level = SELF_ONLY
     return level, [f"REVIEW_FLOOR:{level}"]
+
+
+def _context_budget_status(task: dict[str, Any]) -> str:
+    resolved_size = task.get("resolved_context_size")
+    budget = task.get("context_budget_bytes")
+    if not isinstance(resolved_size, int) or not isinstance(budget, int) or resolved_size < 0 or budget < 0:
+        return CONTEXT_NOT_OBSERVABLE
+    return CONTEXT_WITHIN_BUDGET if resolved_size <= budget else CONTEXT_BUDGET_EXCEEDED
 
 
 def make_execution_decision(
@@ -146,7 +165,25 @@ def make_execution_decision(
     materiality = verification_plan.materiality
     verification_steps = tuple(step.step for step in verification_plan.steps)
 
-    profile_traceability = PROFILE_TRACEABLE if task.get("execution_profile_id") else PROFILE_NOT_OBSERVABLE
+    candidate_set = [str(item) for item in task.get("authorized_candidate_set", []) if str(item)]
+    requested_profile = str(task.get("execution_profile_id") or "") or None
+    if candidate_set:
+        route = choose_authorized_route(
+            candidate_set=candidate_set,
+            requested_profile=requested_profile,
+            owner_selection_authority=bool(task.get("owner_route_selection_authority", True)),
+            external_cost=bool(task.get("external_cost")),
+            paid_cost_approved=bool(task.get("paid_cost_approved")),
+        )
+        routing_status = str(route["status"])
+        selected_profile = route["selected_profile"]
+    else:
+        routing_status = "NOT_APPLICABLE"
+        selected_profile = None
+    profile_traceability = PROFILE_TRACEABLE if selected_profile else PROFILE_NOT_OBSERVABLE
+    context_budget_status = _context_budget_status(task)
+    if context_budget_status == CONTEXT_BUDGET_EXCEEDED:
+        reasons.append("CONTEXT_BUDGET_EXCEEDED")
 
     sequential_or_parallel = "PARALLEL" if bool(task.get("parallelizable")) and delegation.decision == DELEGATE else "SEQUENTIAL"
 
@@ -164,4 +201,7 @@ def make_execution_decision(
         sequential_or_parallel=sequential_or_parallel,
         evidence_reuse_decision=evidence_reuse_decision,
         decision_order=tuple(decision_order),
+        routing_status=routing_status,
+        selected_profile=selected_profile,
+        context_budget_status=context_budget_status,
     )

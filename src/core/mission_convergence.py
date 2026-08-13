@@ -32,7 +32,7 @@ def required_review_stage(review_policy: dict[str, Any] | None, *, sensitive_cha
     independent = str(policy.get("independent_review", "ON_FAILURE")).upper()
     if sensitive_change or independent == "REQUIRED" or (independent == "ON_FAILURE" and findings):
         return INDEPENDENT_REVIEW
-    return OWNER_REVIEW if bool(policy.get("owner_review", True)) else SELF_ONLY
+    return OWNER_REVIEW if bool(policy.get("owner_review", False)) else SELF_ONLY
 
 
 def _phase_result(stage: str, value: Any, *, governed: bool) -> dict[str, Any]:

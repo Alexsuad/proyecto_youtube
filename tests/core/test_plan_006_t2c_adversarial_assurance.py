@@ -50,7 +50,7 @@ def _lifecycle(**overrides):
                 "transition_reason": "candidate fits episode format",
                 "evidence_refs": ["research/screening/W-001.json"],
                 "input_version_refs": ["research/work_identity/W-001.json"],
-                "transition_authority_ref": "approvals/script_product/screening.json",
+                "transition_authority_ref": "config/responsibility_registry.json#responsibilities/SCRIPT_PRODUCT",
                 "authority_role": "SCRIPT_PRODUCT",
                 "decision": {"decision_id": "DEC-001", "decision_version": "1.0.0", "status": "EXPLICIT"},
                 "occurred_at": "2026-01-01T00:00:00Z",
@@ -71,6 +71,9 @@ def _lifecycle(**overrides):
             "exception": None,
         },
         "critical_doubts": [],
+        "responsibility_registry": {
+            "responsibilities": [{"role_id": "SCRIPT_PRODUCT"}],
+        },
         "created_at": "2026-01-01T00:00:00Z",
     }
     lifecycle.update(overrides)
@@ -157,7 +160,7 @@ class TestLineageFamily:
             "transition_reason": "parent",
             "evidence_refs": ["research/screening/W-001.json"],
             "input_version_refs": ["research/work_identity/W-001.json"],
-            "transition_authority_ref": "approvals/script_product/screening.json",
+            "transition_authority_ref": "config/responsibility_registry.json#responsibilities/SCRIPT_PRODUCT",
             "authority_role": "SCRIPT_PRODUCT",
             "decision": {"decision_id": "DEC-000", "decision_version": "1.0.0", "status": "EXPLICIT"},
             "occurred_at": "2026-01-01T00:00:00Z",
@@ -175,13 +178,40 @@ class TestLineageFamily:
         violations = verify_all_adversarial(lifecycle)
         assert any("PREVIOUS_STATE_INVALID" in v for v in violations)
 
+    def test_lineage_from_another_work_fails(self):
+        lifecycle = _lifecycle()
+        parent = copy.deepcopy(lifecycle["transitions"][0])
+        parent.update({"transition_id": "LC-001/T-OTHER", "work_id": "W-002"})
+        lifecycle["transitions"][0]["lineage_ref"] = "LC-001/T-OTHER"
+        lifecycle["transitions"].insert(0, parent)
+        violations = verify_all_adversarial(lifecycle)
+        assert any("LINEAGE_WORK_MISMATCH:LC-001/T-000:LC-001/T-OTHER" in v for v in violations)
+
+    def test_lineage_to_future_transition_fails(self):
+        lifecycle = _lifecycle()
+        parent = copy.deepcopy(lifecycle["transitions"][0])
+        parent.update({
+            "transition_id": "LC-001/T-FUTURE",
+            "occurred_at": "2026-01-02T00:00:00Z",
+        })
+        lifecycle["transitions"][0]["lineage_ref"] = "LC-001/T-FUTURE"
+        lifecycle["transitions"].insert(0, parent)
+        violations = verify_all_adversarial(lifecycle)
+        assert any("LINEAGE_NOT_STRICTLY_PRIOR:LC-001/T-000:LC-001/T-FUTURE" in v for v in violations)
+
 
 class TestAuthorityFamily:
     def test_invented_authority_fails(self):
         lifecycle = _lifecycle()
-        lifecycle["transitions"][0]["transition_authority_ref"] = "self_signed/owner_made_up"
+        lifecycle["transitions"][0]["transition_authority_ref"] = "approvals/definitely_fake.json"
         violations = verify_all_adversarial(lifecycle)
-        assert any("INVENTED_AUTHORITY" in v for v in violations)
+        assert any("AUTHORITY_REF_UNRESOLVABLE" in v for v in violations)
+
+    def test_missing_registry_fails_closed(self):
+        lifecycle = _lifecycle()
+        lifecycle.pop("responsibility_registry")
+        violations = verify_all_adversarial(lifecycle)
+        assert "RESPONSIBILITY_REGISTRY_MISSING" in violations
 
     def test_authority_role_unresolvable_fails(self):
         lifecycle = _lifecycle()
@@ -283,7 +313,7 @@ class TestSelectiveMustKillMutations:
 
     def test_invented_authority_mutant_killed(self):
         lifecycle = _lifecycle()
-        lifecycle["transitions"][0]["transition_authority_ref"] = "self_signed/owner_made_up"
+        lifecycle["transitions"][0]["transition_authority_ref"] = "approvals/definitely_fake.json"
         result = evaluate_must_kill_mutation(mutant=MUST_KILL_MUTATIONS[2], observation=lifecycle)
         assert result["classification"] == "KILLED"
 

@@ -226,13 +226,31 @@ def verify_historical_completion(record: dict[str, Any]) -> list[str]:
         return [f"COMPLETION_SNAPSHOT_INVALID:{exc}"]
     if completion_identity(snapshot) != record.get("completion_identity_sha256"):
         violations.append("COMPLETION_IDENTITY_MISMATCH")
+    binding_hashes = (
+        snapshot.authorization_artifact_sha256,
+        snapshot.authorized_scope_sha256,
+        snapshot.authority_sha256,
+    )
+    if any(not _is_sha256(value) for value in binding_hashes):
+        violations.append("COMPLETION_BINDING_SHA256_INVALID")
+    if len(set(binding_hashes)) != len(binding_hashes):
+        violations.append("COMPLETION_BINDINGS_NOT_DISTINCT")
     if record.get("technical_completion_claim") is not True:
         violations.append("TECHNICAL_COMPLETION_CLAIM_MISSING")
     if record.get("functional_approval_claim") is True:
         violations.append("FUNCTIONAL_APPROVAL_MUST_NOT_BE_CLAIMED")
     if record.get("product_readiness_claim") is True:
         violations.append("PRODUCT_READINESS_MUST_NOT_BE_CLAIMED")
+    closure = record.get("owner_closure")
+    if closure is not None:
+        metadata = closure.get("closure_metadata") if isinstance(closure, dict) else None
+        if not isinstance(metadata, dict) or not _is_sha256(str(metadata.get("owner_identity_sha256") or "")):
+            violations.append("OWNER_IDENTITY_BINDING_REQUIRED")
     return violations
+
+
+def _is_sha256(value: str) -> bool:
+    return len(value) == 64 and all(character in "0123456789abcdefABCDEF" for character in value)
 
 
 def owner_closure(
@@ -256,6 +274,8 @@ def owner_closure(
         raise HistoricalCompletionError("OWNER_REJECTED_COMPLETION")
     if "owner" not in closure_metadata or not closure_metadata.get("owner"):
         raise HistoricalCompletionError("CLOSURE_OWNER_REQUIRED")
+    if not _is_sha256(str(closure_metadata.get("owner_identity_sha256") or "")):
+        raise HistoricalCompletionError("CLOSURE_OWNER_IDENTITY_BINDING_REQUIRED")
     identity = completion_record["completion_identity_sha256"]
     return {
         "plan_id": "PLAN_006",

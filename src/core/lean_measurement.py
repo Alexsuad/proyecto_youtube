@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -138,6 +139,20 @@ def _relative_or_skip(root: Path, reference: str) -> str | None:
     return str(resolved.relative_to(root)).replace("\\", "/")
 
 
+def _repository_revision(root: Path) -> str:
+    try:
+        head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        dirty = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=root, text=True, stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL, check=False,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return "WORKTREE_UNVERIFIABLE"
+    return f"{head}+WORKTREE_UNCOMMITTED" if dirty else head
+
+
 STRING_METRICS: dict[str, tuple[str, ...]] = {
     "delegation_decision": ("INLINE", "DELEGATE", "ESCALATE"),
     "parallel_or_sequential": ("PARALLEL", "SEQUENTIAL"),
@@ -202,7 +217,7 @@ def build_baseline_report(
         "artifact_id": f"PLAN_006_{increment}",
         "mission_id": mission_id,
         "increment": increment,
-        "repository_revision": "WORKTREE_UNCOMMITTED",
+        "repository_revision": _repository_revision(repository_root),
         "generated_at": generated_at or datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "source_inputs": source_inputs,
         "evidence_refs": [item["path"] for item in source_inputs],

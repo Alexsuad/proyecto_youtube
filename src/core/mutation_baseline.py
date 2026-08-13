@@ -100,6 +100,7 @@ def _run_probe(module_source: str, *, path_mode: str, checksum_mode: str, expect
             package.mkdir(parents=True)
             (temp / "src/__init__.py").write_text("", encoding="utf-8")
             (package / "__init__.py").write_text("", encoding="utf-8")
+            (package / "plan_005_invariants.py").write_text((ROOT / "src/core/plan_005_invariants.py").read_text(encoding="utf-8"), encoding="utf-8")
             module = package / "context_resolution.py"
             if force_error:
                 return ProbeExecution(INFRASTRUCTURE_ERROR, None, "", "forced probe infrastructure error", None, None, "FORCED_INFRASTRUCTURE_ERROR")

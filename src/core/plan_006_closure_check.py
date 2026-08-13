@@ -17,13 +17,15 @@ from typing import Any
 
 from src.core.contract_validation import validate_against_schema
 from src.core.evidence_reuse import evaluate_evidence_reuse, IntendedUse, MaterialDependency
+from src.core.evidence_reuse import check_plan_006_report_freshness
 from src.core.historical_completion import verify_historical_completion
+from src.core.mission_authorization import MissionAuthorizationError, load_mission_authorization
 from src.core.resource_aware_decision import make_execution_decision
 
 CLOSURE_OK = "OK"
 CLOSURE_FAIL = "FAIL"
 
-REQUIRED_INCREMENTS = ("T0", "T1", "T2-A", "T2-B", "T2-C", "T2-D", "T3", "T4-0", "T4")
+REQUIRED_INCREMENTS = ("T0", "T1", "T2-A", "T2-B", "T2-C", "T2-D", "T3", "T4-0", "T4", "T5", "D1")
 
 FORBIDDEN_CLAIMS = ("functional_approval_claim", "product_readiness_claim")
 
@@ -83,6 +85,11 @@ def _verify_report(root: Path, reference: str) -> list[str]:
     for claim in FORBIDDEN_CLAIMS:
         if data.get(claim) is True:
             violations.append(f"{claim.upper()}_MUST_NOT_BE_CLAIMED")
+    if data.get("result") != "PASS":
+        violations.append(f"EVIDENCE_RESULT_NOT_PASS:{data.get('result')}")
+    freshness = check_plan_006_report_freshness(root, reference)
+    if freshness["status"] != "FRESH":
+        violations.append(f"EVIDENCE_NOT_FRESH:{freshness['status']}")
     return violations
 
 
@@ -97,6 +104,8 @@ def _report_path(increment: str) -> str:
         "T3": "T3_PERMISSION_MODEL",
         "T4-0": "T4_0_GAP_ANALYSIS",
         "T4": "T4_RESOURCE_AWARE_DECISION",
+        "T5": "T5_PILOT",
+        "D1": "D1_CONCURRENCY_DECISION",
     }
     return f"reports/implementation/plan_006/{names[increment]}.json"
 
@@ -121,16 +130,28 @@ def run_closure_check(
     """
     repository_root = Path(root).resolve()
     findings: list[ClosureFinding] = []
-    increments = list(increments or REQUIRED_INCREMENTS)
+    increments = list(REQUIRED_INCREMENTS if increments is None else increments)
 
     authorization_path = repository_root / "plans/plan_006/PLAN_006_T5_AUTHORIZATION.json"
     if not authorization_path.is_file():
         findings.append(ClosureFinding("T5_AUTHORIZATION", CLOSURE_FAIL, "PLAN_006_T5_AUTHORIZATION.json missing"))
     else:
-        findings.append(ClosureFinding("T5_AUTHORIZATION", CLOSURE_OK, "PLAN_006_T5_AUTHORIZATION.json present"))
+        try:
+            authorization = load_mission_authorization(authorization_path)
+            authorization.verify(
+                repository_root,
+                capability_id="PLAN_006_T5_PILOT",
+                role_id="ENGINEERING_IMPLEMENTER",
+                operation="VERIFY_EVIDENCE",
+                path="reports/implementation/plan_006/",
+                execution_mode="SYNTHETIC",
+            )
+            findings.append(ClosureFinding("T5_AUTHORIZATION", CLOSURE_OK, "T5 authorization verified"))
+        except (MissionAuthorizationError, OSError, ValueError, json.JSONDecodeError) as exc:
+            findings.append(ClosureFinding("T5_AUTHORIZATION", CLOSURE_FAIL, str(exc)))
 
     for increment in increments:
-        if not include_t5_pilot and increment in {"T4-0", "T4"}:
+        if not include_t5_pilot and increment == "T5":
             continue
         reference = _report_path(increment)
         violations = _verify_report(repository_root, reference)
@@ -160,25 +181,28 @@ def run_closure_check(
             intended_use=intended_use,
             material_dependencies=material_dependencies or [],
         )
-        if decision.decision in {"UNVERIFIABLE", "RERUN_REQUIRED"}:
+        if decision.decision != "REUSE":
             findings.append(ClosureFinding("EVIDENCE_REUSE", CLOSURE_FAIL, decision.decision + ": " + ";".join(decision.reasons)))
         else:
             findings.append(ClosureFinding("EVIDENCE_REUSE", CLOSURE_OK, decision.decision))
 
-    execution = make_execution_decision(
-        task={
-            "trivial": True,
-            "deterministic": True,
-            "separable": False,
-            "risk": "LOW",
-            "sensitive": False,
-            "findings": False,
-            "touched_surface": "src/core/plan_006_closure_check.py",
-            "targeted_covers_consumers": True,
-            "authorized_candidate_set": [],
-        }
-    )
-    findings.append(ClosureFinding("EXECUTION_DECISION", CLOSURE_OK, f"topology={execution.topology}"))
+    try:
+        execution = make_execution_decision(
+            task={
+                "trivial": True,
+                "deterministic": True,
+                "separable": False,
+                "risk": "LOW",
+                "sensitive": False,
+                "findings": False,
+                "touched_surface": "src/core/plan_006_closure_check.py",
+                "targeted_covers_consumers": True,
+                "authorized_candidate_set": [],
+            }
+        )
+        findings.append(ClosureFinding("EXECUTION_DECISION", CLOSURE_OK, f"topology={execution.topology}"))
+    except Exception as exc:
+        findings.append(ClosureFinding("EXECUTION_DECISION", CLOSURE_FAIL, str(exc)))
 
     overall = CLOSURE_OK if not any(finding.status == CLOSURE_FAIL for finding in findings) else CLOSURE_FAIL
     return ClosureReport(mission_id=mission_id, findings=tuple(findings), overall=overall)

@@ -74,6 +74,14 @@ def _probe_file(path: Path) -> bool:
     return path.is_file()
 
 
+def _semantic_surface_present(paths: list[Path], required_markers: tuple[str, ...]) -> bool:
+    try:
+        text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
+    except OSError:
+        return False
+    return all(marker in text for marker in required_markers)
+
+
 def analyze_gaps(
     root: str | Path,
     *,
@@ -89,6 +97,14 @@ def analyze_gaps(
         "mission_authorization": ("src/core/mission_authorization.py",),
         "context_resolution": ("src/core/context_resolution.py",),
     }
+    semantic_markers = {
+        "delegation_policy": ("def choose_delegation", "INLINE", "DELEGATE", "ESCALATE"),
+        "routing_policy": ("def choose_authorized_route", "authorized_candidate_set"),
+        "review_workload": ("def choose_review_workload",),
+        "agent_execution_profiles": ("execution_profiles", "execution_route_selection_authority"),
+        "mission_authorization": ("def verify", "authorized_scope_sha256"),
+        "context_resolution": ("def resolve_context", "resolved_context_size"),
+    }
     if existing_capability not in evidence_paths:
         raise ValueError(f"UNKNOWN_EXISTING_CAPABILITY:{existing_capability}")
 
@@ -101,6 +117,14 @@ def analyze_gaps(
             existing_capability=existing_capability,
             evidence_path=evidence_paths[existing_capability][0],
             reason="MISSING_CAPABILITY_SURFACE",
+        )
+    if not _semantic_surface_present(paths, semantic_markers[existing_capability]):
+        return GapFinding(
+            need=decision_need,
+            classification=PARTIALLY_COVERED,
+            existing_capability=existing_capability,
+            evidence_path=evidence_paths[existing_capability][0],
+            reason="SURFACE_PRESENT_SEMANTIC_PROBE_FAILED",
         )
 
     # Default mapping of T4 needs to their canonical existing capability.
@@ -128,7 +152,7 @@ def analyze_gaps(
         classification=default_classification,
         existing_capability=existing_capability,
         evidence_path=evidence_paths[existing_capability][0],
-        reason="SURFACE_PRESENT_AND_CANONICAL",
+        reason="SEMANTIC_SURFACE_PRESENT_AND_CANONICAL",
     )
 
 

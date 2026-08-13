@@ -81,12 +81,23 @@ def test_verify_historical_completion_rejects_identity_tampering():
     assert "COMPLETION_IDENTITY_MISMATCH" in verify_historical_completion(record)
 
 
+def test_verify_historical_completion_rejects_indistinct_bindings():
+    record = build_completion_record(_snapshot(authorized_scope_sha256="b" * 64))
+    assert "COMPLETION_BINDINGS_NOT_DISTINCT" in verify_historical_completion(record)
+
+
+def test_verify_historical_completion_requires_owner_identity_binding_when_closed():
+    record = build_completion_record(_snapshot())
+    record["owner_closure"] = {"closure_metadata": {"owner": "OWNER"}}
+    assert "OWNER_IDENTITY_BINDING_REQUIRED" in verify_historical_completion(record)
+
+
 def test_owner_closure_references_identity_without_reexecution():
     record = build_completion_record(_snapshot())
     closure = owner_closure(
         completion_record=record,
         owner_decision="ACCEPTED",
-        closure_metadata={"owner": "OWNER", "note": "closed"},
+        closure_metadata={"owner": "OWNER", "owner_identity_sha256": "f" * 64, "note": "closed"},
     )
     assert closure["completion_identity_sha256"] == record["completion_identity_sha256"]
     assert closure["re_executes_required_tests"] is False
@@ -122,6 +133,16 @@ def test_owner_closure_requires_owner():
             completion_record=record,
             owner_decision="ACCEPTED",
             closure_metadata={"note": "no owner"},
+        )
+
+
+def test_owner_closure_requires_owner_identity_binding():
+    record = build_completion_record(_snapshot())
+    with pytest.raises(HistoricalCompletionError, match="CLOSURE_OWNER_IDENTITY_BINDING_REQUIRED"):
+        owner_closure(
+            completion_record=record,
+            owner_decision="ACCEPTED",
+            closure_metadata={"owner": "OWNER"},
         )
 
 

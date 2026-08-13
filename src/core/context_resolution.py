@@ -7,6 +7,8 @@ import math
 from pathlib import Path
 from typing import Any, Iterable
 
+from src.core.plan_005_invariants import verify_invariants
+
 
 def canonical_json(value: Any) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -95,6 +97,11 @@ def resolve_context(
     run_id: str,
     policy_path: str | Path | None = None,
     mission_id: str | None = None,
+    parent_run_id: str | None = None,
+    child_run_id: str | None = None,
+    delegation_lineage_ref: str | None = None,
+    authorized_context_refs: list[str] | None = None,
+    conversation_history_inherited: bool = False,
     execution_profile_id: str | None = None,
     prompt_id: str | None = None,
     input_refs: list[str] | None = None,
@@ -102,6 +109,15 @@ def resolve_context(
 ) -> dict[str, Any]:
     """Resolve context with raw-byte identity and optional canonical JSON identity."""
     repository_root = Path(root).resolve()
+    if parent_run_id is not None and child_run_id is not None:
+        if not parent_run_id or not child_run_id or parent_run_id == child_run_id:
+            raise ContextResolutionError("CONTEXT_CHILD_RUN_NOT_ISOLATED")
+    if child_run_id is not None and (not child_run_id or run_id != child_run_id):
+        raise ContextResolutionError("CONTEXT_MANIFEST_CHILD_RUN_MISMATCH")
+    if child_run_id is not None and (not parent_run_id or not delegation_lineage_ref or not authorized_context_refs):
+        raise ContextResolutionError("CONTEXT_AUTHORIZED_CHILD_REFS_REQUIRED")
+    if conversation_history_inherited:
+        raise ContextResolutionError("CONTEXT_CONVERSATION_HISTORY_INHERITED")
     policy = _load_policy(repository_root, policy_path)
     grouped = {"NORMATIVE": [], "EVIDENTIARY": [], "HISTORICAL": []}
     unresolved: list[str] = []
@@ -109,6 +125,10 @@ def resolve_context(
         try:
             if not isinstance(reference, dict):
                 raise ContextResolutionError("CONTEXT_REQUIRED_UNRESOLVED")
+            if child_run_id is not None:
+                authorized = {str(item) for item in authorized_context_refs or []}
+                if str(reference.get("ref_id", "")) not in authorized and str(reference.get("artifact_path", "")) not in authorized:
+                    raise ContextResolutionError("CONTEXT_CHILD_REF_OUTSIDE_AUTHORIZED_CONTEXT")
             context_class = reference.get("context_class")
             if context_class not in grouped:
                 raise ContextResolutionError("CONTEXT_REQUIRED_UNRESOLVED")
@@ -152,6 +172,13 @@ def resolve_context(
     }
     if mission_id is not None:
         body["mission_id"] = mission_id
+    if parent_run_id is not None:
+        body["parent_run_id"] = parent_run_id
+    if child_run_id is not None:
+        body["child_run_id"] = child_run_id
+    if delegation_lineage_ref is not None:
+        body["delegation_lineage_ref"] = delegation_lineage_ref
+    body["conversation_history_inherited"] = False
     if execution_profile_id is not None:
         body["execution_profile_id"] = execution_profile_id
     if prompt_id is not None:
@@ -162,4 +189,15 @@ def resolve_context(
         body["output_refs"] = list(output_refs)
     manifest = {"manifest_id": "CTX-" + _sha256_bytes(canonical_json(body))[:32], **body}
     manifest["manifest_sha256"] = _sha256_bytes(canonical_json(manifest))
+    invariant_violations = verify_invariants(
+        ["CHILD_MANIFEST_MATCHES_CHILD_RUN"],
+        {
+            "parent_run_id": manifest.get("parent_run_id"),
+            "child_run_id": manifest.get("child_run_id"),
+            "manifest_run_id": manifest.get("run_id"),
+            "conversation_history_inherited": manifest.get("conversation_history_inherited"),
+        },
+    )
+    if invariant_violations:
+        raise ContextResolutionError("CONTEXT_LINEAGE_INVARIANT_VIOLATION:" + ",".join(invariant_violations))
     return manifest

@@ -23,7 +23,18 @@ def _sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def _report(repo: Path, name: str, source: str, content: str) -> str:
+def _report(
+    repo: Path,
+    name: str,
+    source: str,
+    content: str,
+    *,
+    scope: str = "src/core/x.py",
+    coverage_required: str = "module",
+    intended_assurance: str = "smoke",
+    environment: str = "ANY",
+    repository_revision: str = "REV-1",
+) -> str:
     (repo / "reports/implementation/plan_006").mkdir(parents=True, exist_ok=True)
     (repo / source).parent.mkdir(parents=True, exist_ok=True)
     source_path = repo / source
@@ -34,10 +45,17 @@ def _report(repo: Path, name: str, source: str, content: str) -> str:
         "artifact_id": "PLAN_006_T2A",
         "mission_id": "T2A_TEST",
         "increment": "T2-A",
-        "repository_revision": "REV-1",
+        "repository_revision": repository_revision,
         "generated_at": "2026-08-13T00:00:00Z",
         "source_inputs": [{"path": source, "sha256": _sha(content.encode())}],
         "evidence_refs": [source],
+        "semantic_applicability": {
+            "scope": scope,
+            "coverage_required": coverage_required,
+            "intended_assurance": intended_assurance,
+            "environment": environment,
+            "repository_revision": repository_revision,
+        },
         "limitations": [],
         "result": "PASS",
         "evidence_identity_sha256": "a" * 64,
@@ -96,7 +114,53 @@ def test_fresh_is_not_enough_when_coverage_not_contained(tmp_path):
         material_dependencies=[],
     )
     assert decision.decision == TARGETED_REVERIFY
-    assert "COVERAGE_NOT_CONTAINED" in decision.reasons
+    assert "SEMANTIC_SCOPE_MISMATCH" in decision.reasons
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "reason"),
+    [
+        ("coverage_required", "different", "SEMANTIC_COVERAGE_REQUIRED_MISMATCH"),
+        ("intended_assurance", "high", "SEMANTIC_INTENDED_ASSURANCE_MISMATCH"),
+        ("environment", "OTHER_ENV", "SEMANTIC_ENVIRONMENT_MISMATCH"),
+        ("repository_revision", "REV-2", "SEMANTIC_REPOSITORY_REVISION_MISMATCH"),
+    ],
+)
+def test_semantically_incompatible_evidence_requires_targeted_reverify(tmp_path, field, value, reason):
+    repo = tmp_path / "repo"
+    ref = _report(repo, "evidence.json", "src/core/x.py", "def x(): pass")
+    intended = {
+        "scope": "src/core/x.py",
+        "coverage_required": "module",
+        "intended_assurance": "smoke",
+        "environment": "ANY",
+        "repository_revision": "REV-1",
+    }
+    intended[field] = value
+    decision = evaluate_evidence_reuse(repo, ref, intended_use=IntendedUse(**intended), material_dependencies=[])
+    assert decision.decision == TARGETED_REVERIFY
+    assert reason in decision.reasons
+
+
+def test_missing_semantic_declaration_requires_targeted_reverify(tmp_path):
+    repo = tmp_path / "repo"
+    ref = _report(repo, "evidence.json", "src/core/x.py", "def x(): pass")
+    report = repo / ref
+    payload = json.loads(report.read_text(encoding="utf-8"))
+    payload.pop("semantic_applicability")
+    identity = dict(payload)
+    identity.pop("evidence_identity_sha256", None)
+    identity.pop("generated_at", None)
+    payload["evidence_identity_sha256"] = _sha(json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode())
+    report.write_text(json.dumps(payload), encoding="utf-8")
+    decision = evaluate_evidence_reuse(
+        repo,
+        ref,
+        intended_use=IntendedUse(scope="src/core/x.py", coverage_required="module", intended_assurance="smoke", repository_revision="REV-1"),
+        material_dependencies=[],
+    )
+    assert decision.decision == TARGETED_REVERIFY
+    assert "SEMANTIC_DECLARATION_MISSING" in decision.reasons
 
 
 def test_material_dependency_change_degrades_to_targeted_reverify(tmp_path):

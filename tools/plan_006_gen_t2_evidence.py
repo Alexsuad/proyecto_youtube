@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.core.contract_validation import validate_against_schema
-from src.core.lean_measurement import build_baseline_report, build_measurement_contract, write_baseline_report
+from src.core.lean_measurement import _evidence_identity, build_baseline_report, build_measurement_contract, write_baseline_report
 
 INCREMENT_META = {
     "T2_A": {
@@ -56,6 +56,13 @@ TEST_FILES = {
     "T2_B": "tests/core/test_plan_006_t2b_proportional_verification.py",
     "T2_C": "tests/core/test_plan_006_t2c_adversarial_assurance.py",
     "T2_D": "tests/core/test_plan_006_t2d_context_output_economy.py",
+}
+
+CORE_FILES = {
+    "T2_A": "src/core/evidence_reuse.py",
+    "T2_B": "src/core/proportional_verification.py",
+    "T2_C": "src/core/adversarial_assurance.py",
+    "T2_D": "src/core/context_output_economy.py",
 }
 
 METRICS_BY_INCREMENT: dict[str, dict] = {
@@ -213,6 +220,7 @@ def main() -> None:
         source_paths = [
             "plans/001_CONTROL_OPERATIVO.md",
             "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+            CORE_FILES[increment],
             TEST_FILES[increment],
         ]
         contracts = [
@@ -229,6 +237,15 @@ def main() -> None:
             source_paths=source_paths,
             authority=AUTHORITY,
         )
+        if increment == "T2_A":
+            payload["semantic_applicability"] = {
+                "scope": "reports/implementation/plan_006/T2_A_EVIDENCE_REUSE.json",
+                "coverage_required": "T2-A evidence reuse decision",
+                "intended_assurance": "structural and semantic reuse compatibility",
+                "environment": "REPOSITORY_LOCAL",
+                "repository_revision": payload["repository_revision"],
+            }
+            payload["evidence_identity_sha256"] = _evidence_identity(payload)
         report_path = write_baseline_report(
             ROOT,
             payload,

@@ -64,6 +64,15 @@ class TestFailClosed:
         with pytest.raises(ValueError, match="UNKNOWN_EXISTING_CAPABILITY"):
             analyze_gaps(ROOT, decision_need="X", existing_capability="unicorn_engine")
 
+    def test_semantic_probe_failure_is_not_already_covered(self, tmp_path):
+        (tmp_path / "config").mkdir(parents=True)
+        (tmp_path / "src/core").mkdir(parents=True)
+        (tmp_path / "config/delegation_policy.json").write_text("{}", encoding="utf-8")
+        (tmp_path / "src/core/delegation_policy.py").write_text("pass", encoding="utf-8")
+        finding = analyze_gaps(tmp_path, decision_need="DECISION_INLINE_DELEGATE_ESCALATE", existing_capability="delegation_policy")
+        assert finding.classification == PARTIALLY_COVERED
+        assert finding.reason == "SURFACE_PRESENT_SEMANTIC_PROBE_FAILED"
+
     def test_unexpected_real_gap_raises(self):
         result = run_gap_analysis(ROOT, probe={"DECISION_INLINE_DELEGATE_ESCALATE": "routing_policy"})
         assert_no_gap_without_evidence(result)

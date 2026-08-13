@@ -18,6 +18,9 @@ from src.core.contract_validation import load_schema, validate_against_schema
 from src.core.execution_preflight import preflight_controlled_execution
 from src.core.replay_protection import mark_mission_reservation
 
+REAL_EXTERNAL_PROVIDERS = {"ollama", "deepseek", "openai_compatible"}
+TECHNICAL_HARNESS_PROVIDERS = {"mock", "agent_handoff", "agent_executor"}
+
 B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
     "ANALYSIS_PRODUCER": "analysis",
     "CURATION_PRODUCER": "curation",
@@ -351,11 +354,35 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
                 },
             )
         _apply_route_resolution(request, route)
+    resolved_authorization = preflight.get("authorization")
+    if resolved_authorization is not None and callable(getattr(resolved_authorization, "verify", None)) and request.execution_profile and request.execution_route:
+        try:
+            resolved_authorization.verify(
+                repository_root,
+                capability_id=str(request.capability_id),
+                role_id=str(request.role),
+                operation=str(request.config.get("mission_operation") or "EXECUTE_CAPABILITY"),
+                execution_profile_id=str(request.execution_profile),
+                execution_route=str(request.execution_route),
+                execution_interface=str(request.config.get("execution_interface") or "UNSPECIFIED_INTERFACE"),
+            )
+        except PermissionError as exc:
+            return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=f"ROUTE_NOT_AUTHORIZED_AFTER_RESOLUTION:{exc}")
     provider_name = resolve_provider(request)
     if not provider_name:
         return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error="no hay ruta real configurada")
     if provider_name not in KNOWN_PROVIDERS:
         return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, error="provider desconocido")
+    if provider_name in REAL_EXTERNAL_PROVIDERS and resolved_authorization is None:
+        return _result(
+            request,
+            provider_name,
+            ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR,
+            started,
+            manifest,
+            error=f"ENTRY_FAIL_CLOSED:REAL_PROVIDER_WITHOUT_MISSION_AUTHORIZATION:{provider_name}",
+            usage=_availability_metadata("ENTRY_FAIL_CLOSED:REAL_PROVIDER_WITHOUT_MISSION_AUTHORIZATION"),
+        )
     if provider_name == "agent_handoff":
         run_id = f"RUN-AI-{uuid.uuid4().hex}"
         try:

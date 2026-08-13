@@ -128,12 +128,51 @@ class TestVerificationBudget:
 
 class TestLowestSufficientRoute:
     def test_profile_traceable_when_observable(self):
-        decision = make_execution_decision(task=_task(execution_profile_id="PROFILE_FAST"))
+        decision = make_execution_decision(
+            task=_task(
+                execution_profile_id="PROFILE_FAST",
+                authorized_candidate_set=["PROFILE_FAST"],
+                owner_route_selection_authority=False,
+            )
+        )
         assert decision.profile_traceability == "TRACEABLE"
 
     def test_profile_not_observable_when_absent(self):
         decision = make_execution_decision(task=_task())
         assert decision.profile_traceability == "NOT_OBSERVABLE"
+
+    def test_authorized_route_is_selected_when_owner_delegates_selection(self):
+        decision = make_execution_decision(
+            task=_task(
+                authorized_candidate_set=["PROFILE_FAST"],
+                execution_profile_id="PROFILE_FAST",
+                owner_route_selection_authority=False,
+            )
+        )
+        assert decision.routing_status == "SELECTED"
+        assert decision.selected_profile == "PROFILE_FAST"
+        assert decision.profile_traceability == "TRACEABLE"
+
+    def test_profile_outside_authorized_set_blocks_route(self):
+        decision = make_execution_decision(
+            task=_task(
+                authorized_candidate_set=["PROFILE_FAST"],
+                execution_profile_id="PROFILE_SLOW",
+            )
+        )
+        assert decision.routing_status == "BLOCKED"
+        assert decision.selected_profile is None
+
+
+class TestContextBudget:
+    def test_context_budget_is_exposed(self):
+        decision = make_execution_decision(task=_task(resolved_context_size=128, context_budget_bytes=64))
+        assert decision.context_budget_status == "BUDGET_EXCEEDED"
+        assert "CONTEXT_BUDGET_EXCEEDED" in decision.reasons
+
+    def test_context_budget_within_limit(self):
+        decision = make_execution_decision(task=_task(resolved_context_size=64, context_budget_bytes=64))
+        assert decision.context_budget_status == "WITHIN_BUDGET"
 
 
 class TestSequentialVsParallel:

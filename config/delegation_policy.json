@@ -1,0 +1,16 @@
+{
+  "policy_version": "1.0.0",
+  "decision_values": ["INLINE", "DELEGATE", "ESCALATE"],
+  "default_delegation_depth": 1,
+  "max_delegation_depth": 1,
+  "deterministic_precedence": true,
+  "owner_authority_preserved": true,
+  "provider_neutral": true,
+  "trivial_task_default": "INLINE",
+  "fail_closed_conditions": [
+    "AUTHORITY_CONFLICT",
+    "SCOPE_UNAUTHORIZED",
+    "CAPABILITY_UNAVAILABLE",
+    "DEPTH_EXCEEDED"
+  ]
+}

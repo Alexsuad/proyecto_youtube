@@ -14,7 +14,6 @@ sys.path.insert(0, str(ROOT))
 
 from src.core.contract_validation import validate_against_schema
 from src.core.lean_measurement import build_baseline_report, build_measurement_contract, write_baseline_report
-from src.core.plan_006_closure_check import run_closure_check
 
 METRICS = {
     "mission_wall_time": "NOT_OBSERVABLE",
@@ -77,17 +76,7 @@ CONTRACTS = [
     ),
 ]
 
-CLOSURE_FINDINGS_JSON = {
-    "closure_overall": None,
-    "closure_findings": [],
-}
-
-
 def main() -> None:
-    closure = run_closure_check(ROOT, mission_id="PLAN_006_T5_MEASURED_OPENCODE_PILOT")
-    CLOSURE_FINDINGS_JSON["closure_overall"] = closure.overall
-    CLOSURE_FINDINGS_JSON["closure_findings"] = closure.to_dict()["findings"]
-
     payload = build_baseline_report(
         ROOT,
         mission_id="PLAN_006_T5_MEASURED_OPENCODE_PILOT",
@@ -108,7 +97,6 @@ def main() -> None:
             "wall_time/context sizes recorded NOT_OBSERVABLE (harness does not surface them deterministically)",
         ],
     )
-    payload["metrics"]["closure_report_json"] = json.dumps(CLOSURE_FINDINGS_JSON, sort_keys=True)
     payload["evidence_identity_sha256"] = _identity(payload)
     report_path = write_baseline_report(
         ROOT,
@@ -119,7 +107,7 @@ def main() -> None:
     if errors:
         raise SystemExit(f"SCHEMA_ERROR: {errors}")
     print(f"OK -> {report_path}")
-    print("CLOSURE OVERALL:", closure.overall)
+    print("PILOT ASSURANCE: MEASURED_PILOT_NOT_FINAL_CLOSURE")
 
 
 def _identity(payload: dict) -> str:

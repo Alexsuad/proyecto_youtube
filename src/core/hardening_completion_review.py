@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from src.core.evidence_freshness import check_report_freshness, validate_evidence_report
+from src.core.evidence_freshness import check_transitive_freshness, validate_evidence_report
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORTS = (
@@ -36,7 +36,7 @@ def _canonical(value: Any) -> bytes:
 def _assess_report(root: Path, name: str, accepted_results: set[str]) -> dict[str, Any]:
     path = root / "reports/implementation/plan_004" / name
     data, structural = validate_evidence_report(root, path)
-    freshness = check_report_freshness(root, path)
+    freshness = check_transitive_freshness(root, path)
     findings = list(structural)
     if freshness["status"] != "FRESH":
         findings.append(f"FRESHNESS_{freshness['status']}")

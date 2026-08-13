@@ -135,6 +135,11 @@ class MissionAuthorization:
         execution_interface: str | None = None,
     ) -> None:
         repository_root = Path(root).resolve()
+        # The dataclass is immutable, but a caller can still construct or
+        # replace an instance in memory.  Never treat those fields as
+        # authoritative unless they still match the signed scope snapshot.
+        if scope_checksum(self.scope_payload()) != self.authorized_scope_sha256:
+            raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authorized scope checksum")
         if self.contract_path:
             contract_file = Path(self.contract_path)
             if not contract_file.is_absolute():
