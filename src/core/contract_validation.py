@@ -417,6 +417,125 @@ def validate_human_publication_approval(data: Dict[str, Any]) -> List[str]:
     return violations
 
 
+_CONTRADICTION_DISPOSITION_ROUTES = {
+    "RESOLVED": "AUTHORIZE_INTENDED_USE_ONLY",
+    "CONTROVERSY": "RESTRICT_FORMULATION_AND_DISCLOSE",
+    "LIMITED": "RESTRICT_FORMULATION_AND_DISCLOSE",
+    "RIVAL": "RESTRICT_FORMULATION_AND_DISCLOSE",
+    "INVESTIGATION_REQUIRED": "RETURN_TO_RESEARCH",
+    "BLOCKED": "REMOVE_REPLACE_OR_REFORMULATE",
+}
+_CONTRADICTION_OPEN_TREATMENTS = {"OPEN", "INVESTIGATE", "BLOCKED"}
+
+
+def validate_contradiction_disposition(
+    contradiction: Dict[str, Any],
+    known_source_ids: Optional[set[str]] = None,
+    known_evidence_ids: Optional[set[str]] = None,
+    known_claim_ids: Optional[set[str]] = None,
+) -> List[str]:
+    """Valida IR4-008/IR4-009 sin crear una autoridad paralela de evidencia."""
+    violations: List[str] = []
+    required = (
+        "affected_claim_ids", "conflicting_source_refs", "discrepancy_kind", "materiality", "disposition",
+        "compared_positions", "decision_evidence_refs", "contrary_evidence_refs", "disposition_justification",
+        "return_route", "return_route_code", "invalidator_codes",
+    )
+    missing = [field for field in required if field not in contradiction or contradiction.get(field) in (None, "", [])]
+    if missing:
+        violations.append(f"Contradicción requiere disposición trazable; faltan: {', '.join(missing)}.")
+        return violations
+
+    disposition = contradiction.get("disposition")
+    route = contradiction.get("return_route_code")
+    expected_route = _CONTRADICTION_DISPOSITION_ROUTES.get(disposition)
+    if expected_route is None:
+        violations.append(f"Disposición de contradicción no canónica: {disposition}.")
+    elif route != expected_route:
+        violations.append(f"Disposición {disposition} requiere return_route_code={expected_route}.")
+
+    source_ids = set(known_source_ids or set())
+    evidence_ids = set(known_evidence_ids or set()) | source_ids
+    claim_ids = set(known_claim_ids or set())
+    conflicting = set(contradiction.get("conflicting_source_refs", []))
+    declared_sources = set(contradiction.get("source_refs", []))
+    if len(conflicting) < 2:
+        violations.append("Una contradicción requiere al menos dos fuentes materiales en conflicto.")
+    if not conflicting.issubset(declared_sources):
+        violations.append("conflicting_source_refs debe estar declarado también en source_refs.")
+    unknown_sources = conflicting - source_ids
+    if unknown_sources:
+        violations.append(f"Contradicción referencia fuentes desconocidas: {', '.join(sorted(unknown_sources))}.")
+    affected_claims = set(contradiction.get("affected_claim_ids", []))
+    unknown_claims = affected_claims - claim_ids
+    if unknown_claims:
+        violations.append(f"Contradicción referencia claims no declarados: {', '.join(sorted(unknown_claims))}.")
+
+    positions = contradiction.get("compared_positions")
+    if not isinstance(positions, list) or len(positions) < 2:
+        violations.append("IR4-009 requiere comparación explícita de al menos dos posiciones materiales.")
+        positions = []
+    position_ids = [item.get("position_id") for item in positions if isinstance(item, dict)]
+    if len(position_ids) != len(set(position_ids)):
+        violations.append("Las posiciones comparadas deben tener position_id únicos.")
+    position_sources: set[str] = set()
+    treatments: set[str] = set()
+    for position in positions:
+        if not isinstance(position, dict):
+            violations.append("Cada posición comparada debe ser estructurada.")
+            continue
+        position_sources.update(position.get("source_refs", []))
+        treatments.add(position.get("treatment"))
+        if not set(position.get("source_refs", [])).issubset(source_ids):
+            violations.append(f"Posición comparada referencia fuentes desconocidas: {position.get('position_id')}.")
+    if not conflicting.issubset(position_sources):
+        violations.append("La comparación debe tratar explícitamente todas las fuentes en conflicto.")
+
+    decision_refs = set(contradiction.get("decision_evidence_refs", []))
+    contrary_refs = set(contradiction.get("contrary_evidence_refs", []))
+    if not decision_refs.issubset(evidence_ids):
+        violations.append("decision_evidence_refs contiene evidencia no declarada.")
+    if not contrary_refs.issubset(evidence_ids):
+        violations.append("contrary_evidence_refs contiene evidencia no declarada.")
+    if not (decision_refs & conflicting):
+        violations.append("La decisión debe citar al menos una fuente en conflicto.")
+    if not (contrary_refs & conflicting):
+        violations.append("La evidencia contraria debe citar explícitamente una fuente en conflicto.")
+
+    materiality = contradiction.get("materiality")
+    if materiality in {"MATERIAL", "CRITICAL"} and not contrary_refs:
+        violations.append("Una contradicción material requiere evidencia contraria explícita.")
+    if disposition in {"CONTROVERSY", "LIMITED", "RIVAL"} and not contradiction.get("remaining_limitations"):
+        violations.append(f"{disposition} requiere remaining_limitations explícitas.")
+    if disposition in {"INVESTIGATION_REQUIRED", "BLOCKED"} and not contradiction.get("pending_matters") and disposition == "INVESTIGATION_REQUIRED":
+        violations.append("INVESTIGATION_REQUIRED requiere pending_matters concretos.")
+    if disposition != "RESOLVED" and not contradiction.get("revalidation_requirements"):
+        violations.append(f"{disposition} requiere revalidation_requirements explícitos.")
+    if disposition == "RESOLVED" and treatments & _CONTRADICTION_OPEN_TREATMENTS:
+        violations.append("Una contradicción RESOLVED no puede conservar posiciones OPEN, INVESTIGATE o BLOCKED.")
+    if disposition == "CONTROVERSY" and not (treatments & {"OPEN", "RETAINED"}):
+        violations.append("CONTROVERSY debe conservar explícitamente una posición rival u abierta.")
+    if disposition == "RIVAL" and "OPEN" not in treatments:
+        violations.append("RIVAL debe conservar explícitamente una posición rival abierta.")
+    if disposition in {"CONTROVERSY", "RIVAL"}:
+        active_sources = {
+            source_ref
+            for position in positions
+            if isinstance(position, dict)
+            if position.get("treatment") in {"OPEN", "RETAINED", "LIMITED", "INVESTIGATE", "BLOCKED"}
+            for source_ref in position.get("source_refs", [])
+        }
+        if not (contrary_refs & active_sources):
+            violations.append("La evidencia contraria no puede proceder únicamente de posiciones descartadas.")
+    if disposition == "LIMITED" and not (treatments & {"LIMITED", "RETAINED"}):
+        violations.append("LIMITED debe conservar la posición tratada y su restricción explícita.")
+    if disposition == "INVESTIGATION_REQUIRED" and not (treatments & {"INVESTIGATE", "OPEN"}):
+        violations.append("INVESTIGATION_REQUIRED debe conservar una posición pendiente de investigación.")
+    if disposition == "BLOCKED" and not (treatments & {"BLOCKED", "OPEN"}):
+        violations.append("BLOCKED debe conservar la posición que impide el uso.")
+    return violations
+
+
 def validate_research_pack(data: Dict[str, Any]) -> List[str]:
     """
     Valida el contrato ResearchPack (B1-C17).
@@ -435,6 +554,15 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
     if len(source_ids) != len(set(source_ids)):
         violations.append("ResearchPack contiene source_id duplicados.")
     known_sources = set(source_ids)
+    known_research_ids = {
+        item.get("item_id")
+        for category in (
+            "facts", "interpretations", "hypotheses", "contradictions", "alternative_views",
+            "narrative_evidence", "external_reality_evidence", "claims_candidates", "narrative_opportunities",
+        )
+        for item in data.get(category, [])
+        if isinstance(item, dict) and item.get("item_id")
+    }
     for category in categories:
         entries = data.get(category, [])
         if not isinstance(entries, list):
@@ -448,6 +576,19 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
                     violations.append(
                         f"ResearchPack.{category}[{index}] referencia una fuente desconocida: '{source_ref}'."
                     )
+    known_claim_ids = set()
+    claims = data.get("critical_claims_assessment", {})
+    for entry in data.get("claims_candidates", []):
+        if isinstance(entry, dict) and entry.get("item_id"):
+            known_claim_ids.add(entry["item_id"])
+    if isinstance(claims, dict):
+        known_claim_ids.update(claims.get("claim_ids", []))
+    for index, contradiction in enumerate(data.get("contradictions", [])):
+        if isinstance(contradiction, dict):
+            violations.extend(
+                f"ResearchPack.contradictions[{index}]: {item}"
+                for item in validate_contradiction_disposition(contradiction, known_sources, known_research_ids, known_claim_ids)
+            )
 
     required_dimensions = {
         "CENTRAL_QUESTION", "CONFLICT", "INITIAL_HYPOTHESIS",
@@ -469,7 +610,6 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
             required = ("limitation_or_pending", "editorial_impact", "scope_decision", "propagated_constraint")
             if any(not entry.get(field) or entry.get(field) == "NONE" for field in required) or entry.get("editorial_impact") == "NOT_APPLICABLE":
                 violations.append(f"Coverage parcial {entry.get('dimension_id')} requiere falta, impacto editorial, decisión de alcance y restricción propagada.")
-    claims = data.get("critical_claims_assessment", {})
     if isinstance(claims, dict) and claims.get("status") == "IDENTIFIED" and not claims.get("claim_ids"):
         violations.append("Critical claims identificados requieren claim_ids concretos.")
     if isinstance(claims, dict) and claims.get("status") == "NONE_JUSTIFIED":
@@ -477,13 +617,6 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
             violations.append("La ausencia de claims críticos requiere justificación e impacto editorial explícitos.")
 
     # IR1-002: el mapa de criticidad debe referenciar claims declaradas en el pack.
-    known_claim_ids = set()
-    for entry in data.get("claims_candidates", []):
-        if isinstance(entry, dict) and entry.get("item_id"):
-            known_claim_ids.add(entry["item_id"])
-    if isinstance(claims, dict):
-        known_claim_ids.update(claims.get("claim_ids", []))
-
     editorial_uses = data.get("editorial_uses")
     if isinstance(editorial_uses, dict):
         criticality_map = editorial_uses.get("criticality_map", {})

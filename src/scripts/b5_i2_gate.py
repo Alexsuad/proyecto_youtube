@@ -10,7 +10,7 @@ from typing import Any
 
 from src.ai.manifest import canonical_json, manifest_checksum as _shared_manifest_checksum
 
-from src.core.contract_validation import validate_against_schema, validate_research_stop_decision
+from src.core.contract_validation import validate_against_schema, validate_research_pack, validate_research_stop_decision
 from src.core.gate_result import GateResult
 from src.core.gate_runtime import run_gate
 from src.core.input_validation import InputRequirement, validate_inputs
@@ -389,6 +389,7 @@ def evaluate(
         violations.extend(f"{name}: {item}" for item in validate_against_schema(data[name], schema))
     for index, item in enumerate(data["analyses"]):
         violations.extend(f"analysis[{index}]: {value}" for value in validate_against_schema(item, "narrative_human_analysis"))
+    violations.extend(f"research: {item}" for item in validate_research_pack(data["research"]))
 
     audit_checksum_sources = {
         "brief_checksum": b5_i1["brief"],

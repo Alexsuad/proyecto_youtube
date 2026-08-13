@@ -817,6 +817,23 @@ def test_research_closure_does_not_fabricate_aggregate_decision(tmp_path: Path) 
     assert any("canonical aggregate ResearchStopDecision" in item for item in result.violations)
 
 
+def test_b5_i2_consumes_research_pack_contradiction_disposition(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    research = _read(paths["research"])
+    research["contradictions"] = [{
+        "item_id": "X1",
+        "statement": "Fuentes en conflicto.",
+        "source_refs": ["S1"],
+        "locator": "p. 1",
+        "confidence": "HIGH",
+    }]
+    _put(paths["research"], research)
+    _refresh_b5_i2_audit(paths)
+    result = _evaluate(paths)
+    assert result.status is GateStatus.FAIL
+    assert any("disposición trazable" in item for item in result.violations)
+
+
 def _mutate(paths: dict[str, Path], name: str, mutate, refresh: bool = True) -> None:
     value = _read(paths[name])
     mutate(value)
