@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_006",
+  "artifact_id": "PLAN_006_T2-A",
+  "mission_id": "PLAN_006_T2_A_EVIDENCE_REUSE",
+  "increment": "T2-A",
+  "repository_revision": "WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T10:49:33.149624Z",
+  "source_inputs": [
+    {
+      "path": "plans/001_CONTROL_OPERATIVO.md",
+      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+    },
+    {
+      "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+    },
+    {
+      "path": "tests/core/test_plan_006_t2a_evidence_reuse.py",
+      "sha256": "9b96c0cf63e1c3bfd47486e7941150dc387b9ad6ab4d13765449c96f9c70d0aa"
+    }
+  ],
+  "evidence_refs": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+    "tests/core/test_plan_006_t2a_evidence_reuse.py"
+  ],
+  "limitations": [],
+  "result": "PASS",
+  "metrics": {
+    "mission_wall_time": "NOT_OBSERVABLE",
+    "commands_executed": 1,
+    "unique_tests_or_test_groups_executed": 6,
+    "tests_repeated_equivalently": 0,
+    "full_suite_runs": 0,
+    "targeted_suite_runs": 1,
+    "gates_executed": 0,
+    "resolved_context_size": "NOT_OBSERVABLE",
+    "estimated_tokens_method": "UTF8_BYTES_DIVIDED_BY_4",
+    "context_references_count": 4,
+    "context_expansions": 0,
+    "delegation_decision": "INLINE",
+    "findings_before_completion": 2,
+    "findings_after_completion": 0,
+    "false_convergence_events": 0,
+    "initial_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "final_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "actual_git_diff_files": 2,
+    "staged_files": 0,
+    "commit_count": 0
+  },
+  "phases": {
+    "context_discovery": {
+      "present": true
+    },
+    "planning_reasoning": {
+      "present": true
+    },
+    "implementation": {
+      "present": true
+    },
+    "deterministic_validation": {
+      "present": true
+    },
+    "independent_review": {
+      "status": "PENDING"
+    },
+    "repair": {
+      "iterations": 0
+    },
+    "revalidation": {
+      "present": true
+    },
+    "git_operations": {
+      "status": "PENDING"
+    }
+  },
+  "measurement_contracts": [
+    {
+      "metric": "evidence_reuse_decision",
+      "baseline": "FAIL_CLOSED_ON_STALE_OR_UNCOVERED",
+      "comparison_unit": "decision",
+      "capture_method": "check_plan_006_report_freshness + evaluate_evidence_reuse",
+      "observability": "MEASURED",
+      "decision_rule": "REUSE solo si FRESH y coverage compatible",
+      "evidence_reference": "reports/implementation/plan_006/T2_A_EVIDENCE_REUSE.json"
+    }
+  ],
+  "authority": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
+  },
+  "evidence_identity_sha256": "ef60564255797bcc54feaa56476fa0395986a1c0b2e200b9a967c08264a8c642"
+}

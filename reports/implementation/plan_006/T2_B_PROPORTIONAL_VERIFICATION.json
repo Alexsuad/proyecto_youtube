@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_006",
+  "artifact_id": "PLAN_006_T2-B",
+  "mission_id": "PLAN_006_T2_B_PROPORTIONAL_VERIFICATION",
+  "increment": "T2-B",
+  "repository_revision": "WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T10:49:33.161737Z",
+  "source_inputs": [
+    {
+      "path": "plans/001_CONTROL_OPERATIVO.md",
+      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+    },
+    {
+      "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+    },
+    {
+      "path": "tests/core/test_plan_006_t2b_proportional_verification.py",
+      "sha256": "a8f0d5f1c783e75d1c988d68a9c33598e7f6dbf9e0b51aabc4662d274e222e08"
+    }
+  ],
+  "evidence_refs": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+    "tests/core/test_plan_006_t2b_proportional_verification.py"
+  ],
+  "limitations": [],
+  "result": "PASS",
+  "metrics": {
+    "mission_wall_time": "NOT_OBSERVABLE",
+    "commands_executed": 1,
+    "unique_tests_or_test_groups_executed": 7,
+    "tests_repeated_equivalently": 0,
+    "full_suite_runs": 0,
+    "targeted_suite_runs": 1,
+    "gates_executed": 0,
+    "resolved_context_size": "NOT_OBSERVABLE",
+    "estimated_tokens_method": "UTF8_BYTES_DIVIDED_BY_4",
+    "context_references_count": 4,
+    "context_expansions": 0,
+    "delegation_decision": "INLINE",
+    "findings_before_completion": 1,
+    "findings_after_completion": 0,
+    "false_convergence_events": 0,
+    "initial_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "final_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "actual_git_diff_files": 2,
+    "staged_files": 0,
+    "commit_count": 0
+  },
+  "phases": {
+    "context_discovery": {
+      "present": true
+    },
+    "planning_reasoning": {
+      "present": true
+    },
+    "implementation": {
+      "present": true
+    },
+    "deterministic_validation": {
+      "present": true
+    },
+    "independent_review": {
+      "status": "PENDING"
+    },
+    "repair": {
+      "iterations": 0
+    },
+    "revalidation": {
+      "present": true
+    },
+    "git_operations": {
+      "status": "PENDING"
+    }
+  },
+  "measurement_contracts": [
+    {
+      "metric": "verification_plan_step",
+      "baseline": "DIRECT_IMPACT -> TARGETED_SUITE",
+      "comparison_unit": "step",
+      "capture_method": "build_verification_plan",
+      "observability": "MEASURED",
+      "decision_rule": "escalar solo si material_dependency != NO_MATERIAL_IMPACT",
+      "evidence_reference": "reports/implementation/plan_006/T2_B_PROPORTIONAL_VERIFICATION.json"
+    }
+  ],
+  "authority": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
+  },
+  "evidence_identity_sha256": "f3c71886107edc23005aa60f763a5b00571b06637b99d95d8777b90f76018446"
+}
