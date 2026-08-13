@@ -4,28 +4,28 @@
   "artifact_id": "PLAN_006_T0_BASELINE",
   "mission_id": "PLAN_006_T0_IMPLEMENTATION",
   "increment": "T0_BASELINE",
-  "repository_revision": "WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T10:29:23.862099Z",
+  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T21:59:32.195086Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
-      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+      "sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129"
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
     },
     {
       "path": "src/core/lean_measurement.py",
-      "sha256": "b3f08c7e87f1ff816c7822659e51329a45f62fd9bd9bc4896c7456997b678d18"
+      "sha256": "9feb217b4ebfe612ada5a81143669c45ff530fa2460a73f433992e5ab6fab36a"
     },
     {
       "path": "src/core/historical_completion.py",
-      "sha256": "d3664e94787e9e981a567055453e74d2deb643f9f863c0a013ac4f144172052c"
+      "sha256": "02daac69b07e52a89e01c58d1d119d73acc9b403afff8f5f6bee1557de389439"
     },
     {
       "path": "config/execution_benchmark_matrix.json",
-      "sha256": "c2d5eb98cf8e812fa7d7b9557e255807dbf1dd369ffb4cd6fc75b6ad20aa27bd"
+      "sha256": "f27583cd51950c78df04922e4a945fb5a20bfe8cd224340d4125f4a46b26ead6"
     }
   ],
   "evidence_refs": [
@@ -120,5 +120,5 @@
       "evidence_reference": "reports/implementation/plan_006/T0_BASELINE.json"
     }
   ],
-  "evidence_identity_sha256": "49eb6c9170dce55d5ea80eeb1bbf980a8ee6f5b9c82f49744eeebaac6c0b56e3"
+  "evidence_identity_sha256": "d35dc28c73693bba272e7fe2b58a44040903d09d29cdddf4ad1c5d47adfd38c8"
 }
