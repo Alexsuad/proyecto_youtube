@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_006",
+  "artifact_id": "PLAN_006_T4",
+  "mission_id": "PLAN_006_T4_RESOURCE_AWARE_DECISION",
+  "increment": "T4",
+  "repository_revision": "WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T10:58:20.065875Z",
+  "source_inputs": [
+    {
+      "path": "plans/001_CONTROL_OPERATIVO.md",
+      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+    },
+    {
+      "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+    },
+    {
+      "path": "src/core/resource_aware_decision.py",
+      "sha256": "447291f71a7fb7d49b55a3018ad2f67d0aa19e3d53fd11ff61344b95dd07e2a0"
+    },
+    {
+      "path": "src/core/delegation_policy.py",
+      "sha256": "f7d0611580c19bf88f1603c530ca7ff13661f2a71853065d6609becc7fb2d1be"
+    },
+    {
+      "path": "src/core/review_workload.py",
+      "sha256": "eeed27f25a4be16792af5e04bdd5b6fea6a80b43818cd9db262255b74b37f13a"
+    }
+  ],
+  "evidence_refs": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+    "src/core/resource_aware_decision.py",
+    "src/core/delegation_policy.py",
+    "src/core/review_workload.py"
+  ],
+  "limitations": [
+    "T5 pilot not yet executed; decision validated in controlled tests only"
+  ],
+  "result": "PASS",
+  "metrics": {
+    "mission_wall_time": "NOT_OBSERVABLE",
+    "commands_executed": 2,
+    "unique_tests_or_test_groups_executed": 18,
+    "tests_repeated_equivalently": 0,
+    "full_suite_runs": 0,
+    "targeted_suite_runs": 1,
+    "gates_executed": 0,
+    "resolved_context_size": "NOT_OBSERVABLE",
+    "estimated_tokens_method": "UTF8_BYTES_DIVIDED_BY_4",
+    "context_references_count": 6,
+    "context_expansions": 0,
+    "delegation_decision": "INLINE",
+    "findings_before_completion": 3,
+    "findings_after_completion": 0,
+    "false_convergence_events": 0,
+    "initial_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "final_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "actual_git_diff_files": 2,
+    "staged_files": 0,
+    "commit_count": 0,
+    "execution_decision_json": "{\"decision_order\": [\"DETERMINISTIC_SUFFICIENT\", \"SEMANTIC_REASONING_REQUIRED\", \"SMALL_AND_LOW_RISK\", \"SEPARABLE_AND_ADDS_VALUE\", \"AUTHORIZED_CANDIDATE\", \"REVIEW_FLOOR\", \"LOWEST_SUFFICIENT_PROFILE\", \"SEQUENTIAL_VS_PARALLEL\"], \"evidence_reuse_decision\": null, \"profile_traceability\": \"NOT_OBSERVABLE\", \"reasons\": [\"INLINE_LOW_RISK_OR_DETERMINISTIC\", \"REVIEW_FLOOR:SELF_ONLY\"], \"review_floor\": \"SELF_ONLY\", \"sequential_or_parallel\": \"SEQUENTIAL\", \"topology\": \"INLINE\", \"verification_materiality\": \"PARTIAL_DEPENDENCY_IMPACT\", \"verification_steps\": [\"DIRECT_CHECK_OR_ADVERSARIAL_INVARIANT\", \"TARGETED_MODULE_TESTS\", \"AFFECTED_CONSUMER_REGRESSION\", \"GIT_DIFF_CHECK\"]}"
+  },
+  "phases": {
+    "context_discovery": {
+      "present": true
+    },
+    "planning_reasoning": {
+      "present": true
+    },
+    "implementation": {
+      "present": true
+    },
+    "deterministic_validation": {
+      "present": true
+    },
+    "independent_review": {
+      "status": "PENDING"
+    },
+    "repair": {
+      "iterations": 1
+    },
+    "revalidation": {
+      "present": true
+    },
+    "git_operations": {
+      "status": "PENDING"
+    }
+  },
+  "measurement_contracts": [
+    {
+      "metric": "execution_topology",
+      "baseline": "INLINE/DELEGATE/ESCALATE bounded by authorization",
+      "comparison_unit": "decision",
+      "capture_method": "make_execution_decision composing choose_delegation + review + verification",
+      "observability": "MEASURED",
+      "decision_rule": "reproducible; never creates functional authority; review floor never degrades",
+      "evidence_reference": "reports/implementation/plan_006/T4_RESOURCE_AWARE_DECISION.json"
+    }
+  ],
+  "authority": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
+  },
+  "evidence_identity_sha256": "80bd89211331bc69501b369108961f8c107d613a0d3ce0a0fa9838b905153e89"
+}

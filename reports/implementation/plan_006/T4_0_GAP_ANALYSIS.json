@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_006",
+  "artifact_id": "PLAN_006_T4-0",
+  "mission_id": "PLAN_006_T4_0_GAP_ANALYSIS",
+  "increment": "T4-0",
+  "repository_revision": "WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T10:55:25.706246Z",
+  "source_inputs": [
+    {
+      "path": "plans/001_CONTROL_OPERATIVO.md",
+      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+    },
+    {
+      "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+    },
+    {
+      "path": "src/core/gap_analysis.py",
+      "sha256": "47a96cf404cbd1d3e06ad8181c7b97dfaa52f470014cb17c68b5c72bae187782"
+    },
+    {
+      "path": "config/delegation_policy.json",
+      "sha256": "b9cce40e20e64143335cd9e24ed749ebb3a9607d8652dfffb170075b532ad239"
+    },
+    {
+      "path": "config/agent_execution_profiles.json",
+      "sha256": "6f1809d92fc658a8c5f5afe1946fd85328fab24c7da2cdc753a78d48bf9fc6ff"
+    }
+  ],
+  "evidence_refs": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+    "src/core/gap_analysis.py",
+    "config/delegation_policy.json",
+    "config/agent_execution_profiles.json"
+  ],
+  "limitations": [],
+  "result": "PASS",
+  "metrics": {
+    "mission_wall_time": "NOT_OBSERVABLE",
+    "commands_executed": 2,
+    "unique_tests_or_test_groups_executed": 13,
+    "tests_repeated_equivalently": 0,
+    "full_suite_runs": 0,
+    "targeted_suite_runs": 1,
+    "gates_executed": 0,
+    "resolved_context_size": "NOT_OBSERVABLE",
+    "estimated_tokens_method": "UTF8_BYTES_DIVIDED_BY_4",
+    "context_references_count": 6,
+    "context_expansions": 0,
+    "delegation_decision": "INLINE",
+    "findings_before_completion": 0,
+    "findings_after_completion": 0,
+    "false_convergence_events": 0,
+    "initial_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "final_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "actual_git_diff_files": 2,
+    "staged_files": 0,
+    "commit_count": 0,
+    "needs_analyzed": 7,
+    "real_gap_count": 0,
+    "partially_covered_count": 3,
+    "gap_findings_json": "[{\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"config/delegation_policy.json\", \"existing_capability\": \"delegation_policy\", \"need\": \"DECISION_INLINE_DELEGATE_ESCALATE\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"src/core/mission_authorization.py\", \"existing_capability\": \"mission_authorization\", \"need\": \"DELEGATION_BOUNDED_BY_AUTHORIZATION\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"src/core/review_workload.py\", \"existing_capability\": \"review_workload\", \"need\": \"REVIEW_FLOOR\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"src/core/routing_policy.py\", \"existing_capability\": \"routing_policy\", \"need\": \"ROUTING_WITHIN_AUTHORIZED_CANDIDATE_SET\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"PARTIALLY_COVERED\", \"evidence_path\": \"config/agent_execution_profiles.json\", \"existing_capability\": \"agent_execution_profiles\", \"need\": \"LOWEST_SUFFICIENT_ROUTE\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"PARTIALLY_COVERED\", \"evidence_path\": \"src/core/context_resolution.py\", \"existing_capability\": \"context_resolution\", \"need\": \"CONTEXT_BUDGET\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"PARTIALLY_COVERED\", \"evidence_path\": \"src/core/routing_policy.py\", \"existing_capability\": \"routing_policy\", \"need\": \"VERIFICATION_BUDGET\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}]",
+    "real_gaps_json": "[]"
+  },
+  "phases": {
+    "context_discovery": {
+      "present": true
+    },
+    "planning_reasoning": {
+      "present": true
+    },
+    "implementation": {
+      "present": true
+    },
+    "deterministic_validation": {
+      "present": true
+    },
+    "independent_review": {
+      "status": "PENDING"
+    },
+    "repair": {
+      "iterations": 0
+    },
+    "revalidation": {
+      "present": true
+    },
+    "git_operations": {
+      "status": "PENDING"
+    }
+  },
+  "measurement_contracts": [
+    {
+      "metric": "gap_classification",
+      "baseline": "ALREADY_COVERED / PARTIALLY_COVERED / REAL_GAP with surface evidence",
+      "comparison_unit": "need",
+      "capture_method": "run_gap_analysis + analyze_gaps against live surfaces",
+      "observability": "MEASURED",
+      "decision_rule": "implement only REAL_GAP with minimum change and evidence",
+      "evidence_reference": "reports/implementation/plan_006/T4_0_GAP_ANALYSIS.json"
+    }
+  ],
+  "authority": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
+  },
+  "evidence_identity_sha256": "a36ccd84754d7d5e0cb6d9b9758f6e1f20f61a7c1cff52b0694f0bd134232a7e"
+}
