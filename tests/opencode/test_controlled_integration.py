@@ -79,9 +79,11 @@ class ControlledOpenCodeIntegrationTests(unittest.TestCase):
         implementer_text = (ROOT / ".opencode/agents/technical-implementer.md").read_text(encoding="utf-8")
         self.assertNotIn("\npermission:", implementer_text)
         self.assertNotIn("\npermission:", reviewer_text)
+        self.assertNotIn("allowlisted inspection commands", reviewer_text)
         self.assertIn("Once the mission preflight has confirmed authorization", implementer_text)
         self.assertIn("independent, read-only technical reviewer", reviewer_text)
         self.assertIn("Never edit, correct, commit", reviewer_text)
+        self.assertIn("inspection commands and targeted tests necessary", reviewer_text)
         self.assertIn("Never push", implementer_text)
 
     def test_opencode_discovers_the_configured_agents(self) -> None:
