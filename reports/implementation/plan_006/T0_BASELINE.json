@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_006",
+  "artifact_id": "PLAN_006_T0_BASELINE",
+  "mission_id": "PLAN_006_T0_IMPLEMENTATION",
+  "increment": "T0_BASELINE",
+  "repository_revision": "WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T10:29:23.862099Z",
+  "source_inputs": [
+    {
+      "path": "plans/001_CONTROL_OPERATIVO.md",
+      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+    },
+    {
+      "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+    },
+    {
+      "path": "src/core/lean_measurement.py",
+      "sha256": "b3f08c7e87f1ff816c7822659e51329a45f62fd9bd9bc4896c7456997b678d18"
+    },
+    {
+      "path": "src/core/historical_completion.py",
+      "sha256": "d3664e94787e9e981a567055453e74d2deb643f9f863c0a013ac4f144172052c"
+    },
+    {
+      "path": "config/execution_benchmark_matrix.json",
+      "sha256": "c2d5eb98cf8e812fa7d7b9557e255807dbf1dd369ffb4cd6fc75b6ad20aa27bd"
+    }
+  ],
+  "evidence_refs": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+    "src/core/lean_measurement.py",
+    "src/core/historical_completion.py",
+    "config/execution_benchmark_matrix.json"
+  ],
+  "limitations": [
+    "No real operational mission was executed; wall time, tokens, cost, resolved context and repeated-equivalent-test counts remain NOT_OBSERVABLE per PLAN 006 §8.6.",
+    "R1-M5 is a historical negative reference benchmark only and is never reactivated as a live phase (PLAN 006 §8.7.A).",
+    "The 21 passing tests are technical harness evidence only and do not authorize product readiness."
+  ],
+  "result": "PASS",
+  "metrics": {
+    "mission_wall_time": "NOT_OBSERVABLE",
+    "phase_wall_time": "NOT_OBSERVABLE",
+    "command_wall_time": "NOT_OBSERVABLE",
+    "commands_executed": 6,
+    "unique_tests_or_test_groups_executed": "NOT_OBSERVABLE",
+    "tests_repeated_equivalently": "NOT_OBSERVABLE",
+    "full_suite_runs": "NOT_OBSERVABLE",
+    "targeted_suite_runs": "NOT_OBSERVABLE",
+    "gates_executed": 1,
+    "resolved_context_size": "NOT_OBSERVABLE",
+    "estimated_tokens_method": "NOT_OBSERVABLE",
+    "context_references_count": "NOT_OBSERVABLE",
+    "context_expansions": "NOT_OBSERVABLE",
+    "self_contained_handoffs": "NOT_OBSERVABLE",
+    "delegation_decision": "INLINE",
+    "additional_actors_used": 1,
+    "delegated_context_size": "NOT_OBSERVABLE",
+    "delegation_overhead": "NOT_OBSERVABLE",
+    "parallel_or_sequential": "SEQUENTIAL",
+    "repair_iterations": 0,
+    "revalidation_iterations": 0,
+    "findings_before_completion": 0,
+    "findings_after_completion": 0,
+    "false_convergence_events": "NOT_OBSERVABLE",
+    "initial_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "final_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
+    "actual_git_diff_files": "NOT_OBSERVABLE",
+    "staged_files": "NOT_OBSERVABLE",
+    "commit_count": 0
+  },
+  "phases": {},
+  "measurement_contracts": [
+    {
+      "metric": "full_suite_runs",
+      "baseline": "0",
+      "comparison_unit": "runs_per_mission",
+      "capture_method": "count",
+      "observability": "NOT_OBSERVABLE",
+      "decision_rule": "reduce_repeated_equivalent_full_suite_runs",
+      "evidence_reference": "reports/implementation/plan_006/T0_BASELINE.json"
+    },
+    {
+      "metric": "gates_executed",
+      "baseline": "1",
+      "comparison_unit": "gates_per_mission",
+      "capture_method": "count",
+      "observability": "MEASURED",
+      "decision_rule": "keep_proportional_to_scope",
+      "evidence_reference": "reports/implementation/plan_006/T0_BASELINE.json"
+    },
+    {
+      "metric": "tests_repeated_equivalently",
+      "baseline": "0",
+      "comparison_unit": "equivalent_runs_per_mission",
+      "capture_method": "telemetry",
+      "observability": "NOT_OBSERVABLE",
+      "decision_rule": "eliminate_repeated_equivalent_work",
+      "evidence_reference": "reports/implementation/plan_006/T0_BASELINE.json"
+    },
+    {
+      "metric": "resolved_context_size",
+      "baseline": "NOT_OBSERVABLE",
+      "comparison_unit": "bytes",
+      "capture_method": "resolved_context_manifest",
+      "observability": "NOT_OBSERVABLE",
+      "decision_rule": "minimum_sufficient_context",
+      "evidence_reference": "reports/implementation/plan_006/T0_BASELINE.json"
+    },
+    {
+      "metric": "mission_wall_time",
+      "baseline": "NOT_OBSERVABLE",
+      "comparison_unit": "seconds",
+      "capture_method": "infrastructure",
+      "observability": "NOT_OBSERVABLE",
+      "decision_rule": "attribute_time_to_phases_when_observable",
+      "evidence_reference": "reports/implementation/plan_006/T0_BASELINE.json"
+    }
+  ],
+  "evidence_identity_sha256": "49eb6c9170dce55d5ea80eeb1bbf980a8ee6f5b9c82f49744eeebaac6c0b56e3"
+}

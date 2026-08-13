@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0.0",
+  "plan_id": "PLAN_006",
+  "artifact_id": "PLAN_006_T1_HISTORICAL_COMPLETION",
+  "mission_id": "PLAN_006_T1_HISTORICAL_COMPLETION",
+  "increment": "T1",
+  "repository_revision": "WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T10:29:47.885594Z",
+  "completion_identity_sha256": "e835493b64ef6e66064c15ff7661fbbe41ec64e1a7b4c79e07830185d69a8c24",
+  "frozen_snapshot": {
+    "mission_id": "PLAN_006_T1_HISTORICAL_COMPLETION",
+    "mission_contract_sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1",
+    "authorization_artifact_sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25",
+    "authorized_scope_sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25",
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256_at_execution": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25",
+    "authority_ref": "plans/001_CONTROL_OPERATIVO.md",
+    "authority_sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25",
+    "repository_revision": "WORKTREE_UNCOMMITTED",
+    "required_test_identities": [
+      "tests/core/test_plan_006_t1_historical_completion.py"
+    ],
+    "evidence_identities": [
+      "PLAN_006_T1_HISTORICAL_COMPLETION_EVIDENCE"
+    ],
+    "git_binding": {
+      "git_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8"
+    },
+    "completion_result": "PASS",
+    "completion_generated_at": "2026-08-13T10:29:47.885594Z"
+  },
+  "technical_completion_claim": true,
+  "functional_approval_claim": false,
+  "product_readiness_claim": false,
+  "source_inputs": [
+    {
+      "path": "plans/001_CONTROL_OPERATIVO.md",
+      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+    },
+    {
+      "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+    }
+  ],
+  "evidence_refs": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md"
+  ],
+  "limitations": [],
+  "result": "PASS",
+  "evidence_identity_sha256": "e032da37e4660be5d84ae3e89d2c5d7468b7d43fcc4ffd8ee5a531bfd18d975a",
+  "owner_closure": {
+    "plan_id": "PLAN_006",
+    "artifact_id": "PLAN_006_T1_OWNER_CLOSURE",
+    "mission_id": "PLAN_006_T1_HISTORICAL_COMPLETION",
+    "increment": "T1",
+    "completion_identity_sha256": "e835493b64ef6e66064c15ff7661fbbe41ec64e1a7b4c79e07830185d69a8c24",
+    "owner_decision": "ACCEPTED_WITH_OBSERVABILITY_LIMITATION",
+    "closure_metadata": {
+      "owner": "OWNER"
+    },
+    "closure_generated_at": "2026-08-13T10:29:47.886646Z",
+    "re_executes_required_tests": false,
+    "rebuilds_historical_authorization_against_current_live_state": false,
+    "functional_approval_claim": false
+  }
+}

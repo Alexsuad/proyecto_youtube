@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/plan_006_evidence_envelope.json",
+  "title": "Plan006EvidenceEnvelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "artifact_id",
+    "mission_id",
+    "increment",
+    "repository_revision",
+    "generated_at",
+    "source_inputs",
+    "evidence_refs",
+    "limitations",
+    "result"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "minLength": 1},
+    "plan_id": {"const": "PLAN_006"},
+    "artifact_id": {"type": "string", "minLength": 1},
+    "mission_id": {"type": "string", "minLength": 1},
+    "increment": {"type": "string", "minLength": 1},
+    "repository_revision": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+        }
+      }
+    },
+    "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "result": {"type": "string", "minLength": 1},
+    "evidence_identity_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "authority": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "live_state_path": {"type": "string", "minLength": 1},
+        "live_state_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    },
+    "metrics": {"type": "object", "additionalProperties": {"type": ["integer", "number", "string"]}},
+    "phases": {"type": "object", "additionalProperties": {"type": "object"}},
+    "completion_identity_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "frozen_snapshot": {"type": "object", "additionalProperties": true},
+    "technical_completion_claim": {"type": "boolean"},
+    "functional_approval_claim": {"type": "boolean"},
+    "product_readiness_claim": {"type": "boolean"},
+    "owner_closure": {"type": "object", "additionalProperties": true},
+    "measurement_contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metric", "baseline", "comparison_unit", "capture_method", "observability", "decision_rule", "evidence_reference"],
+        "properties": {
+          "metric": {"type": "string", "minLength": 1},
+          "baseline": {"type": "string", "minLength": 1},
+          "comparison_unit": {"type": "string", "minLength": 1},
+          "capture_method": {"type": "string", "minLength": 1},
+          "observability": {"enum": ["MEASURED", "NOT_OBSERVABLE", "NOT_APPLICABLE", "UNVERIFIABLE"]},
+          "decision_rule": {"type": "string", "minLength": 1},
+          "evidence_reference": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}
