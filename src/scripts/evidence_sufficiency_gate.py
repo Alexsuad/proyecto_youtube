@@ -4,13 +4,14 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from src.core.contract_validation import validate_source_access_and_evidence_report
 from src.core.gate_result import GateResult
 from src.core.gate_runtime import run_gate
 from src.core.input_validation import InputRequirement, validate_inputs
 from src.core.status import GateStatus
+from src.core.editorial_semantic_memory import current_artifacts_from_paths, run_memory_checkpoint
 
 
 def _substantive(item: Any) -> bool:
@@ -44,7 +45,13 @@ def _all_substantive_low(report: dict) -> bool:
     )
 
 
-def evaluate(report_path: Path, artifact_id: str) -> GateResult:
+def evaluate(
+    report_path: Path,
+    artifact_id: str,
+    semantic_memory_path: Path | None = None,
+    memory_current_artifacts: Mapping[str, Mapping[str, str]] | None = None,
+    memory_candidate_ref: Mapping[str, Any] | None = None,
+) -> GateResult:
     blocked, failures, evidence = validate_inputs(
         [InputRequirement(report_path, "SourceAccessAndEvidenceReport")]
     )
@@ -95,7 +102,25 @@ def evaluate(report_path: Path, artifact_id: str) -> GateResult:
             evidence=evidence,
         )
 
-    violations = validate_source_access_and_evidence_report(report)
+    memory_warnings: list[str] = []
+    memory_path = semantic_memory_path or (report_path.parent / "editorial_semantic_memory.json")
+    episode_ref = f"episode:{report.get('episode_id')}"
+    episode_source = report_path.parent / "episode_brief.json"
+    if not episode_source.is_file():
+        episode_source = report_path
+    candidate_ref = memory_candidate_ref or {"artifact_ref": episode_ref, "version": report.get("brief_version"), "checksum": current_artifacts_from_paths({episode_ref: episode_source}, {episode_ref: report.get("brief_version")}).get(episode_ref, {}).get("checksum", "")}
+    try:
+        memory_result = run_memory_checkpoint(memory_path, candidate_ref, "PRE_FINAL_CURATION", memory_current_artifacts, {episode_ref: episode_source, f"evidence_report:{report.get('report_id')}": report_path}, {episode_ref: report.get("brief_version"), f"evidence_report:{report.get('report_id')}": report.get("brief_version")})
+    except (OSError, ValueError) as exc:
+        memory_result = {"status": "INVALIDATED", "violations": [f"MEMORY_CHECKPOINT_ERROR:{exc}"]}
+    violations = []
+    if memory_result is not None:
+        evidence["memory_checkpoint_PRE_FINAL_CURATION"] = memory_result
+        if memory_result.get("status") == "INVALIDATED":
+            violations.extend(memory_result.get("violations", []))
+        elif memory_result.get("status") == "INSUFFICIENT_HISTORY":
+            memory_warnings.append("EditorialSemanticMemory: INSUFFICIENT_HISTORY requiere revisión funcional.")
+    violations.extend(validate_source_access_and_evidence_report(report))
     evidence.update(
         {
             "report": report_path.name,
@@ -194,7 +219,7 @@ def evaluate(report_path: Path, artifact_id: str) -> GateResult:
             evidence=evidence,
         )
 
-    warnings = list(report.get("limitaciones", [])) + list(report.get("required_disclosures", []))
+    warnings = memory_warnings + list(report.get("limitaciones", [])) + list(report.get("required_disclosures", []))
     if report.get("claims_pendientes"):
         warnings.append("Existen claims pendientes declarados")
 
@@ -220,10 +245,11 @@ def main() -> int:
     parser.add_argument("--report", required=True)
     parser.add_argument("--ep-id")
     parser.add_argument("--output-root")
+    parser.add_argument("--semantic-memory")
     args = parser.parse_args()
     report = Path(args.report)
     return run_gate(
-        lambda: evaluate(report, args.ep_id or report.parent.name),
+        lambda: evaluate(report, args.ep_id or report.parent.name, Path(args.semantic_memory) if args.semantic_memory else None),
         output_root=args.output_root,
     )
 

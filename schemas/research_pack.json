@@ -137,6 +137,10 @@
       "items": {"$ref": "#/definitions/rivalAnalysis"}
     },
     "semantic_status": {"$ref": "#/definitions/semanticStatus"},
+    "phenomenon_research_stop_decision_ref": {"type": "string", "minLength": 1},
+    "aggregate_research_stop_decision_ref": {"type": "string", "minLength": 1},
+    "required_component_decision_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "research_pack_stage": {"type": "string", "enum": ["RESEARCH_IN_PROGRESS", "RESEARCH_REVIEW_PENDING", "RESEARCH_COMPLETE"]},
     "created_at": {
       "type": "string",
       "format": "date-time"
@@ -153,10 +157,12 @@
           "phenomenon",
           "editorial_uses",
           "rival_analysis",
-          "semantic_status"
+          "semantic_status",
+          "phenomenon_research_stop_decision_ref"
         ]
       }
-    }
+    },
+    {"if": {"properties": {"research_pack_stage": {"enum": ["RESEARCH_REVIEW_PENDING", "RESEARCH_COMPLETE"]}}, "required": ["research_pack_stage"]}, "then": {"required": ["aggregate_research_stop_decision_ref", "required_component_decision_refs"]}}
   ],
   "definitions": {
     "coverageEntry": {

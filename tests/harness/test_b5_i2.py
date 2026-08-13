@@ -784,6 +784,39 @@ def _evaluate(paths: dict[str, Path]):
     )
 
 
+def test_research_closure_mode_requires_explicit_stage_and_components(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    result = evaluate(
+        {key: paths[key] for key in ("brief", "research", "evidence", "audit", "provisional")},
+        [paths["analysis"]], paths["curation"], paths["thesis"], paths["script_promise"],
+        paths["b5_i2_audit"], paths["execution_registry"], EP, require_research_closure=True,
+    )
+    assert result.status is GateStatus.BLOCKED
+    assert any("research_pack_stage" in item for item in result.violations)
+    assert any("ResearchStopDecision" in item for item in result.violations)
+
+
+def test_research_closure_does_not_fabricate_aggregate_decision(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    research = _read(paths["research"])
+    research.update({
+        "research_pack_stage": "RESEARCH_COMPLETE",
+        "aggregate_research_stop_decision_ref": "RSD-AGG-1",
+        "required_component_decision_refs": ["RSD-1"],
+    })
+    _put(paths["research"], research)
+    _refresh_b5_i2_audit(paths)
+    result = evaluate(
+        {key: paths[key] for key in ("brief", "research", "evidence", "audit", "provisional")},
+        [paths["analysis"]], paths["curation"], paths["thesis"], paths["script_promise"],
+        paths["b5_i2_audit"], paths["execution_registry"], EP,
+        aggregate_decisions=[{"decision_id": "RSD-1", "sufficiency_status": "SUFFICIENT_FOR_INTENDED_USE"}],
+        require_research_closure=True,
+    )
+    assert result.status is GateStatus.BLOCKED
+    assert any("canonical aggregate ResearchStopDecision" in item for item in result.violations)
+
+
 def _mutate(paths: dict[str, Path], name: str, mutate, refresh: bool = True) -> None:
     value = _read(paths[name])
     mutate(value)

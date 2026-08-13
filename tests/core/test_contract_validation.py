@@ -211,6 +211,8 @@ class TestContractValidation(unittest.TestCase):
         pack = {
             **VALID_RESEARCH_PACK,
             "research_pack_kind": "PHENOMENON",
+            "phenomenon_research_stop_decision_ref": "RSD-PHEN-001",
+            "aggregate_research_stop_decision_ref": "RSD-AGG-001",
             "phenomenon": {
                 "phenomenon_id": "PH-001",
                 "phenomenon_kind": "CULTURAL",

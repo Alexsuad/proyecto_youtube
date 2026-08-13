@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any, Mapping
 
 from src.core.contract_validation import (
     validate_against_schema,
@@ -13,6 +14,7 @@ from src.core.gate_result import GateResult
 from src.core.gate_runtime import run_gate
 from src.core.input_validation import InputRequirement, validate_inputs
 from src.core.status import GateStatus
+from src.core.editorial_semantic_memory import current_artifacts_from_paths, run_memory_checkpoint
 from src.scripts.evidence_sufficiency_gate import evaluate as evaluate_evidence
 
 
@@ -23,6 +25,9 @@ def evaluate(
     artifact_id: str,
     research_id: str | None = None,
     ep_id: str | None = None,
+    semantic_memory_path: Path | None = None,
+    memory_current_artifacts: Mapping[str, Mapping[str, str]] | None = None,
+    memory_candidate_ref: Mapping[str, Any] | None = None,
 ) -> GateResult:
     ev = {}
 
@@ -133,7 +138,25 @@ def evaluate(
             cross_violations, evidence=ev,
         )
 
-    warnings = evidence_result.warnings[:]
+    memory_warnings: list[str] = []
+    memory_path = semantic_memory_path or (thesis_path.parent / "editorial_semantic_memory.json")
+    episode_ref = f"episode:{thesis.get('episode_id')}"
+    episode_source = thesis_path.parent / "episode_brief.json"
+    if not episode_source.is_file():
+        episode_source = thesis_path
+    candidate_ref = memory_candidate_ref or {"artifact_ref": episode_ref, "version": thesis.get("brief_version"), "checksum": current_artifacts_from_paths({episode_ref: episode_source}, {episode_ref: thesis.get("brief_version")}).get(episode_ref, {}).get("checksum", "")}
+    try:
+        memory_result = run_memory_checkpoint(memory_path, candidate_ref, "PRE_THESIS_OR_ARCHITECTURE", memory_current_artifacts, {episode_ref: episode_source, f"research:{research.get('research_id')}": research_path, f"evidence_report:{evidence_report.get('report_id')}": evidence_report_path}, {episode_ref: thesis.get("brief_version"), f"research:{research.get('research_id')}": thesis.get("brief_version"), f"evidence_report:{evidence_report.get('report_id')}": thesis.get("brief_version")})
+    except (OSError, ValueError) as exc:
+        memory_result = {"status": "INVALIDATED", "violations": [f"MEMORY_CHECKPOINT_ERROR:{exc}"]}
+    if memory_result is not None:
+        ev["memory_checkpoint_PRE_THESIS_OR_ARCHITECTURE"] = memory_result
+        if memory_result.get("status") == "INVALIDATED":
+            return GateResult("thesis_provisional_gate", artifact_id, "1.0.0", GateStatus.FAIL, "Memoria editorial invalidada", memory_result.get("violations", []), evidence=ev)
+        if memory_result.get("status") == "INSUFFICIENT_HISTORY":
+            memory_warnings.append("EditorialSemanticMemory: INSUFFICIENT_HISTORY requiere revisión funcional.")
+
+    warnings = memory_warnings + evidence_result.warnings[:]
     summary = "Tesis provisional válida"
     status = GateStatus.PASS
     if warnings:
@@ -153,6 +176,7 @@ def main() -> int:
     parser.add_argument("--research", required=True)
     parser.add_argument("--evidence-report", required=True)
     parser.add_argument("--ep-id")
+    parser.add_argument("--semantic-memory")
     parser.add_argument("--output-root")
     args = parser.parse_args()
     return run_gate(
@@ -162,6 +186,7 @@ def main() -> int:
             Path(args.evidence_report),
             args.ep_id or Path(args.thesis).parent.name,
             ep_id=args.ep_id,
+            semantic_memory_path=Path(args.semantic_memory) if args.semantic_memory else None,
         ),
         output_root=args.output_root,
     )

@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/research_stop_decision.json",
+  "title": "ResearchStopDecision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["decision_id", "decision_version", "subject_kind", "subject_ref", "intended_use", "evidence_refs", "claim_decision", "sufficiency_status", "limitations", "pending_matters", "unresolved_material_contradiction_refs", "invalidators", "return_route", "decision_basis"],
+  "properties": {
+    "decision_id": {"type": "string", "minLength": 1},
+    "decision_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "subject_kind": {"type": "string", "enum": ["PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK"]},
+    "subject_ref": {"type": "string", "minLength": 1},
+    "intended_use": {"type": "string", "minLength": 1},
+    "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "claim_decision": {"type": ["string", "null"], "enum": ["CLAIM_ALLOWED", "CLAIM_LIMITED", "CLAIM_BLOCKED", null]},
+    "sufficiency_status": {"type": "string", "enum": ["SUFFICIENT_FOR_INTENDED_USE", "LIMITED_BUT_USABLE", "MORE_RESEARCH_REQUIRED", "BLOCKED_BY_EVIDENCE"]},
+    "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "pending_matters": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "unresolved_material_contradiction_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "invalidators": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "invalidator_codes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "enum": ["CLAIM_OR_SCOPE_CHANGED", "INTENDED_USE_CHANGED", "MOVED_TO_OPENING_OR_CONCLUSION", "ADDED_TO_PACKAGING_OR_PROMISE", "THESIS_CHANGED", "WORK_VERSION_OR_ADAPTATION_CHANGED", "NEW_MATERIAL_EVIDENCE", "SOURCE_WITHDRAWN_OR_STALE", "UNDECLARED_SOURCE_DERIVATION", "MATERIAL_CONTRADICTION_FOUND", "TRANSLATION_OR_TRANSCRIPTION_CHANGED", "SENSITIVITY_OR_RISK_INCREASED", "CAUSALITY_STRENGTHENED", "LIMITATION_OR_DISCLOSURE_REMOVED", "EDITORIAL_CONTEXT_CHANGED"]}},
+    "return_route": {"type": "string", "minLength": 1},
+    "return_route_code": {"type": "string", "enum": ["AUTHORIZE_INTENDED_USE_ONLY", "RESTRICT_FORMULATION_AND_DISCLOSE", "RETURN_TO_RESEARCH", "REMOVE_REPLACE_OR_REFORMULATE", "CHANNEL_INTELLIGENCE_REVIEW_REQUIRED", "YOUTUBE_ADAPTATION_REVIEW_REQUIRED", "RETURN_TO_ORIGIN_ARTIFACT"]},
+    "component_decision_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "required_component_decision_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "decision_basis": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {"if": {"properties": {"subject_kind": {"const": "MATERIAL_CLAIM"}}, "required": ["subject_kind"]}, "then": {"properties": {"claim_decision": {"type": "string", "enum": ["CLAIM_ALLOWED", "CLAIM_LIMITED", "CLAIM_BLOCKED"]}}}},
+    {"if": {"properties": {"sufficiency_status": {"const": "LIMITED_BUT_USABLE"}}, "required": ["sufficiency_status"]}, "then": {"properties": {"limitations": {"minItems": 1}}}},
+    {"if": {"properties": {"sufficiency_status": {"const": "MORE_RESEARCH_REQUIRED"}}, "required": ["sufficiency_status"]}, "then": {"properties": {"pending_matters": {"minItems": 1}}}},
+    {"if": {"properties": {"sufficiency_status": {"const": "BLOCKED_BY_EVIDENCE"}}, "required": ["sufficiency_status"]}, "then": {"properties": {"return_route": {"minLength": 1}}}},
+    {"if": {"properties": {"subject_kind": {"const": "AGGREGATE_RESEARCH_PACK"}}, "required": ["subject_kind"]}, "then": {"required": ["component_decision_refs"]}},
+    {"if": {"properties": {"subject_kind": {"const": "AGGREGATE_RESEARCH_PACK"}, "sufficiency_status": {"enum": ["SUFFICIENT_FOR_INTENDED_USE", "LIMITED_BUT_USABLE"]}}, "required": ["subject_kind", "sufficiency_status"]}, "then": {"required": ["required_component_decision_refs"]}},
+    {"if": {"properties": {"subject_kind": {"const": "MATERIAL_CLAIM"}}, "required": ["subject_kind"]}, "then": {"required": ["invalidator_codes", "return_route_code"]}},
+    {"if": {"properties": {"sufficiency_status": {"enum": ["SUFFICIENT_FOR_INTENDED_USE", "LIMITED_BUT_USABLE"]}}, "required": ["sufficiency_status"]}, "then": {"properties": {"unresolved_material_contradiction_refs": {"maxItems": 0}}}}
+  ]
+}

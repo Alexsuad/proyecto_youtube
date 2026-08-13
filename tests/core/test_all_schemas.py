@@ -20,6 +20,8 @@ from src.core.contract_validation import (
     validate_source_access_and_evidence_report,
     validate_work_research_dossier,
     validate_work_lifecycle,
+    validate_research_stop_decision,
+    validate_editorial_semantic_memory,
 )
 
 VALID_FIXTURES = {
@@ -182,7 +184,8 @@ VALID_FIXTURES = {
                 ],
                 "verification_status": "VERIFIED",
                 "criticality": "CENTRAL",
-                "intended_use": "CENTRAL_CLAIM_SUPPORT"
+                "intended_use": "CENTRAL_CLAIM_SUPPORT",
+                "materiality": {"is_material": True, "activation_criteria": ["THESIS_DEPENDENCY"], "non_trigger_examples": [], "invalidator_codes": ["CLAIM_OR_SCOPE_CHANGED"], "return_route_code": "AUTHORIZE_INTENDED_USE_ONLY", "decision_ref": "RSD-1"}
             }
         ]
     },
@@ -408,6 +411,8 @@ VALID_FIXTURES = {
         "limitations": [],
         "multilingual_research": {"activation_status": "NOT_ACTIVATED", "triggers": [], "non_trigger_examples": ["NO_LINGUISTIC_DIFFERENCE_REQUIRED"], "affected_source_ids": [], "affected_claim_ids": [], "required_language": None, "material_risk": [], "consultation_result": "NOT_APPLICABLE", "limitations": [], "invalidators": [], "return_route": "NOT_APPLICABLE", "decision_basis": "No depende de una diferencia lingüística material."},
         "research_pack_kind": "PHENOMENON",
+        "phenomenon_research_stop_decision_ref": "RSD-PHEN-001",
+        "aggregate_research_stop_decision_ref": "RSD-AGG-001",
         "phenomenon": {"phenomenon_id": "PHEN-001", "phenomenon_kind": "CULTURAL", "definition": "Fenómeno de fixture."},
         "editorial_uses": {"intended_uses": ["CENTRAL_CLAIM_SUPPORT", "CONTEXTUAL_BACKGROUND"], "criticality_map": {"claims": [{"claim_id": "CLAIM-X", "criticality": "CENTRAL", "intended_use": "CENTRAL_CLAIM_SUPPORT"}]}},
         "rival_analysis": [{"rival_explanation_id": "RIVAL-1", "statement": "Explicación rival.", "agreement_status": "DISAGREEMENT", "disagreement_kind": "RIVAL_OPEN", "claim_ids": ["CLAIM-X"], "source_refs": ["S1"]}],
@@ -737,6 +742,8 @@ VALID_FIXTURES["mission_contract"] = {
     "state_requirements": {"control_path": "plans/001_CONTROL_OPERATIVO.md", "required": {}, "forbidden": {}},
     "schema_checks": []
 }
+VALID_FIXTURES["research_stop_decision"] = {"decision_id": "RSD-1", "decision_version": "1.0.0", "subject_kind": "MATERIAL_CLAIM", "subject_ref": "CLAIM-001", "intended_use": "CENTRAL_CLAIM_SUPPORT", "evidence_refs": ["S-1"], "claim_decision": "CLAIM_ALLOWED", "sufficiency_status": "SUFFICIENT_FOR_INTENDED_USE", "limitations": [], "pending_matters": [], "unresolved_material_contradiction_refs": [], "invalidators": ["CLAIM_OR_USE_CHANGED"], "invalidator_codes": ["CLAIM_OR_SCOPE_CHANGED"], "return_route": "Revalidar si cambia el uso.", "return_route_code": "AUTHORIZE_INTENDED_USE_ONLY", "decision_basis": "Evidencia primaria suficiente para el uso evaluado."}
+VALID_FIXTURES["editorial_semantic_memory"] = {"memory_id": "ESM-1", "memory_version": "1.0.0", "history_source": "REPOSITORY_GOVERNED_ARTIFACTS", "consultation_points": ["PROPOSAL", "PRE_FINAL_CURATION", "PRE_THESIS_OR_ARCHITECTURE", "OPENING_UNIT_REVIEW", "PRE_FINAL_SCRIPT"], "checkpoint_integration": {"PROPOSAL": "CONNECTED", "PRE_FINAL_CURATION": "CONNECTED", "PRE_THESIS_OR_ARCHITECTURE": "CONNECTED", "OPENING_UNIT_REVIEW": "PREPARED_DEFERRED_UNTIL_CANONICAL_OPENING_UNIT_REVIEW", "PRE_FINAL_SCRIPT": "PREPARED_DEFERRED_UNTIL_CANONICAL_FINAL_SCRIPT_APPROVAL"}, "episode_entries": [], "comparison_decisions": [{"decision_id": "CMP-1", "candidate_episode_ref": {"artifact_ref": "episode:EP-NEW", "version": "1.0.0", "checksum": "a" * 64}, "compared_episode_refs": [], "evidence_refs": ["history:empty"], "comparison_dimensions": ["topic", "thesis"], "decision": "INSUFFICIENT_HISTORY", "recommended_action": "REVIEW_REQUIRED", "justification": "No hay corpus editorial previo suficiente.", "invalidators": ["HISTORY_CHANGED"]}], "created_at": "2026-08-13T10:00:00Z"}
 VALID_FIXTURES["work_lifecycle"] = {
     "lifecycle_id": "WL-001", "lifecycle_version": "1.0.0", "episode_id": "EP-1", "research_id": "R-1",
     "entry_mode": "TOPIC_FIRST", "anchor_work_id": None,
@@ -913,6 +920,10 @@ class TestAllJSONSchemas(unittest.TestCase):
                 elif name == "work_lifecycle":
                     business_violations = validate_work_lifecycle(fixture)
                     self.assertEqual(len(business_violations), 0, f"Fixture de work_lifecycle falló validaciones de negocio: {business_violations}")
+                elif name == "research_stop_decision":
+                    self.assertEqual(validate_research_stop_decision(fixture), [])
+                elif name == "editorial_semantic_memory":
+                    self.assertEqual(validate_editorial_semantic_memory(fixture), [])
 
     def test_every_research_contract_schema_has_valid_fixture(self):
         """Valida que los schemas de investigación de R1-M2 pasen sus validadores de negocio."""
@@ -924,6 +935,8 @@ class TestAllJSONSchemas(unittest.TestCase):
                 dossier, VALID_FIXTURES["claims_ledger"], [VALID_FIXTURES["narrative_human_analysis"]]
             ),
             "work_lifecycle": validate_work_lifecycle,
+            "research_stop_decision": validate_research_stop_decision,
+            "editorial_semantic_memory": validate_editorial_semantic_memory,
         }
         for name, validator in mapper.items():
             with self.subTest(schema=name):

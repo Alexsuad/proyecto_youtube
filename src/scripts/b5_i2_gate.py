@@ -10,7 +10,7 @@ from typing import Any
 
 from src.ai.manifest import canonical_json, manifest_checksum as _shared_manifest_checksum
 
-from src.core.contract_validation import validate_against_schema
+from src.core.contract_validation import validate_against_schema, validate_research_stop_decision
 from src.core.gate_result import GateResult
 from src.core.gate_runtime import run_gate
 from src.core.input_validation import InputRequirement, validate_inputs
@@ -350,6 +350,8 @@ def _outputs_by_ref(run: dict) -> dict[str, dict]:
 def evaluate(
     b5_i1: dict[str, Path], analysis: Path | list[Path], curation: Path,
     thesis: Path, script_promise: Path, b5_i2_audit: Path, execution_registry: Path, artifact_id: str,
+    aggregate_decisions: list[dict[str, Any]] | None = None,
+    require_research_closure: bool = False,
 ) -> GateResult:
     analysis_paths = _as_paths(analysis)
     paths = list(b5_i1.values()) + analysis_paths + [curation, thesis, script_promise, b5_i2_audit, execution_registry]
@@ -371,6 +373,7 @@ def evaluate(
 
     violations: list[str] = []
     blocking_violations: list[str] = []
+    memory_warning = False
     for name, schema in {
         "brief": "episode_brief",
         "research": "research_pack",
@@ -400,6 +403,35 @@ def evaluate(
         violations.append("Auditoría semántica B5-I1 no permite avanzar")
 
     brief, research, report, audit = data["brief"], data["research"], data["evidence"], data["audit"]
+    if require_research_closure:
+        stage = research.get("research_pack_stage")
+        if stage not in {"RESEARCH_REVIEW_PENDING", "RESEARCH_COMPLETE"}:
+            blocking_violations.append("B5-I2 closure requires research_pack_stage=RESEARCH_REVIEW_PENDING o RESEARCH_COMPLETE.")
+        aggregate_ref = research.get("aggregate_research_stop_decision_ref")
+        if not aggregate_ref:
+            blocking_violations.append("B5-I2 closure requires aggregate_research_stop_decision_ref.")
+        required_refs = research.get("required_component_decision_refs") or []
+        if not required_refs:
+            blocking_violations.append("B5-I2 closure requires required_component_decision_refs.")
+        supplied_decisions = [item for item in (aggregate_decisions or []) if isinstance(item, dict)]
+        aggregate = next((item for item in supplied_decisions if item.get("decision_id") == aggregate_ref), None)
+        if aggregate is None:
+            blocking_violations.append("B5-I2 closure requires the canonical aggregate ResearchStopDecision resolved by aggregate_research_stop_decision_ref.")
+        else:
+            if aggregate.get("subject_kind") != "AGGREGATE_RESEARCH_PACK":
+                blocking_violations.append("aggregate_research_stop_decision_ref must resolve to subject_kind=AGGREGATE_RESEARCH_PACK.")
+            if aggregate.get("subject_ref") != research.get("research_id"):
+                blocking_violations.append("La RSD agregada resuelta debe referir exactamente al ResearchPack actual.")
+            component_by_id = {
+                item.get("decision_id"): item
+                for item in supplied_decisions
+                if item.get("decision_id") != aggregate_ref
+            }
+            missing_components = [ref for ref in required_refs if ref not in component_by_id]
+            if missing_components:
+                blocking_violations.append(f"Faltan RSD componentes canónicas requeridas: {', '.join(missing_components)}.")
+            components = [component_by_id[ref] for ref in required_refs if ref in component_by_id]
+            violations.extend(validate_research_stop_decision(aggregate, components))
     if any(
         item.get("episode_id") != brief.get("episode_id")
         for item in [research, report, data["provisional"], data["curation"], data["thesis"], data["script_promise"], data["b5_i2_audit"], *data["analyses"]]
@@ -782,7 +814,7 @@ def evaluate(
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.BLOCKED, "La auditoría no tiene autorización operativa para pasar a SCRIPT_PRODUCT", evidence=evidence)
     if any(value in ("NOT_SATISFIED", "UNRESOLVED") for value in critical_statuses.values()) or semantic_editorial_decision == "FAIL":
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.FAIL, "La adjudicación editorial independiente no autoriza avanzar", evidence=evidence)
-    if any(value == "LIMITED" for value in critical_statuses.values()) or editorial_gate_status == GateStatus.REQUEST_CHANGES or risk == "MEDIUM" or semantic_editorial_decision == "REQUEST_CHANGES":
+    if memory_warning or any(value == "LIMITED" for value in critical_statuses.values()) or editorial_gate_status == GateStatus.REQUEST_CHANGES or risk == "MEDIUM" or semantic_editorial_decision == "REQUEST_CHANGES":
         return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.REQUEST_CHANGES, "La auditoría editorial exige correcciones antes de avanzar", evidence=evidence)
     return GateResult("b5_i2_gate", artifact_id, "1.2.0", GateStatus.PASS, "B5-I2 preparado para reauditoría funcional", evidence=evidence)
 
@@ -795,6 +827,7 @@ def main() -> int:
     parser.add_argument("--analysis", required=True, action="append")
     parser.add_argument("--ep-id")
     parser.add_argument("--output-root")
+    parser.add_argument("--research-stop-decision", action="append", default=[])
     args = parser.parse_args()
     b5_i1 = {
         "brief": Path(args.brief),
@@ -813,6 +846,8 @@ def main() -> int:
             Path(args.b5_i2_audit),
             Path(args.execution_registry),
             args.ep_id or Path(args.curation).parent.name,
+            aggregate_decisions=[load(Path(path)) for path in args.research_stop_decision],
+            require_research_closure=True,
         ),
         output_root=args.output_root,
     )

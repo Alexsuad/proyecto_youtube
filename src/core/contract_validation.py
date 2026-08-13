@@ -548,7 +548,145 @@ def validate_claims_ledger(data: Dict[str, Any]) -> List[str]:
                     violations.append(
                         f"Claim '{claim.get('claim_id')}' con uso {intended_use} requiere authority_basis={required_authority}."
                     )
+            materiality = claim.get("materiality")
+            requires_materiality = claim.get("criticality") in {"CENTRAL", "SENSITIVE", "CONTROVERSIAL"} or claim.get("intended_use") in {
+                "CENTRAL_CLAIM_SUPPORT", "SENSITIVE_HANDLING", "CONTROVERSIAL_BALANCE", "EXACT_QUOTE", "PROVE_WORK_CONTENT", "YOUTUBE_POLICY"
+            }
+            if requires_materiality and not isinstance(materiality, dict):
+                violations.append(f"Claim '{claim.get('claim_id')}' requiere assessment de materialidad explícito.")
+            if isinstance(materiality, dict) and not materiality.get("is_material") and (
+                materiality.get("activation_criteria") or materiality.get("decision_ref")
+            ):
+                violations.append(f"Claim '{claim.get('claim_id')}' no puede declarar criterios o decisión material con is_material=false.")
+            if isinstance(materiality, dict) and materiality.get("is_material"):
+                if not materiality.get("activation_criteria"):
+                    violations.append(f"Claim material '{claim.get('claim_id')}' requiere activation_criteria explícitos.")
+                if not materiality.get("decision_ref"):
+                    violations.append(f"Claim material '{claim.get('claim_id')}' requiere ResearchStopDecision explícita.")
+                if not materiality.get("invalidator_codes") or not materiality.get("return_route_code"):
+                    violations.append(f"Claim material '{claim.get('claim_id')}' requiere invalidadores y ruta de retorno canónicos.")
+            sufficiency = claim.get("research_sufficiency")
+            decision = claim.get("claim_decision")
+            if sufficiency == "BLOCKED_BY_EVIDENCE" and decision != "CLAIM_BLOCKED":
+                violations.append(f"Claim '{claim.get('claim_id')}' bloqueado por evidencia requiere CLAIM_BLOCKED.")
+            if decision == "CLAIM_BLOCKED" and sufficiency != "BLOCKED_BY_EVIDENCE":
+                violations.append(f"Claim '{claim.get('claim_id')}' CLAIM_BLOCKED no puede presentarse con suficiencia no bloqueada.")
+            if sufficiency == "LIMITED_BUT_USABLE" and not claim.get("limitations"):
+                violations.append(f"Claim '{claim.get('claim_id')}' LIMITED_BUT_USABLE requiere limitaciones explícitas.")
 
+    return violations
+
+
+def validate_research_stop_decision(
+    data: Dict[str, Any],
+    component_decisions: Optional[List[Dict[str, Any]]] = None,
+) -> List[str]:
+    """Valida suficiencia por uso sin resolver contradicciones de R1-M7."""
+    violations = validate_against_schema(data, "research_stop_decision")
+    status = data.get("sufficiency_status")
+    subject_kind = data.get("subject_kind")
+    claim_decision = data.get("claim_decision")
+    if subject_kind == "MATERIAL_CLAIM" and claim_decision is None:
+        violations.append("ResearchStopDecision de claim material requiere claim_decision explícita.")
+    if subject_kind == "MATERIAL_CLAIM" and (not data.get("invalidator_codes") or not data.get("return_route_code")):
+        violations.append("ResearchStopDecision de claim material requiere invalidator_codes y return_route_code canónicos.")
+    if status == "BLOCKED_BY_EVIDENCE" and claim_decision not in {None, "CLAIM_BLOCKED"}:
+        violations.append("BLOCKED_BY_EVIDENCE no puede autorizar un claim.")
+    if subject_kind == "MATERIAL_CLAIM":
+        expected = {
+            "CLAIM_ALLOWED": {"SUFFICIENT_FOR_INTENDED_USE", "LIMITED_BUT_USABLE"},
+            "CLAIM_LIMITED": {"LIMITED_BUT_USABLE", "MORE_RESEARCH_REQUIRED"},
+            "CLAIM_BLOCKED": {"BLOCKED_BY_EVIDENCE"},
+        }
+        if claim_decision in expected and status not in expected[claim_decision]:
+            violations.append(f"{claim_decision} es incompatible con sufficiency_status={status}.")
+    expected_routes = {
+        "SUFFICIENT_FOR_INTENDED_USE": "AUTHORIZE_INTENDED_USE_ONLY",
+        "LIMITED_BUT_USABLE": "RESTRICT_FORMULATION_AND_DISCLOSE",
+        "MORE_RESEARCH_REQUIRED": "RETURN_TO_RESEARCH",
+        "BLOCKED_BY_EVIDENCE": "REMOVE_REPLACE_OR_REFORMULATE",
+    }
+    route_code = data.get("return_route_code")
+    if subject_kind == "MATERIAL_CLAIM" and status in expected_routes and route_code != expected_routes[status]:
+        violations.append(f"sufficiency_status={status} requiere return_route_code={expected_routes[status]}.")
+    if status == "LIMITED_BUT_USABLE" and not data.get("limitations"):
+        violations.append("LIMITED_BUT_USABLE requiere limitaciones explícitas.")
+    if status == "MORE_RESEARCH_REQUIRED" and (not data.get("pending_matters") or not data.get("return_route")):
+        violations.append("MORE_RESEARCH_REQUIRED requiere pendientes y ruta de investigación.")
+    if status in {"SUFFICIENT_FOR_INTENDED_USE", "LIMITED_BUT_USABLE"} and data.get("unresolved_material_contradiction_refs"):
+        violations.append("Una contradicción material abierta impide suficiencia positiva en R1-M6.")
+    if subject_kind == "AGGREGATE_RESEARCH_PACK":
+        refs = data.get("component_decision_refs") or []
+        required_refs = data.get("required_component_decision_refs") or []
+        components = component_decisions or []
+        if not components:
+            violations.append("AGGREGATE_RESEARCH_PACK requiere decisiones de componentes verificables; no puede validar en modo fail-open.")
+        component_ids = {item.get("decision_id") for item in components if isinstance(item, dict)}
+        if status in {"SUFFICIENT_FOR_INTENDED_USE", "LIMITED_BUT_USABLE"} and not required_refs:
+            violations.append("AGGREGATE_RESEARCH_PACK positivo requiere required_component_decision_refs completos.")
+        if required_refs and set(required_refs) != set(refs):
+            violations.append("required_component_decision_refs debe coincidir exactamente con component_decision_refs.")
+        if refs and component_ids != set(refs):
+            violations.append("AGGREGATE_RESEARCH_PACK debe materializar exactamente todas las decisiones referenciadas.")
+        if refs and component_ids and not set(refs).issubset(component_ids):
+            violations.append("AGGREGATE_RESEARCH_PACK contiene component_decision_refs sin decisión materializada.")
+        for component in components:
+            component_violations = validate_research_stop_decision(component)
+            violations.extend(f"Componente {component.get('decision_id')}: {item}" for item in component_violations)
+            if status == "SUFFICIENT_FOR_INTENDED_USE" and component.get("sufficiency_status") == "LIMITED_BUT_USABLE":
+                violations.append("AGGREGATE_RESEARCH_PACK SUFFICIENT_FOR_INTENDED_USE no puede ocultar un componente LIMITED_BUT_USABLE.")
+            if status in {"SUFFICIENT_FOR_INTENDED_USE", "LIMITED_BUT_USABLE"} and component.get("sufficiency_status") == "MORE_RESEARCH_REQUIRED":
+                violations.append("AGGREGATE_RESEARCH_PACK positivo no puede avanzar con componente MORE_RESEARCH_REQUIRED.")
+            if component.get("sufficiency_status") == "BLOCKED_BY_EVIDENCE":
+                violations.append("AGGREGATE_RESEARCH_PACK no puede avanzar con componente material bloqueado.")
+                break
+    return violations
+
+
+def validate_editorial_semantic_memory(data: Dict[str, Any]) -> List[str]:
+    """Valida que la memoria sea evidencia gobernada y no autoridad editorial autónoma."""
+    violations = validate_against_schema(data, "editorial_semantic_memory")
+    points = set(data.get("consultation_points", []))
+    required_points = {"PROPOSAL", "PRE_FINAL_CURATION", "PRE_THESIS_OR_ARCHITECTURE", "OPENING_UNIT_REVIEW", "PRE_FINAL_SCRIPT"}
+    if not required_points.issubset(points):
+        violations.append("EditorialSemanticMemory no cubre todos los momentos obligatorios de consulta.")
+    for decision in data.get("comparison_decisions", []):
+        if not isinstance(decision, dict):
+            continue
+        kind = decision.get("decision")
+        action = decision.get("recommended_action")
+        reuse = decision.get("continuation_or_reuse")
+        if kind == "TOO_SIMILAR" and action != "REVIEW_REQUIRED":
+            violations.append("TOO_SIMILAR exige revisión funcional; no es una decisión editorial autónoma.")
+        if kind == "INSUFFICIENT_HISTORY" and action != "REVIEW_REQUIRED":
+            violations.append("INSUFFICIENT_HISTORY no puede ser PASS ni NO_ACTION.")
+        if kind in {"INTENTIONAL_CONTINUATION", "REUSE_REQUIRES_JUSTIFICATION"} and not isinstance(reuse, dict):
+            violations.append(f"{kind} requiere continuidad o reutilización explícitamente referenciada.")
+        if kind == "REUSE_REQUIRES_JUSTIFICATION" and action not in {"JUSTIFICATION_REQUIRED", "REVIEW_REQUIRED"}:
+            violations.append("REUSE_REQUIRES_JUSTIFICATION requiere justificación o revisión.")
+        if kind != "INSUFFICIENT_HISTORY" and not decision.get("compared_episode_refs"):
+            violations.append(f"{kind} requiere episodios previos concretos, no similitud abstracta.")
+        if decision.get("candidate_episode_ref") in decision.get("compared_episode_refs", []):
+            violations.append(f"{kind} no puede compararse consigo mismo.")
+        evidence_refs = [str(ref).lower() for ref in decision.get("evidence_refs", [])]
+        machine_only = ("keyword", "keywords", "score:", "embedding", "cosine", "similarity")
+        if evidence_refs and all(any(token in ref for token in machine_only) for ref in evidence_refs):
+            violations.append(f"{kind} no puede aprobarse con evidencia basada solo en keywords, scores o similitud matemática.")
+        if kind == "INSUFFICIENT_HISTORY" and decision.get("compared_episode_refs"):
+            violations.append("INSUFFICIENT_HISTORY no puede declarar episodios comparados como si existiera historial suficiente.")
+        entries = data.get("episode_entries", [])
+        if kind != "INSUFFICIENT_HISTORY":
+            known = {
+                (ref.get("artifact_ref"), ref.get("version"), ref.get("checksum"))
+                for entry in entries if isinstance(entry, dict)
+                for ref in entry.get("artifact_refs", []) if isinstance(ref, dict)
+            }
+            for ref in [decision.get("candidate_episode_ref"), *decision.get("compared_episode_refs", [])]:
+                if isinstance(ref, dict) and (ref.get("artifact_ref"), ref.get("version"), ref.get("checksum")) not in known:
+                    violations.append(f"{kind} referencia un episodio cuya versión/checksum no está en la memoria canónica.")
+            reuse_ref = (reuse or {}).get("prior_artifact_ref") if isinstance(reuse, dict) else None
+            if kind in {"INTENTIONAL_CONTINUATION", "REUSE_REQUIRES_JUSTIFICATION"} and reuse_ref not in {r.get("artifact_ref") for r in decision.get("compared_episode_refs", []) if isinstance(r, dict)}:
+                violations.append(f"{kind} debe referenciar explícitamente uno de los episodios comparados.")
     return violations
 
 

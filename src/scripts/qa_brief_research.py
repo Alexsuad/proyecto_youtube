@@ -4,13 +4,14 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from src.core.contract_validation import validate_against_schema, validate_research_pack
 from src.core.gate_result import GateResult
 from src.core.gate_runtime import run_gate
 from src.core.input_validation import InputRequirement, validate_inputs
 from src.core.status import GateStatus
+from src.core.editorial_semantic_memory import current_artifacts_from_paths, run_memory_checkpoint
 
 DEFAULT_ACTIVE_PROFILE = Path("config/active_editorial_profile.json")
 
@@ -92,6 +93,9 @@ def evaluate(
     ep_path: Path,
     episode_id: str | None = None,
     active_profile_path: Path = DEFAULT_ACTIVE_PROFILE,
+    semantic_memory_path: Path | None = None,
+    memory_current_artifacts: Mapping[str, Mapping[str, str]] | None = None,
+    memory_candidate_ref: Mapping[str, Any] | None = None,
 ) -> GateResult:
     artifact_id = episode_id or ep_path.name
     brief_path = ep_path / "episode_brief.json"
@@ -140,7 +144,25 @@ def evaluate(
             evidence=evidence,
         )
 
-    violations = validate_against_schema(brief, "episode_brief")
+    memory_warnings: list[str] = []
+    memory_path = semantic_memory_path or (ep_path / "editorial_semantic_memory.json")
+    candidate_ref = memory_candidate_ref or {"artifact_ref": f"episode:{brief.get('episode_id')}", "version": brief.get("brief_version"), "checksum": current_artifacts_from_paths({f"episode:{brief.get('episode_id')}": brief_path}, {f"episode:{brief.get('episode_id')}": brief.get("brief_version")}).get(f"episode:{brief.get('episode_id')}", {}).get("checksum", "")}
+    try:
+        memory_result = run_memory_checkpoint(memory_path, candidate_ref, "PROPOSAL", memory_current_artifacts, {f"episode:{brief.get('episode_id')}": brief_path, f"research:{research.get('research_id')}": research_path}, {f"episode:{brief.get('episode_id')}": brief.get("brief_version"), f"research:{research.get('research_id')}": brief.get("brief_version")})
+    except (OSError, ValueError) as exc:
+        memory_result = {"status": "INVALIDATED", "violations": [f"MEMORY_CHECKPOINT_ERROR:{exc}"]}
+    if memory_result is not None:
+        evidence["memory_checkpoint_PROPOSAL"] = memory_result
+        if memory_result.get("status") == "INVALIDATED":
+            violations = list(memory_result.get("violations", []))
+        else:
+            violations = []
+            if memory_result.get("status") == "INSUFFICIENT_HISTORY":
+                memory_warnings.append("EditorialSemanticMemory: INSUFFICIENT_HISTORY requiere revisión funcional.")
+    else:
+        violations = []
+
+    violations.extend(validate_against_schema(brief, "episode_brief"))
     violations.extend(validate_research_pack(research))
     violations.extend(_profile_mismatch(brief, active))
     if research.get("episode_id") != brief.get("episode_id"):
@@ -179,7 +201,7 @@ def evaluate(
             "La cobertura crítica no permite continuar", coverage_blocked, evidence=evidence,
         )
 
-    warnings: list[str] = coverage_warnings
+    warnings: list[str] = memory_warnings + coverage_warnings
     if research.get("limitations"):
         warnings.extend([f"Limitación declarada: {item}" for item in research["limitations"]])
     if research.get("unsupported_claims"):
@@ -201,10 +223,11 @@ def main() -> int:
     parser.add_argument("--ep_path", required=True)
     parser.add_argument("--ep-id")
     parser.add_argument("--active-profile", default=str(DEFAULT_ACTIVE_PROFILE))
+    parser.add_argument("--semantic-memory")
     parser.add_argument("--output-root")
     args = parser.parse_args()
     return run_gate(
-        lambda: evaluate(Path(args.ep_path), args.ep_id, Path(args.active_profile)),
+        lambda: evaluate(Path(args.ep_path), args.ep_id, Path(args.active_profile), Path(args.semantic_memory) if args.semantic_memory else None),
         output_root=args.output_root,
     )
 

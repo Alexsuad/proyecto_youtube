@@ -57,9 +57,16 @@
     },
     "confidence": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH"]},
     "work_use_sufficiency": {"$ref": "#/definitions/workUseSufficiency"},
+    "research_stop_decision_ref": {"type": "string", "minLength": 1},
     "independent_fidelity_audit": {"$ref": "#/definitions/independentFidelityAudit"},
     "created_at": {"type": "string", "format": "date-time"}
   },
+  "allOf": [
+    {
+      "if": {"properties": {"dossier_stage": {"const": "RESEARCH_REVIEW_PENDING"}}, "required": ["dossier_stage"]},
+      "then": {"required": ["research_stop_decision_ref"]}
+    }
+  ],
   "definitions": {
     "workIdentity": {
       "type": "object",
