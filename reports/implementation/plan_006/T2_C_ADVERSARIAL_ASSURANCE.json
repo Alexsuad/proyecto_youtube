@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T2-C",
   "mission_id": "PLAN_006_T2_C_ADVERSARIAL_ASSURANCE",
   "increment": "T2-C",
-  "repository_revision": "WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T10:49:33.172379Z",
+  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T14:10:50.104528Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -16,13 +16,18 @@
       "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
+      "path": "src/core/adversarial_assurance.py",
+      "sha256": "5a7c16761ef7c61d051c4beb3eaca793795f2c59326dd345bbd8b3ccc3281cda"
+    },
+    {
       "path": "tests/core/test_plan_006_t2c_adversarial_assurance.py",
-      "sha256": "c5cfff456c30ede937a1a168c9e221d28d9c02eb8c1f833fb6ff65462942023e"
+      "sha256": "d554213fc7de4f43cb84c381d3e82696fd3639d33b3e872d7269084958bbec41"
     }
   ],
   "evidence_refs": [
     "plans/001_CONTROL_OPERATIVO.md",
     "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+    "src/core/adversarial_assurance.py",
     "tests/core/test_plan_006_t2c_adversarial_assurance.py"
   ],
   "limitations": [],
@@ -89,5 +94,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "150873f7eef8ae7af795989f9d08b22ce9bf0b91fceede20d1af360ce8134b6d"
+  "evidence_identity_sha256": "f2137055f3f9adfe38be2d88019152ddb792ac2fc7f7079087e650bd2494faa4"
 }

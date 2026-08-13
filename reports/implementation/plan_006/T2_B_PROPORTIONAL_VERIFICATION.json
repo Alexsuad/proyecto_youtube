@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T2-B",
   "mission_id": "PLAN_006_T2_B_PROPORTIONAL_VERIFICATION",
   "increment": "T2-B",
-  "repository_revision": "WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T10:49:33.161737Z",
+  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T14:10:49.868294Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -16,6 +16,10 @@
       "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
+      "path": "src/core/proportional_verification.py",
+      "sha256": "ce5b599be902efa9e7981bbabcca00d43513c1330625e0196f3cdf8d091f3715"
+    },
+    {
       "path": "tests/core/test_plan_006_t2b_proportional_verification.py",
       "sha256": "a8f0d5f1c783e75d1c988d68a9c33598e7f6dbf9e0b51aabc4662d274e222e08"
     }
@@ -23,6 +27,7 @@
   "evidence_refs": [
     "plans/001_CONTROL_OPERATIVO.md",
     "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+    "src/core/proportional_verification.py",
     "tests/core/test_plan_006_t2b_proportional_verification.py"
   ],
   "limitations": [],
@@ -89,5 +94,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "f3c71886107edc23005aa60f763a5b00571b06637b99d95d8777b90f76018446"
+  "evidence_identity_sha256": "84c136d14a4727b0ab6907ae936bf5a7d874f0a08d4c659b7471edd1f45887df"
 }

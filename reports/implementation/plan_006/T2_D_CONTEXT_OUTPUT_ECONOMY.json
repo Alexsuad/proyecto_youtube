@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T2-D",
   "mission_id": "PLAN_006_T2_D_CONTEXT_OUTPUT_ECONOMY",
   "increment": "T2-D",
-  "repository_revision": "WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T10:49:33.183011Z",
+  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T14:10:50.341871Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -16,6 +16,10 @@
       "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
+      "path": "src/core/context_output_economy.py",
+      "sha256": "39fc932715ad35ddf9304e2d7f606e54f2c8d78c1fd303161d1d936d2c864bfc"
+    },
+    {
       "path": "tests/core/test_plan_006_t2d_context_output_economy.py",
       "sha256": "39435b9a5626744d035e46f8111bc233f0508d74796f92527f0498b80952e251"
     }
@@ -23,6 +27,7 @@
   "evidence_refs": [
     "plans/001_CONTROL_OPERATIVO.md",
     "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+    "src/core/context_output_economy.py",
     "tests/core/test_plan_006_t2d_context_output_economy.py"
   ],
   "limitations": [],
@@ -89,5 +94,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "67a69e8b2b4e1a279c27e9f392e00cb2429540579a6427b548af95e691b81fa8"
+  "evidence_identity_sha256": "4b8547296aee7f4fcf8a3e637fb486693791c54d385c4465506b59d224ace8bc"
 }

@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T5",
   "mission_id": "PLAN_006_T5_MEASURED_OPENCODE_PILOT",
   "increment": "T5",
-  "repository_revision": "WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T11:46:19.259917Z",
+  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T14:10:53.197358Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -21,11 +21,11 @@
     },
     {
       "path": "src/core/plan_006_closure_check.py",
-      "sha256": "cf0d1456eaf6ed117ab5ce3565c1bdaadeb854d88931482dd8f0f15b91caedbf"
+      "sha256": "1d592787c0c3e78feaf73496e82e4b10648afe9b3470caf969ff3bcf31489775"
     },
     {
       "path": "tests/core/test_plan_006_t5_closure_check.py",
-      "sha256": "a1e6b35d6389c209ca8e60a993b11831c8d7d738b9a3ce7f57ae656a6094e28d"
+      "sha256": "7558d9781b8e17182b645d33dc405a1fb60e8cfc9aa7c595f1ded978f8013b6d"
     }
   ],
   "evidence_refs": [
@@ -66,8 +66,7 @@
     "final_head": "29b5218778f045b17f2b4c9d456e0b2457c46be8",
     "actual_git_diff_files": 3,
     "staged_files": 0,
-    "commit_count": 0,
-    "closure_report_json": "{\"closure_findings\": [{\"check\": \"T5_AUTHORIZATION\", \"detail\": \"PLAN_006_T5_AUTHORIZATION.json present\", \"status\": \"OK\"}, {\"check\": \"EVIDENCE_T0\", \"detail\": \"reports/implementation/plan_006/T0_BASELINE.json\", \"status\": \"OK\"}, {\"check\": \"EVIDENCE_T1\", \"detail\": \"reports/implementation/plan_006/T1_HISTORICAL_COMPLETION.json\", \"status\": \"OK\"}, {\"check\": \"EVIDENCE_T2-A\", \"detail\": \"reports/implementation/plan_006/T2_A_EVIDENCE_REUSE.json\", \"status\": \"OK\"}, {\"check\": \"EVIDENCE_T2-B\", \"detail\": \"reports/implementation/plan_006/T2_B_PROPORTIONAL_VERIFICATION.json\", \"status\": \"OK\"}, {\"check\": \"EVIDENCE_T2-C\", \"detail\": \"reports/implementation/plan_006/T2_C_ADVERSARIAL_ASSURANCE.json\", \"status\": \"OK\"}, {\"check\": \"EVIDENCE_T2-D\", \"detail\": \"reports/implementation/plan_006/T2_D_CONTEXT_OUTPUT_ECONOMY.json\", \"status\": \"OK\"}, {\"check\": \"EVIDENCE_T3\", \"detail\": \"reports/implementation/plan_006/T3_PERMISSION_MODEL.json\", \"status\": \"OK\"}, {\"check\": \"EVIDENCE_T4-0\", \"detail\": \"reports/implementation/plan_006/T4_0_GAP_ANALYSIS.json\", \"status\": \"OK\"}, {\"check\": \"EVIDENCE_T4\", \"detail\": \"reports/implementation/plan_006/T4_RESOURCE_AWARE_DECISION.json\", \"status\": \"OK\"}, {\"check\": \"HISTORICAL_COMPLETION\", \"detail\": \"T1 identity verified\", \"status\": \"OK\"}, {\"check\": \"EXECUTION_DECISION\", \"detail\": \"topology=INLINE\", \"status\": \"OK\"}], \"closure_overall\": \"OK\"}"
+    "commit_count": 0
   },
   "phases": {
     "context_discovery": {
@@ -120,5 +119,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "fd7b57e35f584b028e0ed260b413a91599efcb0ec3be2f0382b8dcf9b254130a"
+  "evidence_identity_sha256": "e3236d04b56f80cd8d68cefdd85e1a77e8298632e21d28f5caaa58f2fbfc2bcd"
 }

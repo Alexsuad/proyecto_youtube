@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T4-0",
   "mission_id": "PLAN_006_T4_0_GAP_ANALYSIS",
   "increment": "T4-0",
-  "repository_revision": "WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T10:55:25.706246Z",
+  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T14:14:16.983775Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/core/gap_analysis.py",
-      "sha256": "47a96cf404cbd1d3e06ad8181c7b97dfaa52f470014cb17c68b5c72bae187782"
+      "sha256": "4994390839b6bbe64a07f17ec8bca961e8e0d71c696dd424d84c1fa3339c4908"
     },
     {
       "path": "config/delegation_policy.json",
@@ -26,6 +26,22 @@
     {
       "path": "config/agent_execution_profiles.json",
       "sha256": "6f1809d92fc658a8c5f5afe1946fd85328fab24c7da2cdc753a78d48bf9fc6ff"
+    },
+    {
+      "path": "src/core/routing_policy.py",
+      "sha256": "69afe9d2ef2c3456e871d2959fa1ac12b7d6c8d20f885fb36a2c482df5725dc8"
+    },
+    {
+      "path": "src/core/context_resolution.py",
+      "sha256": "2afa0fb140338ec2d5b042a94efe97f6907f52e8b11162dd1f9c5d0da284c73c"
+    },
+    {
+      "path": "src/core/review_workload.py",
+      "sha256": "eeed27f25a4be16792af5e04bdd5b6fea6a80b43818cd9db262255b74b37f13a"
+    },
+    {
+      "path": "src/core/mission_authorization.py",
+      "sha256": "17528906cc743e851e0df094c604f1eda7ba717300ea70e098bd6fcb717bd905"
     }
   ],
   "evidence_refs": [
@@ -33,7 +49,11 @@
     "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
     "src/core/gap_analysis.py",
     "config/delegation_policy.json",
-    "config/agent_execution_profiles.json"
+    "config/agent_execution_profiles.json",
+    "src/core/routing_policy.py",
+    "src/core/context_resolution.py",
+    "src/core/review_workload.py",
+    "src/core/mission_authorization.py"
   ],
   "limitations": [],
   "result": "PASS",
@@ -61,7 +81,7 @@
     "needs_analyzed": 7,
     "real_gap_count": 0,
     "partially_covered_count": 3,
-    "gap_findings_json": "[{\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"config/delegation_policy.json\", \"existing_capability\": \"delegation_policy\", \"need\": \"DECISION_INLINE_DELEGATE_ESCALATE\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"src/core/mission_authorization.py\", \"existing_capability\": \"mission_authorization\", \"need\": \"DELEGATION_BOUNDED_BY_AUTHORIZATION\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"src/core/review_workload.py\", \"existing_capability\": \"review_workload\", \"need\": \"REVIEW_FLOOR\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"src/core/routing_policy.py\", \"existing_capability\": \"routing_policy\", \"need\": \"ROUTING_WITHIN_AUTHORIZED_CANDIDATE_SET\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"PARTIALLY_COVERED\", \"evidence_path\": \"config/agent_execution_profiles.json\", \"existing_capability\": \"agent_execution_profiles\", \"need\": \"LOWEST_SUFFICIENT_ROUTE\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"PARTIALLY_COVERED\", \"evidence_path\": \"src/core/context_resolution.py\", \"existing_capability\": \"context_resolution\", \"need\": \"CONTEXT_BUDGET\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"PARTIALLY_COVERED\", \"evidence_path\": \"src/core/routing_policy.py\", \"existing_capability\": \"routing_policy\", \"need\": \"VERIFICATION_BUDGET\", \"reason\": \"SURFACE_PRESENT_AND_CANONICAL\"}]",
+    "gap_findings_json": "[{\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"config/delegation_policy.json\", \"existing_capability\": \"delegation_policy\", \"need\": \"DECISION_INLINE_DELEGATE_ESCALATE\", \"reason\": \"SEMANTIC_SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"src/core/mission_authorization.py\", \"existing_capability\": \"mission_authorization\", \"need\": \"DELEGATION_BOUNDED_BY_AUTHORIZATION\", \"reason\": \"SEMANTIC_SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"src/core/review_workload.py\", \"existing_capability\": \"review_workload\", \"need\": \"REVIEW_FLOOR\", \"reason\": \"SEMANTIC_SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"ALREADY_COVERED\", \"evidence_path\": \"src/core/routing_policy.py\", \"existing_capability\": \"routing_policy\", \"need\": \"ROUTING_WITHIN_AUTHORIZED_CANDIDATE_SET\", \"reason\": \"SEMANTIC_SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"PARTIALLY_COVERED\", \"evidence_path\": \"config/agent_execution_profiles.json\", \"existing_capability\": \"agent_execution_profiles\", \"need\": \"LOWEST_SUFFICIENT_ROUTE\", \"reason\": \"SEMANTIC_SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"PARTIALLY_COVERED\", \"evidence_path\": \"src/core/context_resolution.py\", \"existing_capability\": \"context_resolution\", \"need\": \"CONTEXT_BUDGET\", \"reason\": \"SEMANTIC_SURFACE_PRESENT_AND_CANONICAL\"}, {\"classification\": \"PARTIALLY_COVERED\", \"evidence_path\": \"src/core/routing_policy.py\", \"existing_capability\": \"routing_policy\", \"need\": \"VERIFICATION_BUDGET\", \"reason\": \"SEMANTIC_SURFACE_PRESENT_AND_CANONICAL\"}]",
     "real_gaps_json": "[]"
   },
   "phases": {
@@ -104,5 +124,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "a36ccd84754d7d5e0cb6d9b9758f6e1f20f61a7c1cff52b0694f0bd134232a7e"
+  "evidence_identity_sha256": "5c023387d990fa56c7e220ee7b4f68df0c5155f3dab18cdb012234c64dbeb47e"
 }

@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T2-A",
   "mission_id": "PLAN_006_T2_A_EVIDENCE_REUSE",
   "increment": "T2-A",
-  "repository_revision": "WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T10:49:33.149624Z",
+  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T14:10:49.624952Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -16,13 +16,18 @@
       "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
+      "path": "src/core/evidence_reuse.py",
+      "sha256": "abd549e997efc8c41a9c88a506731e4bca64954d799931ff152e015f8f42d0d5"
+    },
+    {
       "path": "tests/core/test_plan_006_t2a_evidence_reuse.py",
-      "sha256": "9b96c0cf63e1c3bfd47486e7941150dc387b9ad6ab4d13765449c96f9c70d0aa"
+      "sha256": "378054f723450fc5b4ef4ad1fe54dbd5e4cb50fe9d7bd9839a0740378364a6e6"
     }
   ],
   "evidence_refs": [
     "plans/001_CONTROL_OPERATIVO.md",
     "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
+    "src/core/evidence_reuse.py",
     "tests/core/test_plan_006_t2a_evidence_reuse.py"
   ],
   "limitations": [],
@@ -89,5 +94,12 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "ef60564255797bcc54feaa56476fa0395986a1c0b2e200b9a967c08264a8c642"
+  "evidence_identity_sha256": "0477b70c5f2c94982f6b1fc8e2114d43121588dff48132034f536125199b3ac0",
+  "semantic_applicability": {
+    "scope": "reports/implementation/plan_006/T2_A_EVIDENCE_REUSE.json",
+    "coverage_required": "T2-A evidence reuse decision",
+    "intended_assurance": "structural and semantic reuse compatibility",
+    "environment": "REPOSITORY_LOCAL",
+    "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED"
+  }
 }

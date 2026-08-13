@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_D1",
   "mission_id": "PLAN_006_D1_CONCURRENCY_DECISION",
   "increment": "D1",
-  "repository_revision": "WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T11:51:38.798573Z",
+  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T14:10:54.357477Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -21,7 +21,7 @@
     },
     {
       "path": "reports/implementation/plan_006/T5_PILOT.json",
-      "sha256": "72fbbaa5df2bb7aaac7e27167ce5e41df837dfab7cc9a6cf74f6b4fd6ef75bae"
+      "sha256": "eb0857b95d9c490f69e45c1bb81063b1e1787f47d3960a9f0bb130e083da6ec7"
     }
   ],
   "evidence_refs": [
@@ -101,5 +101,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "cff73edea52c565d53e2b1905a01868e58551539c36ee9f5a472493927882479"
+  "evidence_identity_sha256": "c3e111875341f3c5b3001bba5edf309b81fd7452fca8616a91a32328384a1bd4"
 }
