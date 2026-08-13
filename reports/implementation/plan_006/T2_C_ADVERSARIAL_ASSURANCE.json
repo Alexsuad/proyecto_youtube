@@ -4,24 +4,24 @@
   "artifact_id": "PLAN_006_T2-C",
   "mission_id": "PLAN_006_T2_C_ADVERSARIAL_ASSURANCE",
   "increment": "T2-C",
-  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T14:10:50.104528Z",
+  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T21:59:56.715602Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
-      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+      "sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129"
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
     },
     {
       "path": "src/core/adversarial_assurance.py",
-      "sha256": "5a7c16761ef7c61d051c4beb3eaca793795f2c59326dd345bbd8b3ccc3281cda"
+      "sha256": "3ef8ca5fa3ef1c3521c4ca31bc8b6fde61144b71798ddc9882e7c5fb29386f71"
     },
     {
       "path": "tests/core/test_plan_006_t2c_adversarial_assurance.py",
-      "sha256": "d554213fc7de4f43cb84c381d3e82696fd3639d33b3e872d7269084958bbec41"
+      "sha256": "a8b8d0a4eaaa2953ef3e0bbb9d8bf9734296bab5b6be443532f05f87d5c3d909"
     }
   ],
   "evidence_refs": [
@@ -94,5 +94,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "f2137055f3f9adfe38be2d88019152ddb792ac2fc7f7079087e650bd2494faa4"
+  "evidence_identity_sha256": "7960d0665a8cee133c1d780d7ad39416ae86129bb44a542f3d7b28d70434a8e4"
 }

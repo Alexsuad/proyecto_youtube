@@ -4,32 +4,32 @@
   "artifact_id": "PLAN_006_T4",
   "mission_id": "PLAN_006_T4_RESOURCE_AWARE_DECISION",
   "increment": "T4",
-  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T14:14:18.224721Z",
+  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T21:59:59.560773Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
-      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+      "sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129"
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
     },
     {
       "path": "src/core/resource_aware_decision.py",
-      "sha256": "4cbc399bf2a977739fc72e6298a321071e701788b27969c378e0f47bda3680c0"
+      "sha256": "876b0370b95e1993b29f09f716a6936d8f71edcd8313aebfcbc68bf31504c358"
     },
     {
       "path": "src/core/delegation_policy.py",
-      "sha256": "f7d0611580c19bf88f1603c530ca7ff13661f2a71853065d6609becc7fb2d1be"
+      "sha256": "e1ec3e9d3997eebd2d95dedc5e8c437f847db0003a6bf271f4a9da9c74ba4b3a"
     },
     {
       "path": "src/core/review_workload.py",
-      "sha256": "eeed27f25a4be16792af5e04bdd5b6fea6a80b43818cd9db262255b74b37f13a"
+      "sha256": "bf1ab5b69fdc2f33407ad95ac22f3331084daad7b5e5a3667705d9036ce78db6"
     },
     {
       "path": "src/core/routing_policy.py",
-      "sha256": "69afe9d2ef2c3456e871d2959fa1ac12b7d6c8d20f885fb36a2c482df5725dc8"
+      "sha256": "b33d5dc43e0e806e376780933c910c01d140726c2ac6bf5d2a6e08b1e465ae9f"
     },
     {
       "path": "config/agent_execution_profiles.json",
@@ -112,5 +112,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "cc135faf3db38e2dad5c2f7bba787e67a99b8424145e1f79a3d89d48a1d92161"
+  "evidence_identity_sha256": "dc87bb5a521fe9c01e88410335b1d750c991d85133439c64911f995c5f14aa09"
 }

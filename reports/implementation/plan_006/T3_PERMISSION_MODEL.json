@@ -4,24 +4,24 @@
   "artifact_id": "PLAN_006_T3",
   "mission_id": "PLAN_006_T3_PERMISSION_MODEL",
   "increment": "T3",
-  "repository_revision": "WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T10:51:55.382073Z",
+  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T21:59:57.802648Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
-      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+      "sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129"
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
     },
     {
       "path": "opencode.json",
-      "sha256": "1f21fbf7d78b5cd79bc0dece1418af23d35aa19b15af385821435e299f460a2d"
+      "sha256": "4dbf95538888598b5b9c44e8880fc3ae3b9415931aa20c01e9026b004a0fc407"
     },
     {
       "path": "tests/opencode/test_controlled_integration.py",
-      "sha256": "0ebc2c90ab4d6667d8bb88d727d4b35b97fe2097ef0b60fd30d699ce770d1725"
+      "sha256": "e901fb1d1f904221e431128e59f2fb5321a8fe80ba4b0dbd3399c81b586e6aee"
     }
   ],
   "evidence_refs": [
@@ -96,5 +96,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "5b3588f0a635cd73eb6ff2f64ba4e6413bda802edd4807d41fa132ff9614e93f"
+  "evidence_identity_sha256": "ca38c91406211912868d224b961cebca7bb39fe0e9464ccf706e7f49628a9c96"
 }

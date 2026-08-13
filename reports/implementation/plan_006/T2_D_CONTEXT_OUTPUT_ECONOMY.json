@@ -4,24 +4,24 @@
   "artifact_id": "PLAN_006_T2-D",
   "mission_id": "PLAN_006_T2_D_CONTEXT_OUTPUT_ECONOMY",
   "increment": "T2-D",
-  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T14:10:50.341871Z",
+  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T21:59:56.954785Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
-      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+      "sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129"
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
     },
     {
       "path": "src/core/context_output_economy.py",
-      "sha256": "39fc932715ad35ddf9304e2d7f606e54f2c8d78c1fd303161d1d936d2c864bfc"
+      "sha256": "0aa42cb586ab85f7a947f146a73a42b7fa8f31786084ec44def2ab2e5c3bafb2"
     },
     {
       "path": "tests/core/test_plan_006_t2d_context_output_economy.py",
-      "sha256": "39435b9a5626744d035e46f8111bc233f0508d74796f92527f0498b80952e251"
+      "sha256": "f2953966974d8d64f3ef13516ac27e778e4a6ba15b21f3d6ba0a8c1cf5d182dc"
     }
   ],
   "evidence_refs": [
@@ -94,5 +94,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "4b8547296aee7f4fcf8a3e637fb486693791c54d385c4465506b59d224ace8bc"
+  "evidence_identity_sha256": "d78231e3097ae22137cb32e9f640f1729f867d7f806d6680668653d86126c690"
 }

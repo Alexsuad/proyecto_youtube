@@ -4,24 +4,24 @@
   "artifact_id": "PLAN_006_T2-A",
   "mission_id": "PLAN_006_T2_A_EVIDENCE_REUSE",
   "increment": "T2-A",
-  "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T14:10:49.624952Z",
+  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-13T21:59:56.192106Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
-      "sha256": "98a07099d1b8d0556aba631c416ced12708138bb8007f6d7e4251a8924512c25"
+      "sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129"
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
+      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
     },
     {
       "path": "src/core/evidence_reuse.py",
-      "sha256": "abd549e997efc8c41a9c88a506731e4bca64954d799931ff152e015f8f42d0d5"
+      "sha256": "f20d5bb5af5c3e82e8ec1fbab1ed4a6884bf7b4a88c2fac29163fe4c6737f87e"
     },
     {
       "path": "tests/core/test_plan_006_t2a_evidence_reuse.py",
-      "sha256": "378054f723450fc5b4ef4ad1fe54dbd5e4cb50fe9d7bd9839a0740378364a6e6"
+      "sha256": "6086a50581d8e33e6cbf1c8b5a2acffc7ee44ce5dd16b1ec2eba37f40762c998"
     }
   ],
   "evidence_refs": [
@@ -94,12 +94,12 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "0477b70c5f2c94982f6b1fc8e2114d43121588dff48132034f536125199b3ac0",
+  "evidence_identity_sha256": "445c2f47b78bcb1929e9ee1a4d05c495e4bb181e944173c0d22307bc624dd3b1",
   "semantic_applicability": {
     "scope": "reports/implementation/plan_006/T2_A_EVIDENCE_REUSE.json",
     "coverage_required": "T2-A evidence reuse decision",
     "intended_assurance": "structural and semantic reuse compatibility",
     "environment": "REPOSITORY_LOCAL",
-    "repository_revision": "52513b66f122648ae1fd9ce5d8a756faf898a26a+WORKTREE_UNCOMMITTED"
+    "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED"
   }
 }
