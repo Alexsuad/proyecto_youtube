@@ -437,7 +437,7 @@ def validate_contradiction_disposition(
     """Valida IR4-008/IR4-009 sin crear una autoridad paralela de evidencia."""
     violations: List[str] = []
     required = (
-        "affected_claim_ids", "conflicting_source_refs", "discrepancy_kind", "materiality", "disposition",
+        "subject_kind", "subject_ref", "affected_use", "conflicting_source_refs", "discrepancy_kind", "materiality", "disposition",
         "compared_positions", "decision_evidence_refs", "contrary_evidence_refs", "disposition_justification",
         "return_route", "return_route_code", "invalidator_codes",
     )
@@ -447,6 +447,13 @@ def validate_contradiction_disposition(
         return violations
 
     disposition = contradiction.get("disposition")
+    subject_kind = contradiction.get("subject_kind")
+    if not any(contradiction.get(field) for field in ("subject_state", "subject_version", "subject_formulation")):
+        violations.append("La contradicción requiere subject_state, subject_version o subject_formulation.")
+    affected_claims_value = contradiction.get("affected_claim_ids")
+    if affected_claims_value is not None and not isinstance(affected_claims_value, list):
+        violations.append("affected_claim_ids debe ser una lista cuando se declara.")
+        affected_claims_value = []
     route = contradiction.get("return_route_code")
     expected_route = _CONTRADICTION_DISPOSITION_ROUTES.get(disposition)
     if expected_route is None:
@@ -466,10 +473,17 @@ def validate_contradiction_disposition(
     unknown_sources = conflicting - source_ids
     if unknown_sources:
         violations.append(f"Contradicción referencia fuentes desconocidas: {', '.join(sorted(unknown_sources))}.")
-    affected_claims = set(contradiction.get("affected_claim_ids", []))
+    affected_claims = set(affected_claims_value or [])
     unknown_claims = affected_claims - claim_ids
     if unknown_claims:
         violations.append(f"Contradicción referencia claims no declarados: {', '.join(sorted(unknown_claims))}.")
+    if subject_kind == "MATERIAL_CLAIM":
+        if not affected_claims:
+            violations.append("Una contradicción con sujeto MATERIAL_CLAIM requiere affected_claim_ids.")
+        elif contradiction.get("subject_ref") not in affected_claims:
+            violations.append("affected_claim_ids debe incluir el subject_ref del claim material.")
+    elif contradiction.get("subject_ref") in claim_ids and contradiction.get("subject_ref") not in affected_claims:
+        violations.append("El claim existente identificado como sujeto debe quedar enlazado en affected_claim_ids.")
 
     positions = contradiction.get("compared_positions")
     if not isinstance(positions, list) or len(positions) < 2:

@@ -6,7 +6,14 @@ from src.core.contract_validation import validate_contradiction_disposition, val
 from tests.fixtures.synthetic_contracts import VALID_RESEARCH_PACK
 
 
-def _contradiction(disposition="RESOLVED", treatments=("RETAINED", "REJECTED")):
+def _contradiction(
+    disposition="RESOLVED",
+    treatments=("RETAINED", "REJECTED"),
+    *,
+    subject_kind="MATERIAL_CLAIM",
+    subject_ref="C1",
+    affected_claim_ids=None,
+):
     pending = ["Obtener verificación primaria adicional."] if disposition == "INVESTIGATION_REQUIRED" else []
     limitations = ["La formulación debe conservar el desacuerdo explícito."] if disposition in {"CONTROVERSY", "LIMITED", "RIVAL"} else []
     return {
@@ -15,7 +22,13 @@ def _contradiction(disposition="RESOLVED", treatments=("RETAINED", "REJECTED")):
         "source_refs": ["S1", "S2"],
         "locator": "p. 10 / p. 22",
         "confidence": "HIGH",
-        "affected_claim_ids": ["C1"],
+        "subject_kind": subject_kind,
+        "subject_ref": subject_ref,
+        "subject_state": "PROVISIONAL",
+        "subject_version": "1.0.0",
+        "subject_formulation": "La formulación afectada.",
+        "affected_use": "CENTRAL_CLAIM_SUPPORT",
+        "affected_claim_ids": ["C1"] if affected_claim_ids is None else affected_claim_ids,
         "conflicting_source_refs": ["S1", "S2"],
         "discrepancy_kind": "CAUSAL",
         "materiality": "MATERIAL",
@@ -44,16 +57,32 @@ def _contradiction(disposition="RESOLVED", treatments=("RETAINED", "REJECTED")):
     }
 
 
-def _pack(contradiction):
+def _pack(contradiction, *, include_claim=True):
     pack = deepcopy(VALID_RESEARCH_PACK)
     pack["source_registry"].append(deepcopy(pack["source_registry"][0]) | {"source_id": "S2", "title": "Fuente rival"})
-    pack["claims_candidates"] = [{"item_id": "C1", "statement": "Claim afectado.", "source_refs": ["S1", "S2"], "locator": "p. 1", "confidence": "HIGH"}]
+    pack["claims_candidates"] = ([{"item_id": "C1", "statement": "Claim afectado.", "source_refs": ["S1", "S2"], "locator": "p. 1", "confidence": "HIGH"}] if include_claim else [])
     pack["contradictions"] = [contradiction]
     return pack
 
 
 def test_resolved_contradiction_requires_explicit_comparison_and_evidence():
     assert validate_research_pack(_pack(_contradiction())) == []
+
+
+def test_preclaim_contradiction_has_a_real_nonclaim_subject():
+    case = _contradiction(subject_kind="WORK_INTERPRETATION", subject_ref="WI-1", affected_claim_ids=[])
+    assert validate_research_pack(_pack(case, include_claim=False)) == []
+
+
+def test_work_interpretation_can_later_be_linked_to_a_claim_without_losing_origin():
+    case = _contradiction(subject_kind="WORK_INTERPRETATION", subject_ref="WI-1", affected_claim_ids=["C1"])
+    assert validate_research_pack(_pack(case)) == []
+
+
+def test_existing_claim_subject_must_be_linked_explicitly():
+    case = _contradiction(subject_kind="MATERIAL_CLAIM", subject_ref="C1", affected_claim_ids=[])
+    violations = validate_research_pack(_pack(case))
+    assert any("requiere affected_claim_ids" in item for item in violations)
 
 
 def test_limited_controversy_rival_research_and_blocked_are_supported():
