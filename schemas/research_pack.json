@@ -140,6 +140,11 @@
     "phenomenon_research_stop_decision_ref": {"type": "string", "minLength": 1},
     "aggregate_research_stop_decision_ref": {"type": "string", "minLength": 1},
     "required_component_decision_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "specialist_research": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/specialistResearch"}
+    },
     "research_pack_stage": {"type": "string", "enum": ["RESEARCH_IN_PROGRESS", "RESEARCH_REVIEW_PENDING", "RESEARCH_COMPLETE"]},
     "created_at": {
       "type": "string",
@@ -719,6 +724,143 @@
         {"if": {"properties": {"source_kind": {"const": "TRANSCRIPT"}}, "required": ["source_kind"]}, "then": {"properties": {"transcription_type": {"enum": ["OFFICIAL", "CREATOR_PROVIDED", "AUTOMATIC", "MANUAL"]}}}},
         {"if": {"properties": {"source_kind": {"const": "SOURCE_ORIGINAL"}}, "required": ["source_kind"]}, "then": {"properties": {"original_source_ref": {"type": "null"}, "derived_from_source_ref": {"type": "null"}}}}
       ]
+    },
+    "specialistResearch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["specialist_research_id", "status", "responsibility_role_ref", "activation", "authority_status", "does_not_establish"],
+      "properties": {
+        "specialist_research_id": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["PLANNED", "COMPLETED"]},
+        "responsibility_role_ref": {"type": "string", "const": "config/responsibility_registry.json#responsibilities/RESEARCH_AND_CURATION"},
+        "activation": {"$ref": "#/definitions/specialistActivation"},
+        "contribution": {"$ref": "#/definitions/specialistContribution"},
+        "authority_status": {"type": "string", "const": "SPECIALIST_CONTRIBUTION_ONLY"},
+        "does_not_establish": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {"type": "string", "enum": ["FACT", "CLAIM_AUTHORIZATION", "RESEARCH_SUFFICIENCY", "THESIS_APPROVAL", "PRODUCT_AUTHORIZATION"]}
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "COMPLETED"}}, "required": ["status"]},
+          "then": {"required": ["contribution"]}
+        },
+        {
+          "if": {"properties": {"status": {"const": "PLANNED"}}, "required": ["status"]},
+          "then": {"not": {"required": ["contribution"]}}
+        }
+      ]
+    },
+    "specialistActivation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["activation_id", "specialty", "activation_reason", "problem_nature", "risk", "sensitivity", "complexity", "disciplinary_need", "research_question", "scope", "affected_object_refs", "expected_limits"],
+      "properties": {
+        "activation_id": {"type": "string", "minLength": 1},
+        "specialty": {"type": "string", "minLength": 1},
+        "activation_reason": {"type": "string", "minLength": 1},
+        "problem_nature": {"type": "string", "minLength": 1},
+        "risk": {"type": "string", "minLength": 1},
+        "sensitivity": {"type": "string", "minLength": 1},
+        "complexity": {"type": "string", "minLength": 1},
+        "disciplinary_need": {"type": "string", "minLength": 1},
+        "research_question": {"type": "string", "minLength": 1},
+        "scope": {"type": "string", "minLength": 1},
+        "affected_object_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "affected_claim_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "expected_limits": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "specialistContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contribution_id", "specialty", "research_question", "scope", "method", "source_refs", "findings", "rival_status", "rival_positions", "limitations", "operational_limits", "uncertainty", "conflicts_of_interest", "affected_object_refs", "affected_claim_ids", "claim_assessments"],
+      "properties": {
+        "contribution_id": {"type": "string", "minLength": 1},
+        "specialty": {"type": "string", "minLength": 1},
+        "research_question": {"type": "string", "minLength": 1},
+        "scope": {"type": "string", "minLength": 1},
+        "method": {"type": "string", "minLength": 1},
+        "source_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "findings": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/specialistFinding"}},
+        "rival_status": {"type": "string", "enum": ["PRESENT", "NONE_IDENTIFIED"]},
+        "rival_search_justification": {"type": "string", "minLength": 1},
+        "rival_positions": {"type": "array", "items": {"$ref": "#/definitions/specialistRivalPosition"}},
+        "limitations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "operational_limits": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/specialistOperationalLimit"}},
+        "uncertainty": {"$ref": "#/definitions/specialistUncertainty"},
+        "conflicts_of_interest": {"$ref": "#/definitions/specialistConflictOfInterest"},
+        "affected_object_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "affected_claim_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "claim_assessments": {"type": "array", "items": {"$ref": "#/definitions/specialistClaimAssessment"}}
+      },
+      "allOf": [
+        {"if": {"properties": {"rival_status": {"const": "PRESENT"}}, "required": ["rival_status"]}, "then": {"properties": {"rival_positions": {"minItems": 1}}, "required": ["rival_positions"]}},
+        {"if": {"properties": {"rival_status": {"const": "NONE_IDENTIFIED"}}, "required": ["rival_status"]}, "then": {"required": ["rival_search_justification"], "properties": {"rival_positions": {"maxItems": 0}}}}
+      ]
+    },
+    "specialistFinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["finding_id", "statement", "evidence_refs", "confidence"],
+      "properties": {
+        "finding_id": {"type": "string", "minLength": 1},
+        "statement": {"type": "string", "minLength": 1},
+        "evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "confidence": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH"]}
+      }
+    },
+    "specialistRivalPosition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["position_id", "statement", "evidence_refs", "treatment"],
+      "properties": {
+        "position_id": {"type": "string", "minLength": 1},
+        "statement": {"type": "string", "minLength": 1},
+        "evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "treatment": {"type": "string", "enum": ["RETAINED", "LIMITED", "REJECTED", "OPEN"]}
+      }
+    },
+    "specialistUncertainty": {
+      "type": "object", "additionalProperties": false,
+      "required": ["level", "statement", "material", "impact_on_use"],
+      "properties": {
+        "level": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "UNRESOLVED"]},
+        "statement": {"type": "string", "minLength": 1},
+        "material": {"type": "boolean"},
+        "impact_on_use": {"type": "string", "minLength": 1}
+      }
+    },
+    "specialistOperationalLimit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["limit_id", "condition", "effect", "return_route"],
+      "properties": {
+        "limit_id": {"type": "string", "minLength": 1},
+        "condition": {"type": "string", "minLength": 1},
+        "effect": {"type": "string", "minLength": 1},
+        "return_route": {"type": "string", "minLength": 1}
+      }
+    },
+    "specialistConflictOfInterest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "details", "mitigation"],
+      "properties": {
+        "status": {"type": "string", "enum": ["NONE_DECLARED", "PRESENT"]},
+        "details": {"type": "string", "minLength": 1},
+        "mitigation": {"type": "string", "minLength": 1}
+      }
+    },
+    "specialistClaimAssessment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["claim_id", "support_level", "rationale", "evidence_refs", "limitations"],
+      "properties": {
+        "claim_id": {"type": "string", "minLength": 1},
+        "support_level": {"type": "string", "enum": ["SUPPORTED", "LIMITED", "NOT_SUPPORTED"]},
+        "rationale": {"type": "string", "minLength": 1},
+        "evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
     },
     "multilingualResearch": {
       "type": "object",
