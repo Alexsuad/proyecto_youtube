@@ -610,9 +610,6 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
             if isinstance(item, dict) and item.get("item_id")
         },
         "MATERIAL_CLAIM": known_claim_ids,
-        "PHENOMENON": {
-            data.get("phenomenon", {}).get("phenomenon_id")
-        } if isinstance(data.get("phenomenon"), dict) and data.get("phenomenon", {}).get("phenomenon_id") else set(),
     }
     for index, contradiction in enumerate(data.get("contradictions", [])):
         if isinstance(contradiction, dict):

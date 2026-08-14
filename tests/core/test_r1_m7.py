@@ -86,6 +86,11 @@ def test_work_interpretation_subject_ref_must_exist_in_research_pack():
     assert any("subject_ref inexistente" in item for item in violations)
 
 
+def test_external_phenomenon_subject_is_not_falsely_resolved_locally():
+    case = _contradiction(subject_kind="PHENOMENON", subject_ref="EXTERNAL-PHENOMENON", affected_claim_ids=[])
+    assert validate_research_pack(_pack(case, include_claim=False)) == []
+
+
 def test_existing_claim_subject_must_be_linked_explicitly():
     case = _contradiction(subject_kind="MATERIAL_CLAIM", subject_ref="C1", affected_claim_ids=[])
     violations = validate_research_pack(_pack(case))
