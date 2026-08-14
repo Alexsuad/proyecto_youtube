@@ -1,0 +1,35 @@
+{
+  "mission_id": "PLAN_006_T1_DEMO_CONTROLLED",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129",
+    "capability_ids": [
+      "PLAN_006_T1_DEMO"
+    ],
+    "role_ids": [
+      "ENGINEERING_IMPLEMENTER"
+    ],
+    "execution_profile_ids": [
+      "ANY"
+    ],
+    "execution_interface": "ANY",
+    "allowed_operations": [
+      "VERIFY_EVIDENCE",
+      "EXECUTE_CAPABILITY"
+    ],
+    "allowed_paths": [
+      "reports/implementation/plan_006/"
+    ],
+    "allowed_routes": [
+      "ANY"
+    ],
+    "execution_mode": "SYNTHETIC",
+    "single_use": false,
+    "authority_ref": "plans/plan_006/PLAN_006_T1_DEMO_AUTHORITY.json",
+    "authority_sha256": "cb96c1c976fc3f99f30226bc6684b954956f106a3cf3d433f740b41e8177ac5f",
+    "authorized_scope_sha256": "da4ec5947ee32a1a7bcc3db4193ad4a4a1ccb09fb9c8f22373aee91897b8f680",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false,
+    "repair_integrity_evidence_path": "NONE"
+  }
+}

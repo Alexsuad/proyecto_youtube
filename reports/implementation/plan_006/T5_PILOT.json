@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T5",
   "mission_id": "PLAN_006_T5_MEASURED_OPENCODE_PILOT",
   "increment": "T5",
-  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T21:59:43.361821Z",
+  "repository_revision": "d38d7aa196a59933b52267fdaf5affd022e44793+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T08:37:01.088881Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -25,7 +25,7 @@
     },
     {
       "path": "tests/core/test_plan_006_t5_closure_check.py",
-      "sha256": "c662252483a27ba0fe4222ec6d253a319c898fb7976a783bc9a7e5d3422d84c7"
+      "sha256": "525f0338296b75dd0a5d19b948e05886e45b9d715cdffe8ebfe362431b3dd949"
     }
   ],
   "evidence_refs": [
@@ -119,5 +119,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "40e5d307306020a883339a5dd326004ad06526d36b4fbfe2d63a8766f0604bf6"
+  "evidence_identity_sha256": "4da7807f720b33ddfd7f5f767af4ebaa5d94771efc7fa8d972649a0f8f4a3c71"
 }
