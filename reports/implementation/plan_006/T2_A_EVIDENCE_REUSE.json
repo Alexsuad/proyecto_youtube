@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T2-A",
   "mission_id": "PLAN_006_T2_A_EVIDENCE_REUSE",
   "increment": "T2-A",
-  "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-14T18:43:31.000084Z",
+  "repository_revision": "aded15b4d21567b4a5de663246eaa769aeb6fc3d+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T19:22:08.020306Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -13,7 +13,7 @@
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
       "path": "src/core/evidence_reuse.py",
@@ -94,12 +94,12 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "ee5620f164652cc79b84307bdb078372124c873ce55552a9493187c6dc7ce529",
+  "evidence_identity_sha256": "31f560488a52337343cf2f1e6a8445b3ff9e19dbb38e2b080b6469ec6289d370",
   "semantic_applicability": {
     "scope": "reports/implementation/plan_006/T2_A_EVIDENCE_REUSE.json",
     "coverage_required": "T2-A evidence reuse decision",
     "intended_assurance": "structural and semantic reuse compatibility",
     "environment": "REPOSITORY_LOCAL",
-    "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED"
+    "repository_revision": "aded15b4d21567b4a5de663246eaa769aeb6fc3d+WORKTREE_UNCOMMITTED"
   }
 }

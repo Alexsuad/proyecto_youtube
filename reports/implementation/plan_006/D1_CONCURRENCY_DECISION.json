@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_D1",
   "mission_id": "PLAN_006_D1_CONCURRENCY_DECISION",
   "increment": "D1",
-  "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-14T18:40:45.508137Z",
+  "repository_revision": "aded15b4d21567b4a5de663246eaa769aeb6fc3d+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T19:22:26.921922Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -13,11 +13,11 @@
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
       "path": "reports/implementation/plan_006/T0_BASELINE.json",
-      "sha256": "47d8da8677fed86643b97baa5dfa85947c6dae9d0eac0b273cdbe251935f2eed"
+      "sha256": "60ca46d04ab29e13eb4700cfd179976814d4aa80bf05d3cbcd65e6a1ac51a74b"
     },
     {
       "path": "reports/implementation/plan_006/T5_PILOT.json",
@@ -101,5 +101,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "dd3d4a38c13cd75e4034a7e24de5b84d94b8524481c4e13dadb9f7e060e63d5e"
+  "evidence_identity_sha256": "f134b70db7005808d343d83cc4122e1db62ffb1b717c5f78f536d07138a6bd46"
 }

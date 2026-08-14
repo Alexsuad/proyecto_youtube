@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T0_BASELINE",
   "mission_id": "PLAN_006_T0_IMPLEMENTATION",
   "increment": "T0_BASELINE",
-  "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-14T18:39:22.106322Z",
+  "repository_revision": "aded15b4d21567b4a5de663246eaa769aeb6fc3d+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T19:21:51.284604Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -13,7 +13,7 @@
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
       "path": "src/core/lean_measurement.py",
@@ -25,7 +25,7 @@
     },
     {
       "path": "config/execution_benchmark_matrix.json",
-      "sha256": "f27583cd51950c78df04922e4a945fb5a20bfe8cd224340d4125f4a46b26ead6"
+      "sha256": "c2d5eb98cf8e812fa7d7b9557e255807dbf1dd369ffb4cd6fc75b6ad20aa27bd"
     }
   ],
   "evidence_refs": [
@@ -120,5 +120,5 @@
       "evidence_reference": "reports/implementation/plan_006/T0_BASELINE.json"
     }
   ],
-  "evidence_identity_sha256": "45296e59ead7b648c9a6de3f3740f586e9b39ef0ca64a092ac1622337d67ab60"
+  "evidence_identity_sha256": "f612248b433d736e4f82ecb5fdb4ec91d6666ca0a6a66d61f209987e303e73cc"
 }

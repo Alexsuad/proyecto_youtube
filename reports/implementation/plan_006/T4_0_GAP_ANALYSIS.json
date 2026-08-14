@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T4-0",
   "mission_id": "PLAN_006_T4_0_GAP_ANALYSIS",
   "increment": "T4-0",
-  "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-14T18:40:16.848213Z",
+  "repository_revision": "aded15b4d21567b4a5de663246eaa769aeb6fc3d+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T19:22:24.417731Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -13,7 +13,7 @@
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
       "path": "src/core/gap_analysis.py",
@@ -29,7 +29,7 @@
     },
     {
       "path": "src/core/routing_policy.py",
-      "sha256": "b33d5dc43e0e806e376780933c910c01d140726c2ac6bf5d2a6e08b1e465ae9f"
+      "sha256": "69afe9d2ef2c3456e871d2959fa1ac12b7d6c8d20f885fb36a2c482df5725dc8"
     },
     {
       "path": "src/core/context_resolution.py",
@@ -124,5 +124,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "fa3d99087c84693ea816f8342fb10b0dc950a4a506a6aaea79dc634c721a8660"
+  "evidence_identity_sha256": "796201fb7a026b902bbfc8c037b75efe1fea0201c2b92fd2899bdd9dfa0f0d27"
 }

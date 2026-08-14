@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T2-B",
   "mission_id": "PLAN_006_T2_B_PROPORTIONAL_VERIFICATION",
   "increment": "T2-B",
-  "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-14T18:43:31.207361Z",
+  "repository_revision": "aded15b4d21567b4a5de663246eaa769aeb6fc3d+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T19:22:08.305169Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -13,15 +13,15 @@
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
       "path": "src/core/proportional_verification.py",
-      "sha256": "0dd68aa5ad993878a0d37d6ab13fca65982101979951feb5ec24602a17b6a3fe"
+      "sha256": "ce5b599be902efa9e7981bbabcca00d43513c1330625e0196f3cdf8d091f3715"
     },
     {
       "path": "tests/core/test_plan_006_t2b_proportional_verification.py",
-      "sha256": "c24e71201821be87ccfa4b6e19f58ce7e79cec5a570e88a50b633dd24d031014"
+      "sha256": "a8f0d5f1c783e75d1c988d68a9c33598e7f6dbf9e0b51aabc4662d274e222e08"
     }
   ],
   "evidence_refs": [
@@ -94,5 +94,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "134ad93cdf81ba5de7cd70bbd3a347c7cebe77ca23f6ecc2548c87fec94f1d69"
+  "evidence_identity_sha256": "48033bdf4ee9506bdbad976e0e12203a1d32a1ef5c8982bba6945accd60e6e5d"
 }

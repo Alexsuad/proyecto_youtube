@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T3",
   "mission_id": "PLAN_006_T3_PERMISSION_MODEL",
   "increment": "T3",
-  "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-14T18:40:15.723148Z",
+  "repository_revision": "aded15b4d21567b4a5de663246eaa769aeb6fc3d+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T19:22:10.087554Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -13,7 +13,7 @@
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
       "path": "opencode.json",
@@ -21,7 +21,7 @@
     },
     {
       "path": "tests/opencode/test_controlled_integration.py",
-      "sha256": "e901fb1d1f904221e431128e59f2fb5321a8fe80ba4b0dbd3399c81b586e6aee"
+      "sha256": "0ebc2c90ab4d6667d8bb88d727d4b35b97fe2097ef0b60fd30d699ce770d1725"
     }
   ],
   "evidence_refs": [
@@ -96,5 +96,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "a5c51fb2144f88c87ae438368c7ea7ee75c40f8177984904444f37200f7c632f"
+  "evidence_identity_sha256": "b3ab27e8809dfbf51a9c3096396f847fe08d1b30638d00b294ea566f17942782"
 }

@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T4",
   "mission_id": "PLAN_006_T4_RESOURCE_AWARE_DECISION",
   "increment": "T4",
-  "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-14T18:40:17.750722Z",
+  "repository_revision": "aded15b4d21567b4a5de663246eaa769aeb6fc3d+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T19:22:25.687306Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -13,7 +13,7 @@
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
-      "sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae"
+      "sha256": "d6d009dd1a191fbf9e2f984e97a31b51fb4de0e0f744229e1b3734482e6a21f1"
     },
     {
       "path": "src/core/resource_aware_decision.py",
@@ -29,7 +29,7 @@
     },
     {
       "path": "src/core/routing_policy.py",
-      "sha256": "b33d5dc43e0e806e376780933c910c01d140726c2ac6bf5d2a6e08b1e465ae9f"
+      "sha256": "69afe9d2ef2c3456e871d2959fa1ac12b7d6c8d20f885fb36a2c482df5725dc8"
     },
     {
       "path": "config/agent_execution_profiles.json",
@@ -112,5 +112,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "487ec6435275fb782fd710c74e5525e36fa4363d8b8a061ea09bac61dd340497"
+  "evidence_identity_sha256": "6216e7129fe3dd645d42db1caaad32ec2ac58c7ffaa546dc67c71746d0fab671"
 }
