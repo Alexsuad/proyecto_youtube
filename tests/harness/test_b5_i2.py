@@ -859,6 +859,8 @@ def test_b5_i2_consumes_specialist_research_validation(tmp_path: Path) -> None:
             "uncertainty": {"level": "HIGH", "statement": "Incierto.", "material": True, "impact_on_use": "No usar como afirmación categórica."},
             "conflicts_of_interest": {"status": "NONE_DECLARED", "details": "Ninguno.", "mitigation": "Revisión."},
             "affected_object_refs": ["I2"], "affected_claim_ids": ["C-1"], "claim_dispositions": [], "claim_discoveries": [],
+            "activation_relation": "WITHIN_ORIGINAL_MISSION", "activation_change_dimensions": [],
+            "activation_change_description": "La contribución permanece dentro de la misión original.",
             "activation_reassessment_status": "NOT_REQUIRED", "claim_assessments": [],
         },
     }]
@@ -868,6 +870,18 @@ def test_b5_i2_consumes_specialist_research_validation(tmp_path: Path) -> None:
     result = _evaluate(paths)
     assert result.status is GateStatus.FAIL
     assert any("exactamente un assessment" in item or "disposición final" in item for item in result.violations)
+
+    specialist = research["specialist_research"][0]
+    specialist["activation"]["affected_claim_ids"] = []
+    specialist["contribution"]["affected_claim_ids"] = []
+    specialist["contribution"]["activation_relation"] = "MATERIAL_MISSION_CHANGE"
+    specialist["contribution"]["activation_change_dimensions"] = ["QUESTION"]
+    specialist["contribution"]["activation_change_description"] = "La pregunta especializada cambió materialmente."
+    _put(paths["research"], research)
+    _refresh_b5_i2_audit(paths)
+    result = _evaluate(paths)
+    assert result.status is GateStatus.FAIL
+    assert any("mantiene ACTIVATION_REASSESSMENT_REQUIRED=NO" in item for item in result.violations)
 
 
 def _mutate(paths: dict[str, Path], name: str, mutate, refresh: bool = True) -> None:

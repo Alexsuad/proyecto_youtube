@@ -49,6 +49,9 @@ def _specialist(*, status="COMPLETED"):
             "affected_claim_ids": [],
             "claim_dispositions": [],
             "claim_discoveries": [],
+            "activation_relation": "WITHIN_ORIGINAL_MISSION",
+            "activation_change_dimensions": [],
+            "activation_change_description": "La contribución permanece dentro de la misión original.",
             "activation_reassessment_status": "NOT_REQUIRED",
             "claim_assessments": [],
         }
@@ -313,10 +316,75 @@ def test_material_mission_change_can_be_explicitly_reassessed():
     specialist = _specialist()
     specialist["contribution"]["affected_claim_ids"] = ["C-2"]
     specialist["contribution"]["claim_discoveries"] = [_discovered(relation="ACTIVATION_REASSESSMENT_REQUIRED")]
+    specialist["contribution"]["activation_relation"] = "MATERIAL_MISSION_CHANGE"
+    specialist["contribution"]["activation_change_dimensions"] = ["QUESTION"]
+    specialist["contribution"]["activation_change_description"] = "El descubrimiento exige una pregunta especializada distinta."
     specialist["contribution"]["activation_reassessment_status"] = "REQUIRED"
     specialist["contribution"]["activation_reassessment_reason"] = "El nuevo claim requiere otra pregunta especializada."
     specialist["contribution"]["claim_assessments"] = [_assessment("C-2")]
     assert validate_research_pack(_claim_pack(specialist, ["C-2"])) == []
+
+
+def test_same_mission_explicitly_remains_not_required():
+    specialist = _specialist()
+    assert validate_research_pack(_pack(specialist)) == []
+
+
+def test_non_material_reformulation_within_scope_passes():
+    specialist = _specialist()
+    specialist["contribution"]["research_question"] = "Pregunta refinada sin cambio de misión."
+    specialist["contribution"]["activation_change_description"] = "Reformulación no material dentro del alcance original."
+    assert validate_research_pack(_pack(specialist)) == []
+
+
+def test_material_question_change_without_new_claim_can_require_reassessment():
+    specialist = _specialist()
+    specialist["contribution"]["activation_relation"] = "MATERIAL_MISSION_CHANGE"
+    specialist["contribution"]["activation_change_dimensions"] = ["QUESTION"]
+    specialist["contribution"]["activation_change_description"] = "La pregunta especializada cambió materialmente."
+    specialist["contribution"]["activation_reassessment_status"] = "REQUIRED"
+    specialist["contribution"]["activation_reassessment_reason"] = "La misión original ya no cubre la pregunta resultante."
+    assert validate_research_pack(_pack(specialist)) == []
+
+
+def test_material_specialty_scope_and_object_changes_require_reassessment():
+    for dimension in ("SPECIALTY", "SCOPE", "OBJECT"):
+        specialist = _specialist()
+        specialist["contribution"]["activation_relation"] = "MATERIAL_MISSION_CHANGE"
+        specialist["contribution"]["activation_change_dimensions"] = [dimension]
+        specialist["contribution"]["activation_change_description"] = f"Cambio material declarado en {dimension}."
+        specialist["contribution"]["activation_reassessment_status"] = "REQUIRED"
+        specialist["contribution"]["activation_reassessment_reason"] = "La misión requiere reevaluación explícita."
+        assert validate_research_pack(_pack(specialist)) == []
+
+
+def test_material_change_hidden_by_not_required_is_rejected():
+    specialist = _specialist()
+    specialist["contribution"]["activation_relation"] = "MATERIAL_MISSION_CHANGE"
+    specialist["contribution"]["activation_change_dimensions"] = ["SCOPE"]
+    specialist["contribution"]["activation_change_description"] = "El alcance cambió materialmente."
+    assert any("mantiene ACTIVATION_REASSESSMENT_REQUIRED=NO" in violation for violation in validate_research_pack(_pack(specialist)))
+
+
+def test_required_without_material_change_or_discovery_is_rejected():
+    specialist = _specialist()
+    specialist["contribution"]["activation_reassessment_status"] = "REQUIRED"
+    specialist["contribution"]["activation_reassessment_reason"] = "Se solicita reevaluación."
+    assert any("sin cambio material" in violation for violation in validate_research_pack(_pack(specialist)))
+
+
+def test_text_difference_does_not_infer_materiality():
+    specialist = _specialist()
+    specialist["activation"]["research_question"] = "Pregunta original."
+    specialist["contribution"]["research_question"] = "Pregunta reformulada."
+    assert validate_research_pack(_pack(specialist)) == []
+
+
+def test_activation_original_is_preserved():
+    specialist = _specialist()
+    original = dict(specialist["activation"])
+    validate_research_pack(_pack(specialist))
+    assert specialist["activation"] == original
 
 
 def test_initial_unknown_claim_remains_rejected():

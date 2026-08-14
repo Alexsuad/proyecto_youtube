@@ -777,7 +777,7 @@
     "specialistContribution": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["contribution_id", "specialty", "research_question", "scope", "method", "source_refs", "findings", "rival_status", "rival_positions", "limitations", "operational_limits", "uncertainty", "conflicts_of_interest", "affected_object_refs", "affected_claim_ids", "claim_dispositions", "claim_discoveries", "activation_reassessment_status", "claim_assessments"],
+      "required": ["contribution_id", "specialty", "research_question", "scope", "method", "source_refs", "findings", "rival_status", "rival_positions", "limitations", "operational_limits", "uncertainty", "conflicts_of_interest", "affected_object_refs", "affected_claim_ids", "claim_dispositions", "claim_discoveries", "activation_relation", "activation_change_dimensions", "activation_change_description", "activation_reassessment_status", "claim_assessments"],
       "properties": {
         "contribution_id": {"type": "string", "minLength": 1},
         "specialty": {"type": "string", "minLength": 1},
@@ -797,6 +797,9 @@
         "affected_claim_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
         "claim_dispositions": {"type": "array", "items": {"$ref": "#/definitions/specialistClaimDisposition"}},
         "claim_discoveries": {"type": "array", "items": {"$ref": "#/definitions/specialistClaimDiscovery"}},
+        "activation_relation": {"type": "string", "enum": ["WITHIN_ORIGINAL_MISSION", "MATERIAL_MISSION_CHANGE"]},
+        "activation_change_dimensions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["QUESTION", "SPECIALTY", "SCOPE", "OBJECT", "MISSION"]}},
+        "activation_change_description": {"type": "string", "minLength": 1},
         "activation_reassessment_status": {"type": "string", "enum": ["NOT_REQUIRED", "REQUIRED"]},
         "activation_reassessment_reason": {"type": "string", "minLength": 1},
         "claim_assessments": {"type": "array", "items": {"$ref": "#/definitions/specialistClaimAssessment"}}
@@ -805,7 +808,9 @@
         {"if": {"properties": {"rival_status": {"const": "PRESENT"}}, "required": ["rival_status"]}, "then": {"properties": {"rival_positions": {"minItems": 1}}, "required": ["rival_positions"]}},
         {"if": {"properties": {"rival_status": {"const": "NONE_IDENTIFIED"}}, "required": ["rival_status"]}, "then": {"required": ["rival_search_justification"], "properties": {"rival_positions": {"maxItems": 0}}}},
         {"if": {"properties": {"activation_reassessment_status": {"const": "REQUIRED"}}, "required": ["activation_reassessment_status"]}, "then": {"required": ["activation_reassessment_reason"]}},
-        {"if": {"properties": {"activation_reassessment_status": {"const": "NOT_REQUIRED"}}, "required": ["activation_reassessment_status"]}, "then": {"not": {"required": ["activation_reassessment_reason"]}}}
+        {"if": {"properties": {"activation_reassessment_status": {"const": "NOT_REQUIRED"}}, "required": ["activation_reassessment_status"]}, "then": {"not": {"required": ["activation_reassessment_reason"]}}},
+        {"if": {"properties": {"activation_relation": {"const": "MATERIAL_MISSION_CHANGE"}}, "required": ["activation_relation"]}, "then": {"properties": {"activation_change_dimensions": {"minItems": 1}}}},
+        {"if": {"properties": {"activation_relation": {"const": "WITHIN_ORIGINAL_MISSION"}}, "required": ["activation_relation"]}, "then": {"properties": {"activation_change_dimensions": {"maxItems": 0}}}}
       ]
     },
     "specialistFinding": {

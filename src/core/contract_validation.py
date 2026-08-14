@@ -723,7 +723,17 @@ def _validate_specialist_research(
         if reassessment_discoveries and reassessment_status != "REQUIRED":
             violations.append(f"{prefix} declara un cambio material de misión sin ACTIVATION_REASSESSMENT_REQUIRED.")
         if reassessment_status == "REQUIRED" and not reassessment_discoveries:
-            violations.append(f"{prefix} no puede exigir reevaluación sin un descubrimiento que la justifique.")
+            if contribution.get("activation_relation") != "MATERIAL_MISSION_CHANGE":
+                violations.append(f"{prefix} no puede exigir reevaluación sin cambio material de misión u otra causa válida.")
+        activation_relation = contribution.get("activation_relation")
+        if activation_relation == "MATERIAL_MISSION_CHANGE":
+            if reassessment_status != "REQUIRED":
+                violations.append(f"{prefix} declara cambio material de misión pero mantiene ACTIVATION_REASSESSMENT_REQUIRED=NO.")
+        elif activation_relation == "WITHIN_ORIGINAL_MISSION":
+            if reassessment_discoveries:
+                violations.append(f"{prefix} no puede declarar WITHIN_ORIGINAL_MISSION para un descubrimiento que exige reevaluación.")
+            if reassessment_status == "REQUIRED":
+                violations.append(f"{prefix} declara REQUIRED sin cambio material de misión declarado.")
 
         if entry.get("authority_status") != "SPECIALIST_CONTRIBUTION_ONLY":
             violations.append(f"{prefix} no puede declarar autoridad distinta de SPECIALIST_CONTRIBUTION_ONLY.")
