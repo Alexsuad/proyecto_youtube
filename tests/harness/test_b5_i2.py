@@ -845,27 +845,29 @@ def test_b5_i2_consumes_specialist_research_validation(tmp_path: Path) -> None:
             "activation_id": "ACT-1", "specialty": "historia", "activation_reason": "Riesgo histórico material.",
             "problem_nature": "interpretación", "risk": "atribución", "sensitivity": "media", "complexity": "alta",
             "disciplinary_need": "contraste", "research_question": "¿Qué lectura rival debe conservarse?", "scope": "alcance acotado",
-            "affected_object_refs": ["I2"], "affected_claim_ids": [], "expected_limits": ["No autoriza la tesis."],
+            "affected_object_refs": ["I2"], "affected_claim_ids": ["C-1"], "expected_limits": ["No autoriza la tesis."],
         },
         "authority_status": "SPECIALIST_CONTRIBUTION_ONLY",
         "does_not_establish": ["FACT", "CLAIM_AUTHORIZATION", "RESEARCH_SUFFICIENCY", "THESIS_APPROVAL"],
         "contribution": {
             "contribution_id": "CONTR-1", "specialty": "historia", "research_question": "¿Qué lectura rival debe conservarse?",
-            "scope": "alcance acotado", "method": "comparación", "source_refs": ["UNKNOWN"],
-            "findings": [{"finding_id": "F-1", "statement": "Hallazgo", "evidence_refs": ["UNKNOWN"], "confidence": "LOW"}],
+            "scope": "alcance acotado", "method": "comparación", "source_refs": ["S1"],
+            "findings": [{"finding_id": "F-1", "statement": "Hallazgo", "evidence_refs": ["S1"], "confidence": "LOW"}],
             "rival_status": "NONE_IDENTIFIED", "rival_search_justification": "Búsqueda acotada.", "rival_positions": [],
             "limitations": ["Cobertura limitada."],
             "operational_limits": [{"limit_id": "L-1", "condition": "Si se usa para atribución.", "effect": "Formular condicionalmente.", "return_route": "Volver a investigación."}],
             "uncertainty": {"level": "HIGH", "statement": "Incierto.", "material": True, "impact_on_use": "No usar como afirmación categórica."},
             "conflicts_of_interest": {"status": "NONE_DECLARED", "details": "Ninguno.", "mitigation": "Revisión."},
-            "affected_object_refs": ["I2"], "affected_claim_ids": [], "claim_assessments": [],
+            "affected_object_refs": ["I2"], "affected_claim_ids": ["C-1"], "claim_dispositions": [], "claim_discoveries": [],
+            "activation_reassessment_status": "NOT_REQUIRED", "claim_assessments": [],
         },
     }]
+    research["claims_candidates"] = [{"item_id": "C-1", "statement": "Claim", "source_refs": ["S1"], "locator": "p. 1", "confidence": "HIGH"}]
     _put(paths["research"], research)
     _refresh_b5_i2_audit(paths)
     result = _evaluate(paths)
     assert result.status is GateStatus.FAIL
-    assert any("fuentes desconocidas" in item or "evidencia no declarada" in item for item in result.violations)
+    assert any("exactamente un assessment" in item or "disposición final" in item for item in result.violations)
 
 
 def _mutate(paths: dict[str, Path], name: str, mutate, refresh: bool = True) -> None:

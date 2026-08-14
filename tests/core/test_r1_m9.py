@@ -47,6 +47,9 @@ def _specialist(*, status="COMPLETED"):
             "conflicts_of_interest": {"status": "NONE_DECLARED", "details": "No se declaró conflicto.", "mitigation": "Revisión de la procedencia y de posiciones rivales."},
             "affected_object_refs": ["I2"],
             "affected_claim_ids": [],
+            "claim_dispositions": [],
+            "claim_discoveries": [],
+            "activation_reassessment_status": "NOT_REQUIRED",
             "claim_assessments": [],
         }
     return value
@@ -74,6 +77,7 @@ def test_existing_claim_can_be_referenced_and_supported():
     specialist = _specialist()
     specialist["activation"]["affected_claim_ids"] = ["C-1"]
     specialist["contribution"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [{"claim_id": "C-1", "disposition": "ASSESSED", "reason": "ASSESSMENT_COMPLETED", "justification": "Evaluado.", "evidence_refs": ["S1"]}]
     specialist["contribution"]["claim_assessments"] = [{"claim_id": "C-1", "support_level": "SUPPORTED", "rationale": "La fuente primaria respalda el alcance declarado.", "evidence_refs": ["S1"], "limitations": []}]
     pack = _pack(specialist)
     pack["claims_candidates"] = [{"item_id": "C-1", "statement": "Claim", "source_refs": ["S1"], "locator": "p. 1", "confidence": "HIGH"}]
@@ -102,6 +106,7 @@ def test_supported_claim_requires_provenance_with_authority():
     specialist = _specialist()
     specialist["activation"]["affected_claim_ids"] = ["C-1"]
     specialist["contribution"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [{"claim_id": "C-1", "disposition": "ASSESSED", "reason": "ASSESSMENT_COMPLETED", "justification": "Evaluado.", "evidence_refs": ["S1"]}]
     specialist["contribution"]["claim_assessments"] = [{"claim_id": "C-1", "support_level": "SUPPORTED", "rationale": "Apoyo declarado.", "evidence_refs": ["S1"], "limitations": []}]
     pack = _pack(specialist)
     pack["claims_candidates"] = [{"item_id": "C-1", "statement": "Claim", "source_refs": ["S1"], "locator": "p. 1", "confidence": "HIGH"}]
@@ -119,6 +124,7 @@ def test_unknown_claim_cannot_be_assessed():
 def test_incompatible_support_declarations_for_one_claim_are_rejected():
     specialist = _specialist()
     specialist["contribution"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [{"claim_id": "C-1", "disposition": "ASSESSED", "reason": "ASSESSMENT_COMPLETED", "justification": "Evaluado.", "evidence_refs": ["S1"]}]
     specialist["contribution"]["claim_assessments"] = [
         {"claim_id": "C-1", "support_level": "SUPPORTED", "rationale": "Apoyo inicial.", "evidence_refs": ["S1"], "limitations": []},
         {"claim_id": "C-1", "support_level": "NOT_SUPPORTED", "rationale": "La evidencia no alcanza.", "evidence_refs": ["S1"], "limitations": ["Falta corroboración."]},
@@ -131,6 +137,7 @@ def test_incompatible_support_declarations_for_one_claim_are_rejected():
 def test_limited_claim_requires_explicit_limits():
     specialist = _specialist()
     specialist["contribution"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [{"claim_id": "C-1", "disposition": "ASSESSED", "reason": "ASSESSMENT_COMPLETED", "justification": "Evaluado.", "evidence_refs": ["S1"]}]
     specialist["contribution"]["claim_assessments"] = [{"claim_id": "C-1", "support_level": "LIMITED", "rationale": "Apoyo parcial.", "evidence_refs": ["S1"], "limitations": []}]
     pack = _pack(specialist)
     pack["claims_candidates"] = [{"item_id": "C-1", "statement": "Claim", "source_refs": ["S1"], "locator": "p. 1", "confidence": "HIGH"}]
@@ -174,3 +181,145 @@ def test_specialist_cannot_create_parallel_claim_ledger_or_authority():
 
 def test_planned_activation_can_exist_without_contribution():
     assert validate_research_pack(_pack(_specialist(status="PLANNED"))) == []
+
+
+def _claim_pack(specialist, claim_ids):
+    pack = _pack(specialist)
+    pack["claims_candidates"] = [
+        {"item_id": claim_id, "statement": f"Claim {claim_id}", "source_refs": ["S1"], "locator": "p. 1", "confidence": "HIGH"}
+        for claim_id in claim_ids
+    ]
+    return pack
+
+
+def _assessed(claim_id):
+    return {"claim_id": claim_id, "disposition": "ASSESSED", "reason": "ASSESSMENT_COMPLETED", "justification": "Evaluado en la contribución.", "evidence_refs": ["S1"]}
+
+
+def _assessment(claim_id, level="SUPPORTED"):
+    return {"claim_id": claim_id, "support_level": level, "rationale": "Resultado explícito.", "evidence_refs": ["S1"], "limitations": [] if level == "SUPPORTED" else ["Alcance limitado."]}
+
+
+def _discovered(claim_id="C-2", relation="NEW_CLAIM_WITHIN_ORIGINAL_SCOPE"):
+    return {"claim_id": claim_id, "discovery_origin": "INVESTIGATIVE_DISCOVERY", "activation_ref": "ACT-1", "discovery_reason": "La evidencia reveló un claim relacionado durante la investigación.", "evidence_refs": ["S1"], "scope_relation": relation}
+
+
+def test_initial_claims_must_all_be_assessed_or_disposed():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["C-1", "C-2"]
+    specialist["contribution"]["affected_claim_ids"] = ["C-1", "C-2"]
+    specialist["contribution"]["claim_dispositions"] = [_assessed("C-1"), _assessed("C-2")]
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-1"), _assessment("C-2")]
+    assert validate_research_pack(_claim_pack(specialist, ["C-1", "C-2"])) == []
+
+
+def test_initial_claim_disappearing_without_disposition_is_rejected():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["C-1", "C-2"]
+    specialist["contribution"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [_assessed("C-1")]
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-1")]
+    assert any("disposición final" in violation for violation in validate_research_pack(_claim_pack(specialist, ["C-1", "C-2"])))
+
+
+def test_initial_claim_can_be_explicitly_not_assessed():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["C-1", "C-2"]
+    specialist["contribution"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [_assessed("C-1"), {"claim_id": "C-2", "disposition": "NOT_ASSESSED", "reason": "INSUFFICIENT_EVIDENCE", "justification": "No se obtuvo evidencia suficiente.", "evidence_refs": ["S1"]}]
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-1")]
+    assert validate_research_pack(_claim_pack(specialist, ["C-1", "C-2"])) == []
+
+
+def test_not_assessed_requires_reason():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [{"claim_id": "C-1", "disposition": "NOT_ASSESSED", "justification": "No pudo evaluarse.", "evidence_refs": ["S1"]}]
+    assert validate_research_pack(_claim_pack(specialist, ["C-1"]))
+
+
+def test_no_longer_relevant_requires_justification():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [{"claim_id": "C-1", "disposition": "NOT_ASSESSED", "reason": "NO_LONGER_RELEVANT", "evidence_refs": ["S1"]}]
+    assert validate_research_pack(_claim_pack(specialist, ["C-1"]))
+
+
+def test_final_affected_claim_requires_exactly_one_assessment():
+    specialist = _specialist()
+    specialist["contribution"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_assessments"] = []
+    assert any("exactamente un assessment" in violation for violation in validate_research_pack(_claim_pack(specialist, ["C-1"])))
+
+
+def test_duplicate_assessments_are_rejected():
+    specialist = _specialist()
+    specialist["contribution"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-1"), _assessment("C-1", "LIMITED")]
+    assert any("no puede duplicar" in violation for violation in validate_research_pack(_claim_pack(specialist, ["C-1"])))
+
+
+def test_not_supported_cannot_replace_not_assessed():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [{"claim_id": "C-1", "disposition": "NOT_ASSESSED", "reason": "INSUFFICIENT_EVIDENCE", "justification": "No se investigó finalmente.", "evidence_refs": ["S1"]}]
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-1", "NOT_SUPPORTED")]
+    assert any("NOT_ASSESSED" in violation for violation in validate_research_pack(_claim_pack(specialist, ["C-1"])))
+
+
+def test_new_claim_within_scope_keeps_discovery_lineage():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["affected_claim_ids"] = ["C-1", "C-2"]
+    specialist["contribution"]["claim_dispositions"] = [_assessed("C-1")]
+    specialist["contribution"]["claim_discoveries"] = [_discovered()]
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-1"), _assessment("C-2", "LIMITED")]
+    assert validate_research_pack(_claim_pack(specialist, ["C-1", "C-2"])) == []
+
+
+def test_new_claim_without_discovery_trace_is_rejected():
+    specialist = _specialist()
+    specialist["contribution"]["affected_claim_ids"] = ["C-2"]
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-2")]
+    assert any("descubrimiento trazable" in violation for violation in validate_research_pack(_claim_pack(specialist, ["C-2"])))
+
+
+def test_new_claim_requires_activation_relationship():
+    specialist = _specialist()
+    specialist["contribution"]["affected_claim_ids"] = ["C-2"]
+    specialist["contribution"]["claim_discoveries"] = [{**_discovered(), "activation_ref": "OTHER-ACTIVATION"}]
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-2")]
+    assert any("activation_ref" in violation for violation in validate_research_pack(_claim_pack(specialist, ["C-2"])))
+
+
+def test_new_claim_requires_originating_evidence():
+    specialist = _specialist()
+    specialist["contribution"]["affected_claim_ids"] = ["C-2"]
+    specialist["contribution"]["claim_discoveries"] = [{**_discovered(), "evidence_refs": []}]
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-2")]
+    assert validate_research_pack(_claim_pack(specialist, ["C-2"]))
+
+
+def test_material_mission_change_requires_activation_reassessment():
+    specialist = _specialist()
+    specialist["contribution"]["affected_claim_ids"] = ["C-2"]
+    specialist["contribution"]["claim_discoveries"] = [_discovered(relation="ACTIVATION_REASSESSMENT_REQUIRED")]
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-2")]
+    assert any("ACTIVATION_REASSESSMENT_REQUIRED" in violation for violation in validate_research_pack(_claim_pack(specialist, ["C-2"])))
+
+
+def test_material_mission_change_can_be_explicitly_reassessed():
+    specialist = _specialist()
+    specialist["contribution"]["affected_claim_ids"] = ["C-2"]
+    specialist["contribution"]["claim_discoveries"] = [_discovered(relation="ACTIVATION_REASSESSMENT_REQUIRED")]
+    specialist["contribution"]["activation_reassessment_status"] = "REQUIRED"
+    specialist["contribution"]["activation_reassessment_reason"] = "El nuevo claim requiere otra pregunta especializada."
+    specialist["contribution"]["claim_assessments"] = [_assessment("C-2")]
+    assert validate_research_pack(_claim_pack(specialist, ["C-2"])) == []
+
+
+def test_initial_unknown_claim_remains_rejected():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["DOES_NOT_EXIST"]
+    assert any("claims no declarados" in violation for violation in validate_research_pack(_pack(specialist)))
