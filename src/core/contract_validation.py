@@ -433,6 +433,7 @@ def validate_contradiction_disposition(
     known_source_ids: Optional[set[str]] = None,
     known_evidence_ids: Optional[set[str]] = None,
     known_claim_ids: Optional[set[str]] = None,
+    known_subject_ids: Optional[Dict[str, set[str]]] = None,
 ) -> List[str]:
     """Valida IR4-008/IR4-009 sin crear una autoridad paralela de evidencia."""
     violations: List[str] = []
@@ -448,6 +449,11 @@ def validate_contradiction_disposition(
 
     disposition = contradiction.get("disposition")
     subject_kind = contradiction.get("subject_kind")
+    resolvable_subject_ids = (known_subject_ids or {}).get(subject_kind)
+    if resolvable_subject_ids is not None and contradiction.get("subject_ref") not in resolvable_subject_ids:
+        violations.append(
+            f"Contradicción referencia subject_ref inexistente para {subject_kind}: '{contradiction.get('subject_ref')}'."
+        )
     if not any(contradiction.get(field) for field in ("subject_state", "subject_version", "subject_formulation")):
         violations.append("La contradicción requiere subject_state, subject_version o subject_formulation.")
     affected_claims_value = contradiction.get("affected_claim_ids")
@@ -597,11 +603,28 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
             known_claim_ids.add(entry["item_id"])
     if isinstance(claims, dict):
         known_claim_ids.update(claims.get("claim_ids", []))
+    known_subject_ids = {
+        "WORK_INTERPRETATION": {
+            item.get("item_id")
+            for item in data.get("interpretations", [])
+            if isinstance(item, dict) and item.get("item_id")
+        },
+        "MATERIAL_CLAIM": known_claim_ids,
+        "PHENOMENON": {
+            data.get("phenomenon", {}).get("phenomenon_id")
+        } if isinstance(data.get("phenomenon"), dict) and data.get("phenomenon", {}).get("phenomenon_id") else set(),
+    }
     for index, contradiction in enumerate(data.get("contradictions", [])):
         if isinstance(contradiction, dict):
             violations.extend(
                 f"ResearchPack.contradictions[{index}]: {item}"
-                for item in validate_contradiction_disposition(contradiction, known_sources, known_research_ids, known_claim_ids)
+                for item in validate_contradiction_disposition(
+                    contradiction,
+                    known_sources,
+                    known_research_ids,
+                    known_claim_ids,
+                    known_subject_ids,
+                )
             )
 
     required_dimensions = {

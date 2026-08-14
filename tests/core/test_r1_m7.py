@@ -57,10 +57,11 @@ def _contradiction(
     }
 
 
-def _pack(contradiction, *, include_claim=True):
+def _pack(contradiction, *, include_claim=True, include_interpretation=False):
     pack = deepcopy(VALID_RESEARCH_PACK)
     pack["source_registry"].append(deepcopy(pack["source_registry"][0]) | {"source_id": "S2", "title": "Fuente rival"})
     pack["claims_candidates"] = ([{"item_id": "C1", "statement": "Claim afectado.", "source_refs": ["S1", "S2"], "locator": "p. 1", "confidence": "HIGH"}] if include_claim else [])
+    pack["interpretations"] = ([{"item_id": "WI-1", "statement": "Interpretación de la obra.", "source_refs": ["S1"], "locator": "p. 2", "confidence": "HIGH"}] if include_interpretation else [])
     pack["contradictions"] = [contradiction]
     return pack
 
@@ -71,12 +72,18 @@ def test_resolved_contradiction_requires_explicit_comparison_and_evidence():
 
 def test_preclaim_contradiction_has_a_real_nonclaim_subject():
     case = _contradiction(subject_kind="WORK_INTERPRETATION", subject_ref="WI-1", affected_claim_ids=[])
-    assert validate_research_pack(_pack(case, include_claim=False)) == []
+    assert validate_research_pack(_pack(case, include_claim=False, include_interpretation=True)) == []
 
 
 def test_work_interpretation_can_later_be_linked_to_a_claim_without_losing_origin():
     case = _contradiction(subject_kind="WORK_INTERPRETATION", subject_ref="WI-1", affected_claim_ids=["C1"])
-    assert validate_research_pack(_pack(case)) == []
+    assert validate_research_pack(_pack(case, include_interpretation=True)) == []
+
+
+def test_work_interpretation_subject_ref_must_exist_in_research_pack():
+    case = _contradiction(subject_kind="WORK_INTERPRETATION", subject_ref="DOES_NOT_EXIST", affected_claim_ids=[])
+    violations = validate_research_pack(_pack(case, include_claim=False, include_interpretation=True))
+    assert any("subject_ref inexistente" in item for item in violations)
 
 
 def test_existing_claim_subject_must_be_linked_explicitly():
