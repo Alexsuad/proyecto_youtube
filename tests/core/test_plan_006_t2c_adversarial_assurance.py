@@ -277,13 +277,14 @@ class TestCriticalDoubtFamily:
 
 class TestCheckRegistry:
     def test_known_checks_resolve(self):
-        assert len(ADVERSARIAL_CHECKS) == 4
+        assert len(ADVERSARIAL_CHECKS) == 5
         ids = {check.check_id for check in ADVERSARIAL_CHECKS}
         assert ids == {
             "STATE_HISTORY_REQUIRED_TRANSITION",
             "LINEAGE_INTEGRITY",
             "AUTHORITY_RESOLVABLE",
             "CRITICAL_DOUBT_VALID_CLOSURE",
+            "CONTRACT_ENUM_SURFACE_STABLE",
         }
 
     def test_unknown_check_fails_closed(self):
@@ -332,3 +333,70 @@ class TestRealSchemaShape:
         schema = json.loads(WORK_LIFECYCLE_SCHEMA.read_text(encoding="utf-8"))
         states = {item for item in schema["definitions"]["state"]["enum"]}
         assert REQUIRED_TRANSITIONS.keys() - states == set()
+
+
+class TestContractEnumSurfaceFamily:
+    def test_real_schemas_match_canonical_surfaces(self):
+        assert verify_all_adversarial(_lifecycle()) == []
+
+    def test_m7_escape_non_target_expansion_detected_without_per_value_test(self):
+        sources = {
+            "research_stop_decision": {
+                "properties": {"subject_kind": {"type": "string", "enum": ["PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK", "WORK_INTERPRETATION"]}},
+            }
+        }
+        violations = verify_adversarial(["CONTRACT_ENUM_SURFACE_STABLE"], _lifecycle(schema_sources=sources))
+        assert any("CONTRACT_ENUM_SURFACE_EXPANDED:research_stop_decision.subject_kind:WORK_INTERPRETATION" in v for v in violations)
+
+    def test_m7_escape_detected_even_when_target_value_is_authorized_elsewhere(self):
+        sources = {
+            "research_pack": {
+                "definitions": {
+                    "multilingualResearch": {
+                        "properties": {
+                            "material_risk": {
+                                "type": "array",
+                                "items": {"type": "string", "enum": ["CLAIM_VALIDITY", "WORK_INTERPRETATION", "CONTRADICTION", "SUFFICIENCY", "WORK_SELECTION", "THESIS", "DISCLOSURE_OR_LIMITATION", "PHENOMENON"]},
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        violations = verify_adversarial(["CONTRACT_ENUM_SURFACE_STABLE"], _lifecycle(schema_sources=sources))
+        assert any("CONTRACT_ENUM_SURFACE_EXPANDED:research_pack.material_risk:PHENOMENON" in v for v in violations)
+
+    def test_m7_escape_report_claim_reconciled_with_diff(self):
+        sources = {
+            "research_stop_decision": {
+                "properties": {"subject_kind": {"type": "string", "enum": ["PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK", "THESIS"]}},
+            }
+        }
+        violations = verify_adversarial(["CONTRACT_ENUM_SURFACE_STABLE"], _lifecycle(schema_sources=sources))
+        assert any("CONTRACT_ENUM_SURFACE_EXPANDED:research_stop_decision.subject_kind:THESIS" in v for v in violations)
+
+    def test_authorized_legitimate_change_passes(self):
+        sources = {
+            "research_stop_decision": {
+                "properties": {"subject_kind": {"type": "string", "enum": ["PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK"]}},
+            }
+        }
+        assert verify_adversarial(["CONTRACT_ENUM_SURFACE_STABLE"], _lifecycle(schema_sources=sources)) == []
+
+    def test_regression_of_canonical_value_detected(self):
+        sources = {
+            "research_stop_decision": {
+                "properties": {"subject_kind": {"type": "string", "enum": ["PHENOMENON", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK"]}},
+            }
+        }
+        violations = verify_adversarial(["CONTRACT_ENUM_SURFACE_STABLE"], _lifecycle(schema_sources=sources))
+        assert any("CONTRACT_ENUM_SURFACE_REGRESSED:research_stop_decision.subject_kind:WORK_RESEARCH_DOSSIER" in v for v in violations)
+
+    def test_enum_surface_mutant_killed(self):
+        sources = {
+            "research_stop_decision": {
+                "properties": {"subject_kind": {"type": "string", "enum": ["PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK", "WORK_INTERPRETATION"]}},
+            }
+        }
+        result = evaluate_must_kill_mutation(mutant=MUST_KILL_MUTATIONS[4], observation=_lifecycle(schema_sources=sources))
+        assert result["classification"] == "KILLED"

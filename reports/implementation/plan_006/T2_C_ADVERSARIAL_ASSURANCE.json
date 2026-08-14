@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T2-C",
   "mission_id": "PLAN_006_T2_C_ADVERSARIAL_ASSURANCE",
   "increment": "T2-C",
-  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T21:59:56.715602Z",
+  "repository_revision": "c9a10e77962c413a72bad0be0a90e05f4423ebe8+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T11:31:34.607351Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -17,11 +17,11 @@
     },
     {
       "path": "src/core/adversarial_assurance.py",
-      "sha256": "3ef8ca5fa3ef1c3521c4ca31bc8b6fde61144b71798ddc9882e7c5fb29386f71"
+      "sha256": "4ede9beb0423a8964a59ff3d803df39aa0edeb3ee694d78bce4c90cb9a097a77"
     },
     {
       "path": "tests/core/test_plan_006_t2c_adversarial_assurance.py",
-      "sha256": "a8b8d0a4eaaa2953ef3e0bbb9d8bf9734296bab5b6be443532f05f87d5c3d909"
+      "sha256": "7619498fb8fd4fb13a3fb4600442ca8b634328a9ffe0075071c7368349dbe581"
     }
   ],
   "evidence_refs": [
@@ -35,7 +35,7 @@
   "metrics": {
     "mission_wall_time": "NOT_OBSERVABLE",
     "commands_executed": 3,
-    "unique_tests_or_test_groups_executed": 28,
+    "unique_tests_or_test_groups_executed": 38,
     "tests_repeated_equivalently": 0,
     "full_suite_runs": 0,
     "targeted_suite_runs": 3,
@@ -94,5 +94,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "7960d0665a8cee133c1d780d7ad39416ae86129bb44a542f3d7b28d70434a8e4"
+  "evidence_identity_sha256": "385009b765b338c20a4f0fba1a9acf62a915b5b704d2793889b3dc96d237b824"
 }

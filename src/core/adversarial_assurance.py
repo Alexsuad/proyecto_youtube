@@ -47,6 +47,26 @@ _APPROVED_ACTIONS = {
     "REQUIRE_MORE_TARGETED_RESEARCH", "BLOCK_BY_EVIDENCE",
 }
 
+# Canonical enum surfaces of productive contracts. A contract enum is a
+# stability boundary: it can only change when the canonical surface is updated
+# together with the mission that authorizes the new value. Any expansion or
+# regression of a registered surface without that coordination is a non-target
+# behavior change (field evidence R1-M7) that review must not accept silently.
+CONTRACT_ENUM_SURFACES: dict[str, tuple[str, tuple[str, ...], frozenset[str]]] = {
+    "research_stop_decision.subject_kind": (
+        "research_stop_decision",
+        ("properties", "subject_kind", "enum"),
+        frozenset({"PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK"}),
+    ),
+    "research_pack.material_risk": (
+        "research_pack",
+        ("definitions", "multilingualResearch", "properties", "material_risk", "items", "enum"),
+        frozenset({"CLAIM_VALIDITY", "WORK_INTERPRETATION", "CONTRADICTION", "SUFFICIENCY", "WORK_SELECTION", "THESIS", "DISCLOSURE_OR_LIMITATION"}),
+    ),
+}
+
+ROOT = Path(__file__).resolve().parents[2]
+
 
 @dataclass(frozen=True)
 class AdversarialCheck:
@@ -194,11 +214,54 @@ def _critical_doubt_check(observation: dict[str, Any]) -> list[str]:
     return violations
 
 
+def _resolve_enum_value(path: tuple[str, ...], schema: dict[str, Any]) -> list[Any]:
+    node: Any = schema
+    for key in path:
+        node = node[key]
+    return list(node)
+
+
+def _contract_enum_surface_check(observation: dict[str, Any]) -> list[str]:
+    """Canonical contract enum surfaces must match the real schemas exactly.
+
+    Reads the real schema files under ``ROOT/schemas`` unless the observation
+    provides explicit ``schema_sources`` (hermetic tests). A deviation reports
+    the concrete added/removed values so the escape is named without a per-value
+    hand-written test.
+    """
+    violations: list[str] = []
+    sources = observation.get("schema_sources")
+    for surface_id, (filename, path, canonical) in CONTRACT_ENUM_SURFACES.items():
+        schema_path = ROOT / "schemas" / f"{filename}.json"
+        schema: dict[str, Any] | None = None
+        if isinstance(sources, dict) and filename in sources:
+            schema = sources[filename]
+        else:
+            try:
+                schema = json.loads(schema_path.read_text(encoding="utf-8"))
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                violations.append(f"CONTRACT_ENUM_SURFACE_UNREADABLE:{surface_id}")
+                continue
+        try:
+            declared = set(_resolve_enum_value(path, schema))
+        except (KeyError, IndexError, TypeError):
+            violations.append(f"CONTRACT_ENUM_SURFACE_MISSING:{surface_id}")
+            continue
+        added = sorted(declared - canonical)
+        removed = sorted(canonical - declared)
+        if added:
+            violations.append(f"CONTRACT_ENUM_SURFACE_EXPANDED:{surface_id}:{','.join(added)}")
+        if removed:
+            violations.append(f"CONTRACT_ENUM_SURFACE_REGRESSED:{surface_id}:{','.join(removed)}")
+    return violations
+
+
 ADVERSARIAL_CHECKS: tuple[AdversarialCheck, ...] = (
     AdversarialCheck("STATE_HISTORY_REQUIRED_TRANSITION", "Screened/excluded/invalidated work requires a prior transition.", _state_transition_check),
     AdversarialCheck("LINEAGE_INTEGRITY", "Lineage refs exist, belong to the same work and are not future/incompatible; transition ids unique.", _lineage_check),
     AdversarialCheck("AUTHORITY_RESOLVABLE", "Authority refs resolve against the canonical responsibility registry.", _authority_check),
     AdversarialCheck("CRITICAL_DOUBT_VALID_CLOSURE", "RESOLVED requires trigger/activation/authorization/evidence; return route matches an approved trigger.", _critical_doubt_check),
+    AdversarialCheck("CONTRACT_ENUM_SURFACE_STABLE", "Canonical contract enum surfaces match the real schemas exactly; silent expansion/regression is rejected.", _contract_enum_surface_check),
 )
 
 _BY_ID = {check.check_id: check for check in ADVERSARIAL_CHECKS}
@@ -270,11 +333,16 @@ def _mutate_doubt_check_allows_resolved_without_evidence(observation: dict[str, 
     return violations
 
 
+def _mutate_enum_surface_check_allows_silent_expansion(observation: dict[str, Any]) -> list[str]:
+    return []
+
+
 MUST_KILL_MUTATIONS: tuple[MustKillMutation, ...] = (
     MustKillMutation("STATE_REQUIRED_TRANSITION_REMOVED", "STATE_HISTORY_REQUIRED_TRANSITION", _mutate_state_check_removes_required_transition),
     MustKillMutation("DUPLICATE_TRANSITION_GUARD_REMOVED", "LINEAGE_INTEGRITY", _mutate_lineage_check_removes_duplicate_guard),
     MustKillMutation("INVENTED_AUTHORITY_ACCEPTED", "AUTHORITY_RESOLVABLE", _mutate_authority_check_accepts_invented_authority),
     MustKillMutation("RESOLVED_WITHOUT_EVIDENCE_ACCEPTED", "CRITICAL_DOUBT_VALID_CLOSURE", _mutate_doubt_check_allows_resolved_without_evidence),
+    MustKillMutation("CONTRACT_ENUM_SURFACE_EXPANSION_ACCEPTED", "CONTRACT_ENUM_SURFACE_STABLE", _mutate_enum_surface_check_allows_silent_expansion),
 )
 
 

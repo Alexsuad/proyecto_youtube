@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T2-D",
   "mission_id": "PLAN_006_T2_D_CONTEXT_OUTPUT_ECONOMY",
   "increment": "T2-D",
-  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T21:59:56.954785Z",
+  "repository_revision": "c9a10e77962c413a72bad0be0a90e05f4423ebe8+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T11:31:34.932632Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -94,5 +94,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "d78231e3097ae22137cb32e9f640f1729f867d7f806d6680668653d86126c690"
+  "evidence_identity_sha256": "10c1e09a3729298fd86706ff84a0bd1191f113946fe6ba3d7c5b3ed06323af4f"
 }

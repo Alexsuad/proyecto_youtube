@@ -4,8 +4,8 @@
   "artifact_id": "PLAN_006_T2-B",
   "mission_id": "PLAN_006_T2_B_PROPORTIONAL_VERIFICATION",
   "increment": "T2-B",
-  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T21:59:56.484117Z",
+  "repository_revision": "c9a10e77962c413a72bad0be0a90e05f4423ebe8+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T11:31:34.298781Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
@@ -94,5 +94,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "cc0f6bea893194df0bf443cb505fa90d0c4d5702d0b4ac4364c34ef8987219d4"
+  "evidence_identity_sha256": "6c73bf2d0d7d6a885f07099f59d68e714a1465a2afe619fe8166d524dc54ea22"
 }

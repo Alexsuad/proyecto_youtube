@@ -113,7 +113,7 @@ METRICS_BY_INCREMENT: dict[str, dict] = {
     "T2_C": {
         "mission_wall_time": "NOT_OBSERVABLE",
         "commands_executed": 3,
-        "unique_tests_or_test_groups_executed": 28,
+        "unique_tests_or_test_groups_executed": 38,
         "tests_repeated_equivalently": 0,
         "full_suite_runs": 0,
         "targeted_suite_runs": 3,
