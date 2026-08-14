@@ -2,7 +2,7 @@
   "mission_id": "PLAN_006_T5_MEASURED_OPENCODE_PILOT",
   "decision": "APPROVE",
   "artifact_version": "1.0.0",
-  "authorized_scope_sha256": "a6fc5afd43a49c43207c6eadb5805507dac7baa90212d59dce0186871f2892e1",
+  "authorized_scope_sha256": "acec67ceb46aa45ffadcb4bbcfb4686b28f61dab94554cc210e33236b41be5b4",
   "authorization_source": "EXPLICIT_OWNER_AUTHORIZATION_RECORDED_2026-08-13",
   "historical_note": "PLAN 006 T5 measured OpenCode pilot: DELEGATE authorized exclusively inside this pilot; temporary native subagents via Task/explore/general; delegation depth max 1; primary keeps integration, verification and final responsibility; no persistent agents; no new .opencode/agents/*; DELEGATE scope ends with T5."
 }

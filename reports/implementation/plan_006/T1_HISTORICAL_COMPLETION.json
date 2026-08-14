@@ -4,19 +4,19 @@
   "artifact_id": "PLAN_006_T1_HISTORICAL_COMPLETION",
   "mission_id": "PLAN_006_T1_DEMO_CONTROLLED",
   "increment": "T1",
-  "repository_revision": "d38d7aa196a59933b52267fdaf5affd022e44793+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-14T08:34:35.521945Z",
-  "completion_identity_sha256": "8b57c89b00ebd76ad8ff598f8c2ba8ccc489b56328e2d4b1f902194d867777c7",
+  "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T18:39:23.984809Z",
+  "completion_identity_sha256": "519ad2d1a004d4381db1b9ac4dd0c5b9209a235e55b87d1657b007df87caac9b",
   "frozen_snapshot": {
     "mission_id": "PLAN_006_T1_DEMO_CONTROLLED",
     "mission_contract_sha256": "89dd47ced238900663617d172e0221b1764eef53ea139ae6afa7a08fecd0b8ae",
-    "authorization_artifact_sha256": "ea3f6d4fd95f91f6c812d7fa292b1e8ca3ff47b0871a770af3dd936a7f693534",
-    "authorized_scope_sha256": "da4ec5947ee32a1a7bcc3db4193ad4a4a1ccb09fb9c8f22373aee91897b8f680",
+    "authorization_artifact_sha256": "6447d3023ed28255943d992f87e5e4f31651e46412384959433b17a7565d4c93",
+    "authorized_scope_sha256": "31e64a8feee51e545b45c3453ccc5610ae25af94e9c735b13beebf3f8787bd40",
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
-    "live_state_sha256_at_execution": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129",
+    "live_state_sha256_at_execution": "671a65e496390ba8a63d49516e4feaf23978e2a00e63bfb647ac7025bb977e64",
     "authority_ref": "plans/plan_006/PLAN_006_T1_DEMO_AUTHORITY.json",
-    "authority_sha256": "cb96c1c976fc3f99f30226bc6684b954956f106a3cf3d433f740b41e8177ac5f",
-    "repository_revision": "d38d7aa196a59933b52267fdaf5affd022e44793+WORKTREE_UNCOMMITTED",
+    "authority_sha256": "78f9846797e6f412ae51c2d10afe25fb6f1a9b5932945808963bc304685f2bd0",
+    "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
     "required_test_identities": [
       "tests/core/test_plan_006_t1_historical_completion.py"
     ],
@@ -24,10 +24,10 @@
       "PLAN_006_T1_DEMO_CONTROLLED_EVIDENCE"
     ],
     "git_binding": {
-      "git_head": "d38d7aa196a59933b52267fdaf5affd022e44793"
+      "git_head": "26113dec1fd2d3cdfa1ee0056b3d977c11163039"
     },
     "completion_result": "PASS",
-    "completion_generated_at": "2026-08-14T08:34:35.521945Z"
+    "completion_generated_at": "2026-08-14T18:39:23.984809Z"
   },
   "technical_completion_claim": true,
   "functional_approval_claim": false,
@@ -35,7 +35,7 @@
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
-      "sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129"
+      "sha256": "671a65e496390ba8a63d49516e4feaf23978e2a00e63bfb647ac7025bb977e64"
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
@@ -43,11 +43,11 @@
     },
     {
       "path": "plans/plan_006/PLAN_006_T1_DEMO_AUTHORIZATION.json",
-      "sha256": "ea3f6d4fd95f91f6c812d7fa292b1e8ca3ff47b0871a770af3dd936a7f693534"
+      "sha256": "6447d3023ed28255943d992f87e5e4f31651e46412384959433b17a7565d4c93"
     },
     {
       "path": "plans/plan_006/PLAN_006_T1_DEMO_AUTHORITY.json",
-      "sha256": "cb96c1c976fc3f99f30226bc6684b954956f106a3cf3d433f740b41e8177ac5f"
+      "sha256": "78f9846797e6f412ae51c2d10afe25fb6f1a9b5932945808963bc304685f2bd0"
     },
     {
       "path": "tests/core/test_plan_006_t1_historical_completion.py",
@@ -64,25 +64,25 @@
   "limitations": [
     "Controlled T1 demonstration: live state A is the reconciled control operativo; bindings are DISTINCT real artifacts, not the old indistinct historical bindings.",
     "Demo A->B: OK against A; BLOCKED:MISSION_STALE_AGAINST_LIVE_STATE against B.",
-    "Live state hashes: A=f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129; B=71ff232b0348e8220f175f635e987ffa94cde3f74570084803f46f71a2115379.",
+    "Live state hashes: A=671a65e496390ba8a63d49516e4feaf23978e2a00e63bfb647ac7025bb977e64; B=71ff232b0348e8220f175f635e987ffa94cde3f74570084803f46f71a2115379.",
     "Historical completion stays valid regardless of A->B; current applicability is evaluated separately (T2/T3 semantics).",
     "owner_identity_sha256 binds owner closure to the controlled demonstration authority artifact."
   ],
   "result": "PASS",
-  "evidence_identity_sha256": "247f4b3552f3de71711535a2f6d6b8f0080a030699c4330bb60208e5b50c743e",
+  "evidence_identity_sha256": "dce2f2621c1100fde25ff3310198966c82dad8d8662e03b16de9bb2cfd59aa18",
   "owner_closure": {
     "plan_id": "PLAN_006",
     "artifact_id": "PLAN_006_T1_OWNER_CLOSURE",
     "mission_id": "PLAN_006_T1_DEMO_CONTROLLED",
     "increment": "T1",
-    "completion_identity_sha256": "8b57c89b00ebd76ad8ff598f8c2ba8ccc489b56328e2d4b1f902194d867777c7",
+    "completion_identity_sha256": "519ad2d1a004d4381db1b9ac4dd0c5b9209a235e55b87d1657b007df87caac9b",
     "owner_decision": "ACCEPTED",
     "closure_metadata": {
       "owner": "OWNER",
-      "owner_identity_sha256": "cb96c1c976fc3f99f30226bc6684b954956f106a3cf3d433f740b41e8177ac5f",
+      "owner_identity_sha256": "78f9846797e6f412ae51c2d10afe25fb6f1a9b5932945808963bc304685f2bd0",
       "note": "Controlled T1 demonstration closure; no functional approval claimed."
     },
-    "closure_generated_at": "2026-08-14T08:34:35.523941Z",
+    "closure_generated_at": "2026-08-14T18:39:23.986811Z",
     "re_executes_required_tests": false,
     "rebuilds_historical_authorization_against_current_live_state": false,
     "functional_approval_claim": false

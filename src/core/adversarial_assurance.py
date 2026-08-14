@@ -11,11 +11,8 @@ the real `work_lifecycle` surface as data; it does not modify product modules.
 """
 from __future__ import annotations
 
-import json
-import re
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Callable
 
 # State family (from schemas/work_lifecycle.json state enum)
@@ -46,26 +43,6 @@ _APPROVED_ACTIONS = {
     "CONTINUE_SCREENING", "PROMOTE_TO_FINALIST_CONSIDERATION", "EXCLUDE_FOR_CURRENT_EPISODE",
     "REQUIRE_MORE_TARGETED_RESEARCH", "BLOCK_BY_EVIDENCE",
 }
-
-# Canonical enum surfaces of productive contracts. A contract enum is a
-# stability boundary: it can only change when the canonical surface is updated
-# together with the mission that authorizes the new value. Any expansion or
-# regression of a registered surface without that coordination is a non-target
-# behavior change (field evidence R1-M7) that review must not accept silently.
-CONTRACT_ENUM_SURFACES: dict[str, tuple[str, tuple[str, ...], frozenset[str]]] = {
-    "research_stop_decision.subject_kind": (
-        "research_stop_decision",
-        ("properties", "subject_kind", "enum"),
-        frozenset({"PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK"}),
-    ),
-    "research_pack.material_risk": (
-        "research_pack",
-        ("definitions", "multilingualResearch", "properties", "material_risk", "items", "enum"),
-        frozenset({"CLAIM_VALIDITY", "WORK_INTERPRETATION", "CONTRADICTION", "SUFFICIENCY", "WORK_SELECTION", "THESIS", "DISCLOSURE_OR_LIMITATION"}),
-    ),
-}
-
-ROOT = Path(__file__).resolve().parents[2]
 
 
 @dataclass(frozen=True)
@@ -214,45 +191,27 @@ def _critical_doubt_check(observation: dict[str, Any]) -> list[str]:
     return violations
 
 
-def _resolve_enum_value(path: tuple[str, ...], schema: dict[str, Any]) -> list[Any]:
-    node: Any = schema
-    for key in path:
-        node = node[key]
-    return list(node)
+def _subject_resolution_check(observation: dict[str, Any]) -> list[str]:
+    """A subject_kind added to the local subject-resolution surface must have a
+    resolvable source in the ResearchPack or be explicitly declared/authorized.
 
-
-def _contract_enum_surface_check(observation: dict[str, Any]) -> list[str]:
-    """Canonical contract enum surfaces must match the real schemas exactly.
-
-    Reads the real schema files under ``ROOT/schemas`` unless the observation
-    provides explicit ``schema_sources`` (hermetic tests). A deviation reports
-    the concrete added/removed values so the escape is named without a per-value
-    hand-written test.
+    The contradiction validator resolves ``subject_ref`` against a surface built
+    from the ResearchPack. A focused change may extend that surface only for the
+    subject it is authorized to resolve; a subject_kind that the validator now
+    rejects while no resolvable ref exists anywhere in the pack and without a
+    declared authorization is a non-target collateral change. Field escape
+    R1-M7: the mission targeted WORK_INTERPRETATION and PHENOMENON was silently
+    added to the locally-resolved subjects although ResearchPack provides no
+    phenomenon id, and the schemas stayed identical.
     """
     violations: list[str] = []
-    sources = observation.get("schema_sources")
-    for surface_id, (filename, path, canonical) in CONTRACT_ENUM_SURFACES.items():
-        schema_path = ROOT / "schemas" / f"{filename}.json"
-        schema: dict[str, Any] | None = None
-        if isinstance(sources, dict) and filename in sources:
-            schema = sources[filename]
-        else:
-            try:
-                schema = json.loads(schema_path.read_text(encoding="utf-8"))
-            except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-                violations.append(f"CONTRACT_ENUM_SURFACE_UNREADABLE:{surface_id}")
-                continue
-        try:
-            declared = set(_resolve_enum_value(path, schema))
-        except (KeyError, IndexError, TypeError):
-            violations.append(f"CONTRACT_ENUM_SURFACE_MISSING:{surface_id}")
+    rejected = {str(k) for k in (observation.get("subject_resolution_rejected") or [])}
+    accepted = {str(k) for k in (observation.get("subject_resolution_accepted") or [])}
+    declared = {str(k) for k in (observation.get("authorized_subject_resolution") or [])}
+    for kind in sorted(rejected):
+        if kind in accepted or kind in declared:
             continue
-        added = sorted(declared - canonical)
-        removed = sorted(canonical - declared)
-        if added:
-            violations.append(f"CONTRACT_ENUM_SURFACE_EXPANDED:{surface_id}:{','.join(added)}")
-        if removed:
-            violations.append(f"CONTRACT_ENUM_SURFACE_REGRESSED:{surface_id}:{','.join(removed)}")
+        violations.append(f"NON_TARGET_SUBJECT_RESOLUTION:{kind}")
     return violations
 
 
@@ -261,7 +220,7 @@ ADVERSARIAL_CHECKS: tuple[AdversarialCheck, ...] = (
     AdversarialCheck("LINEAGE_INTEGRITY", "Lineage refs exist, belong to the same work and are not future/incompatible; transition ids unique.", _lineage_check),
     AdversarialCheck("AUTHORITY_RESOLVABLE", "Authority refs resolve against the canonical responsibility registry.", _authority_check),
     AdversarialCheck("CRITICAL_DOUBT_VALID_CLOSURE", "RESOLVED requires trigger/activation/authorization/evidence; return route matches an approved trigger.", _critical_doubt_check),
-    AdversarialCheck("CONTRACT_ENUM_SURFACE_STABLE", "Canonical contract enum surfaces match the real schemas exactly; silent expansion/regression is rejected.", _contract_enum_surface_check),
+    AdversarialCheck("SUBJECT_LOCAL_RESOLUTION_STABLE", "A subject_kind the real validator rejects for a missing resolvable source must be accepted somewhere or explicitly declared/authorized; non-target resolution changes are rejected.", _subject_resolution_check),
 )
 
 _BY_ID = {check.check_id: check for check in ADVERSARIAL_CHECKS}
@@ -333,7 +292,7 @@ def _mutate_doubt_check_allows_resolved_without_evidence(observation: dict[str, 
     return violations
 
 
-def _mutate_enum_surface_check_allows_silent_expansion(observation: dict[str, Any]) -> list[str]:
+def _mutate_subject_resolution_check_allows_non_target_resolution(observation: dict[str, Any]) -> list[str]:
     return []
 
 
@@ -342,7 +301,7 @@ MUST_KILL_MUTATIONS: tuple[MustKillMutation, ...] = (
     MustKillMutation("DUPLICATE_TRANSITION_GUARD_REMOVED", "LINEAGE_INTEGRITY", _mutate_lineage_check_removes_duplicate_guard),
     MustKillMutation("INVENTED_AUTHORITY_ACCEPTED", "AUTHORITY_RESOLVABLE", _mutate_authority_check_accepts_invented_authority),
     MustKillMutation("RESOLVED_WITHOUT_EVIDENCE_ACCEPTED", "CRITICAL_DOUBT_VALID_CLOSURE", _mutate_doubt_check_allows_resolved_without_evidence),
-    MustKillMutation("CONTRACT_ENUM_SURFACE_EXPANSION_ACCEPTED", "CONTRACT_ENUM_SURFACE_STABLE", _mutate_enum_surface_check_allows_silent_expansion),
+    MustKillMutation("NON_TARGET_SUBJECT_RESOLUTION_ACCEPTED", "SUBJECT_LOCAL_RESOLUTION_STABLE", _mutate_subject_resolution_check_allows_non_target_resolution),
 )
 
 

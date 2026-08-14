@@ -4,20 +4,20 @@
   "artifact_id": "PLAN_006_T5",
   "mission_id": "PLAN_006_T5_MEASURED_OPENCODE_PILOT",
   "increment": "T5",
-  "repository_revision": "d38d7aa196a59933b52267fdaf5affd022e44793+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-14T08:37:01.088881Z",
+  "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T18:40:44.746106Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
-      "sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129"
+      "sha256": "671a65e496390ba8a63d49516e4feaf23978e2a00e63bfb647ac7025bb977e64"
     },
     {
       "path": "plans/plan_006/PLAN_006_T5_AUTHORIZATION.json",
-      "sha256": "8ddaf5ccaa5801cf5b581197b937be47642ef924f95ebc6b34b39ce7fa949cf7"
+      "sha256": "5aa3cc548e5c76256748686140aff745aa3aa407b633ca17a57ee5871b763895"
     },
     {
       "path": "plans/plan_006/PLAN_006_T5_AUTHORITY.json",
-      "sha256": "524b3af4e8b25e8dc29cc0b5d7f79846ec6386dd1d84a6f21012d3df03ee1021"
+      "sha256": "5d5c36b9aa37e20860f9aaa600c55556f7b2fd743b7429271b677c6ad56c3860"
     },
     {
       "path": "src/core/plan_006_closure_check.py",
@@ -119,5 +119,5 @@
   "authority": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md"
   },
-  "evidence_identity_sha256": "4da7807f720b33ddfd7f5f767af4ebaa5d94771efc7fa8d972649a0f8f4a3c71"
+  "evidence_identity_sha256": "290c0564b68805c82264c8d4725dc5c9dee13f4b415e15da0a67b2964fca5d72"
 }

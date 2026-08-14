@@ -4,5 +4,5 @@
   "artifact_version": "1.0.0",
   "authorization_source": "EXPLICIT_OWNER_DEMO_CONTROLLED_CASE_2026-08-14",
   "historical_note": "Controlled T1 demonstration only: authorization bound to live state A (reconciled control operativo). It is used to show A->B separation, not to authorize any real product execution.",
-  "authorized_scope_sha256": "da4ec5947ee32a1a7bcc3db4193ad4a4a1ccb09fb9c8f22373aee91897b8f680"
+  "authorized_scope_sha256": "31e64a8feee51e545b45c3453ccc5610ae25af94e9c735b13beebf3f8787bd40"
 }

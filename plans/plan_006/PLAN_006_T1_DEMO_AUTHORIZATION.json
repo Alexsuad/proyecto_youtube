@@ -2,7 +2,7 @@
   "mission_id": "PLAN_006_T1_DEMO_CONTROLLED",
   "authorization": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
-    "live_state_sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129",
+    "live_state_sha256": "671a65e496390ba8a63d49516e4feaf23978e2a00e63bfb647ac7025bb977e64",
     "capability_ids": [
       "PLAN_006_T1_DEMO"
     ],
@@ -26,8 +26,8 @@
     "execution_mode": "SYNTHETIC",
     "single_use": false,
     "authority_ref": "plans/plan_006/PLAN_006_T1_DEMO_AUTHORITY.json",
-    "authority_sha256": "cb96c1c976fc3f99f30226bc6684b954956f106a3cf3d433f740b41e8177ac5f",
-    "authorized_scope_sha256": "da4ec5947ee32a1a7bcc3db4193ad4a4a1ccb09fb9c8f22373aee91897b8f680",
+    "authority_sha256": "78f9846797e6f412ae51c2d10afe25fb6f1a9b5932945808963bc304685f2bd0",
+    "authorized_scope_sha256": "31e64a8feee51e545b45c3453ccc5610ae25af94e9c735b13beebf3f8787bd40",
     "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
     "contains_material_repair": false,
     "repair_integrity_evidence_path": "NONE"

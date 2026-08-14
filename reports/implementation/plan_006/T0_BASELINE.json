@@ -4,12 +4,12 @@
   "artifact_id": "PLAN_006_T0_BASELINE",
   "mission_id": "PLAN_006_T0_IMPLEMENTATION",
   "increment": "T0_BASELINE",
-  "repository_revision": "03234e934b12d1bbaebd022d52bd69303c352af1+WORKTREE_UNCOMMITTED",
-  "generated_at": "2026-08-13T21:59:32.195086Z",
+  "repository_revision": "26113dec1fd2d3cdfa1ee0056b3d977c11163039+WORKTREE_UNCOMMITTED",
+  "generated_at": "2026-08-14T18:39:22.106322Z",
   "source_inputs": [
     {
       "path": "plans/001_CONTROL_OPERATIVO.md",
-      "sha256": "f55d8f774e5d3a66bd52425a8c8469430d6151394f08b350e359a44e68a81129"
+      "sha256": "671a65e496390ba8a63d49516e4feaf23978e2a00e63bfb647ac7025bb977e64"
     },
     {
       "path": "plans/plan_006/006_LEAN_HARNESS_ASSURANCE_ORQUESTACION_EFICIENCIA.md",
@@ -120,5 +120,5 @@
       "evidence_reference": "reports/implementation/plan_006/T0_BASELINE.json"
     }
   ],
-  "evidence_identity_sha256": "d35dc28c73693bba272e7fe2b58a44040903d09d29cdddf4ad1c5d47adfd38c8"
+  "evidence_identity_sha256": "45296e59ead7b648c9a6de3f3740f586e9b39ef0ca64a092ac1622337d67ab60"
 }

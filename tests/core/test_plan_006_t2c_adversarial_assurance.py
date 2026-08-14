@@ -13,6 +13,7 @@ from src.core.adversarial_assurance import (
     verify_adversarial,
     verify_all_adversarial,
 )
+from src.core.contract_validation import validate_contradiction_disposition
 
 SCHEMAS = Path(__file__).resolve().parents[2] / "schemas"
 WORK_LIFECYCLE_SCHEMA = SCHEMAS / "work_lifecycle.json"
@@ -100,6 +101,62 @@ def _doubt(**overrides):
     }
     doubt.update(overrides)
     return doubt
+
+
+def _contradiction(subject_kind="MATERIAL_CLAIM", subject_ref="C1", affected_claim_ids=None):
+    """A structurally valid contradiction that only fails on subject resolution,
+    so the differential probe isolates the local-resolution surface."""
+    return {
+        "item_id": "X1",
+        "statement": "Las fuentes discrepan sobre la causa del hecho.",
+        "source_refs": ["S1", "S2"],
+        "locator": "p. 10 / p. 22",
+        "confidence": "HIGH",
+        "subject_kind": subject_kind,
+        "subject_ref": subject_ref,
+        "subject_state": "PROVISIONAL",
+        "subject_version": "1.0.0",
+        "subject_formulation": "La formulación afectada.",
+        "affected_use": "CENTRAL_CLAIM_SUPPORT",
+        "affected_claim_ids": ["C1"] if affected_claim_ids is None else affected_claim_ids,
+        "conflicting_source_refs": ["S1", "S2"],
+        "discrepancy_kind": "CAUSAL",
+        "materiality": "MATERIAL",
+        "disposition": "RESOLVED",
+        "compared_positions": [
+            {"position_id": "P1", "statement": "La causa es A.", "source_refs": ["S1"], "treatment": "RETAINED"},
+            {"position_id": "P2", "statement": "La causa es B.", "source_refs": ["S2"], "treatment": "REJECTED"},
+        ],
+        "decision_evidence_refs": ["S1", "S2"],
+        "contrary_evidence_refs": ["S2"],
+        "disposition_justification": "Se comparan ambas posiciones y se explicita el impacto sobre el claim.",
+        "remaining_limitations": [],
+        "pending_matters": [],
+        "return_route": "Revisar la formulación según la disposición de la contradicción.",
+        "return_route_code": "AUTHORIZE_INTENDED_USE_ONLY",
+        "invalidator_codes": ["MATERIAL_CONTRADICTION_FOUND"],
+        "dependent_artifact_refs": ["claim:C1"],
+        "revalidation_requirements": [],
+    }
+
+
+_PHENOMENON_REF = "EXT-PHENOMENON"
+
+
+def _phenomenon_observation(known_subject_ids, *, declared=()):
+    """Derive the local-resolution observation for PHENOMENON by running the real
+    contradiction validator. An external phenomenon ref is only rejected once the
+    kind is added to the locally-resolved surface (the R1-M7 escape)."""
+    case = _contradiction(subject_kind="PHENOMENON", subject_ref=_PHENOMENON_REF, affected_claim_ids=[])
+    violations = validate_contradiction_disposition(
+        case, {"S1", "S2"}, {"S1", "S2", "X1"}, {"C1"}, known_subject_ids
+    )
+    rejected = any("subject_ref inexistente" in item for item in violations)
+    return {
+        "subject_resolution_rejected": ["PHENOMENON"] if rejected else [],
+        "subject_resolution_accepted": [] if rejected else ["PHENOMENON"],
+        "authorized_subject_resolution": sorted(declared),
+    }
 
 
 class TestStateHistoryFamily:
@@ -284,7 +341,7 @@ class TestCheckRegistry:
             "LINEAGE_INTEGRITY",
             "AUTHORITY_RESOLVABLE",
             "CRITICAL_DOUBT_VALID_CLOSURE",
-            "CONTRACT_ENUM_SURFACE_STABLE",
+            "SUBJECT_LOCAL_RESOLUTION_STABLE",
         }
 
     def test_unknown_check_fails_closed(self):
@@ -335,68 +392,47 @@ class TestRealSchemaShape:
         assert REQUIRED_TRANSITIONS.keys() - states == set()
 
 
-class TestContractEnumSurfaceFamily:
-    def test_real_schemas_match_canonical_surfaces(self):
-        assert verify_all_adversarial(_lifecycle()) == []
-
-    def test_m7_escape_non_target_expansion_detected_without_per_value_test(self):
-        sources = {
-            "research_stop_decision": {
-                "properties": {"subject_kind": {"type": "string", "enum": ["PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK", "WORK_INTERPRETATION"]}},
-            }
+class TestSubjectLocalResolutionFamily:
+    def test_baseline_phenomenon_external_subject_is_not_falsely_resolved_locally(self):
+        """Corrected surface (master): PHENOMENON is not in the local resolution map,
+        so an external phenomenon ref is accepted. The schemas never changed."""
+        known_subject_ids = {
+            "WORK_INTERPRETATION": {"WI-1"},
+            "MATERIAL_CLAIM": {"C1"},
         }
-        violations = verify_adversarial(["CONTRACT_ENUM_SURFACE_STABLE"], _lifecycle(schema_sources=sources))
-        assert any("CONTRACT_ENUM_SURFACE_EXPANDED:research_stop_decision.subject_kind:WORK_INTERPRETATION" in v for v in violations)
+        observation = _phenomenon_observation(known_subject_ids)
+        assert verify_adversarial(["SUBJECT_LOCAL_RESOLUTION_STABLE"], _lifecycle(**observation)) == []
 
-    def test_m7_escape_detected_even_when_target_value_is_authorized_elsewhere(self):
-        sources = {
-            "research_pack": {
-                "definitions": {
-                    "multilingualResearch": {
-                        "properties": {
-                            "material_risk": {
-                                "type": "array",
-                                "items": {"type": "string", "enum": ["CLAIM_VALIDITY", "WORK_INTERPRETATION", "CONTRADICTION", "SUFFICIENCY", "WORK_SELECTION", "THESIS", "DISCLOSURE_OR_LIMITATION", "PHENOMENON"]},
-                            }
-                        }
-                    }
-                }
-            }
+    def test_m7_escape_non_target_subject_resolution_detected_with_identical_schemas(self):
+        """Escaped surface (df3e861): PHENOMENON is silently added to the local
+        resolution map, so the real validator now rejects the external phenomenon ref
+        while the schemas stayed identical. T2-C flags the non-target collateral."""
+        known_subject_ids = {
+            "WORK_INTERPRETATION": {"WI-1"},
+            "MATERIAL_CLAIM": {"C1"},
+            "PHENOMENON": set(),
         }
-        violations = verify_adversarial(["CONTRACT_ENUM_SURFACE_STABLE"], _lifecycle(schema_sources=sources))
-        assert any("CONTRACT_ENUM_SURFACE_EXPANDED:research_pack.material_risk:PHENOMENON" in v for v in violations)
+        observation = _phenomenon_observation(known_subject_ids)
+        violations = verify_adversarial(["SUBJECT_LOCAL_RESOLUTION_STABLE"], _lifecycle(**observation))
+        assert any("NON_TARGET_SUBJECT_RESOLUTION:PHENOMENON" in v for v in violations)
 
-    def test_m7_escape_report_claim_reconciled_with_diff(self):
-        sources = {
-            "research_stop_decision": {
-                "properties": {"subject_kind": {"type": "string", "enum": ["PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK", "THESIS"]}},
-            }
+    def test_authorized_legitimate_resolution_change_passes(self):
+        """A declared/authorized extension of the local resolution surface is allowed:
+        no false positive when PHENOMENON resolution is explicitly authorized."""
+        known_subject_ids = {
+            "WORK_INTERPRETATION": {"WI-1"},
+            "MATERIAL_CLAIM": {"C1"},
+            "PHENOMENON": set(),
         }
-        violations = verify_adversarial(["CONTRACT_ENUM_SURFACE_STABLE"], _lifecycle(schema_sources=sources))
-        assert any("CONTRACT_ENUM_SURFACE_EXPANDED:research_stop_decision.subject_kind:THESIS" in v for v in violations)
+        observation = _phenomenon_observation(known_subject_ids, declared=["PHENOMENON"])
+        assert verify_adversarial(["SUBJECT_LOCAL_RESOLUTION_STABLE"], _lifecycle(**observation)) == []
 
-    def test_authorized_legitimate_change_passes(self):
-        sources = {
-            "research_stop_decision": {
-                "properties": {"subject_kind": {"type": "string", "enum": ["PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK"]}},
-            }
+    def test_resolution_surface_mutant_killed(self):
+        known_subject_ids = {
+            "WORK_INTERPRETATION": {"WI-1"},
+            "MATERIAL_CLAIM": {"C1"},
+            "PHENOMENON": set(),
         }
-        assert verify_adversarial(["CONTRACT_ENUM_SURFACE_STABLE"], _lifecycle(schema_sources=sources)) == []
-
-    def test_regression_of_canonical_value_detected(self):
-        sources = {
-            "research_stop_decision": {
-                "properties": {"subject_kind": {"type": "string", "enum": ["PHENOMENON", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK"]}},
-            }
-        }
-        violations = verify_adversarial(["CONTRACT_ENUM_SURFACE_STABLE"], _lifecycle(schema_sources=sources))
-        assert any("CONTRACT_ENUM_SURFACE_REGRESSED:research_stop_decision.subject_kind:WORK_RESEARCH_DOSSIER" in v for v in violations)
-
-    def test_enum_surface_mutant_killed(self):
-        sources = {
-            "research_stop_decision": {
-                "properties": {"subject_kind": {"type": "string", "enum": ["PHENOMENON", "WORK_RESEARCH_DOSSIER", "MATERIAL_CLAIM", "AGGREGATE_RESEARCH_PACK", "WORK_INTERPRETATION"]}},
-            }
-        }
-        result = evaluate_must_kill_mutation(mutant=MUST_KILL_MUTATIONS[4], observation=_lifecycle(schema_sources=sources))
+        observation = _phenomenon_observation(known_subject_ids)
+        result = evaluate_must_kill_mutation(mutant=MUST_KILL_MUTATIONS[4], observation=_lifecycle(**observation))
         assert result["classification"] == "KILLED"
