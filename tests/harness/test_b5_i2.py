@@ -883,6 +883,17 @@ def test_b5_i2_consumes_specialist_research_validation(tmp_path: Path) -> None:
     assert result.status is GateStatus.FAIL
     assert any("mantiene ACTIVATION_REASSESSMENT_REQUIRED=NO" in item for item in result.violations)
 
+    specialist["activation"]["specialty"] = "historia"
+    specialist["contribution"]["specialty"] = "derecho"
+    specialist["contribution"]["activation_change_dimensions"] = ["SPECIALTY"]
+    specialist["contribution"]["activation_change_description"] = "La especialidad requerida cambió materialmente."
+    specialist["contribution"]["activation_reassessment_status"] = "REQUIRED"
+    specialist["contribution"]["activation_reassessment_reason"] = "La pregunta requiere ahora conocimiento jurídico."
+    _put(paths["research"], research)
+    _refresh_b5_i2_audit(paths)
+    result = _evaluate(paths)
+    assert not any("cambio de especialidad" in item for item in result.violations)
+
 
 def _mutate(paths: dict[str, Path], name: str, mutate, refresh: bool = True) -> None:
     value = _read(paths[name])

@@ -595,8 +595,16 @@ def _validate_specialist_research(
         contribution = entry.get("contribution")
         if not isinstance(contribution, dict):
             continue
-        if isinstance(activation, dict) and contribution.get("specialty") != activation.get("specialty"):
-            violations.append(f"{prefix}.contribution debe conservar la especialidad declarada en la activación.")
+        specialty_changed = isinstance(activation, dict) and contribution.get("specialty") != activation.get("specialty")
+        if specialty_changed:
+            if contribution.get("activation_relation") != "MATERIAL_MISSION_CHANGE":
+                violations.append(f"{prefix}.contribution no puede cambiar especialidad dentro de la misión original.")
+            if "SPECIALTY" not in set(contribution.get("activation_change_dimensions", [])):
+                violations.append(f"{prefix}.contribution cambio de especialidad requiere dimensión SPECIALTY explícita.")
+            if contribution.get("activation_reassessment_status") != "REQUIRED":
+                violations.append(f"{prefix}.contribution cambio de especialidad requiere ACTIVATION_REASSESSMENT_REQUIRED=YES.")
+            if not contribution.get("activation_reassessment_reason"):
+                violations.append(f"{prefix}.contribution cambio de especialidad requiere motivo de reevaluación.")
         contribution_sources = set(contribution.get("source_refs", []))
         unknown_sources = contribution_sources - known_sources
         if unknown_sources:

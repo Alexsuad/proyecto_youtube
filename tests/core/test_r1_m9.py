@@ -358,6 +358,64 @@ def test_material_specialty_scope_and_object_changes_require_reassessment():
         assert validate_research_pack(_pack(specialist)) == []
 
 
+def test_material_specialty_change_is_valid_when_explicitly_reassessed():
+    specialist = _specialist()
+    specialist["contribution"]["specialty"] = "derecho"
+    specialist["contribution"]["activation_relation"] = "MATERIAL_MISSION_CHANGE"
+    specialist["contribution"]["activation_change_dimensions"] = ["SPECIALTY"]
+    specialist["contribution"]["activation_change_description"] = "La especialidad requerida cambió materialmente."
+    specialist["contribution"]["activation_reassessment_status"] = "REQUIRED"
+    specialist["contribution"]["activation_reassessment_reason"] = "La pregunta requiere ahora conocimiento jurídico."
+    assert validate_research_pack(_pack(specialist)) == []
+
+
+def test_specialty_change_cannot_be_within_original_mission():
+    specialist = _specialist()
+    specialist["contribution"]["specialty"] = "derecho"
+    assert any("no puede cambiar especialidad" in violation for violation in validate_research_pack(_pack(specialist)))
+
+
+def test_specialty_change_requires_specialty_dimension():
+    specialist = _specialist()
+    specialist["contribution"]["specialty"] = "derecho"
+    specialist["contribution"]["activation_relation"] = "MATERIAL_MISSION_CHANGE"
+    specialist["contribution"]["activation_change_dimensions"] = ["QUESTION"]
+    specialist["contribution"]["activation_change_description"] = "Cambio material declarado."
+    specialist["contribution"]["activation_reassessment_status"] = "REQUIRED"
+    specialist["contribution"]["activation_reassessment_reason"] = "La misión requiere reevaluación."
+    assert any("dimensión SPECIALTY" in violation for violation in validate_research_pack(_pack(specialist)))
+
+
+def test_specialty_change_cannot_remain_not_required():
+    specialist = _specialist()
+    specialist["contribution"]["specialty"] = "derecho"
+    specialist["contribution"]["activation_relation"] = "MATERIAL_MISSION_CHANGE"
+    specialist["contribution"]["activation_change_dimensions"] = ["SPECIALTY"]
+    specialist["contribution"]["activation_change_description"] = "Cambio material declarado."
+    assert any("cambio de especialidad requiere ACTIVATION_REASSESSMENT_REQUIRED=YES" in violation for violation in validate_research_pack(_pack(specialist)))
+
+
+def test_not_assessed_blocked_by_prerequisite_allows_no_evidence_refs():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [{"claim_id": "C-1", "disposition": "NOT_ASSESSED", "reason": "BLOCKED_BY_PREREQUISITE", "justification": "Falta el prerrequisito de acceso."}]
+    assert validate_research_pack(_claim_pack(specialist, ["C-1"])) == []
+
+
+def test_not_assessed_insufficient_evidence_allows_no_evidence_refs():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [{"claim_id": "C-1", "disposition": "NOT_ASSESSED", "reason": "INSUFFICIENT_EVIDENCE", "justification": "No se obtuvo evidencia suficiente."}]
+    assert validate_research_pack(_claim_pack(specialist, ["C-1"])) == []
+
+
+def test_not_assessed_unknown_declared_evidence_is_rejected():
+    specialist = _specialist()
+    specialist["activation"]["affected_claim_ids"] = ["C-1"]
+    specialist["contribution"]["claim_dispositions"] = [{"claim_id": "C-1", "disposition": "NOT_ASSESSED", "reason": "INSUFFICIENT_EVIDENCE", "justification": "No se obtuvo evidencia suficiente.", "evidence_refs": ["UNKNOWN"]}]
+    assert any("evidencia no declarada" in violation for violation in validate_research_pack(_claim_pack(specialist, ["C-1"])))
+
+
 def test_material_change_hidden_by_not_required_is_rejected():
     specialist = _specialist()
     specialist["contribution"]["activation_relation"] = "MATERIAL_MISSION_CHANGE"
