@@ -556,6 +556,202 @@ def validate_contradiction_disposition(
     return violations
 
 
+def _validate_specialist_research(
+    entries: Any,
+    source_records: Any,
+    known_sources: set[str],
+    known_claim_ids: set[str],
+) -> List[str]:
+    """Valida IR6-001..IR6-005 dentro del ResearchPack canónico.
+
+    La especialidad es una dimensión de investigación, no una identidad de
+    agente. Los hallazgos permanecen como contribución limitada y no pueden
+    promoverse aquí a hechos, autorización de claims, suficiencia o tesis.
+    """
+    violations: List[str] = []
+    if not isinstance(entries, list):
+        if entries is not None:
+            violations.append("ResearchPack.specialist_research debe ser una lista.")
+        return violations
+    sources_by_id = {
+        item.get("source_id"): item
+        for item in source_records
+        if isinstance(item, dict) and isinstance(item.get("source_id"), str)
+    }
+    for index, entry in enumerate(entries):
+        prefix = f"ResearchPack.specialist_research[{index}]"
+        if not isinstance(entry, dict):
+            continue
+        activation = entry.get("activation")
+        if isinstance(activation, dict):
+            activation_claims = set(activation.get("affected_claim_ids", []))
+            unknown_activation_claims = activation_claims - known_claim_ids
+            if unknown_activation_claims:
+                violations.append(
+                    f"{prefix}.activation referencia claims no declarados: {', '.join(sorted(unknown_activation_claims))}."
+                )
+        else:
+            activation_claims = set()
+        contribution = entry.get("contribution")
+        if not isinstance(contribution, dict):
+            continue
+        specialty_changed = isinstance(activation, dict) and contribution.get("specialty") != activation.get("specialty")
+        if specialty_changed:
+            if contribution.get("activation_relation") != "MATERIAL_MISSION_CHANGE":
+                violations.append(f"{prefix}.contribution no puede cambiar especialidad dentro de la misión original.")
+            if "SPECIALTY" not in set(contribution.get("activation_change_dimensions", [])):
+                violations.append(f"{prefix}.contribution cambio de especialidad requiere dimensión SPECIALTY explícita.")
+            if contribution.get("activation_reassessment_status") != "REQUIRED":
+                violations.append(f"{prefix}.contribution cambio de especialidad requiere ACTIVATION_REASSESSMENT_REQUIRED=YES.")
+            if not contribution.get("activation_reassessment_reason"):
+                violations.append(f"{prefix}.contribution cambio de especialidad requiere motivo de reevaluación.")
+        contribution_sources = set(contribution.get("source_refs", []))
+        unknown_sources = contribution_sources - known_sources
+        if unknown_sources:
+            violations.append(f"{prefix}.contribution referencia fuentes desconocidas: {', '.join(sorted(unknown_sources))}.")
+
+        contribution_claims = set(contribution.get("affected_claim_ids", []))
+        unknown_claims = contribution_claims - known_claim_ids
+        if unknown_claims:
+            violations.append(f"{prefix}.contribution referencia claims no declarados: {', '.join(sorted(unknown_claims))}.")
+
+        def check_evidence(refs: Any, context: str) -> set[str]:
+            values = set(refs or []) if isinstance(refs, list) else set()
+            unknown = values - known_sources
+            if unknown:
+                violations.append(f"{prefix}.contribution.{context} contiene evidencia no declarada: {', '.join(sorted(unknown))}.")
+            return values
+
+        for finding in contribution.get("findings", []):
+            if isinstance(finding, dict):
+                check_evidence(finding.get("evidence_refs"), "findings")
+        for rival in contribution.get("rival_positions", []):
+            if isinstance(rival, dict):
+                check_evidence(rival.get("evidence_refs"), "rival_positions")
+
+        assessments_by_claim: dict[str, list[dict[str, Any]]] = {}
+        assessment_levels: dict[str, str] = {}
+        for assessment in contribution.get("claim_assessments", []):
+            if not isinstance(assessment, dict):
+                continue
+            claim_id = assessment.get("claim_id")
+            if claim_id not in known_claim_ids:
+                violations.append(f"{prefix}.contribution.claim_assessments referencia claim no declarado: '{claim_id}'.")
+            if claim_id not in contribution_claims:
+                violations.append(f"{prefix}.contribution.claim_assessments debe declarar '{claim_id}' en affected_claim_ids.")
+            evidence_refs = check_evidence(assessment.get("evidence_refs"), "claim_assessments")
+            level = assessment.get("support_level")
+            assessments_by_claim.setdefault(claim_id, []).append(assessment)
+            if claim_id in assessment_levels and assessment_levels[claim_id] != level:
+                violations.append(f"{prefix}.contribution declara niveles de soporte incompatibles para claim '{claim_id}'.")
+            assessment_levels[claim_id] = level
+            if level in {"LIMITED", "NOT_SUPPORTED"} and not assessment.get("limitations"):
+                violations.append(f"{prefix}.contribution claim '{claim_id}' requiere limitaciones explícitas para {level}.")
+            if level == "SUPPORTED":
+                authorities = {
+                    (sources_by_id.get(ref, {}).get("provenance") or {}).get("claim_authority")
+                    for ref in evidence_refs
+                    if ref in sources_by_id
+                }
+                if not authorities or authorities == {"NONE"}:
+                    violations.append(f"{prefix}.contribution claim '{claim_id}' no tiene evidencia con autoridad suficiente para SUPPORT.")
+
+        dispositions_by_claim: dict[str, list[dict[str, Any]]] = {}
+        for disposition in contribution.get("claim_dispositions", []):
+            if not isinstance(disposition, dict):
+                continue
+            claim_id = disposition.get("claim_id")
+            dispositions_by_claim.setdefault(claim_id, []).append(disposition)
+            if claim_id not in known_claim_ids:
+                violations.append(f"{prefix}.contribution.claim_dispositions referencia claim no declarado: '{claim_id}'.")
+            if claim_id not in activation_claims:
+                violations.append(f"{prefix}.contribution.claim_dispositions solo puede disponer claims de la activación original: '{claim_id}'.")
+            check_evidence(disposition.get("evidence_refs"), "claim_dispositions")
+            reason = disposition.get("reason")
+            disposition_kind = disposition.get("disposition")
+            if disposition_kind == "ASSESSED" and reason != "ASSESSMENT_COMPLETED":
+                violations.append(f"{prefix}.claim_dispositions ASSESSED requiere reason=ASSESSMENT_COMPLETED para '{claim_id}'.")
+            if disposition_kind == "NOT_ASSESSED" and reason == "ASSESSMENT_COMPLETED":
+                violations.append(f"{prefix}.claim_dispositions NOT_ASSESSED no puede usar reason=ASSESSMENT_COMPLETED para '{claim_id}'.")
+
+        for claim_id in contribution_claims:
+            count = len(assessments_by_claim.get(claim_id, []))
+            if count != 1:
+                violations.append(f"{prefix}.affected_claim_ids requiere exactamente un assessment para '{claim_id}' (encontrados: {count}).")
+
+        for claim_id, assessments in assessments_by_claim.items():
+            if len(assessments) > 1:
+                violations.append(f"{prefix}.claim_assessments no puede duplicar el claim '{claim_id}'.")
+
+        for claim_id in activation_claims:
+            dispositions = dispositions_by_claim.get(claim_id, [])
+            assessments = assessments_by_claim.get(claim_id, [])
+            if len(dispositions) != 1:
+                violations.append(f"{prefix} debe conservar exactamente una disposición final para el claim inicial '{claim_id}'.")
+                continue
+            disposition = dispositions[0]
+            kind = disposition.get("disposition")
+            if kind == "ASSESSED":
+                if claim_id not in contribution_claims or len(assessments) != 1:
+                    violations.append(f"{prefix} claim inicial '{claim_id}' marcado ASSESSED debe estar afectado y tener un assessment.")
+            elif kind == "NOT_ASSESSED":
+                if claim_id in contribution_claims or assessments:
+                    violations.append(f"{prefix} claim inicial '{claim_id}' no puede ser NOT_ASSESSED y conservar assessment/afectación final.")
+
+        discovery_by_claim: dict[str, list[dict[str, Any]]] = {}
+        reassessment_discoveries = 0
+        for discovery in contribution.get("claim_discoveries", []):
+            if not isinstance(discovery, dict):
+                continue
+            claim_id = discovery.get("claim_id")
+            discovery_by_claim.setdefault(claim_id, []).append(discovery)
+            if claim_id not in known_claim_ids:
+                violations.append(f"{prefix}.claim_discoveries referencia claim no declarado: '{claim_id}'.")
+            if claim_id in activation_claims:
+                violations.append(f"{prefix}.claim_discoveries no puede volver a declarar como nuevo el claim inicial '{claim_id}'.")
+            activation_id = activation.get("activation_id") if isinstance(activation, dict) else None
+            if discovery.get("activation_ref") != activation_id:
+                violations.append(f"{prefix}.claim_discoveries debe conservar activation_ref={activation_id!r}.")
+            check_evidence(discovery.get("evidence_refs"), "claim_discoveries")
+            relation = discovery.get("scope_relation")
+            if relation == "ACTIVATION_REASSESSMENT_REQUIRED":
+                reassessment_discoveries += 1
+            if claim_id in contribution_claims and len(assessments_by_claim.get(claim_id, [])) != 1:
+                violations.append(f"{prefix} claim descubierto '{claim_id}' afectado finalmente requiere exactamente un assessment.")
+
+        for claim_id, discoveries in discovery_by_claim.items():
+            if len(discoveries) > 1:
+                violations.append(f"{prefix}.claim_discoveries no puede duplicar el claim descubierto '{claim_id}'.")
+
+        for claim_id in contribution_claims - activation_claims:
+            if len(discovery_by_claim.get(claim_id, [])) != 1:
+                violations.append(f"{prefix} claim nuevo afectado '{claim_id}' requiere un descubrimiento trazable único.")
+
+        reassessment_status = contribution.get("activation_reassessment_status")
+        if reassessment_discoveries and reassessment_status != "REQUIRED":
+            violations.append(f"{prefix} declara un cambio material de misión sin ACTIVATION_REASSESSMENT_REQUIRED.")
+        if reassessment_status == "REQUIRED" and not reassessment_discoveries:
+            if contribution.get("activation_relation") != "MATERIAL_MISSION_CHANGE":
+                violations.append(f"{prefix} no puede exigir reevaluación sin cambio material de misión u otra causa válida.")
+        activation_relation = contribution.get("activation_relation")
+        if activation_relation == "MATERIAL_MISSION_CHANGE":
+            if reassessment_status != "REQUIRED":
+                violations.append(f"{prefix} declara cambio material de misión pero mantiene ACTIVATION_REASSESSMENT_REQUIRED=NO.")
+        elif activation_relation == "WITHIN_ORIGINAL_MISSION":
+            if reassessment_discoveries:
+                violations.append(f"{prefix} no puede declarar WITHIN_ORIGINAL_MISSION para un descubrimiento que exige reevaluación.")
+            if reassessment_status == "REQUIRED":
+                violations.append(f"{prefix} declara REQUIRED sin cambio material de misión declarado.")
+
+        if entry.get("authority_status") != "SPECIALIST_CONTRIBUTION_ONLY":
+            violations.append(f"{prefix} no puede declarar autoridad distinta de SPECIALIST_CONTRIBUTION_ONLY.")
+        forbidden_authority = {"FACT", "CLAIM_AUTHORIZATION", "RESEARCH_SUFFICIENCY", "THESIS_APPROVAL"}
+        declared_limits = set(entry.get("does_not_establish", []))
+        if not forbidden_authority.issubset(declared_limits):
+            violations.append(f"{prefix} debe conservar límites explícitos frente a hecho, claim, suficiencia y tesis.")
+    return violations
+
+
 def validate_research_pack(data: Dict[str, Any]) -> List[str]:
     """
     Valida el contrato ResearchPack (B1-C17).
@@ -668,6 +864,14 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
                     f"ResearchPack.semantic_status referencia claim no declarada: '{status_entry['claim_id']}'."
                 )
     violations.extend(_validate_source_provenance(data.get("source_registry", []), "ResearchPack"))
+    violations.extend(
+        _validate_specialist_research(
+            data.get("specialist_research", []),
+            data.get("source_registry", []),
+            known_sources,
+            known_claim_ids,
+        )
+    )
     violations.extend(
         _validate_multilingual_research(
             data.get("multilingual_research"),
