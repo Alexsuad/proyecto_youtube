@@ -27,7 +27,6 @@ from src.core.contract_validation import validate_against_schema
 from src.core.evidence_freshness import (
     check_report_freshness,
     check_transitive_freshness,
-    sha256_path,
 )
 from src.core.historical_completion import (
     CompletionSnapshot,
@@ -51,6 +50,23 @@ def _is_plan_006_report(reference: str) -> bool:
 
 def _sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _canonical_sha256_path(path: Path) -> str:
+    """Hash repository text independently of checkout line endings."""
+    content = path.read_bytes()
+    return hashlib.sha256(content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")).hexdigest()
+
+
+def _declared_live_state_paths(data: dict[str, Any]) -> set[str]:
+    paths: set[str] = set()
+    authority = data.get("authority")
+    if isinstance(authority, dict) and isinstance(authority.get("live_state_path"), str):
+        paths.add(authority["live_state_path"].replace("\\", "/"))
+    snapshot = data.get("frozen_snapshot")
+    if isinstance(snapshot, dict) and isinstance(snapshot.get("live_state_path"), str):
+        paths.add(snapshot["live_state_path"].replace("\\", "/"))
+    return paths
 
 
 @dataclass(frozen=True)
@@ -111,19 +127,37 @@ def check_plan_006_report_freshness(root: str | Path, reference: str) -> dict[st
         if calculated.lower() != expected_identity.lower():
             violations.append("EVIDENCE_IDENTITY_MISMATCH")
     mismatches: list[str] = []
+    live_state_changes: list[str] = []
+    live_state_paths = _declared_live_state_paths(data)
+    seen_sources: set[str] = set()
     for entry in data.get("source_inputs", []):
         relative = str(entry.get("path", "")).replace("\\", "/")
+        seen_sources.add(relative)
         source = repository_root / relative
         if not source.is_file():
             violations.append(f"EVIDENCE_REF_UNVERIFIABLE:{relative}")
             continue
-        if sha256_path(source).lower() != str(entry.get("sha256", "")).lower():
+        try:
+            actual = _canonical_sha256_path(source)
+        except OSError as exc:
+            violations.append(f"EVIDENCE_REF_UNVERIFIABLE:{relative}:{exc}")
+            continue
+        if actual.lower() != str(entry.get("sha256", "")).lower():
+            if relative in live_state_paths:
+                live_state_changes.append(relative)
+                continue
             mismatches.append(relative)
+    for relative in sorted(live_state_paths - seen_sources):
+        if not (repository_root / relative).is_file():
+            violations.append(f"EVIDENCE_REF_UNVERIFIABLE:{relative}")
     if mismatches:
         return {"report": reference, "status": "STALE", "mismatches": mismatches, "violations": []}
     if violations:
         return {"report": reference, "status": "UNVERIFIABLE", "violations": violations}
-    return {"report": reference, "status": "FRESH", "violations": []}
+    result = {"report": reference, "status": "FRESH", "violations": []}
+    if live_state_changes:
+        result["live_state_changes"] = live_state_changes
+    return result
 
 
 def evaluate_evidence_reuse(
@@ -192,7 +226,7 @@ def evaluate_evidence_reuse(
                 provenance={"dependency": dependency.path},
             )
         try:
-            actual = _sha256_file(dependency_path)
+            actual = _canonical_sha256_path(dependency_path)
         except OSError as exc:
             return ReuseDecision(
                 UNVERIFIABLE,
@@ -209,12 +243,29 @@ def evaluate_evidence_reuse(
             )
 
     if snapshot is not None:
+        live_state_path = repository_root / Path(snapshot.live_state_path)
+        if not live_state_path.is_file():
+            return ReuseDecision(
+                UNVERIFIABLE,
+                (f"LIVE_STATE_UNVERIFIABLE:{snapshot.live_state_path}",),
+                evidence_ref=evidence_ref,
+                snapshot=snapshot,
+            )
+        try:
+            current_live_state_sha256 = _canonical_sha256_path(live_state_path)
+        except OSError as exc:
+            return ReuseDecision(
+                UNVERIFIABLE,
+                (f"LIVE_STATE_UNREADABLE:{snapshot.live_state_path}",),
+                evidence_ref=evidence_ref,
+                snapshot=snapshot,
+                provenance={"error": type(exc).__name__},
+            )
         applicability = evaluate_current_applicability(
             snapshot=snapshot,
-            current_live_state_sha256=_sha256_file(repository_root / Path(snapshot.live_state_path))
-            if (repository_root / Path(snapshot.live_state_path)).is_file()
-            else "UNVERIFIABLE",
+            current_live_state_sha256=current_live_state_sha256,
             material_dependency_hashes={dep.path: dep.sha256 for dep in material_dependencies},
+            compare_live_state=False,
         )
         if not applicability.applicable:
             return ReuseDecision(

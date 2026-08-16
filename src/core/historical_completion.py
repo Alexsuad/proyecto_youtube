@@ -307,6 +307,7 @@ def evaluate_current_applicability(
     snapshot: CompletionSnapshot,
     current_live_state_sha256: str,
     material_dependency_hashes: dict[str, str],
+    compare_live_state: bool = True,
 ) -> CurrentApplicability:
     """Decide whether the historical evidence is reusable for a new decision.
 
@@ -315,11 +316,12 @@ def evaluate_current_applicability(
     execution dependencies moved. This delegates to T2 semantics: when the live
     state used at execution no longer matches the current live state, the
     evidence cannot be reused as-is for a new decision without targeted
-    re-verification.
+    re-verification. Reuse callers may disable that global-state comparison when
+    material dependencies are independently verified.
     """
     if not isinstance(snapshot.live_state_sha256_at_execution, str) or not snapshot.live_state_sha256_at_execution:
         return CurrentApplicability(False, "UNVERIFIABLE", ("LIVE_STATE_SNAPSHOT_MISSING",))
-    if current_live_state_sha256.lower() != snapshot.live_state_sha256_at_execution.lower():
+    if compare_live_state and current_live_state_sha256.lower() != snapshot.live_state_sha256_at_execution.lower():
         return CurrentApplicability(
             False,
             "TARGETED_REVERIFY_REQUIRED",

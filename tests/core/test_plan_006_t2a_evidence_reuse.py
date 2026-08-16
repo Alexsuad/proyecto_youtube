@@ -226,3 +226,110 @@ def test_missing_evidence_ref_is_unverifiable(tmp_path):
     )
     assert decision.decision == UNVERIFIABLE
     assert "EVIDENCE_REF_UNRESOLVED" in decision.reasons
+
+
+def _bind_live_state(repo: Path, ref: str) -> None:
+    state = repo / "plans/001_CONTROL_OPERATIVO.md"
+    state.parent.mkdir(parents=True, exist_ok=True)
+    state.write_text("state-1", encoding="utf-8")
+    report = repo / ref
+    payload = json.loads(report.read_text(encoding="utf-8"))
+    payload["authority"] = {"live_state_path": "plans/001_CONTROL_OPERATIVO.md"}
+    payload["source_inputs"].insert(0, {"path": "plans/001_CONTROL_OPERATIVO.md", "sha256": _sha(state.read_bytes())})
+    identity = dict(payload)
+    identity.pop("evidence_identity_sha256", None)
+    identity.pop("generated_at", None)
+    payload["evidence_identity_sha256"] = _sha(
+        json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    )
+    report.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def test_live_state_change_does_not_stale_historical_evidence(tmp_path):
+    repo = tmp_path / "repo"
+    ref = _report(repo, "evidence.json", "src/core/x.py", "def x(): pass")
+    _bind_live_state(repo, ref)
+    (repo / "plans/001_CONTROL_OPERATIVO.md").write_text("state-2", encoding="utf-8")
+
+    from src.core.evidence_reuse import check_plan_006_report_freshness
+
+    freshness = check_plan_006_report_freshness(repo, ref)
+    assert freshness["status"] == "FRESH"
+    assert freshness["live_state_changes"] == ["plans/001_CONTROL_OPERATIVO.md"]
+
+
+def test_full_reuse_ignores_only_live_state_drift(tmp_path):
+    repo = tmp_path / "repo"
+    ref = _report(repo, "evidence.json", "src/core/x.py", "def x(): pass")
+    _bind_live_state(repo, ref)
+    state = repo / "plans/001_CONTROL_OPERATIVO.md"
+    historical_live_state = _sha(b"state-1")
+    dependency = repo / "src/core/dep.py"
+    dependency.write_text("def dep(): pass", encoding="utf-8")
+    dependency_sha = _sha(dependency.read_bytes())
+    state.write_text("state-2", encoding="utf-8")
+
+    decision = evaluate_evidence_reuse(
+        repo,
+        ref,
+        intended_use=IntendedUse(
+            scope="src/core/x.py",
+            coverage_required="module",
+            intended_assurance="smoke",
+            repository_revision="REV-1",
+        ),
+        material_dependencies=[MaterialDependency(path="src/core/dep.py", sha256=dependency_sha)],
+        snapshot=_snapshot(historical_live_state),
+    )
+    assert decision.decision == REUSE
+
+
+def test_crlf_only_material_dependency_change_is_not_reported(tmp_path):
+    repo = tmp_path / "repo"
+    ref = _report(repo, "evidence.json", "src/core/x.py", "def x(): pass")
+    dependency = repo / "src/core/dep.py"
+    dependency.write_bytes(b"def dep(): pass\n")
+    expected = _sha(dependency.read_bytes())
+    dependency.write_bytes(b"def dep(): pass\r\n")
+
+    decision = evaluate_evidence_reuse(
+        repo,
+        ref,
+        intended_use=IntendedUse(scope="src/core/x.py", coverage_required="module", intended_assurance="smoke"),
+        material_dependencies=[MaterialDependency(path="src/core/dep.py", sha256=expected)],
+    )
+    assert decision.decision == REUSE
+
+
+def test_material_source_change_still_stales_evidence(tmp_path):
+    repo = tmp_path / "repo"
+    ref = _report(repo, "evidence.json", "src/core/x.py", "def x(): pass")
+    _bind_live_state(repo, ref)
+    (repo / "src/core/x.py").write_text("def x(): return 1", encoding="utf-8")
+
+    from src.core.evidence_reuse import check_plan_006_report_freshness
+
+    freshness = check_plan_006_report_freshness(repo, ref)
+    assert freshness["status"] == "STALE"
+    assert "src/core/x.py" in freshness["mismatches"]
+
+
+def test_missing_declared_live_state_fails_closed(tmp_path):
+    repo = tmp_path / "repo"
+    ref = _report(repo, "evidence.json", "src/core/x.py", "def x(): pass")
+    report = repo / ref
+    payload = json.loads(report.read_text(encoding="utf-8"))
+    payload["authority"] = {"live_state_path": "plans/001_CONTROL_OPERATIVO.md"}
+    payload["source_inputs"].insert(0, {"path": "plans/001_CONTROL_OPERATIVO.md", "sha256": "a" * 64})
+    identity = dict(payload)
+    identity.pop("evidence_identity_sha256", None)
+    identity.pop("generated_at", None)
+    payload["evidence_identity_sha256"] = _sha(
+        json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    )
+    report.write_text(json.dumps(payload), encoding="utf-8")
+
+    from src.core.evidence_reuse import check_plan_006_report_freshness
+
+    freshness = check_plan_006_report_freshness(repo, ref)
+    assert freshness["status"] == "UNVERIFIABLE"
