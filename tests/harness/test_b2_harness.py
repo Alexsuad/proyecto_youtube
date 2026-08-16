@@ -77,7 +77,7 @@ class TestB2Harness(unittest.TestCase):
         approval = {"artifact_id": ep_id, "script_version": "1.0.0", "checksum": checksum, "decision": "APPROVED", "approved_by": "editor_jefe_01", "approved_role": "EDITORIAL_LEAD", "approved_at": "2026-07-21T20:00:00Z"}
         (episode / "script_version_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
         (episode / "editorial_script_approval.json").write_text(json.dumps(approval), encoding="utf-8")
-        ledger = {"ledger_id": ep_id + "-claims", "script_version": "1.0.0", "claims": [{"claim_id": "claim-1", "script_location": "L1", "claim_text": "Texto", "claim_type": "FACT", "source_refs": ["source-1"], "verification_status": "VERIFIED"}]}
+        ledger = {"ledger_id": ep_id + "-claims", "script_version": "1.0.0", "claims": [{"claim_id": "claim-1", "script_location": "L1", "claim_text": "Texto", "claim_type": "FACT", "source_refs": ["source-1"], "verification_status": "VERIFIED", "materiality": {"is_material": False, "activation_criteria": [], "non_trigger_examples": ["B2 synthetic fixture"], "invalidator_codes": ["CLAIM_OR_SCOPE_CHANGED"], "return_route_code": "NOT_APPLICABLE", "decision_ref": None}}]}
         (episode / "claims_ledger.json").write_text(json.dumps(ledger), encoding="utf-8")
         checksums = {name: __import__("hashlib").sha256((episode / name).read_bytes()).hexdigest() for name in (*files, "claims_ledger.json")}
         final = {"final_script_clean": "06_guion_longform_limpio.md", "final_script_annotated": "06_guion_longform_anotado.md", "claims_ledger": "claims_ledger.json", "checksums": checksums, "approval_record": approval, "final_candidate_version": "1.0.0", "human_approved_version": "1.0.0"}

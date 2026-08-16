@@ -1,4 +1,4 @@
-"""T5 — Measured OpenCode pilot: deterministic PLAN 006 closure check.
+"""T5 — Measured executor pilot: deterministic PLAN 006 closure check.
 
 Composes the T1/T2/T4 surfaces into a single fail-closed closure verification
 for the PLAN 006 technical mission (PLAN 006 §15.3, §18, §24, §30). It never

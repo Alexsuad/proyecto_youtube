@@ -133,10 +133,6 @@
           "type": "string",
           "format": "date-time"
         },
-        "capability_id": {
-          "type": "string",
-          "minLength": 1
-        },
         "agent_id": {
           "type": "string",
           "minLength": 1
@@ -452,10 +448,6 @@
             "SYNTHETIC",
             "REAL"
           ]
-        },
-        "capability_id": {
-          "type": "string",
-          "minLength": 1
         },
         "modified_artifact_ids": {
           "type": "array",

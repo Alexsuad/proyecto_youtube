@@ -61,3 +61,8 @@ def test_defined_capability_with_canonical_role_owner_resolves(tmp_path: Path) -
     item = next(item for item in authority["authorities"] if item["capability_id"] == "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT")
     assert item["authority_resolution"] == "RESOLVED"
     assert next(item for item in integrity["capabilities"] if item["capability_id"] == "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT")["authority_resolution"] == "RESOLVED"
+
+
+def test_orphaned_routing_entry_is_reported(tmp_path: Path) -> None:
+    integrity, _ = audit_cross_registry(_fixture(tmp_path), "2026-08-11T00:00:00Z")
+    assert "ROUTE_UNRESOLVED_STOP_LOCAL:B5_I2_SEMANTIC_AUDITOR" in integrity["findings"]

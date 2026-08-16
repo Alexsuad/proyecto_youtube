@@ -49,8 +49,13 @@ def audit_cross_registry(root: Path = ROOT, generated_at: str | None = None) -> 
     prompts = {x["prompt_id"] for x in _load(root / "config/agent_prompt_registry.json")["prompts"]}
     profiles = _load(root / "config/agent_execution_profiles.json")
     routes = yaml.safe_load((root / "config/capability_routing.yaml").read_text(encoding="utf-8")) or {}
+    canonical_capability_ids = {str(cap["capability_id"]) for cap in caps}
+    declared_routes = routes.get("capabilities", {}) if isinstance(routes.get("capabilities", {}), dict) else {}
     canonical_owners = {str(role.get("functional_owner")) for role in roles.values() if role.get("functional_owner")}
     records, authorities, findings = [], [], []
+    for route_id in declared_routes:
+        if str(route_id) not in canonical_capability_ids:
+            findings.append(f"ROUTE_UNRESOLVED_STOP_LOCAL:{route_id}")
     for cap in caps:
         cid, maturity, kind = cap["capability_id"], cap.get("maturity_status"), cap.get("implementation_kind")
         implemented = maturity in {"IMPLEMENTED", "DEMONSTRATED"}

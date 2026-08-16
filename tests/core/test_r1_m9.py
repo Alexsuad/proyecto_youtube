@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 
-from src.core.contract_validation import validate_research_pack
+from src.core.contract_validation import loads_strict_json, validate_research_pack
 from tests.fixtures.synthetic_contracts import VALID_RESEARCH_PACK
 
 
@@ -449,3 +449,34 @@ def test_initial_unknown_claim_remains_rejected():
     specialist = _specialist()
     specialist["activation"]["affected_claim_ids"] = ["DOES_NOT_EXIST"]
     assert any("claims no declarados" in violation for violation in validate_research_pack(_pack(specialist)))
+
+
+def test_duplicate_json_members_are_rejected_before_schema_validation():
+    try:
+        loads_strict_json('{"capability_id":"A","capability_id":"B"}')
+    except ValueError as exc:
+        assert "duplicate JSON key" in str(exc)
+    else:
+        raise AssertionError("duplicate JSON member was silently accepted")
+
+
+def test_contribution_evidence_must_be_declared_by_contribution():
+    specialist = _specialist()
+    specialist["contribution"]["findings"][0]["evidence_refs"] = ["S2"]
+    pack = _pack(specialist)
+    pack["source_registry"].append({**pack["source_registry"][0], "source_id": "S2"})
+    violations = validate_research_pack(pack)
+    assert any("fuera de contribution.source_refs" in violation for violation in violations)
+
+
+def test_specialist_identity_ids_are_unique_within_research_pack():
+    first = _specialist()
+    second = deepcopy(first)
+    second["activation"]["activation_id"] = "ACT-2"
+    second["contribution"]["contribution_id"] = "CONTR-2"
+    second["contribution"]["findings"][0]["finding_id"] = "F-2"
+    second["contribution"]["operational_limits"][0]["limit_id"] = "L-2"
+    pack = _pack(first)
+    pack["specialist_research"] = [first, second]
+    violations = validate_research_pack(pack)
+    assert any("specialist_research_id duplicado" in violation for violation in violations)

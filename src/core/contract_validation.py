@@ -254,6 +254,21 @@ class ContractValidationError(Exception):
         self.violations = violations or [message]
 
 
+def _reject_duplicate_json_keys(pairs: List[Tuple[str, Any]]) -> Dict[str, Any]:
+    """Build a JSON object while failing closed on duplicate member names."""
+    result: Dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def loads_strict_json(text: str) -> Any:
+    """Parse JSON without silently discarding duplicate object members."""
+    return json.loads(text, object_pairs_hook=_reject_duplicate_json_keys)
+
+
 def load_schema(schema_name: str) -> Dict[str, Any]:
     """Carga un JSON Schema por nombre. Lanza FileNotFoundError si no existe."""
     if not schema_name.endswith(".json"):
@@ -262,7 +277,7 @@ def load_schema(schema_name: str) -> Dict[str, Any]:
     if not os.path.isfile(schema_path):
         raise FileNotFoundError(f"Schema inexistente: {schema_name}")
     with open(schema_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        return loads_strict_json(f.read())
 
 
 def validate_against_schema(data: Dict[str, Any], schema_name: str) -> List[str]:
@@ -578,12 +593,30 @@ def _validate_specialist_research(
         for item in source_records
         if isinstance(item, dict) and isinstance(item.get("source_id"), str)
     }
+    seen_ids: dict[str, set[str]] = {
+        "specialist_research_id": set(),
+        "activation_id": set(),
+        "contribution_id": set(),
+        "finding_id": set(),
+        "position_id": set(),
+        "limit_id": set(),
+    }
+
+    def check_unique_id(kind: str, value: Any, context: str) -> None:
+        if not isinstance(value, str) or not value:
+            return
+        if value in seen_ids[kind]:
+            violations.append(f"{context} {kind} duplicado en ResearchPack: '{value}'.")
+        seen_ids[kind].add(value)
+
     for index, entry in enumerate(entries):
         prefix = f"ResearchPack.specialist_research[{index}]"
         if not isinstance(entry, dict):
             continue
+        check_unique_id("specialist_research_id", entry.get("specialist_research_id"), prefix)
         activation = entry.get("activation")
         if isinstance(activation, dict):
+            check_unique_id("activation_id", activation.get("activation_id"), f"{prefix}.activation")
             activation_claims = set(activation.get("affected_claim_ids", []))
             unknown_activation_claims = activation_claims - known_claim_ids
             if unknown_activation_claims:
@@ -595,6 +628,7 @@ def _validate_specialist_research(
         contribution = entry.get("contribution")
         if not isinstance(contribution, dict):
             continue
+        check_unique_id("contribution_id", contribution.get("contribution_id"), f"{prefix}.contribution")
         specialty_changed = isinstance(activation, dict) and contribution.get("specialty") != activation.get("specialty")
         if specialty_changed:
             if contribution.get("activation_relation") != "MATERIAL_MISSION_CHANGE":
@@ -620,13 +654,18 @@ def _validate_specialist_research(
             unknown = values - known_sources
             if unknown:
                 violations.append(f"{prefix}.contribution.{context} contiene evidencia no declarada: {', '.join(sorted(unknown))}.")
+            undeclared = values - contribution_sources
+            if undeclared:
+                violations.append(f"{prefix}.contribution.{context} usa fuentes fuera de contribution.source_refs: {', '.join(sorted(undeclared))}.")
             return values
 
         for finding in contribution.get("findings", []):
             if isinstance(finding, dict):
+                check_unique_id("finding_id", finding.get("finding_id"), f"{prefix}.contribution.findings")
                 check_evidence(finding.get("evidence_refs"), "findings")
         for rival in contribution.get("rival_positions", []):
             if isinstance(rival, dict):
+                check_unique_id("position_id", rival.get("position_id"), f"{prefix}.contribution.rival_positions")
                 check_evidence(rival.get("evidence_refs"), "rival_positions")
 
         assessments_by_claim: dict[str, list[dict[str, Any]]] = {}
@@ -722,6 +761,10 @@ def _validate_specialist_research(
         for claim_id, discoveries in discovery_by_claim.items():
             if len(discoveries) > 1:
                 violations.append(f"{prefix}.claim_discoveries no puede duplicar el claim descubierto '{claim_id}'.")
+
+        for limit in contribution.get("operational_limits", []):
+            if isinstance(limit, dict):
+                check_unique_id("limit_id", limit.get("limit_id"), f"{prefix}.contribution.operational_limits")
 
         for claim_id in contribution_claims - activation_claims:
             if len(discovery_by_claim.get(claim_id, [])) != 1:

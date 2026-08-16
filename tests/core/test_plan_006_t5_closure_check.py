@@ -1,4 +1,4 @@
-"""T5 — measured OpenCode pilot tests: PLAN 006 closure check (PLAN 006 §13)."""
+"""T5 — measured executor pilot tests: PLAN 006 closure check (PLAN 006 §13)."""
 import json
 from pathlib import Path
 
