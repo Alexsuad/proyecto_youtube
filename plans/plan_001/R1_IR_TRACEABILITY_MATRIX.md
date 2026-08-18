@@ -181,3 +181,19 @@ Este addendum no reescribe los estados historicos de la matriz IR-0 ni convierte
 | Siguiente accion | `OWNER_REVIEW_OF_PLAN_007_P7_EVIDENCE` | control operativo reconciliado en P7 | R2 y ejecucion real siguen sin autorizacion |
 
 Los artefactos y pruebas de la implementacion permanecen en el worktree sin commit ni push por instruccion de la mision.
+
+## Addendum R1-M10 - Auditorias independientes
+
+Este addendum no reescribe las filas historicas IR7 ni convierte fixtures tecnicas en aprobacion funcional. Registra la superficie tecnica completada y aprobada tecnicamente; la aprobacion funcional permanece separada.
+
+- `IR7-002`: se incorpora `schemas/independent_research_audit.json`, un contrato parametrizado para suficiencia, fidelidad, interpretacion, claims/fuentes, curacion y paquete de investigacion, sin prescribir un agente por dimension.
+- `IR7-003`: `src/core/research_audit.py` exige actor y run distintos para productor y auditor, `AUDIT_ONLY` y `independence_result=PASS`; la suite incluye el caso adversarial productor igual a auditor.
+- `IR7-004`: el contrato conserva hallazgos, referencias de evidencia, limitaciones, defectos y decisiones tecnicas existentes (`PASS`, `REQUEST_CHANGES`, `FAIL`, `BLOCKED`).
+- `IR7-005`: `InvalidationEngine.resolve_correction_route()` reutiliza `correction_routing_policy.json`, registra dependencias desde el artefacto origen y no modifica el output productor; las rutas sin defecto u origen consistente bloquean.
+- `IRA-003`: permanece `REUSE`; `SCRIPT_PRODUCT` conserva la autoridad funcional de suficiencia editorial.
+
+La fidelidad de obras queda representable tecnicamente, pero sus criterios funcionales siguen siendo responsabilidad de `SCRIPT_PRODUCT`; `WorkResearchDossier.independent_fidelity_audit` permanece diferido y no se declara auditoria funcional implementada. `IR7-008` y cualquier ejecucion editorial real siguen pendientes de autorizacion posterior.
+
+Evidencia reproducible: `reports/implementation/plan_001/R1_M10_independent_research_audits_2026-08-18.md`.
+
+R1-M10 queda `COMPLETED` con revision tecnica `PASS` y aprobacion tecnica `APPROVED`. R1-M11 no queda abierta; requiere autorizacion posterior del OWNER.

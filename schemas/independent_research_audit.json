@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/independent_research_audit.json",
+  "title": "IndependentResearchAudit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "audit_id",
+    "audit_version",
+    "episode_id",
+    "audit_type",
+    "audited_artifacts",
+    "producer",
+    "auditor",
+    "auditor_write_scope",
+    "independence_result",
+    "findings",
+    "evidence_refs",
+    "limitations",
+    "defects",
+    "correction_routes",
+    "decision",
+    "created_at"
+  ],
+  "properties": {
+    "audit_id": {"type": "string", "minLength": 1},
+    "audit_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "episode_id": {"type": "string", "minLength": 1},
+    "audit_type": {
+      "enum": ["SUFFICIENCY", "FIDELITY", "INTERPRETATION", "CLAIMS_SOURCES", "CURATION", "RESEARCH_PACKAGE"]
+    },
+    "audited_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/auditedArtifact"}
+    },
+    "producer": {"$ref": "#/definitions/actor"},
+    "auditor": {"$ref": "#/definitions/actor"},
+    "auditor_write_scope": {"const": "AUDIT_ONLY"},
+    "independence_result": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/finding"}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "defects": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/defect"}
+    },
+    "correction_routes": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/correctionRoute"}
+    },
+    "decision": {"enum": ["PASS", "REQUEST_CHANGES", "FAIL", "BLOCKED"]},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "definitions": {
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor_id", "run_id"],
+      "properties": {
+        "actor_id": {"type": "string", "minLength": 1},
+        "run_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "auditedArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "checksum", "producer_run_id"],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "producer_run_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["criterion", "status", "evidence_refs", "limitations"],
+      "properties": {
+        "criterion": {"type": "string", "minLength": 1},
+        "status": {"enum": ["SATISFIED", "LIMITED", "NOT_SATISFIED", "UNRESOLVED"]},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "defect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defect_id", "defect_type", "severity", "origin_artifact", "description"],
+      "properties": {
+        "defect_id": {"type": "string", "minLength": 1},
+        "defect_type": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["CRITICAL", "MAJOR", "MINOR"]},
+        "origin_artifact": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "correctionRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defect_id", "defect_type", "severity", "origin_artifact", "invalidated_artifacts", "return_state", "required_revalidation", "suggested_role"],
+      "properties": {
+        "defect_id": {"type": "string", "minLength": 1},
+        "defect_type": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["CRITICAL", "MAJOR", "MINOR"]},
+        "origin_artifact": {"type": "string", "minLength": 1},
+        "invalidated_artifacts": {"type": "array", "items": {"type": "string"}},
+        "return_state": {"type": "string", "minLength": 1},
+        "required_revalidation": {"type": "string", "minLength": 1},
+        "suggested_role": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

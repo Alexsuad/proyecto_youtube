@@ -498,6 +498,25 @@ VALID_FIXTURES = {
     }
 }
 
+VALID_FIXTURES["independent_research_audit"] = {
+    "audit_id": "AUDIT-1",
+    "audit_version": "1.0.0",
+    "episode_id": "EP-1",
+    "audit_type": "FIDELITY",
+    "audited_artifacts": [{"artifact_id": "WORK-DOSSIER-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}],
+    "producer": {"actor_id": "PRODUCER-1", "run_id": "RUN-P"},
+    "auditor": {"actor_id": "AUDITOR-1", "run_id": "RUN-A"},
+    "auditor_write_scope": "AUDIT_ONLY",
+    "independence_result": "PASS",
+    "findings": [{"criterion": "SCRIPT_PRODUCT_DEFINED_CRITERION", "status": "SATISFIED", "evidence_refs": ["WORK-DOSSIER-1"], "limitations": []}],
+    "evidence_refs": ["WORK-DOSSIER-1"],
+    "limitations": [],
+    "defects": [],
+    "correction_routes": [],
+    "decision": "PASS",
+    "created_at": "2026-08-18T12:00:00Z",
+}
+
 # B4-I1: los registros canónicos sirven como fixtures válidos de sus schemas.
 for _name in ("responsibility_registry", "skill_catalog", "subagent_registry", "editorial_profile_registry"):
     with open(os.path.join(os.path.dirname(__file__), "..", "..", "config", f"{_name}.json"), encoding="utf-8") as _fixture:

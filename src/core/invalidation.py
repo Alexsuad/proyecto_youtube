@@ -4,8 +4,11 @@ Proyecto YouTube — Sistema Agéntico Editorial
 """
 
 from dataclasses import dataclass, field, asdict
+from copy import deepcopy
 from typing import List, Dict, Any, Optional, Set
 from datetime import datetime, timezone
+
+from src.core.contract_validation import validate_against_schema
 
 
 @dataclass
@@ -48,6 +51,16 @@ class InvalidationEngine:
         self.dependencies[parent_id].add(child_id)
         if self.registry is not None and hasattr(self.registry, "add_dependency"):
             self.registry.add_dependency(parent_id, child_id)
+
+    def resolve_correction_route(self, route: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate and register an origin-preserving correction route."""
+        violations = validate_against_schema(route, "correction_routing_policy")
+        if violations:
+            raise ValueError("CORRECTION_ROUTE_INVALID:" + ";".join(violations))
+        origin = str(route["origin_artifact"])
+        for dependent in route.get("invalidated_artifacts", []):
+            self.register_dependency(origin, str(dependent))
+        return deepcopy(route)
 
     def classify_profile_change(self, change_type: str) -> str:
         mapping = {"NO_IMPACT": "NO_IMPACT", "PARTIAL_INVALIDATION": "PARTIAL_INVALIDATION", "FULL_INVALIDATION": "FULL_INVALIDATION"}
