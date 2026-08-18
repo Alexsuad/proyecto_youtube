@@ -10,7 +10,6 @@
     "profile_checksum",
     "topic",
     "entry_mode",
-    "narrative_work",
     "central_question",
     "proposed_angle",
     "proposed_territory",
@@ -44,7 +43,11 @@
       "minLength": 1
     },
     "entry_mode": {
-      "enum": ["TOPIC_FIRST", "ANCHOR_WORK_FIRST", "CORPUS_FIRST"]
+      "enum": [
+        "TOPIC_FIRST",
+        "ANCHOR_WORK_FIRST",
+        "CORPUS_FIRST"
+      ]
     },
     "narrative_work": {
       "type": "string",
@@ -72,6 +75,31 @@
     "submitted_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "research_ref": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*"
+    },
+    "narrative_door_evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": ".*\\S.*"
+      }
+    },
+    "candidate_work_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": ".*\\S.*"
+      }
     }
   },
   "$defs": {

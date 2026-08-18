@@ -10,6 +10,10 @@ from typing import Any
 from src.ai.contracts import ExecutionResult, ExecutionStatus
 from src.ai.manifest import canonical_json, file_checksum
 from src.core.contract_validation import validate_against_schema
+from src.core.mission_authorization import load_mission_authorization
+
+# Process-local capability issued only after execution preflight verifies authority.
+_VERIFIED_AUTHORIZATION_TOKEN = object()
 
 B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
     "ANALYSIS_PRODUCER": {"analysis"},
@@ -348,6 +352,41 @@ def validate_handoff(path: Path, *, package: dict[str, Any], current_skill_check
     return record
 
 
+def _real_provenance_authorized(request: Any) -> bool:
+    if request is None:
+        return False
+    config = request.config or {}
+    authorization_path = config.get("mission_authorization_path")
+    repository_root = Path(str(config.get("repository_root") or Path(__file__).resolve().parents[2])).resolve()
+    if not authorization_path:
+        return False
+    candidate = Path(str(authorization_path))
+    if candidate.is_absolute() or ".." in candidate.parts:
+        return False
+    path = (repository_root / candidate).resolve()
+    try:
+        path.relative_to(repository_root)
+        authorization = load_mission_authorization(path)
+        output_path = getattr(request, "output_artifact_path", None)
+        relative_output = None
+        if output_path:
+            relative_output = str(Path(output_path).resolve().relative_to(repository_root)).replace("\\", "/")
+        authorization.verify(
+            repository_root,
+            capability_id=str(request.capability_id),
+            role_id=str(getattr(request, "role", "")),
+            operation=str(config.get("mission_operation") or "EXECUTE_CAPABILITY"),
+            path=relative_output,
+            execution_mode="REAL",
+            execution_route=str(getattr(request, "execution_route", None) or config.get("execution_route") or "") or None,
+            execution_profile_id=str(getattr(request, "execution_profile", None) or config.get("execution_profile") or "") or None,
+            execution_interface=str(config.get("execution_interface") or "") or None,
+        )
+    except Exception:
+        return False
+    return True
+
+
 def append_result(
     path: Path,
     result: ExecutionResult,
@@ -357,6 +396,8 @@ def append_result(
     request: Any | None = None,
 ) -> None:
     """Registra solo ejecuciones que realmente produjeron un artefacto verificable."""
+    if str(execution_mode).upper() == "REAL" and (request is None or not _real_provenance_authorized(request)):
+        raise PermissionError("REAL_PROVENANCE_REQUIRES_VERIFIED_MISSION_AUTHORIZATION")
     if result.status is not ExecutionStatus.SUCCEEDED or not result.output_checksum:
         return
     if not result.output_artifact_kind or not result.output_artifact_id:

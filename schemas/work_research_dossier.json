@@ -12,16 +12,8 @@
     "evidence_report_id",
     "work",
     "dossier_stage",
-    "analysis_references",
-    "question_and_thesis_relation",
-    "claim_dispositions",
-    "overinterpretation_risk",
-    "candidate_editorial_function_analysis_ref",
-    "locators",
     "pending_items",
     "confidence",
-    "work_use_sufficiency",
-    "independent_fidelity_audit",
     "created_at"
   ],
   "properties": {
@@ -64,6 +56,10 @@
   "allOf": [
     {
       "if": {"properties": {"dossier_stage": {"const": "RESEARCH_REVIEW_PENDING"}}, "required": ["dossier_stage"]},
+      "then": {"required": ["analysis_references", "question_and_thesis_relation", "claim_dispositions", "overinterpretation_risk", "candidate_editorial_function_analysis_ref", "locators", "work_use_sufficiency", "independent_fidelity_audit"]}
+    },
+    {
+      "if": {"properties": {"dossier_stage": {"const": "RESEARCH_REVIEW_PENDING"}}, "required": ["dossier_stage"]},
       "then": {"required": ["research_stop_decision_ref"]}
     }
   ],
@@ -99,7 +95,9 @@
       "required": ["analysis_id", "material_id"],
       "properties": {
         "analysis_id": {"type": "string", "minLength": 1},
-        "material_id": {"type": "string", "minLength": 1}
+        "material_id": {"type": "string", "minLength": 1},
+        "artifact_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "artifact_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
       }
     },
     "questionAndThesisRelation": {
@@ -124,7 +122,9 @@
         "authority_status": {"type": "string", "const": "REPRESENTATION_ONLY_IR4_PENDING"},
         "candidate_allowed_claim_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
         "candidate_limited_claim_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "candidate_blocked_claim_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+        "candidate_blocked_claim_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+            "claims_ledger_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+            "claims_ledger_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
       }
     },
     "overinterpretationRisk": {

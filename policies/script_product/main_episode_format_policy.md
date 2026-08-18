@@ -5,6 +5,8 @@
 **Sede canónica de B5_PRE:** `plans/plan_001/B5_PRE_SCRIPT_FOUNDATION.md`
 **Estado:** DEFINED (no se aprueban excepciones en esta misión)
 
+FUNCTIONAL_DIMENSION: candidate_works
+
 ---
 
 ## 1. Alcance

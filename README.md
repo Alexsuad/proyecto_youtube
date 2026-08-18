@@ -39,9 +39,9 @@ Contratos ejecutables
 
 Los documentos de `workspace/` se conservan como referencia histórica, de migración o apoyo humano. No se debe reconstruir identidad activa ni autoridad ejecutable desde ellos.
 
-## Arquitectura: Vault Externo
+## Almacenamiento y portabilidad
 
-Todo el trabajo de un episodio vive **fuera de este repo**, en el Content Vault:
+La ruta moderna portable usa los contratos y artefactos del checkout. El Content Vault externo se conserva como ruta legacy opcional para trabajo episódico:
 
 ```
 C:\YT_VAULT\MasAllaDelGuion\
@@ -58,7 +58,7 @@ La carpeta `output/` de **este repo** se usa exclusivamente para:
 - Reportes de auditoría del sistema (Gate 0)
 - Logs de ejecución
 
-La configuración del Vault está en `config/local_settings.json`.
+La configuración del Vault está en `config/local_settings.json`; no es una dependencia universal de Gate 0 ni del cierre del MVP.
 
 ---
 
@@ -73,8 +73,8 @@ Los scripts se encuentran en `src/scripts/`. Se ejecutan en este orden:
 | Paso | Script | Qué hace |
 |---|---|---|
 | 0a | `gate0_auditoria.py` | Audita coherencia del sistema antes de empezar |
-| 0b | `gate0_integridad.py` | Verifica integridad del entorno (config, Vault) |
-| 1 | `iniciar_episodio.py` | Crea la carpeta del episodio en el Vault y registra en el índice |
+| 0b | `gate0_integridad.py` | Verifica integridad del entorno; usa ruta portable si falta configuración local |
+| 1 | `iniciar_episodio.py` | Opcional: crea la carpeta del episodio en el Vault legacy |
 | N | `cerrar_episodio.py` | Valida entregables y marca el episodio como completado |
 
 ### Uso básico
@@ -83,7 +83,7 @@ Los scripts se encuentran en `src/scripts/`. Se ejecutan en este orden:
 # Auditar antes de empezar
 python src/scripts/gate0_auditoria.py
 
-# Iniciar un episodio nuevo
+# Iniciar un episodio nuevo en Vault (opcional, solo ruta legacy)
 python src/scripts/iniciar_episodio.py
 
 # Cerrar el episodio activo
@@ -107,8 +107,8 @@ Dentro de la carpeta del episodio en el Vault (`ep_XXXX_slug/`):
 | `06_guion_longform.md` | **Obligatorio** | Guion final aprobado |
 | `07_verificacion_veracidad_notebooklm.md` | **Obligatorio** | Gate V — debe tener `ESTADO_GLOBAL: OK` |
 | `08_shorts.md` | Futuro / Etapa 2 | Guiones de shorts |
-| `09_packaging.md` | Futuro / Etapa 2 | Títulos y concepto de miniatura |
-| `10_seo.md` | Futuro / Etapa 2 | Metadatos para YouTube |
+| `09_packaging.md` | Diferido / Etapa 2 | Títulos y concepto de miniatura; no requerido para cerrar el MVP |
+| `10_seo.md` | Diferido / Etapa 2 | Metadatos para YouTube; no requerido para cerrar el MVP |
 | `99_notebooklm_pack.md` | Deseable* | Índice de subida a NotebookLM |
 
 > *`99_notebooklm_pack.md` puede convertirse en obligatorio activando `notebooklm_pack_required: true` en `config/local_settings.json`.

@@ -78,7 +78,7 @@ def _classify_provider_kind(provider: str, request: ExecutionRequest, usage: dic
         return explicit
     if usage.get("synthetic"):
         return "SYNTHETIC"
-    if provider == "mock" or (request.execution_mode or "").lower() == "mock":
+    if provider in TECHNICAL_HARNESS_PROVIDERS or (request.execution_mode or "").lower() == "mock":
         return "SYNTHETIC"
     return "REAL"
 
@@ -86,6 +86,8 @@ def _classify_provider_kind(provider: str, request: ExecutionRequest, usage: dic
 def persist_execution_result(path: Path, result: ExecutionResult, request: ExecutionRequest, *, execution_mode: str) -> None:
     from src.ai.registry import append_result
 
+    if str(execution_mode).upper() == "REAL" and request.config.get("_mission_authorization_token") is None:
+        raise PermissionError("REAL_PROVENANCE_REQUIRES_VERIFIED_MISSION_AUTHORIZATION")
     append_result(path, result, execution_mode=execution_mode, role=request.role or "UNSPECIFIED_PRODUCER", request=request)
 
 
@@ -290,6 +292,9 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
         preflight = preflight_controlled_execution(request, root=repository_root)
         from src.ai.registry import capture_pre_run_snapshot
 
+        if preflight.get("authorization") is not None:
+            from src.ai.registry import _VERIFIED_AUTHORIZATION_TOKEN
+            request.config = {**request.config, "_mission_authorization_verified": True, "_mission_authorization_token": _VERIFIED_AUTHORIZATION_TOKEN}
         capture_pre_run_snapshot(request, authorization=preflight.get("authorization"), root=repository_root)
         if preflight.get("context_manifest") is not None:
             request.config = {**request.config, "resolved_context_manifest": preflight["context_manifest"], "resolved_context_manifest_sha256": preflight["context_manifest"]["manifest_sha256"], "mission_contract_sha256": preflight["authorization"].contract_sha256}
@@ -413,7 +418,7 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
     violations = validate_editorial_payload(output, request.output_schema) if request.output_schema in EDITORIAL_ONLY_SCHEMAS else validate_against_schema(output, request.output_schema)
     if violations:
         return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, output=output, error="OUTPUT_CONTRACT_INVALID: " + "; ".join(violations), usage=usage)
-    return _result(request, provider_name, ExecutionStatus.SUCCEEDED, started, manifest, output=output, usage=usage, real=provider_name not in {"mock", "agent_handoff"})
+    return _result(request, provider_name, ExecutionStatus.SUCCEEDED, started, manifest, output=output, usage=usage, real=provider_name in REAL_EXTERNAL_PROVIDERS)
 
 
 def _execute_reduced_mission(request: ExecutionRequest, started: str, manifest: str, mission_contract: Any) -> ExecutionResult:
@@ -452,7 +457,11 @@ def _finalize_mission_reservation(request: ExecutionRequest, result: ExecutionRe
         request.config = {**request.config, "_mission_reservation_status": status}
         result.usage["mission_reservation_status"] = status
     except (OSError, ValueError, PermissionError) as exc:
-        result.usage["provenance_error"] = f"MISSION_RESERVATION_FINALIZATION_FAILED: {exc}"
+        error = f"MISSION_RESERVATION_FINALIZATION_FAILED: {exc}"
+        result.status = ExecutionStatus.FAILED
+        result.error = error
+        result.usage["provenance_error"] = error
+        result.usage["mission_reservation_status"] = "RESERVED"
     return result
 
 

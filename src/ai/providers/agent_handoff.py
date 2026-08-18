@@ -61,6 +61,7 @@ class AgentHandoffProvider:
             "expected_provider_or_agent": request.config.get("expected_provider_or_agent"),
             "artifacts": artifacts,
             "completion_gate": completion_gate.to_dict(),
+            **({"strategic_return": request.config["strategic_return"]} if "strategic_return" in request.config else {}),
         }
         package["package_checksum"] = checksum(canonical_json(package))
         path = directory / f"{run_id}.json"
@@ -82,6 +83,9 @@ class AgentHandoffProvider:
                 or payload.get("skill_id") != package["skill_id"] or payload.get("skill_version") != package["skill_version"]):
             raise ValueError("resultado importado no corresponde al paquete de handoff")
         content = payload.get("output")
+        declared_return = package.get("strategic_return")
+        if declared_return is not None and (not isinstance(content, dict) or content.get("strategic_return") != declared_return):
+            raise ValueError("strategic_return no coincide con el handoff canónico")
         encoded = json.dumps(content, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
         if payload.get("output_checksum") != checksum(encoded):
             raise ValueError("checksum incorrecto en resultado importado")

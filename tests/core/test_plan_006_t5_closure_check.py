@@ -20,11 +20,11 @@ class TestEvidenceIntegrity:
     def test_default_closure_requires_t5_and_d1(self):
         assert {"T5", "D1"}.issubset(REQUIRED_INCREMENTS)
 
-    def test_current_t1_distinct_bindings_allow_final_closure(self):
+    def test_historical_completion_does_not_imply_current_closure(self):
         report = run_closure_check(ROOT, mission_id="PLAN_006_T5_PILOT")
-        assert report.overall == CLOSURE_OK
+        assert report.overall == CLOSURE_FAIL
         assert any(f.check == "HISTORICAL_COMPLETION" and f.status == CLOSURE_OK for f in report.findings)
-        assert any(f.check == "EVIDENCE_T1" and f.status == CLOSURE_OK for f in report.findings)
+        assert any(f.check == "EVIDENCE_T1" and f.status == CLOSURE_FAIL and "EVIDENCE_NOT_FRESH" in f.detail for f in report.findings)
 
     def test_reuse_decision_stays_fail_closed(self):
         report = run_closure_check(

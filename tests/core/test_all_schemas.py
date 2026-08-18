@@ -3,6 +3,8 @@ Pruebas Unitarias de Integridad y Validación de los 25 JSON Schemas y sus Fixtu
 """
 
 import os
+import hashlib
+from pathlib import Path
 import json
 import unittest
 import jsonschema
@@ -22,6 +24,7 @@ from src.core.contract_validation import (
     validate_work_lifecycle,
     validate_research_stop_decision,
     validate_editorial_semantic_memory,
+    _source_dimension_universe,
 )
 
 VALID_FIXTURES = {
@@ -580,7 +583,7 @@ VALID_FIXTURES["youtube_adaptation_b5_i2_package"] = {
         "episode_brief": {"artifact_id": "EP-1", "version": "1.0.0", "checksum": "a" * 64},
         "refined_thesis": {"artifact_id": "T-1", "version": "1.0.0", "checksum": "a" * 64},
         "editorial_script_promise": {"artifact_id": "SP-1", "version": "1.0.0", "checksum": "a" * 64},
-        "evidence_or_claims_reference": {"artifact_id": "E-1", "version": "1.0.0", "checksum": "a" * 64},
+        "evidence_or_claims_reference": {"artifact_id": "E-1", "version": "1.0.0", "checksum": "a" * 64}, "claims_ledger": {"artifact_id": "CL-1", "version": "1.0.0", "checksum": "b" * 64}, "evidence_report": {"artifact_id": "E-1", "version": "1.0.0", "checksum": "a" * 64},
     },
     "producer_run_id": "RUN-PROD-1",
     "episode_youtube_positioning": {
@@ -638,7 +641,7 @@ VALID_FIXTURES["youtube_adaptation_b5_i2_package"] = {
             "severity": "LOW",
             "mitigations": ["Contextualizar."],
             "uncertainties": ["Pendiente revisión audiovisual."],
-            "audiovisual_review_pending": True
+            "audiovisual_review_pending": True, "evidence_refs": ["E-1"]
         },
         "rights_reuse_risk": {
             "quotes": "Breves.",
@@ -650,14 +653,15 @@ VALID_FIXTURES["youtube_adaptation_b5_i2_package"] = {
             "commentary_and_analysis": "Predominante.",
             "summary_substitution_risk": "LOW",
             "textual_risk": "LOW",
-            "audiovisual_review_pending": True,
+            "audiovisual_review_pending": True, "evidence_refs": ["E-1"],
             "unresolved_items": [],
-            "mitigations": ["Citas breves."]
+            "mitigations": ["Citas breves."], "evidence_refs": ["E-1"]
         }
     },
     "unsupported_elements": [],
     "unresolved_items": [],
     "producer_limits": ["No autoriza B5-I3."],
+    "strategic_return": {"return_required": False, "target_domain": None, "strategic_triggers": {key: False for key in _TOPIC_TRIGGERS}, "reason": None, "evidence_refs": []},
     "created_at": "2026-08-01T10:00:00Z"
 }
 
@@ -673,8 +677,8 @@ VALID_FIXTURES["youtube_adaptation_review"] = {
     "capability_results": {key: {"decision": "PASS", "rationale": "Evaluado.", "evidence_refs": ["E-1"], "mitigation_or_pending": "Mitigado.", "blocking_reason": None} for key in ["YT_EARLY_AUDIENCE_FIT", "YT_VISIBLE_PROMISE", "YT_EARLY_PACKAGING_HYPOTHESIS", "YT_PROMISE_CONTENT_ALIGNMENT", "YT_OPENING_READINESS", "YT_DURATION_ENVELOPE", "YT_OVERPROMISE_REVIEW", "YT_TEXT_PLATFORM_RISK", "YT_SCRIPT_RIGHTS_REUSE_RISK"]},
     "overpromise_decision": {"decision": "PASS", "rationale": "Evaluado.", "evidence_refs": ["E-1"], "mitigation_or_pending": "Mitigado.", "blocking_reason": None},
     "unsupported_elements": [],
-    "platform_risk_summary": {"severity": "LOW", "summary": "Riesgo bajo.", "mitigations": ["Contextualizar."], "uncertainties": ["Pendiente revisión audiovisual."]},
-    "rights_reuse_summary": {"severity": "LOW", "summary": "Uso transformativo preliminarmente aceptable.", "mitigations": ["Citas breves."], "unresolved_items": []},
+    "platform_risk_summary": {"severity": "LOW", "summary": "Riesgo bajo.", "mitigations": ["Contextualizar."], "uncertainties": ["Pendiente revisión audiovisual."], "evidence_refs": ["E-1"]},
+    "rights_reuse_summary": {"severity": "LOW", "summary": "Uso transformativo preliminarmente aceptable.", "mitigations": ["Citas breves."], "unresolved_items": [], "evidence_refs": ["E-1"]},
     "opening_readiness": {"decision": "PASS", "rationale": "Son obligaciones, no apertura redactada.", "pending_items": []},
     "duration_assessment": {"decision": "PASS", "rationale": "Está justificada.", "recommended_range": "14-18 minutos"},
     "findings": ["Sin hallazgos bloqueantes."],
@@ -682,6 +686,7 @@ VALID_FIXTURES["youtube_adaptation_review"] = {
     "blocking_reasons": [],
     "unresolved_items": [],
     "publication_limit": {"DOES_NOT_AUTHORIZE": ["B5_I3", "FINAL_PACKAGING", "PRODUCTION", "PUBLICATION", "MONETIZATION_GUARANTEE", "LEGAL_APPROVAL"]},
+    "strategic_return": {"return_required": False, "target_domain": None, "strategic_triggers": {key: False for key in _TOPIC_TRIGGERS}, "reason": None, "evidence_refs": []},
     "decision": "APPROVAL",
     "created_at": "2026-08-01T10:05:00Z"
 }
@@ -702,7 +707,7 @@ VALID_FIXTURES["youtube_adaptation_r3_traceability"] = {
     ]
 }
 
-VALID_FIXTURES["narrative_human_analysis"] = {"analysis_id":"A-1","episode_id":"EP-1","research_id":"R-1","evidence_report_id":"E-1","semantic_audit_id":"S-1","material_id":"M-1","material_checksum":"a"*64,"inherited_constraint_ids":[],"findings":[{"finding_id":"F-1","claim_type":"INTERPRETATION","statement":"Lectura.","narrative_evidence_refs":["NE-1"],"source_refs":["S-1"],"human_dimension":"BELIEF","causal_relation":"Relación.","confidence":"HIGH"}],"rival_interpretations":["Rival."],"rival_interpretation_status":"PRESENT","rival_interpretation_justification":None,"limitations":["Límite."],"limits_status":"PRESENT","limits_justification":None,"demonstrates":"Demuestra una relación.","does_not_establish":"No demuestra causalidad universal.","material_function_candidate":"Complicación.","specific_scene_or_passage":"Escena específica.","observable_decision_or_action":"Acción observable.","conflict":"Conflicto claro.","consequence":"Consecuencia clara.","main_interpretation":"Interpretación principal.","supporting_evidence":["F-1"],"interpretive_limit":"Límite interpretativo.","relationship_to_provisional_thesis":"Relacionada con la tesis provisional.","potential_contribution_to_progression":"Aporta progresión.","created_at":"2026-07-24T20:00:00Z"}
+VALID_FIXTURES["narrative_human_analysis"] = {"analysis_id":"A-1","artifact_version":"1.0.0","episode_id":"EP-1","research_id":"R-1","evidence_report_id":"E-1","semantic_audit_id":"S-1","material_id":"M-1","material_checksum":"a"*64,"inherited_constraint_ids":[],"findings":[{"finding_id":"F-1","claim_type":"INTERPRETATION","statement":"Lectura.","narrative_evidence_refs":["NE-1"],"source_refs":["S-1"],"human_dimension":"BELIEF","causal_relation":"Relación.","confidence":"HIGH"}],"rival_interpretations":["Rival."],"rival_interpretation_status":"PRESENT","rival_interpretation_justification":None,"limitations":["Límite."],"limits_status":"PRESENT","limits_justification":None,"demonstrates":"Demuestra una relación.","does_not_establish":"No demuestra causalidad universal.","material_function_candidate":"Complicación.","specific_scene_or_passage":"Escena específica.","observable_decision_or_action":"Acción observable.","conflict":"Conflicto claro.","consequence":"Consecuencia clara.","main_interpretation":"Interpretación principal.","supporting_evidence":["F-1"],"interpretive_limit":"Límite interpretativo.","relationship_to_provisional_thesis":"Relacionada con la tesis provisional.","potential_contribution_to_progression":"Aporta progresión.","created_at":"2026-07-24T20:00:00Z"}
 VALID_FIXTURES["material_curation"] = {"curation_id":"C-1","episode_id":"EP-1","research_id":"R-1","analysis_ids":["A-1"],"candidates":[{"material_id":"M-1","function":"Complicación","thesis_contribution":"Aporta.","new_perspective":"Nueva.","redundancy_with_selected":[],"context_cost":"Bajo.","narrative_evidence_strength":"HIGH","contradiction_or_nuance":"Matiz.","narrative_use":"COMPLICATION","selection_status":"SELECTED"}],"selected_material_ids":["M-1"],"selection_stage":"FINAL","exclusions":[],"sequence_rationale":"Secuencia justificada.","set_relationship":"Relación del conjunto.","unique_contributions":[{"material_id":"M-1","contribution":"Aporta."}],"function_overlap_justification":"No hay solapamiento.","progression_evidence":[{"material_id":"M-1","change_in_understanding":"Cambio.","evidence_refs":["F-1"],"non_substitutability":"No sustituible."}],"inherited_restrictions":[],"selected_materials":["M-1"],"excluded_materials":[],"function_of_each_selected_material":[{"material_id":"M-1","contribution":"Aporta."}],"reason_for_each_exclusion":[],"pairwise_redundancy_review":[],"contrast_map":[{"from_material_id":"M-1","to_material_id":"M-1","contrast":"Autocontraste mínimo de fixture."}],"progression_map":[{"material_id":"M-1","change_in_understanding":"Cambio.","evidence_refs":["F-1"],"non_substitutability":"No sustituible."}],"context_cost":"Bajo.","expected_order":["M-1"],"dependency_between_materials":[],"created_at":"2026-07-24T20:00:00Z"}
 VALID_FIXTURES["refined_thesis"] = {"thesis_id":"T-1","episode_id":"EP-1","brief_version":"1.0.0","research_id":"R-1","evidence_report_id":"E-1","semantic_audit_id":"S-1","provisional_thesis_id":"TP-1","analysis_ids":["A-1"],"curation_id":"C-1","statement":"Tesis.","supporting_evidence_refs":["F-1"],"counterevidence_refs":["R-1"],"rival_interpretations":["Rival."],"main_objection":"Objeción.","nuance":"Matiz.","material_contributions":[{"material_id":"M-1","contribution":"Aporta."}],"analysis_confirmed":["Confirmación."],"changes_from_provisional":["Cambio."],"discarded_from_provisional":["Descartado."],"refinement_rationale":"Razón.","refinement_dimensions":[{"dimension":"SCOPE","provisional_position":"Antes.","resulting_position":"Después.","evidence_refs":["F-1"],"rationale":"Razón."}],"inherited_constraint_ids":[],"statement_unchanged_justification":None,"limits":["Límite."],"revision_conditions":["Nueva evidencia."],"stage":"THESIS_REFINED","refined_position":"Posición refinada.","what_was_confirmed":["Confirmado."],"what_was_changed":["Cambiado."],"what_was_rejected":["Rechazado."],"what_was_limited":["Limitado."],"strongest_objection":"Objeción fuerte.","alternative_explanation":"Explicación alternativa.","conditions_of_validity":["Condición."],"remaining_uncertainties":["Incertidumbre."],"evidence_dependencies":["Dependencia."],"created_at":"2026-07-24T20:00:00Z"}
 VALID_FIXTURES["b5_i2_semantic_sufficiency_audit"].update({"artifact_references":["analysis:A-1","curation:C-1","refined_thesis:T-1","script_promise:SP-1"],"producer_run_reference":"RUN-P","auditor_run_reference":"RUN-AUDIT-1","producer_actor_id":"producer-1","auditor_actor_id":"auditor-1","auditor_input_checksum":"a"*64,"auditor_write_scope":"AUDIT_ONLY","independence_result":"PASS","dimension_results":[{"dimension":d,"status":"PASS","summary":"Evaluado."} for d in ["TRIVIAL_THESIS","INTERCHANGEABLE_ANALYSIS","DECORATIVE_OBJECTION","FALSE_DEPTH"]],"required_changes":[],"excluded_claims_detected":[],"unsupported_inferences":[],"redundancy_findings":[],"progression_findings":[],"thesis_refinement_finding":{"status":"PASS","summary":"Evaluado."},"blocking_reasons":[],"reaudit_requirements":[]})
@@ -710,9 +715,9 @@ VALID_FIXTURES["work_research_dossier"] = {
     "dossier_id": "WRD-001", "dossier_version": "1.0.0", "episode_id": "EP-1", "research_id": "R-1", "evidence_report_id": "E-1",
     "work": {"material_id": "M-1", "title": "Obra de fixture", "creator": "Autor", "consulted_representations": [{"representation_kind": "ORIGINAL_WORK", "edition_or_version": "Edición 1", "consulted_locator": "Capítulo 1"}]},
     "dossier_stage": "RESEARCH_IN_PROGRESS",
-    "analysis_references": [{"analysis_id": "A-1", "material_id": "M-1"}],
+    "analysis_references": [{"analysis_id": "A-1", "material_id": "M-1", "artifact_version": "1.0.0", "artifact_checksum": "a" * 64}],
     "question_and_thesis_relation": {"central_question_ref": "EP-1.pregunta_central", "provisional_thesis_ref": "TP-1", "demonstrates_analysis_ref": "A-1", "does_not_establish_analysis_ref": "A-1", "main_interpretation_analysis_ref": "A-1", "rival_interpretation_analysis_refs": ["A-1"]},
-    "claim_dispositions": {"claims_ledger_id": "CL-001", "authority_status": "REPRESENTATION_ONLY_IR4_PENDING", "candidate_allowed_claim_ids": ["CLAIM-001"], "candidate_limited_claim_ids": [], "candidate_blocked_claim_ids": []},
+    "claim_dispositions": {"claims_ledger_id": "CL-001", "claims_ledger_version": "1.0.0", "claims_ledger_checksum": "a" * 64, "authority_status": "REPRESENTATION_ONLY_IR4_PENDING", "candidate_allowed_claim_ids": ["CLAIM-001"], "candidate_limited_claim_ids": [], "candidate_blocked_claim_ids": []},
     "overinterpretation_risk": {"level": "MEDIUM", "rationale": "Requiere mantener el límite interpretativo."},
     "candidate_editorial_function_analysis_ref": "A-1", "locators": [{"analysis_id": "A-1", "locator": "Escena 3"}],
     "pending_items": [], "confidence": "HIGH",
@@ -720,6 +725,9 @@ VALID_FIXTURES["work_research_dossier"] = {
     "independent_fidelity_audit": {"audit_reference": None, "dependency": "DEFERRED_TO_R1_M10_R1_M11"},
     "created_at": "2026-08-07T10:00:00Z"
 }
+_fixture_checksum = lambda value: hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+VALID_FIXTURES["work_research_dossier"]["analysis_references"][0]["artifact_checksum"] = _fixture_checksum(VALID_FIXTURES["narrative_human_analysis"])
+VALID_FIXTURES["work_research_dossier"]["claim_dispositions"]["claims_ledger_checksum"] = _fixture_checksum(VALID_FIXTURES["claims_ledger"])
 
 VALID_FIXTURES["execution_provenance_registry"]["runs"][0].update({
     "prompt_id": "prompt_fixture",
@@ -747,7 +755,7 @@ VALID_FIXTURES["delegation_decision"] = {"decision": "INLINE", "reasons": ["fixt
 VALID_FIXTURES["review_workload_decision"] = {"review_level": "SELF_ONLY", "review_origin": "NOT_APPLICABLE", "reasons": ["fixture"], "evidence_refs": []}
 VALID_FIXTURES["routing_decision"] = {"status": "SELECTED", "reasons": ["fixture"], "candidate_set": ["local"], "selected_profile": "local", "external_cost_authorized": False}
 VALID_FIXTURES["plan_006_evidence_envelope"] = {"schema_version": "1.0.0", "plan_id": "PLAN_006", "artifact_id": "PLAN006-FIXTURE", "mission_id": "PLAN_006_T0", "increment": "T0", "repository_revision": "a" * 40, "generated_at": "2026-08-13T10:00:00Z", "source_inputs": [{"path": "src/core/lean_measurement.py", "sha256": "a" * 64}], "evidence_refs": ["src/core/lean_measurement.py"], "limitations": ["fixture"], "result": "PASS"}
-VALID_FIXTURES["editorial_semantic_memory"] = {"memory_id": "ESM-1", "memory_version": "1.0.0", "history_source": "REPOSITORY_GOVERNED_ARTIFACTS", "consultation_points": ["PROPOSAL", "PRE_FINAL_CURATION", "PRE_THESIS_OR_ARCHITECTURE", "OPENING_UNIT_REVIEW", "PRE_FINAL_SCRIPT"], "checkpoint_integration": {"PROPOSAL": "CONNECTED", "PRE_FINAL_CURATION": "CONNECTED", "PRE_THESIS_OR_ARCHITECTURE": "CONNECTED", "OPENING_UNIT_REVIEW": "PREPARED_DEFERRED_UNTIL_CANONICAL_OPENING_UNIT_REVIEW", "PRE_FINAL_SCRIPT": "PREPARED_DEFERRED_UNTIL_CANONICAL_FINAL_SCRIPT_APPROVAL"}, "episode_entries": [], "comparison_decisions": [{"decision_id": "CMP-1", "candidate_episode_ref": {"artifact_ref": "episode:EP-NEW", "version": "1.0.0", "checksum": "a" * 64}, "compared_episode_refs": [], "evidence_refs": ["history:empty"], "comparison_dimensions": ["topic", "thesis"], "decision": "INSUFFICIENT_HISTORY", "recommended_action": "REVIEW_REQUIRED", "justification": "No hay corpus editorial previo suficiente.", "invalidators": ["HISTORY_CHANGED"]}], "created_at": "2026-08-13T10:00:00Z"}
+VALID_FIXTURES["editorial_semantic_memory"] = {"memory_id": "ESM-1", "memory_version": "1.0.0", "history_source": "REPOSITORY_GOVERNED_ARTIFACTS", "consultation_points": ["PROPOSAL", "PRE_FINAL_CURATION", "PRE_THESIS_OR_ARCHITECTURE", "OPENING_UNIT_REVIEW", "PRE_FINAL_SCRIPT"], "checkpoint_integration": {"PROPOSAL": "CONNECTED", "PRE_FINAL_CURATION": "CONNECTED", "PRE_THESIS_OR_ARCHITECTURE": "CONNECTED", "OPENING_UNIT_REVIEW": "PREPARED_DEFERRED_UNTIL_CANONICAL_OPENING_UNIT_REVIEW", "PRE_FINAL_SCRIPT": "PREPARED_DEFERRED_UNTIL_CANONICAL_FINAL_SCRIPT_APPROVAL"}, "episode_entries": [], "comparison_decisions": [{"decision_id": "CMP-1", "candidate_episode_ref": {"artifact_ref": "episode:EP-NEW", "version": "1.0.0", "checksum": "a" * 64}, "compared_episode_refs": [], "evidence_refs": ["history:empty"], "comparison_dimensions": ["topic", "thesis"], "decision": "INSUFFICIENT_HISTORY", "recommended_action": "REVIEW_REQUIRED", "justification": "No hay corpus editorial previo suficiente.", "invalidators": ["HISTORY_CHANGED"]}], "functional_dimension_sources": {"CHANNEL_INTELLIGENCE": {"sources": [{"artifact_ref": "policies/channel_intelligence/topic_belonging_policy.md", "version": "1.0.0", "checksum": "a" * 64}], "dimensions": ["identity_alignment"]}, "SCRIPT_PRODUCT": {"sources": [{"artifact_ref": "policies/script_product/main_episode_format_policy.md", "version": "1.0.0", "checksum": "b" * 64}], "dimensions": ["CANDIDATE_WORKS"]}, "YOUTUBE_ADAPTATION": {"sources": [{"artifact_ref": "config/youtube_adaptation_r3_traceability.json", "version": "1.0.0", "checksum": "c" * 64}], "dimensions": ["YT_VISIBLE_PROMISE"]}}, "semantic_assurance": {"status": "PASS", "evaluated_dimensions": {"CHANNEL_INTELLIGENCE": [{"dimension": "identity_alignment", "status": "EVALUATED", "evidence_refs": ["ci:1"]}], "SCRIPT_PRODUCT": [{"dimension": "CANDIDATE_WORKS", "status": "EVALUATED", "evidence_refs": ["sp:1"]}], "YOUTUBE_ADAPTATION": [{"dimension": "YT_VISIBLE_PROMISE", "status": "EVALUATED", "evidence_refs": ["ya:1"]}]}}, "created_at": "2026-08-13T10:00:00Z"}
 VALID_FIXTURES["work_lifecycle"] = {
     "lifecycle_id": "WL-001", "lifecycle_version": "1.0.0", "episode_id": "EP-1", "research_id": "R-1",
     "entry_mode": "TOPIC_FIRST", "anchor_work_id": None,
@@ -858,6 +866,16 @@ VALID_FIXTURES["repair_integrity_evidence"] = {
     "created_at": "2026-08-09T00:00:00Z"
 }
 VALID_FIXTURES["repair_integrity_evidence"]["evidence_sha256"] = evidence_checksum(VALID_FIXTURES["repair_integrity_evidence"])
+
+for _owner, _source in (("CHANNEL_INTELLIGENCE", "policies/channel_intelligence/topic_belonging_policy.md"), ("SCRIPT_PRODUCT", "policies/script_product/main_episode_format_policy.md"), ("YOUTUBE_ADAPTATION", "config/youtube_adaptation_r3_traceability.json")):
+    VALID_FIXTURES["editorial_semantic_memory"]["functional_dimension_sources"][_owner]["sources"][0]["checksum"] = hashlib.sha256((Path(__file__).resolve().parents[2] / _source).read_bytes()).hexdigest()
+VALID_FIXTURES["editorial_semantic_memory"]["functional_dimension_sources"]["SCRIPT_PRODUCT"]["sources"].append({"artifact_ref": "policies/script_product/episode_discovery_and_material_curation_policy.md", "version": "1.0.0", "checksum": hashlib.sha256((Path(__file__).resolve().parents[2] / "policies/script_product/episode_discovery_and_material_curation_policy.md").read_bytes()).hexdigest()})
+for _owner, _binding in VALID_FIXTURES["editorial_semantic_memory"]["functional_dimension_sources"].items():
+    _paths = [Path(__file__).resolve().parents[2] / _source["artifact_ref"] for _source in _binding["sources"]]
+    _dimensions = sorted(_source_dimension_universe(_owner, _paths))
+    _binding["dimensions"] = ["producer-declared-value-is-ignored"]
+    VALID_FIXTURES["editorial_semantic_memory"]["semantic_assurance"]["evaluated_dimensions"][_owner] = [{"dimension": _dimension, "status": "EVALUATED", "evidence_refs": [f"{_owner}:evidence"]} for _dimension in _dimensions]
+
 
 class TestAllJSONSchemas(unittest.TestCase):
 

@@ -2,20 +2,20 @@
   "schema_version": "1.0.0",
   "plan_id": "PLAN_004",
   "mission_id": "TH-05",
-  "repository_revision": "fd594e032bcab8d1567e7351223eca5d8e248d20",
-  "generated_at": "2026-08-11T00:00:00Z",
+  "repository_revision": "ce044572298c5cd021436c30d266545278689296",
+  "generated_at": "2026-08-18T15:22:17.558956Z",
   "source_inputs": [
     {
       "path": "config/capability_registry.json",
-      "sha256": "929d87458288eaa047f10b9aa592a5e913ae27d1fa76bb8cd9ac3f974ee2ac5b"
+      "sha256": "812afbd8ed7f4d06dc17f40f5728102ae27cac2a832700e36b5dd3574b2850d6"
     },
     {
       "path": "config/responsibility_registry.json",
-      "sha256": "d950488039410870ccf97d4e435ca3071ab43078cf592c24d1a9b73da100d6c4"
+      "sha256": "c05115caaab92a58ac833b8a3aaf8a866fbceb869cc86d8ee01d59cee5de0600"
     },
     {
       "path": "config/agent_prompt_registry.json",
-      "sha256": "f441aa3703bf8b69f7b2c5ab79f256549de6d9e9f1cff33b508415fb7da3477a"
+      "sha256": "3df4376a40368c49a088849ed9b24e83a5e819129851465bb6b297f49b8e9a6a"
     },
     {
       "path": "config/agent_execution_profiles.json",
@@ -23,11 +23,19 @@
     },
     {
       "path": "config/capability_routing.yaml",
-      "sha256": "a5b1dda9c8c08a7ed457d9e39b326bbe16fa8f036c6ac664369d5f6a85dd8e2b"
+      "sha256": "d85f83d1f6855759da5584a5c9d595fe45ab13f997149fc1b7c594e72af85646"
+    },
+    {
+      "path": "config/skill_catalog.json",
+      "sha256": "1180a3ec5c57d646b9f5286d882a28303d22064341d0123f17e7413b88e39db6"
     },
     {
       "path": "reports/implementation/plan_004/TH04_capability_audit_universe.json",
       "sha256": "de573052b66f3f99f435480352a37f07e0416f6943da356eaf6b7f9cf66f7bfc"
+    },
+    {
+      "path": "src/core/cross_registry_integrity.py",
+      "sha256": "a6102ddff80a03a05ebf512a7686bd0ccf5b79101fafad4cc4480c384f6a94f8"
     }
   ],
   "evidence_refs": [
@@ -36,7 +44,9 @@
     "config/agent_prompt_registry.json",
     "config/agent_execution_profiles.json",
     "config/capability_routing.yaml",
-    "reports/implementation/plan_004/TH04_capability_audit_universe.json"
+    "config/skill_catalog.json",
+    "reports/implementation/plan_004/TH04_capability_audit_universe.json",
+    "src/core/cross_registry_integrity.py"
   ],
   "limitations": [],
   "result": "PASS",
@@ -46,13 +56,36 @@
       "capability_id": "TOPIC_BELONGING_ASSESSMENT",
       "maturity_status": "IMPLEMENTED",
       "implementation_kind": "SEMANTIC",
+      "route_type": "SEMANTIC",
       "references": {
         "ROLE": "RESOLVED",
         "PROMPT": "RESOLVED",
         "PROFILE": "RESOLVED",
         "IMPLEMENTATION": "RESOLVED",
         "CONTRACT": "RESOLVED",
-        "ROUTE": "RESOLVED"
+        "ROUTE": "RESOLVED",
+        "ROUTE_ENTRYPOINT": "RESOLVED",
+        "SKILL": "NOT_APPLICABLE",
+        "ROUTE_CONTRACT": "RESOLVED"
+      },
+      "authority_resolution": "RESOLVED",
+      "routing_is_execution_only": true
+    },
+    {
+      "capability_id": "B5_I2_SEMANTIC_AUDITOR",
+      "maturity_status": "IMPLEMENTED",
+      "implementation_kind": "SEMANTIC",
+      "route_type": "SEMANTIC",
+      "references": {
+        "ROLE": "RESOLVED",
+        "PROMPT": "RESOLVED",
+        "PROFILE": "RESOLVED",
+        "IMPLEMENTATION": "RESOLVED",
+        "CONTRACT": "RESOLVED",
+        "ROUTE": "RESOLVED",
+        "ROUTE_ENTRYPOINT": "RESOLVED",
+        "SKILL": "RESOLVED",
+        "ROUTE_CONTRACT": "RESOLVED"
       },
       "authority_resolution": "RESOLVED",
       "routing_is_execution_only": true
@@ -61,13 +94,15 @@
       "capability_id": "STRATEGIC_IDENTITY_CHANGE_ASSESSMENT",
       "maturity_status": "DEFINED",
       "implementation_kind": "DEFERRED",
+      "route_type": "DEFERRED",
       "references": {
         "ROLE": "NOT_APPLICABLE",
         "PROMPT": "NOT_APPLICABLE",
         "PROFILE": "NOT_APPLICABLE",
         "IMPLEMENTATION": "NOT_APPLICABLE",
         "CONTRACT": "NOT_APPLICABLE",
-        "ROUTE": "NOT_APPLICABLE"
+        "ROUTE": "NOT_APPLICABLE",
+        "ROUTE_ENTRYPOINT": "NOT_APPLICABLE"
       },
       "authority_resolution": "RESOLVED",
       "routing_is_execution_only": true
@@ -76,13 +111,15 @@
       "capability_id": "EDITORIAL_PROFILE_PROPOSAL",
       "maturity_status": "DEFINED",
       "implementation_kind": "DEFERRED",
+      "route_type": "DEFERRED",
       "references": {
         "ROLE": "NOT_APPLICABLE",
         "PROMPT": "NOT_APPLICABLE",
         "PROFILE": "NOT_APPLICABLE",
         "IMPLEMENTATION": "NOT_APPLICABLE",
         "CONTRACT": "NOT_APPLICABLE",
-        "ROUTE": "NOT_APPLICABLE"
+        "ROUTE": "NOT_APPLICABLE",
+        "ROUTE_ENTRYPOINT": "NOT_APPLICABLE"
       },
       "authority_resolution": "RESOLVED",
       "routing_is_execution_only": true
@@ -91,13 +128,15 @@
       "capability_id": "EDITORIAL_PROFILE_FUNCTIONAL_REVIEW",
       "maturity_status": "DEFINED",
       "implementation_kind": "DEFERRED",
+      "route_type": "DEFERRED",
       "references": {
         "ROLE": "NOT_APPLICABLE",
         "PROMPT": "NOT_APPLICABLE",
         "PROFILE": "NOT_APPLICABLE",
         "IMPLEMENTATION": "NOT_APPLICABLE",
         "CONTRACT": "NOT_APPLICABLE",
-        "ROUTE": "NOT_APPLICABLE"
+        "ROUTE": "NOT_APPLICABLE",
+        "ROUTE_ENTRYPOINT": "NOT_APPLICABLE"
       },
       "authority_resolution": "RESOLVED",
       "routing_is_execution_only": true
@@ -106,13 +145,15 @@
       "capability_id": "PROFILE_CHANGE_IMPACT_ASSESSMENT",
       "maturity_status": "DEFINED",
       "implementation_kind": "DEFERRED",
+      "route_type": "DEFERRED",
       "references": {
         "ROLE": "NOT_APPLICABLE",
         "PROMPT": "NOT_APPLICABLE",
         "PROFILE": "NOT_APPLICABLE",
         "IMPLEMENTATION": "NOT_APPLICABLE",
         "CONTRACT": "NOT_APPLICABLE",
-        "ROUTE": "NOT_APPLICABLE"
+        "ROUTE": "NOT_APPLICABLE",
+        "ROUTE_ENTRYPOINT": "NOT_APPLICABLE"
       },
       "authority_resolution": "RESOLVED",
       "routing_is_execution_only": true
@@ -121,13 +162,15 @@
       "capability_id": "VOICE_CORPUS_SAMPLE_ASSESSMENT",
       "maturity_status": "DEFINED",
       "implementation_kind": "DEFERRED",
+      "route_type": "DEFERRED",
       "references": {
         "ROLE": "NOT_APPLICABLE",
         "PROMPT": "NOT_APPLICABLE",
         "PROFILE": "NOT_APPLICABLE",
         "IMPLEMENTATION": "NOT_APPLICABLE",
         "CONTRACT": "NOT_APPLICABLE",
-        "ROUTE": "NOT_APPLICABLE"
+        "ROUTE": "NOT_APPLICABLE",
+        "ROUTE_ENTRYPOINT": "NOT_APPLICABLE"
       },
       "authority_resolution": "RESOLVED",
       "routing_is_execution_only": true
@@ -136,13 +179,15 @@
       "capability_id": "VOICE_LEARNING_CANDIDATE_REVIEW",
       "maturity_status": "DEFINED",
       "implementation_kind": "DEFERRED",
+      "route_type": "DEFERRED",
       "references": {
         "ROLE": "NOT_APPLICABLE",
         "PROMPT": "NOT_APPLICABLE",
         "PROFILE": "NOT_APPLICABLE",
         "IMPLEMENTATION": "NOT_APPLICABLE",
         "CONTRACT": "NOT_APPLICABLE",
-        "ROUTE": "NOT_APPLICABLE"
+        "ROUTE": "NOT_APPLICABLE",
+        "ROUTE_ENTRYPOINT": "NOT_APPLICABLE"
       },
       "authority_resolution": "RESOLVED",
       "routing_is_execution_only": true
@@ -151,13 +196,15 @@
       "capability_id": "IDENTITY_DRIFT_AUDIT",
       "maturity_status": "DEFINED",
       "implementation_kind": "DEFERRED",
+      "route_type": "DEFERRED",
       "references": {
         "ROLE": "NOT_APPLICABLE",
         "PROMPT": "NOT_APPLICABLE",
         "PROFILE": "NOT_APPLICABLE",
         "IMPLEMENTATION": "NOT_APPLICABLE",
         "CONTRACT": "NOT_APPLICABLE",
-        "ROUTE": "NOT_APPLICABLE"
+        "ROUTE": "NOT_APPLICABLE",
+        "ROUTE_ENTRYPOINT": "NOT_APPLICABLE"
       },
       "authority_resolution": "RESOLVED",
       "routing_is_execution_only": true

@@ -19,6 +19,13 @@ _SCHEMA_BY_REPORT = {
     "PLAN_005_D5_RECOVERY_E2E.json": "plan_005_d5_recovery_evidence",
 }
 
+# Evidence that certifies TH-05 cross-registry integrity must bind the generator
+# that determines its findings, not only its registry inputs.
+_MATERIAL_GENERATOR_BY_REPORT = {
+    "TH05_cross_registry_integrity.json": "src/core/cross_registry_integrity.py",
+    "TH05_authority_resolution.json": "src/core/cross_registry_integrity.py",
+}
+
 
 def sha256_path(path: Path) -> str:
     if path.is_file():
@@ -78,13 +85,21 @@ def validate_evidence_report(root: str | Path, report_path: str | Path) -> tuple
         return None, [f"REPORT_UNREADABLE:{exc}"]
     if not isinstance(data, dict):
         return None, ["REPORT_NOT_OBJECT"]
-    violations = [f"SCHEMA_INVALID:{entry}" for entry in validate_against_schema(data, _schema_name(report))]
+    schema_name = _schema_name(report)
+    try:
+        violations = [f"SCHEMA_INVALID:{entry}" for entry in validate_against_schema(data, schema_name)]
+    except FileNotFoundError as exc:
+        return data, [f"SCHEMA_UNAVAILABLE:{schema_name}:{exc}"]
     if not violations:
         if "evidence_identity_sha256" in data and str(data.get("evidence_identity_sha256", "")).lower() != _identity_checksum(data).lower():
             violations.append("EVIDENCE_IDENTITY_MISMATCH")
         for ref in data.get("evidence_refs", []):
             if _relative_path(repository_root, str(ref)) is None or not _relative_path(repository_root, str(ref)).exists():
                 violations.append(f"EVIDENCE_REF_UNVERIFIABLE:{ref}")
+        required_generator = _MATERIAL_GENERATOR_BY_REPORT.get(report.name)
+        declared_inputs = {str(entry.get("path", "")).replace("\\", "/") for entry in data.get("source_inputs", []) if isinstance(entry, dict)}
+        if required_generator and required_generator not in declared_inputs:
+            violations.append(f"MATERIAL_GENERATOR_UNDECLARED:{required_generator}")
     return data, violations
 
 

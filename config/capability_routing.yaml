@@ -1,6 +1,7 @@
 capabilities:
   B5_I2_SEMANTIC_AUDITOR:
     skill_id: skill_auditar_suficiencia_semantica_b5_i2
+    entrypoint: src/scripts/run_b5_i2_semantic_audit.py
     skill_version: 1.0.0
     output_schema: b5_i2_semantic_sufficiency_audit
     routing:

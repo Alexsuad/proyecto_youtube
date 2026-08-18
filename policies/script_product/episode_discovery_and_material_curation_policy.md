@@ -5,6 +5,8 @@
 **Sede canónica de B5_PRE:** `plans/plan_001/B5_PRE_SCRIPT_FOUNDATION.md`
 **Estado:** DEFINED (no se implementa en esta misión)
 
+FUNCTIONAL_DIMENSION: material_curation
+
 ---
 
 ## 1. Descubrimiento

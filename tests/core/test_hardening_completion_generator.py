@@ -70,3 +70,32 @@ def test_completion_review_cannot_hide_failed_cross_registry_report(tmp_path):
     statuses = {item["name"]: item["status"] for item in review["dimensions"]}
     assert statuses["CROSS_REGISTRY_INTEGRITY"] == "FAIL"
     assert review["result"] == "HARDENING_COMPLETED_WITH_EVIDENCE_LIMITATION"
+
+
+def test_th05_freshness_requires_and_tracks_material_generator(tmp_path):
+    from src.core.evidence_freshness import check_report_freshness
+
+    generator = tmp_path / "src/core/cross_registry_integrity.py"
+    generator.parent.mkdir(parents=True)
+    generator.write_text("before", encoding="utf-8")
+    report = tmp_path / "TH05_cross_registry_integrity.json"
+    payload = {
+        "schema_version": "1", "plan_id": "PLAN_004", "mission_id": "TH-05",
+        "repository_revision": "a" * 40, "generated_at": "now",
+        "source_inputs": [{"path": "src/core/cross_registry_integrity.py", "sha256": hashlib.sha256(b"before").hexdigest()}],
+        "evidence_refs": ["src/core/cross_registry_integrity.py"], "limitations": [], "result": "PASS",
+    }
+    report.write_text(json.dumps(payload), encoding="utf-8")
+    assert check_report_freshness(tmp_path, report)["status"] == "FRESH"
+    generator.write_text("after", encoding="utf-8")
+    assert check_report_freshness(tmp_path, report)["status"] == "STALE"
+
+
+def test_plan_005_missing_schema_is_unverifiable_not_exception(tmp_path):
+    from src.core.evidence_freshness import check_report_freshness
+
+    report = tmp_path / "PLAN_005_COMPLETION_REVIEW.json"
+    report.write_text(json.dumps({"schema_version": "1"}), encoding="utf-8")
+    result = check_report_freshness(tmp_path, report)
+    assert result["status"] == "UNVERIFIABLE"
+    assert any(item.startswith("SCHEMA_UNAVAILABLE:plan_005_completion_review") for item in result["violations"])

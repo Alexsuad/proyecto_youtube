@@ -25,7 +25,7 @@ Valores configurados en `config/local_settings.json`:
 - `channel_id` = identificador contractual del canal
 - Ejemplo ruta episodio: `<VAULT_ROOT>/<CHANNEL_ID>/episodios/ep_0001_abandono/`
 
-Si no hay Vault configurado, el sistema debe detenerse y pedir configuración.
+La configuración del Vault es necesaria para la ruta legacy que crea episodios con `iniciar_episodio.py`, pero no es una dependencia universal de Gate 0 ni del cierre moderno del MVP. Sin ella, Gate 0 continúa por la ruta portable con `WARN`.
 
 ---
 

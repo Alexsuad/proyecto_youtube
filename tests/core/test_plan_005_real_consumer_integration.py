@@ -22,9 +22,11 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _setup(root: Path, *, allowed_routes: list[str]) -> Path:
+def _setup(root: Path, *, allowed_routes: list[str], role_id: str = "SCRIPT_PRODUCT_AUDITOR") -> Path:
     (root / "config").mkdir(exist_ok=True)
     (root / "output").mkdir(exist_ok=True)
+    import shutil
+    shutil.copy(Path(__file__).resolve().parents[2] / "config/context_resolution_policy.json", root / "config/context_resolution_policy.json")
     (root / "config" / "capability_registry.json").write_text(json.dumps({
         "registry_version": "1.0.0", "authority": "CAPABILITY_FUNCTIONAL_AUTHORITY",
         "routing_consumer": "P5_INTEGRATION", "compatibility_tokens": {
@@ -35,13 +37,17 @@ def _setup(root: Path, *, allowed_routes: list[str]) -> Path:
             "functional_authority_domain": "SCRIPT_PRODUCT", "purpose": "Fixture real consumer",
             "functional_requirements": ["REQ-P5"], "implementation_kind": "DETERMINISTIC",
             "maturity_status": "DEFINED",
+            "assigned_role": [role_id],
+            "prompt_reference": [],
+            "execution_profile_refs": [],
+            "routing_required": False,
         }],
     }), encoding="utf-8")
     (root / "control.md").write_text("CURRENT_MISSION: P5_INTEGRATION\n", encoding="utf-8")
     state_sha = _sha(root / "control.md")
     scope = {
         "mission_id": "P5_INTEGRATION", "capability_ids": ["B5_I2_SEMANTIC_AUDITOR"],
-        "role_ids": ["INDEPENDENT_EDITORIAL_AUDITOR"], "execution_profile_ids": ["ANY"],
+        "role_ids": [role_id], "execution_profile_ids": ["ANY"],
         "execution_interface": "ANY", "allowed_operations": ["EXECUTE_CAPABILITY"],
         "allowed_paths": ["output/"], "allowed_routes": allowed_routes,
         "execution_mode": "ANY", "live_state_sha256": state_sha,
@@ -52,7 +58,7 @@ def _setup(root: Path, *, allowed_routes: list[str]) -> Path:
     auth = root / "mission-authorization.json"
     auth.write_text(json.dumps({"mission_id": "P5_INTEGRATION", "authorization": {
         "live_state_path": "control.md", "live_state_sha256": state_sha, "capability_ids": ["B5_I2_SEMANTIC_AUDITOR"],
-        "role_ids": ["INDEPENDENT_EDITORIAL_AUDITOR"], "execution_profile_ids": ["ANY"], "execution_interface": "ANY",
+        "role_ids": [role_id], "execution_profile_ids": ["ANY"], "execution_interface": "ANY",
         "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output/"], "allowed_routes": allowed_routes,
         "execution_mode": "ANY", "single_use": False,
         "authority_ref": "authority-decision.json", "authority_sha256": _sha(decision),
@@ -83,7 +89,7 @@ def _request(root: Path, *, execution_route: str, execution_profile: str = "mock
         output_artifact_id="B5I2-SSA-1",
         output_artifact_ref="semantic_audit:B5I2-SSA-1",
         episode_id="EP-1",
-        role="INDEPENDENT_EDITORIAL_AUDITOR",
+        role="SCRIPT_PRODUCT_AUDITOR",
         config={
             "repository_root": str(root),
             "mission_authorization_path": "mission-authorization.json",

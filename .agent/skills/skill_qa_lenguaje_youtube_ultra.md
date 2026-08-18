@@ -15,9 +15,9 @@ Además requiere el argumento `--ep_path` con la ruta al episodio.
   - `04_analisis_patrones.md`
   - `05_sintesis_tesis.md`
 - **POST-GUION audita:**
-  - `06_guion_longform.md` (Hook, guion general, CTA)
-  - `09_packaging.md` (Títulos y Miniatura)
-  - `10_seo.md` (Descripción y tags)
+   - `06_guion_longform.md` (Hook, guion general, CTA)
+
+  Packaging final (`09_packaging.md`) y SEO (`10_seo.md`) pertenecen a la Etapa 2 diferida y no son entradas de este gate.
 
 Dependencia: `config/qa_youtube_lenguaje_ultra_seguro.md`
 

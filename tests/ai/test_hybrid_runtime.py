@@ -21,12 +21,13 @@ from src.core.mission_completion_gate import load_mission_contract, run_mission_
 from src.scripts.run_b5_i2_semantic_audit import build_editorial_prompt, execute_b5_i2_audit, import_b5_i2_handoff
 import src.scripts.run_b5_i2_semantic_audit as audit_runner
 from tests.core.test_all_schemas import VALID_FIXTURES
+from tests.core.test_plan_005_real_consumer_integration import _setup as setup_governed_repo
 
 
 CAPABILITY = "B5_I2_SEMANTIC_AUDITOR"
 SKILL_ID = "skill_auditar_suficiencia_semantica_b5_i2"
 SKILL_VERSION = "1.0.0"
-AUDITOR_ROLE = "INDEPENDENT_EDITORIAL_AUDITOR"
+AUDITOR_ROLE = "SCRIPT_PRODUCT_AUDITOR"
 PRODUCER_CASES = [
     ("ANALYSIS_PRODUCER", "analysis", "narrative_human_analysis"),
     ("CURATION_PRODUCER", "curation", "material_curation"),
@@ -105,6 +106,19 @@ def _completion_gate_config(tmp_path: Path) -> dict[str, str]:
         "mission_contract_path": str(contract_path),
         "mission_repo_root": str(repo),
     }
+
+def _governed_request(tmp_path: Path, *, allowed_routes: list[str], **overrides) -> ExecutionRequest:
+    setup_governed_repo(tmp_path, allowed_routes=allowed_routes, role_id=AUDITOR_ROLE)
+    request = _request(tmp_path, **overrides)
+    request.config.update({
+        "repository_root": str(tmp_path),
+        "mission_authorization_path": "mission-authorization.json",
+        "context_policy_path": "config/context_resolution_policy.json",
+    })
+    if isinstance(request.config.get("routing_policy_path"), str):
+        request.config["routing_policy_path"] = Path(request.config["routing_policy_path"])
+    return request
+
 
 def _request(tmp_path: Path, **overrides) -> ExecutionRequest:
     source = tmp_path / "analysis.json"
@@ -236,7 +250,7 @@ def test_api_without_key_blocks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
 
 
 def test_local_unavailable_blocks(tmp_path: Path) -> None:
-    result = execute(_request(tmp_path, provider="ollama", execution_mode="local", model="local", timeout=0.01, config={"base_url": "http://127.0.0.1:1"}))
+    result = execute(_governed_request(tmp_path, allowed_routes=["local_model"], provider="ollama", execution_mode="local", model="local", timeout=0.01, config={"base_url": "http://127.0.0.1:1"}))
     assert result.status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER
 
 
@@ -270,10 +284,11 @@ def test_real_run_is_recorded_in_canonical_provenance(tmp_path: Path, monkeypatc
     monkeypatch.setattr(OpenAICompatibleProvider, "execute", lambda self, request: (_audit(), {"provider_test_double": True}))
     policy = tmp_path / "routing.yaml"
     policy.write_text("capabilities:\n  B5_I2_SEMANTIC_AUDITOR:\n    routing:\n      allow_external_api: true\n", encoding="utf-8")
-    result = execute(_request(tmp_path, provider="openai_compatible", execution_mode="api", model="semantic-test", config={"routing_policy_path": policy}))
+    governed = _governed_request(tmp_path, allowed_routes=["api_model"], provider="openai_compatible", execution_mode="api", model="semantic-test", config={"routing_policy_path": str(policy)})
+    result = execute(governed)
     assert result.is_real_editorial_execution
     registry = tmp_path / "execution_registry.json"
-    append_result(registry, result, execution_mode="REAL", role=AUDITOR_ROLE)
+    append_result(registry, result, execution_mode="REAL", role=AUDITOR_ROLE, request=governed)
     saved = json.loads(registry.read_text(encoding="utf-8"))
     assert saved["runs"][0]["run_id"] == result.run_id
     assert saved["runs"][0]["role"] == AUDITOR_ROLE
@@ -307,6 +322,7 @@ def test_runner_rejects_audit_without_original_b5_i1_evidence(tmp_path: Path) ->
 
 def test_runner_builds_nonempty_editorial_prompt_and_imposes_runtime_provenance(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     artifacts = _four_artifacts(tmp_path)
+    setup_governed_repo(tmp_path, allowed_routes=["api_model"], role_id=AUDITOR_ROLE)
     policy = tmp_path / "routing.yaml"
     policy.write_text("capabilities:\n  B5_I2_SEMANTIC_AUDITOR:\n    routing:\n      allow_external_api: true\n", encoding="utf-8")
     captured: dict[str, object] = {}
@@ -316,7 +332,7 @@ def test_runner_builds_nonempty_editorial_prompt_and_imposes_runtime_provenance(
         payload.update({"auditor_run_id": "FORGED", "provider_or_adapter": "forged", "model_or_evaluator": "forged", "input_manifest_checksum": "b" * 64})
         return payload, {"provider_or_adapter": "openai_compatible", "model_or_evaluator": "actual-semantic-model"}
     monkeypatch.setattr(OpenAICompatibleProvider, "execute", provider)
-    result = execute_b5_i2_audit(artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=tmp_path / "registry.json", episode_id="EP-1", provider="openai_compatible", execution_mode="api", model="ignored", config={"routing_policy_path": policy})
+    result = execute_b5_i2_audit(artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=tmp_path / "registry.json", episode_id="EP-1", provider="openai_compatible", execution_mode="api", model="ignored", config={"routing_policy_path": policy, "repository_root": str(tmp_path), "mission_authorization_path": "mission-authorization.json", "context_policy_path": "config/context_resolution_policy.json"})
     prompt = str(captured["prompt"])
     assert all(token in prompt for token in ("skill_auditar_suficiencia_semantica_b5_i2@1.0.0", "ANALYSIS_SPECIFICITY", "B5_I3_READINESS", "EarlyPackagingHypothesis", "Artefactos reales", "schema estructural"))
     assert result.status is ExecutionStatus.SUCCEEDED
@@ -359,7 +375,7 @@ def test_runtime_persists_real_producer_provenance(tmp_path: Path, role: str, ar
     result = execute(request)
     assert result.status is ExecutionStatus.SUCCEEDED
     registry = tmp_path / f"{artifact_kind}_registry.json"
-    persist_execution_result(registry, result, request, execution_mode="REAL")
+    persist_execution_result(registry, result, request, execution_mode="SYNTHETIC")
     saved = json.loads(registry.read_text(encoding="utf-8"))
     run = saved["runs"][0]
     assert run["episode_id"] == "EP-1"
@@ -390,7 +406,7 @@ def test_incompatible_role_artifact_is_rejected(tmp_path: Path) -> None:
         output_artifact_ref="analysis:A-1",
     )
     with pytest.raises(ValueError, match="incompatible"):
-        append_result(tmp_path / "registry.json", result, execution_mode="REAL", role="INDEPENDENT_EDITORIAL_AUDITOR")
+        append_result(tmp_path / "registry.json", result, execution_mode="SYNTHETIC", role="INDEPENDENT_EDITORIAL_AUDITOR")
 
 
 def test_unknown_role_cannot_produce_b5_i2_analysis(tmp_path: Path) -> None:
@@ -414,7 +430,7 @@ def test_unknown_role_cannot_produce_b5_i2_analysis(tmp_path: Path) -> None:
         output_artifact_ref="analysis:A-1",
     )
     with pytest.raises(ValueError, match="no registrado"):
-        append_result(tmp_path / "registry.json", result, execution_mode="REAL", role="UNKNOWN_ROLE")
+        append_result(tmp_path / "registry.json", result, execution_mode="SYNTHETIC", role="UNKNOWN_ROLE")
 
 
 def test_missing_output_path_is_rejected_for_producer(tmp_path: Path) -> None:
@@ -436,7 +452,7 @@ def test_missing_output_path_is_rejected_for_producer(tmp_path: Path) -> None:
         output_artifact_ref="analysis:A-1",
     )
     with pytest.raises(ValueError, match="output_artifact_path"):
-        append_result(tmp_path / "registry.json", result, execution_mode="REAL", role="ANALYSIS_PRODUCER")
+        append_result(tmp_path / "registry.json", result, execution_mode="SYNTHETIC", role="ANALYSIS_PRODUCER")
 
 
 def test_duplicate_run_id_and_checksum_mismatch_are_rejected(tmp_path: Path) -> None:
@@ -461,14 +477,14 @@ def test_duplicate_run_id_and_checksum_mismatch_are_rejected(tmp_path: Path) -> 
         output_artifact_ref="script_promise:SP-1",
     )
     registry = tmp_path / "registry.json"
-    append_result(registry, result, execution_mode="REAL", role="SCRIPT_PROMISE_PRODUCER")
+    append_result(registry, result, execution_mode="SYNTHETIC", role="SCRIPT_PROMISE_PRODUCER")
     with pytest.raises(ValueError, match="run_id duplicado"):
-        append_result(registry, result, execution_mode="REAL", role="SCRIPT_PROMISE_PRODUCER")
+        append_result(registry, result, execution_mode="SYNTHETIC", role="SCRIPT_PROMISE_PRODUCER")
     bad = copy.deepcopy(result)
     bad.run_id = "RUN-DUP-2"
     bad.output_checksum = "b" * 64
     with pytest.raises(ValueError, match="checksum incorrecto"):
-        append_result(tmp_path / "registry2.json", bad, execution_mode="REAL", role="SCRIPT_PROMISE_PRODUCER")
+        append_result(tmp_path / "registry2.json", bad, execution_mode="SYNTHETIC", role="SCRIPT_PROMISE_PRODUCER")
 
 
 def test_auto_and_api_do_not_authorize_external_use_from_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -477,7 +493,7 @@ def test_auto_and_api_do_not_authorize_external_use_from_environment(tmp_path: P
     request = _request(tmp_path, provider=None, execution_mode="auto", config={"local_available": False})
     assert execute(request).status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
     request = _request(tmp_path, provider="openai_compatible", execution_mode="api")
-    assert execute(request).status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER
+    assert execute(request).status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
 
 
 def test_handoff_import_rejects_foreign_package_and_persists_valid_result(tmp_path: Path) -> None:
@@ -568,6 +584,7 @@ def test_complete_commit_cleans_journal_and_backups(tmp_path: Path) -> None:
 
 def test_provider_may_return_editorial_fields_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     artifacts = _four_artifacts(tmp_path)
+    setup_governed_repo(tmp_path, allowed_routes=["api_model"], role_id=AUDITOR_ROLE)
     policy = tmp_path / "routing.yaml"
     policy.write_text("capabilities:\n  B5_I2_SEMANTIC_AUDITOR:\n    routing:\n      allow_external_api: true\n", encoding="utf-8")
     editorial = {
@@ -588,7 +605,7 @@ def test_provider_may_return_editorial_fields_only(tmp_path: Path, monkeypatch: 
         "decision": "PASS",
     }
     monkeypatch.setattr(OpenAICompatibleProvider, "execute", lambda self, request: (editorial, {"provider_or_adapter": "openai_compatible", "model_or_evaluator": "model-real"}))
-    result = execute_b5_i2_audit(artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=tmp_path / "registry.json", episode_id="EP-1", provider="openai_compatible", execution_mode="api", config={"routing_policy_path": policy})
+    result = execute_b5_i2_audit(artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=tmp_path / "registry.json", episode_id="EP-1", provider="openai_compatible", execution_mode="api", config={"routing_policy_path": policy, "repository_root": str(tmp_path), "mission_authorization_path": "mission-authorization.json", "context_policy_path": "config/context_resolution_policy.json"})
     assert result.status is ExecutionStatus.SUCCEEDED
     assert result.output["auditor_run_id"] == result.run_id
 
@@ -696,14 +713,14 @@ def test_handoff_consume_failure_rolls_back_audit_and_registry(tmp_path: Path, m
 def test_auto_explicit_openai_provider_requires_authorization(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("AI_API_KEY", "present"); monkeypatch.setenv("AI_BASE_URL", "https://provider.invalid")
     result = execute(_request(tmp_path, provider="openai_compatible", execution_mode="auto", config={"local_available": False}))
-    assert result.status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER
+    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
 
 
 def test_deepseek_availability_and_response_errors_are_classified_explicitly(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DEEPSEEK_API_KEY", "secret")
     policy = tmp_path / "routing.yaml"
     policy.write_text("capabilities:\n  B5_I2_SEMANTIC_AUDITOR:\n    routing:\n      allow_external_api: true\n", encoding="utf-8")
-    request = _request(tmp_path, provider="deepseek", execution_mode="deepseek", model="deepseek-chat", config={"routing_policy_path": policy})
+    request = _governed_request(tmp_path, allowed_routes=["api_model"], provider="deepseek", execution_mode="deepseek", model="deepseek-chat", config={"routing_policy_path": str(policy)})
     monkeypatch.setattr(DeepSeekProvider, "execute", lambda self, req: (_ for _ in ()).throw(RuntimeError("PROVIDER_UNAVAILABLE")))
     result = execute(request)
     assert result.status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER

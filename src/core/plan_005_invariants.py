@@ -144,12 +144,16 @@ def _skill_applied_requires_resolved_source(obs: dict[str, Any]) -> list[str]:
 
 def _recovery_unverifiable_does_not_resume(obs: dict[str, Any]) -> list[str]:
     topology = str(obs.get("resume_topology") or "")
-    status = str(obs.get("recovery_status") or "FRESH").upper()
+    status = str(obs.get("recovery_status") or "").upper()
     blocked_topologies = {"BLOCKED_REPLAY_RESUME_UNSUPPORTED", "NEW_AUTHORIZATION_REQUIRED", "BLOCKED_AMBIGUOUS_RESERVATION", "BLOCKED"}
     if topology in blocked_topologies:
         return []
     if topology == "SAME_RESERVATION_LEASE":
-        return ["RECOVERY_SAME_RESERVATION_LEASE_UNSUPPORTED"]
+        if not status:
+            return ["RECOVERY_RESUMED_WITHOUT_STATUS"]
+        if status in {"STALE", "UNVERIFIABLE", "INVALID", "AMBIGUOUS"}:
+            return ["RECOVERY_RESUMED_UNVERIFIABLE"]
+        return []
     if status in {"STALE", "UNVERIFIABLE", "INVALID", "AMBIGUOUS"}:
         return ["RECOVERY_UNVERIFIABLE_WITHOUT_BLOCKED_TOPOLOGY"]
     if topology not in {""}:

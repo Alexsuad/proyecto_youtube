@@ -49,8 +49,8 @@ def main() -> int:
     payload=result.output or {"status":result.status.value,"error":result.error,"role_id":args.role,"execution_profile":args.profile}
     output_path.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); result.output_checksum=file_checksum(output_path)
     if result.status.value=="SUCCEEDED":
-        persist_execution_result(Path(args.execution_registry_path),result,request,execution_mode="REAL"); print(json.dumps({"status":"SUCCESS","run_id":result.run_id,"output":str(output_path)},ensure_ascii=False)); return 0
-    persist_execution_attempt(Path(args.execution_registry_path), result, request, execution_mode="REAL")
+        persist_execution_result(Path(args.execution_registry_path),result,request,execution_mode="SYNTHETIC"); print(json.dumps({"status":"SUCCESS","run_id":result.run_id,"output":str(output_path)},ensure_ascii=False)); return 0
+    persist_execution_attempt(Path(args.execution_registry_path), result, request, execution_mode="SYNTHETIC")
     print(json.dumps({"status":"FAILED","error":result.error,"output":str(output_path)},ensure_ascii=False)); return 1
 
 if __name__=="__main__": raise SystemExit(main())

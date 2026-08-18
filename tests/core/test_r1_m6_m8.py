@@ -1,12 +1,14 @@
 """Adversarial contract tests for R1-M6 claims and R1-M8 editorial memory."""
 
 from copy import deepcopy
+import hashlib
 from pathlib import Path
 import unittest
 
 from src.core.contract_validation import (
     validate_claims_ledger,
     validate_editorial_semantic_memory,
+    _source_dimension_universe,
     validate_against_schema,
     validate_research_stop_decision,
 )
@@ -34,8 +36,17 @@ def _memory(**overrides):
         "checkpoint_integration": {"PROPOSAL": "CONNECTED", "PRE_FINAL_CURATION": "CONNECTED", "PRE_THESIS_OR_ARCHITECTURE": "CONNECTED", "OPENING_UNIT_REVIEW": "PREPARED_DEFERRED_UNTIL_CANONICAL_OPENING_UNIT_REVIEW", "PRE_FINAL_SCRIPT": "PREPARED_DEFERRED_UNTIL_CANONICAL_FINAL_SCRIPT_APPROVAL"},
         "episode_entries": [{"episode_id": "EP-1", "artifact_refs": [ref], "dimensions": dimensions}, {"episode_id": "EP-2", "artifact_refs": [{**ref, "artifact_ref": "episode:EP-2"}], "dimensions": dimensions}],
         "comparison_decisions": [{"decision_id": "CMP-1", "candidate_episode_ref": {**ref, "artifact_ref": "episode:EP-2"}, "compared_episode_refs": [ref], "evidence_refs": ["thesis:T-1"], "comparison_dimensions": ["thesis", "works"], "decision": "RELATED_BUT_DISTINCT", "recommended_action": "NO_ACTION", "justification": "La tesis difiere aunque comparte tema.", "invalidators": ["THESIS_CHANGED"]}],
+        "functional_dimension_sources": {"CHANNEL_INTELLIGENCE": {"sources": [{"artifact_ref": "policies/channel_intelligence/topic_belonging_policy.md", "version": "1.0.0", "checksum": "a" * 64}], "dimensions": ["identity_alignment"]}, "SCRIPT_PRODUCT": {"sources": [{"artifact_ref": "policies/script_product/main_episode_format_policy.md", "version": "1.0.0", "checksum": "b" * 64}], "dimensions": ["CANDIDATE_WORKS"]}, "YOUTUBE_ADAPTATION": {"sources": [{"artifact_ref": "config/youtube_adaptation_r3_traceability.json", "version": "1.0.0", "checksum": "c" * 64}], "dimensions": ["YT_VISIBLE_PROMISE"]}}, "semantic_assurance": {"status": "PASS", "evaluated_dimensions": {"CHANNEL_INTELLIGENCE": [{"dimension": "identity_alignment", "status": "EVALUATED", "evidence_refs": ["ci:1"]}], "SCRIPT_PRODUCT": [{"dimension": "CANDIDATE_WORKS", "status": "EVALUATED", "evidence_refs": ["sp:1"]}], "YOUTUBE_ADAPTATION": [{"dimension": "YT_VISIBLE_PROMISE", "status": "EVALUATED", "evidence_refs": ["ya:1"]}]}},
         "created_at": "2026-08-13T10:00:00Z",
     }
+    for owner, source in (("CHANNEL_INTELLIGENCE", "policies/channel_intelligence/topic_belonging_policy.md"), ("SCRIPT_PRODUCT", "policies/script_product/main_episode_format_policy.md"), ("YOUTUBE_ADAPTATION", "config/youtube_adaptation_r3_traceability.json")):
+        value["functional_dimension_sources"][owner]["sources"][0]["checksum"] = hashlib.sha256((Path(__file__).resolve().parents[2] / source).read_bytes()).hexdigest()
+    value["functional_dimension_sources"]["SCRIPT_PRODUCT"]["sources"].append({"artifact_ref": "policies/script_product/episode_discovery_and_material_curation_policy.md", "version": "1.0.0", "checksum": hashlib.sha256((Path(__file__).resolve().parents[2] / "policies/script_product/episode_discovery_and_material_curation_policy.md").read_bytes()).hexdigest()})
+    for owner, binding in value["functional_dimension_sources"].items():
+        paths = [Path(__file__).resolve().parents[2] / source["artifact_ref"] for source in binding["sources"]]
+        dimensions = sorted(_source_dimension_universe(owner, paths))
+        binding["dimensions"] = ["producer-declared-value-is-ignored"]
+        value["semantic_assurance"]["evaluated_dimensions"][owner] = [{"dimension": dimension, "status": "EVALUATED", "evidence_refs": [f"{owner}:evidence"]} for dimension in dimensions]
     value.update(overrides)
     return value
 
@@ -111,6 +122,37 @@ class TestR1M6ClaimsAndSufficiency(unittest.TestCase):
         decision = _decision(unresolved_material_contradiction_refs=["CONTRADICTION-1"])
         self.assertTrue(any("contradicción material abierta" in item for item in validate_research_stop_decision(decision)))
 
+
+class TestPlan007FamilyCSemanticAssurance(unittest.TestCase):
+    def test_invented_dimension_is_rejected(self):
+        memory = _memory()
+        memory["semantic_assurance"]["evaluated_dimensions"]["YOUTUBE_ADAPTATION"].append({"dimension": "INVENTED", "status": "EVALUATED", "evidence_refs": ["x"]})
+        self.assertIn("SEMANTIC_DIMENSION_NOT_CANONICAL:YOUTUBE_ADAPTATION:INVENTED", validate_editorial_semantic_memory(memory))
+
+    def test_canonical_dimension_omission_is_rejected(self):
+        memory = _memory()
+        memory["semantic_assurance"]["evaluated_dimensions"]["YOUTUBE_ADAPTATION"].pop()
+        self.assertTrue(any("SEMANTIC_DIMENSION_NOT_EVALUATED:YOUTUBE_ADAPTATION" in item for item in validate_editorial_semantic_memory(memory)))
+
+    def test_canonical_evaluated_dimension_is_accepted(self):
+        self.assertEqual(validate_editorial_semantic_memory(_memory()), [])
+
+    def test_noncanonical_source_is_rejected(self):
+        memory = _memory()
+        memory["functional_dimension_sources"]["YOUTUBE_ADAPTATION"]["sources"][0]["artifact_ref"] = "policies/script_product/main_episode_format_policy.md"
+        violations = validate_editorial_semantic_memory(memory)
+        self.assertTrue(any("SEMANTIC_SOURCE_NON_CANONICAL:YOUTUBE_ADAPTATION" in item for item in violations))
+
+    def test_inconsistent_published_source_version_is_rejected(self):
+        memory = _memory()
+        memory["functional_dimension_sources"]["YOUTUBE_ADAPTATION"]["sources"][0]["version"] = "9.9.9"
+        violations = validate_editorial_semantic_memory(memory)
+        self.assertTrue(any("SEMANTIC_SOURCE_VERSION_MISMATCH:YOUTUBE_ADAPTATION" in item for item in violations))
+    def test_inconsistent_source_checksum_is_rejected(self):
+        memory = _memory()
+        memory["functional_dimension_sources"]["YOUTUBE_ADAPTATION"]["sources"][0]["checksum"] = "0" * 64
+        violations = validate_editorial_semantic_memory(memory)
+        self.assertTrue(any("SEMANTIC_SOURCE_CHECKSUM_MISMATCH:YOUTUBE_ADAPTATION" in item for item in violations))
 
 class TestR1M8EditorialSemanticMemory(unittest.TestCase):
     def test_similarity_requires_multiple_editorial_dimensions(self):

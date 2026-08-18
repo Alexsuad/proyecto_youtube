@@ -2,6 +2,8 @@
 Pruebas Unitarias para la Validación Determinista de Contratos (contract_validation.py)
 """
 
+import hashlib
+import json
 import unittest
 from copy import deepcopy
 from src.core.contract_validation import (
@@ -290,23 +292,27 @@ class TestContractValidation(unittest.TestCase):
         self.assertTrue(any("claim no declarada" in v for v in violations))
 
     def _valid_work_dossier(self):
+        analysis = self._valid_narrative_analyses()[0]
+        ledger = self._valid_claims_ledger()
+        analysis_checksum = hashlib.sha256(json.dumps(analysis, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+        ledger_checksum = hashlib.sha256(json.dumps(ledger, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
         return {
             "dossier_id": "WRD-001", "dossier_version": "1.0.0", "episode_id": "EP-1", "research_id": "R-1", "evidence_report_id": "E-1",
             "work": {"material_id": "M-1", "title": "Obra", "creator": "Autor", "consulted_representations": [{"representation_kind": "ORIGINAL_WORK", "edition_or_version": "Edición 1", "consulted_locator": "Capítulo 1"}]},
-            "dossier_stage": "RESEARCH_IN_PROGRESS", "analysis_references": [{"analysis_id": "A-1", "material_id": "M-1"}],
+            "dossier_stage": "RESEARCH_IN_PROGRESS", "analysis_references": [{"analysis_id": "A-1", "material_id": "M-1", "artifact_version": "1.0.0", "artifact_checksum": analysis_checksum}],
             "question_and_thesis_relation": {"central_question_ref": "EP-1.pregunta_central", "provisional_thesis_ref": "TP-1", "demonstrates_analysis_ref": "A-1", "does_not_establish_analysis_ref": "A-1", "main_interpretation_analysis_ref": "A-1", "rival_interpretation_analysis_refs": ["A-1"]},
-            "claim_dispositions": {"claims_ledger_id": "CL-001", "authority_status": "REPRESENTATION_ONLY_IR4_PENDING", "candidate_allowed_claim_ids": ["CLAIM-001"], "candidate_limited_claim_ids": [], "candidate_blocked_claim_ids": []},
+            "claim_dispositions": {"claims_ledger_id": "CL-001", "claims_ledger_version": "1.0.0", "claims_ledger_checksum": ledger_checksum, "authority_status": "REPRESENTATION_ONLY_IR4_PENDING", "candidate_allowed_claim_ids": ["CLAIM-001"], "candidate_limited_claim_ids": [], "candidate_blocked_claim_ids": []},
             "overinterpretation_risk": {"level": "MEDIUM", "rationale": "Riesgo contenido."}, "candidate_editorial_function_analysis_ref": "A-1", "locators": [{"analysis_id": "A-1", "locator": "Escena 3"}],
             "pending_items": [], "confidence": "HIGH", "work_use_sufficiency": {"intended_use": "NARRATIVE_MATERIAL", "status": "IR7_FIDELITY_AUDIT_REQUIRED"},
             "independent_fidelity_audit": {"audit_reference": None, "dependency": "DEFERRED_TO_R1_M10_R1_M11"}, "created_at": "2026-08-07T10:00:00Z"
         }
 
     def _valid_claims_ledger(self):
-        return {"ledger_id": "CL-001", "script_version": "1.0.0", "claims": [{"claim_id": "CLAIM-001", "script_location": "B1", "claim_text": "Claim", "claim_type": "FACT", "source_refs": ["S1"], "verification_status": "VERIFIED"}]}
+        return {"ledger_id": "CL-001", "script_version": "1.0.0", "claims": [{"claim_id": "CLAIM-001", "script_location": "B1", "claim_text": "Claim", "claim_type": "FACT", "source_refs": ["S1"], "verification_status": "VERIFIED", "materiality": {"is_material": True, "activation_criteria": ["THESIS_DEPENDENCY"], "non_trigger_examples": ["Ejemplo"], "invalidator_codes": ["CLAIM_OR_SCOPE_CHANGED"], "return_route_code": "AUTHORIZE_INTENDED_USE_ONLY", "decision_ref": "DEC-1"}}]}
 
     def _valid_narrative_analyses(self):
         return [{
-            "analysis_id": "A-1", "episode_id": "EP-1", "research_id": "R-1", "evidence_report_id": "E-1", "semantic_audit_id": "S-1", "material_id": "M-1", "material_checksum": "a" * 64,
+            "analysis_id": "A-1", "artifact_version": "1.0.0", "episode_id": "EP-1", "research_id": "R-1", "evidence_report_id": "E-1", "semantic_audit_id": "S-1", "material_id": "M-1", "material_checksum": "a" * 64,
             "inherited_constraint_ids": [], "findings": [{"finding_id": "F-1", "claim_type": "INTERPRETATION", "statement": "Lectura.", "narrative_evidence_refs": ["NE-1"], "source_refs": ["S-1"], "human_dimension": "BELIEF", "causal_relation": "Relación.", "confidence": "HIGH"}],
             "rival_interpretations": ["Rival."], "rival_interpretation_status": "PRESENT", "rival_interpretation_justification": None, "limitations": ["Límite."], "limits_status": "PRESENT", "limits_justification": None,
             "demonstrates": "Demuestra.", "does_not_establish": "No demuestra.", "material_function_candidate": "Complicación", "specific_scene_or_passage": "Escena 3", "observable_decision_or_action": "Decisión.", "conflict": "Conflicto.", "consequence": "Consecuencia.", "main_interpretation": "Interpretación.", "supporting_evidence": ["F-1"], "interpretive_limit": "Límite.", "relationship_to_provisional_thesis": "Relación.", "potential_contribution_to_progression": "Aporta.", "created_at": "2026-08-07T10:00:00Z"
@@ -319,6 +325,21 @@ class TestContractValidation(unittest.TestCase):
         dossier = self._valid_work_dossier()
         del dossier["dossier_version"]
         self.assertTrue(any("dossier_version" in violation for violation in validate_work_research_dossier(dossier, self._valid_claims_ledger(), self._valid_narrative_analyses())))
+
+    def test_work_research_dossier_rejects_analysis_checksum_mismatch(self):
+        dossier = self._valid_work_dossier()
+        dossier["analysis_references"][0]["artifact_checksum"] = "0" * 64
+        assert any("checksum no coincide" in violation for violation in validate_work_research_dossier(dossier, self._valid_claims_ledger(), self._valid_narrative_analyses()))
+
+    def test_work_research_dossier_rejects_analysis_version_mismatch(self):
+        dossier = self._valid_work_dossier()
+        dossier["analysis_references"][0]["artifact_version"] = "9.9.9"
+        assert any("version no coincide" in violation for violation in validate_work_research_dossier(dossier, self._valid_claims_ledger(), self._valid_narrative_analyses()))
+
+    def test_work_research_dossier_rejects_claims_ledger_checksum_mismatch(self):
+        dossier = self._valid_work_dossier()
+        dossier["claim_dispositions"]["claims_ledger_checksum"] = "0" * 64
+        assert any("checksum de ClaimsLedger" in violation for violation in validate_work_research_dossier(dossier, self._valid_claims_ledger(), self._valid_narrative_analyses()))
 
     def test_work_research_dossier_rejects_unknown_claim(self):
         dossier = self._valid_work_dossier()

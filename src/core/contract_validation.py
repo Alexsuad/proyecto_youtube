@@ -5,6 +5,10 @@ Proyecto YouTube — Sistema Agéntico Editorial
 
 import os
 import json
+import hashlib
+import re
+import unicodedata
+from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 import jsonschema
@@ -935,11 +939,18 @@ def validate_claims_ledger(data: Dict[str, Any]) -> List[str]:
 
     # 2. Validación de negocio
     if "claims" in data and isinstance(data["claims"], list):
+        claim_ids = [claim.get("claim_id") for claim in data["claims"] if isinstance(claim, dict)]
+        if len(claim_ids) != len(set(claim_ids)):
+            violations.append("ClaimsLedger no puede duplicar claim_id.")
         for idx, claim in enumerate(data["claims"]):
             if not isinstance(claim, dict):
                 violations.append(f"Entrada claim en indice {idx} debe ser un diccionario.")
                 continue
             
+            if not isinstance(claim.get("claim_id"), str) or not claim.get("claim_id", "").strip():
+                violations.append(f"Claim en indice {idx} requiere claim_id no vacío.")
+            if not isinstance(claim.get("claim_text"), str) or not claim.get("claim_text", "").strip():
+                violations.append(f"Claim en indice {idx} requiere claim_text no vacío.")
             # Verificar que source_refs no este vacio
             if "source_refs" in claim and isinstance(claim["source_refs"], list) and len(claim["source_refs"]) == 0:
                 violations.append(f"Claim '{claim.get('claim_id')}' rechazada: No se permiten claims sin fuente ni estado de verificacion.")
@@ -1057,9 +1068,121 @@ def validate_research_stop_decision(
     return violations
 
 
+
+_CANONICAL_FUNCTIONAL_SOURCES = {
+    "CHANNEL_INTELLIGENCE": {"policies/channel_intelligence/topic_belonging_policy.md"},
+    "SCRIPT_PRODUCT": {
+        "policies/script_product/main_episode_format_policy.md",
+        "policies/script_product/episode_discovery_and_material_curation_policy.md",
+    },
+    "YOUTUBE_ADAPTATION": {"config/youtube_adaptation_r3_traceability.json"},
+}
+
+
+def _source_dimension_universe(owner: str, source_paths: List[Path]) -> Optional[set]:
+    """Derive explicit source dimensions; unavailable universes fail closed.
+
+    CI and SP are Markdown without independently versioned ID catalogs: CI
+    uses its explicit evaluation bullets and SP its uppercase contract labels.
+    Markdown versions are therefore presence-checked only; JSON registry
+    versions are compared exactly.
+    """
+    if owner == "YOUTUBE_ADAPTATION":
+        capabilities = set()
+        for source_path in source_paths:
+            payload = json.loads(source_path.read_text(encoding="utf-8"))
+            capabilities.update(item.get("capability_id") for item in payload.get("capabilities", []) if isinstance(item, dict) and isinstance(item.get("capability_id"), str))
+        return capabilities or None
+    if owner == "SCRIPT_PRODUCT":
+        dimensions = set()
+        for source_path in source_paths:
+            for line in source_path.read_text(encoding="utf-8").splitlines():
+                marker = "FUNCTIONAL_DIMENSION:"
+                if line.strip().startswith(marker):
+                    value = line.strip()[len(marker):].strip()
+                    if value:
+                        dimensions.add(value)
+        return dimensions or None
+    if owner == "CHANNEL_INTELLIGENCE":
+        source_text = source_paths[0].read_text(encoding="utf-8")
+        section = source_text.split("## 2. Criterio funcional completo de evaluación", 1)
+        if len(section) != 2:
+            return None
+        dimensions = set()
+        for line in section[1].split("## ", 1)[0].splitlines():
+            match = re.match(r"\s*-\s+(.+?)\.?\s*$", line)
+            if match:
+                value = unicodedata.normalize("NFKD", match.group(1))
+                value = "".join(char for char in value if not unicodedata.combining(char))
+                value = re.sub(r"[^A-Za-z0-9]+", "_", value).strip("_").lower()
+                if value:
+                    dimensions.add(value)
+        return dimensions or None
+    return None
+
+def validate_semantic_assurance(data: Dict[str, Any]) -> List[str]:
+    """Require source-derived coverage; producer-declared dimensions are not authority."""
+    violations: List[str] = []
+    bindings = data.get("functional_dimension_sources", {})
+    assurance = data.get("semantic_assurance", {})
+    evaluated = assurance.get("evaluated_dimensions", {})
+    for owner, canonical_refs in _CANONICAL_FUNCTIONAL_SOURCES.items():
+        binding = bindings.get(owner)
+        if not isinstance(binding, dict):
+            violations.append(f"SEMANTIC_SOURCE_MISSING:{owner}")
+            continue
+        bound_refs = set()
+        source_paths = []
+        for source in binding.get("sources", []):
+            artifact_ref = source.get("artifact_ref") if isinstance(source, dict) else None
+            if artifact_ref not in canonical_refs:
+                violations.append(f"SEMANTIC_SOURCE_NON_CANONICAL:{owner}:{artifact_ref}")
+                continue
+            bound_refs.add(artifact_ref)
+            if not source.get("version"):
+                violations.append(f"SEMANTIC_SOURCE_VERSION_MISSING:{owner}:{artifact_ref}")
+            source_path = Path(__file__).resolve().parents[2] / artifact_ref
+            source_paths.append(source_path)
+            if source_path.suffix == ".json" and source_path.is_file():
+                try:
+                    canonical_version = json.loads(source_path.read_text(encoding="utf-8")).get("registry_version")
+                except (OSError, ValueError, json.JSONDecodeError):
+                    canonical_version = None
+                if canonical_version and source.get("version") != canonical_version:
+                    violations.append(f"SEMANTIC_SOURCE_VERSION_MISMATCH:{owner}:{artifact_ref}")
+            declared_checksum = str(source.get("checksum") or "").lower()
+            if not source_path.is_file() or hashlib.sha256(source_path.read_bytes()).hexdigest() != declared_checksum:
+                violations.append(f"SEMANTIC_SOURCE_CHECKSUM_MISMATCH:{owner}:{artifact_ref}")
+        for artifact_ref in sorted(canonical_refs - bound_refs):
+            violations.append(f"SEMANTIC_SOURCE_INCOMPLETE:{owner}:{artifact_ref}")
+        expected = None
+        if canonical_refs == bound_refs and all(path.is_file() for path in source_paths):
+            try:
+                expected = _source_dimension_universe(owner, source_paths)
+            except (OSError, ValueError, json.JSONDecodeError):
+                expected = None
+        if not expected:
+            violations.append(f"SEMANTIC_DIMENSION_UNIVERSE_UNAVAILABLE:{owner}")
+            continue
+        actual_items = evaluated.get(owner, []) if isinstance(evaluated, dict) else []
+        actual = {item.get("dimension") for item in actual_items if isinstance(item, dict)}
+        for dimension in sorted(actual - expected):
+            violations.append(f"SEMANTIC_DIMENSION_NOT_CANONICAL:{owner}:{dimension}")
+        for dimension in sorted(expected - actual):
+            violations.append(f"SEMANTIC_DIMENSION_NOT_EVALUATED:{owner}:{dimension}")
+        for item in actual_items:
+            if isinstance(item, dict) and item.get("dimension") in expected:
+                if item.get("status") != "EVALUATED":
+                    violations.append(f"SEMANTIC_DIMENSION_INCOMPLETE:{owner}:{item.get('dimension')}")
+                if item.get("status") == "EVALUATED" and not item.get("evidence_refs"):
+                    violations.append(f"SEMANTIC_DIMENSION_WITHOUT_EVIDENCE:{owner}:{item.get('dimension')}")
+    if assurance.get("status") == "PASS" and violations:
+        violations.append("SEMANTIC_PASS_REQUIRES_COMPLETE_CANONICAL_COVERAGE")
+    return violations
 def validate_editorial_semantic_memory(data: Dict[str, Any]) -> List[str]:
     """Valida que la memoria sea evidencia gobernada y no autoridad editorial autónoma."""
     violations = validate_against_schema(data, "editorial_semantic_memory")
+    violations.extend(validate_semantic_assurance(data))
     points = set(data.get("consultation_points", []))
     required_points = {"PROPOSAL", "PRE_FINAL_CURATION", "PRE_THESIS_OR_ARCHITECTURE", "OPENING_UNIT_REVIEW", "PRE_FINAL_SCRIPT"}
     if not required_points.issubset(points):
@@ -1230,18 +1353,34 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
     return violations
 
 
+def _canonical_artifact_checksum(value: Dict[str, Any]) -> str:
+    payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def validate_work_research_dossier(
     data: Dict[str, Any],
     claims_ledger: Optional[Dict[str, Any]] = None,
     narrative_analyses: Optional[List[Dict[str, Any]]] = None,
 ) -> List[str]:
-    """Valida referencias internas del WorkResearchDossier sin duplicar sus contratos fuente."""
+    """Valida el dossier por madurez y resuelve referencias contra artefactos canonicos."""
     violations = validate_against_schema(data, "work_research_dossier")
-
-    if claims_ledger is None or narrative_analyses is None:
-        violations.append("WorkResearchDossier requiere ClaimsLedger y NarrativeHumanAnalysis para validar referencias canónicas.")
+    stage = data.get("dossier_stage")
+    mature_fields = {
+        "analysis_references", "question_and_thesis_relation", "claim_dispositions",
+        "overinterpretation_risk", "candidate_editorial_function_analysis_ref", "locators",
+        "work_use_sufficiency", "research_stop_decision_ref", "independent_fidelity_audit",
+    }
+    if stage == "IDENTIFIED":
+        for field in sorted(mature_fields.intersection(data)):
+            violations.append(f"WorkResearchDossier IDENTIFIED no puede declarar artefacto maduro: '{field}'.")
         return violations
-
+    mature_declared = bool(mature_fields.intersection(data))
+    if claims_ledger is None or narrative_analyses is None:
+        if stage == "RESEARCH_REVIEW_PENDING" or (stage == "RESEARCH_IN_PROGRESS" and mature_declared):
+            violations.append("WorkResearchDossier requiere artefactos canonicos para resolver referencias en la fase declarada.")
+        return violations
+    violations.extend(validate_against_schema(claims_ledger, "claims_ledger"))
     analyses_by_id = {
         analysis.get("analysis_id"): analysis for analysis in narrative_analyses
         if isinstance(analysis, dict) and analysis.get("analysis_id")
@@ -1251,6 +1390,13 @@ def validate_work_research_dossier(
         entry.get("analysis_id") for entry in data.get("analysis_references", [])
         if isinstance(entry, dict) and entry.get("analysis_id")
     }
+    if stage == "RESEARCH_REVIEW_PENDING":
+        for reference in data.get("analysis_references", []):
+            if not reference.get("artifact_version") or not reference.get("artifact_checksum"):
+                violations.append("WorkResearchDossier RESEARCH_REVIEW_PENDING requiere version y checksum de cada NarrativeHumanAnalysis.")
+        dispositions = data.get("claim_dispositions") if isinstance(data.get("claim_dispositions"), dict) else {}
+        if not dispositions.get("claims_ledger_version") or not dispositions.get("claims_ledger_checksum"):
+            violations.append("WorkResearchDossier RESEARCH_REVIEW_PENDING requiere version y checksum del ClaimsLedger.")
     for reference in data.get("analysis_references", []):
         if not isinstance(reference, dict):
             continue
@@ -1259,6 +1405,10 @@ def validate_work_research_dossier(
         if analysis is None:
             violations.append(f"WorkResearchDossier.analysis_references referencia análisis inexistente: '{analysis_id}'.")
             continue
+        if reference.get("artifact_version") is not None and reference.get("artifact_version") != analysis.get("artifact_version"):
+            violations.append(f"WorkResearchDossier.analysis_references version no coincide para '{analysis_id}'.")
+        if reference.get("artifact_checksum") is not None and reference.get("artifact_checksum") != _canonical_artifact_checksum(analysis):
+            violations.append(f"WorkResearchDossier.analysis_references checksum no coincide para '{analysis_id}'.")
         for field in ("episode_id", "research_id", "evidence_report_id"):
             if data.get(field) != analysis.get(field):
                 violations.append(f"WorkResearchDossier y análisis '{analysis_id}' difieren en '{field}'.")
@@ -1307,6 +1457,10 @@ def validate_work_research_dossier(
 
     if dispositions.get("claims_ledger_id") != claims_ledger.get("ledger_id"):
         violations.append("WorkResearchDossier referencia un claims_ledger_id distinto del ledger suministrado.")
+    if dispositions.get("claims_ledger_version") is not None and dispositions.get("claims_ledger_version") != claims_ledger.get("script_version"):
+        violations.append("WorkResearchDossier referencia una version de ClaimsLedger distinta del ledger suministrado.")
+    if dispositions.get("claims_ledger_checksum") is not None and dispositions.get("claims_ledger_checksum") != _canonical_artifact_checksum(claims_ledger):
+        violations.append("WorkResearchDossier referencia un checksum de ClaimsLedger distinto del ledger suministrado.")
     known_claim_ids = {
         claim.get("claim_id") for claim in claims_ledger.get("claims", [])
         if isinstance(claim, dict) and claim.get("claim_id")
@@ -1316,6 +1470,7 @@ def validate_work_research_dossier(
             violations.append(f"WorkResearchDossier referencia claim inexistente en ledger: '{claim_id}'.")
 
     return violations
+
 
 
 def validate_work_lifecycle(

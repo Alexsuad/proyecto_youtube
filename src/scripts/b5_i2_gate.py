@@ -11,6 +11,7 @@ from typing import Any
 from src.ai.manifest import canonical_json, manifest_checksum as _shared_manifest_checksum
 
 from src.core.contract_validation import validate_against_schema, validate_research_pack, validate_research_stop_decision
+from src.scripts.channel_intelligence import evaluate_topic_belonging_gate, validate_assessment, validate_decision, validate_topic_input
 from src.core.gate_result import GateResult
 from src.core.gate_runtime import run_gate
 from src.core.input_validation import InputRequirement, validate_inputs
@@ -285,11 +286,10 @@ def _append_functional_defects(violations: list[str], analyses: list[dict[str, A
             violations.append(f"SUMMARY_INSTEAD_OF_ANALYSIS: el análisis {analysis.get('analysis_id')} parece resumir en lugar de interpretar")
         if _looks_generic(analysis.get("main_interpretation")) and _looks_generic(analysis.get("causal_relation")):
             violations.append(f"FALSE_DEPTH: el análisis {analysis.get('analysis_id')} usa abstracción sin mecanismo verificable")
-    selected_materials = curation.get("selected_materials", [])
     selected_functions = [item.get("contribution") for item in curation.get("function_of_each_selected_material", []) if isinstance(item, dict)]
     if len(selected_functions) != len(set(selected_functions)):
         violations.append("REDUNDANT_CURATION: hay funciones editoriales repetidas entre materiales seleccionados")
-    if len(curation.get("progression_map", [])) < len(selected_materials):
+    if len(curation.get("progression_map", [])) < len(curation.get("selected_material_ids", [])):
         violations.append("NO_ARGUMENTATIVE_PROGRESSION: la progresión argumentativa no cubre todos los materiales seleccionados")
     if not curation.get("contrast_map"):
         violations.append("NO_ARGUMENTATIVE_PROGRESSION: falta contrast_map en la curación final")
@@ -352,6 +352,11 @@ def evaluate(
     thesis: Path, script_promise: Path, b5_i2_audit: Path, execution_registry: Path, artifact_id: str,
     aggregate_decisions: list[dict[str, Any]] | None = None,
     require_research_closure: bool = False,
+    topic_belonging_decision: dict[str, Any] | None = None,
+    work_lifecycle: dict[str, Any] | None = None,
+    topic_belonging_input: dict[str, Any] | None = None,
+    topic_belonging_assessment: dict[str, Any] | None = None,
+    research_dossier: dict[str, Any] | None = None,
 ) -> GateResult:
     analysis_paths = _as_paths(analysis)
     paths = list(b5_i1.values()) + analysis_paths + [curation, thesis, script_promise, b5_i2_audit, execution_registry]
@@ -387,6 +392,23 @@ def evaluate(
         "execution_registry": "execution_provenance_registry",
     }.items():
         violations.extend(f"{name}: {item}" for item in validate_against_schema(data[name], schema))
+    if topic_belonging_decision is None and data["brief"].get("topic_belonging_decision_ref"):
+        violations.append("brief declara TopicBelongingDecision pero el gate no recibio la decision canonica para resolver su lineage.")
+    if topic_belonging_decision is not None:
+        if topic_belonging_input is None or topic_belonging_assessment is None:
+            violations.append("TopicBelongingDecision requiere input y assessment canonicos para validar lineage independiente.")
+        else:
+            violations.extend(f"topic_input: {item}" for item in validate_topic_input(topic_belonging_input))
+            violations.extend(f"topic_assessment: {item}" for item in validate_assessment(topic_belonging_assessment, topic_belonging_input))
+            violations.extend(f"topic_decision: {item}" for item in validate_decision(topic_belonging_decision, topic_belonging_assessment))
+            topic_gate = evaluate_topic_belonging_gate(topic_belonging_decision, topic_belonging_assessment, topic_belonging_input, work_lifecycle=work_lifecycle, research_dossier=research_dossier)
+            violations.extend(f"topic_belonging: {item}" for item in topic_gate.get("violations", []))
+        expected_ref = str(topic_belonging_decision.get("decision_id") or "")
+        expected_checksum = str(topic_belonging_decision.get("provenance", {}).get("output_checksum") or "")
+        if data["brief"].get("topic_belonging_decision_ref") != expected_ref:
+            violations.append("brief no conserva el TopicBelongingDecision que lo habilit?")
+        if data["brief"].get("topic_belonging_decision_checksum") != expected_checksum:
+            violations.append("brief no conserva el checksum del TopicBelongingDecision")
     for index, item in enumerate(data["analyses"]):
         violations.extend(f"analysis[{index}]: {value}" for value in validate_against_schema(item, "narrative_human_analysis"))
     violations.extend(f"research: {item}" for item in validate_research_pack(data["research"]))
@@ -521,6 +543,26 @@ def evaluate(
 
     curation_data = data["curation"]
     candidate_rows = curation_data.get("candidates", [])
+    selected_ids = list(curation_data.get("selected_material_ids", []))
+    selected_materials = list(curation_data.get("selected_materials", []))
+    if set(selected_materials) != set(selected_ids):
+        violations.append("selected_materials y selected_material_ids deben representar la misma seleccion")
+    selected_final_materials = selected_ids
+    if curation_data.get("selection_stage") == "FINAL":
+        selected_rows = [item for item in candidate_rows if item.get("material_id") in set(selected_ids)]
+        substantive = [item for item in selected_rows if item.get("narrative_evidence_strength") in {"MEDIUM", "HIGH"} and item.get("function") and item.get("thesis_contribution") and item.get("new_perspective") and item.get("narrative_use")]
+        final_selection = work_lifecycle.get("final_selection", {}) if isinstance(work_lifecycle, dict) else {}
+        final_exception = final_selection.get("exception") if isinstance(final_selection, dict) else None
+        exception_valid = isinstance(final_selection, dict) and final_selection.get("range_status") == "EXCEPTION" and isinstance(final_exception, dict) and final_exception.get("functional_owner") == "SCRIPT_PRODUCT" and bool(final_exception.get("owner_approval_ref"))
+        if isinstance(work_lifecycle, dict) and isinstance(final_selection, dict):
+            if set(final_selection.get("selected_work_ids", [])) != set(selected_final_materials):
+                violations.append("WorkLifecycle.final_selection no coincide con MaterialCuration.selected_material_ids")
+            if final_selection.get("curation_ref") != curation_data.get("curation_id"):
+                violations.append("WorkLifecycle.final_selection.curation_ref no coincide con la curation actual")
+        if not 3 <= len(selected_final_materials) <= 5 and not exception_valid:
+            violations.append("FINAL curation requires 3 to 5 substantive selected materials or an approved format exception")
+        elif len(substantive) != len(selected_rows):
+            violations.append("FINAL curation includes material without substantive analysis, evidence, differentiated function, or progression use")
     candidate_ids = [item.get("material_id") for item in candidate_rows]
     if len(candidate_ids) != len(set(candidate_ids)):
         violations.append("material_id debe ser único entre candidatos")

@@ -260,7 +260,7 @@ def _recover_prepared_transaction(output_path: Path, registry_path: Path) -> Non
     _cleanup_transaction_files(txn_paths["audit_backup"], txn_paths["registry_backup"], journal_path)
 
 
-def _atomic_persist(output_path: Path, registry_path: Path, audit: dict[str, Any], result: ExecutionResult, *, handoff_package: dict[str, Any] | None = None, current_skill_checksum: str | None = None) -> None:
+def _atomic_persist(output_path: Path, registry_path: Path, audit: dict[str, Any], result: ExecutionResult, request: ExecutionRequest | None = None, *, handoff_package: dict[str, Any] | None = None, current_skill_checksum: str | None = None) -> None:
     """Prevalida y sustituye los documentos de auditoría+provenance como una sola unidad."""
     _recover_prepared_transaction(output_path, registry_path)
     output_bytes = json.dumps(audit, ensure_ascii=False, indent=2).encode("utf-8") + b"\n"
@@ -278,7 +278,8 @@ def _atomic_persist(output_path: Path, registry_path: Path, audit: dict[str, Any
     try:
         # append_result remains canonical for registry shape and validation.
         draft_registry_path.write_bytes(old_registry or b'{"registry_version":"1.0.0","runs":[]}')
-        append_result(draft_registry_path, result, execution_mode="REAL", role=AUDITOR_ROLE)
+        from src.ai.registry import _VERIFIED_AUTHORIZATION_TOKEN
+        append_result(draft_registry_path, result, execution_mode="REAL" if request and request.config.get("_mission_authorization_token") is _VERIFIED_AUTHORIZATION_TOKEN else "SYNTHETIC", role=AUDITOR_ROLE, request=request)
         if handoff_package:
             consume_handoff(
                 draft_registry_path,
@@ -343,7 +344,7 @@ def execute_b5_i2_audit(*, artifacts: list[InputArtifact], output_path: Path, re
     result = replace(result, output=audit, output_checksum=None, output_artifact_id=audit["audit_id"], output_artifact_kind="semantic_audit", output_artifact_ref=f"semantic_audit:{audit['audit_id']}")
     result = replace(result, output_checksum=__import__("hashlib").sha256(json.dumps(audit, ensure_ascii=False, indent=2).encode("utf-8") + b"\n").hexdigest())
     try:
-        _atomic_persist(output_path, registry_path, audit, result)
+        _atomic_persist(output_path, registry_path, audit, result, request)
     except (OSError, ValueError) as exc:
         return replace(result, status=ExecutionStatus.FAILED, error=f"persistencia atómica falló: {exc}")
     return result
@@ -370,7 +371,7 @@ def import_b5_i2_handoff(*, package_path: Path, result_path: Path, artifacts: li
         return ExecutionResult(run_id="", status=ExecutionStatus.FAILED, executor_type="handoff", provider=provider, model=model, input_manifest_checksum=computed_manifest, output=None, output_checksum=None, started_at="", completed_at="", error=str(exc))
     from src.ai.execution import _now  # mantiene un único formato de timestamp del runtime
     run_id, timestamp = f"RUN-AI-IMPORT-{package['handoff_id'].replace('RUN-AI-', '')}", _now()
-    result = ExecutionResult(run_id, ExecutionStatus.SUCCEEDED, "handoff", provider, model, computed_manifest, editorial_payload, None, timestamp, timestamp, usage={"skill_id": request.skill_id, "skill_version": request.skill_version}, episode_id=request.episode_id, output_artifact_id=request.output_artifact_id, output_artifact_kind="semantic_audit", output_artifact_ref=request.output_artifact_ref, is_real_editorial_execution=True)
+    result = ExecutionResult(run_id, ExecutionStatus.SUCCEEDED, "handoff", provider, model, computed_manifest, editorial_payload, None, timestamp, timestamp, usage={"skill_id": request.skill_id, "skill_version": request.skill_version}, episode_id=request.episode_id, output_artifact_id=request.output_artifact_id, output_artifact_kind="semantic_audit", output_artifact_ref=request.output_artifact_ref, is_real_editorial_execution=bool(request.config.get("_mission_authorization_token") is __import__("src.ai.registry", fromlist=["_VERIFIED_AUTHORIZATION_TOKEN"])._VERIFIED_AUTHORIZATION_TOKEN))
     audit = _runtime_audit(editorial_payload, request, result)
     block_reason = _dimension_block_reason(audit)
     if block_reason:
@@ -380,7 +381,7 @@ def import_b5_i2_handoff(*, package_path: Path, result_path: Path, artifacts: li
         return replace(result, status=ExecutionStatus.FAILED, output=audit, error="output B5-I2 inválido: " + "; ".join(violations))
     result = replace(result, output=audit, output_artifact_id=audit["audit_id"], output_checksum=__import__("hashlib").sha256(json.dumps(audit, ensure_ascii=False, indent=2).encode("utf-8") + b"\n").hexdigest())
     try:
-        _atomic_persist(output_path, registry_path, audit, result, handoff_package=package, current_skill_checksum=skill_checksum())
+        _atomic_persist(output_path, registry_path, audit, result, request, handoff_package=package, current_skill_checksum=skill_checksum())
     except (OSError, ValueError) as exc:
         return replace(result, status=ExecutionStatus.FAILED, error=f"persistencia atómica falló: {exc}")
     return result

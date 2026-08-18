@@ -115,7 +115,7 @@ def _curation() -> dict:
         "analysis_ids": ["A-1"],
         "candidates": [candidate("M1", "SELECTED"), candidate("M2", "EXCLUDED")],
         "selected_material_ids": ["M1"],
-        "selection_stage": "FINAL",
+        "selection_stage": "PRELIMINARY",
         "exclusions": [
             {
                 "material_id": "M2",
@@ -940,7 +940,7 @@ def test_b5_i1_checksum_divergence_fails(tmp_path: Path, field: str) -> None:
 
 @pytest.mark.parametrize(("name", "target", "mutation", "needle"), [
     ("selected_without_analysis", "curation", lambda d: d.update(selected_material_ids=["M2"]), "Material seleccionado sin NarrativeHumanAnalysis"),
-    ("final_candidate_unresolved", "curation", lambda d: d["candidates"][1].update(selection_status="CANDIDATE"), "Curación FINAL no puede conservar candidatos sin resolver"),
+    ("final_candidate_unresolved", "curation", lambda d: (d.update(selection_stage="FINAL"), d["candidates"][1].update(selection_status="CANDIDATE")), "Curación FINAL no puede conservar candidatos sin resolver"),
     ("without_sequence", "curation", lambda d: d.pop("sequence_rationale"), "sequence_rationale"),
     ("without_set_relationship", "curation", lambda d: d.pop("set_relationship"), "set_relationship"),
     ("without_unique_contribution", "curation", lambda d: d.update(unique_contributions=[]), "unique_contributions"),
@@ -1328,3 +1328,23 @@ def test_unauthorized_material_analysis_is_blocked(tmp_path: Path) -> None:
     _mutate(paths, "analysis", lambda d: d.update(material_id="M3", material_checksum="a" * 64))
     result = _evaluate(paths)
     assert result.status is GateStatus.BLOCKED
+
+
+def test_final_curation_rejects_divergent_selection_fields(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    curation = _read(paths["curation"])
+    curation["selected_materials"] = ["M2"]
+    _put(paths["curation"], curation)
+    result = _evaluate(paths)
+    assert result.status is GateStatus.FAIL
+    assert any("selected_materials y selected_material_ids" in violation for violation in result.violations)
+
+
+def test_final_curation_requires_three_to_five_substantive_materials(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    curation = _read(paths["curation"])
+    curation["selection_stage"] = "FINAL"
+    _put(paths["curation"], curation)
+    result = _evaluate(paths)
+    assert result.status is GateStatus.FAIL
+    assert any("3 to 5" in item for item in result.violations)

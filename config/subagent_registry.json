@@ -242,7 +242,9 @@
         "episode_brief",
         "refined_thesis",
         "editorial_script_promise",
-        "evidence_or_claims_reference"
+        "evidence_or_claims_reference",
+        "claims_ledger",
+        "evidence_report"
       ],
       "outputs": [
         "youtube_adaptation_b5_i2_package"
@@ -289,7 +291,9 @@
           "episode_brief",
           "refined_thesis",
           "editorial_script_promise",
-          "evidence_or_claims_reference"
+          "evidence_or_claims_reference",
+          "claims_ledger",
+          "evidence_report"
         ],
         "emits": [
           "youtube_adaptation_b5_i2_package"
@@ -348,7 +352,10 @@
       "inputs": [
         "youtube_adaptation_b5_i2_package",
         "producer_run_reference",
-        "active_editorial_profile_reference"
+        "active_editorial_profile_reference",
+        "refined_thesis",
+        "claims_ledger",
+        "evidence_report"
       ],
       "outputs": [
         "youtube_adaptation_review"
@@ -394,7 +401,10 @@
         "accepts": [
           "youtube_adaptation_b5_i2_package",
           "producer_run_reference",
-          "active_editorial_profile_reference"
+          "active_editorial_profile_reference",
+          "refined_thesis",
+          "claims_ledger",
+          "evidence_report"
         ],
         "emits": [
           "youtube_adaptation_review"

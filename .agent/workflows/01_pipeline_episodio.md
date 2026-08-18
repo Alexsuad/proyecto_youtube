@@ -1,5 +1,5 @@
 ---
-description: Workflow orquestador del pipeline completo de episodio (Fases 0-10). Realiza Gate 0, inicia el episodio en el Vault, recorre cada fase verificando gates, y cierra al final.
+description: Workflow orquestador del pipeline de episodio. Realiza Gate 0 y recorre la ruta moderna portable; la ruta Vault legacy es opcional.
 ---
 
 # Workflow: Pipeline Completo de Episodio (Orquestador)
@@ -12,8 +12,8 @@ description: Workflow orquestador del pipeline completo de episodio (Fases 0-10)
 
 ## PREREQUISITOS (leer antes de comenzar)
 
-El runtime operativo debe tener disponibles:
-- `config/local_settings.json` con `vault_root` y `channel_id`
+El flujo moderno debe tener disponibles:
+La ruta legacy de episodio además requiere `config/local_settings.json` con `vault_root` y `channel_id`; esa configuración no es un prerrequisito universal de Gate 0 ni del cierre moderno del MVP.
 - El **tema** del episodio y su **slug** confirmados por el usuario
 - El **número** de episodio (siguiente al último registrado)
 - La referencia editorial explícita: `profile_id`, `profile_version`, `profile_checksum`.
@@ -51,19 +51,20 @@ python src/scripts/gate0_integridad.py
 
 ---
 
-## FASE 1 — Iniciar Episodio en Vault
+## FASE 1 — Resolver almacenamiento de episodio
 
-**Objetivo:** Crear la carpeta del episodio y registrarla en el índice.
+**Objetivo:** Usar la ruta moderna portable por defecto. Solo si el operador dispone de `config/local_settings.json` y desea conservar el flujo legacy se crea y registra un episodio en Vault.
 
-### Paso 1.1 — Ejecutar script de inicio
+### Paso 1.1 — Ruta legacy opcional
 // turbo
 ```
 python src/scripts/iniciar_episodio.py --num <NUM> --slug <SLUG>
 ```
-- Capturar `EP_PATH` del output del script.
-- Mantener `EP_PATH` como variable de contexto para todas las fases siguientes.
+ - Capturar `EP_PATH` del output del script.
+ - Mantener `EP_PATH` como variable de contexto para todas las fases siguientes.
+ - Si no existe la configuración local, continuar con los artefactos contractuales del checkout y no ejecutar este script.
 
-**⛔ Gate:** Si el script retorna error → DETENER. No improvisar rutas.
+**⛔ Gate:** Si se elige la ruta legacy y el script retorna error → DETENER. No improvisar rutas. La ausencia de Vault no bloquea la ruta moderna.
 
 ---
 

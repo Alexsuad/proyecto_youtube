@@ -248,7 +248,7 @@ def test_topic_modes_require_corpus_and_clarify_real_topic_first() -> None:
     }
     assert "ENTRY_MODE_REQUIRES_CORPUS" in validate_topic_input({**base, "entry_mode": "CORPUS_FIRST"})
     assert validate_topic_input({**base, "entry_mode": "CORPUS_FIRST", "corpus_ref": "corpus-1"}) == []
-    assert "TOPIC_FIRST_REAL_WORK_REQUIRES_FUNCTIONAL_CLARIFICATION" in validate_topic_input({**base, "entry_mode": "TOPIC_FIRST", "narrative_work": "Obra"})
+    assert validate_topic_input({**base, "entry_mode": "TOPIC_FIRST", "narrative_work": "Obra"}) == []
 
 def test_missing_entry_mode_is_rejected_by_canonical_schema() -> None:
     profile = active_profile()

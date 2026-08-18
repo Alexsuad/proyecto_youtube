@@ -23,7 +23,7 @@ def parse_policy(path: Path) -> dict[str, list[str]]:
 
 def evaluate(ep_path: Path, phase: str, gate_id: str = "qa_lenguaje_youtube", episode_id: str | None = None) -> GateResult:
     artifact_id = episode_id or ep_path.name
-    names = ["00_brief_episodio.md", "04_analisis_patrones.md", "05_sintesis_tesis.md"] if phase == "pre-guion" else ["06_guion_longform.md", "09_packaging.md", "10_seo.md"]
+    names = ["00_brief_episodio.md", "04_analisis_patrones.md", "05_sintesis_tesis.md"] if phase == "pre-guion" else ["06_guion_longform.md"]
     requirements = [InputRequirement(ep_path / name, name) for name in names]
     blocked, failures, evidence = validate_inputs(requirements)
     if blocked:

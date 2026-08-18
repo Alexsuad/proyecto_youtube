@@ -168,6 +168,10 @@ def test_fresh_lease_resume_is_allowed() -> None:
     _assert_holds(["RECOVERY_UNVERIFIABLE_DOES_NOT_RESUME"], {"resume_topology": "SAME_RESERVATION_LEASE", "recovery_status": "FRESH"})
 
 
+def test_same_reservation_lease_without_recovery_status_blocks() -> None:
+    _assert_violation(["RECOVERY_UNVERIFIABLE_DOES_NOT_RESUME"], {"resume_topology": "SAME_RESERVATION_LEASE"}, "RECOVERY_RESUMED_WITHOUT_STATUS")
+
+
 # --- Fresh context ---
 
 def test_parent_run_equals_child_run_blocks() -> None:

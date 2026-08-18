@@ -412,7 +412,9 @@
         "episode_brief",
         "refined_thesis",
         "editorial_script_promise",
-        "evidence_or_claims_reference"
+        "evidence_or_claims_reference",
+        "claims_ledger",
+        "evidence_report"
       ],
       "required_context": [
         "config/active_editorial_profile.json",
@@ -449,7 +451,7 @@
       ],
       "handoff": {
         "to": "YOUTUBE_ADAPTATION_AUDITOR",
-        "condition": "youtube_adaptation_b5_i2_package completo, trazable y con límites explícitos"
+        "condition": "youtube_adaptation_b5_i2_package completo, trazable, grounded y con strategic_return explícito"
       },
       "evidence_requirements": [
         "producer_run_id independiente",
@@ -469,7 +471,10 @@
       "required_inputs": [
         "youtube_adaptation_b5_i2_package",
         "producer_run_reference",
-        "active_editorial_profile_reference"
+        "active_editorial_profile_reference",
+        "refined_thesis",
+        "claims_ledger",
+        "evidence_report"
       ],
       "required_context": [
         "config/active_editorial_profile.json",
@@ -505,7 +510,7 @@
       ],
       "handoff": {
         "to": "OWNER_REVIEW",
-        "condition": "youtube_adaptation_review emitido con decisión, checksums y límites de publicación"
+        "condition": "youtube_adaptation_review emitido con decisión, checksums, strategic_return y límites de publicación"
       },
       "evidence_requirements": [
         "decision APPROVAL|APPROVAL_WITH_WARNINGS|REQUEST_CHANGES|BLOCK",

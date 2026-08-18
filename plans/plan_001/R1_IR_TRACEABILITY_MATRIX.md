@@ -167,3 +167,17 @@ R1-M3 fue ejecutada con autorización explícita para IR1-007, IR1-008, IR1-009,
 - Evidencia de validación: `29 passed`, `166 subtests passed` en los tests dirigidos de schemas y contratos.
 
 R1-M3 queda `COMPLETED_PENDING_REVIEW`. R1-M4, R1-M5 y R1-M6 permanecen sin abrir.
+
+
+## Addendum P7 ? Reconciliacion contra evidencia actual
+
+Este addendum no reescribe los estados historicos de la matriz IR-0 ni convierte evidencia tecnica en aprobacion funcional. Distingue el baseline historico de los hitos tecnicos demostrados en PLAN 007 y del estado vivo actual.
+
+| capa | estado reconciliado | evidencia | limite |
+|---|---|---|---|
+| Historico de la matriz | Se conserva sin reescritura | filas IR-0 a IR-7 existentes | No representa por si solo el estado vivo posterior |
+| Completado tecnicamente | P2/P3/P4/P5/P6 controlados por PLAN 007 | suite amplia, P6-A, P6-B, cross-registry y semantic assurance | No equivale a aprobacion funcional ni uso productivo |
+| Estado vivo | `R1_IN_PROGRESS`; `PLAN_007_FUNCTIONAL_APPROVAL: NO` | `plans/001_CONTROL_OPERATIVO.md` | Requiere revision del OWNER para cualquier siguiente autorizacion |
+| Siguiente accion | `OWNER_REVIEW_OF_PLAN_007_P7_EVIDENCE` | control operativo reconciliado en P7 | R2 y ejecucion real siguen sin autorizacion |
+
+Los artefactos y pruebas de la implementacion permanecen en el worktree sin commit ni push por instruccion de la mision.

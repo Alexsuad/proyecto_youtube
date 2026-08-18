@@ -237,6 +237,30 @@
       "prompt_version": "1.0.0"
     },
     {
+      "role_id": "SCRIPT_PRODUCT_AUDITOR",
+      "contract_type": "BASE_RESPONSIBILITY",
+      "functional_owner": "SCRIPT_PRODUCT",
+      "purpose": "Auditar de forma independiente los artefactos B5-I2 sin modificarlos ni aprobar su uso funcional.",
+      "when_used": "Solo mediante la ruta B5-I2 autorizada y con contexto independiente.",
+      "inputs": [
+        "b5_i1_package",
+        "narrative_human_analyses",
+        "material_curation",
+        "refined_thesis",
+        "editorial_script_promise",
+        "producer_run_reference",
+        "artifact_checksums"
+      ],
+      "outputs": ["semantic_audit"],
+      "read_permissions": ["B5-I2 artifacts", "active editorial profile", "producer provenance"],
+      "write_permissions": ["semantic_audit only"],
+      "forbidden_actions": ["modificar artefactos auditados", "autoaprobar", "autorizar B5-I3", "declarar ejecucion real"],
+      "veto_conditions": ["evidencia insuficiente", "contexto no independiente", "checksum no verificable", "provenance ausente"],
+      "evidence": ["semantic audit", "artifact checksums", "independent auditor run"],
+      "handoff": ["semantic audit to B5-I2 gate"],
+      "prompt_version": "1.0.0"
+    },
+    {
       "role_id": "CHANNEL_INTELLIGENCE_PRODUCER",
       "contract_type": "BASE_RESPONSIBILITY",
       "functional_owner": "CHANNEL_INTELLIGENCE",

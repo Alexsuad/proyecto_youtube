@@ -198,8 +198,13 @@ def save_index_atomically(index_path: Path, index: dict) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--ep-id"); parser.add_argument("--config", default=str(REPO_ROOT / "config/local_settings.json")); parser.add_argument("--output-root")
+    parser = argparse.ArgumentParser(); parser.add_argument("--ep-id"); parser.add_argument("--config", default=str(REPO_ROOT / "config/local_settings.json")); parser.add_argument("--episode-path", help="Ruta portable del episodio, sin índice Vault"); parser.add_argument("--output-root")
     args = parser.parse_args(); config_path = Path(args.config)
+    if args.episode_path:
+        ep_path = expand_path(args.episode_path)
+        ep_id = args.ep_id or ep_path.name
+        result = evaluate(ep_id, ep_path, output_root(args.output_root))
+        return run_gate(lambda: result, output_root=args.output_root)
     try: config = json.loads(config_path.read_text(encoding="utf-8"))
     except Exception as exc:
         return run_gate(lambda: (_ for _ in ()).throw(RuntimeError(f"No se pudo cargar config: {exc}")), output_root=args.output_root)

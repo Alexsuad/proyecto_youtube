@@ -8,6 +8,7 @@ from src.ai.contracts import ExecutionRequest, ExecutionStatus
 from src.ai.execution import execute
 from src.ai.providers.ollama import OllamaProvider
 from src.ai.role_execution import RoleExecutionContractError, build_model_prompt, resolve_role_execution_contract
+from tests.core.test_plan_005_real_consumer_integration import _request as governed_request, _setup as setup_governed_repo
 
 
 def _runtime_values() -> dict[str, object]:
@@ -54,29 +55,37 @@ def test_ollama_response_parsing_allows_only_documented_fence_cleanup() -> None:
 
 
 
-def test_model_invocation_timeout_is_runtime_block(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_model_invocation_timeout_is_runtime_block(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     def _raise_timeout(self, request):
         raise RuntimeError("MODEL_INVOCATION_FAILED: TIMEOUT")
 
     monkeypatch.setattr(OllamaProvider, "execute", _raise_timeout)
-    request = ExecutionRequest(
-        capability_id="SCRIPT_PRODUCT_PRODUCER",
-        skill_id="test",
-        skill_version="1",
-        input_artifacts=[],
-        output_schema="execution_smoke_report",
-        provider="ollama",
-        model="Qwen2.5-Coder:latest",
-        role="SCRIPT_PRODUCT_PRODUCER",
-        config={"prompt": "{}"},
-    )
+    setup_governed_repo(tmp_path, allowed_routes=["local_model"], role_id="SCRIPT_PRODUCT_PRODUCER")
+    request = governed_request(tmp_path, execution_route="local_model", execution_profile="ollama_local", provider="ollama")
+    request.role = "SCRIPT_PRODUCT_PRODUCER"
+    request.output_schema = "execution_smoke_report"
+    request.input_artifacts = []
+    request.skill_id = "test"
+    request.skill_version = "1"
+    request.model = "Qwen2.5-Coder:latest"
+    request.config["context_policy_path"] = "config/context_resolution_policy.json"
     result = execute(request)
+    print("DEBUG_RESULT", result.status, result.error, result.usage)
     assert result.status is ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER
     assert result.error == "MODEL_INVOCATION_FAILED: TIMEOUT"
 
-def test_output_contract_invalid_is_not_success(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_output_contract_invalid_is_not_success(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     monkeypatch.setattr(OllamaProvider,"execute",lambda self,request: ({"bad":True},{}))
-    request=ExecutionRequest(capability_id="SCRIPT_PRODUCT_PRODUCER",skill_id="test",skill_version="1",input_artifacts=[],output_schema="execution_smoke_report",provider="ollama",model="fake",role="SCRIPT_PRODUCT_PRODUCER",config={"prompt":"{}"})
+    setup_governed_repo(tmp_path, allowed_routes=["local_model"], role_id="SCRIPT_PRODUCT_PRODUCER")
+    request = governed_request(tmp_path, execution_route="local_model", execution_profile="ollama_local", provider="ollama")
+    request.role = "SCRIPT_PRODUCT_PRODUCER"
+    request.output_schema = "execution_smoke_report"
+    request.input_artifacts = []
+    request.skill_id = "test"
+    request.skill_version = "1"
+    request.model = "fake"
+    request.config["context_policy_path"] = "config/context_resolution_policy.json"
     result=execute(request)
+    print("DEBUG_RESULT", result.status, result.error, result.usage)
     assert result.status.value == "FAILED"
     assert result.error and result.error.startswith("OUTPUT_CONTRACT_INVALID")

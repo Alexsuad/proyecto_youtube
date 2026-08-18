@@ -13,6 +13,7 @@ from src.core.legacy_gate_adapter import parse_legacy_gate_v
 from src.core.status import GateStatus
 from src.scripts.evidence_sufficiency_gate import evaluate as evidence_evaluate
 from src.scripts import cerrar_episodio
+from src.scripts import gate0_auditoria, gate0_integridad
 from tests.support.workspace_temp import temporary_directory
 
 
@@ -276,6 +277,70 @@ class TestB2Harness(unittest.TestCase):
         self.assertIn("READY_FOR_EDITORIAL_FUNCTIONAL_REVIEW", workflow)
         self.assertNotIn("09_packaging.md", workflow)
         self.assertNotIn("EditorialScriptApproval", workflow)
+    def test_gate0_portable_path_does_not_require_local_settings_or_vault(self):
+        with self.tempdir("gate0_portable") as temp:
+            root = Path(temp)
+            for relative in (".agent/rules", ".agent/skills", ".agent/workflows", "templates", "workspace", "config"):
+                (root / relative).mkdir(parents=True)
+            for name in ("00_reglas_globales.md", "01_formato_outputs.md", "02_reglas_notebooklm.md"):
+                (root / ".agent/rules" / name).write_text("rule", encoding="utf-8")
+            with patch.object(gate0_auditoria, "REPO_ROOT", root), patch.object(gate0_integridad, "REPO_ROOT", root), patch.object(
+                gate0_integridad, "scan", return_value={"exit_code": 0}
+            ):
+                audit = gate0_auditoria.evaluate()
+                integrity = gate0_integridad.evaluate()
+            self.assertEqual(audit.status, GateStatus.WARN)
+            self.assertEqual(integrity.status, GateStatus.WARN)
+            self.assertEqual(audit.evidence["execution_path"], "portable_checkout")
+            self.assertEqual(integrity.evidence["execution_path"], "portable_checkout")
+
+    def test_gate0_preserves_legacy_vault_checks(self):
+        with self.tempdir("gate0_legacy") as temp:
+            root = Path(temp); vault = root / "vault"; index = vault / "channel/index/episodes_index.json"
+            index.parent.mkdir(parents=True); index.write_text(json.dumps({"episodes": []}), encoding="utf-8")
+            (root / "config").mkdir(); (root / "config/local_settings.json").write_text(json.dumps({"vault_root": str(vault), "channel_id": "channel"}), encoding="utf-8")
+            for relative in (".agent/rules", ".agent/skills", ".agent/workflows", "templates", "workspace"):
+                (root / relative).mkdir(parents=True)
+            for name in ("00_reglas_globales.md", "01_formato_outputs.md", "02_reglas_notebooklm.md"):
+                (root / ".agent/rules" / name).write_text("rule", encoding="utf-8")
+            with patch.object(gate0_auditoria, "REPO_ROOT", root), patch.object(gate0_integridad, "REPO_ROOT", root), patch.object(
+                gate0_integridad, "scan", return_value={"exit_code": 0}
+            ):
+                self.assertEqual(gate0_auditoria.evaluate().status, GateStatus.PASS)
+                self.assertEqual(gate0_integridad.evaluate().status, GateStatus.PASS)
+
+    def test_post_guion_language_gate_does_not_require_deferred_packaging_or_seo(self):
+        from src.scripts.qa_lenguaje_youtube import evaluate as language_evaluate
+        with self.tempdir("deferred_packaging") as temp:
+            episode = Path(temp) / "episode"
+            episode.mkdir()
+            (episode / "06_guion_longform.md").write_text("Guion sin packaging final.", encoding="utf-8")
+            with patch("src.scripts.qa_lenguaje_youtube.REPO_ROOT", ROOT):
+                result = language_evaluate(episode, "post-guion", episode_id="ep")
+            self.assertNotEqual(result.status, GateStatus.BLOCKED)
+
+    def test_modern_episode_closure_does_not_require_vault_config(self):
+        with self.tempdir("portable_closure") as temp:
+            temp_path = Path(temp)
+            episode = temp_path / "episode"
+            episode.mkdir()
+            files = {"06_guion_longform.md": "guion", "06_guion_longform_limpio.md": "guion limpio", "06_guion_longform_anotado.md": "guion anotado"}
+            for name, content in files.items():
+                (episode / name).write_text(content, encoding="utf-8")
+            checksum = __import__("hashlib").sha256(b"guion").hexdigest()
+            approval = {"artifact_id": "episode", "script_version": "1.0.0", "checksum": checksum, "decision": "APPROVED", "approved_by": "editor_jefe_01", "approved_role": "EDITORIAL_LEAD", "approved_at": "2026-07-21T20:00:00Z"}
+            (episode / "script_version_manifest.json").write_text(json.dumps({"script_id": "episode", "version": "1.0.0", "checksum": checksum, "narrative_plan_version": "1.0.0", "status": "EDITORIAL_SCRIPT_APPROVED"}), encoding="utf-8")
+            (episode / "editorial_script_approval.json").write_text(json.dumps(approval), encoding="utf-8")
+            ledger = {"ledger_id": "episode-claims", "script_version": "1.0.0", "claims": [{"claim_id": "claim-1", "script_location": "L1", "claim_text": "Texto", "claim_type": "FACT", "source_refs": ["source-1"], "verification_status": "VERIFIED", "materiality": {"is_material": False, "activation_criteria": [], "non_trigger_examples": ["portable fixture"], "invalidator_codes": ["CLAIM_OR_SCOPE_CHANGED"], "return_route_code": "NOT_APPLICABLE", "decision_ref": None}}]}
+            (episode / "claims_ledger.json").write_text(json.dumps(ledger), encoding="utf-8")
+            checksums = {name: __import__("hashlib").sha256((episode / name).read_bytes()).hexdigest() for name in (*files, "claims_ledger.json")}
+            (episode / "final_delivery_manifest.json").write_text(json.dumps({"final_script_clean": "06_guion_longform_limpio.md", "final_script_annotated": "06_guion_longform_anotado.md", "claims_ledger": "claims_ledger.json", "checksums": checksums, "approval_record": approval, "final_candidate_version": "1.0.0", "human_approved_version": "1.0.0"}), encoding="utf-8")
+            gate_dir = temp_path / "out" / "gates" / "episode"
+            gate_dir.mkdir(parents=True)
+            for gate_id in ("qa_brief_research", "evidence_sufficiency", "qa_duracion_guion", "qa_lenguaje_youtube_ultra_post_guion"):
+                (gate_dir / f"{gate_id}.json").write_text(json.dumps(GateResult(gate_id, "episode", "1.0.0", GateStatus.PASS, "ok").to_dict()), encoding="utf-8")
+            done = subprocess.run([sys.executable, str(ROOT / "src/scripts/cerrar_episodio.py"), "--ep-id", "episode", "--episode-path", str(episode), "--output-root", str(temp_path / "out")], cwd=temp_path, env={**os.environ, "PYTHONPATH": str(ROOT)}, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
+            self.assertEqual(done.returncode, 0, done.stderr)
 
     def test_evidence_substantive_regression_cases(self):
         with self.tempdir("evidence_substantive") as temp:

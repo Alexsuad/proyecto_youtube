@@ -40,6 +40,8 @@ def canonical_payload(data: dict[str, Any], artifact_kind: str) -> dict[str, Any
         payload.pop("artifact_checksum", None)
     elif artifact_kind == "owner_decision":
         payload.pop("owner_decision_checksum", None)
+    elif artifact_kind == "input":
+        pass
     elif artifact_kind != "decision":
         raise ValueError(f"Unsupported artifact kind: {artifact_kind}")
     if isinstance(provenance, dict):
@@ -90,14 +92,12 @@ def _entry_mode_violations(data: dict[str, Any]) -> list[str]:
     mode, work = data.get("entry_mode"), data.get("narrative_work")
     if not mode:
         return []
-    if mode == "TOPIC_FIRST" and work == "NO_WORK_YET":
+    if mode == "TOPIC_FIRST" and work in (None, "", "NO_WORK_YET"):
         return []
-    if mode == "ANCHOR_WORK_FIRST" and work == "NO_WORK_YET":
+    if mode == "ANCHOR_WORK_FIRST" and work in (None, "", "NO_WORK_YET"):
         return ["ENTRY_MODE_REQUIRES_ANCHOR_WORK"]
     if mode == "CORPUS_FIRST" and not data.get("corpus_ref"):
         return ["ENTRY_MODE_REQUIRES_CORPUS"]
-    if mode == "TOPIC_FIRST" and work and work != "NO_WORK_YET":
-        return ["TOPIC_FIRST_REAL_WORK_REQUIRES_FUNCTIONAL_CLARIFICATION"]
     return []
 
 def validate_topic_input(data: dict[str, Any]) -> list[str]:
@@ -134,6 +134,11 @@ def validate_assessment(data: dict[str, Any], topic_input: dict[str, Any] | None
     if topic_input is not None:
         violations.extend(f"INPUT_INVALID: {v}" for v in validate_topic_input(topic_input))
         for key in ("topic_input_id", "profile_id", "profile_version", "profile_checksum", "topic", "entry_mode", "corpus_ref", "narrative_work", "central_question", "proposed_angle", "proposed_territory", "initial_evidence", "strategic_triggers"):
+            if key == "narrative_work" and data.get("entry_mode") == "TOPIC_FIRST":
+                # TOPIC_FIRST may acquire a work during research without changing entry mode.
+                if data.get(key) not in (None, "", "NO_WORK_YET") and topic_input.get(key) not in (None, "", "NO_WORK_YET", data.get(key)):
+                    violations.append(f"ASSESSMENT_INPUT_{key.upper()}_MISMATCH")
+                continue
             if data.get(key) != topic_input.get(key):
                 violations.append(f"ASSESSMENT_INPUT_{key.upper()}_MISMATCH")
     return violations
@@ -215,7 +220,14 @@ def gate_outcome_violations(decision: dict[str, Any], owner_decision: dict[str, 
     return [f"TOPIC_DECISION_NOT_APPROVED: {outcome}"]
 
 
-def evaluate_topic_belonging_gate(decision: dict[str, Any], assessment: dict[str, Any], topic_input: dict[str, Any] | None = None, owner_decision: dict[str, Any] | None = None) -> dict[str, Any]:
+def evaluate_topic_belonging_gate(
+    decision: dict[str, Any],
+    assessment: dict[str, Any],
+    topic_input: dict[str, Any] | None = None,
+    owner_decision: dict[str, Any] | None = None,
+    work_lifecycle: dict[str, Any] | None = None,
+    research_dossier: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     violations = validate_decision(decision, assessment)
     if topic_input is not None:
         violations.extend(f"ASSESSMENT_INVALID: {v}" for v in validate_assessment(assessment, topic_input))
@@ -224,6 +236,50 @@ def evaluate_topic_belonging_gate(decision: dict[str, Any], assessment: dict[str
         else: violations.extend(validate_owner_decision(owner_decision, topic_input, assessment, decision))
     if decision.get("decision") == "ESCALATE_TO_OWNER" and owner_decision is None:
         violations.append("OWNER_DECISION_REQUIRED")
+    if decision.get("decision") in {"APPROVE", "APPROVE_WITH_CONDITIONS"} and assessment.get("entry_mode") == "TOPIC_FIRST":
+        evidence = decision.get("pre_b5_i1_evidence")
+        if not isinstance(work_lifecycle, dict) or not isinstance(research_dossier, dict):
+            violations.append("PRE_B5_I1_BELONGING_APPROVAL_REQUIRES_MATERIAL_RESEARCH_BINDING")
+        door_refs = evidence.get("narrative_door_evidence_refs", []) if isinstance(evidence, dict) else []
+        candidate_refs = evidence.get("candidate_work_refs", []) if isinstance(evidence, dict) else []
+        research_ref = evidence.get("research_ref") if isinstance(evidence, dict) else None
+        enriched_input_checksum = evidence.get("topic_input_checksum") if isinstance(evidence, dict) else None
+        if not isinstance(door_refs, list) or not door_refs or not all(isinstance(ref, str) and ref.strip() for ref in door_refs):
+            violations.append("PRE_B5_I1_BELONGING_APPROVAL_REQUIRES_NARRATIVE_DOOR")
+        candidate_refs_valid = isinstance(candidate_refs, list) and all(isinstance(ref, str) and ref.strip() for ref in candidate_refs)
+        if not candidate_refs_valid or not candidate_refs:
+            violations.append("PRE_B5_I1_BELONGING_APPROVAL_REQUIRES_SUFFICIENT_CANDIDATE_WORKS")
+        candidate_count = len(candidate_refs) if candidate_refs_valid else 0
+        screening = work_lifecycle.get("screening", {}) if isinstance(work_lifecycle, dict) else {}
+        exception = screening.get("exception") if isinstance(screening, dict) else None
+        exception_valid = isinstance(screening, dict) and screening.get("range_status") == "EXCEPTION" and isinstance(exception, dict) and bool(exception.get("owner_approval_ref")) and exception.get("functional_owner") == "SCRIPT_PRODUCT"
+        if candidate_refs_valid and candidate_count not in range(5, 9) and not exception_valid:
+            violations.append("PRE_B5_I1_BELONGING_APPROVAL_REQUIRES_NORMAL_CANDIDATE_RANGE_OR_APPROVED_EXCEPTION")
+        if not isinstance(research_ref, str) or not research_ref.strip():
+            violations.append("PRE_B5_I1_BELONGING_APPROVAL_REQUIRES_RESEARCH_EVIDENCE")
+        if not topic_input or enriched_input_checksum != canonical_checksum(topic_input, "input"):
+            violations.append("PRE_B5_I1_BELONGING_APPROVAL_REQUIRES_CURRENT_TOPIC_INPUT_CHECKSUM")
+        if isinstance(topic_input, dict) and isinstance(evidence, dict):
+            for field in ("research_ref", "narrative_door_evidence_refs", "candidate_work_refs"):
+                if topic_input.get(field) != evidence.get(field):
+                    violations.append(f"PRE_B5_I1_EVIDENCE_{field.upper()}_MISMATCH")
+        if isinstance(work_lifecycle, dict) and isinstance(evidence, dict):
+            screening = work_lifecycle.get("screening", {})
+            lifecycle_candidates = screening.get("candidate_work_ids", []) if isinstance(screening, dict) else []
+            if evidence.get("candidate_work_refs") != lifecycle_candidates:
+                violations.append("PRE_B5_I1_EVIDENCE_CANDIDATES_NOT_BOUND_TO_WORK_LIFECYCLE")
+        if isinstance(research_dossier, dict) and isinstance(evidence, dict):
+            if evidence.get("research_ref") != research_dossier.get("research_id"):
+                violations.append("PRE_B5_I1_EVIDENCE_RESEARCH_NOT_BOUND_TO_DOSSIER")
+            if research_dossier.get("dossier_stage") not in {"IDENTIFIED", "RESEARCH_IN_PROGRESS"}:
+                violations.append("PRE_B5_I1_RESEARCH_DOSSIER_STAGE_NOT_PRE_B5")
+            if not research_dossier.get("evidence_report_id") or not set(evidence.get("narrative_door_evidence_refs", [])).intersection({str(research_dossier.get("evidence_report_id"))}):
+                violations.append("PRE_B5_I1_NARRATIVE_DOOR_NOT_BOUND_TO_RESEARCH_EVIDENCE")
+        if isinstance(work_lifecycle, dict) and isinstance(evidence, dict):
+            if work_lifecycle.get("entry_mode") != "TOPIC_FIRST":
+                violations.append("PRE_B5_I1_LIFECYCLE_ENTRY_MODE_MISMATCH")
+            if work_lifecycle.get("research_id") != evidence.get("research_ref"):
+                violations.append("PRE_B5_I1_LIFECYCLE_RESEARCH_MISMATCH")
     violations.extend(gate_outcome_violations(decision, owner_decision))
     return {"status": "PASS" if not violations else "BLOCKED", "decision": decision.get("decision"), "topic_belonging_approval": "NECESSARY_NOT_SUFFICIENT", "topic_approved": not violations, "production_authorized": False, "publication_authorized": False, "b5_i3_authorized": False, "r6_c_authorized": False, "s5_authorized": False, "violations": violations}
 

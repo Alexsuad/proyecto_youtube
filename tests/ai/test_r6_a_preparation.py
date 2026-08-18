@@ -113,7 +113,7 @@ def test_append_result_records_extended_r6_provenance_fields(tmp_path: Path) -> 
         is_real_editorial_execution=False,
     )
     registry_path = tmp_path / "registry.json"
-    persist_execution_result(registry_path, result, request, execution_mode="REAL")
+    persist_execution_result(registry_path, result, request, execution_mode="SYNTHETIC")
     saved = load_registry(registry_path)
     run = saved["runs"][0]
     assert run["agent_id"] == "SCRIPT_PRODUCT_PRODUCER"
