@@ -31,6 +31,8 @@ def validate_independent_research_audit(data: dict[str, Any]) -> list[str]:
     if declared_producer_run == "MULTIPLE_PRODUCER_RUNS":
         if len(artifact_runs) < 2:
             violations.append("PRODUCER_RUN_DECLARATION_MULTIPLE_WITHOUT_MULTIPLE_ARTIFACT_RUNS")
+        if auditor["run_id"] in artifact_runs:
+            violations.append("AUDITOR_EQUALS_PRODUCER_RUN")
     elif artifact_runs != {declared_producer_run}:
         violations.append("AUDITED_ARTIFACT_PRODUCER_RUN_MISMATCH")
 

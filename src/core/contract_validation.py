@@ -799,7 +799,10 @@ def _validate_specialist_research(
     return violations
 
 
-def validate_research_pack(data: Dict[str, Any]) -> List[str]:
+def validate_research_pack(
+    data: Dict[str, Any],
+    research_adapter: Optional[Dict[str, Any]] = None,
+) -> List[str]:
     """
     Valida el contrato ResearchPack (B1-C17).
     Debe separar hechos, interpretaciones e hipótesis.
@@ -817,6 +820,13 @@ def validate_research_pack(data: Dict[str, Any]) -> List[str]:
     if len(source_ids) != len(set(source_ids)):
         violations.append("ResearchPack contiene source_id duplicados.")
     known_sources = set(source_ids)
+    if research_adapter is not None:
+        from src.core.research_adapter import validate_optional_research_adapter
+
+        violations.extend(
+            f"ResearchPack.research_adapter: {item}"
+            for item in validate_optional_research_adapter(research_adapter, known_sources)
+        )
     known_research_ids = {
         item.get("item_id")
         for category in (

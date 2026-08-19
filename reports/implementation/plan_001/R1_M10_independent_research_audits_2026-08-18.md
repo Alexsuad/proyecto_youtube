@@ -37,3 +37,9 @@ R1-M10 was limited to the technical representation and controlled validation of 
 The contract and controlled fixtures do not demonstrate real producer/auditor operation. Fidelity criteria and functional audit judgments remain pending SCRIPT_PRODUCT. This evidence supports technical review only and does not establish operational demonstration, functional approval, product readiness, or authorization for product use.
 
 The audit envelope repeats the correction-route shape because the repository schema resolver does not currently resolve external schema references; actual route validation delegates to the existing `correction_routing_policy.json`. This is a non-material technical debt, not a second routing policy.
+
+## Corrección posterior a auditoría
+
+Se detectó posteriormente un gap de independencia en `MULTIPLE_PRODUCER_RUNS`. Se corrigió verificando `auditor.run_id` contra los `producer_run_id` reales de los artefactos. Se añadió regresión adversarial.
+
+La corrección fue verificada de forma externa e independiente: `MATERIAL-1: VERIFIED_FIXED`.

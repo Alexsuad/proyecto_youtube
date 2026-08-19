@@ -84,6 +84,22 @@ def test_multiple_producer_runs_follow_canonical_b5_pattern():
     assert validate_independent_research_audit(data) == []
 
 
+def test_multiple_producer_auditor_sharing_a_producer_run_is_rejected():
+    data = _audit(
+        producer={"actor_id": "MIXED_PRODUCER_ACTORS", "run_id": "MULTIPLE_PRODUCER_RUNS"},
+        audited_artifacts=[
+            {"artifact_id": "WORK-DOSSIER-1", "checksum": "a" * 64, "producer_run_id": "RUN-P1"},
+            {"artifact_id": "CLAIMS-1", "checksum": "b" * 64, "producer_run_id": "RUN-P2"},
+        ],
+        auditor={"actor_id": "AUDITOR-1", "run_id": "RUN-P1"},
+        defects=[],
+        correction_routes=[],
+        decision="PASS",
+    )
+    violations = validate_independent_research_audit(data)
+    assert "AUDITOR_EQUALS_PRODUCER_RUN" in violations
+
+
 def test_declared_single_producer_must_match_all_audited_artifacts():
     data = _audit(audited_artifacts=[{"artifact_id": "WORK-DOSSIER-1", "checksum": "a" * 64, "producer_run_id": "RUN-OTHER"}])
     assert "AUDITED_ARTIFACT_PRODUCER_RUN_MISMATCH" in validate_independent_research_audit(data)

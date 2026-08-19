@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/source_grounded_research_adapter.json",
+  "title": "SourceGroundedResearchAdapter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "adapter_id",
+    "contract_version",
+    "provider",
+    "availability",
+    "source_refs",
+    "findings",
+    "limitations",
+    "canonicality",
+    "veracity_authority",
+    "gate_behavior",
+    "decision_authority"
+  ],
+  "properties": {
+    "adapter_id": {"type": "string", "minLength": 1},
+    "contract_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "provider": {"type": "string", "minLength": 1},
+    "availability": {"enum": ["AVAILABLE", "UNAVAILABLE"]},
+    "source_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["finding_id", "statement", "evidence_refs", "status"],
+        "properties": {
+          "finding_id": {"type": "string", "minLength": 1},
+          "statement": {"type": "string", "minLength": 1},
+          "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "status": {"enum": ["SUPPORTED", "LIMITED", "UNRESOLVED"]}
+        }
+      }
+    },
+    "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "canonicality": {"const": "NOT_CANONICAL_MEMORY"},
+    "veracity_authority": {"const": "NOT_VERACITY_AUTHORITY"},
+    "gate_behavior": {"const": "NOT_REQUIRED_GATE"},
+    "decision_authority": {"const": "SCRIPT_PRODUCT"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"availability": {"const": "UNAVAILABLE"}}, "required": ["availability"]},
+      "then": {"properties": {"source_refs": {"maxItems": 0}, "findings": {"maxItems": 0}}}
+    },
+    {
+      "if": {"properties": {"availability": {"const": "AVAILABLE"}}, "required": ["availability"]},
+      "then": {"properties": {"source_refs": {"minItems": 1}}}
+    }
+  ]
+}
