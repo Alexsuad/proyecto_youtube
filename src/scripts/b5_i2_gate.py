@@ -8,9 +8,17 @@ import re
 from pathlib import Path
 from typing import Any
 
-from src.ai.manifest import canonical_json, manifest_checksum as _shared_manifest_checksum
+from src.ai.manifest import canonical_json, file_checksum, manifest_checksum as _shared_manifest_checksum
 
-from src.core.contract_validation import validate_against_schema, validate_research_pack, validate_research_stop_decision
+from src.core.contract_validation import (
+    validate_against_schema,
+    validate_claims_ledger,
+    validate_research_pack,
+    validate_research_stop_decision,
+    validate_work_lifecycle,
+    validate_work_research_dossier,
+)
+from src.core.research_audit import resolve_correction_routes, validate_independent_research_audit
 from src.scripts.channel_intelligence import evaluate_topic_belonging_gate, validate_assessment, validate_decision, validate_topic_input
 from src.core.gate_result import GateResult
 from src.core.gate_runtime import run_gate
@@ -65,6 +73,91 @@ def load(path: Path) -> dict:
 
 def _as_paths(analysis: Path | list[Path]) -> list[Path]:
     return [analysis] if isinstance(analysis, Path) else analysis
+
+
+def _canonical_value_checksum(value: Any) -> str:
+    return hashlib.sha256(canonical_json(value)).hexdigest()
+
+
+def _r1_artifact_index(
+    claims_ledger: dict[str, Any] | None,
+    lifecycle: dict[str, Any] | None,
+    dossiers: list[dict[str, Any]] | None,
+    analyses: list[dict[str, Any]],
+    artifact_paths: dict[str, Path] | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Indexa los artefactos R1 reales por las referencias del registry canónico."""
+    index: dict[str, dict[str, Any]] = {}
+
+    def add(kind: str, artifact_id: str | None, value: Any) -> None:
+        if artifact_id:
+            artifact_ref = f"{kind}:{artifact_id}"
+            source_path = (artifact_paths or {}).get(artifact_ref)
+            index[artifact_ref] = {
+                "checksum": file_checksum(source_path) if source_path is not None and source_path.exists() else None,
+                "version": value.get("artifact_version") or value.get("dossier_version") or value.get("lifecycle_version") or value.get("script_version"),
+            }
+
+    add("claims_ledger", claims_ledger.get("ledger_id") if claims_ledger else None, claims_ledger)
+    add("work_lifecycle", lifecycle.get("lifecycle_id") if lifecycle else None, lifecycle)
+    for dossier in dossiers or []:
+        add("work_research_dossier", dossier.get("dossier_id"), dossier)
+    for analysis in analyses:
+        add("analysis", analysis.get("analysis_id"), analysis)
+    return index
+
+
+def _validate_independent_audit_bindings(
+    audit: dict[str, Any],
+    canonical_artifacts: dict[str, dict[str, Any]],
+    execution_registry: dict[str, Any],
+) -> list[str]:
+    """Binds IRA-7 rows to the exact artifact and producer output in the registry."""
+    violations: list[str] = []
+    registry_outputs: dict[str, list[dict[str, str]]] = {}
+    for run in execution_registry.get("runs", []):
+        if not isinstance(run, dict):
+            continue
+        run_id = str(run.get("run_id") or "")
+        for output in run.get("outputs", []):
+            if not isinstance(output, dict):
+                continue
+            artifact_ref = output.get("artifact_ref") or f"{output.get('artifact_kind', '')}:{output.get('artifact_id', '')}"
+            if artifact_ref:
+                registry_outputs.setdefault(artifact_ref, []).append(
+                    {"run_id": run_id, "checksum": str(output.get("checksum") or "")}
+                )
+
+    for audited in audit.get("audited_artifacts", []):
+        artifact_ref = str(audited.get("artifact_id") or "")
+        expected = canonical_artifacts.get(artifact_ref)
+        if expected is None:
+            violations.append(f"AUDITED_ARTIFACT_NOT_IN_CLOSURE:{artifact_ref}")
+            continue
+        if expected["checksum"] is None:
+            violations.append(f"AUDITED_ARTIFACT_SOURCE_MISSING:{artifact_ref}")
+            continue
+        if audited.get("checksum") != expected["checksum"]:
+            violations.append(f"AUDITED_ARTIFACT_CHECKSUM_MISMATCH:{artifact_ref}")
+        outputs = registry_outputs.get(artifact_ref, [])
+        if not outputs:
+            violations.append(f"AUDITED_ARTIFACT_PROVENANCE_MISSING:{artifact_ref}")
+            continue
+        exact_tuple = any(
+            item["run_id"] == audited.get("producer_run_id")
+            and item["checksum"] == audited.get("checksum") == expected["checksum"]
+            for item in outputs
+        )
+        if not exact_tuple:
+            if not any(item["checksum"] == audited.get("checksum") for item in outputs):
+                violations.append(f"AUDITED_ARTIFACT_REGISTRY_CHECKSUM_MISMATCH:{artifact_ref}")
+            if not any(
+                item["run_id"] == audited.get("producer_run_id")
+                and item["checksum"] == audited.get("checksum")
+                for item in outputs
+            ):
+                violations.append(f"AUDITED_ARTIFACT_PRODUCER_RUN_MISMATCH:{artifact_ref}")
+    return sorted(set(violations))
 
 
 def _expected_constraints(evidence: dict) -> set[str]:
@@ -357,6 +450,10 @@ def evaluate(
     topic_belonging_input: dict[str, Any] | None = None,
     topic_belonging_assessment: dict[str, Any] | None = None,
     research_dossier: dict[str, Any] | None = None,
+    research_dossiers: list[dict[str, Any]] | None = None,
+    claims_ledger: dict[str, Any] | None = None,
+    independent_research_audit: dict[str, Any] | None = None,
+    r1_artifact_paths: dict[str, Path] | None = None,
 ) -> GateResult:
     analysis_paths = _as_paths(analysis)
     paths = list(b5_i1.values()) + analysis_paths + [curation, thesis, script_promise, b5_i2_audit, execution_registry]
@@ -427,6 +524,95 @@ def evaluate(
 
     brief, research, report, audit = data["brief"], data["research"], data["evidence"], data["audit"]
     if require_research_closure:
+        missing_r1_artifacts = {
+            "ClaimsLedger": claims_ledger,
+            "WorkLifecycle": work_lifecycle,
+            "WorkResearchDossier": research_dossiers,
+            "IndependentResearchAudit": independent_research_audit,
+        }
+        for artifact_name, artifact in missing_r1_artifacts.items():
+            if artifact is None or artifact == []:
+                blocking_violations.append(f"B5-I2 closure requires canonical {artifact_name}.")
+        if claims_ledger is not None:
+            violations.extend(f"claims_ledger: {item}" for item in validate_claims_ledger(claims_ledger))
+        violations.extend(
+            f"execution_registry: {item}"
+            for item in validate_against_schema(data["execution_registry"], "execution_provenance_registry")
+        )
+        dossier_artifacts: dict[str, dict[str, Any]] = {}
+        if research_dossiers is not None and claims_ledger is not None:
+            dossier_ids = [item.get("dossier_id") for item in research_dossiers if isinstance(item, dict)]
+            if len(dossier_ids) != len(set(dossier_ids)):
+                violations.append("WorkResearchDossier collection no permite dossier_id duplicados.")
+            for dossier in research_dossiers:
+                if not isinstance(dossier, dict):
+                    violations.append("WorkResearchDossier collection contiene un elemento no objeto.")
+                    continue
+                material_id = (dossier.get("work") or {}).get("material_id") if isinstance(dossier.get("work"), dict) else None
+                dossier_artifacts[dossier.get("dossier_id", "")] = {
+                    "claims_ledger": claims_ledger,
+                    "narrative_analyses": [
+                        analysis for analysis in data["analyses"]
+                        if analysis.get("material_id") == material_id
+                    ],
+                }
+                violations.extend(
+                    f"research_dossier[{dossier.get('dossier_id')}]: {item}"
+                    for item in validate_work_research_dossier(
+                        dossier,
+                        claims_ledger=claims_ledger,
+                        narrative_analyses=dossier_artifacts[dossier.get("dossier_id", "")]["narrative_analyses"],
+                    )
+                )
+        if work_lifecycle is not None:
+            required_dossier_refs = {
+                work.get("dossier_ref")
+                for work in work_lifecycle.get("works", [])
+                if isinstance(work, dict) and work.get("state") in {"FINALIST_WORK", "FINAL_SELECTED_WORK"}
+                and work.get("dossier_ref")
+            }
+            provided_dossier_refs = {
+                dossier.get("dossier_id")
+                for dossier in (research_dossiers or [])
+                if isinstance(dossier, dict) and dossier.get("dossier_id")
+            }
+            for dossier_ref in sorted(required_dossier_refs - provided_dossier_refs):
+                blocking_violations.append(f"WorkLifecycle requiere dossier ausente: {dossier_ref}")
+            for item in validate_work_lifecycle(
+                work_lifecycle,
+                dossiers=research_dossiers,
+                material_curation=data["curation"],
+                dossier_artifacts=dossier_artifacts,
+            ):
+                target = blocking_violations if "FUNCTIONAL_DECISION_REQUIRED" in item else violations
+                target.append(f"work_lifecycle: {item}")
+        if independent_research_audit is not None:
+            independent_audit_violations = [
+                f"independent_research_audit: {item}"
+                for item in validate_independent_research_audit(independent_research_audit)
+            ]
+            violations.extend(independent_audit_violations)
+            if not independent_audit_violations:
+                evidence["independent_research_audit_correction_routes"] = resolve_correction_routes(
+                    independent_research_audit
+                )
+                canonical_artifacts = _r1_artifact_index(
+                    claims_ledger,
+                    work_lifecycle,
+                    research_dossiers,
+                    data["analyses"],
+                    r1_artifact_paths,
+                )
+                violations.extend(
+                    f"independent_research_audit: {item}"
+                    for item in _validate_independent_audit_bindings(
+                        independent_research_audit,
+                        canonical_artifacts,
+                        data["execution_registry"],
+                    )
+                )
+            if independent_research_audit.get("episode_id") != research.get("episode_id"):
+                violations.append("independent_research_audit.episode_id no coincide con ResearchPack")
         stage = research.get("research_pack_stage")
         if stage not in {"RESEARCH_REVIEW_PENDING", "RESEARCH_COMPLETE"}:
             blocking_violations.append("B5-I2 closure requires research_pack_stage=RESEARCH_REVIEW_PENDING o RESEARCH_COMPLETE.")
@@ -871,6 +1057,10 @@ def main() -> int:
     parser.add_argument("--ep-id")
     parser.add_argument("--output-root")
     parser.add_argument("--research-stop-decision", action="append", default=[])
+    parser.add_argument("--claims-ledger", required=True)
+    parser.add_argument("--work-lifecycle", required=True)
+    parser.add_argument("--research-dossier", required=True, action="append")
+    parser.add_argument("--independent-research-audit", required=True)
     args = parser.parse_args()
     b5_i1 = {
         "brief": Path(args.brief),
@@ -878,6 +1068,22 @@ def main() -> int:
         "evidence": Path(args.evidence),
         "audit": Path(args.audit),
         "provisional": Path(args.provisional),
+    }
+    claims_ledger = load(Path(args.claims_ledger))
+    work_lifecycle = load(Path(args.work_lifecycle))
+    research_dossiers = [load(Path(path)) for path in args.research_dossier]
+    analyses = [load(Path(path)) for path in args.analysis]
+    r1_artifact_paths = {
+        f"claims_ledger:{claims_ledger['ledger_id']}": Path(args.claims_ledger),
+        f"work_lifecycle:{work_lifecycle['lifecycle_id']}": Path(args.work_lifecycle),
+        **{
+            f"work_research_dossier:{dossier['dossier_id']}": Path(path)
+            for dossier, path in zip(research_dossiers, args.research_dossier)
+        },
+        **{
+            f"analysis:{analysis['analysis_id']}": Path(path)
+            for analysis, path in zip(analyses, args.analysis)
+        },
     }
     return run_gate(
         lambda: evaluate(
@@ -891,6 +1097,11 @@ def main() -> int:
             args.ep_id or Path(args.curation).parent.name,
             aggregate_decisions=[load(Path(path)) for path in args.research_stop_decision],
             require_research_closure=True,
+            claims_ledger=claims_ledger,
+            work_lifecycle=work_lifecycle,
+            research_dossiers=research_dossiers,
+            independent_research_audit=load(Path(args.independent_research_audit)),
+            r1_artifact_paths=r1_artifact_paths,
         ),
         output_root=args.output_root,
     )

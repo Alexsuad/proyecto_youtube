@@ -33,6 +33,9 @@ PRODUCER_CASES = [
     ("CURATION_PRODUCER", "curation", "material_curation"),
     ("THESIS_PRODUCER", "refined_thesis", "refined_thesis"),
     ("SCRIPT_PROMISE_PRODUCER", "script_promise", "editorial_script_promise"),
+    ("SCRIPT_PRODUCT_PRODUCER", "claims_ledger", "claims_ledger"),
+    ("SCRIPT_PRODUCT_PRODUCER", "work_lifecycle", "work_lifecycle"),
+    ("SCRIPT_PRODUCT_PRODUCER", "work_research_dossier", "work_research_dossier"),
 ]
 
 
@@ -221,7 +224,7 @@ def _producer_output(schema_name: str) -> dict:
 
 
 def _output_id(kind: str) -> str:
-    return {"analysis": "A-1", "curation": "C-1", "refined_thesis": "T-1", "script_promise": "SP-1"}[kind]
+    return {"analysis": "A-1", "curation": "C-1", "refined_thesis": "T-1", "script_promise": "SP-1", "claims_ledger": "CL-001", "work_lifecycle": "WL-001", "work_research_dossier": "WRD-001"}[kind]
 
 
 def _output_file(tmp_path: Path, kind: str, payload: dict) -> Path:
@@ -383,6 +386,41 @@ def test_runtime_persists_real_producer_provenance(tmp_path: Path, role: str, ar
     assert run["outputs"][0]["artifact_kind"] == artifact_kind
     assert run["outputs"][0]["artifact_id"] == _output_id(artifact_kind)
     assert run["outputs"][0]["artifact_path"] == str(output_path)
+
+
+def test_registry_checksum_follows_physical_json_bytes_across_indentation(tmp_path: Path) -> None:
+    payload = _producer_output("claims_ledger")
+    compact = _output_file(tmp_path, "claims_ledger_compact", payload)
+    indented = _output_file(tmp_path, "claims_ledger_indented", payload)
+    indented.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    def persist(output_path: Path, registry_path: Path, run_id: str) -> str:
+        request = ExecutionRequest(
+            capability_id="producer",
+            skill_id="skill_claims_ledger",
+            skill_version="1.0.0",
+            input_artifacts=[InputArtifact("research", "R-1", compact, "RUN-R")],
+            output_schema="claims_ledger",
+            execution_mode="mock",
+            provider="mock",
+            mock_output=payload,
+            episode_id="EP-1",
+            role="SCRIPT_PRODUCT_PRODUCER",
+            output_artifact_kind="claims_ledger",
+            output_artifact_id="CL-001",
+            output_artifact_path=output_path,
+            output_artifact_ref="claims_ledger:CL-001",
+        )
+        result = execute(request)
+        result.run_id = run_id
+        persist_execution_result(registry_path, result, request, execution_mode="SYNTHETIC")
+        return json.loads(registry_path.read_text(encoding="utf-8"))["runs"][0]["outputs"][0]["checksum"]
+
+    compact_checksum = persist(compact, tmp_path / "compact_registry.json", "RUN-COMPACT")
+    indented_checksum = persist(indented, tmp_path / "indented_registry.json", "RUN-INDENTED")
+    assert compact_checksum == hashlib.sha256(compact.read_bytes()).hexdigest()
+    assert indented_checksum == hashlib.sha256(indented.read_bytes()).hexdigest()
+    assert compact_checksum != indented_checksum
 
 
 def test_incompatible_role_artifact_is_rejected(tmp_path: Path) -> None:

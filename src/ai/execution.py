@@ -22,11 +22,15 @@ REAL_EXTERNAL_PROVIDERS = {"ollama", "deepseek", "openai_compatible"}
 TECHNICAL_HARNESS_PROVIDERS = {"mock", "agent_handoff", "agent_executor"}
 
 B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
-    "ANALYSIS_PRODUCER": "analysis",
-    "CURATION_PRODUCER": "curation",
-    "THESIS_PRODUCER": "refined_thesis",
-    "SCRIPT_PROMISE_PRODUCER": "script_promise",
-    "INDEPENDENT_EDITORIAL_AUDITOR": "semantic_audit",
+    "ANALYSIS_PRODUCER": {"analysis"},
+    "CURATION_PRODUCER": {"curation"},
+    "THESIS_PRODUCER": {"refined_thesis"},
+    "SCRIPT_PROMISE_PRODUCER": {"script_promise"},
+    "INDEPENDENT_EDITORIAL_AUDITOR": {"semantic_audit"},
+    "SCRIPT_PRODUCT_PRODUCER": {
+        "analysis", "curation", "refined_thesis", "script_promise",
+        "claims_ledger", "work_lifecycle", "work_research_dossier",
+    },
 }
 EDITORIAL_RUNTIME_FIELDS = {
     "episode_id",

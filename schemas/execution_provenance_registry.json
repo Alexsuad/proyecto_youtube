@@ -376,7 +376,10 @@
             "youtube_adaptation_b5_i2_package",
             "early_packaging_hypothesis",
             "youtube_adaptation_review",
-            "execution_smoke_report"
+            "execution_smoke_report",
+            "claims_ledger",
+            "work_lifecycle",
+            "work_research_dossier"
           ]
         },
         "artifact_id": {

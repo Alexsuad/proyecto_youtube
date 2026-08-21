@@ -21,7 +21,10 @@ B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
     "THESIS_PRODUCER": {"refined_thesis"},
     "SCRIPT_PROMISE_PRODUCER": {"script_promise"},
     "INDEPENDENT_EDITORIAL_AUDITOR": {"semantic_audit"},
-    "SCRIPT_PRODUCT_PRODUCER": {"analysis", "curation", "refined_thesis", "script_promise"},
+    "SCRIPT_PRODUCT_PRODUCER": {
+        "analysis", "curation", "refined_thesis", "script_promise",
+        "claims_ledger", "work_lifecycle", "work_research_dossier",
+    },
     "SCRIPT_PRODUCT_AUDITOR": {"semantic_audit"},
     "YOUTUBE_ADAPTATION_PRODUCER": {"early_packaging_hypothesis", "youtube_adaptation_b5_i2_package"},
     "YOUTUBE_ADAPTATION_AUDITOR": {"youtube_adaptation_review"},
@@ -35,6 +38,9 @@ B5_I2_ARTIFACT_KINDS = {
     "early_packaging_hypothesis",
     "youtube_adaptation_b5_i2_package",
     "youtube_adaptation_review",
+    "claims_ledger",
+    "work_lifecycle",
+    "work_research_dossier",
 }
 
 

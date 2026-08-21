@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
 
 from src.ai.manifest import canonical_json
 from src.core.status import GateStatus
-from src.scripts.b5_i2_gate import _canonical_manifest_checksum, evaluate
+from src.scripts.b5_i2_gate import _canonical_manifest_checksum, _canonical_value_checksum, evaluate
+from tests.core.test_work_lifecycle import _screened_pack, _transition
 from tests.harness.test_b5_i1_editorial_input import _valid_thesis, valid_brief, valid_report, valid_research
 
 
@@ -235,12 +237,12 @@ def _artifact_checksum_rows(paths: dict[str, Path]) -> list[dict]:
             "producer_run_id": RUN_ANALYSIS,
         }
     ]
-    if "analysis2" in paths:
+    for key in sorted(key for key in paths if key.startswith("analysis") and key != "analysis"):
         rows.append(
             {
                 "artifact_kind": "analysis",
-                "artifact_id": _read(paths["analysis2"])["analysis_id"],
-                "checksum": _digest(paths["analysis2"]),
+                "artifact_id": _read(paths[key])["analysis_id"],
+                "checksum": _digest(paths[key]),
                 "producer_run_id": RUN_ANALYSIS_2,
             }
         )
@@ -794,6 +796,372 @@ def test_research_closure_mode_requires_explicit_stage_and_components(tmp_path: 
     assert result.status is GateStatus.BLOCKED
     assert any("research_pack_stage" in item for item in result.violations)
     assert any("ResearchStopDecision" in item for item in result.violations)
+    assert {
+        "B5-I2 closure requires canonical ClaimsLedger.",
+        "B5-I2 closure requires canonical WorkLifecycle.",
+        "B5-I2 closure requires canonical WorkResearchDossier.",
+        "B5-I2 closure requires canonical IndependentResearchAudit.",
+    }.issubset(set(result.violations))
+
+
+def _integrated_independent_audit(
+    claims_ledger: dict,
+    lifecycle: dict,
+    dossiers: list[dict],
+    analyses: list[dict],
+    artifact_paths: dict[str, Path] | None = None,
+) -> dict:
+    values = [claims_ledger, lifecycle, *dossiers, *analyses]
+    refs = [
+        "claims_ledger:CL-1", "work_lifecycle:WL-001",
+        *[f"work_research_dossier:{dossier['dossier_id']}" for dossier in dossiers],
+        *[f"analysis:{analysis['analysis_id']}" for analysis in analyses],
+    ]
+    return {
+        "audit_id": "IRA-R1-INTEGRATED", "audit_version": "1.0.0", "episode_id": EP,
+        "audit_type": "RESEARCH_PACKAGE",
+        "audited_artifacts": [
+            {"artifact_id": ref, "checksum": _digest(artifact_paths[ref]) if artifact_paths and ref in artifact_paths else _canonical_value_checksum(value), "producer_run_id": "RUN-R1-PRODUCER"}
+            for ref, value in zip(refs, values)
+        ],
+        "producer": {"actor_id": "R1-PRODUCER", "run_id": "RUN-R1-PRODUCER"},
+        "auditor": {"actor_id": "R1-AUDITOR", "run_id": "RUN-R1-AUDITOR"},
+        "auditor_write_scope": "AUDIT_ONLY", "independence_result": "PASS",
+        "findings": [], "evidence_refs": ["evidence:R1"], "limitations": [], "defects": [],
+        "correction_routes": [], "decision": "PASS", "created_at": "2026-08-21T00:00:00Z",
+    }
+
+
+def test_b5_i2_integrates_three_final_works_dossiers_and_exact_independent_audit(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    lifecycle, dossiers, claims_ledger, analyses, r1_artifact_paths = _integrated_r1_closure(paths)
+    independent_audit = _integrated_independent_audit(claims_ledger, lifecycle, dossiers, analyses, r1_artifact_paths)
+    research = _read(paths["research"])
+    component = {
+        "decision_id": "RSD-1", "decision_version": "1.0.0", "subject_kind": "MATERIAL_CLAIM", "subject_ref": "C-1",
+        "intended_use": "CENTRAL_CLAIM_SUPPORT", "evidence_refs": ["S-1"], "claim_decision": "CLAIM_ALLOWED",
+        "sufficiency_status": "SUFFICIENT_FOR_INTENDED_USE", "limitations": [], "pending_matters": [],
+        "unresolved_material_contradiction_refs": [], "invalidators": ["Claim change"],
+        "invalidator_codes": ["CLAIM_OR_SCOPE_CHANGED"], "return_route": "Revisar.", "return_route_code": "AUTHORIZE_INTENDED_USE_ONLY", "decision_basis": "Fixture.",
+    }
+    aggregate = {**component, "decision_id": "RSD-AGG-1", "subject_kind": "AGGREGATE_RESEARCH_PACK", "subject_ref": research["research_id"], "claim_decision": None, "component_decision_refs": ["RSD-1"], "required_component_decision_refs": ["RSD-1"]}
+    result = evaluate(
+        {key: paths[key] for key in ("brief", "research", "evidence", "audit", "provisional")},
+        [paths["analysis"], paths["analysis2"], paths["analysis3"]], paths["curation"], paths["thesis"], paths["script_promise"],
+        paths["b5_i2_audit"], paths["execution_registry"], EP,
+        aggregate_decisions=[aggregate, component], require_research_closure=True,
+        claims_ledger=claims_ledger, work_lifecycle=lifecycle, research_dossiers=dossiers,
+        independent_research_audit=independent_audit, r1_artifact_paths=r1_artifact_paths,
+    )
+    assert result.status is GateStatus.BLOCKED, "\n".join(result.violations)
+    assert not any("AUDITED_ARTIFACT" in item for item in result.violations)
+    assert not any(
+        item.startswith(("claims_ledger:", "research_dossier:"))
+        or (item.startswith("work_lifecycle:") and "FUNCTIONAL_DECISION_REQUIRED" not in item)
+        for item in result.violations
+    )
+    assert any("FUNCTIONAL_DECISION_REQUIRED" in item for item in result.violations)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected"),
+    [
+        ("missing_dossier", "WorkLifecycle requiere dossier ausente"),
+        ("wrong_work_dossier", "WorkLifecycle y WorkResearchDossier difieren"),
+        ("audit_checksum", "AUDITED_ARTIFACT_CHECKSUM_MISMATCH"),
+        ("audit_foreign_artifact", "AUDITED_ARTIFACT_NOT_IN_CLOSURE"),
+        ("audit_not_independent", "AUDITOR_EQUALS_PRODUCER_RUN"),
+    ],
+)
+def test_b5_i2_r1_collection_and_audit_bindings_fail_closed(tmp_path: Path, mutation: str, expected: str) -> None:
+    paths = _write_case(tmp_path)
+    lifecycle, dossiers, claims_ledger, analyses, r1_artifact_paths = _integrated_r1_closure(paths)
+    independent_audit = _integrated_independent_audit(claims_ledger, lifecycle, dossiers, analyses, r1_artifact_paths)
+    if mutation == "missing_dossier":
+        dossiers = dossiers[:2]
+    elif mutation == "wrong_work_dossier":
+        dossiers[0]["work"]["material_id"] = "W9"
+    elif mutation == "audit_checksum":
+        independent_audit["audited_artifacts"][0]["checksum"] = "a" * 64
+    elif mutation == "audit_foreign_artifact":
+        independent_audit["audited_artifacts"][0]["artifact_id"] = "work_research_dossier:D-FOREIGN"
+    elif mutation == "audit_not_independent":
+        independent_audit["auditor"]["run_id"] = "RUN-R1-PRODUCER"
+    result = evaluate(
+        {key: paths[key] for key in ("brief", "research", "evidence", "audit", "provisional")},
+        [paths["analysis"], paths["analysis2"], paths["analysis3"]], paths["curation"], paths["thesis"], paths["script_promise"],
+        paths["b5_i2_audit"], paths["execution_registry"], EP,
+        aggregate_decisions=[], require_research_closure=True,
+        claims_ledger=claims_ledger, work_lifecycle=lifecycle, research_dossiers=dossiers,
+        independent_research_audit=independent_audit, r1_artifact_paths=r1_artifact_paths,
+    )
+    assert result.status in {GateStatus.BLOCKED, GateStatus.FAIL}
+    assert any(expected in item for item in result.violations)
+
+
+def test_r1_audit_binding_accepts_exact_current_tuple_with_historical_registry_output(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    lifecycle, dossiers, claims_ledger, analyses, r1_artifact_paths = _integrated_r1_closure(paths)
+    independent_audit = _integrated_independent_audit(claims_ledger, lifecycle, dossiers, analyses, r1_artifact_paths)
+    registry = _read(paths["execution_registry"])
+    historical_run = deepcopy(registry["runs"][-1])
+    historical_run["run_id"] = "RUN-R1-PRODUCER-HISTORICAL"
+    historical_run["outputs"] = [{
+        "artifact_kind": "claims_ledger",
+        "artifact_id": "CL-1",
+        "artifact_ref": "claims_ledger:CL-1",
+        "artifact_path": str(r1_artifact_paths["claims_ledger:CL-1"]),
+        "checksum": "b" * 64,
+    }]
+    historical_run["output_artifact_ids"] = ["claims_ledger:CL-1"]
+    historical_run["output_versions"] = ["0.9.0"]
+    historical_run["output_checksums"] = ["b" * 64]
+    registry["runs"].append(historical_run)
+    _put(paths["execution_registry"], registry)
+    result = evaluate(
+        {key: paths[key] for key in ("brief", "research", "evidence", "audit", "provisional")},
+        [paths["analysis"], paths["analysis2"], paths["analysis3"]], paths["curation"], paths["thesis"], paths["script_promise"],
+        paths["b5_i2_audit"], paths["execution_registry"], EP, aggregate_decisions=[], require_research_closure=True,
+        claims_ledger=claims_ledger, work_lifecycle=lifecycle, research_dossiers=dossiers,
+        independent_research_audit=independent_audit, r1_artifact_paths=r1_artifact_paths,
+    )
+    assert result.status is GateStatus.BLOCKED
+    assert not any("AUDITED_ARTIFACT_REGISTRY_CHECKSUM_MISMATCH:claims_ledger:CL-1" in item for item in result.violations)
+    assert not any("AUDITED_ARTIFACT_PRODUCER_RUN_MISMATCH:claims_ledger:CL-1" in item for item in result.violations)
+
+
+def test_invalid_independent_research_audit_is_not_ignored_by_b5_i2_gate(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    independent_audit = {
+        "audit_id": "IRA-1", "audit_version": "1.0.0", "episode_id": EP,
+        "audit_type": "RESEARCH_PACKAGE",
+        "audited_artifacts": [{"artifact_id": "D-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}],
+        "producer": {"actor_id": "P-1", "run_id": "RUN-P"},
+        "auditor": {"actor_id": "P-1", "run_id": "RUN-P"},
+        "auditor_write_scope": "AUDIT_ONLY", "independence_result": "PASS",
+        "findings": [], "evidence_refs": [], "limitations": [], "defects": [],
+        "correction_routes": [], "decision": "PASS", "created_at": "2026-08-21T00:00:00Z",
+    }
+    result = evaluate(
+        {key: paths[key] for key in ("brief", "research", "evidence", "audit", "provisional")},
+        [paths["analysis"]], paths["curation"], paths["thesis"], paths["script_promise"],
+        paths["b5_i2_audit"], paths["execution_registry"], EP,
+        require_research_closure=True,
+        independent_research_audit=independent_audit,
+    )
+    assert result.status is GateStatus.BLOCKED
+    assert "independent_research_audit: AUDITOR_EQUALS_PRODUCER_RUN" in result.violations
+
+
+def _integrated_r1_closure(paths: dict[str, Path]) -> tuple[dict, list[dict], dict, list[dict], dict[str, Path]]:
+    """Construye tres obras finales con todos los artefactos R1 ligados."""
+    research = _read(paths["research"])
+    research["research_pack_stage"] = "RESEARCH_COMPLETE"
+    research["aggregate_research_stop_decision_ref"] = "RSD-AGG-1"
+    research["required_component_decision_refs"] = ["RSD-1"]
+    base_evidence = deepcopy(research["narrative_evidence"][0])
+    for work_id in ("W1", "W2", "W3"):
+        entry = deepcopy(base_evidence)
+        entry.update({"item_id": f"N-{work_id}", "material_id": work_id, "statement": f"Evidencia {work_id}."})
+        research["narrative_evidence"].append(entry)
+    _put(paths["research"], research)
+    b5_i1_audit = _read(paths["audit"])
+    b5_i1_audit["research_checksum"] = _digest(paths["research"])
+    _put(paths["audit"], b5_i1_audit)
+
+    analyses = []
+    base_analysis = _read(paths["analysis"])
+    for work_id in ("W1", "W2", "W3"):
+        analysis = deepcopy(base_analysis)
+        analysis.update({
+            "analysis_id": f"A-{work_id}",
+            "artifact_version": "1.0.0",
+            "material_id": work_id,
+            "material_checksum": _material_checksum_from_research(research, work_id),
+        })
+        analysis["findings"][0]["finding_id"] = f"F-{work_id}"
+        analysis["findings"][0]["narrative_evidence_refs"] = [f"N-{work_id}"]
+        analysis["supporting_evidence"] = [f"F-{work_id}"]
+        key = "analysis" if work_id == "W1" else f"analysis{int(work_id[-1])}"
+        paths[key] = _put(paths["analysis"].parent / f"{key}.json", analysis)
+        analyses.append(analysis)
+
+    lifecycle = _screened_pack()
+    lifecycle.update({"episode_id": EP, "research_id": "RP-001"})
+    selected_ids = ["W1", "W2", "W3"]
+    for work_id in selected_ids:
+        work = next(item for item in lifecycle["works"] if item["work_id"] == work_id)
+        work.update({
+            "state": "FINAL_SELECTED_WORK",
+            "dossier_ref": f"D-{work_id}",
+            "differentiated_function_ref": f"function:{work_id}",
+            "comparative_decision_ref": f"comparison:{work_id}",
+        })
+        lifecycle["transitions"].append(_transition(work_id, "SCREENED_WORK", "FINALIST_WORK", transition_id=f"T-{work_id}-FINALIST"))
+        lifecycle["transitions"].append(_transition(work_id, "FINALIST_WORK", "FINAL_SELECTED_WORK", transition_id=f"T-{work_id}-SELECTED"))
+    lifecycle["final_selection"] = {
+        "selected_work_ids": selected_ids,
+        "format_policy_ref": "policies/script_product/main_episode_format_policy.md",
+        "range_status": "NORMAL",
+        "curation_ref": "C-1",
+        "exception": None,
+    }
+
+    curation = _read(paths["curation"])
+    curation.update({
+        "analysis_ids": [f"A-{work_id}" for work_id in selected_ids],
+        "selected_material_ids": selected_ids,
+        "selected_materials": selected_ids,
+        "exclusions": [],
+        "candidates": [
+            {**deepcopy(curation["candidates"][0]), "material_id": work_id, "selection_status": "SELECTED"}
+            for work_id in selected_ids
+        ],
+        "function_of_each_selected_material": [
+            {"material_id": work_id, "contribution": f"Función diferenciada {work_id}."}
+            for work_id in selected_ids
+        ],
+        "unique_contributions": [
+            {"material_id": work_id, "contribution": f"Aporte no sustituible {work_id}."}
+            for work_id in selected_ids
+        ],
+        "progression_evidence": [
+            {"material_id": work_id, "change_in_understanding": f"Cambio {work_id}.", "evidence_refs": [f"F-{work_id}"], "non_substitutability": f"Sin {work_id} falta una función."}
+            for work_id in selected_ids
+        ],
+    })
+    for restriction in curation["inherited_restrictions"]:
+        restriction["affected_material_ids"] = list(selected_ids)
+    _put(paths["curation"], curation)
+    thesis = _read(paths["thesis"])
+    thesis["analysis_ids"] = [f"A-{work_id}" for work_id in selected_ids]
+    thesis["supporting_evidence_refs"] = [f"F-{work_id}" for work_id in selected_ids]
+    thesis["counterevidence_refs"] = ["F-W1"]
+    thesis["material_contributions"] = [{"material_id": work_id, "contribution": f"Aporte {work_id}."} for work_id in selected_ids]
+    for dimension in thesis.get("refinement_dimensions", []):
+        dimension["evidence_refs"] = ["F-W1"]
+    _put(paths["thesis"], thesis)
+    promise = _read(paths["script_promise"])
+    promise["refined_thesis_checksum"] = _digest(paths["thesis"])
+    _put(paths["script_promise"], promise)
+    _refresh_b5_i2_audit(paths, provider_or_adapter="synthetic-fixture")
+    _refresh_execution_registry(paths, auditor_provider="synthetic-fixture")
+
+    claims_ledger = {
+        "ledger_id": "CL-1",
+        "script_version": "1.0.0",
+        "claims": [{
+            "claim_id": "C-1", "script_location": "B1", "claim_text": "Claim.", "claim_type": "FACT",
+            "source_refs": ["S-1"], "verification_status": "VERIFIED",
+            "materiality": {
+                "is_material": True, "activation_criteria": ["THESIS_DEPENDENCY"],
+                "non_trigger_examples": ["Fixture"], "invalidator_codes": ["NEW_MATERIAL_EVIDENCE"],
+                "return_route_code": "AUTHORIZE_INTENDED_USE_ONLY", "decision_ref": "DEC-1",
+            },
+        }],
+    }
+    claims_path = _put(paths["analysis"].parent / "claims_ledger.json", claims_ledger)
+    claims_checksum = _canonical_value_checksum(claims_ledger)
+    dossiers = []
+    dossier_paths: dict[str, Path] = {}
+    for analysis in analyses:
+        work_id = analysis["material_id"]
+        dossiers.append({
+            "dossier_id": f"D-{work_id}", "dossier_version": "1.0.0", "episode_id": EP,
+            "research_id": "RP-001", "evidence_report_id": "ER-001",
+            "work": {"material_id": work_id, "title": f"Obra {work_id}", "creator": "Autor", "consulted_representations": [{"representation_kind": "ORIGINAL_WORK", "edition_or_version": "fixture-1", "consulted_locator": f"fixture://{work_id}"}]},
+            "dossier_stage": "RESEARCH_REVIEW_PENDING", "pending_items": [], "confidence": "HIGH",
+            "analysis_references": [{"analysis_id": analysis["analysis_id"], "material_id": work_id, "artifact_version": "1.0.0", "artifact_checksum": _canonical_value_checksum(analysis)}],
+            "question_and_thesis_relation": {"central_question_ref": "question:EP-001", "provisional_thesis_ref": "TH-001", "demonstrates_analysis_ref": analysis["analysis_id"], "does_not_establish_analysis_ref": analysis["analysis_id"], "main_interpretation_analysis_ref": analysis["analysis_id"], "rival_interpretation_analysis_refs": [analysis["analysis_id"]]},
+            "claim_dispositions": {"claims_ledger_id": "CL-1", "claims_ledger_version": "1.0.0", "claims_ledger_checksum": claims_checksum, "authority_status": "REPRESENTATION_ONLY_IR4_PENDING", "candidate_allowed_claim_ids": ["C-1"], "candidate_limited_claim_ids": [], "candidate_blocked_claim_ids": []},
+            "overinterpretation_risk": {"level": "LOW", "rationale": "Fixture técnica."},
+            "candidate_editorial_function_analysis_ref": analysis["analysis_id"],
+            "locators": [{"analysis_id": analysis["analysis_id"], "locator": f"fixture://{work_id}/scene"}],
+            "work_use_sufficiency": {"intended_use": "B5_I2_CONTROLLED_HARNESS", "status": "IR7_FIDELITY_AUDIT_REQUIRED"},
+            "research_stop_decision_ref": "RSD-1",
+            "independent_fidelity_audit": {"audit_reference": None, "dependency": "FUNCTIONAL_DECISION_REQUIRED"},
+            "created_at": "2026-08-21T00:00:00Z",
+        })
+        dossier_paths[f"work_research_dossier:D-{work_id}"] = _put(paths["analysis"].parent / f"D-{work_id}.json", dossiers[-1])
+
+    lifecycle_path = _put(paths["analysis"].parent / "work_lifecycle.json", lifecycle)
+    r1_artifact_paths = {
+        "claims_ledger:CL-1": claims_path,
+        "work_lifecycle:WL-001": lifecycle_path,
+        **dossier_paths,
+        **{
+            f"analysis:{analysis['analysis_id']}": paths[key]
+            for key, analysis in zip(("analysis", "analysis2", "analysis3"), analyses)
+        },
+    }
+    r1_refs = [
+        ("claims_ledger:CL-1", claims_ledger, "RUN-R1-PRODUCER"),
+        ("work_lifecycle:WL-001", lifecycle, "RUN-R1-PRODUCER"),
+        *[(f"work_research_dossier:D-{work_id}", dossier, "RUN-R1-PRODUCER") for work_id, dossier in zip(selected_ids, dossiers)],
+        *[(f"analysis:A-{work_id}", analysis, "RUN-R1-PRODUCER") for work_id, analysis in zip(selected_ids, analyses)],
+    ]
+    registry = _read(paths["execution_registry"])
+    producer_run = deepcopy(registry["runs"][0])
+    producer_run["run_id"] = "RUN-R1-PRODUCER"
+    producer_run["outputs"] = [{"artifact_kind": ref.split(":", 1)[0], "artifact_id": ref.split(":", 1)[1], "artifact_ref": ref, "artifact_path": str(r1_artifact_paths[ref]), "checksum": _digest(r1_artifact_paths[ref])} for ref, value, _ in r1_refs]
+    producer_run["output_artifact_ids"] = [item["artifact_ref"] for item in producer_run["outputs"]]
+    producer_run["output_checksums"] = [item["checksum"] for item in producer_run["outputs"]]
+    producer_run["output_versions"] = ["1.0.0"] * len(producer_run["outputs"])
+    registry["runs"].append(producer_run)
+    _put(paths["execution_registry"], registry)
+    _refresh_b5_i2_audit(paths)
+    b5_i2_audit = _read(paths["b5_i2_audit"])
+    b5_i2_audit["audited_artifact_ids"] = [
+        *[f"analysis:A-{work_id}" for work_id in selected_ids],
+        "curation:C-1", "refined_thesis:T-1", "script_promise:SP-1",
+    ]
+    for finding in b5_i2_audit.get("findings", []):
+        anchored = finding.get("anchored_findings", [])
+        if finding.get("criterion") == "ANALYSIS_SPECIFICITY":
+            anchored = [deepcopy(anchored[0]) for _ in selected_ids] if anchored else []
+            for anchor, work_id in zip(anchored, selected_ids):
+                anchor.update({"artifact_kind": "analysis", "artifact_id": f"A-{work_id}", "artifact_field": "findings[0].statement"})
+        for anchor in anchored:
+            kind = anchor.get("artifact_kind")
+            if kind == "analysis":
+                if finding.get("criterion") != "ANALYSIS_SPECIFICITY":
+                    anchor["artifact_id"] = "A-W1"
+                anchor.update({"artifact_field": "findings[0].statement", "evaluated_excerpt": "La escena muestra una decisión condicionada por el miedo."})
+            elif kind == "curation":
+                anchor.update({"artifact_id": "C-1", "artifact_field": "sequence_rationale", "evaluated_excerpt": curation["sequence_rationale"]})
+            elif kind == "refined_thesis":
+                anchor.update({"artifact_id": "T-1", "artifact_field": "statement", "evaluated_excerpt": thesis["statement"]})
+            elif kind == "script_promise":
+                anchor.update({"artifact_id": "SP-1", "artifact_field": "editorial_promise", "evaluated_excerpt": promise["editorial_promise"]})
+            anchor["evidence_refs"] = ["N-W1"]
+            anchor["evidence_excerpts"] = [{"evidence_ref": "N-W1", "excerpt": "Evidencia W1."}]
+        finding["anchored_findings"] = anchored
+    _put(paths["b5_i2_audit"], b5_i2_audit)
+    _sync_auditor_run(paths)
+    return lifecycle, dossiers, claims_ledger, analyses, r1_artifact_paths
+
+
+def test_valid_independent_research_audit_routes_through_b5_i2_gate(tmp_path: Path) -> None:
+    paths = _write_case(tmp_path)
+    independent_audit = {
+        "audit_id": "IRA-2", "audit_version": "1.0.0", "episode_id": EP,
+        "audit_type": "RESEARCH_PACKAGE",
+        "audited_artifacts": [{"artifact_id": "D-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}],
+        "producer": {"actor_id": "P-1", "run_id": "RUN-P"},
+        "auditor": {"actor_id": "A-1", "run_id": "RUN-A"},
+        "auditor_write_scope": "AUDIT_ONLY", "independence_result": "PASS",
+        "findings": [], "evidence_refs": [], "limitations": [], "defects": [],
+        "correction_routes": [], "decision": "PASS", "created_at": "2026-08-21T00:00:00Z",
+    }
+    result = evaluate(
+        {key: paths[key] for key in ("brief", "research", "evidence", "audit", "provisional")},
+        [paths["analysis"]], paths["curation"], paths["thesis"], paths["script_promise"],
+        paths["b5_i2_audit"], paths["execution_registry"], EP,
+        require_research_closure=True,
+        independent_research_audit=independent_audit,
+    )
+    assert result.status is GateStatus.BLOCKED
+    assert result.evidence["independent_research_audit_correction_routes"] == []
 
 
 def test_research_closure_does_not_fabricate_aggregate_decision(tmp_path: Path) -> None:
