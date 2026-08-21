@@ -1,6 +1,12 @@
 ---
 description: Genera mapa de eventos y outline con una referencia editorial canónica explícita (sin inventar).
+status: DEFERRED_TO_B5_I3
+current_execution: BLOCKED_UNTIL_B5_I3_REMEDIATION
 ---
+
+> **NO EJECUTABLE EN EL ESTADO ACTUAL.** Este workflow conserva una formulación histórica de outline y solo puede reactivarse después de integrar los prerrequisitos documentados en B5-I3/B6/B7/B7.5. No aplicar ahora sus fórmulas de re-hook, timeline, número de eventos, CTA o estructura universal.
+
+> **Sede no canónica:** las entradas, salidas y reglas de este archivo no son instrucciones del flujo portable actual. La autoridad vigente de voz y formato se resuelve desde los contratos y el perfil editorial activo.
 
 
 
@@ -20,9 +26,9 @@ Si la referencia canónica no existe o no corresponde a un perfil activo válido
 - No inventar datos (obras, años, directores, actores, detalles de trama).
 - Si falta información: escribir "PENDIENTE" y listar preguntas concretas al final.
 - Cumplir las reglas del perfil editorial exacto referenciado.
-- Re-hook obligatorio entre eventos (solo planificado, no guion).
+- Re-hook obligatorio entre eventos (regla histórica; no ejecutable ni vigente).
 
-## Salidas (crear en Vault)
+## Salidas históricas (no crear en la ruta actual)
 1) `<EP_PATH>/03_mapa_eventos.md`
    - Concepto del episodio
    - Lista de eventos (obras) con objetivo emocional de cada uno

@@ -1,5 +1,7 @@
 # Estilo y Voz del Narrador — Proyecto YouTube (Fuente de Verdad)
 
+> **METADATA LEGACY — SUSTITUIDA / NO EJECUTABLE.** La voz vigente procede del `EditorialProfile`, corpus auténtico gobernado y aprendizaje editorial gobernado; este cuerpo se conserva como fuente histórica de migración.
+
 ## 1) Cómo debe sonar
 - Cercano, íntimo y conversado.
 - Reflexivo, pero directo (sin hablar “enredado”).

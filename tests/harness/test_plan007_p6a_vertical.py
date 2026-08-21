@@ -32,7 +32,7 @@ def _write(path: Path, value: dict) -> None:
 def _dossier(stage: str) -> dict:
     data = {"dossier_id": "D-W1", "dossier_version": "1.0.0", "episode_id": EP, "research_id": "RP-001", "evidence_report_id": "ER-001", "work": {"material_id": "M1", "title": "Obra sintetica M1", "creator": "Autor sintetico", "consulted_representations": [{"representation_kind": "ORIGINAL_WORK", "edition_or_version": "fixture-1", "consulted_locator": "fixture://M1"}]}, "dossier_stage": stage, "pending_items": ["Completar investigacion"] if stage == "IDENTIFIED" else [], "confidence": "LOW" if stage == "IDENTIFIED" else "HIGH", "created_at": "2026-08-18T10:00:00Z"}
     if stage == "RESEARCH_REVIEW_PENDING":
-        data.update({"analysis_references": [{"analysis_id": "A-1", "material_id": "M1"}], "question_and_thesis_relation": {"central_question_ref": "question:EP", "provisional_thesis_ref": "thesis:TH-001", "demonstrates_analysis_ref": "A-1", "does_not_establish_analysis_ref": "A-1", "main_interpretation_analysis_ref": "A-1", "rival_interpretation_analysis_refs": ["A-1"]}, "claim_dispositions": {"claims_ledger_id": "CL-P6A-001", "authority_status": "REPRESENTATION_ONLY_IR4_PENDING", "candidate_allowed_claim_ids": ["C-1"], "candidate_limited_claim_ids": [], "candidate_blocked_claim_ids": []}, "overinterpretation_risk": {"level": "LOW", "rationale": "Fixture acotada."}, "candidate_editorial_function_analysis_ref": "A-1", "locators": [{"analysis_id": "A-1", "locator": "fixture://W1/scene"}], "work_use_sufficiency": {"intended_use": "B5_I2_CONTROLLED_HARNESS", "status": "IR7_FIDELITY_AUDIT_REQUIRED"}, "research_stop_decision_ref": "RSD-W1", "independent_fidelity_audit": {"audit_reference": None, "dependency": "DEFERRED_TO_R1_M10_R1_M11"}})
+        data.update({"analysis_references": [{"analysis_id": "A-1", "material_id": "M1"}], "question_and_thesis_relation": {"central_question_ref": "question:EP", "provisional_thesis_ref": "thesis:TH-001", "demonstrates_analysis_ref": "A-1", "does_not_establish_analysis_ref": "A-1", "main_interpretation_analysis_ref": "A-1", "rival_interpretation_analysis_refs": ["A-1"]}, "claim_dispositions": {"claims_ledger_id": "CL-P6A-001", "authority_status": "REPRESENTATION_ONLY_IR4_PENDING", "candidate_allowed_claim_ids": ["C-1"], "candidate_limited_claim_ids": [], "candidate_blocked_claim_ids": []}, "overinterpretation_risk": {"level": "LOW", "rationale": "Fixture acotada."}, "candidate_editorial_function_analysis_ref": "A-1", "locators": [{"analysis_id": "A-1", "locator": "fixture://W1/scene"}], "work_use_sufficiency": {"intended_use": "B5_I2_CONTROLLED_HARNESS", "status": "IR7_FIDELITY_AUDIT_REQUIRED"}, "research_stop_decision_ref": "RSD-W1", "independent_fidelity_audit": {"audit_reference": None, "dependency": "FUNCTIONAL_DECISION_REQUIRED"}})
     return data
 
 
@@ -87,7 +87,15 @@ def test_p6a_topic_first_vertical_reaches_canonical_b5_i2_route(tmp_path: Path) 
     assert validate_against_schema(final, "work_research_dossier") == []
     assert validate_work_research_dossier(final, ledger, [analysis_value]) == []
     assert validate_claims_ledger(ledger) == []
-    assert validate_work_lifecycle(lifecycle) == []
+    lifecycle_dossiers = [final]
+    for material_id in ("M2", "M3"):
+        dossier = json.loads(json.dumps(final))
+        dossier["dossier_id"] = f"D-W{material_id[1:]}"
+        dossier["work"]["material_id"] = material_id
+        dossier["work"]["title"] = f"Obra sintetica {material_id}"
+        dossier["analysis_references"][0]["material_id"] = material_id
+        lifecycle_dossiers.append(dossier)
+    assert any("FUNCTIONAL_DECISION_REQUIRED" in item for item in validate_work_lifecycle(lifecycle, dossiers=lifecycle_dossiers))
     candidate_ids = lifecycle["screening"]["candidate_work_ids"]
     assert len(candidate_ids) == 5 and lifecycle["entry_mode"] == "TOPIC_FIRST" and lifecycle["anchor_work_id"] is None
     assert reviewed["pre_b5_i1_evidence"]["candidate_work_refs"] == ["M1", "M2", "M3", "M4", "M5"]

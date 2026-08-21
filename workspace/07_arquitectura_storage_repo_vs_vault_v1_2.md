@@ -1,5 +1,7 @@
 # Arquitectura de Almacenamiento: Repo vs Vault (V1.2 - Configuración Activa)
 
+> **METADATA LEGACY — HISTÓRICA / NO EJECUTABLE.** La ruta portable y el adaptador Vault opcional se describen en la documentación vigente; este cuerpo conserva la arquitectura histórica del equipo.
+
 ## Introducción
 Este documento detalla la implementación específica de la arquitectura V1.2 para el canal **"MasAllaDelGuion"**.
 La clave es separar el **Cerebro (Repo)** del **Cuerpo (Vault)**.

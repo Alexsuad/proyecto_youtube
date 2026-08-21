@@ -1,6 +1,8 @@
 
 # Reglas Editoriales — Proyecto YouTube (Fuente de Verdad)
 
+> **METADATA LEGACY — SUSTITUIDA / NO EJECUTABLE.** Las reglas activas proceden de `.agent/rules/`, `policies/` y el perfil editorial gobernado; este cuerpo se conserva sin reescritura histórica.
+
 > Estas reglas son obligatorias. Si se rompe una regla “NO-GO”, el guion debe corregirse antes de pasar a producción.
 
 ## 1) Reglas NO-GO (prohibiciones)

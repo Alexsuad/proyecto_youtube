@@ -1,5 +1,7 @@
 # Identidad del Canal — Proyecto YouTube (Fuente de Verdad)
 
+> **METADATA LEGACY — SUSTITUIDA / NO EJECUTABLE.** La identidad vigente se resuelve desde el perfil editorial activo y sus contratos gobernados; este cuerpo se conserva como fuente histórica de migración.
+
 ## 1) Qué hace este canal (en una frase)
 Este canal explica conceptos emocionales y patrones de relaciones humanas usando historias (películas/series/libros) como “eventos” que representan ese concepto, y lo aterriza a la vida real en lenguaje simple.
 

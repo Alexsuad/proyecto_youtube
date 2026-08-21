@@ -1,6 +1,8 @@
 # Skill — Cerrar Episodio
 Objetivo: validar que el episodio alcanzó `EDITORIAL_SCRIPT_APPROVED` sin exigir entregables diferidos.
 
+La QA de duración usa un `YT_DURATION_ENVELOPE` episódico válido cuando se le entrega junto con su package, review independiente y registro de ejecución verificables. El gate debe declarar `duration_policy_source` como `EPISODIC_YT_DURATION_ENVELOPE` o `TECHNICAL_FALLBACK`; solo cuando no existe un envelope aprobado se aplica el fallback técnico documentado, que no constituye una decisión editorial universal. La ruta portable de cierre consume los gates generados en el checkout y no exige Vault ni configuración local.
+
 > **Rol ejecutor actual:** Python (`src/scripts/cerrar_episodio.py`) para validación determinista de contratos y actualización del índice.
 
 ---
@@ -25,8 +27,8 @@ Ejecutar `src/scripts/cerrar_episodio.py` que verifica la existencia de los entr
 
 Si falta alguno: STOP — listar los faltantes, no cerrar el episodio.
 
-### Paso B — Actualizar índice (Python)
-Actualizar `episodes_index.json` con:
+### Paso B — Actualizar índice cuando se use Vault legacy (Python)
+En la ruta portable el cierre valida los gates del checkout y no modifica ningún índice externo. Solo en la ruta Vault legacy seleccionada se actualiza `episodes_index.json` con:
 - `"estado": "completado"`
 - `"cerrado": "<timestamp>"`
 
@@ -38,4 +40,5 @@ Actualizar `episodes_index.json` con:
 ---
 
 ## Salida
-- `episodes_index.json` actualizado con estado `completado`.
+- Ruta portable: gate de cierre PASS y artefacto de resultado en el output configurado.
+- Ruta Vault legacy: además, `episodes_index.json` actualizado con estado `completado`.

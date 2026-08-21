@@ -32,6 +32,8 @@ docs/*
 !docs/initiatives/**
 !docs/functional/
 !docs/functional/**
+!docs/legacy/
+!docs/legacy/**
 .env
 .env.*
 env.example

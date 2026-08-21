@@ -1487,8 +1487,16 @@ def validate_work_lifecycle(
     data: Dict[str, Any],
     dossiers: Optional[List[Dict[str, Any]]] = None,
     material_curation: Optional[Dict[str, Any]] = None,
+    dossier_artifacts: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> List[str]:
-    """Valida el lifecycle de obras sin duplicar dossier ni curación."""
+    """Valida el lifecycle y resuelve dossiers finales contra artefactos canónicos.
+
+    ``dossier_artifacts`` is execution context, not a second authority.  It maps a
+    dossier id to the canonical ClaimsLedger and NarrativeHumanAnalysis values
+    already referenced by that dossier.  Final promotions fail closed when this
+    context is absent, because validating only the dossier schema is insufficient
+    to establish reference integrity.
+    """
     violations = validate_against_schema(data, "work_lifecycle")
     works = [item for item in data.get("works", []) if isinstance(item, dict)]
     works_by_id = {item.get("work_id"): item for item in works if item.get("work_id")}
@@ -1666,14 +1674,51 @@ def validate_work_lifecycle(
     elif final_status == "NORMAL":
         violations.append("Una selección final NORMAL requiere obras declaradas.")
 
+    final_states = {"FINALIST_WORK", "FINAL_SELECTED_WORK"}
+    if any(work.get("state") in final_states for work in works) and dossiers is None:
+        violations.append("FINALIST_WORK y FINAL_SELECTED_WORK requieren la colección de WorkResearchDossier para validar la promoción.")
     dossier_by_id = {item.get("dossier_id"): item for item in (dossiers or []) if isinstance(item, dict) and item.get("dossier_id")}
     for work in works:
+        state = work.get("state")
         dossier_ref = work.get("dossier_ref")
-        if dossier_ref and dossiers is not None:
+        if state in final_states and dossiers is not None and dossier_ref:
             dossier = dossier_by_id.get(dossier_ref)
             if dossier is None:
                 violations.append(f"WorkLifecycle referencia WorkResearchDossier inexistente: '{dossier_ref}'.")
-            elif dossier.get("work", {}).get("material_id") != work.get("work_id"):
+            else:
+                context = (dossier_artifacts or {}).get(dossier_ref)
+                claims_ledger = context.get("claims_ledger") if isinstance(context, dict) else None
+                narrative_analyses = context.get("narrative_analyses") if isinstance(context, dict) else None
+                dossier_violations = validate_work_research_dossier(
+                    dossier,
+                    claims_ledger=claims_ledger,
+                    narrative_analyses=narrative_analyses,
+                )
+                violations.extend(f"WorkResearchDossier '{dossier_ref}': {item}" for item in dossier_violations)
+                dossier_work = dossier.get("work") if isinstance(dossier.get("work"), dict) else {}
+                if dossier.get("dossier_stage") != "RESEARCH_REVIEW_PENDING":
+                    violations.append(f"{state} '{work.get('work_id')}' requiere WorkResearchDossier en RESEARCH_REVIEW_PENDING.")
+                if dossier.get("episode_id") != data.get("episode_id"):
+                    violations.append(f"WorkLifecycle y WorkResearchDossier difieren en episode_id para la obra '{work.get('work_id')}'.")
+                if dossier.get("research_id") != data.get("research_id"):
+                    violations.append(f"WorkLifecycle y WorkResearchDossier difieren en research_id para la obra '{work.get('work_id')}'.")
+                if dossier_work.get("material_id") != work.get("work_id"):
+                    violations.append(f"WorkLifecycle y WorkResearchDossier difieren para la obra '{work.get('work_id')}'.")
+                if (
+                    state == "FINAL_SELECTED_WORK"
+                    and isinstance(dossier.get("independent_fidelity_audit"), dict)
+                    and dossier["independent_fidelity_audit"].get("dependency") == "FUNCTIONAL_DECISION_REQUIRED"
+                    and dossier["independent_fidelity_audit"].get("audit_reference") is None
+                ):
+                    violations.append(
+                        f"FINAL_SELECTED_WORK '{work.get('work_id')}' requiere resolver FUNCTIONAL_DECISION_REQUIRED; "
+                        "la integridad técnica del dossier no equivale a aprobación funcional."
+                    )
+        elif dossier_ref and dossiers is not None:
+            dossier = dossier_by_id.get(dossier_ref)
+            if dossier is None:
+                violations.append(f"WorkLifecycle referencia WorkResearchDossier inexistente: '{dossier_ref}'.")
+            elif (dossier.get("work") if isinstance(dossier.get("work"), dict) else {}).get("material_id") != work.get("work_id"):
                 violations.append(f"WorkLifecycle y WorkResearchDossier difieren para la obra '{work.get('work_id')}'.")
 
     for doubt in data.get("critical_doubts", []):

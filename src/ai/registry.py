@@ -406,7 +406,7 @@ def append_result(
         raise ValueError(f"role {role} no registrado para artifact_kind B5-I2 {result.output_artifact_kind}")
     if result.output_artifact_kind in B5_I2_ARTIFACT_KINDS and role in B5_I2_ROLE_ARTIFACT_COMPATIBILITY and result.output_artifact_kind not in B5_I2_ROLE_ARTIFACT_COMPATIBILITY[role]:
         raise ValueError(f"role {role} incompatible con artifact_kind {result.output_artifact_kind}")
-    if role in {"ANALYSIS_PRODUCER", "CURATION_PRODUCER", "THESIS_PRODUCER", "SCRIPT_PROMISE_PRODUCER", "SCRIPT_PRODUCT_PRODUCER", "YOUTUBE_ADAPTATION_PRODUCER"} and not result.output_artifact_path:
+    if role in {"ANALYSIS_PRODUCER", "CURATION_PRODUCER", "THESIS_PRODUCER", "SCRIPT_PROMISE_PRODUCER", "SCRIPT_PRODUCT_PRODUCER", "YOUTUBE_ADAPTATION_PRODUCER", "YOUTUBE_ADAPTATION_AUDITOR"} and not result.output_artifact_path:
         raise ValueError(f"{role} requiere output_artifact_path verificable")
     if result.output_artifact_path:
         if not result.output_artifact_path.exists():

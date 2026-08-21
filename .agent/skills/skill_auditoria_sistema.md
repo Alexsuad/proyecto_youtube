@@ -1,22 +1,23 @@
 # Skill — Auditoría de Sistema (V1 - Pre-Ejecución)
 
-**Objetivo:** Verificar que el entorno (Repo + Vault) está correctamente configurado y listo para operar.
-Este skill es el **Gate 0** obligatorio antes de cualquier operación de escritura.
+**Objetivo:** Verificar que el checkout y, cuando se solicite, el adaptador Vault legacy están listos para operar.
+Este skill corresponde al **Gate 0** técnico. La ruta portable no requiere configuración local ni Vault.
 
 ---
 
 ## Entradas
-- `config/local_settings.json` (Debe existir)
-- Opcional: variables de entorno (solo diagnóstico). La fuente de verdad es `config/local_settings.json`.
+- Ruta portable del checkout y sus contratos.
+- `config/local_settings.json` solo si se selecciona explícitamente la ruta legacy Vault.
+- Opcional: variables de entorno (solo diagnóstico). En modo legacy la fuente de verdad es la configuración local.
 
 ---
 
 ## Pasos
 
 ### 1. Verificación de Configuración
-- Leer `config/local_settings.json`.
-- Validar que existan las claves: `vault_root`, `channel_id`.
-- **Acción:** Si falla 🔴 STOP.
+- Auditar siempre la estructura contractual del checkout.
+- Si se selecciona el adaptador legacy, leer `config/local_settings.json` y validar `vault_root`, `channel_id`.
+- Si la configuración legacy falta, está incompleta o la ruta no existe, omitir ese adaptador y continuar por la ruta portable con `WARN`.
 
 ### 2. Verificación del Repositorio (Estructura Base)
 - Confirmar existencia de directorios críticos:
@@ -31,7 +32,7 @@ Este skill es el **Gate 0** obligatorio antes de cualquier operación de escritu
   - `02_reglas_notebooklm.md`
 - **Acción:** Si falta algo crítico 🔴 STOP. Si falta algo menor 🟡 WARN.
 
-### 3. Verificación y Auto-Creación del Vault
+### 3. Verificación del Vault (solo adaptador legacy seleccionado)
 - Usar las rutas leídas de la config: `<VAULT_ROOT>\<CHANNEL_ID>\`.
 - **Paso A:** Verificar existencia de `VAULT_ROOT`. (Si no existe, 🔴 STOP - El usuario debe montar el disco/ruta).
 - **Paso B:** Verificar/Crear `<VAULT_ROOT>\<CHANNEL_ID>\`.
@@ -41,7 +42,7 @@ Este skill es el **Gate 0** obligatorio antes de cualquier operación de escritu
   - Opcional: `...\biblioteca\` (no se crea automáticamente).
 - **Paso D:** Verificar existencia de `index\episodes_index.json`.
   - Si no existe, crear un JSON válido vacío: `{"episodes": [], "last_updated": null}`.
-- **Acción:** Reportar qué se creó y qué ya existía.
+- **Acción:** Reportar qué se creó y qué ya existía. No se auto-crea Vault desde la ruta portable ni se convierte en condición universal.
 
 ### 4. Diagnóstico Final
 - Generar reporte consolidado.

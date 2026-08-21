@@ -1,5 +1,7 @@
 # Política de Spoilers — Proyecto YouTube (Fuente de Verdad)
 
+> **METADATA LEGACY — HISTÓRICA / NO EJECUTABLE.** La política material queda como prerrequisito futuro de B5-I3/B6/B7.5; este cuerpo no es una regla activa y se conserva como evidencia.
+
 ## 1) Regla general
 - Spoilers: SÍ se permiten, pero SOLO:
   1) con aviso explícito

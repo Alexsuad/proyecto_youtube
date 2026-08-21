@@ -5,6 +5,12 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
+from src.ai.execution import persist_execution_result
+from src.ai.manifest import file_checksum
+import src.ai.registry as execution_registry
+from src.core.duration_envelope import resolve_approved_duration_envelope
 from src.core.contract_validation import validate_against_schema
 from src.core.status import GateStatus
 from src.scripts.youtube_adaptation_b5_i2_gate import evaluate
@@ -116,6 +122,144 @@ def _paths(tmp_path: Path, package: dict | None = None, review: dict | None = No
 def test_valid_gate_with_exact_real_provenance_passes(tmp_path: Path):
     _, _, package_path, review_path, registry_path = _paths(tmp_path)
     assert evaluate(package_path, review_path, registry_path).status is GateStatus.PASS
+
+
+def test_persisted_b5_i2_approval_automatically_materializes_duration_envelope(tmp_path: Path, monkeypatch) -> None:
+    """A real PASS review becomes resolvable without a separate approval call."""
+    package, review, package_path, review_path, registry_path = _paths(tmp_path)
+    artifacts: list[InputArtifact] = [
+        InputArtifact("youtube_adaptation_b5_i2_package", "YT-PKG-1", package_path, "RUN-PROD-1")
+    ]
+    for kind, artifact_id, field in (
+        ("refined_thesis", "T-1", "refined_thesis"),
+        ("claims_ledger", "CL-1", "claims_ledger"),
+        ("evidence_report", "E-1", "evidence_report"),
+    ):
+        artifact_path = tmp_path / f"{kind}.json"
+        artifact_path.write_text(json.dumps({"artifact_id": artifact_id}), encoding="utf-8")
+        package["input_references"][field]["checksum"] = file_checksum(artifact_path)
+        artifacts.append(InputArtifact(kind, artifact_id, artifact_path, "1.0.0"))
+    package_checksum = _write_json(package_path, package)
+    review["artifact_checksum"] = package_checksum
+    review_checksum = _write_json(review_path, review)
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    registry["runs"] = [registry["runs"][0]]
+    registry["runs"][0]["outputs"][0]["checksum"] = package_checksum
+    registry["runs"][0]["output_checksums"] = [package_checksum]
+    _write_json(registry_path, registry)
+    request = ExecutionRequest(
+        capability_id="YT_DURATION_ENVELOPE",
+        skill_id="skill_packaging",
+        skill_version="1.0.0",
+        input_artifacts=artifacts,
+        output_schema="youtube_adaptation_review",
+        output_artifact_kind="youtube_adaptation_review",
+        output_artifact_id="YT-REV-1",
+        output_artifact_path=review_path,
+        output_artifact_ref="youtube_adaptation_review:YT-REV-1",
+        episode_id="EP-1",
+        role="YOUTUBE_ADAPTATION_AUDITOR",
+        config={
+            "_mission_authorization_token": object(),
+            "prompt_id": "prompt_yaa",
+            "prompt_checksum": "a" * 64,
+            "input_checksum": package_checksum,
+            "validation_result": "PASS",
+            "execution_profile": "real_profile",
+        },
+    )
+    result = ExecutionResult(
+        "RUN-AUD-1", ExecutionStatus.SUCCEEDED, "provider", "provider-real", "model-real",
+        "b" * 64, review, review_checksum, "2026-08-01T10:02:00Z", "2026-08-01T10:03:00Z",
+        usage={"skill_id": "skill_packaging", "skill_version": "1.0.0", "provider_kind": "REAL"},
+        episode_id="EP-1", output_artifact_id="YT-REV-1", output_artifact_kind="youtube_adaptation_review",
+        output_artifact_path=review_path, output_artifact_ref="youtube_adaptation_review:YT-REV-1",
+    )
+    monkeypatch.setattr(execution_registry, "_real_provenance_authorized", lambda _: True)
+    request.config["active_editorial_profile_path"] = tmp_path / "historical-profile.json"
+    with pytest.raises(ValueError, match="no puede sustituir"):
+        persist_execution_result(
+            registry_path, result, request, execution_mode="REAL", _allow_duration_registry_override=True
+        )
+    request.config.pop("active_editorial_profile_path")
+    persist_execution_result(
+        registry_path, result, request, execution_mode="REAL", _allow_duration_registry_override=True
+    )
+    gate = evaluate(package_path, review_path, registry_path, ROOT / "config" / "active_editorial_profile.json", "EP-1")
+    assert gate.status is GateStatus.PASS, gate.violations
+    saved = json.loads(registry_path.read_text(encoding="utf-8"))
+    assert len(saved["duration_envelope_approvals"]) == 1
+    assert resolve_approved_duration_envelope("EP-1", registry_path, _allow_registry_override=True)["approval"]["status"] == "APPROVED"
+
+
+def test_duration_profile_override_is_rejected_by_gate_and_loader(tmp_path: Path):
+    _, _, package_path, review_path, registry_path = _paths(tmp_path)
+    alternate = tmp_path / "historical-profile.json"
+    alternate.write_text((ROOT / "config" / "active_editorial_profile.json").read_text(encoding="utf-8"), encoding="utf-8")
+    gate = evaluate(package_path, review_path, registry_path, alternate)
+    assert gate.status is GateStatus.FAIL
+    assert any("autoridad" in item or "perfil editorial" in item for item in gate.violations)
+    from src.core.duration_envelope import load_duration_envelope
+    with pytest.raises(ValueError, match="solo puede resolverse"):
+        load_duration_envelope(package_path, "EP-1", review_path=review_path, registry_path=registry_path, active_profile_path=alternate)
+
+
+def _profile_authority_fixture(tmp_path: Path, kind: str) -> Path:
+    config = tmp_path / "profile-authority" / "config"
+    config.mkdir(parents=True)
+    active_source = ROOT / "config" / "active_editorial_profile.json"
+    registry_source = ROOT / "config" / "editorial_profile_registry.json"
+    active = json.loads(active_source.read_text(encoding="utf-8"))
+    registry = json.loads(registry_source.read_text(encoding="utf-8"))
+    active_path = config / "active_editorial_profile.json"
+    if kind == "corrupt":
+        active_path.write_text("{not-json", encoding="utf-8")
+    elif kind == "missing":
+        pass
+    else:
+        if kind == "inactive":
+            active["status"] = "INACTIVE"
+        elif kind == "inconsistent":
+            active["ACTIVE_PROFILE_ID"] = "different-profile"
+        active_path.write_text(json.dumps(active), encoding="utf-8")
+    if kind != "missing_registry":
+        (config / "editorial_profile_registry.json").write_text(json.dumps(registry), encoding="utf-8")
+    return active_path
+
+
+@pytest.mark.parametrize("authority_case", ["corrupt", "missing", "missing_registry", "inactive", "inconsistent"])
+def test_invalid_active_profile_authority_fails_before_approval_or_fallback(tmp_path: Path, authority_case: str):
+    _, _, package_path, review_path, registry_path = _paths(tmp_path)
+    authority = _profile_authority_fixture(tmp_path, authority_case)
+    gate = evaluate(
+        package_path,
+        review_path,
+        registry_path,
+        _active_profile_path_override=authority,
+    )
+    assert gate.status is GateStatus.FAIL
+    from src.core.duration_envelope import resolve_approved_duration_envelope
+    with pytest.raises(ValueError):
+        resolve_approved_duration_envelope(
+            "EP-1",
+            registry_path,
+            _allow_registry_override=True,
+            _active_profile_path_override=authority,
+        )
+
+
+def test_invalid_active_profile_cannot_materialize_duration_approval(tmp_path: Path):
+    _, _, package_path, review_path, registry_path = _paths(tmp_path)
+    authority = _profile_authority_fixture(tmp_path, "inactive")
+    from src.core.duration_envelope import register_approved_duration_envelope
+    with pytest.raises(ValueError):
+        register_approved_duration_envelope(
+            package_path,
+            review_path,
+            registry_path,
+            _active_profile_path_override=authority,
+        )
+    assert "duration_envelope_approvals" not in json.loads(registry_path.read_text(encoding="utf-8"))
 
 
 def test_valid_producer_package_schema():

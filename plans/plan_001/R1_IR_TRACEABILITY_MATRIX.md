@@ -163,7 +163,7 @@ R1-M3 fue ejecutada con autorización explícita para IR1-007, IR1-008, IR1-009,
 - REUSE: `narrative_human_analysis.json`, `material_curation.json`, `claims_ledger.json` y `source_access_and_evidence_report.json` se conservan como fuentes; el dossier los referencia y no copia su contenido.
 - IR1-008, IR1-009 e IR1-011 se resuelven mediante referencias validadas a `NarrativeHumanAnalysis` del mismo episodio, investigación, evidencia y obra.
 - IR1-010 conserva los claims en `ClaimsLedger`; las listas del dossier son candidatas con `REPRESENTATION_ONLY_IR4_PENDING`, sin emitir una decisión IR4.
-- IR1-012 solo representa suficiencia no funcional y una auditoría de fidelidad nula con dependencia `DEFERRED_TO_R1_M10_R1_M11`; no declara auditoría independiente implementada ni aprobada.
+- IR1-012 solo representa suficiencia no funcional y una auditoría de fidelidad nula con dependencia `FUNCTIONAL_DECISION_REQUIRED`; no declara auditoría independiente implementada ni aprobada.
 - Evidencia de validación: `29 passed`, `166 subtests passed` en los tests dirigidos de schemas y contratos.
 
 R1-M3 queda `COMPLETED_PENDING_REVIEW`. R1-M4, R1-M5 y R1-M6 permanecen sin abrir.

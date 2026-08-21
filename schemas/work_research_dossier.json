@@ -160,7 +160,7 @@
       "required": ["audit_reference", "dependency"],
       "properties": {
         "audit_reference": {"type": "null"},
-        "dependency": {"type": "string", "const": "DEFERRED_TO_R1_M10_R1_M11"}
+        "dependency": {"type": "string", "const": "FUNCTIONAL_DECISION_REQUIRED"}
       }
     }
   }

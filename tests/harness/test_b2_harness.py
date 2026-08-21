@@ -11,6 +11,7 @@ from src.core.gate_result import GateResult
 from src.core.gate_runtime import emit
 from src.core.legacy_gate_adapter import parse_legacy_gate_v
 from src.core.status import GateStatus
+from src.core.duration_envelope import load_duration_envelope, register_approved_duration_envelope, resolve_approved_duration_envelope
 from src.scripts.evidence_sufficiency_gate import evaluate as evidence_evaluate
 from src.scripts import cerrar_episodio
 from src.scripts import gate0_auditoria, gate0_integridad
@@ -85,7 +86,8 @@ class TestB2Harness(unittest.TestCase):
         (episode / "final_delivery_manifest.json").write_text(json.dumps(final), encoding="utf-8")
         gate_dir = output / "gates" / ep_id; gate_dir.mkdir(parents=True)
         for gate_id in ("qa_brief_research", "evidence_sufficiency", "qa_duracion_guion", "qa_lenguaje_youtube_ultra_post_guion"):
-            result = GateResult(gate_id, ep_id, "1.0.0", GateStatus.PASS, "ok")
+            evidence = {"duration_policy_source": "TECHNICAL_FALLBACK"} if gate_id == "qa_duracion_guion" else {}
+            result = GateResult(gate_id, ep_id, "1.0.0", GateStatus.PASS, "ok", evidence=evidence)
             (gate_dir / f"{gate_id}.json").write_text(json.dumps(result.to_dict()), encoding="utf-8")
         index_path = vault / "channel/index/episodes_index.json"; index_path.parent.mkdir(parents=True)
         index_path.write_text(json.dumps({"episodes": [{"ep_id": ep_id, "ep_path": str(episode), "estado": "en_progreso"}]}), encoding="utf-8")
@@ -337,10 +339,100 @@ class TestB2Harness(unittest.TestCase):
             (episode / "final_delivery_manifest.json").write_text(json.dumps({"final_script_clean": "06_guion_longform_limpio.md", "final_script_annotated": "06_guion_longform_anotado.md", "claims_ledger": "claims_ledger.json", "checksums": checksums, "approval_record": approval, "final_candidate_version": "1.0.0", "human_approved_version": "1.0.0"}), encoding="utf-8")
             gate_dir = temp_path / "out" / "gates" / "episode"
             gate_dir.mkdir(parents=True)
-            for gate_id in ("qa_brief_research", "evidence_sufficiency", "qa_duracion_guion", "qa_lenguaje_youtube_ultra_post_guion"):
+            for gate_id in ("qa_brief_research", "evidence_sufficiency", "qa_lenguaje_youtube_ultra_post_guion"):
                 (gate_dir / f"{gate_id}.json").write_text(json.dumps(GateResult(gate_id, "episode", "1.0.0", GateStatus.PASS, "ok").to_dict()), encoding="utf-8")
+            (gate_dir / "qa_duracion_guion.json").write_text(json.dumps(GateResult("qa_duracion_guion", "episode", "1.0.0", GateStatus.PASS, "ok", evidence={"duration_policy_source": "TECHNICAL_FALLBACK"}).to_dict()), encoding="utf-8")
             done = subprocess.run([sys.executable, str(ROOT / "src/scripts/cerrar_episodio.py"), "--ep-id", "episode", "--episode-path", str(episode), "--output-root", str(temp_path / "out")], cwd=temp_path, env={**os.environ, "PYTHONPATH": str(ROOT)}, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
             self.assertEqual(done.returncode, 0, done.stderr)
+
+            (gate_dir / "qa_duracion_guion.json").write_text(json.dumps(GateResult("qa_duracion_guion", "episode", "1.0.0", GateStatus.PASS, "ok").to_dict()), encoding="utf-8")
+            rejected = cerrar_episodio.evaluate("episode", episode, temp_path / "out")
+            self.assertEqual(rejected.status, GateStatus.FAIL)
+            self.assertTrue(any("fuente de política" in item for item in rejected.violations))
+
+    def test_episode_duration_envelope_is_bound_through_closure(self):
+        from tests.harness.test_youtube_adaptation_b5_i2 import _paths
+
+        with self.tempdir("duration_envelope_closure") as temp:
+            temp_path = Path(temp); episode, output, _ = self.make_valid_closure(temp_path, ep_id="EP-1")
+            _, _, envelope_path, review_path, registry_path = _paths(temp_path / "duration")
+            _, metadata = load_duration_envelope(envelope_path, "EP-1", review_path=review_path, registry_path=registry_path)
+            gate_path = output / "gates" / "EP-1" / "qa_duracion_guion.json"
+            gate = GateResult("qa_duracion_guion", "EP-1", "1.0.0", GateStatus.PASS, "ok", evidence={"duration_policy_source": "EPISODIC_YT_DURATION_ENVELOPE", **metadata})
+            gate_path.write_text(json.dumps(gate.to_dict()), encoding="utf-8")
+            result = cerrar_episodio.evaluate("EP-1", episode, output, envelope_path, duration_review_path=review_path, _registry_path_override=registry_path)
+            self.assertEqual(result.status, GateStatus.PASS, result.violations)
+
+            fallback_gate = GateResult("qa_duracion_guion", "EP-1", "1.0.0", GateStatus.PASS, "ok", evidence={"duration_policy_source": "TECHNICAL_FALLBACK"})
+            gate_path.write_text(json.dumps(fallback_gate.to_dict()), encoding="utf-8")
+            rejected = cerrar_episodio.evaluate("EP-1", episode, output, envelope_path, duration_review_path=review_path, _registry_path_override=registry_path)
+            self.assertEqual(rejected.status, GateStatus.FAIL)
+            self.assertTrue(any("no lo utilizó" in item for item in rejected.violations))
+
+            incomplete = cerrar_episodio.evaluate("EP-1", episode, output, duration_review_path=review_path)
+            self.assertEqual(incomplete.status, GateStatus.FAIL)
+            self.assertTrue(any("requieren duration-envelope" in item for item in incomplete.violations))
+
+    def test_registered_approved_duration_envelope_blocks_omitted_fallback(self):
+        from tests.harness.test_youtube_adaptation_b5_i2 import _paths, _sync_review_registry_checksum
+
+        with self.tempdir("registered_duration_envelope") as temp:
+            temp_path = Path(temp)
+            episode, output, _ = self.make_valid_closure(temp_path, ep_id="EP-TEST")
+            _, _, package_path, review_path, registry_path = _paths(temp_path / "duration")
+            package = json.loads(package_path.read_text(encoding="utf-8"))
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+            package["episode_id"] = "EP-TEST"
+            review["episode_id"] = "EP-TEST"
+            review["artifact_id"] = package["package_id"]
+            package_path.write_text(json.dumps(package), encoding="utf-8")
+            package_checksum = __import__("hashlib").sha256(package_path.read_bytes()).hexdigest()
+            review["artifact_checksum"] = package_checksum
+            review_path.write_text(json.dumps(review), encoding="utf-8")
+            registry = json.loads(registry_path.read_text(encoding="utf-8"))
+            registry["runs"][0]["episode_id"] = "EP-TEST"
+            registry["runs"][0]["outputs"][0]["checksum"] = package_checksum
+            registry["runs"][0]["output_checksums"] = [package_checksum]
+            registry["runs"][1]["episode_id"] = "EP-TEST"
+            registry["runs"][1]["input_artifact_ids"][0] = "youtube_adaptation_b5_i2_package:YT-PKG-1"
+            registry["runs"][1]["input_checksums"][0] = package_checksum
+            registry["runs"][1]["input_checksum"] = package_checksum
+            registry_path.write_text(json.dumps(registry), encoding="utf-8")
+            _sync_review_registry_checksum(registry_path, review_path)
+
+            baseline_registry = temp_path / "baseline-registry.json"
+            baseline_registry.write_text(registry_path.read_text(encoding="utf-8"), encoding="utf-8")
+            approval = register_approved_duration_envelope(package_path, review_path, registry_path)
+            assert approval["capability_id"] == "YT_DURATION_ENVELOPE"
+            assert resolve_approved_duration_envelope("EP-TEST", registry_path, _allow_registry_override=True)["approval"]["approval_id"] == approval["approval_id"]
+            assert len(json.loads(registry_path.read_text(encoding="utf-8"))["duration_envelope_approvals"]) == 1
+            register_approved_duration_envelope(package_path, review_path, registry_path)
+            assert len(json.loads(registry_path.read_text(encoding="utf-8"))["duration_envelope_approvals"]) == 1
+
+            rejected = cerrar_episodio.evaluate("EP-TEST", episode, output, _registry_path_override=registry_path)
+            self.assertEqual(rejected.status, GateStatus.FAIL)
+            self.assertTrue(any("Existe un YT_DURATION_ENVELOPE aprobado" in item for item in rejected.violations))
+
+            alternative_empty = temp_path / "alternative-empty.json"
+            alternative_empty.write_text(json.dumps({"registry_version": "1.0.0", "runs": []}), encoding="utf-8")
+            rejected_alternative = cerrar_episodio.evaluate(
+                "EP-TEST", episode, output,
+                duration_registry_path=alternative_empty,
+                _registry_path_override=registry_path,
+            )
+            self.assertEqual(rejected_alternative.status, GateStatus.FAIL)
+            self.assertTrue(any("no puede sustituir" in item for item in rejected_alternative.violations))
+
+            rejected_missing_alternative = cerrar_episodio.evaluate(
+                "EP-TEST", episode, output,
+                duration_registry_path=temp_path / "missing-registry.json",
+                _registry_path_override=registry_path,
+            )
+            self.assertEqual(rejected_missing_alternative.status, GateStatus.FAIL)
+            self.assertTrue(any("no puede sustituir" in item for item in rejected_missing_alternative.violations))
+
+            fallback_allowed = cerrar_episodio.evaluate("EP-TEST", episode, output, _registry_path_override=baseline_registry)
+            self.assertEqual(fallback_allowed.status, GateStatus.PASS, fallback_allowed.violations)
 
     def test_evidence_substantive_regression_cases(self):
         with self.tempdir("evidence_substantive") as temp:

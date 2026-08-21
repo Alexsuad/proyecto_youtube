@@ -10,6 +10,10 @@
 
 > Este archivo es una proyección operativa del Plan 001. No crea autoridad nueva ni sustituye el plan rector. Ante una contradicción, prevalece el plan rector y debe bloquearse la misión hasta resolverla.
 
+## Prerrequisito de spoilers antes de activar B7.5
+
+Antes de activar B7.5 deberá integrarse en sus consumidores la política aprobada de spoilers: necesidad editorial, mínimo detalle necesario, nivel declarado, warning proporcional, warning antes de una revelación material inesperada y packaging/apertura sin explotación innecesaria de spoilers. Este registro no implementa una nueva arquitectura de spoilers ni activa B7.5.
+
 ## 0. Uso operativo
 
 Lectura mínima para ejecutar una misión de este bloque:

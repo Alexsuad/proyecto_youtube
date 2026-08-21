@@ -1,6 +1,8 @@
 # Skill — Guion Longform
 Objetivo: escribir un guion listo para grabar, siguiendo rígidamente la estructura, estilo y reglas anti-cliché del canal.
 
+> **ESTADO: NO EJECUTABLE ACTUALMENTE.** El catálogo la difiere a B6. Su checklist histórico de tres eventos, proporciones, re-hooks, resets y CTA no constituye una regla activa; debe sustituirse antes de cualquier futura activación por los prerrequisitos canónicos del bloque.
+
 > **Rol ejecutor actual:** el runtime operativo
 ---
 

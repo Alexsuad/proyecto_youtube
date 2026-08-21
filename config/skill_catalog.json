@@ -28,7 +28,7 @@
       "canonical_owner": "ORCHESTRATION",
       "classification": "KEEP",
       "target_or_merge_destination": "ORCHESTRATION",
-      "rationale": "Gate técnico de preejecución.",
+      "rationale": "Gate técnico de preejecución; la ruta portable es primaria y Vault queda aislado como adaptador legacy opcional.",
       "covered_by_general_capability": [
         "verificar-evidencia-minima-cierre"
       ]
@@ -51,7 +51,7 @@
       "canonical_owner": "ORCHESTRATION",
       "classification": "KEEP",
       "target_or_merge_destination": "ORCHESTRATION",
-      "rationale": "Control determinista de integridad del cierre canónico del MVP.",
+      "rationale": "Control determinista de integridad del MVP; el escaneo de Vault se conserva solo como adaptador legacy opcional.",
       "covered_by_general_capability": [
         "auditar-trazabilidad-input-output",
         "verificar-evidencia-minima-cierre"

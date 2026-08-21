@@ -1,5 +1,5 @@
 # Skill — Control de Integridad del Pipeline
-Objetivo: Garantizar que el sistema está estable y limpio antes de iniciar una nueva producción.
+Objetivo: Garantizar que el checkout está estable antes de una operación. El escaneo de Vault es un adaptador legacy opcional.
 
 > **Nota:** La verificación de archivos es **determinista**. La ejecución real la hace:
 > `src/scripts/gate0_integridad.py`
@@ -8,8 +8,8 @@ Objetivo: Garantizar que el sistema está estable y limpio antes de iniciar una 
 ---
 
 ## Entrada mínima
-- `config/local_settings.json` (vault_root + channel_id)
-- `<VAULT_ROOT>/<CHANNEL_ID>/index/episodes_index.json`
+- Checkout del repositorio y sus contratos.
+- `config/local_settings.json` y `<VAULT_ROOT>/<CHANNEL_ID>/index/episodes_index.json` solo para seleccionar el adaptador legacy.
 
 ---
 
@@ -20,8 +20,9 @@ Objetivo: Garantizar que el sistema está estable y limpio antes de iniciar una 
    python src/scripts/gate0_integridad.py
    ```
    El script:
-   - Lee el `episodes_index.json` del Vault.
-   - Escanea carpetas de episodios en `<VAULT_ROOT>/<CHANNEL_ID>/episodios/`.
+   - Si existe una configuración legacy válida, lee el `episodes_index.json` del Vault.
+   - Si se selecciona esa ruta, escanea carpetas de episodios en `<VAULT_ROOT>/<CHANNEL_ID>/episodios/`.
+   - Sin configuración legacy válida, comprueba la integridad portable y devuelve `WARN` informativo sin bloquear el checkout.
    - Detecta episodios con estado `en_progreso` o con entregables finales faltantes.
 
 2) **Los entregables finales verificados son:**
@@ -34,9 +35,9 @@ Objetivo: Garantizar que el sistema está estable y limpio antes de iniciar una 
    - `<EP_PATH>/final_delivery_manifest.json`
 
 3) **Diagnóstico (asignado por el script):**
-   - `OK` → Vault limpio o episodio anterior completo.
+   - `OK` → Checkout limpio o Vault legacy limpio.
    - `WARN` → Episodio con entregables incompletos (riesgo de colisión).
-   - `FAIL` → Error de configuración o Vault inaccesible.
+   - `FAIL` → Error técnico real de integridad. La ausencia de Vault solo afecta al adaptador legacy.
 
 4) **Reporte generado por el script:**
    - `output/control_integridad_pipeline.md` (con `ESTADO_GLOBAL`)

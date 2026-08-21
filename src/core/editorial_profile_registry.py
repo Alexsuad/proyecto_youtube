@@ -3,7 +3,64 @@ import json
 from pathlib import Path
 
 from src.core.contract_validation import validate_against_schema
+from src.core.path_resolution import REPO_ROOT
 from src.core.version_manifest import compute_checksum
+
+
+def load_active_profile_authority(
+    requested_path: Path | None = None,
+    *,
+    _profile_path_override: Path | None = None,
+) -> dict:
+    """Load and fully validate the sole runtime active-profile authority."""
+    canonical = (REPO_ROOT / "config" / "active_editorial_profile.json").resolve()
+    if requested_path is not None and Path(requested_path).resolve() != canonical:
+        raise ValueError("El perfil editorial activo solo puede resolverse desde config/active_editorial_profile.json.")
+    selected = Path(_profile_path_override).resolve() if _profile_path_override is not None else canonical
+    if not selected.is_file():
+        raise ValueError("El archivo canónico del perfil editorial activo está ausente o no es legible.")
+    try:
+        active = json.loads(selected.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("El archivo canónico del perfil editorial activo no contiene JSON legible.") from exc
+    active_errors = validate_against_schema(active, "active_editorial_profile")
+    if active_errors:
+        raise ValueError("Perfil editorial activo inválido: " + "; ".join(active_errors))
+    registry_path = selected.parent / "editorial_profile_registry.json"
+    if not registry_path.is_file():
+        raise ValueError("El registry editorial canónico está ausente o no es legible.")
+    try:
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("El registry editorial canónico no contiene JSON legible.") from exc
+    registry_errors = validate_against_schema(registry, "editorial_profile_registry")
+    if registry_errors:
+        raise ValueError("Registry editorial inválido: " + "; ".join(registry_errors))
+    profile_id = active["ACTIVE_PROFILE_ID"]
+    profile_version = active["ACTIVE_PROFILE_VERSION"]
+    profile_checksum = active["profile_checksum"]
+    key = EditorialProfileRegistry.build_key(profile_id, profile_version)
+    entry = registry["profiles"].get(key)
+    if (
+        registry.get("active_profile_key") != key
+        or not isinstance(entry, dict)
+        or entry.get("active") is not True
+        or entry.get("status") != "ACTIVE"
+        or entry.get("profile_id") != profile_id
+        or entry.get("version") != profile_version
+        or entry.get("checksum") != profile_checksum
+    ):
+        raise ValueError("El pointer del perfil activo no coincide con el registry editorial canónico.")
+    profile = entry.get("profile")
+    profile_errors = validate_against_schema(profile, "editorial_profile")
+    if profile_errors:
+        raise ValueError("El perfil registrado activo es inválido: " + "; ".join(profile_errors))
+    if compute_checksum(profile) != profile_checksum:
+        raise ValueError("El perfil registrado activo no coincide con su checksum canónico.")
+    for section in ("functional_approval", "technical_validation"):
+        if active[section]["profile_checksum"] != profile_checksum:
+            raise ValueError(f"{section} no coincide con el checksum del perfil activo.")
+    return active
 
 
 class EditorialProfileRegistry:

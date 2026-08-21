@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from src.core.contract_validation import load_schema, validate_against_schema
+from src.core.editorial_profile_registry import load_active_profile_authority
 from src.core.gate_result import GateResult
 from src.core.gate_runtime import run_gate
 from src.core.status import GateStatus
@@ -162,14 +163,18 @@ def _strategic_return_violations(value: Any, label: str) -> list[str]:
     return violations
 
 
-def evaluate(package_path: Path, review_path: Path, registry_path: Path, active_profile_path: Path | None = None, artifact_id: str = "YT-R3", claims_ledger: dict[str, Any] | None = None) -> GateResult:
+def evaluate(package_path: Path, review_path: Path, registry_path: Path, active_profile_path: Path | None = None, artifact_id: str = "YT-R3", claims_ledger: dict[str, Any] | None = None, *, _active_profile_path_override: Path | None = None) -> GateResult:
     fail_violations: list[str] = []
     blocked_reasons: list[str] = []
     warnings: list[str] = []
     package = _read(package_path)
     review = _read(review_path)
     registry = _read(registry_path)
-    active_profile = _read(active_profile_path) if active_profile_path else _read(Path("config/active_editorial_profile.json"))
+    try:
+        active_profile = load_active_profile_authority(active_profile_path, _profile_path_override=_active_profile_path_override)
+    except ValueError as exc:
+        fail_violations.append(str(exc))
+        active_profile = {}
     for name, payload, schema in [("producer_package", package, "youtube_adaptation_b5_i2_package"), ("auditor_review", review, "youtube_adaptation_review"), ("execution_registry", registry, "execution_provenance_registry")]:
         fail_violations.extend([f"{name}: {violation}" for violation in validate_against_schema(payload, schema)])
     expected_profile = {"profile_id": active_profile.get("ACTIVE_PROFILE_ID"), "profile_version": active_profile.get("ACTIVE_PROFILE_VERSION"), "profile_checksum": active_profile.get("profile_checksum")}
@@ -295,11 +300,14 @@ def evaluate(package_path: Path, review_path: Path, registry_path: Path, active_
             artifact_id = str(ref.get("artifact_id") or "") if isinstance(ref, dict) else ""
             checksum = str(ref.get("checksum") or "") if isinstance(ref, dict) else ""
             version = str(ref.get("version") or "") if isinstance(ref, dict) else ""
-            if artifact_id not in checksum_by_id:
+            accepted_ids = (artifact_id, _artifact_ref(name, artifact_id))
+            matched_id = next((candidate for candidate in accepted_ids if candidate in checksum_by_id), None)
+            if matched_id is None:
                 fail_violations.append(f"auditor_run must consume original {name} reference {artifact_id}")
-            elif checksum_by_id[artifact_id] != checksum:
+                continue
+            if checksum_by_id[matched_id] != checksum:
                 fail_violations.append(f"auditor_run checksum does not match original {name} reference {artifact_id}")
-            if artifact_id in version_by_id and version_by_id[artifact_id] != version:
+            if matched_id in version_by_id and version_by_id[matched_id] != version:
                 fail_violations.append(f"auditor_run version does not match original {name} reference {artifact_id}")
         _check_run_identity(auditor_run, expected_agent="YOUTUBE_ADAPTATION_AUDITOR", expected_role="YOUTUBE_ADAPTATION_AUDITOR", label="auditor_run", fail_violations=fail_violations, blocked_reasons=blocked_reasons)
         if auditor_run.get("input_checksum") != package_checksum:

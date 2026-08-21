@@ -1,5 +1,13 @@
 # Skill — Curación por función narrativa B5-I2
-Objetivo: producir `MaterialCuration` sin mínimos rígidos de materiales.
+Objetivo: producir `MaterialCuration` sin convertir los rangos normales en cuotas ciegas.
+
+## Rangos operativos y suficiencia
+
+- El screening normal trabaja con 5–8 obras candidatas.
+- La selección final normal contiene 3–5 obras sustantivas.
+- Una excepción solo es válida si está declarada explícitamente, identifica su aprobación y conserva el impacto funcional y de alcance; no existe excepción implícita.
+- La cantidad nunca sustituye la suficiencia, la evidencia narrativa, la diferenciación funcional, el contraste ni la progresión argumentativa.
+- No se exige un mínimo universal de fuentes: se conserva la trazabilidad necesaria para la decisión concreta.
 
 > **Rol ejecutor actual:** el runtime operativo (en el futuro puede ser un agente Curador especializado en análisis narrativo)
 

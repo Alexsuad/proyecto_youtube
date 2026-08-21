@@ -1,0 +1,269 @@
+{
+  "registry_version": "1.1.0",
+  "decisions": [
+    {
+      "decision_id": "MD-LEGACY-001",
+      "subject_ref": "workspace/* (documentación legacy material)",
+      "decision": "La documentación legacy material de workspace/ se clasifica como histórica o fuente de migración, no ejecutable, y queda sujeta a la vista per-file derivada de este registro. Ningún documento legacy puede actuar como autoridad activa del runtime.",
+      "reason": "La arquitectura vigente consume exclusivamente config/, schemas/, src/, policies/ y profiles/. README clasifica workspace/00 como SUPERSEDED_NON_EXECUTABLE, workspace/01,02,03,05 como MIGRATION_SOURCE y workspace/06 y contratos auxiliares como HISTORICAL_REFERENCE; la política de contaminación de runtime trata workspace/ como raíz histórica.",
+      "authority": "TECHNICAL_GOVERNANCE",
+      "state": "VIGENTE",
+      "evidence_refs": [
+        "README.md",
+        "config/runtime_contamination_policy.json",
+        "src/scripts/check_b3_canonical_consumption.py"
+      ],
+      "superseded_by": null,
+      "recorded_at": "2026-08-20T00:00:00Z"
+    },
+    {
+      "decision_id": "MD-LEGACY-002",
+      "subject_ref": "B3-M1 (matriz canónica de componentes por archivo)",
+      "decision": "La evidencia per-file exigida por B3-M1 no está materializada en el repositorio; se registra como deuda de trazabilidad documental. B3 permanece cerrado y el consumo canónico ya demostrado no se invalida.",
+      "reason": "La búsqueda en el worktree y en el historial Git no localizó la matriz per-file de B3-M1. B3_IMPLEMENTATION_STATUS es COMPLETED y B3_FINAL_CLOSURE_STATUS es PASS; no se reabre B3 ni se rehace su evidencia.",
+      "authority": "TECHNICAL_GOVERNANCE",
+      "state": "VIGENTE",
+      "evidence_refs": [
+        "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
+        "plans/plan_001/B3_perfil_editorial_frontera_canal.md",
+        "src/scripts/check_b3_canonical_consumption.py",
+        "tests/harness/test_b3_i3_canonical_consumption.py"
+      ],
+      "superseded_by": null,
+      "recorded_at": "2026-08-20T00:00:00Z"
+    },
+    {
+      "decision_id": "MD-LEGACY-003",
+      "subject_ref": "workspace/00_sistema_agentes_v1.md",
+      "decision": "El sistema de agentes v1 descrito en workspace/00 queda sustituido por la gobernanza operativa vigente (plans/001_CONTROL_OPERATIVO.md) y la arquitectura del motor agéntico (plans/001_reestructuracion_motor_agentico_editorial_y_harness.md). El archivo se conserva como evidencia histórica no ejecutable.",
+      "reason": "README clasifica workspace/00 como SUPERSEDED_NON_EXECUTABLE; las nomenclaturas de coordinación humana no constituyen identidades durables del runtime (AGENTS.md).",
+      "authority": "TECHNICAL_GOVERNANCE",
+      "state": "SUSTITUIDA",
+      "evidence_refs": [
+        "README.md",
+        "plans/001_CONTROL_OPERATIVO.md",
+        "AGENTS.md"
+      ],
+      "superseded_by": "MD-LEGACY-001",
+      "recorded_at": "2026-08-20T00:00:00Z"
+    },
+    {
+      "decision_id": "MD-LEGACY-004",
+      "subject_ref": "workspace/01..05c y workspace/07 (documentación editorial migrada o histórica)",
+      "decision": "La documentación editorial de workspace/01..05c y workspace/07 queda como fuente de migración o referencia histórica, sin autoridad activa; su contenido se conserva como evidencia y no como regla vigente.",
+      "reason": "El contenido editorial vigente reside en config/editorial_profile_registry.json, policies/ y .agent/rules/; workspace/01,02,03,05 es MIGRATION_SOURCE y workspace/04,05c,06,07 es HISTORICAL_REFERENCE. La política de consumo canónico B3-I3 prohíbe consumir estas rutas como fuentes vivas.",
+      "authority": "TECHNICAL_GOVERNANCE",
+      "state": "SUSTITUIDA",
+      "evidence_refs": [
+        "README.md",
+        "config/editorial_profile_registry.json",
+        "src/scripts/check_b3_canonical_consumption.py",
+        "tests/harness/test_b3_i3_canonical_consumption.py"
+      ],
+      "superseded_by": "MD-LEGACY-001",
+      "recorded_at": "2026-08-20T00:00:00Z"
+    },
+    {
+      "decision_id": "MD-LEGACY-005",
+      "subject_ref": "workspace/06_convencion_outputs_y_notebooklm_v1.md y contratos auxiliares de workspace/",
+      "decision": "La convención de outputs de workspace/06 y los contratos auxiliares de workspace/ quedan como referencia histórica; no constituyen gate ni autoridad universal obligatoria.",
+      "reason": "La Misión 3 del PLAN 008 retira la apariencia de NotebookLM como autoridad o gate universal; workspace/06 y contratos auxiliares son HISTORICAL_REFERENCE según README.",
+      "authority": "TECHNICAL_GOVERNANCE",
+      "state": "SUSTITUIDA",
+      "evidence_refs": [
+        "README.md",
+        "plans/plan_008/008_IMPLEMENTACION_TECNICA_REMEDIACION_LEGACY_Y_TRAZABILIDAD.md",
+        "config/runtime_contamination_policy.json"
+      ],
+      "superseded_by": "MD-LEGACY-001",
+      "recorded_at": "2026-08-20T00:00:00Z"
+    },
+    {
+      "decision_id": "MD-LEGACY-006",
+      "subject_ref": "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md y templates/evento_template_v2.md (material editorial legacy omitido en el índice inicial)",
+      "decision": "La policy de detección de patrones y clichés y el template de evento quedan clasificados como legacy editorial migrado o histórico, no ejecutables, sin autoridad activa; su contenido se conserva como evidencia y no como regla vigente.",
+      "reason": "El inventario inicial de la Misión 1 omitió estos dos archivos materiales. El workflow .agent/workflows/piloto-outline.md queda registrado como no ejecutable y diferido; conserva fórmulas legacy solo como evidencia histórica. La sustitución funcional queda anclada a sus hitos futuros y no se activa en PLAN-008.",
+      "authority": "TECHNICAL_GOVERNANCE",
+      "state": "SUSTITUIDA",
+      "evidence_refs": [
+        "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md",
+        "templates/evento_template_v2.md",
+        ".agent/workflows/piloto-outline.md"
+      ],
+      "superseded_by": "MD-LEGACY-001",
+      "recorded_at": "2026-08-20T00:00:00Z"
+    }
+  ],
+  "legacy_files": [
+    {
+      "file_path": "workspace/00_sistema_agentes_v1.md",
+      "decision_id": "MD-LEGACY-003",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": "plans/001_CONTROL_OPERATIVO.md",
+      "consumer_activo": null,
+      "duplicacion_material": "Gobernanza operativa y arquitectura del motor agéntico",
+      "disposicion": "SUPERSEDED_NON_EXECUTABLE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/01_canal_identidad.md",
+      "decision_id": "MD-LEGACY-004",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": "config/editorial_profile_registry.json",
+      "consumer_activo": null,
+      "duplicacion_material": "Identidad del perfil editorial activo",
+      "disposicion": "MIGRATION_SOURCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/02_reglas_editoriales.md",
+      "decision_id": "MD-LEGACY-004",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": ".agent/rules/",
+      "consumer_activo": null,
+      "duplicacion_material": "Reglas editoriales activas en .agent/rules/ y perfil",
+      "disposicion": "MIGRATION_SOURCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/03_formato_longform.md",
+      "decision_id": "MD-LEGACY-004",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": "policies/script_product/main_episode_format_policy.md",
+      "consumer_activo": null,
+      "duplicacion_material": "Política de formato de episodio principal",
+      "disposicion": "MIGRATION_SOURCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/04_politica_spoilers.md",
+      "decision_id": "MD-LEGACY-004",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": null,
+      "consumer_activo": null,
+      "duplicacion_material": "Política de spoilers pendiente de integración en consumidores canónicos (prerrequisito B5-I3/B6/B7.5)",
+      "disposicion": "HISTORICAL_REFERENCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/05_estilo_y_voz.md",
+      "decision_id": "MD-LEGACY-004",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": "config/editorial_profile_registry.json",
+      "consumer_activo": null,
+      "duplicacion_material": "Voz editorial del perfil activo (voice_profile)",
+      "disposicion": "MIGRATION_SOURCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/05c_voice_profile.md",
+      "decision_id": "MD-LEGACY-004",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": null,
+      "consumer_activo": null,
+      "duplicacion_material": "Observaciones de voz; no constituyen reglas (Misión 4 del PLAN 008)",
+      "disposicion": "HISTORICAL_REFERENCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/06_convencion_outputs_y_notebooklm_v1.md",
+      "decision_id": "MD-LEGACY-005",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": ".agent/rules/01_formato_outputs.md",
+      "consumer_activo": null,
+      "duplicacion_material": "Convención de outputs activa en .agent/rules/",
+      "disposicion": "HISTORICAL_REFERENCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/07_arquitectura_storage_repo_vs_vault_v1_2.md",
+      "decision_id": "MD-LEGACY-004",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": null,
+      "consumer_activo": null,
+      "duplicacion_material": "Arquitectura de almacenamiento; la ruta portable no depende de Vault",
+      "disposicion": "HISTORICAL_REFERENCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/CHECKLIST_REVISION_COMPETENCIA.md",
+      "decision_id": "MD-LEGACY-005",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": null,
+      "consumer_activo": null,
+      "duplicacion_material": "Contrato auxiliar de operación humana",
+      "disposicion": "HISTORICAL_REFERENCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/CONTRATO_NOTEBOOKLM.md",
+      "decision_id": "MD-LEGACY-005",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": null,
+      "consumer_activo": null,
+      "duplicacion_material": "Contrato auxiliar; NotebookLM no es gate universal",
+      "disposicion": "HISTORICAL_REFERENCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/INDICE_EPISODIOS.md",
+      "decision_id": "MD-LEGACY-005",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": null,
+      "consumer_activo": null,
+      "duplicacion_material": "Índice auxiliar histórico",
+      "disposicion": "HISTORICAL_REFERENCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/LISTA_DE_NO_COPIA.md",
+      "decision_id": "MD-LEGACY-005",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": null,
+      "consumer_activo": null,
+      "duplicacion_material": "Lista auxiliar de no copia",
+      "disposicion": "HISTORICAL_REFERENCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/MAPA_DE_LENTES.md",
+      "decision_id": "MD-LEGACY-005",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": null,
+      "consumer_activo": null,
+      "duplicacion_material": "Mapa auxiliar histórico de lentes",
+      "disposicion": "HISTORICAL_REFERENCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "reference/estilo_usuario/README.md",
+      "decision_id": "MD-LEGACY-001",
+      "estado": "HISTORICA",
+      "autoridad_sucesor": null,
+      "consumer_activo": null,
+      "duplicacion_material": "Referencia de voz histórica; metadata reconciliada y sin autoridad conductual",
+      "disposicion": "HISTORICAL_REFERENCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md",
+      "decision_id": "MD-LEGACY-006",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": "policies/script_product/main_episode_format_policy.md",
+      "consumer_activo": null,
+      "duplicacion_material": "Reglas de patrones, clichés, ritmo, cierre y voz; aspectos de voz remiten al perfil activo y la política de spoilers a su integración en B5-I3/B6/B7.5",
+      "disposicion": "MIGRATION_SOURCE",
+      "ejecutable": false
+    },
+    {
+      "file_path": "templates/evento_template_v2.md",
+      "decision_id": "MD-LEGACY-006",
+      "estado": "SUSTITUIDA",
+      "autoridad_sucesor": "policies/script_product/main_episode_format_policy.md",
+      "consumer_activo": null,
+      "duplicacion_material": "Estructura de evento legacy (re-hook, proporciones obra/análisis) sustituida por la política de formato vigente",
+      "disposicion": "MIGRATION_SOURCE",
+      "ejecutable": false
+    }
+  ]
+}

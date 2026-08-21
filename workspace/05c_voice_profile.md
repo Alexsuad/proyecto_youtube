@@ -1,5 +1,7 @@
 # 05c_voice_profile.md - Perfil de Voz Acumulado (MADG)
 
+> **METADATA LEGACY — SUSTITUIDA / NO EJECUTABLE.** Las observaciones históricas de voz no son reglas ni autoridad; la autoridad vigente procede del `EditorialProfile`, corpus auténtico gobernado y aprendizaje editorial gobernado.
+
 Este documento es el repositorio vivo de los aprendizajes de estilo del canal. Se actualiza después de cada episodio comparando la salida de la IA con el guion final humano.
 
 ---

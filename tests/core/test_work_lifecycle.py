@@ -1,4 +1,6 @@
 from copy import deepcopy
+import hashlib
+import json
 
 from src.core.contract_validation import validate_against_schema, validate_work_lifecycle
 
@@ -87,6 +89,75 @@ def _final_pack():
     return data, curation
 
 
+def _dossier(work_id, stage="RESEARCH_REVIEW_PENDING", *, episode_id="EP-1", research_id="R-1"):
+    dossier = {
+        "dossier_id": f"D-{work_id}", "dossier_version": "1.0.0", "episode_id": episode_id,
+        "research_id": research_id, "evidence_report_id": f"ER-{work_id}",
+        "work": {"material_id": work_id, "title": f"Obra {work_id}", "creator": "Autor", "consulted_representations": [{"representation_kind": "ORIGINAL_WORK", "edition_or_version": "fixture-1", "consulted_locator": f"fixture://{work_id}"}]},
+        "dossier_stage": stage, "pending_items": [], "confidence": "HIGH", "created_at": "2026-08-12T20:00:00Z",
+    }
+    if stage == "RESEARCH_REVIEW_PENDING":
+        dossier.update({
+            "analysis_references": [{"analysis_id": f"A-{work_id}", "material_id": work_id}],
+            "question_and_thesis_relation": {"central_question_ref": "question:EP-1", "provisional_thesis_ref": "thesis:1", "demonstrates_analysis_ref": f"A-{work_id}", "does_not_establish_analysis_ref": f"A-{work_id}", "main_interpretation_analysis_ref": f"A-{work_id}", "rival_interpretation_analysis_refs": [f"A-{work_id}"]},
+            "claim_dispositions": {"claims_ledger_id": "CL-1", "authority_status": "REPRESENTATION_ONLY_IR4_PENDING", "candidate_allowed_claim_ids": ["C-1"], "candidate_limited_claim_ids": [], "candidate_blocked_claim_ids": []},
+            "overinterpretation_risk": {"level": "LOW", "rationale": "Fixture técnica."},
+            "candidate_editorial_function_analysis_ref": f"A-{work_id}", "locators": [{"analysis_id": f"A-{work_id}", "locator": f"fixture://{work_id}/scene"}],
+            "work_use_sufficiency": {"intended_use": "B5_I2_CONTROLLED_HARNESS", "status": "IR7_FIDELITY_AUDIT_REQUIRED"},
+            "research_stop_decision_ref": f"RSD-{work_id}", "independent_fidelity_audit": {"audit_reference": None, "dependency": "FUNCTIONAL_DECISION_REQUIRED"},
+        })
+    return dossier
+
+
+def _final_dossiers():
+    return [_dossier(work_id) for work_id in ("W1", "W2", "W3")]
+
+
+def _dossier_artifacts(work_id="W1"):
+    analysis = {
+        "analysis_id": f"A-{work_id}", "artifact_version": "1.0.0", "episode_id": "EP-1", "research_id": "R-1",
+        "evidence_report_id": f"ER-{work_id}", "semantic_audit_id": f"SA-{work_id}", "material_id": work_id,
+        "material_checksum": "a" * 64, "inherited_constraint_ids": [],
+        "findings": [{"finding_id": f"F-{work_id}", "claim_type": "INTERPRETATION", "statement": "Lectura.", "narrative_evidence_refs": ["NE-1"], "source_refs": ["S-1"], "human_dimension": "BELIEF", "causal_relation": "Relación.", "confidence": "HIGH"}],
+        "rival_interpretations": ["Rival."], "rival_interpretation_status": "PRESENT", "rival_interpretation_justification": None,
+        "limitations": ["Límite."], "limits_status": "PRESENT", "limits_justification": None,
+        "demonstrates": "Demuestra.", "does_not_establish": "No demuestra.", "material_function_candidate": "Complicación",
+        "specific_scene_or_passage": "Escena 3", "observable_decision_or_action": "Decisión.", "conflict": "Conflicto.",
+        "consequence": "Consecuencia.", "main_interpretation": "Interpretación.", "supporting_evidence": [f"F-{work_id}"],
+        "interpretive_limit": "Límite.", "relationship_to_provisional_thesis": "Relación.",
+        "potential_contribution_to_progression": "Aporta.", "created_at": "2026-08-12T20:00:00Z",
+    }
+    ledger = {"ledger_id": "CL-1", "script_version": "1.0.0", "claims": [{
+        "claim_id": "C-1", "script_location": "B1", "claim_text": "Claim", "claim_type": "FACT",
+        "source_refs": ["S-1"], "verification_status": "VERIFIED", "materiality": {
+            "is_material": True, "activation_criteria": ["THESIS_DEPENDENCY"], "non_trigger_examples": ["Fixture"],
+            "invalidator_codes": ["NEW_MATERIAL_EVIDENCE"], "return_route_code": "AUTHORIZE_INTENDED_USE_ONLY", "decision_ref": "DEC-1",
+        },
+    }]}
+    return {"claims_ledger": ledger, "narrative_analyses": [analysis]}
+
+
+def _finalist_pack_with_resolved_references():
+    data = _screened_pack()
+    work = data["works"][0]
+    work.update({"state": "FINALIST_WORK", "dossier_ref": "D-W1"})
+    data["transitions"].append(_transition("W1", "SCREENED_WORK", "FINALIST_WORK"))
+    dossier = _dossier("W1")
+    artifacts = _dossier_artifacts()
+    analysis = artifacts["narrative_analyses"][0]
+    dossier["analysis_references"][0].update({
+        "artifact_version": analysis["artifact_version"],
+        "artifact_checksum": hashlib.sha256(json.dumps(analysis, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest(),
+    })
+    artifacts["claims_ledger"]["claims"][0]["claim_id"] = "C-1"
+    artifacts["claims_ledger"]["script_version"] = "1.0.0"
+    dossier["claim_dispositions"].update({
+        "claims_ledger_version": "1.0.0",
+        "claims_ledger_checksum": hashlib.sha256(json.dumps(artifacts["claims_ledger"], ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest(),
+    })
+    return data, [dossier], {"D-W1": artifacts}
+
+
 def _doubt(status="ACTIVE", **overrides):
     value = {
         "doubt_id": "D-1", "decision_id": "SP-IR0-CRITICAL_WORK_DOUBT", "decision_version": "1.0.0", "work_id": "W1",
@@ -119,8 +190,36 @@ def test_screened_to_finalist_requires_dossier_reference():
 
 
 def test_finalist_to_final_selected_requires_curation_and_function():
+    data, curation = _final_pack(); dossiers = _final_dossiers()
+    violations = validate_work_lifecycle(data, dossiers=dossiers, material_curation=curation)
+    assert any("FUNCTIONAL_DECISION_REQUIRED" in item for item in violations)
+
+
+def test_finalist_promotion_is_valid_when_dossier_references_resolve():
+    data, dossiers, artifacts = _finalist_pack_with_resolved_references()
+    assert validate_work_lifecycle(data, dossiers=dossiers, dossier_artifacts=artifacts) == []
+
+
+def test_final_selected_with_identified_dossier_fails_closed():
+    data, curation = _final_pack(); dossiers = _final_dossiers()
+    dossiers[0] = _dossier("W1", stage="IDENTIFIED")
+    violations = validate_work_lifecycle(data, dossiers=dossiers, material_curation=curation)
+    assert any("RESEARCH_REVIEW_PENDING" in item for item in violations)
+
+
+def test_finalist_without_dossier_collection_fails_closed():
     data, curation = _final_pack()
-    assert validate_work_lifecycle(data, material_curation=curation) == []
+    assert any("colección de WorkResearchDossier" in item for item in validate_work_lifecycle(data, material_curation=curation))
+
+
+def test_final_selected_dossier_identity_and_research_context_must_match():
+    data, curation = _final_pack(); dossiers = _final_dossiers()
+    dossiers[0] = _dossier("OTHER", episode_id="EP-OTHER", research_id="R-OTHER")
+    dossiers[0]["dossier_id"] = "D-W1"
+    violations = validate_work_lifecycle(data, dossiers=dossiers, material_curation=curation)
+    assert any("episode_id" in item for item in violations)
+    assert any("research_id" in item for item in violations)
+    assert any("difieren para la obra 'W1'" in item for item in violations)
 
 
 def test_promotional_jumps_fail_closed():
@@ -345,14 +444,14 @@ def test_implicit_exception_is_rejected():
 
 
 def test_three_to_five_substantive_final_works_pass_with_curation():
-    data, curation = _final_pack()
-    assert validate_work_lifecycle(data, material_curation=curation) == []
+    data, curation = _final_pack(); dossiers = _final_dossiers()
+    assert any("FUNCTIONAL_DECISION_REQUIRED" in item for item in validate_work_lifecycle(data, dossiers=dossiers, material_curation=curation))
 
 
 def test_decorative_work_cannot_complete_final_minimum():
-    data, curation = _final_pack()
+    data, curation = _final_pack(); dossiers = _final_dossiers()
     curation["function_of_each_selected_material"] = curation["function_of_each_selected_material"][:2]
-    assert validate_work_lifecycle(data, material_curation=curation)
+    assert validate_work_lifecycle(data, dossiers=dossiers, material_curation=curation)
 
 
 def test_excluded_or_invalidated_work_cannot_reopen_directly_to_selected():

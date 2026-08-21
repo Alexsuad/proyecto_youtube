@@ -1,4 +1,5 @@
 # Skill — QA Editorial (Auditoría Estructural y de Voz)
+> **ESTADO: NO EJECUTABLE ACTUALMENTE.** El catálogo la difiere a B6-B7. Sus comprobaciones legacy de proporciones, número fijo de eventos y re-hooks solo son prerrequisitos de reemplazo; no constituyen reglas activas durante PLAN-008.
 Objetivo: auditar el guion asegurando que cumple **exactamente** la arquitectura MADG y no contiene lenguaje IA o clichés de coaching.
 
 > **Rol ejecutor actual:** el runtime operativo

@@ -1,5 +1,7 @@
 # 📄 `workspace/00_sistema_agentes_v1.md`
 
+> **METADATA LEGACY — SUSTITUIDA / NO EJECUTABLE.** Este cuerpo se conserva como evidencia histórica. La autoridad vigente es `plans/001_CONTROL_OPERATIVO.md` y los contratos canónicos de `config/`, `schemas/`, `src/` y `policies/`.
+
 ## Documento Maestro del Sistema — Proyecto YouTube (V1.2)
 
 **Proyecto:** `proyecto_youtube`

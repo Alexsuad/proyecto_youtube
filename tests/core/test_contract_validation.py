@@ -304,7 +304,7 @@ class TestContractValidation(unittest.TestCase):
             "claim_dispositions": {"claims_ledger_id": "CL-001", "claims_ledger_version": "1.0.0", "claims_ledger_checksum": ledger_checksum, "authority_status": "REPRESENTATION_ONLY_IR4_PENDING", "candidate_allowed_claim_ids": ["CLAIM-001"], "candidate_limited_claim_ids": [], "candidate_blocked_claim_ids": []},
             "overinterpretation_risk": {"level": "MEDIUM", "rationale": "Riesgo contenido."}, "candidate_editorial_function_analysis_ref": "A-1", "locators": [{"analysis_id": "A-1", "locator": "Escena 3"}],
             "pending_items": [], "confidence": "HIGH", "work_use_sufficiency": {"intended_use": "NARRATIVE_MATERIAL", "status": "IR7_FIDELITY_AUDIT_REQUIRED"},
-            "independent_fidelity_audit": {"audit_reference": None, "dependency": "DEFERRED_TO_R1_M10_R1_M11"}, "created_at": "2026-08-07T10:00:00Z"
+            "independent_fidelity_audit": {"audit_reference": None, "dependency": "FUNCTIONAL_DECISION_REQUIRED"}, "created_at": "2026-08-07T10:00:00Z"
         }
 
     def _valid_claims_ledger(self):

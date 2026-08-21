@@ -1,5 +1,7 @@
 # Formato Longform — Proyecto YouTube (Fuente de Verdad)
 
+> **METADATA LEGACY — SUSTITUIDA / NO EJECUTABLE.** La política vigente de formato reside en `policies/script_product/`; este cuerpo es material histórico de migración.
+
 ## 1) Duración objetivo
 - Duración total: 15–25 minutos.
 

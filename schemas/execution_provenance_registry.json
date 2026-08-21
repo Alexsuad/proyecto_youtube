@@ -34,9 +34,71 @@
       }
     },
     "attempts": {"type": "array", "items": {"$ref": "#/definitions/attempt"}},
-    "reservations": {"type": "array", "items": {"$ref": "#/definitions/reservation"}}
+    "reservations": {"type": "array", "items": {"$ref": "#/definitions/reservation"}},
+    "duration_envelope_approvals": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/duration_envelope_approval"}
+    }
   },
   "definitions": {
+    "duration_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_kind", "artifact_id", "artifact_ref", "artifact_path", "checksum"],
+      "properties": {
+        "artifact_kind": {
+          "enum": ["youtube_adaptation_b5_i2_package", "youtube_adaptation_review"]
+        },
+        "artifact_id": {"type": "string", "minLength": 1},
+        "artifact_ref": {"type": "string", "minLength": 1},
+        "artifact_path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?![A-Za-z]:)(?![\\\\/])(?!.*\\.\\.).*"
+        },
+        "checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "duration_envelope_approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_id", "capability_id", "episode_id", "status", "decision", "authority",
+        "package", "review", "provenance", "gate", "duration_metadata"
+      ],
+      "properties": {
+        "approval_id": {"type": "string", "minLength": 1},
+        "capability_id": {"const": "YT_DURATION_ENVELOPE"},
+        "episode_id": {"type": "string", "minLength": 1},
+        "status": {"const": "APPROVED"},
+        "decision": {"const": "PASS"},
+        "authority": {"const": "YOUTUBE_ADAPTATION_AUDITOR"},
+        "package": {"$ref": "#/definitions/duration_artifact"},
+        "review": {"$ref": "#/definitions/duration_artifact"},
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["producer_run_id", "auditor_run_id", "registry_ref"],
+          "properties": {
+            "producer_run_id": {"type": "string", "minLength": 1},
+            "auditor_run_id": {"type": "string", "minLength": 1},
+            "registry_ref": {"type": "string", "minLength": 1}
+          }
+        },
+        "gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["gate_id", "status", "review_decision", "result_checksum"],
+          "properties": {
+            "gate_id": {"const": "youtube_adaptation_b5_i2_gate"},
+            "status": {"const": "PASS"},
+            "review_decision": {"type": "string", "minLength": 1},
+            "result_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+          }
+        },
+        "duration_metadata": {"type": "object", "minProperties": 1}
+      }
+    },
     "handoff": {
       "type": "object",
       "additionalProperties": false,

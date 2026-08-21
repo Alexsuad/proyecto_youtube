@@ -3,7 +3,7 @@
 > Entrada operativa: consultar primero [`AGENTS.md`](AGENTS.md), [`plans/001_CONTROL_OPERATIVO.md`](plans/001_CONTROL_OPERATIVO.md) y [`docs/product/MVP_BASELINE.md`](docs/product/MVP_BASELINE.md). Ante una mejora fuera de misión: localizar MVP y control operativo, comprobar pertenencia y duplicados, capturar problema/valor, mantener `implementation_authorized: false` y no ampliar alcance.
 
 > Repositorio canónico del sistema editorial de **Más Allá del Guion**. La prioridad activa es el núcleo profesional de Guion hasta `EDITORIAL_SCRIPT_APPROVED`.
-> La fuente de verdad del contenido operativo del producto está en el perfil editorial activo y en sus contratos versionados; el *Content Vault* externo contiene trabajo episódico y evidencia operativa.
+> La fuente de verdad del contenido operativo del producto está en el perfil editorial activo y en sus contratos versionados; el *Content Vault* externo es un adaptador legacy opcional para trabajo episódico y evidencia operativa.
 
 ---
 
@@ -86,18 +86,15 @@ python src/scripts/gate0_auditoria.py
 # Iniciar un episodio nuevo en Vault (opcional, solo ruta legacy)
 python src/scripts/iniciar_episodio.py
 
-# Cerrar el episodio activo
-python src/scripts/cerrar_episodio.py
-
-# Cerrar forzando (pasa los WARN de entregables deseables)
-python src/scripts/cerrar_episodio.py --forzar
+# Cerrar una ruta portable del episodio
+python src/scripts/cerrar_episodio.py --episode-path <EP_PATH> --ep-id <EP_ID>
 ```
 
 ---
 
 ## Entregables por episodio
 
-Dentro de la carpeta del episodio en el Vault (`ep_XXXX_slug/`):
+Dentro de `<EP_PATH>` —checkout portable o adaptador Vault legacy— (`ep_XXXX_slug/` cuando aplica):
 
 | Archivo | Tipo | Descripción |
 |---|---|---|
@@ -105,21 +102,21 @@ Dentro de la carpeta del episodio en el Vault (`ep_XXXX_slug/`):
 | `01_research_bruto.md` | Deseable | Investigación bruta. **NO subir a NotebookLM** |
 | `02_curation_obras.md` | Deseable | Obras seleccionadas |
 | `06_guion_longform.md` | **Obligatorio** | Guion final aprobado |
-| `07_verificacion_veracidad_notebooklm.md` | **Obligatorio** | Gate V — debe tener `ESTADO_GLOBAL: OK` |
+| `07_verificacion_veracidad_notebooklm.md` | Adaptador legacy opcional | Verificación externa histórica; no es gate universal ni autoridad |
 | `08_shorts.md` | Futuro / Etapa 2 | Guiones de shorts |
 | `09_packaging.md` | Diferido / Etapa 2 | Títulos y concepto de miniatura; no requerido para cerrar el MVP |
 | `10_seo.md` | Diferido / Etapa 2 | Metadatos para YouTube; no requerido para cerrar el MVP |
-| `99_notebooklm_pack.md` | Deseable* | Índice de subida a NotebookLM |
+| `99_notebooklm_pack.md` | Opcional | Índice para un adaptador externo, si se decide usarlo |
 
-> *`99_notebooklm_pack.md` puede convertirse en obligatorio activando `notebooklm_pack_required: true` en `config/local_settings.json`.
+> La ausencia de estos archivos no bloquea la ruta portable moderna. Una configuración local no puede convertir un adaptador en autoridad universal.
 
 ---
 
 ## Regla NotebookLM
 
-**NotebookLM es la memoria limpia del canal. Solo recibe "verdades terminadas".**
+**NotebookLM es un adaptador opcional y no autoritativo.** Su ausencia no impide el pipeline portable; la autoridad permanece en los contratos, el perfil editorial activo y los artefactos gobernados del episodio.
 
-### ✅ Qué se subirá en la Etapa 2 autorizada
+### Uso opcional, cuando exista un adaptador autorizado
 - `06_guion_longform.md` — guion final aprobado
 - `08_shorts.md` — shorts finales
 - `09_packaging.md` — packaging final
@@ -131,7 +128,7 @@ Dentro de la carpeta del episodio en el Vault (`ep_XXXX_slug/`):
 - Borradores o versiones intermedias
 - Archivos de QA o notas de revisión
 
-### Convención de nombres al subir
+### Convención de nombres del adaptador
 
 Renombrar cada archivo con el patrón:
 
@@ -145,11 +142,10 @@ Ejemplo: `EPI_ep_0007__duelo_y_culpa__GUION`
 
 ## Cómo usar el pack (`99_notebooklm_pack.md`)
 
-1. Al finalizar el episodio, el runtime operativo genera `99_notebooklm_pack.md` usando `templates/99_notebooklm_pack_template.md`.
+1. Si se habilita el adaptador, puede generarse `99_notebooklm_pack.md` usando `templates/99_notebooklm_pack_template.md`.
 2. El pack incluye: tesis central, obras principales, 5 ideas fuerza, notas de sensibilidad y la lista de archivos a subir.
-3. Subir los 4-5 archivos finales a NotebookLM, renombrados con la convención de nombres.
-4. Hacer una pregunta de prueba en NotebookLM para verificar que "entiende" el nuevo contenido.
-5. Preguntar: *"¿Existe algún episodio anterior con tesis similar o que use las mismas obras?"* para evitar repetición.
+3. Transferir los archivos solo si la ruta opcional está disponible y autorizada.
+4. No usar el adaptador como fuente de verdad ni como condición para cerrar el episodio.
 
 ---
 

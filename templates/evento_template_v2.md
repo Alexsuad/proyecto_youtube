@@ -1,5 +1,7 @@
 # Evento Template V2 — Guion por Evento (Película / Serie / Libro)
 
+> **METADATA LEGACY — SUSTITUIDA / NO EJECUTABLE.** Este template se conserva como evidencia histórica. No activa una estructura universal; cualquier uso futuro requiere los prerrequisitos de B5-I3/B6/B7/B7.5.
+
 > Este template se usa para escribir cada evento del episodio con control total.
 
 ---

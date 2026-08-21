@@ -83,12 +83,74 @@ def _classify_provider_kind(provider: str, request: ExecutionRequest, usage: dic
     return "REAL"
 
 
-def persist_execution_result(path: Path, result: ExecutionResult, request: ExecutionRequest, *, execution_mode: str) -> None:
+def _duration_package_input(request: ExecutionRequest) -> Path | None:
+    """Return the sole B5-I2 package consumed by a duration-review run."""
+    if request.role != "YOUTUBE_ADAPTATION_AUDITOR" or request.output_artifact_kind != "youtube_adaptation_review":
+        return None
+    packages = [
+        item.path
+        for item in request.input_artifacts
+        if item.artifact_kind == "youtube_adaptation_b5_i2_package"
+    ]
+    if len(packages) != 1:
+        raise ValueError(
+            "YOUTUBE_ADAPTATION_AUDITOR requiere exactamente un package B5-I2 trazable para persistir una review."
+        )
+    return Path(packages[0])
+
+
+def _restore_registry(path: Path, prior: bytes | None) -> None:
+    if prior is None:
+        if path.exists():
+            path.unlink()
+        return
+    path.write_bytes(prior)
+
+
+def persist_execution_result(
+    path: Path,
+    result: ExecutionResult,
+    request: ExecutionRequest,
+    *,
+    execution_mode: str,
+    _allow_duration_registry_override: bool = False,
+) -> None:
     from src.ai.registry import append_result
+    from src.core.duration_envelope import canonical_active_profile_path, canonical_duration_registry_path, register_approved_duration_envelope
+    from src.core.status import GateStatus
+    from src.scripts.youtube_adaptation_b5_i2_gate import evaluate as evaluate_youtube_adaptation
 
     if str(execution_mode).upper() == "REAL" and request.config.get("_mission_authorization_token") is None:
         raise PermissionError("REAL_PROVENANCE_REQUIRES_VERIFIED_MISSION_AUTHORIZATION")
+    package_path = _duration_package_input(request)
+    registry_path = Path(path).resolve()
+    configured_profile = request.config.get("active_editorial_profile_path")
+    if configured_profile is not None and Path(str(configured_profile)).resolve() != canonical_active_profile_path():
+        raise ValueError("request.config no puede sustituir el perfil editorial activo canónico.")
+    if package_path is not None and registry_path != canonical_duration_registry_path() and not _allow_duration_registry_override:
+        raise ValueError("La aprobación de duración solo puede materializarse en el registry canónico.")
+    prior = registry_path.read_bytes() if registry_path.exists() else None
     append_result(path, result, execution_mode=execution_mode, role=request.role or "UNSPECIFIED_PRODUCER", request=request)
+    if package_path is None:
+        return
+    gate = evaluate_youtube_adaptation(
+        package_path,
+        result.output_artifact_path,
+        registry_path,
+        (Path(__file__).resolve().parents[2] / "config" / "active_editorial_profile.json"),
+        request.episode_id,
+    )
+    if gate.status is not GateStatus.PASS:
+        return
+    try:
+        register_approved_duration_envelope(
+            package_path,
+            result.output_artifact_path,
+            registry_path,
+        )
+    except Exception:
+        _restore_registry(registry_path, prior)
+        raise
 
 
 def persist_execution_attempt(path: Path, result: ExecutionResult, request: ExecutionRequest, *, execution_mode: str) -> None:

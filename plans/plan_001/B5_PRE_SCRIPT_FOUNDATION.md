@@ -10,6 +10,12 @@
 >
 > **No confundir con `B5_5_prototipo_editorial.md`:** ese documento es el prototipo editorial controlado **posterior** (post-guion). Este documento representa la **planeación previa al guion** (pre-script): entrada, pertenencia, investigación, obras candidatas, obras finales, análisis, curación, tesis, promesa editorial y restricciones de adaptación temprana. No produce todavía outline, arquitectura completa, apertura ni guion.
 
+## Prerrequisitos para una futura activación B5-I3
+
+Este registro no activa B5-I3 ni implementa una arquitectura de guion. Antes de cualquier activación futura, el diseño deberá impedir la reintroducción automática de 80/20 cuantitativo, re-hooks periódicos obligatorios, resets por cronómetro, tres eventos obligatorios, timeline universal 15–25, “segundo mejor primero”, CTA obligatorio o la secuencia universal Hook → Intro → Evento 1 → Evento 2 → Evento 3 → Clímax → CTA. La sustitución aprobada se evaluará por gramática narrativa funcional, progresión, renovación atencional, variación de ritmo no mecánica y función argumentativa.
+
+El mismo hito futuro deberá integrar una política de spoilers basada en necesidad editorial, mínimo detalle necesario, nivel declarado, warning proporcional y aviso antes de una revelación material inesperada. No se crea ahora un stack paralelo ni una regla de voz o referentes.
+
 ---
 
 ## 1. Identidad del plan

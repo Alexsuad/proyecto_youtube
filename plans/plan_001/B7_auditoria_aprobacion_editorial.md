@@ -10,6 +10,12 @@
 
 > Este archivo es una proyección operativa del Plan 001. No crea autoridad nueva ni sustituye el plan rector. Ante una contradicción, prevalece el plan rector y debe bloquearse la misión hasta resolverla.
 
+## Prerrequisitos antes de activar B7
+
+Antes de activar este bloque deberá verificarse que ningún consumidor reintroduce 80/20 cuantitativo, re-hooks periódicos obligatorios, resets por cronómetro, tres eventos obligatorios, timeline universal 15–25, “segundo mejor primero”, CTA obligatorio o la estructura universal Hook → Intro → Evento 1 → Evento 2 → Evento 3 → Clímax → CTA. La auditoría deberá revisar función narrativa, progresión, renovación atencional, ritmo no mecánico y función argumentativa, sin convertir estas dimensiones en una cuota nueva.
+
+También deberá estar integrada la política de spoilers por necesidad editorial, mínimo detalle necesario, nivel declarado, warning proporcional y aviso previo a revelaciones materiales inesperadas. B7 no queda activado por este registro.
+
 ## 0. Uso operativo
 
 Lectura mínima para ejecutar una misión de este bloque:

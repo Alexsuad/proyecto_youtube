@@ -1,4 +1,5 @@
 # POLICY — Detección de Patrones y Clichés (V2)
+> **METADATA LEGACY — SUSTITUIDA / NO EJECUTABLE.** Sus fórmulas no se reactivan como reglas universales; los prerrequisitos futuros están anclados en B5-I3/B6/B7.5 y la voz vigente en el perfil gobernado.
 **Proyecto:** Proyecto YouTube  
 **Propósito:** Reducir huellas típicas de “texto de IA” y elevar naturalidad + voz del canal  
 **Aplicación:** Obligatoria en guion por eventos y en guion final (GO/NO-GO)

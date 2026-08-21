@@ -522,6 +522,10 @@ for _name in ("responsibility_registry", "skill_catalog", "subagent_registry", "
     with open(os.path.join(os.path.dirname(__file__), "..", "..", "config", f"{_name}.json"), encoding="utf-8") as _fixture:
         VALID_FIXTURES[_name] = json.load(_fixture)
 
+# PLAN 008, Misión 1: el registro canónico de decisiones materiales sirve como fixture de su schema.
+with open(os.path.join(os.path.dirname(__file__), "..", "..", "docs", "legacy", "material_decision_registry.json"), encoding="utf-8") as _fixture:
+    VALID_FIXTURES["material_decision_registry"] = json.load(_fixture)
+
 
 # CI: fixtures for capability and topic belonging schemas.
 with open(os.path.join(os.path.dirname(__file__), "..", "..", "config", "capability_registry.json"), encoding="utf-8") as _fixture:
@@ -741,7 +745,7 @@ VALID_FIXTURES["work_research_dossier"] = {
     "candidate_editorial_function_analysis_ref": "A-1", "locators": [{"analysis_id": "A-1", "locator": "Escena 3"}],
     "pending_items": [], "confidence": "HIGH",
     "work_use_sufficiency": {"intended_use": "NARRATIVE_MATERIAL", "status": "IR7_FIDELITY_AUDIT_REQUIRED"},
-    "independent_fidelity_audit": {"audit_reference": None, "dependency": "DEFERRED_TO_R1_M10_R1_M11"},
+    "independent_fidelity_audit": {"audit_reference": None, "dependency": "FUNCTIONAL_DECISION_REQUIRED"},
     "created_at": "2026-08-07T10:00:00Z"
 }
 _fixture_checksum = lambda value: hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()

@@ -19,7 +19,7 @@ from src.core.research_audit import resolve_correction_routes, validate_independ
 from tests.core.test_r1_m6_m8 import _decision, _memory
 from tests.core.test_r1_m7 import _contradiction
 from tests.core.test_r1_m9 import _specialist
-from tests.core.test_work_lifecycle import _doubt, _final_pack, _screened_pack
+from tests.core.test_work_lifecycle import _doubt, _final_dossiers, _final_pack, _screened_pack
 from tests.fixtures.synthetic_contracts import VALID_RESEARCH_PACK
 
 
@@ -209,7 +209,7 @@ def test_case_a_positive_composes_r1_capabilities_without_editorial_approval() -
 
     lifecycle, curation = _final_pack()
     lifecycle["critical_doubts"] = [_doubt(work_id="W4")]
-    assert validate_work_lifecycle(lifecycle, material_curation=curation) == []
+    assert any("FUNCTIONAL_DECISION_REQUIRED" in item for item in validate_work_lifecycle(lifecycle, dossiers=_final_dossiers(), material_curation=curation))
     assert validate_optional_research_adapter(None) == []
 
     memory = _memory()

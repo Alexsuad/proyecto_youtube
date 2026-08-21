@@ -10,6 +10,12 @@
 
 > Este archivo es una proyección operativa del Plan 001. No crea autoridad nueva ni sustituye el plan rector. Ante una contradicción, prevalece el plan rector y debe bloquearse la misión hasta resolverla.
 
+## Prerrequisitos antes de activar B6
+
+Esta sede registra una condición futura; no activa B6 ni implementa la arquitectura completa de guion. Antes de ejecutar el bloque deberán quedar impedidas las fórmulas legacy 80/20 cuantitativo, re-hooks periódicos obligatorios, resets por cronómetro, tres eventos obligatorios, timeline universal 15–25, “segundo mejor primero”, CTA obligatorio y la estructura universal Hook → Intro → Evento 1 → Evento 2 → Evento 3 → Clímax → CTA. La evaluación futura debe usar gramática narrativa funcional, progresión, renovación atencional, variación de ritmo no mecánica y función argumentativa.
+
+Antes de esa activación también deberá integrarse la política de spoilers por necesidad editorial, mínimo detalle necesario, nivel declarado, warning proporcional y aviso antes de una revelación material inesperada. Este registro no convierte la política histórica en comportamiento actual.
+
 ## 0. Uso operativo
 
 Lectura mínima para ejecutar una misión de este bloque:

@@ -1,4 +1,5 @@
 # Skill — Mapa de eventos + Outline (estructura longform)
+> **ESTADO: NO EJECUTABLE ACTUALMENTE.** `config/skill_catalog.json` la difiere a B5-I3; sus reglas históricas no deben reactivarse hasta completar los prerrequisitos canónicos de B5-I3/B6/B7/B7.5.
 Objetivo: pasar de "ideas" a estructura clara del episodio.
 
 > **Rol ejecutor actual:** el runtime operativo (en el futuro puede ser un agente Planner con modelo especializado en estructura narrativa)

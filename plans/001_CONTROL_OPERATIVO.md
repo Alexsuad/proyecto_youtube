@@ -3,8 +3,9 @@
 **Documento:** Proyección operativa resumida  
 **Plan rector:** [`001_reestructuracion_motor_agentico_editorial_y_harness.md`](001_reestructuracion_motor_agentico_editorial_y_harness.md)  
 **Índice por bloques:** [`plan_001/README.md`](plan_001/README.md)  
-**Versión del plan:** `1.4`
-**Última sincronización:** `2026-08-15`
+**Versión del documento de control:** `1.5`
+**Versión del plan rector:** `1.4`
+**Última sincronización:** `2026-08-20`
 
 ## 1. Estado canónico
 
@@ -29,6 +30,30 @@ PLAN_007_STATUS: TECHNICALLY_ACCEPTED_BY_OWNER
 PLAN_007_FUNCTIONAL_APPROVAL: NO
 PLAN_007_PRODUCT_USE_AUTHORIZED: NO
 PLAN_007_REAL_YA_EXECUTION_AUTHORIZED: NO
+PLAN_008_AUTHORIZATION: OWNER_EXPRESS_IMPLEMENTATION_MISSIONS_1_TO_4
+PLAN_008_DOCUMENT: plans/plan_008/008_IMPLEMENTACION_TECNICA_REMEDIACION_LEGACY_Y_TRAZABILIDAD.md
+PLAN_008_STATUS: OWNER_CLOSED
+PLAN_008_MISSION_1: TECHNICALLY_IMPLEMENTED
+PLAN_008_MISSION_1_CORRECTIVE_REVISION: TECHNICALLY_IMPLEMENTED
+PLAN_008_MISSION_2: TECHNICALLY_IMPLEMENTED
+PLAN_008_MISSION_3: TECHNICALLY_IMPLEMENTED
+PLAN_008_MISSION_4: TECHNICALLY_IMPLEMENTED
+PLAN_008_CURRENT_MISSION: NONE
+PLAN_008_IMPLEMENTATION_AUTHORIZED: YES_MISSIONS_1_TO_4
+PLAN_008_PRODUCT_USE_AUTHORIZED: NO
+PLAN_008_R2_AUTHORIZED: NO
+PLAN_008_B5_I3_AUTHORIZED: NO
+PLAN_008_REAL_PRODUCTION_AUTHORIZED: NO
+PLAN_008_COMMIT: YES
+PLAN_008_PUSH: NO
+PLAN_008_MISSION_1_EVIDENCE: docs/legacy/material_decision_registry.json
+PLAN_008_MISSION_1_VIEW: docs/legacy/LEGACY_PER_FILE_VIEW.md
+PLAN_008_MISSION_1_GATE: src/scripts/check_material_decisions.py
+PLAN_008_B3_M1_DEBT: RECONCILED_DOCUMENTALLY_WITHOUT_REOPENING_B3
+PLAN_008_MISSION_2_EVIDENCE: src/core/contract_validation.py; schemas/work_research_dossier.json; .agent/skills/skill_curation_obras.md; tests/core/test_work_lifecycle.py
+PLAN_008_MISSION_3_EVIDENCE: src/core/duration_envelope.py; src/scripts/qa_duracion_guion.py; src/scripts/gate0_auditoria.py; src/scripts/gate0_integridad.py; src/scripts/cerrar_episodio.py; .agent/skills/skill_auditoria_sistema.md; .agent/skills/skill_control_integridad_pipeline.md; README.md
+PLAN_008_MISSION_4_EVIDENCE: docs/legacy/LEGACY_PER_FILE_VIEW.md; reference/estilo_usuario/README.md; plans/plan_001/B5_PRE_SCRIPT_FOUNDATION.md; plans/plan_001/B6_redaccion_edicion_verificacion.md; plans/plan_001/B7_auditoria_aprobacion_editorial.md; plans/plan_001/B7_5_adaptacion_youtube.md
+PLAN_008_INDEPENDENT_REVIEW: PASS
 R1_M10_AUTHORIZATION: OWNER_AUTHORIZED
 R1_M10_SCOPE: IR7-002;IR7-003;IR7-004;IR7-005;IRA-003
 TECHNICAL_HARDENING_AUTHORIZATION: OWNER_AUTHORIZED
@@ -90,7 +115,7 @@ R1_M3_OWNER_REVIEW: APPROVED
 R1_M3_RESULT: PASS
 R1_M3_AUTHORIZATION: AUTHORIZED_R1_M3_SCOPE_IR1_007_008_009_010_011_012
 R1_M3_SCOPE: "IR1-007;IR1-008;IR1-009;IR1-010;IR1-011;IR1-012"
-R1_M3_IR7_DEPENDENCY: DEFERRED_TO_R1_M10_R1_M11
+R1_M3_IR7_DEPENDENCY: FUNCTIONAL_DECISION_REQUIRED
 R1_M6_OPENED: YES
 R1_M6_STATUS: COMPLETED
 R1_M6_OWNER_REVIEW: APPROVED
