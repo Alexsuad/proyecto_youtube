@@ -1,3 +1,5 @@
+> **Snapshot histórico:** este informe registra la revisión técnica realizada antes de la decisión funcional de `SCRIPT_PRODUCT`. No representa el estado vivo posterior al cierre de `R1_GATE`. La decisión funcional y el estado vigente se registran en [`R1_GATE_functional_review_2026-08-21.md`](R1_GATE_functional_review_2026-08-21.md) y en [`plans/001_CONTROL_OPERATIVO.md`](../../../plans/001_CONTROL_OPERATIVO.md).
+
 # R1_GATE — Revisión técnica integrada
 
 **Fecha:** 2026-08-21
