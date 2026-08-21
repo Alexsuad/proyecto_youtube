@@ -33,7 +33,7 @@ Si falta un dato:
 Este proyecto se opera por fases. Cada fase deja un archivo.
 
 Regla:
-- no se avanza a la siguiente fase si no existe el archivo de salida de la fase actual.
+- solo se avanza a la siguiente fase cuando el artefacto requerido existe y supera su schema, referencias, provenance y gate aplicables; la mera existencia del archivo nunca demuestra validez ni autorización.
 
 Si el usuario pide saltarse fases, se debe advertir el riesgo.
 

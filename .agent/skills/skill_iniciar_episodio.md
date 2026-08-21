@@ -1,4 +1,5 @@
 # Skill — Iniciar Episodio (Gate 0 - Creación de EP_PATH)
+> **RUTA:** `LEGACY_VAULT_ADAPTER_ONLY`. La ruta portable moderna recibe `EP_PATH` desde el runtime y no requiere esta skill ni `config/local_settings.json`.
 Objetivo: crear la carpeta del nuevo episodio en el Vault y registrarlo en el índice.
 
 > **Rol ejecutor actual:** Python (`src/scripts/iniciar_episodio.py`) — esta es una tarea determinista.

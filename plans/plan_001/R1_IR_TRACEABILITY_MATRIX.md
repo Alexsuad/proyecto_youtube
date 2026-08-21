@@ -6,6 +6,8 @@
 **Roadmap:** `plans/plan_001/B0_1_roadmap_implementacion_post_p08.md`.
 **Estado vivo:** `plans/001_CONTROL_OPERATIVO.md`.
 
+> Esta matriz conserva el baseline histórico de IR y la evidencia de sus misiones. Sus bloques de estado no sustituyen el estado vivo, las autorizaciones ni la siguiente acción del Control Operativo.
+
 ```text
 R1_STATUS: IN_PROGRESS
 R1_M1_STATUS: COMPLETED_PENDING_REVIEW

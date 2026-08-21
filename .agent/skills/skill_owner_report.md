@@ -1,7 +1,8 @@
 # Skill — Reporte Ejecutivo para el Dueño (Owner Report)
+> **STATUS:** `NON_EXECUTABLE_CURRENT` hasta resolver la decisión de producto registrada en `config/skill_catalog.json`. No debe ejecutarse como capacidad actual.
 Objetivo: Generar una síntesis estratégica y técnica del episodio para que el dueño del canal pueda revisar el valor, la arquitectura y los riesgos sin leer todo el contenido bruto.
 
-> **Rol ejecutor actual:** el runtime operativo (Auditor Estratégico)
+> **Rol previsto:** Auditor Estratégico; no disponible como capacidad ejecutable mientras el estado anterior permanezca vigente.
 
 ---
 

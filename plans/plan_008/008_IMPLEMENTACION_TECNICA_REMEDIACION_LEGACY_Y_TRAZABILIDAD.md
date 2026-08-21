@@ -5,8 +5,8 @@ Estado: OWNER_CLOSED
 Identificador canónico del repositorio: PLAN-008
 Revisión independiente: PASS
 Misión activa: NONE
-Commit de cierre: REALIZADO
-Push: NO AUTORIZADO.
+Commit de cierre: `965ead6` REALIZADO
+Publicación: COMPLETADA en `origin/master`; no se autoriza push adicional por este plan.
 
 ## 1. Propósito
 
@@ -286,4 +286,4 @@ El cierre técnico de este plan NO implica por sí mismo autorización de produc
 
 ## 10. Estado documental de implementación
 
-Las Misiones 1–4 quedan reflejadas como técnicamente implementadas con evidencia en el control operativo. La cadena técnica de PLAN-008 fue confirmada como `PASS` por la revisión independiente, por lo que el plan queda `OWNER_CLOSED` y sin misión activa. Este cierre no autoriza producto, R2, B5-I3, B6, B7, B7.5 ni producción real; el push permanece no autorizado.
+Las Misiones 1–4 quedan reflejadas como técnicamente implementadas con evidencia en el control operativo. La cadena técnica de PLAN-008 fue confirmada como `PASS` por la revisión independiente, por lo que el plan queda `OWNER_CLOSED` y sin misión activa. Este cierre no autoriza producto, R2, B5-I3, B6, B7, B7.5 ni producción real. El push de cierre fue autorizado separadamente y completado; PLAN-008 no autoriza pushes adicionales.

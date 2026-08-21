@@ -54,9 +54,12 @@ C:\YT_VAULT\MasAllaDelGuion\
     episodes_index.json
 ```
 
-La carpeta `output/` de **este repo** se usa exclusivamente para:
-- Reportes de auditoría del sistema (Gate 0)
-- Logs de ejecución
+La carpeta `output/` de **este repo** se usa para evidencia técnica del runtime:
+- Reportes de auditoría y gates
+- Logs y diagnósticos de ejecución
+- Provenance y estado técnico gobernado
+
+`output/` nunca es sede de contenido editorial canónico; los contratos y registros ejecutables viven en `schemas/`, `config/` y `src/`.
 
 La configuración del Vault está en `config/local_settings.json`; no es una dependencia universal de Gate 0 ni del cierre del MVP.
 
@@ -68,7 +71,9 @@ El orden actual es: identidad y brief → investigación y evidencia → tesis y
 
 El estado operativo vivo (fase, incremento, misión, autorización y siguiente acción) se resuelve exclusivamente en [`plans/001_CONTROL_OPERATIVO.md`](plans/001_CONTROL_OPERATIVO.md), que es la única sede de autoridad. Este README no replica valores operativos mutables. B5-I3 no está autorizado y S5 real está bloqueado.
 
-Los scripts se encuentran en `src/scripts/`. Se ejecutan en este orden:
+Los scripts de la tabla son entrypoints de control del episodio, no un inventario exhaustivo del pipeline funcional. La ruta funcional B5-I1/B5-I2 y sus gates se describe en el workflow operativo; los dos gates B5-I2 pertenecen a superficies distintas (`SCRIPT_PRODUCT` y `YOUTUBE_ADAPTATION`).
+
+Los scripts se encuentran en `src/scripts/`. Los entrypoints de control son:
 
 | Paso | Script | Qué hace |
 |---|---|---|
@@ -108,7 +113,7 @@ Dentro de `<EP_PATH>` —checkout portable o adaptador Vault legacy— (`ep_XXXX
 | `10_seo.md` | Diferido / Etapa 2 | Metadatos para YouTube; no requerido para cerrar el MVP |
 | `99_notebooklm_pack.md` | Opcional | Índice para un adaptador externo, si se decide usarlo |
 
-> La ausencia de estos archivos no bloquea la ruta portable moderna. Una configuración local no puede convertir un adaptador en autoridad universal.
+> La ausencia de archivos Markdown legacy u otros artefactos opcionales no bloquea la ruta portable moderna. Los entregables obligatorios del cierre y sus contratos deben existir y superar sus validaciones; una configuración local no puede convertir un adaptador en autoridad universal.
 
 ---
 
@@ -117,7 +122,6 @@ Dentro de `<EP_PATH>` —checkout portable o adaptador Vault legacy— (`ep_XXXX
 **NotebookLM es un adaptador opcional y no autoritativo.** Su ausencia no impide el pipeline portable; la autoridad permanece en los contratos, el perfil editorial activo y los artefactos gobernados del episodio.
 
 ### Uso opcional, cuando exista un adaptador autorizado
-- `06_guion_longform.md` — guion final aprobado
 - `08_shorts.md` — shorts finales
 - `09_packaging.md` — packaging final
 - `10_seo.md` — SEO final

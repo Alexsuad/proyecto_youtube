@@ -1,5 +1,7 @@
 # Sistema Canónico de Contratos, Schemas, Estados y Versionado (Misión B1)
 
+> **B1 CONTRACT BASELINE / ARCHITECTURAL REFERENCE.** Este documento conserva la especificación y el inventario de la etapa B1; no es un catálogo exhaustivo contemporáneo ni publica el estado vivo. Los contratos ejecutables actuales se resuelven en `schemas/`, `config/` y `src/`; el estado operativo vive en `plans/001_CONTROL_OPERATIVO.md`.
+
 **Versión:** 1.0.0  
 **Fecha:** 2026-07-21  
 **Propietario:** Infraestructura y Gobernanza (validación técnica)  

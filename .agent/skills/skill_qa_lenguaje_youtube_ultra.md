@@ -1,8 +1,10 @@
 # Skill — QA Lenguaje YouTube (Modo A Ultra Seguro)
 
+> **STATUS:** `NON_CANONICAL_CURRENT` / `MERGE`. No ejecutar como gate independiente: la política canónica vigente es la de `skill_qa_lenguaje_youtube.md` hasta una consolidación autorizada.
+
 Objetivo: Auditoría automática buscando lenguaje que afecte la distribución algorítmica y la monetización en YouTube bajo reglas ultraseguras.
 
-> **Rol ejecutor actual:** Script de validación automatizada (`src/scripts/qa_lenguaje_youtube_ultra.py`).
+> **Rol previsto:** wrapper de compatibilidad sobre la validación automatizada; no constituye un gate canónico independiente mientras permanezca en `MERGE`.
 
 ---
 

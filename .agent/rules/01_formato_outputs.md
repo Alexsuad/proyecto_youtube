@@ -12,9 +12,11 @@ Fecha: 27/07/2026
 
 **REPO (Este repositorio):**
 La carpeta `output/` del repositorio se usa EXCLUSIVAMENTE para:
-- Reportes de auditoría del sistema (Gate 0)
-- Logs de ejecución y control de estado
-- Documentos de diagnóstico del pipeline
+- Reportes de auditoría y gates
+- Logs y diagnósticos de ejecución y control de estado
+- Provenance y estado técnico gobernado
+
+No es sede de contenido editorial canónico; los contratos y registros ejecutables viven en `schemas/`, `config/` y `src/`.
 
 **RUTA PORTABLE (actual):**
 Los artefactos de un episodio pueden vivir dentro del checkout, bajo la ruta de episodio entregada al runtime. Esta es la ruta válida sin configuración local ni path físico predeterminado.

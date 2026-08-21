@@ -4,7 +4,8 @@
 **Repositorio de referencia:** `proyecto_youtube_2026-07-21_10-00-29.zip`  
 **Versión del plan:** 1.4
 **Fecha de revisión:** 2026-07-22
-**Estado:** `READY_FOR_EXTERNAL_AUDIT` / `TEMPORARILY_PAUSED_BY_PLAN_003_R0`
+**Estado del snapshot:** `READY_FOR_EXTERNAL_AUDIT` / `TEMPORARILY_PAUSED_BY_PLAN_003_R0`
+**Estado vivo:** consultar exclusivamente `plans/001_CONTROL_OPERATIVO.md`; los estados y acciones de este documento son históricos/no normativos.
 **Auditorías funcionales incorporadas:** `TEAM_01_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_02_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_03_APPROVED_WITH_REQUIRED_AMENDMENTS` + `PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT`
 **Implementación autorizada:** `LIMITED_TO_PLAN_003_R0` mientras dure la recuperación
 **Progreso global inicial:** `0 %`  

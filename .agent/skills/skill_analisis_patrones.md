@@ -6,7 +6,7 @@ Objetivo: producir `NarrativeHumanAnalysis` con lectura específica de deseos, m
 ---
 
 ## Entrada mínima
-- `<EP_PATH>/02_curation_obras.md`
+- Consumir el `ResearchPack` de B5-I1 y trabajar únicamente sobre los materiales que hayan superado la selección preliminar. No consumir `material_curation.json` como entrada: ese artefacto posterior referencia estos análisis mediante `analysis_ids`.
 
 ---
 
@@ -22,4 +22,5 @@ Objetivo: producir `NarrativeHumanAnalysis` con lectura específica de deseos, m
 ---
 
 ## Salida
-- `<EP_PATH>/04_analisis_patrones.md`
+- `<EP_PATH>/narrative_human_analysis.json` (salida canónica).
+- `<EP_PATH>/04_analisis_patrones.md` (proyección documental legacy compatible y opcional; no sustituye al contrato JSON).

@@ -1,12 +1,13 @@
 ---
-description: Workflow orquestador del pipeline de episodio. Realiza Gate 0 y recorre la ruta moderna portable; la ruta Vault legacy es opcional.
+description: Workflow operativo de la ruta actual del episodio. Realiza Gate 0 y recorre la ruta moderna portable; la ruta Vault legacy es opcional.
 ---
 
-# Workflow: Pipeline Completo de Episodio (Orquestador)
+# Workflow: Pipeline operativo de episodio (ruta actual)
 
 > **Ejecutor actual:** el runtime operativo como agente único.
 > **Futuro:** Cada fase puede ser ejecutada por un agente independiente.
-> **Regla de oro:** No se avanza a la siguiente fase si no existe el entregable de la fase actual.
+> **Regla de oro:** Solo se avanza a la siguiente fase cuando el entregable requerido de la fase actual existe y supera su schema, referencias, provenance y gate aplicables; su mera existencia nunca habilita el avance.
+> **Alcance:** este workflow describe la ruta actual hasta el núcleo pre-script/B5-I2; no es una autorización ni un pipeline de publicación completo.
 
 ---
 
@@ -141,6 +142,8 @@ Esto no autoriza B5-I2. Las skills heredadas permanecen no ejecutables hasta sus
 2. Crear `refined_thesis.json`, distinta de `THESIS_PROVISIONAL`, vinculada a análisis, curación, evidencia y restricciones heredadas.
 3. Crear `editorial_script_promise.json` como entrada para escribir el guion: audiencia, promesa, tensión, expectativas legítimas y a evitar, alineación con la tesis, riesgo textual y obligaciones de apertura. No produce título, miniatura, packaging, Shorts ni SEO.
 4. Un revisor IA produce `b5_i2_semantic_sufficiency_audit.json` con los nueve criterios B5-I2, los artefactos originales B5-I1 y checksums exactos.
-5. Ejecutar `src/scripts/b5_i2_gate.py` incluyendo la auditoría B5-I2. Cualquier checksum divergente, auditoría insuficiente, análisis sin evidencia original, curación final incompleta, tesis sin refinamiento demostrado, referencia circular o promesa textual deshonesta bloquea.
+5. Ejecutar `src/scripts/b5_i2_gate.py` incluyendo la auditoría B5-I2 de `SCRIPT_PRODUCT`. Cualquier checksum divergente, auditoría insuficiente, análisis sin evidencia original, curación final incompleta, tesis sin refinamiento demostrado, referencia circular o promesa textual deshonesta bloquea.
+
+La adaptación `YOUTUBE_ADAPTATION` tiene un gate B5-I2 separado (`src/scripts/youtube_adaptation_b5_i2_gate.py`) y no se sustituye con el gate de `SCRIPT_PRODUCT`.
 
 El estado de salida permitido es `READY_FOR_B5_I2_FUNCTIONAL_REAUDIT`. B5-I3, B6 y B7 permanecen sin iniciar.

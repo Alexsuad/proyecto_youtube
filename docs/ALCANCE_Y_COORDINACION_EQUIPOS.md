@@ -11,6 +11,8 @@ La regla principal es:
 
 > Cada equipo tiene autoridad sobre su especialidad, pero no puede tomar decisiones que pertenezcan a otro equipo.
 
+La **Dirección Transversal** coordina dependencias comunes, conflictos de alcance y coherencia entre equipos. Es una función de coordinación humana y no constituye un quinto dominio runtime, capability, role productivo ni owner funcional.
+
 Los equipos pueden intercambiar consultas, requisitos, observaciones y auditorías. Sin embargo, solo el equipo **04_Infraestructura y Gobernanza** puede convertir esas necesidades en instrucciones para agentes operativos como Antigravity, Codex, OpenCode u otros equivalentes.
 
 ## Etapas globales y frontera operativa

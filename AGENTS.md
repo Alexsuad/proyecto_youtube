@@ -2,7 +2,7 @@
 
 ## Propósito
 
-Repositorio canónico del núcleo profesional de Guion de Más Allá del Guion. La etapa activa termina en `EDITORIAL_SCRIPT_APPROVED`; S5 real de B5-I2 y B5-I3 siguen sin autorización en esta misión.
+Repositorio canónico del núcleo profesional de Guion de Más Allá del Guion. La etapa activa termina en `EDITORIAL_SCRIPT_APPROVED`; la autorización de S5 real y B5-I3 se resuelve exclusivamente desde `plans/001_CONTROL_OPERATIVO.md`.
 
 ## Estado operativo
 
@@ -100,7 +100,8 @@ La ausencia de una vertical demostrada bloquea el uso productivo y la promoción
 ## Comandos Canónicos
 
 - Validaciones Python: usar un intérprete explícito y reproducible; no depender de `.venv` si está rota.
-- B5-I2 gate: `src/scripts/b5_i2_gate.py`
+- B5-I2 `SCRIPT_PRODUCT` gate: `src/scripts/b5_i2_gate.py`
+- B5-I2 `YOUTUBE_ADAPTATION` gate: `src/scripts/youtube_adaptation_b5_i2_gate.py`
 - Auditoría semántica B5-I2: `src/scripts/run_b5_i2_semantic_audit.py`
 - Activación de perfil: `src/scripts/activate_editorial_profile.py`
 
