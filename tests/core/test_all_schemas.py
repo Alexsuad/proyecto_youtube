@@ -900,6 +900,36 @@ for _owner, _binding in VALID_FIXTURES["editorial_semantic_memory"]["functional_
     _binding["dimensions"] = ["producer-declared-value-is-ignored"]
     VALID_FIXTURES["editorial_semantic_memory"]["semantic_assurance"]["evaluated_dimensions"][_owner] = [{"dimension": _dimension, "status": "EVALUATED", "evidence_refs": [f"{_owner}:evidence"]} for _dimension in _dimensions]
 
+VALID_FIXTURES["human_episode_input"] = {
+    "contract": "human_episode_input", "contract_version": "1.0.0",
+    "interaction_id": "INT-FIXTURE", "occurred_at": "2026-08-22T00:00:00Z",
+    "channel": "TERMINAL", "mode": "TOPIC_FIRST", "content": "Tema de fixture",
+    "initial_question": None, "context": None, "works": [], "actor_ref": "fixture-user",
+    "provenance": {"capture_method": "TEXT", "source": "USER"}, "processing_status": "RECEIVED",
+}
+VALID_FIXTURES["editorial_intake_handoff"] = {
+    "contract": "editorial_intake_handoff", "contract_version": "1.0.0",
+    "target_contract": "topic_belonging_input", "status": "AWAITING_EDITORIAL_ENRICHMENT",
+    "source_interaction_id": "INT-FIXTURE", "source_channel": "TERMINAL", "entry_mode": "TOPIC_FIRST",
+    "field_bindings": {"topic": "Tema de fixture"}, "unresolved_fields": ["proposed_angle"],
+    "profile_binding": {"profile_id": "mas_alla_del_guion", "profile_version": "1.2.1", "profile_checksum": "a" * 64},
+    "provenance": {"source_ref": "human-input:INT-FIXTURE", "transformation": "BIND_USER_FIELDS_ONLY", "editorial_decisions_made": False},
+}
+VALID_FIXTURES["human_decision"] = {
+    "contract": "human_decision", "contract_version": "1.0.0", "request_id": "REQ-FIXTURE",
+    "action": "APPROVE", "selected_option": None, "correction": None,
+    "actor_ref": "fixture-user", "channel": "TERMINAL", "episode_id": "ep_0001",
+    "occurred_at": "2026-08-22T00:00:00Z", "request_checksum": "a" * 64,
+}
+VALID_FIXTURES["human_decision_request"] = {
+    "contract": "human_decision_request", "contract_version": "1.0.0",
+    "request_id": "REQ-FIXTURE", "episode_id": "ep_0001", "prompt": "Aprobar propuesta",
+    "options": [], "recommendation": None, "subject_ref": None, "subject_version": None,
+    "subject_checksum": None, "workflow_ref": "B5_I1_CONTROLLED_EXECUTION",
+    "expected_actor_ref": "fixture-user", "expected_channel": "TERMINAL",
+    "created_at": "2026-08-22T00:00:00Z", "status": "PENDING", "request_checksum": "a" * 64,
+}
+
 
 class TestAllJSONSchemas(unittest.TestCase):
 

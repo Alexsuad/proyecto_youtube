@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/human_decision.json",
+  "title": "Human Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "request_id", "action", "selected_option", "correction", "actor_ref", "channel", "episode_id", "occurred_at", "request_checksum"],
+  "allOf": [
+    {"if": {"properties": {"action": {"const": "SELECT_ALTERNATIVE"}}}, "then": {"properties": {"selected_option": {"type": "string", "minLength": 1}, "correction": {"type": "null"}}}},
+    {"if": {"properties": {"action": {"const": "CORRECT"}}}, "then": {"properties": {"selected_option": {"type": "null"}, "correction": {"type": "string", "minLength": 1}}}},
+    {"if": {"properties": {"action": {"enum": ["APPROVE", "REJECT", "CANCEL"]}}}, "then": {"properties": {"selected_option": {"type": "null"}, "correction": {"type": "null"}}}}
+  ],
+  "properties": {
+    "contract": {"const": "human_decision"},
+    "contract_version": {"const": "1.0.0"},
+    "request_id": {"type": "string", "minLength": 1},
+    "action": {"enum": ["APPROVE", "SELECT_ALTERNATIVE", "CORRECT", "REJECT", "CANCEL"]},
+    "selected_option": {"type": ["string", "null"]},
+    "correction": {"type": ["string", "null"]},
+    "actor_ref": {"type": "string", "minLength": 1},
+    "channel": {"type": "string", "minLength": 1},
+    "episode_id": {"type": ["string", "null"]},
+    "occurred_at": {"type": ["string", "null"], "format": "date-time"},
+    "request_checksum": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+  }
+}

@@ -82,9 +82,20 @@ Los scripts se encuentran en `src/scripts/`. Los entrypoints de control son:
 | 1 | `iniciar_episodio.py` | Opcional: crea la carpeta del episodio en el Vault legacy |
 | N | `cerrar_episodio.py` | Valida entregables y marca el episodio como completado |
 
+La entrada de producto para personas y automatizaciones es `python -m src.cli iniciar`; su funcionamiento y las tres modalidades están documentados en [`docs/product/CLI_OPERACION.md`](docs/product/CLI_OPERACION.md). `iniciar_episodio.py` permanece como wrapper legacy compatible.
+
 ### Uso básico
 
 ```powershell
+# Entrada de producto interactiva
+python -m src.cli iniciar
+
+# Entrada de producto no interactiva
+python -m src.cli iniciar --modo tema --tema "Tema del episodio"
+
+# Entrada no interactiva con pregunta y contexto separados
+python -m src.cli iniciar --modo tema --tema "Tema del episodio" --pregunta "Pregunta concreta" --contexto "Contexto adicional"
+
 # Auditar antes de empezar
 python src/scripts/gate0_auditoria.py
 
