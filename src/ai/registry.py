@@ -373,6 +373,9 @@ def _real_provenance_authorized(request: Any) -> bool:
     try:
         path.relative_to(repository_root)
         authorization = load_mission_authorization(path)
+        from src.core.execution_preflight import _load_registered_capability
+
+        capability = _load_registered_capability(repository_root, str(request.capability_id))
         output_path = getattr(request, "output_artifact_path", None)
         relative_output = None
         if output_path:
@@ -387,6 +390,7 @@ def _real_provenance_authorized(request: Any) -> bool:
             execution_route=str(getattr(request, "execution_route", None) or config.get("execution_route") or "") or None,
             execution_profile_id=str(getattr(request, "execution_profile", None) or config.get("execution_profile") or "") or None,
             execution_interface=str(config.get("execution_interface") or "") or None,
+            required_material_decision_ref=capability.get("material_decision_ref") if capability else None,
         )
     except Exception:
         return False

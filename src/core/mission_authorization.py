@@ -10,6 +10,9 @@ from typing import Any
 from src.core.contract_validation import validate_against_schema
 
 
+CANONICAL_MATERIAL_DECISION_REGISTRY = "docs/legacy/material_decision_registry.json"
+
+
 class MissionAuthorizationError(PermissionError):
     """A mission authorization is invalid, stale, out of scope, or replayed."""
 
@@ -24,6 +27,68 @@ def canonical_scope(data: dict[str, Any]) -> bytes:
 
 def scope_checksum(data: dict[str, Any]) -> str:
     return hashlib.sha256(canonical_scope(data)).hexdigest()
+
+
+def _safe_repository_file(root: Path, reference: str) -> Path:
+    candidate = Path(reference)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_INVALID: path outside repository")
+    resolved = (root / candidate).resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_INVALID: path outside repository") from exc
+    return resolved
+
+
+def _verify_material_decision_binding(
+    repository_root: Path,
+    authority_data: dict[str, Any],
+    required_reference: dict[str, Any],
+    capability_id: str,
+) -> None:
+    binding = authority_data.get("material_decision_binding")
+    if not isinstance(binding, dict):
+        raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_REQUIRED")
+    expected = {key: str(required_reference.get(key) or "") for key in ("registry_path", "decision_id", "subject_ref")}
+    if expected["registry_path"] != CANONICAL_MATERIAL_DECISION_REGISTRY:
+        raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_INVALID: non-canonical registry")
+    if any(str(binding.get(key) or "") != value for key, value in expected.items()):
+        raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_MISMATCH")
+    try:
+        registry_path = _safe_repository_file(repository_root, expected["registry_path"])
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_INVALID: registry unavailable") from exc
+    decision = next((item for item in registry.get("decisions", []) if item.get("decision_id") == expected["decision_id"]), None)
+    scope = decision.get("authorization_scope") if isinstance(decision, dict) else None
+    if (
+        not isinstance(decision, dict)
+        or decision.get("state") != "VIGENTE"
+        or decision.get("subject_ref") != expected["subject_ref"]
+        or not isinstance(scope, dict)
+        or scope.get("capability_id") != capability_id
+        or scope.get("controlled_demonstration") is not True
+        or scope.get("general_activation") is not False
+        or scope.get("product_use") is not False
+        or scope.get("successor_capabilities") is not False
+    ):
+        raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_INVALID")
+    try:
+        capability_registry = json.loads(
+            (repository_root / "config" / "capability_registry.json").read_text(encoding="utf-8")
+        )
+        capability = next(
+            (item for item in capability_registry.get("capabilities", [])
+             if item.get("capability_id") == capability_id),
+            None,
+        )
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_INVALID: capability registry unavailable") from exc
+    if not isinstance(capability, dict) or decision.get("authority") != capability.get("functional_authority_domain"):
+        raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_INVALID: authority mismatch")
+    if str(binding.get("decision_sha256") or "").lower() != scope_checksum(decision):
+        raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_INVALID: decision checksum")
 
 
 @dataclass(frozen=True)
@@ -133,6 +198,7 @@ class MissionAuthorization:
         execution_route: str | None = None,
         execution_profile_id: str | None = None,
         execution_interface: str | None = None,
+        required_material_decision_ref: dict[str, Any] | None = None,
     ) -> None:
         repository_root = Path(root).resolve()
         # The dataclass is immutable, but a caller can still construct or
@@ -176,6 +242,13 @@ class MissionAuthorization:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authority version")
         if authority_data.get("decision") not in {"APPROVE", "AUTHORIZED"}:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authority decision")
+        if required_material_decision_ref is not None:
+            _verify_material_decision_binding(
+                repository_root,
+                authority_data,
+                required_material_decision_ref,
+                capability_id,
+            )
         if capability_id not in self.capability_ids:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: capability scope")
         if role_id not in self.role_ids:

@@ -115,6 +115,23 @@ def _evidence(root: Path, registry_path: Path, contract: MissionContract, repair
 def _setup(root: Path) -> tuple[MissionContract, Path, Path, Path]:
     (root / "config").mkdir()
     (root / "output").mkdir()
+    (root / "config" / "capability_registry.json").write_text(json.dumps({
+        "registry_version": "1.0.0",
+        "authority": "CAPABILITY_FUNCTIONAL_AUTHORITY",
+        "routing_consumer": "TH03_FIXTURE",
+        "compatibility_tokens": {"maturity": {}, "availability": {}, "assurance": {}, "approval": {}, "evidence": {}},
+        "capabilities": [{
+            "capability_id": "REPAIR_INTEGRITY",
+            "domain": "INFRASTRUCTURE_GOVERNANCE",
+            "functional_authority_domain": "INFRASTRUCTURE_GOVERNANCE",
+            "purpose": "Controlled repair integrity fixture.",
+            "functional_requirements": [],
+            "implementation_kind": "DETERMINISTIC",
+            "maturity_status": "DEFINED",
+            "assigned_role": ["REPAIR_EXECUTOR", "INDEPENDENT_REVIEWER"],
+            "routing_required": False,
+        }],
+    }) + "\n", encoding="utf-8")
     (root / "config" / "execution_provenance_policy.json").write_text(json.dumps({"schema_version": "1.0.0", "canonical_registry_path": "output/execution_provenance_registry.json"}) + "\n", encoding="utf-8")
     (root / "control.md").write_text("CURRENT_MISSION: TH_03\n", encoding="utf-8")
     (root / "origin.md").write_text("original origin\n", encoding="utf-8")

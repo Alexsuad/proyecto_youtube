@@ -72,7 +72,7 @@ def _contractual_producer_smoke_input() -> dict[str, object]:
     }
 
 
-def test_run_agent_role_cli_writes_smoke_output_and_provenance(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_run_agent_role_cli_blocks_unregistered_role_capability(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     profile_id, executor_id = _first_harness_route()
     monkeypatch.setattr("src.ai.runtime_profiles.shutil.which", lambda command: f"C:/tools/{command}")
     monkeypatch.setattr("src.ai.providers.agent_executor.shutil.which", lambda command: f"C:/tools/{command}")
@@ -100,22 +100,10 @@ def test_run_agent_role_cli_writes_smoke_output_and_provenance(monkeypatch: pyte
         ],
     )
     exit_code = run_agent_role.main()
-    assert exit_code == 0
+    assert exit_code == 1
     payload = json.loads(output_path.read_text(encoding="utf-8"))
-    assert payload["selected_executor"] == executor_id
-    assert payload["execution_profile"] == profile_id
-    registry = json.loads(registry_path.read_text(encoding="utf-8"))
-    assert registry["runs"][0]["execution_profile"] == profile_id
-    assert registry["runs"][0]["outputs"][0]["artifact_kind"] == "execution_smoke_report"
-    run = registry["runs"][0]
-    assert run["role_id"] == "SCRIPT_PRODUCT_PRODUCER"
-    assert run["prompt_id"] == "prompt_script_product_producer"
-    assert len(run["prompt_checksum"]) == 64
-    assert len(run["input_checksum"]) == 64
-    assert len(run["output_checksum"]) == 64
-    assert run["validation_result"] == "PASS"
-    assert run["execution_mode"] == "SYNTHETIC"
-    assert run["provider_kind"] == "SYNTHETIC"
+    assert payload["status"] == "BLOCKED_BY_SEMANTIC_EVALUATOR"
+    assert "CAPABILITY_UNREGISTERED:SCRIPT_PRODUCT_PRODUCER" in payload["error"]
 
 
 def test_reservation_finalization_failure_fails_result_and_preserves_unconsumed_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

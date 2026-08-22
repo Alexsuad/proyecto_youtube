@@ -436,6 +436,7 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
                 execution_profile_id=str(request.execution_profile),
                 execution_route=str(request.execution_route),
                 execution_interface=str(request.config.get("execution_interface") or "UNSPECIFIED_INTERFACE"),
+                required_material_decision_ref=preflight.get("required_material_decision_ref"),
             )
         except PermissionError as exc:
             return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=f"ROUTE_NOT_AUTHORIZED_AFTER_RESOLUTION:{exc}")

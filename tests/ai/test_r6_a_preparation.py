@@ -9,7 +9,7 @@ from src.ai.execution import execute, persist_execution_result
 from src.ai.registry import load_registry
 from src.ai.subagents import assert_no_self_approval, assert_not_immutable_target, get_agent_definition
 from src.core.contract_validation import validate_against_schema
-from tests.ai.test_hybrid_runtime import _completion_gate_config
+from tests.ai.test_hybrid_runtime import _completion_gate_config, _register_synthetic_auditor
 
 ROOT = Path(__file__).parents[2]
 R6_ROLE_IDS = [
@@ -138,10 +138,11 @@ def test_append_result_records_extended_r6_provenance_fields(tmp_path: Path) -> 
 
 
 def test_agent_handoff_registers_extended_preparation_fields(tmp_path: Path) -> None:
+    _register_synthetic_auditor(tmp_path)
     source = _artifact(tmp_path, "analysis.json", {"analysis_id": "A-1", "content": "ok"})
     registry_path = tmp_path / "registry.json"
     request = ExecutionRequest(
-        capability_id="SCRIPT_PRODUCT_AUDITOR",
+        capability_id="B5_I2_SEMANTIC_AUDITOR",
         skill_id="skill_auditar_suficiencia_semantica_b5_i2",
         skill_version="1.0.0",
         input_artifacts=[InputArtifact("analysis", "A-1", source, "RUN-P")],
@@ -150,7 +151,7 @@ def test_agent_handoff_registers_extended_preparation_fields(tmp_path: Path) -> 
         provider="agent_handoff",
         episode_id="EP-1",
         role="SCRIPT_PRODUCT_AUDITOR",
-        config={**_completion_gate_config(tmp_path), "prompt": "auditar sin modificar", "prompt_version": "1.0.0", "execution_registry_path": str(registry_path), "handoff_target": "OWNER_REVIEW"},
+        config={**_completion_gate_config(tmp_path), "repository_root": str(tmp_path), "prompt": "auditar sin modificar", "prompt_version": "1.0.0", "execution_registry_path": str(registry_path), "handoff_target": "OWNER_REVIEW"},
         handoff_directory=tmp_path / "handoff",
     )
     result = execute(request)

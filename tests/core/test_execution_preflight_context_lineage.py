@@ -16,7 +16,7 @@ def test_preflight_binds_reduced_mission_lineage_into_context_manifest(monkeypat
     captured = {}
 
     monkeypatch.setattr(execution_preflight, "load_mission_authorization", lambda _path: _Authorization())
-    monkeypatch.setattr(execution_preflight, "_registry_capability", lambda *args: {"assigned_role": ["ROLE-1"]})
+    monkeypatch.setattr(execution_preflight, "_load_registered_capability", lambda *args: {"availability_status": "ACTIVE", "assigned_role": ["ROLE-1"]})
 
     def resolve(_references, **kwargs):
         captured.update(kwargs)
@@ -58,7 +58,7 @@ def test_preflight_loads_only_matching_reduced_mission_contract(monkeypatch, tmp
         captured["contract_path"] = path
         return contract
     monkeypatch.setattr(execution_preflight, "load_mission_contract", load_contract)
-    monkeypatch.setattr(execution_preflight, "_registry_capability", lambda *args: {"assigned_role": ["ROLE-1"]})
+    monkeypatch.setattr(execution_preflight, "_load_registered_capability", lambda *args: {"availability_status": "ACTIVE", "assigned_role": ["ROLE-1"]})
     monkeypatch.setattr(execution_preflight, "resolve_context", lambda *args, **kwargs: {"manifest_id": "CTX-1"})
     request = SimpleNamespace(capability_id="CAP-1", role="ROLE-1", execution_route="route-1", execution_profile="profile-1", execution_mode="SYNTHETIC", output_artifact_path="output/result.json", config={"mission_authorization_path":"authorization.json", "mission_contract_path":"contract.json", "context_references":[]})
     result = execution_preflight.preflight_controlled_execution(request, root=tmp_path)

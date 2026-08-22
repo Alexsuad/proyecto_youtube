@@ -24,6 +24,80 @@ def _write(path: Path, content: str | bytes) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _material_decision(root: Path, *, decision_id: str = "MD-1", subject_ref: str = "capability:CAP", state: str = "VIGENTE", controlled_demonstration: bool = True) -> tuple[dict, dict]:
+    _write(root / "legacy.md", "legacy")
+    decision = {
+        "decision_id": decision_id,
+        "subject_ref": subject_ref,
+        "decision": "Controlled capability demonstration.",
+        "reason": "Fixture.",
+        "authority": "CHANNEL_INTELLIGENCE",
+        "state": state,
+        "authorization_scope": {
+            "capability_id": "CAP",
+            "controlled_demonstration": controlled_demonstration,
+            "general_activation": False,
+            "product_use": False,
+            "successor_capabilities": False,
+        },
+        "evidence_refs": ["legacy.md"],
+        "superseded_by": None,
+        "recorded_at": "2026-08-22T00:00:00Z",
+    }
+    registry = {
+        "registry_version": "1.1.0",
+        "decisions": [decision],
+        "legacy_files": [{
+            "file_path": "legacy.md", "decision_id": decision_id, "estado": "HISTORICA",
+            "autoridad_sucesor": None, "consumer_activo": None, "duplicacion_material": None,
+            "disposicion": "HISTORICAL_REFERENCE", "ejecutable": False,
+        }],
+    }
+    _write(root / "docs/legacy/material_decision_registry.json", json.dumps(registry))
+    _write(root / "config/capability_registry.json", json.dumps({
+        "capabilities": [{
+            "capability_id": "CAP",
+            "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+        }],
+    }))
+    return decision, registry
+
+
+def _bound_authorization(root: Path, decision: dict, *, binding_overrides: dict | None = None) -> tuple[object, dict]:
+    state_digest = _write(root / "state.md", "STATE")
+    scope = {
+        "mission_id": "MATERIAL-BOUND", "capability_ids": ["CAP"], "role_ids": ["ROLE"],
+        "execution_profile_ids": ["PROFILE"], "execution_interface": "INTERFACE",
+        "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output/"],
+        "allowed_routes": ["route"], "execution_mode": "SYNTHETIC", "live_state_sha256": state_digest,
+        "contains_material_repair": False, "repair_integrity_evidence_path": "NONE",
+    }
+    binding = {
+        "registry_path": "docs/legacy/material_decision_registry.json",
+        "decision_id": decision["decision_id"],
+        "subject_ref": decision["subject_ref"],
+        "decision_sha256": scope_checksum(decision),
+    }
+    binding.update(binding_overrides or {})
+    authority = {
+        "mission_id": "MATERIAL-BOUND", "decision": "AUTHORIZED", "artifact_version": "1.0.0",
+        "authorized_scope_sha256": scope_checksum(scope), "material_decision_binding": binding,
+    }
+    authority_digest = _write(root / "authority.json", json.dumps(authority))
+    contract = {"mission_id": "MATERIAL-BOUND", "authorization": {
+        "live_state_path": "state.md", "live_state_sha256": state_digest, "capability_ids": ["CAP"],
+        "role_ids": ["ROLE"], "execution_profile_ids": ["PROFILE"], "execution_interface": "INTERFACE",
+        "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output/"], "allowed_routes": ["route"],
+        "execution_mode": "SYNTHETIC", "single_use": False, "authority_ref": "authority.json",
+        "authority_sha256": authority_digest, "authorized_scope_sha256": scope_checksum(scope),
+        "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY", "contains_material_repair": False,
+        "repair_integrity_evidence_path": "NONE",
+    }}
+    contract_path = root / "mission.json"
+    contract_path.write_text(json.dumps(contract), encoding="utf-8")
+    return load_mission_authorization(contract_path), binding
+
+
 def test_current_capability_registry_has_resolvable_authority_domains() -> None:
     assert validate_capability_registry() == []
 
@@ -110,6 +184,105 @@ def test_mission_authorization_binds_live_state_and_authority(tmp_path: Path) ->
         auth.verify(tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
                     path="output/result.json", execution_mode="SYNTHETIC", execution_route="route_a",
                     execution_profile_id="PROFILE", execution_interface="INTERFACE")
+
+
+def test_mission_authorization_material_decision_binding_is_fail_closed(tmp_path: Path) -> None:
+    decision, registry = _material_decision(tmp_path)
+    auth, binding = _bound_authorization(tmp_path, decision)
+    auth.verify(
+        tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
+        path="output/result.json", execution_mode="SYNTHETIC", execution_route="route",
+        execution_profile_id="PROFILE", execution_interface="INTERFACE",
+        required_material_decision_ref={key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")},
+    )
+    registry["decisions"][0]["state"] = "HISTORICA"
+    _write(tmp_path / "docs/legacy/material_decision_registry.json", json.dumps(registry))
+    with pytest.raises(MissionAuthorizationError, match="MATERIAL_DECISION_BINDING_INVALID"):
+        auth.verify(
+            tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
+            required_material_decision_ref={key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")},
+        )
+
+
+def test_mission_authorization_accepts_canonical_material_decision_binding(tmp_path: Path) -> None:
+    decision, _ = _material_decision(tmp_path, decision_id="MD-CI-001")
+    auth, binding = _bound_authorization(tmp_path, decision)
+    auth.verify(
+        tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
+        path="output/result.json", execution_mode="SYNTHETIC", execution_route="route",
+        execution_profile_id="PROFILE", execution_interface="INTERFACE",
+        required_material_decision_ref={key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")},
+    )
+
+
+def test_mission_authorization_rejects_non_canonical_material_registry(tmp_path: Path) -> None:
+    decision, registry = _material_decision(tmp_path)
+    alternate = tmp_path / "alternate-material-decisions.json"
+    _write(alternate, json.dumps(registry))
+    auth, binding = _bound_authorization(
+        tmp_path,
+        decision,
+        binding_overrides={"registry_path": "alternate-material-decisions.json"},
+    )
+    with pytest.raises(MissionAuthorizationError, match="non-canonical registry"):
+        auth.verify(
+            tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
+            required_material_decision_ref={key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")},
+        )
+
+
+def test_mission_authorization_rejects_material_authority_domain_mismatch(tmp_path: Path) -> None:
+    decision, registry = _material_decision(tmp_path)
+    registry["decisions"][0]["authority"] = "SCRIPT_PRODUCT"
+    _write(tmp_path / "docs/legacy/material_decision_registry.json", json.dumps(registry))
+    auth, binding = _bound_authorization(tmp_path, decision)
+    with pytest.raises(MissionAuthorizationError, match="authority mismatch"):
+        auth.verify(
+            tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
+            required_material_decision_ref={key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")},
+        )
+
+
+def test_mission_authorization_rejects_invalid_material_decision_variants(tmp_path: Path) -> None:
+    decision, registry = _material_decision(tmp_path)
+    auth, binding = _bound_authorization(tmp_path, decision)
+    required_ref = {key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")}
+    for mutation in (
+        lambda item: item.update({"state": "SUSTITUIDA"}),
+        lambda item: item.update({"subject_ref": "capability:OTHER"}),
+        lambda item: item["authorization_scope"].update({"controlled_demonstration": False}),
+    ):
+        current = json.loads(json.dumps(registry))
+        mutation(current["decisions"][0])
+        _write(tmp_path / "docs/legacy/material_decision_registry.json", json.dumps(current))
+        with pytest.raises(MissionAuthorizationError, match="MATERIAL_DECISION_BINDING_INVALID"):
+            auth.verify(
+                tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
+                required_material_decision_ref=required_ref,
+            )
+
+    _write(tmp_path / "docs/legacy/material_decision_registry.json", json.dumps(registry))
+    missing_auth, missing_binding = _bound_authorization(
+        tmp_path,
+        decision,
+        binding_overrides={"decision_id": "MD-MISSING"},
+    )
+    with pytest.raises(MissionAuthorizationError, match="MATERIAL_DECISION_BINDING_INVALID"):
+        missing_auth.verify(
+            tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
+            required_material_decision_ref={key: missing_binding[key] for key in ("registry_path", "decision_id", "subject_ref")},
+        )
+
+    mismatched_auth, _ = _bound_authorization(
+        tmp_path,
+        decision,
+        binding_overrides={"subject_ref": "capability:OTHER"},
+    )
+    with pytest.raises(MissionAuthorizationError, match="MATERIAL_DECISION_BINDING_MISMATCH"):
+        mismatched_auth.verify(
+            tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
+            required_material_decision_ref=required_ref,
+        )
 
 def test_mission_replay_reservation_is_single_use(tmp_path: Path) -> None:
     registry = tmp_path / "provenance.json"

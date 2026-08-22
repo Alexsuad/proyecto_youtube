@@ -97,6 +97,24 @@
         "recorded_at": {
           "type": "string",
           "format": "date-time"
+        },
+        "authorization_scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capability_id",
+            "controlled_demonstration",
+            "general_activation",
+            "product_use",
+            "successor_capabilities"
+          ],
+          "properties": {
+            "capability_id": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+            "controlled_demonstration": {"const": true},
+            "general_activation": {"const": false},
+            "product_use": {"const": false},
+            "successor_capabilities": {"const": false}
+          }
         }
       }
     },

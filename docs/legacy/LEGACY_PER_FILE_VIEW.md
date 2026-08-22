@@ -8,6 +8,7 @@
 
 | Id | Estado | Autoridad | Sujeto |
 |---|---|---|---|
+| MD-CI-001 | VIGENTE | CHANNEL_INTELLIGENCE | capability:TOPIC_BELONGING_ASSESSMENT |
 | MD-LEGACY-001 | VIGENTE | TECHNICAL_GOVERNANCE | workspace/* (documentación legacy material) |
 | MD-LEGACY-002 | VIGENTE | TECHNICAL_GOVERNANCE | B3-M1 (matriz canónica de componentes por archivo) |
 | MD-LEGACY-003 | SUSTITUIDA | TECHNICAL_GOVERNANCE | workspace/00_sistema_agentes_v1.md |
@@ -19,6 +20,7 @@
 
 | Id | Sustituido por |
 |---|---|
+| MD-CI-001 | — |
 | MD-LEGACY-001 | — |
 | MD-LEGACY-002 | — |
 | MD-LEGACY-003 | MD-LEGACY-001 |

@@ -5,23 +5,30 @@ import json
 from pathlib import Path
 from typing import Any
 
-from src.core.capability_governance import validate_capability_registry
+from src.core.capability_governance import NON_EXECUTABLE_AVAILABILITY, validate_capability_registry
 from src.core.context_resolution import resolve_context
 from src.core.mission_authorization import load_mission_authorization
 from src.core.mission_completion_gate import load_mission_contract
 from src.core.replay_protection import mark_mission_reservation, reserve_mission_execution
 
 
-def _registry_capability(root: Path, capability_id: str, registry_path: str | None) -> dict[str, Any]:
-    path = root / (Path(registry_path) if registry_path else Path("config/capability_registry.json"))
+def _load_registered_capability(
+    root: Path,
+    capability_id: str,
+) -> dict[str, Any] | None:
+    path = root / "config" / "capability_registry.json"
     violations = validate_capability_registry(path)
     if violations:
         raise PermissionError("CAPABILITY_REGISTRY_INVALID: " + "; ".join(violations))
     data = json.loads(path.read_text(encoding="utf-8"))
-    capability = next((item for item in data.get("capabilities", []) if item.get("capability_id") == capability_id), None)
+    return next((item for item in data.get("capabilities", []) if item.get("capability_id") == capability_id), None)
+
+
+def _registry_capability(root: Path, capability_id: str) -> dict[str, Any]:
+    capability = _load_registered_capability(root, capability_id)
     if capability is None:
         raise PermissionError("CAPABILITY_UNREGISTERED:" + capability_id)
-    if capability.get("availability_status") in {"NON_EXECUTABLE_CURRENT", "SUSPENDED", "DEPRECATED"}:
+    if capability.get("availability_status") in NON_EXECUTABLE_AVAILABILITY:
         raise PermissionError("CAPABILITY_UNAVAILABLE:" + capability_id)
     return capability
 
@@ -35,13 +42,26 @@ def _mark_failed(registry_path: str | None, reservation: dict[str, str] | None, 
 def preflight_controlled_execution(request: Any, *, root: str | Path) -> dict[str, Any]:
     """Validate authorization, replay, capability and context before execution."""
     config = getattr(request, "config", {}) or {}
+    repository_root = Path(root).resolve()
+    capability_id = str(request.capability_id)
+    registry_capability = _load_registered_capability(repository_root, capability_id)
+    if registry_capability is None:
+        raise PermissionError("CAPABILITY_UNREGISTERED:" + capability_id)
+    if registry_capability.get("availability_status") in NON_EXECUTABLE_AVAILABILITY:
+        raise PermissionError("CAPABILITY_UNAVAILABLE:" + capability_id)
     authorization_path = config.get("mission_authorization_path")
+    if registry_capability.get("availability_status") == "READY_NOT_AUTHORIZED" and not authorization_path:
+        raise PermissionError("MISSION_AUTHORIZATION_REQUIRED:" + capability_id)
     if not authorization_path:
         if config.get("mission_authorization_required"):
             raise PermissionError("MISSION_CONTRACT_INVALID: mission authorization path missing")
-        return {"authorization": None, "context_manifest": None, "reservation": None}
+        return {
+            "authorization": None,
+            "context_manifest": None,
+            "reservation": None,
+            "required_material_decision_ref": registry_capability.get("material_decision_ref") if registry_capability else None,
+        }
 
-    repository_root = Path(root).resolve()
     authorization_candidate = Path(str(authorization_path))
     if authorization_candidate.is_absolute() or ".." in authorization_candidate.parts:
         raise PermissionError("MISSION_CONTRACT_INVALID: authorization path outside repository")
@@ -86,6 +106,7 @@ def preflight_controlled_execution(request: Any, *, root: str | Path) -> dict[st
         execution_route=requested_route or None,
         execution_profile_id=requested_profile,
         execution_interface=requested_interface,
+        required_material_decision_ref=registry_capability.get("material_decision_ref") if registry_capability else None,
 
     )
 
@@ -110,7 +131,7 @@ def preflight_controlled_execution(request: Any, *, root: str | Path) -> dict[st
         }
 
     try:
-        registry_capability = _registry_capability(repository_root, str(request.capability_id), config.get("capability_registry_path"))
+        registry_capability = _registry_capability(repository_root, capability_id)
         if str(getattr(request, "role", "")) not in set(registry_capability.get("assigned_role", [])):
             raise PermissionError("EXECUTION_NOT_AUTHORIZED: capability role scope")
         context_manifest = resolve_context(
@@ -129,4 +150,10 @@ def preflight_controlled_execution(request: Any, *, root: str | Path) -> dict[st
     except Exception:
         _mark_failed(registry_path, reservation, request)
         raise
-    return {"authorization": authorization, "context_manifest": context_manifest, "reservation": reservation, "mission_contract": mission_contract}
+    return {
+        "authorization": authorization,
+        "context_manifest": context_manifest,
+        "reservation": reservation,
+        "mission_contract": mission_contract,
+        "required_material_decision_ref": registry_capability.get("material_decision_ref") if registry_capability else None,
+    }

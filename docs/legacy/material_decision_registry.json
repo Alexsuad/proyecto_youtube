@@ -2,6 +2,30 @@
   "registry_version": "1.1.0",
   "decisions": [
     {
+      "decision_id": "MD-CI-001",
+      "subject_ref": "capability:TOPIC_BELONGING_ASSESSMENT",
+      "decision": "TOPIC_BELONGING_ASSESSMENT queda autorizada exclusivamente para demostraciones controladas R2/B5-I1 destinadas a probar la aplicación; no activa globalmente la capability, no autoriza uso productivo ni autoriza ninguna capability posterior.",
+      "reason": "Decisión explícita del owner para separar la demostración controlada de la activación general y del uso productivo.",
+      "authority": "CHANNEL_INTELLIGENCE",
+      "state": "VIGENTE",
+      "authorization_scope": {
+        "capability_id": "TOPIC_BELONGING_ASSESSMENT",
+        "controlled_demonstration": true,
+        "general_activation": false,
+        "product_use": false,
+        "successor_capabilities": false
+      },
+      "evidence_refs": [
+        "plans/001_CONTROL_OPERATIVO.md",
+        "config/capability_registry.json",
+        "policies/channel_intelligence/topic_belonging_policy.md",
+        "schemas/topic_belonging_input.json",
+        "schemas/topic_belonging_decision.json"
+      ],
+      "superseded_by": null,
+      "recorded_at": "2026-08-22T00:00:00Z"
+    },
+    {
       "decision_id": "MD-LEGACY-001",
       "subject_ref": "workspace/* (documentación legacy material)",
       "decision": "La documentación legacy material de workspace/ se clasifica como histórica o fuente de migración, no ejecutable, y queda sujeta a la vista per-file derivada de este registro. Ningún documento legacy puede actuar como autoridad activa del runtime.",

@@ -8,13 +8,21 @@ from typing import Any
 import yaml
 
 from src.core.contract_validation import validate_against_schema
+from src.core.material_decision_registry import load_registry, validate_registry
 
 CANONICAL_CAPABILITY_REGISTRY = Path("config/capability_registry.json")
+CANONICAL_MATERIAL_DECISION_REGISTRY = Path("docs/legacy/material_decision_registry.json")
 ROOT = Path(__file__).resolve().parents[2]
 DOMAINS = {"CHANNEL_INTELLIGENCE", "SCRIPT_PRODUCT", "YOUTUBE_ADAPTATION", "INFRASTRUCTURE_GOVERNANCE"}
 MATURITY = {"DEFINED", "REGISTERED", "IMPLEMENTED", "DEMONSTRATED"}
 AVAILABILITY = {"NON_EXECUTABLE_CURRENT", "READY_NOT_AUTHORIZED", "ACTIVE", "SUSPENDED", "DEPRECATED"}
+NON_EXECUTABLE_AVAILABILITY = {"NON_EXECUTABLE_CURRENT", "SUSPENDED", "DEPRECATED"}
 SEMANTIC = "SEMANTIC"
+
+
+def availability_requires_entrypoint(availability: Any) -> bool:
+    """Return whether the canonical availability lifecycle requires a route entrypoint."""
+    return str(availability or "") in AVAILABILITY - NON_EXECUTABLE_AVAILABILITY
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -79,6 +87,37 @@ def _validate_ref_list(root: Path, capability_id: str, refs: Any, code: str, *, 
     return violations
 
 
+def _validate_material_decision_ref(root: Path, capability: dict[str, Any], capability_id: str) -> list[str]:
+    reference = capability.get("material_decision_ref")
+    if not isinstance(reference, dict):
+        return []
+    registry_path = str(reference.get("registry_path") or "")
+    if registry_path != str(CANONICAL_MATERIAL_DECISION_REGISTRY).replace("\\", "/"):
+        return [f"CAP_MATERIAL_DECISION_REGISTRY_NON_CANONICAL:{capability_id}"]
+    if not _safe_ref(root, registry_path):
+        return [f"CAP_MATERIAL_DECISION_REGISTRY_UNRESOLVED:{capability_id}"]
+    try:
+        registry = load_registry(root / registry_path)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return [f"CAP_MATERIAL_DECISION_REGISTRY_UNRESOLVED:{capability_id}"]
+    if validate_registry(registry):
+        return [f"CAP_MATERIAL_DECISION_REGISTRY_INVALID:{capability_id}"]
+    decision = next((item for item in registry.get("decisions", []) if item.get("decision_id") == reference.get("decision_id")), None)
+    scope = decision.get("authorization_scope") if isinstance(decision, dict) else None
+    if (
+        not isinstance(decision, dict)
+        or decision.get("state") != "VIGENTE"
+        or decision.get("subject_ref") != reference.get("subject_ref")
+        or not isinstance(scope, dict)
+        or scope.get("capability_id") != capability_id
+        or scope.get("controlled_demonstration") is not True
+    ):
+        return [f"CAP_MATERIAL_DECISION_UNRESOLVED:{capability_id}"]
+    if decision.get("authority") != capability.get("functional_authority_domain"):
+        return [f"CAP_MATERIAL_DECISION_AUTHORITY_MISMATCH:{capability_id}"]
+    return []
+
+
 def validate_capability_registry(path: str | Path = CANONICAL_CAPABILITY_REGISTRY) -> list[str]:
     root_path = Path(path)
     data = _load(root_path)
@@ -103,6 +142,7 @@ def validate_capability_registry(path: str | Path = CANONICAL_CAPABILITY_REGISTR
             violations.append(f"CAP_MATURITY_INVALID:{capability_id}")
         if availability is not None and availability not in AVAILABILITY:
             violations.append(f"CAP_AVAILABILITY_INVALID:{capability_id}")
+        violations.extend(_validate_material_decision_ref(repository_root, capability, capability_id))
         violations.extend(_validate_ref_list(repository_root, capability_id, capability.get("functional_requirements"), "CAP_REQUIREMENT_REF_UNRESOLVED", path_like_only=True))
 
         if maturity in {"IMPLEMENTED", "DEMONSTRATED"} and not capability.get("implementation_refs"):

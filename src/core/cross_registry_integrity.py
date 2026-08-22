@@ -10,6 +10,8 @@ from typing import Any
 
 import yaml
 
+from src.core.capability_governance import availability_requires_entrypoint
+
 
 ROOT = Path(__file__).resolve().parents[2]
 AUTHORITY_STATES = {"RESOLVED", "UNRESOLVED", "CONFLICTING"}
@@ -98,6 +100,9 @@ def audit_cross_registry(root: Path = ROOT, generated_at: str | None = None) -> 
             checks["ROUTE_ENTRYPOINT"] = "RESOLVED" if entrypoint_valid else "UNRESOLVED"
             if not entrypoint_valid:
                 findings.append(f"ROUTE_ENTRYPOINT_UNRESOLVED:{cid}")
+        elif availability_requires_entrypoint(cap.get("availability_status")):
+            checks["ROUTE_ENTRYPOINT"] = "MISSING"
+            findings.append(f"ROUTE_ENTRYPOINT_UNRESOLVED:{cid}")
         else:
             checks["ROUTE_ENTRYPOINT"] = "NOT_APPLICABLE"
         if semantic and isinstance(route, dict):

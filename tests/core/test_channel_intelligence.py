@@ -6,6 +6,8 @@ from pathlib import Path
 
 import yaml
 
+from src.ai.contracts import ExecutionRequest, ExecutionStatus
+from src.ai.execution import execute
 import src.scripts.channel_intelligence as ci
 from src.scripts.channel_intelligence import (
     active_profile,
@@ -95,7 +97,21 @@ def test_approval_with_conditions_requires_conditions():
 def test_capability_registry_is_operational_and_routing_exists():
     assert validate_capability_registry() == []
     routing=yaml.safe_load((ROOT/'config/capability_routing.yaml').read_text(encoding='utf-8'))
-    assert (ROOT/routing['capabilities']['TOPIC_BELONGING_ASSESSMENT']['entrypoint']).is_file()
+    assert 'entrypoint' not in routing['capabilities']['TOPIC_BELONGING_ASSESSMENT']
+def test_topic_belonging_non_executable_capability_blocks_through_execute():
+    result = execute(ExecutionRequest(
+        capability_id="TOPIC_BELONGING_ASSESSMENT",
+        skill_id="topic_belonging",
+        skill_version="1.0.0",
+        input_artifacts=[],
+        output_schema="topic_belonging_decision",
+        execution_mode="mock",
+        provider="mock",
+        role="CHANNEL_INTELLIGENCE_PRODUCER",
+        config={"repository_root": str(ROOT)},
+    ))
+    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert result.error == "CAPABILITY_UNAVAILABLE:TOPIC_BELONGING_ASSESSMENT"
 def test_policy_and_prompts_reference_active_compiled_profile():
     policy=(ROOT/'policies/channel_intelligence/topic_belonging_policy.md').read_text(encoding='utf-8')
     assert 'compiled_profile_path' in policy and 'ESCALATE_TO_OWNER' in policy

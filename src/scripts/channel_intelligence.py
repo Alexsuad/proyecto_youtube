@@ -290,7 +290,10 @@ def validate_capability_registry() -> list[str]:
     capability = next((x for x in _load(CAPABILITIES).get("capabilities", []) if x.get("capability_id") == "TOPIC_BELONGING_ASSESSMENT"), None)
     if not capability: return violations + ["TOPIC_BELONGING_CAPABILITY_MISSING"]
     routing = yaml.safe_load(ROUTING.read_text(encoding="utf-8")); route = routing.get("capabilities", {}).get("TOPIC_BELONGING_ASSESSMENT", {})
-    if not route or not (ROOT / route.get("entrypoint", "")).is_file(): violations.append("CAPABILITY_ROUTING_ENTRYPOINT_MISSING")
+    if not route:
+        violations.append("CAPABILITY_ROUTING_ENTRYPOINT_MISSING")
+    elif capability.get("availability_status") != "NON_EXECUTABLE_CURRENT" and not (ROOT / route.get("entrypoint", "")).is_file():
+        violations.append("CAPABILITY_ROUTING_ENTRYPOINT_MISSING")
     for ref in capability.get("dependencies", []) + [capability.get("input_contract", ""), capability.get("output_contract", "")]:
         if ref and ref != "DEFERRED" and not (ROOT / ref).is_file(): violations.append(f"CAPABILITY_REFERENCE_MISSING: {ref}")
     responsibility_roles = {x.get("role_id") for x in _load(RESPONSIBILITIES).get("responsibilities", [])}

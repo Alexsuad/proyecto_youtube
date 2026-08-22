@@ -46,6 +46,11 @@
       ],
       "maturity_status": "IMPLEMENTED",
       "availability_status": "NON_EXECUTABLE_CURRENT",
+      "material_decision_ref": {
+        "registry_path": "docs/legacy/material_decision_registry.json",
+        "decision_id": "MD-CI-001",
+        "subject_ref": "capability:TOPIC_BELONGING_ASSESSMENT"
+      },
       "dependencies": [
         "config/active_editorial_profile.json",
         "config/editorial_profile_registry.json",
