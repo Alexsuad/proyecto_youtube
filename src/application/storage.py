@@ -289,6 +289,43 @@ class VaultEpisodeStore:
         except OSError as exc:
             raise StorageError(f"No se pudo crear el episodio: {exc}") from exc
 
+    def record_topic_belonging_vertical(
+        self,
+        handle: EpisodeHandle,
+        *,
+        topic_input: dict[str, Any],
+        assessment: dict[str, Any],
+        decision: dict[str, Any],
+        gate_result: dict[str, Any],
+        lineage: dict[str, Any],
+        executions: list[dict[str, Any]],
+    ) -> None:
+        """Persist the bounded Topic Belonging vertical as one editorial batch."""
+        artifacts = {
+            "02_topic_belonging_input.json": topic_input,
+            "03_topic_belonging_assessment.json": assessment,
+            "04_topic_belonging_decision.json": decision,
+            "05_topic_belonging_gate.json": gate_result,
+            "topic_belonging_lineage.json": lineage,
+            "topic_belonging_execution.json": {"executions": executions},
+        }
+        with self._index_lock():
+            paths = [handle.folder / name for name in artifacts]
+            if any(path.exists() for path in paths):
+                raise StorageError("La vertical Topic Belonging ya tiene artefactos persistidos.")
+            written: list[Path] = []
+            try:
+                for path in paths:
+                    _write_json_atomic(path, artifacts[path.name])
+                    written.append(path)
+            except Exception:
+                for path in written:
+                    try:
+                        path.unlink(missing_ok=True)
+                    except OSError:
+                        pass
+                raise
+
     def _entry(self, episode_id: str) -> dict[str, Any]:
         entry = next((item for item in self._load_index().get("episodes", []) if item.get("ep_id") == episode_id), None)
         if not entry:

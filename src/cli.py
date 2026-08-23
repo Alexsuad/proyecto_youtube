@@ -3,22 +3,66 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
+from typing import Any
 
 from src.application.contracts import EntryMode, HumanInput, InputValidationError
 from src.application.interaction import TerminalInteraction, UserCancelled
 from src.application.service import EpisodeApplicationService
 from src.application.storage import StorageError, VaultEpisodeStore
+from src.application.topic_belonging import ExecutionCognitiveBoundary, build_topic_belonging_service
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SETTINGS = REPO_ROOT / "config" / "local_settings.json"
 
 
-def _service(settings: str | Path = DEFAULT_SETTINGS) -> EpisodeApplicationService:
+def _load_synthetic_outputs(path: str | Path | None) -> dict[str, dict[str, Any]] | None:
+    if path is None:
+        return None
+    try:
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"SYNTHETIC_OUTPUTS_INVALID:{exc}") from exc
+    if not isinstance(payload, dict) or any(
+        stage not in payload or not isinstance(payload[stage], dict)
+        for stage in ("enrich", "produce", "review")
+    ):
+        raise ValueError("SYNTHETIC_OUTPUTS_INVALID:required stages are enrich, produce and review")
+    return payload
+
+
+def _service(
+    settings: str | Path = DEFAULT_SETTINGS,
+    *,
+    mission_authorization_path: str | None = None,
+    execution_mode: str = "REAL",
+    mock_outputs: dict[str, dict[str, Any]] | None = None,
+) -> EpisodeApplicationService:
+    store = VaultEpisodeStore.from_settings(settings)
     return EpisodeApplicationService(
-        VaultEpisodeStore.from_settings(settings),
+        store,
+        workflow=build_topic_belonging_service(
+            store,
+            boundary=ExecutionCognitiveBoundary(
+                repository_root=REPO_ROOT,
+                mission_authorization_path=mission_authorization_path,
+                execution_mode=execution_mode,
+                mock_outputs=mock_outputs,
+            ),
+        ),
         interaction=TerminalInteraction(),
+    )
+
+
+def _service_from_args(args: argparse.Namespace) -> EpisodeApplicationService:
+    synthetic_outputs = _load_synthetic_outputs(getattr(args, "synthetic_outputs", None))
+    return _service(
+        args.config,
+        mission_authorization_path=getattr(args, "mission_authorization", None),
+        execution_mode="SYNTHETIC_TEST" if synthetic_outputs is not None else "REAL",
+        mock_outputs=synthetic_outputs,
     )
 
 
@@ -80,7 +124,7 @@ def _non_interactive_input(args: argparse.Namespace) -> HumanInput:
 def _start(args: argparse.Namespace) -> int:
     try:
         human_input = _interactive_input() if args.modo is None else _non_interactive_input(args)
-        result = _service(args.config).start(human_input)
+        result = _service_from_args(args).start(human_input)
     except UserCancelled:
         print("Operación cancelada por el usuario.")
         return 130
@@ -89,13 +133,13 @@ def _start(args: argparse.Namespace) -> int:
         return 2
     print(f"Episodio creado: {result.episode.episode_id}")
     print("Entrada registrada.")
-    print("La entrada quedó lista para el workflow editorial autorizado; no se ejecutó una vertical editorial.")
+    print("Topic Belonging alcanzó su gate técnico; el flujo se detuvo antes de investigación y guion.")
     return 0
 
 
 def _resume(args: argparse.Namespace) -> int:
     try:
-        state = _service(args.config).resume(args.episodio)
+        state = _service_from_args(args).resume(args.episodio)
     except (StorageError, PermissionError, ValueError) as exc:
         print(f"ERROR: {exc}")
         return 2
@@ -110,6 +154,8 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     start = subparsers.add_parser("iniciar", help="Crear y registrar un episodio")
     start.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    start.add_argument("--mission-authorization", help=argparse.SUPPRESS)
+    start.add_argument("--synthetic-outputs", help=argparse.SUPPRESS)
     start.add_argument("--modo", choices=["tema", "obra", "corpus"], help="Omitir para usar el flujo interactivo")
     start.add_argument("--tema")
     start.add_argument("--obra")
@@ -120,6 +166,8 @@ def build_parser() -> argparse.ArgumentParser:
     resume = subparsers.add_parser("reanudar", help="Consultar y reanudar un episodio registrado")
     resume.add_argument("episodio")
     resume.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    resume.add_argument("--mission-authorization", help=argparse.SUPPRESS)
+    resume.add_argument("--synthetic-outputs", help=argparse.SUPPRESS)
     resume.set_defaults(handler=_resume)
     return parser
 

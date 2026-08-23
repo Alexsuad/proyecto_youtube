@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "repository_root": ".",
-  "normative_allowed_roots": ["policies", "schemas", "config", "plans", "prompts", "skills"],
+  "normative_allowed_roots": ["policies", "schemas", "config", "plans", "prompts", "profiles", "skills"],
   "evidentiary_allowed_roots": ["input", "fixtures", "output", "reports", "workspace"],
   "historical_allowed_roots": ["workspace", "reports", "plans"]
 }

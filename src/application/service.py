@@ -93,6 +93,24 @@ class EpisodeApplicationService:
                 pending = candidate
                 break
         if pending is None:
+            complete = getattr(self.workflow, "complete", None)
+            if callable(complete):
+                folder = Path(current["folder"])
+                human_input = HumanInput.from_dict(
+                    json.loads((folder / "00_human_input.json").read_text(encoding="utf-8"))
+                )
+                handoff = json.loads((folder / "01_editorial_intake_handoff.json").read_text(encoding="utf-8"))
+                handle = EpisodeHandle(
+                    episode_id,
+                    current["entry"].get("slug", "episodio"),
+                    folder,
+                    self.store.index_path,
+                )
+                run_id = current["state"].get("run_id") or f"RUN-{uuid4().hex}"
+                outcome = complete(handle, human_input, handoff, run_id)
+                if outcome is not None:
+                    self.store.record_workflow(handle, outcome)
+                    return self.store.resume(episode_id)
             return current
         folder = Path(current["folder"])
         human_input = HumanInput.from_dict(

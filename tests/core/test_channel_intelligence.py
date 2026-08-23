@@ -97,8 +97,8 @@ def test_approval_with_conditions_requires_conditions():
 def test_capability_registry_is_operational_and_routing_exists():
     assert validate_capability_registry() == []
     routing=yaml.safe_load((ROOT/'config/capability_routing.yaml').read_text(encoding='utf-8'))
-    assert 'entrypoint' not in routing['capabilities']['TOPIC_BELONGING_ASSESSMENT']
-def test_topic_belonging_non_executable_capability_blocks_through_execute():
+    assert routing['capabilities']['TOPIC_BELONGING_ASSESSMENT']['entrypoint'] == 'src/application/topic_belonging.py'
+def test_topic_belonging_ready_not_authorized_capability_blocks_without_mission_authorization():
     result = execute(ExecutionRequest(
         capability_id="TOPIC_BELONGING_ASSESSMENT",
         skill_id="topic_belonging",
@@ -111,7 +111,7 @@ def test_topic_belonging_non_executable_capability_blocks_through_execute():
         config={"repository_root": str(ROOT)},
     ))
     assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
-    assert result.error == "CAPABILITY_UNAVAILABLE:TOPIC_BELONGING_ASSESSMENT"
+    assert result.error == "MISSION_AUTHORIZATION_REQUIRED:TOPIC_BELONGING_ASSESSMENT"
 def test_policy_and_prompts_reference_active_compiled_profile():
     policy=(ROOT/'policies/channel_intelligence/topic_belonging_policy.md').read_text(encoding='utf-8')
     assert 'compiled_profile_path' in policy and 'ESCALATE_TO_OWNER' in policy

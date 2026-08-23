@@ -10,6 +10,7 @@ capabilities:
       allow_external_api: false
       unavailable: BLOCKED_BY_SEMANTIC_EVALUATOR
   TOPIC_BELONGING_ASSESSMENT:
+    entrypoint: src/application/topic_belonging.py
     output_schema: topic_belonging_decision
     routing:
       explicit_mode: respect_requested_route

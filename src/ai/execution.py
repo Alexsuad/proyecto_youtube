@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import copy
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -269,6 +270,31 @@ def _result(
     )
 
 
+def _bind_synthetic_runtime_fields(request: ExecutionRequest, output: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
+    """Bind required cognitive provenance fields to a runtime-generated ID.
+
+    A synthetic provider may omit runtime-owned IDs, but it cannot choose them.
+    Declared values are preserved so the application boundary can reject them
+    when they differ from the authoritative ``ExecutionResult.run_id``.
+    """
+    if request.mock_output is None or request.execution_mode != "SYNTHETIC_TEST":
+        return output, None
+    run_key = {
+        "topic_belonging_assessment": "producer_run_id",
+        "topic_belonging_decision": "reviewer_run_id",
+    }.get(request.output_schema)
+    if run_key is None:
+        return output, None
+    runtime_run_id = f"RUN-AI-{uuid.uuid4().hex}"
+    bound = copy.deepcopy(output)
+    provenance = bound.get("provenance")
+    if not isinstance(provenance, dict):
+        return bound, runtime_run_id
+    if not bound.get(run_key):
+        bound[run_key] = runtime_run_id
+    if not provenance.get("run_id"):
+        provenance["run_id"] = runtime_run_id
+    return bound, runtime_run_id
 def validate_editorial_payload(payload: dict[str, Any], schema_name: str) -> list[str]:
     schema = load_schema(schema_name)
     required_exempt = EDITORIAL_RUNTIME_FIELDS | EDITORIAL_RUNTIME_NORMALIZED_FIELDS
@@ -353,6 +379,15 @@ def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
 
 def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
     started, manifest = _now(), manifest_checksum(request)
+    if request.execution_mode == "SYNTHETIC_TEST" and request.mock_output is None:
+        return _result(
+            request,
+            "none",
+            ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR,
+            started,
+            manifest,
+            error="SYNTHETIC_MOCK_OUTPUT_REQUIRED: real providers are unavailable in synthetic test mode",
+        )
     repository_root = Path(str(request.config.get("repository_root") or Path(__file__).resolve().parents[2])).resolve()
     try:
         preflight = preflight_controlled_execution(request, root=repository_root)
@@ -440,6 +475,8 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
             )
         except PermissionError as exc:
             return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=f"ROUTE_NOT_AUTHORIZED_AFTER_RESOLUTION:{exc}")
+    if request.mock_output is not None and request.execution_mode == "SYNTHETIC_TEST":
+        request.provider = "mock"
     provider_name = resolve_provider(request)
     if not provider_name:
         return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error="no hay ruta real configurada")
@@ -482,10 +519,11 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
         status = ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER if availability.get("availability_status") in {"CREDENTIALS_MISSING", "MODEL_UNAVAILABLE", "PROVIDER_UNAVAILABLE", "TIMEOUT", "MODEL_INVOCATION_FAILED"} else (ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR if availability.get("availability_status") in {"BLOCKED_PENDING_OWNER_COST_AUTHORIZATION", "EXECUTOR_UNAVAILABLE", "AGENT_HARNESS_SMOKE_ONLY_UNTIL_R6_B_RETRY"} else ExecutionStatus.FAILED)
         return _result(request, provider_name, status, started, manifest, error=str(exc), usage=availability)
     output = editorial_only_payload(output or {}) if request.output_schema in EDITORIAL_ONLY_SCHEMAS else (output or {})
+    output, synthetic_runtime_run_id = _bind_synthetic_runtime_fields(request, output)
     violations = validate_editorial_payload(output, request.output_schema) if request.output_schema in EDITORIAL_ONLY_SCHEMAS else validate_against_schema(output, request.output_schema)
     if violations:
         return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, output=output, error="OUTPUT_CONTRACT_INVALID: " + "; ".join(violations), usage=usage)
-    return _result(request, provider_name, ExecutionStatus.SUCCEEDED, started, manifest, output=output, usage=usage, real=provider_name in REAL_EXTERNAL_PROVIDERS)
+    return _result(request, provider_name, ExecutionStatus.SUCCEEDED, started, manifest, output=output, usage=usage, real=provider_name in REAL_EXTERNAL_PROVIDERS, run_id=synthetic_runtime_run_id)
 
 
 def _execute_reduced_mission(request: ExecutionRequest, started: str, manifest: str, mission_contract: Any) -> ExecutionResult:

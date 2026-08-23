@@ -39,7 +39,12 @@ def _mark_failed(registry_path: str | None, reservation: dict[str, str] | None, 
         request.config = {**request.config, "_mission_reservation_status": "FAILED"}
 
 
-def preflight_controlled_execution(request: Any, *, root: str | Path) -> dict[str, Any]:
+def preflight_controlled_execution(
+    request: Any,
+    *,
+    root: str | Path,
+    reserve_mission: bool = True,
+) -> dict[str, Any]:
     """Validate authorization, replay, capability and context before execution."""
     config = getattr(request, "config", {}) or {}
     repository_root = Path(root).resolve()
@@ -111,10 +116,10 @@ def preflight_controlled_execution(request: Any, *, root: str | Path) -> dict[st
     )
 
     registry_path = config.get("execution_registry_path")
-    if authorization.single_use and not registry_path:
+    if authorization.single_use and reserve_mission and not registry_path:
         raise PermissionError("MISSION_PROVENANCE_REQUIRED: execution registry path missing")
     reservation = None
-    if authorization.single_use:
+    if authorization.single_use and reserve_mission:
         reservation = reserve_mission_execution(
             registry_path,
             mission_id=authorization.mission_id,

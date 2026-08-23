@@ -377,8 +377,8 @@ def test_cli_non_interactive_runs_the_same_application_service(tmp_path: Path, c
             "--tema",
             "Tema automatizable",
         ]
-    ) == 0
-    assert "Episodio creado:" in capsys.readouterr().out
+    ) == 2
+    assert "MISSION_AUTHORIZATION_REQUIRED:TOPIC_BELONGING_ASSESSMENT" in capsys.readouterr().out
 
 
 def test_human_decision_is_normalized_and_persisted(tmp_path: Path) -> None:

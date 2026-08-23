@@ -69,6 +69,27 @@ python src/scripts/iniciar_episodio.py --num <NUM> --slug <SLUG>
 
 ---
 
+## R2-M1 — Vertical técnica Topic Belonging
+
+Cuando `CURRENT_MISSION` sea `R2_M1_PLAN009_TOPIC_BELONGING_TECHNICAL_VERTICAL`, la ruta moderna se detiene en:
+
+```text
+Gate 0
+→ captura moderna por terminal
+→ EditorialIntakeHandoff
+→ enriquecimiento cognitivo mínimo de CHANNEL_INTELLIGENCE
+→ TopicBelongingInput
+→ CHANNEL_INTELLIGENCE_PRODUCER
+→ CHANNEL_INTELLIGENCE_REVIEWER independiente
+→ Topic Belonging gate
+→ persistencia
+→ STOP
+```
+
+    El enriquecimiento no amplía el formulario visible ni constituye una capability adicional. Los fakes solo pueden inyectarse en la frontera cognitiva del harness técnico. Esta ruta no crea `EpisodeBrief`, `ResearchPack`, tesis, guion ni artefactos de fases posteriores.
+
+El CLI real permanece fail-closed durante P1: sin una `MissionAuthorization` válida no ejecuta `READY_NOT_AUTHORIZED`. El harness puede inyectar un fake únicamente en la frontera cognitiva y con configuración temporal de test; no es un fallback productivo.
+
 ## B5-I1 — Entrada editorial canónica
 
 ### 1. EpisodeBrief

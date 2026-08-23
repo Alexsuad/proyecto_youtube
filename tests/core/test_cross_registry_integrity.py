@@ -17,10 +17,12 @@ def _fixture(tmp_path: Path) -> Path:
     shutil.copy(ROOT / "config/capability_routing.yaml", tmp_path / "config/capability_routing.yaml")
     shutil.copytree(ROOT / "reports", tmp_path / "reports")
     for path in (
+        "src/application/topic_belonging.py",
         "src/scripts/channel_intelligence.py",
         "src/scripts/topic_belonging_flow.py",
         "src/scripts/run_b5_i2_semantic_audit.py",
         "schemas/topic_belonging_input.json",
+        "schemas/topic_belonging_assessment.json",
         "schemas/topic_belonging_decision.json",
         "schemas/b5_i2_semantic_sufficiency_audit.json",
         ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
@@ -34,7 +36,7 @@ def test_semantic_implemented_capability_resolves_canonical_links(tmp_path: Path
     integrity, authority = audit_cross_registry(root, "2026-08-11T00:00:00Z")
     topic = next(item for item in integrity["capabilities"] if item["capability_id"] == "TOPIC_BELONGING_ASSESSMENT")
     assert all(topic["references"][key] == "RESOLVED" for key in ("ROLE", "PROMPT", "PROFILE", "IMPLEMENTATION", "CONTRACT", "ROUTE"))
-    assert topic["references"]["ROUTE_ENTRYPOINT"] == "NOT_APPLICABLE"
+    assert topic["references"]["ROUTE_ENTRYPOINT"] == "RESOLVED"
     assert topic["references"]["SKILL"] == "NOT_APPLICABLE"
     assert not any("TOPIC_BELONGING_ASSESSMENT" in finding for finding in integrity["findings"])
     assert next(item for item in authority["authorities"] if item["capability_id"] == "TOPIC_BELONGING_ASSESSMENT")["authority_resolution"] == "RESOLVED"
@@ -114,12 +116,14 @@ def test_semantic_route_entrypoint_must_match_real_implementation(tmp_path: Path
     assert "ROUTE_ENTRYPOINT_UNRESOLVED:B5_I2_SEMANTIC_AUDITOR" in integrity["findings"]
 
 
-def test_non_executable_topic_route_without_entrypoint_is_not_applicable(tmp_path: Path) -> None:
+def test_topic_route_entrypoint_is_required_after_m1(tmp_path: Path) -> None:
     root = _fixture(tmp_path)
+    routing = root / "config/capability_routing.yaml"
+    routing.write_text(routing.read_text(encoding="utf-8").replace("    entrypoint: src/application/topic_belonging.py\n", ""), encoding="utf-8")
     integrity, _ = audit_cross_registry(root, "2026-08-11T00:00:00Z")
     topic = next(item for item in integrity["capabilities"] if item["capability_id"] == "TOPIC_BELONGING_ASSESSMENT")
-    assert topic["references"]["ROUTE_ENTRYPOINT"] == "NOT_APPLICABLE"
-    assert "ROUTE_ENTRYPOINT_UNRESOLVED:TOPIC_BELONGING_ASSESSMENT" not in integrity["findings"]
+    assert topic["references"]["ROUTE_ENTRYPOINT"] == "MISSING"
+    assert "ROUTE_ENTRYPOINT_UNRESOLVED:TOPIC_BELONGING_ASSESSMENT" in integrity["findings"]
 
 
 @pytest.mark.parametrize("availability", ["READY_NOT_AUTHORIZED", "ACTIVE"])
@@ -130,6 +134,8 @@ def test_executable_lifecycle_requires_route_entrypoint(tmp_path: Path, availabi
     topic_capability = next(item for item in data["capabilities"] if item["capability_id"] == "TOPIC_BELONGING_ASSESSMENT")
     topic_capability["availability_status"] = availability
     registry.write_text(json.dumps(data), encoding="utf-8")
+    routing = root / "config/capability_routing.yaml"
+    routing.write_text(routing.read_text(encoding="utf-8").replace("    entrypoint: src/application/topic_belonging.py\n", ""), encoding="utf-8")
     integrity, _ = audit_cross_registry(root, "2026-08-11T00:00:00Z")
     topic = next(item for item in integrity["capabilities"] if item["capability_id"] == "TOPIC_BELONGING_ASSESSMENT")
     assert topic["references"]["ROUTE_ENTRYPOINT"] == "MISSING"
