@@ -10,14 +10,44 @@
 
 ```text
 PLAN_010_STATUS: IN_PROGRESS
-PLAN_010_IMPLEMENTATION: AUTHORIZED_FOR_M1_ONLY
+PLAN_010_IMPLEMENTATION: AUTHORIZED_FOR_M2_M3_ONLY
 PLAN_010_ACTIVE_BLOCK: NONE
 PLAN_010_M0_STATUS: COMPLETED
 PLAN_010_M1_STATUS: OWNER_ACCEPTED
 PLAN_010_M1_COMMIT: COMPLETED
 PLAN_010_M1_PUSH: COMPLETED
 PLAN_010_M1_REMOTE_BRANCH: origin/plan010/m1-integration-lean-assurance
-PLAN_010_M2_M3: NOT_AUTHORIZED
+PLAN_010_M2_M3: OWNER_ACCEPTED
+PLAN_010_M2_M3_FILE_SCOPE:
+  - plans/001_CONTROL_OPERATIVO.md
+  - plans/plan_010/010_CIERRE_INTEGRACION_M1_Y_EFICIENCIA_PROPORCIONAL_ASSURANCE.md
+  - src/application/storage.py
+  - src/application/service.py
+  - src/application/topic_belonging.py
+  - src/cli.py
+  - src/ai/role_execution.py
+  - src/core/prompt_resolver.py
+  - config/agent_prompt_registry.json
+  - prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md
+  - prompts/roles/CHANNEL_INTELLIGENCE_REVIEWER/1.0.0.md
+  - tests/core/test_application_intake.py
+  - tests/core/test_b4_i2_agent_prompts.py
+  - tests/core/test_channel_intelligence.py
+  - tests/harness/test_plan009_m1_vertical.py
+  - tests/integration/test_r1_m11_integration.py
+  - tests/harness/test_plan010_m2_m3.py
+PLAN_010_M2_M3_TEMPORARY_SCOPE: .runtime-tmp/plan010-m2-m3/**
+PLAN_010_M2_M3_SCOPE_EXTENSION:
+  - src/core/mission_authorization.py
+  - tests/core/test_plan_006_t1_historical_completion.py
+  - tests/core/test_transversal_capability_governance.py
+PLAN_010_M2_M3_SCOPE_EXTENSION_REASON: OWNER_AUTHORIZED_SCOPE_EXPANSION_TO_UPDATE_AUTHORIZATION_FIXTURES; canonical MissionAuthorization verification must bind authorization.mission_id to CURRENT_MISSION for every new execution
+PLAN_010_PRE_ORIGIN_LEGACY_RESUME: FAIL_CLOSED_WITHOUT_INDEPENDENT_EVIDENCE
+PLAN_010_PRE_ORIGIN_LEGACY_REASON: internal mutable markers cannot distinguish historical legacy from coordinated downgrade; no backfill or heuristic is authorized in M2_M3
+PLAN_010_EPISODE_ORIGIN_TRUST_MODEL: APPLICATION_TRUSTED_PERSISTENCE
+PLAN_010_EPISODE_ORIGIN_SCOPE: INTEGRITY_BINDING_AND_CONSISTENCY_DETECTION_WITHIN_APPLICATION_PERSISTENCE_BOUNDARY
+PLAN_010_EPISODE_ORIGIN_LIMITATION: NOT_CRYPTOGRAPHIC_AUTHENTICITY_OR_TAMPER_PROOF_STORAGE
+PLAN_010_FULL_STORAGE_REWRITE: OUT_OF_SCOPE_SECURITY_HARDENING
 PLAN_010_PRODUCT_USE: NOT_AUTHORIZED
 PLAN_010_REAL_PROVIDER: NO
 PLAN_010_P2: NOT_AUTHORIZED
@@ -73,6 +103,14 @@ AUTOZIP
 ```
 
 No se autoriza fabricar una autorización dentro del CLI, habilitar un fallback fake fuera de tests ni promover una capability a uso productivo.
+
+### 2.1 Trust model de provenance de episodio
+
+Para M2+M3, `episode_origin.json` es el anchor canónico de origen dentro de la frontera de persistencia de la aplicación. Sus anchors y checksums detectan corrupción, modificaciones parciales, incoherencias entre artifacts y downgrades incompletos; no proporcionan autenticidad criptográfica ni almacenamiento tamper-proof frente a un actor que pueda reescribir coordinadamente todos los artifacts persistidos y recalcular sus hashes.
+
+Ese escenario se clasifica como `OUT_OF_SCOPE_SECURITY_HARDENING`. Defenderlo requeriría una raíz de confianza externa —por ejemplo firma/MAC con clave externa, registro append-only, WORM, servicio remoto confiable o TPM/HSM— y no se implementa en PLAN010 M2+M3.
+
+Los episodios pre-origin sin `episode_origin.json` y sin evidencia independiente verificable permanecen `NOT_RESUMABLE` mediante `FAIL_CLOSED`; no se autoriza backfill, migración ni heurística interna.
 
 ## 3. Mapa de bloques
 

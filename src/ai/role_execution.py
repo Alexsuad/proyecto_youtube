@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from src.core.contract_validation import load_schema
+from src.core.editorial_profile_registry import load_active_profile_authority
 from src.core.prompt_resolver import PromptResolutionError, resolve_prompt
+from src.core.version_manifest import compute_checksum
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -46,11 +48,23 @@ YOUTUBE_ADAPTATION_AUDITOR_REQUIRED_INPUTS = (
     "producer_run_reference",
     "active_editorial_profile_reference",
 )
+CHANNEL_INTELLIGENCE_PRODUCER_REQUIRED_INPUTS = (
+    "TopicBelongingInput",
+    "active_editorial_profile",
+    "initial_evidence",
+)
+CHANNEL_INTELLIGENCE_REVIEWER_REQUIRED_INPUTS = (
+    "TopicBelongingInput",
+    "TopicBelongingAssessment",
+    "active_editorial_profile",
+)
 ROLE_REQUIRED_INPUTS = {
     "SCRIPT_PRODUCT_PRODUCER": SCRIPT_PRODUCT_PRODUCER_REQUIRED_INPUTS,
     "SCRIPT_PRODUCT_AUDITOR": SCRIPT_PRODUCT_AUDITOR_REQUIRED_INPUTS,
     "YOUTUBE_ADAPTATION_PRODUCER": YOUTUBE_ADAPTATION_PRODUCER_REQUIRED_INPUTS,
     "YOUTUBE_ADAPTATION_AUDITOR": YOUTUBE_ADAPTATION_AUDITOR_REQUIRED_INPUTS,
+    "CHANNEL_INTELLIGENCE_PRODUCER": CHANNEL_INTELLIGENCE_PRODUCER_REQUIRED_INPUTS,
+    "CHANNEL_INTELLIGENCE_REVIEWER": CHANNEL_INTELLIGENCE_REVIEWER_REQUIRED_INPUTS,
 }
 ROLE_ALLOWED_OUTPUT_SCHEMAS = {
     "SCRIPT_PRODUCT_PRODUCER": {
@@ -73,6 +87,15 @@ ROLE_ALLOWED_OUTPUT_SCHEMAS = {
         "execution_smoke_report",
         "youtube_adaptation_review",
     },
+    "CHANNEL_INTELLIGENCE_PRODUCER": {
+        "execution_smoke_report",
+        "topic_belonging_input",
+        "topic_belonging_assessment",
+    },
+    "CHANNEL_INTELLIGENCE_REVIEWER": {
+        "execution_smoke_report",
+        "topic_belonging_decision",
+    },
 }
 
 
@@ -88,23 +111,39 @@ def _active_compiled_profile() -> dict[str, Any] | None:
     pointer_path = ROOT / "config" / "active_editorial_profile.json"
     registry_path = ROOT / "config" / "editorial_profile_registry.json"
     if not pointer_path.is_file() or not registry_path.is_file():
-        return None
-    pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
-    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+        raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: active editorial profile authority missing")
+    try:
+        pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+        load_active_profile_authority()
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: active editorial profile authority invalid") from exc
     key = registry.get("active_profile_key")
     entry = registry.get("profiles", {}).get(key, {})
     profile_path = entry.get("compiled_profile_path")
     if not profile_path:
-        return None
+        raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: compiled active profile path missing")
     resolved = ROOT / profile_path
-    if not resolved.is_file():
+    try:
+        compiled_text = resolved.read_text(encoding="utf-8")
+        compiled_profile = json.loads(compiled_text)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: compiled active profile invalid") from exc
+    if not compiled_text.strip() or not isinstance(compiled_profile, dict):
         raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: compiled active profile missing")
+    active_checksum = str(pointer.get("profile_checksum") or "")
+    if (
+        compiled_profile.get("checksum") != active_checksum
+        or not isinstance(compiled_profile.get("profile"), dict)
+        or compute_checksum(compiled_profile["profile"]) != active_checksum
+    ):
+        raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: compiled active profile checksum mismatch")
     return {
         "profile_id": pointer.get("ACTIVE_PROFILE_ID"),
         "profile_version": pointer.get("ACTIVE_PROFILE_VERSION"),
         "profile_checksum": pointer.get("profile_checksum"),
         "compiled_profile_path": profile_path,
-        "compiled_profile": json.loads(resolved.read_text(encoding="utf-8")),
+        "compiled_profile": compiled_profile,
     }
 
 
@@ -145,8 +184,11 @@ def _applicable_policies(prompt_contract: dict[str, Any]) -> list[dict[str, str]
             continue
         path = ROOT / ref
         if not path.is_file():
-            continue
-        policies.append({"path": ref, "content": path.read_text(encoding="utf-8")})
+            raise RoleExecutionContractError(f"INPUT_CONTRACT_INVALID: required context missing: {ref}")
+        content = path.read_text(encoding="utf-8")
+        if not content.strip():
+            raise RoleExecutionContractError(f"INPUT_CONTRACT_INVALID: required context empty: {ref}")
+        policies.append({"path": ref, "content": content})
     return policies
 
 
@@ -166,6 +208,8 @@ def resolve_role_execution_contract(role_id: str, output_schema: str, input_payl
     except FileNotFoundError as exc:
         raise RoleExecutionContractError(f"PROMPT_NOT_FOUND: {prompt_path}") from exc
     profile = _active_compiled_profile() if ("active_editorial_profile" in prompt_contract.get("required_inputs", []) or any("profile" in str(item).lower() for item in prompt_contract.get("required_context", []))) else None
+    if "active_editorial_profile" in prompt_contract.get("required_inputs", []) and not isinstance(profile, dict):
+        raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: active editorial profile is required")
     schema = load_schema(output_schema)
     return {
         "role_id": role_id,

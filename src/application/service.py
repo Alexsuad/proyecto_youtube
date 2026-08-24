@@ -45,8 +45,9 @@ class EpisodeApplicationService:
 
     def start(self, human_input: HumanInput) -> IntakeResult:
         preflight = getattr(self.workflow, "preflight", None)
+        mission_id = None
         if callable(preflight):
-            preflight()
+            mission_id = preflight()
         profile = self.profile_loader()
         run_id = f"RUN-{uuid4().hex}"
         handoff = build_editorial_handoff(human_input, profile)
@@ -55,6 +56,7 @@ class EpisodeApplicationService:
             handoff=handoff,
             profile=profile,
             run_id=run_id,
+            mission_id=mission_id if isinstance(mission_id, str) and mission_id.strip() else None,
         )
         try:
             workflow_state = self._run_workflow(episode, human_input, handoff, run_id)
@@ -72,6 +74,8 @@ class EpisodeApplicationService:
         if callable(preflight):
             preflight()
         current = self.store.resume(episode_id)
+        if current["entry"].get("estado") == self.store.ADMINISTRATIVE_CLOSED_INDEX_STATUS:
+            raise StorageError("EPISODE_ADMINISTRATIVELY_CLOSED: no se reanuda un episodio cerrado por recovery")
         request_path = Path(current["folder"]) / "human_decision_requests.json"
         requests = json.loads(request_path.read_text(encoding="utf-8")).get("requests", []) if request_path.exists() else []
         pending = None
@@ -151,6 +155,22 @@ class EpisodeApplicationService:
         workflow_state = self._consume_decision(handle, human_input, handoff, request, record["decision"])
         self.store.record_workflow(handle, workflow_state)
         return self.store.resume(episode_id)
+
+    def administratively_close_irrecoverable_episode(
+        self,
+        episode_id: str,
+        *,
+        reason: str,
+        actor: str,
+        source: str = "APPLICATION_ADMINISTRATIVE_RECOVERY",
+    ) -> dict[str, Any]:
+        """Expose the single administrative recovery path without invoking editorial workflow."""
+        return self.store.administratively_close_irrecoverable_episode(
+            episode_id,
+            reason=reason,
+            actor=actor,
+            source=source,
+        )
 
     def _run_workflow(
         self,

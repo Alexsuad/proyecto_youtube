@@ -64,7 +64,7 @@ def _material_decision(root: Path, *, decision_id: str = "MD-1", subject_ref: st
 
 
 def _bound_authorization(root: Path, decision: dict, *, binding_overrides: dict | None = None) -> tuple[object, dict]:
-    state_digest = _write(root / "state.md", "STATE")
+    state_digest = _write(root / "state.md", "CURRENT_MISSION: MATERIAL-BOUND\n")
     scope = {
         "mission_id": "MATERIAL-BOUND", "capability_ids": ["CAP"], "role_ids": ["ROLE"],
         "execution_profile_ids": ["PROFILE"], "execution_interface": "INTERFACE",
@@ -139,7 +139,7 @@ def test_context_blocks_traversal_and_required_checksum_mismatch(tmp_path: Path)
 def test_mission_authorization_binds_live_state_and_authority(tmp_path: Path) -> None:
     state = tmp_path / "state.md"
     authority = tmp_path / "authority.json"
-    state_digest = _write(state, "CURRENT_MISSION: TEST \n")
+    state_digest = _write(state, "CURRENT_MISSION: M-1 \n")
     scope = {
         "mission_id": "M-1", "capability_ids": ["CAP"], "role_ids": ["ROLE"], "execution_profile_ids": ["PROFILE"],
         "execution_interface": "INTERFACE", "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output"],
@@ -358,7 +358,7 @@ def test_symlink_escape_is_blocked_when_platform_allows_symlinks(tmp_path: Path)
 def test_compatible_executor_substitution_does_not_change_functional_authority(tmp_path: Path) -> None:
     state = tmp_path / "state.md"
     authority = tmp_path / "authority.json"
-    state_digest = _write(state, "STATE")
+    state_digest = _write(state, "CURRENT_MISSION: M-EXEC\n")
     scope = {
         "mission_id": "M-EXEC", "capability_ids": ["CAP"], "role_ids": ["ROLE"], "execution_profile_ids": ["PROFILE"],
         "execution_interface": "INTERFACE", "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output"],

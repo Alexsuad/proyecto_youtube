@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -69,6 +70,9 @@ class VaultEpisodeStore:
     """Filesystem adapter compatible with a local, mounted, or synced Vault."""
 
     INDEX_FILENAME = "episodes_index.json"
+    ADMINISTRATIVE_CLOSED_STATE = "ADMINISTRATIVELY_CLOSED"
+    ADMINISTRATIVE_CLOSED_INDEX_STATUS = "administratively_cerrado"
+    ADMINISTRATIVE_CLOSURE_FILENAME = "administrative_recovery.json"
 
     def __init__(self, vault_root: str | Path, channel_id: str):
         if not str(vault_root).strip():
@@ -152,6 +156,7 @@ class VaultEpisodeStore:
         handoff: dict[str, Any],
         profile: dict[str, Any],
         run_id: str,
+        mission_id: str | None = None,
         episode_number: int | None = None,
         slug_override: str | None = None,
     ) -> EpisodeHandle:
@@ -161,6 +166,7 @@ class VaultEpisodeStore:
                 handoff=handoff,
                 profile=profile,
                 run_id=run_id,
+                mission_id=mission_id,
                 episode_number=episode_number,
                 slug_override=slug_override,
             )
@@ -189,6 +195,7 @@ class VaultEpisodeStore:
         handoff: dict[str, Any] | None,
         profile: dict[str, Any] | None,
         run_id: str,
+        mission_id: str | None = None,
         episode_number: int | None = None,
         slug_override: str | None = None,
         legacy: bool = False,
@@ -270,6 +277,33 @@ class VaultEpisodeStore:
                         "creado": now,
                         "cerrado": None,
                     }
+                if mission_id:
+                    state["mission_id"] = str(mission_id)
+                    entry["mission_id"] = str(mission_id)
+                state_anchor = {
+                    key: value
+                    for key, value in state.items()
+                    if key not in {"status", "updated_at", "administrative_closure_ref"}
+                }
+                index_anchor = {
+                    key: value
+                    for key, value in entry.items()
+                    if key not in {"estado", "application_status", "cerrado", "administrative_closure_ref", "administrative_closure"}
+                }
+                origin = {
+                    "episode_id": episode_id,
+                    "origin": "LEGACY_M1" if legacy else "MODERN_M1",
+                    "state_anchor_sha256": hashlib.sha256(
+                        json.dumps(state_anchor, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                    ).hexdigest(),
+                    "index_anchor_sha256": hashlib.sha256(
+                        json.dumps(index_anchor, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                    ).hexdigest(),
+                }
+                origin["origin_checksum"] = hashlib.sha256(
+                    json.dumps(origin, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                ).hexdigest()
+                _write_json_atomic(folder / "episode_origin.json", origin)
                 _write_json_atomic(folder / "episode_state.json", state)
                 episodes.append(entry)
                 index["episodes"] = episodes
@@ -332,13 +366,198 @@ class VaultEpisodeStore:
             raise StorageError(f"No existe el episodio {episode_id} en el índice.")
         return entry
 
-    def resume(self, episode_id: str) -> dict[str, Any]:
-        entry = self._entry(episode_id)
-        folder = self.episodes_path / str(entry.get("ep_folder", ""))
-        if not folder.is_dir():
+    def _folder_for_entry(self, entry: dict[str, Any]) -> Path:
+        ep_folder = str(entry.get("ep_folder", "")).strip()
+        folder = self.episodes_path / ep_folder if ep_folder else Path("")
+        if not ep_folder:
             # Legacy indexes may not have ep_folder; retain their absolute path fallback.
             folder = Path(entry.get("ep_path", ""))
+        if not str(folder).strip():
+            return folder
+        base = self.episodes_path.resolve()
+        resolved = folder.resolve(strict=False)
+        if resolved == base:
+            raise StorageError("EPISODE_PATH_NOT_EPISODE: el destino debe ser una carpeta de episodio")
+        try:
+            resolved.relative_to(base)
+        except ValueError as exc:
+            raise StorageError("EPISODE_PATH_OUTSIDE_VAULT: no se permite recovery fuera del Vault") from exc
+        if folder.is_symlink():
+            raise StorageError("EPISODE_PATH_SYMLINK_UNSUPPORTED: no se modifica un destino enlazado")
+        return folder
+
+    @staticmethod
+    def _file_checksum(path: Path) -> str:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def _evidence_files(self, folder: Path) -> list[dict[str, str]]:
         if not folder.is_dir():
+            return []
+        evidence: list[dict[str, str]] = []
+        for path in sorted(item for item in folder.rglob("*") if item.is_file() and item.name != self.ADMINISTRATIVE_CLOSURE_FILENAME):
+            evidence.append(
+                {
+                    "path": path.relative_to(folder).as_posix(),
+                    "sha256": self._file_checksum(path),
+                }
+            )
+        return evidence
+
+    def _irrecoverability_basis(self, folder: Path) -> tuple[str, list[str], dict[str, Any] | None]:
+        """Prove a technical recovery gap without treating a healthy stop as abandoned."""
+        if not folder.is_dir():
+            return "EPISODE_FOLDER_MISSING", [], None
+
+        state_path = folder / "episode_state.json"
+        state: dict[str, Any] | None = None
+        if state_path.is_file():
+            try:
+                state = _read_json(state_path)
+            except StorageError:
+                return "EPISODE_STATE_INVALID", [state_path.name], None
+            if state.get("status") == "TOPIC_BELONGING_TECHNICAL_STOP":
+                raise StorageError("EPISODE_RECOVERABLE_TECHNICAL_STOP: no se cierra administrativamente un episodio sano")
+
+        missing = [
+            name
+            for name in ("00_human_input.json", "01_editorial_intake_handoff.json", "episode_state.json")
+            if not (folder / name).is_file()
+        ]
+        if missing:
+            return "REQUIRED_ARTIFACT_MISSING", missing, state
+
+        try:
+            _read_json(folder / "00_human_input.json")
+            _read_json(folder / "01_editorial_intake_handoff.json")
+        except StorageError:
+            return "REQUIRED_ARTIFACT_INVALID", ["00_human_input.json", "01_editorial_intake_handoff.json"], state
+
+        # With the intake contract intact, the application can still attempt normal resume.
+        raise StorageError("EPISODE_RECOVERABILITY_NOT_PROVEN: se conserva el episodio para reanudación normal")
+
+    def administratively_close_irrecoverable_episode(
+        self,
+        episode_id: str,
+        *,
+        reason: str,
+        actor: str,
+        source: str = "APPLICATION_ADMINISTRATIVE_RECOVERY",
+    ) -> dict[str, Any]:
+        """Record a non-editorial recovery closure without deleting episode evidence."""
+        if not str(reason).strip() or not str(actor).strip() or not str(source).strip():
+            raise StorageError("ADMINISTRATIVE_RECOVERY_METADATA_REQUIRED: reason, actor y source son obligatorios")
+        if "PLAN010" in str(source).upper():
+            raise StorageError("ADMINISTRATIVE_RECOVERY_SOURCE_MUST_BE_NEUTRAL")
+        with self._index_lock():
+            index = self._load_index()
+            episodes = list(index.get("episodes", []))
+            entry = next((item for item in episodes if item.get("ep_id") == episode_id), None)
+            if entry is None:
+                raise StorageError(f"No existe el episodio {episode_id} en el índice.")
+            folder = self._folder_for_entry(entry)
+
+            def materialize(closure: dict[str, Any]) -> None:
+                if not folder.is_dir():
+                    return
+                closure_path = folder / self.ADMINISTRATIVE_CLOSURE_FILENAME
+                if not closure_path.is_file():
+                    _write_json_atomic(closure_path, closure)
+                prior_state = closure.get("prior_episode_state")
+                state_path = folder / "episode_state.json"
+                if isinstance(prior_state, dict) and state_path.is_file():
+                    current_state = _read_json(state_path)
+                    if current_state.get("status") != self.ADMINISTRATIVE_CLOSED_STATE:
+                        updated_state = dict(prior_state)
+                        updated_state.update(
+                            {
+                                "status": self.ADMINISTRATIVE_CLOSED_STATE,
+                                "administrative_closure_ref": self.ADMINISTRATIVE_CLOSURE_FILENAME,
+                                "updated_at": closure["closed_at"],
+                            }
+                        )
+                        _write_json_atomic(state_path, updated_state)
+
+            def index_with_closure(current_index: dict[str, Any], closure: dict[str, Any]) -> dict[str, Any]:
+                updated_episodes = []
+                current_entries = list(current_index.get("episodes", []))
+                for candidate in current_entries:
+                    if candidate.get("ep_id") != episode_id:
+                        updated_episodes.append(candidate)
+                        continue
+                    updated = dict(candidate)
+                    updated.update(
+                        {
+                            "estado": self.ADMINISTRATIVE_CLOSED_INDEX_STATUS,
+                            "application_status": self.ADMINISTRATIVE_CLOSED_STATE,
+                            "cerrado": closure["closed_at"],
+                            "administrative_closure_ref": (
+                                self.ADMINISTRATIVE_CLOSURE_FILENAME if folder.is_dir() else "index:administrative_closure"
+                            ),
+                            # The index is the recovery journal. The folder record is a durable evidence copy.
+                            "administrative_closure": closure,
+                        }
+                    )
+                    updated_episodes.append(updated)
+                new_index = dict(current_index)
+                new_index["episodes"] = updated_episodes
+                new_index["last_updated"] = closure["closed_at"]
+                return new_index
+
+            if entry.get("estado") == self.ADMINISTRATIVE_CLOSED_INDEX_STATUS:
+                closure_path = folder / self.ADMINISTRATIVE_CLOSURE_FILENAME
+                if closure_path.is_file():
+                    closure = _read_json(closure_path)
+                else:
+                    closure = entry.get("administrative_closure")
+                    if not isinstance(closure, dict):
+                        raise StorageError("ADMINISTRATIVE_RECOVERY_RECORD_MISSING: cierre marcado sin evidencia")
+                materialize(closure)
+                return closure
+            if entry.get("estado") != "en_progreso":
+                raise StorageError(f"EPISODE_NOT_IN_PROGRESS: estado actual {entry.get('estado')}")
+
+            closure_path = folder / self.ADMINISTRATIVE_CLOSURE_FILENAME
+            if closure_path.exists():
+                closure = _read_json(closure_path)
+                if closure.get("operation") != "ADMINISTRATIVE_RECOVERY_CLOSE" or closure.get("episode_id") != episode_id:
+                    raise StorageError("ADMINISTRATIVE_RECOVERY_RECORD_CONFLICT: evidencia de otro cierre")
+                _write_json_atomic(self.index_path, index_with_closure(index, closure))
+                materialize(closure)
+                return closure
+
+            basis, basis_artifacts, prior_state = self._irrecoverability_basis(folder)
+            closed_at = datetime.now(timezone.utc).isoformat()
+            closure = {
+                "operation": "ADMINISTRATIVE_RECOVERY_CLOSE",
+                "version": "1.0.0",
+                "episode_id": episode_id,
+                "previous_index_status": entry.get("estado"),
+                "previous_application_status": entry.get("application_status"),
+                "reason": str(reason).strip(),
+                "actor": str(actor).strip(),
+                "source": str(source).strip(),
+                "closed_at": closed_at,
+                "irrecoverability": {"basis": basis, "artifacts": basis_artifacts},
+                "evidence_files": self._evidence_files(folder),
+                "prior_index_entry": dict(entry),
+                "prior_episode_state": prior_state,
+            }
+            # Commit the index journal first. Any interruption after this point is
+            # converged by the idempotent materialization path above.
+            _write_json_atomic(self.index_path, index_with_closure(index, closure))
+            materialize(closure)
+            return closure
+
+    def resume(self, episode_id: str) -> dict[str, Any]:
+        entry = self._entry(episode_id)
+        folder = self._folder_for_entry(entry)
+        if not folder.is_dir():
+            if entry.get("estado") == self.ADMINISTRATIVE_CLOSED_INDEX_STATUS:
+                return {
+                    "entry": entry,
+                    "state": entry.get("administrative_closure", {}),
+                    "folder": "",
+                }
             raise StorageError(f"El episodio {episode_id} no tiene una carpeta persistida.")
         state = _read_json(folder / "episode_state.json")
         return {"entry": entry, "state": state, "folder": str(folder)}

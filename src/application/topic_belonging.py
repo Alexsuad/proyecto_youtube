@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
 import re
@@ -15,6 +15,7 @@ from uuid import uuid4
 from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
 from src.ai.execution import execute
 from src.ai.manifest import file_checksum, manifest_checksum
+from src.ai.role_execution import RoleExecutionContractError, build_model_prompt, resolve_role_execution_contract
 from src.application.contracts import HumanInput
 from src.application.storage import EpisodeHandle, StorageError, VaultEpisodeStore
 from src.application.authority import load_operational_authority
@@ -22,6 +23,7 @@ from src.core.editorial_profile_registry import load_active_profile_authority
 from src.core.contract_validation import validate_against_schema
 from src.core.execution_preflight import preflight_controlled_execution
 from src.core.path_resolution import REPO_ROOT
+from src.core.prompt_resolver import resolve_prompt
 from src.scripts.channel_intelligence import (
     canonical_checksum,
     validate_assessment,
@@ -34,16 +36,20 @@ from src.scripts.topic_belonging_flow import evaluate_topic_belonging_gate
 CAPABILITY_ID = "TOPIC_BELONGING_ASSESSMENT"
 PRODUCER_ROLE = "CHANNEL_INTELLIGENCE_PRODUCER"
 REVIEWER_ROLE = "CHANNEL_INTELLIGENCE_REVIEWER"
-MISSION_ID = "PLAN010_M1_TOPIC_BELONGING_INTEGRATION_CLOSURE"
-PROMPT_IDS = {
-    "enrich": "prompt_channel_intelligence_producer",
-    "produce": "prompt_channel_intelligence_producer",
-    "review": "prompt_channel_intelligence_reviewer",
-}
-PROMPT_PATHS = {
-    "enrich": "prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md",
-    "produce": "prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md",
-    "review": "prompts/roles/CHANNEL_INTELLIGENCE_REVIEWER/1.0.0.md",
+LEGACY_M1_LINEAGE_ID = "PLAN010_M1_TOPIC_BELONGING_INTEGRATION_CLOSURE"
+EPISODE_ORIGIN_FIELDS = frozenset(
+    {
+        "episode_id",
+        "origin",
+        "state_anchor_sha256",
+        "index_anchor_sha256",
+        "origin_checksum",
+    }
+)
+PROMPT_ROLES = {
+    "enrich": PRODUCER_ROLE,
+    "produce": PRODUCER_ROLE,
+    "review": REVIEWER_ROLE,
 }
 
 # The six artifacts persisted atomically by VaultEpisodeStore.record_topic_belonging_vertical.
@@ -60,6 +66,7 @@ M1_ALLOWED_EPISODE_ARTIFACTS = frozenset(
         "00_human_input.json",
         "01_editorial_intake_handoff.json",
         *VERTICAL_ARTIFACTS,
+        "episode_origin.json",
         "episode_state.json",
         "workflow_state.json",
     }
@@ -68,12 +75,16 @@ M1_ALLOWED_EPISODE_ARTIFACTS = frozenset(
 STOP_STATUS = "TOPIC_BELONGING_TECHNICAL_STOP"
 
 
+def _prompt_contract_for_stage(stage: str) -> dict[str, Any]:
+    return resolve_prompt(PROMPT_ROLES[stage])
+
+
 class TopicBelongingExecutionError(PermissionError):
     """A cognitive boundary execution did not produce a contractual output."""
 
 
 class CognitiveBoundary(Protocol):
-    def preflight(self) -> None: ...
+    def preflight(self) -> str: ...
 
     def enrich(self, handoff: dict[str, Any], human_input: HumanInput, profile: dict[str, Any], episode_id: str) -> tuple[dict[str, Any], ExecutionResult]: ...
 
@@ -228,21 +239,28 @@ class ExecutionCognitiveBoundary:
     execution_route: str = "local_model"
     execution_profile: str = "ollama_local"
     execution_registry_path: str | None = None
+    operational_authority_path: str | None = None
+    resolved_mission_id: str | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if self.mock_outputs is not None and self.execution_mode != "SYNTHETIC_TEST":
             raise PermissionError("MOCK_OUTPUTS_REQUIRE_SYNTHETIC_TEST_MODE")
 
-    def preflight(self) -> None:
+    def preflight(self) -> str:
         if not self.mission_authorization_path:
             raise PermissionError("MISSION_AUTHORIZATION_REQUIRED:TOPIC_BELONGING_ASSESSMENT")
         if self.execution_mode != "SYNTHETIC_TEST":
-            raise PermissionError("M1_PROVIDER_REAL_NOT_AUTHORIZED: use SYNTHETIC_TEST only")
+            raise PermissionError("REAL_PROVIDER_NOT_AUTHORIZED: use SYNTHETIC_TEST only")
         if self.mock_outputs is None or any(
             stage not in self.mock_outputs or not isinstance(self.mock_outputs.get(stage), dict)
             for stage in ("enrich", "produce", "review")
         ):
-            raise PermissionError("SYNTHETIC_MOCK_OUTPUTS_REQUIRED: provider real is not allowed in M1")
+            raise PermissionError("SYNTHETIC_MOCK_OUTPUTS_REQUIRED: real provider is not authorized")
+        authority = load_operational_authority(self._operational_authority_path())
+        live_mission_id = str(authority.values.get("CURRENT_MISSION") or "").strip()
+        if not live_mission_id:
+            raise PermissionError("CURRENT_MISSION_REQUIRED: authority has no current mission")
+        enrich_prompt = _prompt_contract_for_stage("enrich")
         probe = ExecutionRequest(
             capability_id=CAPABILITY_ID,
             skill_id="topic_belonging",
@@ -264,8 +282,8 @@ class ExecutionCognitiveBoundary:
                 "context_policy_path": "config/context_resolution_policy.json",
                 "context_references": self._context_references("enrich"),
                 "output_refs": ["topic_belonging_input:PREFLIGHT"],
-                "prompt_id": PROMPT_IDS["enrich"],
-                "prompt_version": "1.0.0",
+                "prompt_id": enrich_prompt["prompt_id"],
+                "prompt_version": enrich_prompt["prompt_version"],
                 "run_id": "PREFLIGHT-TOPIC-BELONGING",
                 "execution_registry_path": self.execution_registry_path,
             },
@@ -278,19 +296,31 @@ class ExecutionCognitiveBoundary:
                 detail = "MISSION_AUTHORIZATION_PATH_OUTSIDE_REPOSITORY"
             raise PermissionError(f"MISSION_AUTHORIZATION_INVALID:{detail}") from exc
         authorization = result.get("authorization")
-        if authorization is None or authorization.mission_id != MISSION_ID:
+        if authorization is None:
             raise PermissionError("MISSION_SCOPE_AUTHORIZATION_MISMATCH")
+        if authorization.mission_id != live_mission_id:
+            raise PermissionError("MISSION_SCOPE_AUTHORIZATION_MISMATCH:CURRENT_MISSION")
+        self.resolved_mission_id = authorization.mission_id
+        return authorization.mission_id
+
+    def _operational_authority_path(self) -> Path:
+        if self.operational_authority_path:
+            candidate = Path(self.operational_authority_path)
+            return candidate if candidate.is_absolute() else self.repository_root / candidate
+        return self.repository_root / "plans/001_CONTROL_OPERATIVO.md"
 
     def _context_references(self, stage: str) -> list[dict[str, Any]]:
         registry = json.loads((self.repository_root / "config/editorial_profile_registry.json").read_text(encoding="utf-8"))
         active_key = registry["active_profile_key"]
         compiled = registry["profiles"][active_key]["compiled_profile_path"]
+        prompt_contract = _prompt_contract_for_stage(stage)
+        prompt_path = f"prompts/roles/{PROMPT_ROLES[stage]}/{prompt_contract['prompt_version']}.md"
         return [
             {"ref_id": "active-profile", "context_class": "NORMATIVE", "precedence_layer": "NORMATIVE_CONTEXT", "artifact_path": "config/active_editorial_profile.json", "artifact_type": "json", "authority_domain": "CHANNEL_INTELLIGENCE", "required": True},
             {"ref_id": "profile-registry", "context_class": "NORMATIVE", "precedence_layer": "NORMATIVE_CONTEXT", "artifact_path": "config/editorial_profile_registry.json", "artifact_type": "json", "authority_domain": "CHANNEL_INTELLIGENCE", "required": True},
             {"ref_id": "compiled-profile", "context_class": "NORMATIVE", "precedence_layer": "NORMATIVE_CONTEXT", "artifact_path": compiled, "artifact_type": "json", "authority_domain": "CHANNEL_INTELLIGENCE", "required": True},
             {"ref_id": "topic-policy", "context_class": "NORMATIVE", "precedence_layer": "NORMATIVE_CONTEXT", "artifact_path": "policies/channel_intelligence/topic_belonging_policy.md", "artifact_type": "markdown", "authority_domain": "CHANNEL_INTELLIGENCE", "required": True},
-            {"ref_id": f"prompt-{stage}", "context_class": "NORMATIVE", "precedence_layer": "NORMATIVE_CONTEXT", "artifact_path": PROMPT_PATHS[stage], "artifact_type": "markdown", "authority_domain": "CHANNEL_INTELLIGENCE", "required": True},
+            {"ref_id": f"prompt-{stage}", "context_class": "NORMATIVE", "precedence_layer": "NORMATIVE_CONTEXT", "artifact_path": prompt_path, "artifact_type": "markdown", "authority_domain": "CHANNEL_INTELLIGENCE", "required": True},
         ]
 
     def _run(
@@ -304,8 +334,29 @@ class ExecutionCognitiveBoundary:
         episode_id: str,
         inputs: list[tuple[str, str, dict[str, Any], str]],
         mock_output: dict[str, Any] | None,
+        role_input_payload: dict[str, Any],
     ) -> tuple[dict[str, Any], ExecutionResult]:
         request_run_id = f"REQUEST-{stage.upper()}-{uuid4().hex}"
+        role_id = role
+        try:
+            prompt_contract = resolve_role_execution_contract(
+                role_id,
+                output_schema,
+                role_input_payload,
+                {
+                    "episode_id": episode_id,
+                    "stage": stage.upper(),
+                    "execution_mode": self.execution_mode,
+                    "execution_route": self.execution_route,
+                    "execution_profile": self.execution_profile,
+                    "mission_id": self.resolved_mission_id or "UNRESOLVED_MISSION",
+                },
+            )
+            model_prompt = build_model_prompt(prompt_contract)
+        except RoleExecutionContractError as exc:
+            raise TopicBelongingExecutionError(f"{stage.upper()}_PROMPT_CONTRACT_INVALID:{exc}") from exc
+        if not model_prompt.strip():
+            raise TopicBelongingExecutionError(f"{stage.upper()}_PROMPT_EMPTY")
         with tempfile.TemporaryDirectory(prefix="topic-belonging-input-") as temp_dir:
             input_artifacts: list[InputArtifact] = []
             for index, (kind, artifact_id, payload, producer_run_id) in enumerate(inputs):
@@ -342,13 +393,30 @@ class ExecutionCognitiveBoundary:
                     "context_references": self._context_references(stage),
                     "input_refs": [f"{kind}:{item_id}" for kind, item_id, _, _ in inputs],
                     "output_refs": [f"{output_kind}:{output_id}"],
-                    "prompt_id": PROMPT_IDS[stage],
-                    "prompt_version": "1.0.0",
+                    "prompt_id": prompt_contract["prompt_id"],
+                    "prompt_version": prompt_contract["prompt_version"],
+                    "prompt_checksum": prompt_contract["prompt_checksum"],
+                    "prompt_input_checksum": prompt_contract["input_checksum"],
+                    "prompt": model_prompt,
+                    "prompt_contract": {
+                        "role_id": prompt_contract["role_id"],
+                        "prompt_id": prompt_contract["prompt_id"],
+                        "prompt_version": prompt_contract["prompt_version"],
+                        "output_schema_name": prompt_contract["output_schema_name"],
+                    },
                     "run_id": request_run_id,
                     "handoff_target": REVIEWER_ROLE if stage == "produce" else CAPABILITY_ID,
                 },
             )
             result = execute(request)
+            result.usage.update(
+                {
+                    "prompt_id": prompt_contract["prompt_id"],
+                    "prompt_version": prompt_contract["prompt_version"],
+                    "prompt_checksum": prompt_contract["prompt_checksum"],
+                    "prompt_input_checksum": prompt_contract["input_checksum"],
+                }
+            )
         if result.status is not ExecutionStatus.SUCCEEDED or not isinstance(result.output, dict):
             raise TopicBelongingExecutionError(
                 f"{stage.upper()}_EXECUTION_BLOCKED:{result.error or result.status.value}"
@@ -383,6 +451,11 @@ class ExecutionCognitiveBoundary:
             episode_id=episode_id,
             inputs=[("editorial_intake_handoff", handoff["source_interaction_id"], handoff, "")],
             mock_output=output,
+            role_input_payload={
+                "TopicBelongingInput": {"human_input": human_input.to_dict(), "handoff": handoff},
+                "active_editorial_profile": profile,
+                "initial_evidence": handoff.get("evidence_refs", []),
+            },
         )
 
     def produce(self, topic_input: dict[str, Any], profile: dict[str, Any], episode_id: str, *, input_producer_run_id: str = "") -> tuple[dict[str, Any], ExecutionResult]:
@@ -396,6 +469,11 @@ class ExecutionCognitiveBoundary:
             episode_id=episode_id,
             inputs=[("topic_belonging_input", topic_input["topic_input_id"], topic_input, input_producer_run_id)],
             mock_output=output,
+            role_input_payload={
+                "TopicBelongingInput": topic_input,
+                "active_editorial_profile": profile,
+                "initial_evidence": topic_input.get("initial_evidence", []),
+            },
         )
 
     def review(self, topic_input: dict[str, Any], assessment: dict[str, Any], profile: dict[str, Any], episode_id: str, *, input_producer_run_id: str = "") -> tuple[dict[str, Any], ExecutionResult]:
@@ -418,6 +496,11 @@ class ExecutionCognitiveBoundary:
                 ("topic_belonging_assessment", assessment["assessment_id"], assessment, assessment["producer_run_id"]),
             ],
             mock_output=output,
+            role_input_payload={
+                "TopicBelongingInput": topic_input,
+                "TopicBelongingAssessment": assessment,
+                "active_editorial_profile": profile,
+            },
         )
 
 
@@ -434,13 +517,25 @@ class TopicBelongingTechnicalWorkflow:
         self.store = store
         self.boundary = boundary
         self.profile_loader = profile_loader
+        self._mission_id: str | None = None
 
-    def preflight(self) -> None:
+    def preflight(self) -> str:
         repository_root = Path(getattr(self.boundary, "repository_root", REPO_ROOT))
-        authority = load_operational_authority(repository_root / "plans/001_CONTROL_OPERATIVO.md")
-        if authority.values.get("CURRENT_MISSION") != MISSION_ID:
-            raise PermissionError(f"CURRENT_MISSION_REQUIRED:{MISSION_ID}")
-        self.boundary.preflight()
+        authority_path = getattr(self.boundary, "operational_authority_path", None)
+        if authority_path:
+            candidate = Path(authority_path)
+            authority_path = candidate if candidate.is_absolute() else repository_root / candidate
+        else:
+            authority_path = repository_root / "plans/001_CONTROL_OPERATIVO.md"
+        authority = load_operational_authority(authority_path)
+        live_mission_id = str(authority.values.get("CURRENT_MISSION") or "").strip()
+        if not live_mission_id:
+            raise PermissionError("CURRENT_MISSION_REQUIRED: authority has no current mission")
+        authorized_mission_id = self.boundary.preflight()
+        if authorized_mission_id != live_mission_id:
+            raise PermissionError("MISSION_SCOPE_AUTHORIZATION_MISMATCH:CURRENT_MISSION")
+        self._mission_id = live_mission_id
+        return live_mission_id
 
     def start(self, handle: EpisodeHandle, human_input: HumanInput, handoff: dict[str, Any], run_id: str) -> dict[str, Any]:
         self.preflight()
@@ -474,7 +569,7 @@ class TopicBelongingTechnicalWorkflow:
 
         gate = evaluate_topic_belonging_gate(decision, assessment, topic_input)
         lineage = {
-            "mission_id": MISSION_ID,
+            "mission_id": self._mission_id,
             "episode_id": handle.episode_id,
             "human_input_ref": f"episode:{handle.episode_id}/00_human_input.json",
             "handoff_ref": f"episode:{handle.episode_id}/01_editorial_intake_handoff.json",
@@ -566,6 +661,32 @@ class TopicBelongingTechnicalWorkflow:
             raise TopicBelongingExecutionError(
                 "PERSISTED_VERTICAL_INTEGRITY_INVALID:INCOMPLETE_VERTICAL_WITH_STOP_STATE"
             )
+        self._validate_persisted_origin_binding(handle)
+        state_mission_id, index_mission_id, lineage_mission_id = self._persisted_mission_bindings(handle)
+        if bool(state_mission_id) != bool(index_mission_id):
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:MODERN_MISSION_BINDING_INCOMPLETE"
+            )
+        if not state_mission_id and not index_mission_id:
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:MODERN_MISSION_BINDING_MISSING:STATE_INDEX"
+            )
+        if lineage_mission_id is None and state_mission_id != self._mission_id:
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:HISTORICAL_INCOMPLETE_REQUIRES_SAME_MISSION"
+            )
+        if state_mission_id and state_mission_id != index_mission_id:
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:MODERN_MISSION_BINDING_MISMATCH"
+            )
+        if lineage_mission_id and lineage_mission_id != state_mission_id:
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:MODERN_MISSION_BINDING_MISMATCH"
+            )
+        if state_mission_id and state_mission_id != self._mission_id:
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:HISTORICAL_INCOMPLETE_REQUIRES_SAME_MISSION"
+            )
         self._clear_partial_vertical(handle)
         return self.start(handle, human_input, handoff, run_id)
 
@@ -575,6 +696,88 @@ class TopicBelongingTechnicalWorkflow:
     def _workflow_status(self, handle: EpisodeHandle) -> str | None:
         data = self._read_episode_file(handle, "workflow_state.json")
         return data.get("status")
+
+    def _persisted_mission_bindings(self, handle: EpisodeHandle) -> tuple[Any, Any, Any]:
+        try:
+            state = self._read_episode_file(handle, "episode_state.json")
+            index = json.loads(handle.index_path.read_text(encoding="utf-8"))
+            entry = next(item for item in index.get("episodes", []) if item.get("ep_id") == handle.episode_id)
+            lineage_path = handle.folder / "topic_belonging_lineage.json"
+            lineage = json.loads(lineage_path.read_text(encoding="utf-8")) if lineage_path.is_file() else {}
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, StopIteration, AttributeError) as exc:
+            raise TopicBelongingExecutionError(
+                f"PERSISTED_VERTICAL_INTEGRITY_INVALID:MISSION_BINDING_READ:{exc}"
+            ) from exc
+        return state.get("mission_id"), entry.get("mission_id"), lineage.get("mission_id")
+
+    def _validate_persisted_origin_binding(self, handle: EpisodeHandle) -> None:
+        try:
+            origin = self._read_episode_file(handle, "episode_origin.json")
+            state = self._read_episode_file(handle, "episode_state.json")
+            index = json.loads(handle.index_path.read_text(encoding="utf-8"))
+            entry = next(item for item in index.get("episodes", []) if item.get("ep_id") == handle.episode_id)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, StopIteration, AttributeError) as exc:
+            raise TopicBelongingExecutionError(
+                f"PERSISTED_VERTICAL_INTEGRITY_INVALID:ORIGIN_READ:{exc}"
+            ) from exc
+        if not isinstance(origin, dict) or set(origin) != EPISODE_ORIGIN_FIELDS:
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:EPISODE_ORIGIN_SCHEMA_INVALID"
+            )
+        state_anchor = {
+            key: value
+            for key, value in state.items()
+            if key not in {"status", "updated_at", "administrative_closure_ref"}
+        }
+        index_anchor = {
+            key: value
+            for key, value in entry.items()
+            if key not in {"estado", "application_status", "cerrado", "administrative_closure_ref", "administrative_closure"}
+        }
+        origin_payload = {
+            "episode_id": origin.get("episode_id"),
+            "origin": origin.get("origin"),
+            "state_anchor_sha256": origin.get("state_anchor_sha256"),
+            "index_anchor_sha256": origin.get("index_anchor_sha256"),
+        }
+        valid = (
+            origin.get("episode_id") == handle.episode_id
+            and origin.get("state_anchor_sha256") == hashlib.sha256(
+                json.dumps(state_anchor, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+            and origin.get("index_anchor_sha256") == hashlib.sha256(
+                json.dumps(index_anchor, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+            and origin.get("origin_checksum") == hashlib.sha256(
+                json.dumps(origin_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+        )
+        if not valid:
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:EPISODE_ORIGIN_BINDING_INVALID"
+            )
+        if not isinstance(origin.get("origin"), str) or origin.get("origin") not in {"LEGACY_M1", "MODERN_M1"}:
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:EPISODE_ORIGIN_KIND_INVALID"
+            )
+        legacy_storage = (
+            state.get("status") == "LEGACY_TECHNICAL_INITIALIZATION"
+            and state.get("provenance", {}).get("source") == "LEGACY_SCRIPT"
+            and entry.get("input_origin") == "LEGACY_SCRIPT_TECHNICAL"
+            and entry.get("application_status") == "LEGACY_TECHNICAL_INITIALIZATION"
+        )
+        if state.get("status") != entry.get("application_status"):
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:EPISODE_ORIGIN_STORAGE_STATUS_MISMATCH"
+            )
+        if origin.get("origin") == "LEGACY_M1" and not legacy_storage:
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:LEGACY_ORIGIN_STORAGE_BINDING_INVALID"
+            )
+        if origin.get("origin") == "MODERN_M1" and legacy_storage:
+            raise TopicBelongingExecutionError(
+                "PERSISTED_VERTICAL_INTEGRITY_INVALID:MODERN_ORIGIN_STORAGE_BINDING_INVALID"
+            )
 
     def _validate_persisted_vertical(self, handle: EpisodeHandle) -> dict[str, dict[str, Any]]:
         """Validate every persisted M1 binding before recovering the technical stop.
@@ -630,6 +833,68 @@ class TopicBelongingTechnicalWorkflow:
         gate = persisted["05_topic_belonging_gate.json"]
         lineage = persisted["topic_belonging_lineage.json"]
         execution_payload = persisted["topic_belonging_execution.json"]
+        episode_state = self._read_episode_file(handle, "episode_state.json")
+        try:
+            index_data = json.loads(handle.index_path.read_text(encoding="utf-8"))
+            index_entry = next(
+                item for item in index_data.get("episodes", []) if item.get("ep_id") == handle.episode_id
+            )
+            index_mission_id = index_entry.get("mission_id")
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, StopIteration, AttributeError) as exc:
+            raise TopicBelongingExecutionError(
+                f"PERSISTED_VERTICAL_INTEGRITY_INVALID:INDEX_READ:{exc}"
+            ) from exc
+        origin_path = handle.folder / "episode_origin.json"
+        try:
+            origin = self._read_episode_file(handle, "episode_origin.json") if origin_path.is_file() else {}
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            raise TopicBelongingExecutionError(
+                f"PERSISTED_VERTICAL_INTEGRITY_INVALID:ORIGIN_READ:{exc}"
+            ) from exc
+        if not isinstance(origin, dict):
+            violations.append("EPISODE_ORIGIN_SCHEMA_INVALID")
+            origin = {}
+        elif set(origin) != EPISODE_ORIGIN_FIELDS:
+            violations.append("EPISODE_ORIGIN_SCHEMA_INVALID")
+        state_anchor = {
+            key: value
+            for key, value in episode_state.items()
+            if key not in {"status", "updated_at", "administrative_closure_ref"}
+        }
+        index_anchor = {
+            key: value
+            for key, value in index_entry.items()
+            if key not in {"estado", "application_status", "cerrado", "administrative_closure_ref", "administrative_closure"}
+        }
+        origin_payload = {
+            "episode_id": origin.get("episode_id"),
+            "origin": origin.get("origin"),
+            "state_anchor_sha256": origin.get("state_anchor_sha256"),
+            "index_anchor_sha256": origin.get("index_anchor_sha256"),
+        }
+        expected_origin_checksum = hashlib.sha256(
+            json.dumps(origin_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        origin_valid = (
+            bool(origin)
+            and origin.get("episode_id") == handle.episode_id
+            and origin.get("state_anchor_sha256") == hashlib.sha256(
+                json.dumps(state_anchor, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+            and origin.get("index_anchor_sha256") == hashlib.sha256(
+                json.dumps(index_anchor, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+            and origin.get("origin_checksum") == expected_origin_checksum
+        )
+        origin_kind = origin.get("origin") if origin_valid else None
+        legacy_storage = (
+            episode_state.get("status") == "LEGACY_TECHNICAL_INITIALIZATION"
+            and episode_state.get("provenance", {}).get("source") == "LEGACY_SCRIPT"
+            and index_entry.get("input_origin") == "LEGACY_SCRIPT_TECHNICAL"
+            and index_entry.get("application_status") == "LEGACY_TECHNICAL_INITIALIZATION"
+            and origin_kind == "LEGACY_M1"
+        )
+        legacy_vertical = lineage.get("mission_id") == LEGACY_M1_LINEAGE_ID and legacy_storage
 
         violations.extend(
             f"HANDOFF_SCHEMA_INVALID: {violation}"
@@ -658,7 +923,6 @@ class TopicBelongingTechnicalWorkflow:
             violations.append("GATE_BINDING_INVALID")
 
         expected_lineage = {
-            "mission_id": MISSION_ID,
             "episode_id": handle.episode_id,
             "human_input_ref": f"episode:{handle.episode_id}/00_human_input.json",
             "handoff_ref": f"episode:{handle.episode_id}/01_editorial_intake_handoff.json",
@@ -677,6 +941,36 @@ class TopicBelongingTechnicalWorkflow:
             "reviewer_actor_id": decision.get("reviewer_actor_id"),
             "stop_after": "TOPIC_BELONGING_GATE",
         }
+        lineage_mission_id = lineage.get("mission_id")
+        state_mission_id = episode_state.get("mission_id")
+        if not origin:
+            violations.append("EPISODE_ORIGIN_BINDING_MISSING")
+        elif not origin_valid:
+            violations.append("EPISODE_ORIGIN_BINDING_INVALID")
+        elif origin_kind not in {"LEGACY_M1", "MODERN_M1"}:
+            violations.append("EPISODE_ORIGIN_KIND_INVALID")
+        elif legacy_vertical and origin_kind != "LEGACY_M1":
+            violations.append("LEGACY_LINEAGE_HAS_MODERN_ORIGIN")
+        elif not legacy_vertical and origin_kind != "MODERN_M1":
+            violations.append("MODERN_LINEAGE_HAS_LEGACY_ORIGIN")
+        if origin_kind == "MODERN_M1" and lineage_mission_id == LEGACY_M1_LINEAGE_ID:
+            violations.append("LEGACY_LINEAGE_HAS_MODERN_ORIGIN")
+        if lineage_mission_id == LEGACY_M1_LINEAGE_ID and not legacy_storage:
+            violations.append("LEGACY_LINEAGE_STORAGE_BINDING_INVALID")
+        if legacy_vertical:
+            if state_mission_id or index_mission_id:
+                violations.append("LEGACY_LINEAGE_HAS_MODERN_MISSION_BINDING")
+        else:
+            for label, value in (
+                ("STATE", state_mission_id),
+                ("INDEX", index_mission_id),
+                ("LINEAGE", lineage_mission_id),
+            ):
+                if not isinstance(value, str) or not value.strip():
+                    violations.append(f"MODERN_MISSION_BINDING_MISSING:{label}")
+            modern_ids = {value for value in (state_mission_id, index_mission_id, lineage_mission_id) if isinstance(value, str) and value.strip()}
+            if len(modern_ids) > 1:
+                violations.append("MODERN_MISSION_BINDING_MISMATCH")
         for key, expected in expected_lineage.items():
             if lineage.get(key) != expected:
                 violations.append(f"LINEAGE_{key.upper()}_MISMATCH")
@@ -748,6 +1042,47 @@ class TopicBelongingTechnicalWorkflow:
             )
             for stage in expected_stages
         }
+        expected_prompt_bindings: dict[str, dict[str, str]] = {}
+        try:
+            active_profile = self.profile_loader()
+            prompt_inputs = {
+                "ENRICHMENT": {
+                    "TopicBelongingInput": {"human_input": human_input, "handoff": handoff},
+                    "active_editorial_profile": active_profile,
+                    "initial_evidence": handoff.get("evidence_refs", []),
+                },
+                "PRODUCER": {
+                    "TopicBelongingInput": topic_input,
+                    "active_editorial_profile": active_profile,
+                    "initial_evidence": topic_input.get("initial_evidence", []),
+                },
+                "REVIEWER": {
+                    "TopicBelongingInput": topic_input,
+                    "TopicBelongingAssessment": assessment,
+                    "active_editorial_profile": active_profile,
+                },
+            }
+            prompt_schemas = {
+                "ENRICHMENT": "topic_belonging_input",
+                "PRODUCER": "topic_belonging_assessment",
+                "REVIEWER": "topic_belonging_decision",
+            }
+            for stage, schema_name in prompt_schemas.items():
+                role = PRODUCER_ROLE if stage != "REVIEWER" else REVIEWER_ROLE
+                contract = resolve_role_execution_contract(
+                    role,
+                    schema_name,
+                    prompt_inputs[stage],
+                    {"episode_id": handle.episode_id, "stage": stage, "mission_id": lineage_mission_id},
+                )
+                expected_prompt_bindings[stage] = {
+                    "prompt_id": contract["prompt_id"],
+                    "prompt_version": contract["prompt_version"],
+                    "prompt_checksum": contract["prompt_checksum"],
+                    "prompt_input_checksum": contract["input_checksum"],
+                }
+        except (RoleExecutionContractError, OSError, ValueError) as exc:
+            violations.append(f"PROMPT_PROVENANCE_EXPECTATION_INVALID:{exc}")
         for execution in executions:
             if not isinstance(execution, dict):
                 violations.append("EXECUTION_RECORD_NOT_OBJECT")
@@ -771,6 +1106,10 @@ class TopicBelongingTechnicalWorkflow:
             }.items():
                 if execution.get(key) != expected_value:
                     violations.append(f"EXECUTION_{stage}_{key.upper()}_INCOMPATIBLE")
+            if not legacy_vertical:
+                for key, expected_value in expected_prompt_bindings.get(stage, {}).items():
+                    if execution.get(key) != expected_value:
+                        violations.append(f"EXECUTION_{stage}_{key.upper()}_MISMATCH")
             if execution.get("status") != ExecutionStatus.SUCCEEDED.value:
                 violations.append(f"EXECUTION_{stage}_STATUS_INVALID")
             for checksum_key in ("input_manifest_checksum", "output_checksum", "artifact_checksum"):
@@ -847,6 +1186,10 @@ class TopicBelongingTechnicalWorkflow:
             "execution_mode": result.usage.get("execution_mode", "SYNTHETIC" if result.provider == "mock" else "REAL"),
             "execution_route": result.usage.get("execution_route"),
             "execution_profile": result.usage.get("execution_profile"),
+            "prompt_id": result.usage.get("prompt_id"),
+            "prompt_version": result.usage.get("prompt_version"),
+            "prompt_checksum": result.usage.get("prompt_checksum"),
+            "prompt_input_checksum": result.usage.get("prompt_input_checksum"),
         }
 
     def resume(self, handle: EpisodeHandle, human_input: HumanInput, handoff: dict[str, Any], decision: Any, request: Any) -> dict[str, Any]:

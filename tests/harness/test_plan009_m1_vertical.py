@@ -46,6 +46,8 @@ def _mission_authorization(
     *,
     execution_interface: str = "TOPIC_BELONGING_TEST",
     single_use: bool = False,
+    mission_id: str | None = None,
+    live_state_path: str = "plans/001_CONTROL_OPERATIVO.md",
 ) -> str:
     directory = ROOT / ".runtime-tmp" / f"plan009-m1-{tmp_path.name}"
     directory.mkdir(parents=True, exist_ok=True)
@@ -54,9 +56,15 @@ def _mission_authorization(
     control = ROOT / "plans/001_CONTROL_OPERATIVO.md"
     material_registry = json.loads((ROOT / "docs/legacy/material_decision_registry.json").read_text(encoding="utf-8"))
     material = next(item for item in material_registry["decisions"] if item["decision_id"] == "MD-CI-001")
-    state_sha = _sha(control)
+    live_state = ROOT / live_state_path
+    state_sha = _sha(live_state)
+    current_mission = next(
+        line.split(":", 1)[1].strip()
+        for line in live_state.read_text(encoding="utf-8").splitlines()
+        if line.startswith("CURRENT_MISSION:")
+    )
     scope = {
-        "mission_id": "PLAN010_M1_TOPIC_BELONGING_INTEGRATION_CLOSURE",
+        "mission_id": mission_id or current_mission,
         "capability_ids": ["TOPIC_BELONGING_ASSESSMENT"],
         "role_ids": ["CHANNEL_INTELLIGENCE_PRODUCER", "CHANNEL_INTELLIGENCE_REVIEWER"],
         "execution_profile_ids": ["ollama_local"],
@@ -87,7 +95,7 @@ def _mission_authorization(
         "mission_id": scope["mission_id"],
         "authorization": {
             **scope,
-            "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+            "live_state_path": live_state_path,
             "authority_ref": authority_ref,
             "authority_sha256": _sha(authority_path),
             "authorized_scope_sha256": scope_checksum(scope),
@@ -187,7 +195,14 @@ def _decision(assessment: dict, run_id: str | None = None) -> dict:
     return data
 
 
-def _service(tmp_path: Path, mission_auth: str, outputs: dict[str, dict], *, channel: str = "CHANNEL") -> EpisodeApplicationService:
+def _service(
+    tmp_path: Path,
+    mission_auth: str,
+    outputs: dict[str, dict],
+    *,
+    channel: str = "CHANNEL",
+    operational_authority_path: str | None = None,
+) -> EpisodeApplicationService:
     tmp_path.mkdir(parents=True, exist_ok=True)
     store = VaultEpisodeStore(tmp_path / "vault", channel)
     boundary = ExecutionCognitiveBoundary(
@@ -196,6 +211,7 @@ def _service(tmp_path: Path, mission_auth: str, outputs: dict[str, dict], *, cha
         execution_mode="SYNTHETIC_TEST",
         execution_interface="TOPIC_BELONGING_TEST",
         mock_outputs=outputs,
+        operational_authority_path=operational_authority_path,
     )
     return EpisodeApplicationService(
         store,
@@ -448,7 +464,7 @@ def test_m1_real_provider_mode_is_blocked_before_episode_creation(tmp_path: Path
         execution_mode="REAL",
     )
     workflow = TopicBelongingTechnicalWorkflow(store, boundary=boundary)
-    with pytest.raises(PermissionError, match="M1_PROVIDER_REAL_NOT_AUTHORIZED"):
+    with pytest.raises(PermissionError, match="REAL_PROVIDER_NOT_AUTHORIZED"):
         EpisodeApplicationService(store, workflow=workflow).start(
             HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
         )

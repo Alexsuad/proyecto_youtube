@@ -226,11 +226,11 @@ def test_active_execution_stays_fail_closed_against_live_state_b(tmp_path):
     (repo / "plans").mkdir(parents=True)
     (repo / "config").mkdir()
     state = repo / "plans/001_CONTROL_OPERATIVO.md"
-    state.write_text("state version A", encoding="utf-8")
+    state.write_text("CURRENT_MISSION: T1_TEST\n", encoding="utf-8")
     # Authorization frozen against live state A.
-    auth = _auth(repo, live_sha=hashlib.sha256(b"state version A").hexdigest())
+    auth = _auth(repo, live_sha=hashlib.sha256(b"CURRENT_MISSION: T1_TEST\n").hexdigest())
     # Live state changes to B by an administrative action after completion.
-    state.write_text("state version B", encoding="utf-8")
+    state.write_text("CURRENT_MISSION: CHANGED\n", encoding="utf-8")
     # Active execution must still be blocked (fail-closed).
     with pytest.raises(MissionAuthorizationError):
         verify_active_execution_fail_closed(
@@ -249,7 +249,7 @@ def test_active_execution_succeeds_when_live_state_matches():
     (repo / "plans").mkdir(parents=True)
     (repo / "config").mkdir()
     state = repo / "plans/001_CONTROL_OPERATIVO.md"
-    state_bytes = b"state version A"
+    state_bytes = b"CURRENT_MISSION: T1_TEST\n"
     state.write_bytes(state_bytes)
     live_sha = hashlib.sha256(state_bytes).hexdigest()
     auth = _auth(repo, live_sha=live_sha)

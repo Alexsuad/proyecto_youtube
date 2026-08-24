@@ -149,6 +149,24 @@ def _resume(args: argparse.Namespace) -> int:
     return 0
 
 
+def _administrative_close(args: argparse.Namespace) -> int:
+    try:
+        closure = _service(args.config).administratively_close_irrecoverable_episode(
+            args.episodio,
+            reason=args.motivo,
+            actor=args.actor,
+            source=args.source,
+        )
+    except (StorageError, PermissionError, ValueError) as exc:
+        print(f"ERROR: {exc}")
+        return 2
+    print(f"Recovery administrativo registrado: {args.episodio}")
+    print(f"Base: {closure['irrecoverability']['basis']}")
+    print(f"Actor: {closure['actor']}")
+    print("No se borraron artifacts ni se declaró cierre editorial.")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="proyecto-youtube", description="Operar un episodio sin conocer los contratos internos.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -169,6 +187,20 @@ def build_parser() -> argparse.ArgumentParser:
     resume.add_argument("--mission-authorization", help=argparse.SUPPRESS)
     resume.add_argument("--synthetic-outputs", help=argparse.SUPPRESS)
     resume.set_defaults(handler=_resume)
+    administrative_close = subparsers.add_parser(
+        "cerrar-administrativamente",
+        help="Liberar un episodio técnicamente irrecuperable sin borrar evidencia",
+    )
+    administrative_close.add_argument("episodio")
+    administrative_close.add_argument("--motivo", required=True)
+    administrative_close.add_argument("--actor", required=True)
+    administrative_close.add_argument(
+        "--source",
+        default="APPLICATION_ADMINISTRATIVE_RECOVERY",
+        help=argparse.SUPPRESS,
+    )
+    administrative_close.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    administrative_close.set_defaults(handler=_administrative_close)
     return parser
 
 

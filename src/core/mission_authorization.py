@@ -234,6 +234,21 @@ class MissionAuthorization:
             authority_data = json.loads(authority.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authority artifact") from exc
+        try:
+            state_text = state.read_text(encoding="utf-8")
+            current_mission = next(
+                line.split(":", 1)[1].strip().strip('"')
+                for line in state_text.splitlines()
+                if line.startswith("CURRENT_MISSION:")
+            )
+        except (OSError, UnicodeDecodeError, StopIteration):
+            current_mission = None
+            state_text = ""
+        operational_authority = "## 1. Estado canónico" in state_text
+        if operational_authority and current_mission is None:
+            raise MissionAuthorizationError("MISSION_STALE_AGAINST_LIVE_STATE: CURRENT_MISSION missing")
+        if operational_authority and current_mission != self.mission_id:
+            raise MissionAuthorizationError("MISSION_STALE_AGAINST_LIVE_STATE: mission_id does not match CURRENT_MISSION")
         if authority_data.get("mission_id") != self.mission_id:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authority mission binding")
         if authority_data.get("authorized_scope_sha256") != self.authorized_scope_sha256:
@@ -257,6 +272,7 @@ class MissionAuthorization:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: execution profile scope")
         if execution_interface and self.execution_interface not in {"ANY", execution_interface}:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: execution interface")
+        self.verify_current_mission(repository_root)
         if operation not in self.allowed_operations:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: operation scope")
         if path and self.allowed_paths and not any(path == allowed or path.startswith(allowed.rstrip("/") + "/") for allowed in self.allowed_paths):
@@ -265,6 +281,23 @@ class MissionAuthorization:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: routing scope")
         if execution_mode and self.execution_mode not in {"ANY", execution_mode}:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: execution mode")
+
+    def verify_current_mission(self, root: str | Path) -> None:
+        """Require every hashed state artifact to expose the matching current mission."""
+        repository_root = Path(root).resolve()
+        state = (repository_root / self.live_state_path).resolve()
+        try:
+            state.relative_to(repository_root)
+            state_text = state.read_text(encoding="utf-8")
+            current_mission = next(
+                line.split(":", 1)[1].strip().strip('"')
+                for line in state_text.splitlines()
+                if line.startswith("CURRENT_MISSION:")
+            )
+        except (OSError, UnicodeDecodeError, ValueError, StopIteration) as exc:
+            raise MissionAuthorizationError("MISSION_STALE_AGAINST_LIVE_STATE: CURRENT_MISSION missing") from exc
+        if current_mission != self.mission_id:
+            raise MissionAuthorizationError("MISSION_STALE_AGAINST_LIVE_STATE: mission_id does not match CURRENT_MISSION")
 
 
 def load_mission_authorization(path: str | Path) -> MissionAuthorization:
