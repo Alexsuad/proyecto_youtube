@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -6,7 +6,10 @@ from pathlib import Path
 import pytest
 
 from src.ai.runtime_profiles import AgentRuntimePort, MANAGED_BY_EXECUTOR, UNAVAILABLE, UNAVAILABLE_FROM_EXECUTOR, inventory_executor, load_execution_profiles, resolve_run_configuration
+from src.ai.providers.agent_executor import AgentExecutorProvider
+from src.ai.role_execution import build_model_prompt, resolve_role_execution_contract
 from src.core.contract_validation import validate_against_schema
+from src.core.prompt_resolver import resolve_prompt
 
 ROOT = Path(__file__).parents[2]
 
@@ -20,6 +23,50 @@ def test_hybrid_profile_contract_declares_owner_authority_and_extensible_profile
     assert policy["per_run_override_required"] is True
     assert policy["defaults_are_non_binding"] is True
     assert set(data["execution_profiles"]) >= {"ollama_local", "deepseek_chat", "codex_current", "opencode_free", "antigravity_current"}
+
+
+def test_editorial_roles_traverse_canonical_profile_and_prompt_route() -> None:
+    profiles = load_execution_profiles(ROOT / "config/agent_execution_profiles.json")
+    registry = json.loads((ROOT / "config/agent_prompt_registry.json").read_text(encoding="utf-8"))
+    roles = ("RESEARCH_AND_CURATION", "NARRATIVE_ARCHITECTURE", "WRITING", "EDITOR")
+    registered = {entry["role_id"]: entry for entry in registry["prompts"]}
+    for role_id in roles:
+        prompt_entry = registered[role_id]
+        assert prompt_entry["status"] == "ACTIVE"
+        route = resolve_run_configuration(
+            {
+                "role_id": role_id,
+                "execution_route": "local_model",
+                "execution_profile": "ollama_local",
+                "executor_override": None,
+                "provider_override": None,
+                "model_override": "owner-selected-free-model",
+                "timeout_seconds": 30,
+                "max_retries": 0,
+                "temperature": None,
+                "max_tokens": None,
+                "budget_limit": None,
+                "paid_cost_approved": False,
+            },
+            profiles=profiles,
+            environ={},
+        )
+        assert route.execution_profile == "ollama_local"
+        resolved_prompt = resolve_prompt(role_id)
+        assert resolved_prompt["prompt_id"] == prompt_entry["prompt_id"]
+        contract = resolve_role_execution_contract(
+            role_id,
+            "execution_smoke_report",
+            {},
+            {
+                "role_id": role_id,
+                "execution_profile": route.execution_profile,
+                "execution_route": route.execution_route,
+            },
+        )
+        model_prompt = build_model_prompt(contract)
+        assert model_prompt.strip()
+        assert prompt_entry["prompt_id"] in model_prompt
 
 
 def test_resolution_priority_is_per_run_then_profile_then_role_then_global() -> None:
@@ -203,6 +250,99 @@ def test_agent_harness_route_uses_managed_provider_identity(monkeypatch: pytest.
     assert resolved.status == "READY"
     assert resolved.provider == MANAGED_BY_EXECUTOR
     assert resolved.model == UNAVAILABLE_FROM_EXECUTOR
+
+
+def test_opencode_profile_requires_owner_model_selection(monkeypatch: pytest.MonkeyPatch) -> None:
+    profiles = load_execution_profiles(ROOT / "config/agent_execution_profiles.json")
+    monkeypatch.setattr("src.ai.runtime_profiles.shutil.which", lambda command: f"C:/tools/{command}")
+    base = {
+        "role_id": "SCRIPT_PRODUCT_PRODUCER",
+        "execution_route": "agent_harness",
+        "execution_profile": "opencode_free",
+        "executor_override": "opencode",
+        "provider_override": None,
+        "timeout_seconds": 180,
+        "max_retries": 1,
+        "temperature": None,
+        "max_tokens": None,
+        "budget_limit": None,
+        "paid_cost_approved": False,
+    }
+    blocked = resolve_run_configuration({**base, "model_override": None}, profiles=profiles, environ={})
+    assert blocked.status == "MODEL_UNAVAILABLE"
+    selected = resolve_run_configuration({**base, "model_override": "owner-selected-free-model"}, profiles=profiles, environ={})
+    assert selected.status == "READY"
+    assert selected.provider == MANAGED_BY_EXECUTOR
+    assert selected.model == "owner-selected-free-model"
+
+
+@pytest.mark.parametrize("profile_id, executor_id, model", [
+    ("codex_current", "codex_cli", None),
+    ("opencode_free", "opencode", "owner-selected-free-model"),
+])
+def test_reasoning_effort_is_fail_closed_when_executor_does_not_declare_support(
+    monkeypatch: pytest.MonkeyPatch, profile_id: str, executor_id: str, model: str | None
+) -> None:
+    profiles = load_execution_profiles(ROOT / "config/agent_execution_profiles.json")
+    monkeypatch.setattr("src.ai.runtime_profiles.shutil.which", lambda command: f"C:/tools/{command}")
+    with pytest.raises(ValueError, match="reasoning_effort no soportado"):
+        resolve_run_configuration({
+            "role_id": "SCRIPT_PRODUCT_PRODUCER",
+            "execution_route": "agent_harness",
+            "execution_profile": profile_id,
+            "executor_override": executor_id,
+            "provider_override": None,
+            "model_override": model,
+            "reasoning_effort": "high",
+            "timeout_seconds": 180,
+            "max_retries": 1,
+            "temperature": None,
+            "max_tokens": None,
+            "budget_limit": None,
+            "paid_cost_approved": False,
+        }, profiles=profiles, environ={})
+
+
+def test_reasoning_effort_is_transport_only_when_executor_declares_support(monkeypatch: pytest.MonkeyPatch) -> None:
+    profiles = load_execution_profiles(ROOT / "config/agent_execution_profiles.json")
+    profiles["executors"]["codex_cli"]["supports_reasoning_effort"] = True
+    profiles["execution_profiles"]["codex_current"]["supports_reasoning_effort"] = True
+    monkeypatch.setattr("src.ai.runtime_profiles.shutil.which", lambda command: f"C:/tools/{command}")
+    resolved = resolve_run_configuration({
+        "role_id": "SCRIPT_PRODUCT_PRODUCER",
+        "execution_route": "agent_harness",
+        "execution_profile": "codex_current",
+        "executor_override": "codex_cli",
+        "provider_override": None,
+        "model_override": None,
+        "reasoning_effort": "medium",
+        "timeout_seconds": 180,
+        "max_retries": 1,
+        "temperature": None,
+        "max_tokens": None,
+        "budget_limit": None,
+        "paid_cost_approved": False,
+    }, profiles=profiles, environ={})
+    assert resolved.reasoning_effort == "medium"
+    assert resolved.reasoning_effort_supported is True
+    assert resolved.as_run_configuration()["reasoning_effort"] == "medium"
+
+
+def test_agent_executor_real_mode_is_fail_closed_before_subprocess(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("src.ai.providers.agent_executor.shutil.which", lambda command: f"C:/tools/{command}")
+    monkeypatch.setattr("src.ai.providers.agent_executor.subprocess.run", lambda *args, **kwargs: pytest.fail("real agent subprocess must not run"))
+    request = type("Request", (), {
+        "config": {"smoke_test": False, "isolated_workdir": str(tmp_path)},
+        "executor": "codex_cli",
+        "timeout": 5,
+        "role": "SCRIPT_PRODUCT_PRODUCER",
+        "capability_id": "SCRIPT_PRODUCT_PRODUCER",
+        "execution_profile": "codex_current",
+        "execution_route": "agent_harness",
+        "model": None,
+    })()
+    with pytest.raises(PermissionError, match="AGENT_HARNESS_SMOKE_ONLY_UNTIL_R6_B_RETRY"):
+        AgentExecutorProvider().execute(request)
 
 
 def test_unknown_profile_route_provider_and_executor_are_rejected() -> None:

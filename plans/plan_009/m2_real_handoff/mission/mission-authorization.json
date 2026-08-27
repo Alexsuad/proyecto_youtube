@@ -1,0 +1,33 @@
+{
+  "mission_id": "R2_M2_P2_PLAN009_REAL_TOPIC_BELONGING",
+  "authorization": {
+    "allowed_operations": [
+      "EXECUTE_CAPABILITY"
+    ],
+    "allowed_paths": [],
+    "allowed_routes": [
+      "agent_harness"
+    ],
+    "authority_ref": "plans/plan_009/m2_real_handoff/mission/authority.json",
+    "authority_sha256": "a2c4dd05903426db1a4c8a452aa5d6f8247708caadd2464ebb6f154fa6ff1227",
+    "authorized_scope_sha256": "58d23f8342d8bb2d04848103cd14d892669ff11d9e597e589c7bf3f222217b9f",
+    "capability_ids": [
+      "TOPIC_BELONGING_ASSESSMENT"
+    ],
+    "contains_material_repair": false,
+    "execution_interface": "TOPIC_BELONGING_TERMINAL",
+    "execution_mode": "REAL",
+    "execution_profile_ids": [
+      "codex_current"
+    ],
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "3e48e8519240d2d5674f7dcf99a9f36c0132c2c959336e70c142c7ceb14602b6",
+    "repair_integrity_evidence_path": "NONE",
+    "role_ids": [
+      "CHANNEL_INTELLIGENCE_PRODUCER",
+      "CHANNEL_INTELLIGENCE_REVIEWER"
+    ],
+    "single_use": false
+  }
+}

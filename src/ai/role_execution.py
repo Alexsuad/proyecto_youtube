@@ -48,6 +48,11 @@ YOUTUBE_ADAPTATION_AUDITOR_REQUIRED_INPUTS = (
     "producer_run_reference",
     "active_editorial_profile_reference",
 )
+CHANNEL_INTELLIGENCE_ENRICHMENT_REQUIRED_INPUTS = (
+    "EditorialIntakeHandoff",
+    "active_editorial_profile",
+    "initial_evidence",
+)
 CHANNEL_INTELLIGENCE_PRODUCER_REQUIRED_INPUTS = (
     "TopicBelongingInput",
     "active_editorial_profile",
@@ -147,8 +152,20 @@ def _active_compiled_profile() -> dict[str, Any] | None:
     }
 
 
-def _validate_role_payload(role_id: str, input_payload: dict[str, Any], output_schema: str) -> None:
+def _validate_role_payload(
+    role_id: str,
+    input_payload: dict[str, Any],
+    output_schema: str,
+    runtime_values: dict[str, Any] | None = None,
+) -> None:
     required = ROLE_REQUIRED_INPUTS.get(role_id, ())
+    if role_id == "CHANNEL_INTELLIGENCE_PRODUCER":
+        stage = str((runtime_values or {}).get("stage") or "").upper()
+        required = (
+            CHANNEL_INTELLIGENCE_ENRICHMENT_REQUIRED_INPUTS
+            if stage == "ENRICHMENT" or output_schema == "topic_belonging_input"
+            else CHANNEL_INTELLIGENCE_PRODUCER_REQUIRED_INPUTS
+        )
     missing = [key for key in required if key not in input_payload]
     if missing:
         raise RoleExecutionContractError(
@@ -195,7 +212,7 @@ def _applicable_policies(prompt_contract: dict[str, Any]) -> list[dict[str, str]
 def resolve_role_execution_contract(role_id: str, output_schema: str, input_payload: Any, runtime_values: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(input_payload, dict):
         raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: input payload must be a JSON object")
-    _validate_role_payload(role_id, input_payload, output_schema)
+    _validate_role_payload(role_id, input_payload, output_schema, runtime_values)
     try:
         prompt_contract = resolve_prompt(role_id)
     except PromptResolutionError as exc:

@@ -16,6 +16,7 @@ from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus,
 from src.ai.execution import execute
 from src.ai.manifest import file_checksum, manifest_checksum
 from src.ai.role_execution import RoleExecutionContractError, build_model_prompt, resolve_role_execution_contract
+from src.ai.runtime_profiles import load_execution_profiles
 from src.application.contracts import HumanInput
 from src.application.storage import EpisodeHandle, StorageError, VaultEpisodeStore
 from src.application.authority import load_operational_authority
@@ -236,8 +237,11 @@ class ExecutionCognitiveBoundary:
     execution_mode: str = "REAL"
     execution_interface: str = "TOPIC_BELONGING_TERMINAL"
     mock_outputs: dict[str, dict[str, Any]] | None = None
-    execution_route: str = "local_model"
-    execution_profile: str = "ollama_local"
+    execution_route: str | None = None
+    execution_profile: str | None = None
+    model_override: str | None = None
+    reasoning_effort: str | None = None
+    paid_cost_approved: bool = False
     execution_registry_path: str | None = None
     operational_authority_path: str | None = None
     resolved_mission_id: str | None = field(default=None, init=False, repr=False)
@@ -245,15 +249,43 @@ class ExecutionCognitiveBoundary:
     def __post_init__(self) -> None:
         if self.mock_outputs is not None and self.execution_mode != "SYNTHETIC_TEST":
             raise PermissionError("MOCK_OUTPUTS_REQUIRE_SYNTHETIC_TEST_MODE")
+        if self.execution_mode == "SYNTHETIC_TEST" and self.execution_profile is None:
+            self.execution_profile = "ollama_local"
+        if self.execution_mode == "SYNTHETIC_TEST" and self.execution_route is None:
+            self.execution_route = "local_model"
+
+    def _resolve_profile_route(self) -> None:
+        """Bind the route declared by an explicitly selected profile only.
+
+        A profile is an owner selection, not a global/default provider.  The
+        route is a structural property of that selected profile and is needed
+        for MissionAuthorization scope checks before the shared runtime runs.
+        """
+        if not self.execution_profile:
+            return
+        profiles_path = self.repository_root / "config" / "agent_execution_profiles.json"
+        try:
+            profiles = load_execution_profiles(profiles_path)
+            profile = profiles.get("execution_profiles", {}).get(self.execution_profile)
+            profile_route = str(profile.get("execution_route") or "").strip() if isinstance(profile, dict) else ""
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise PermissionError("EXECUTION_PROFILES_UNAVAILABLE") from exc
+        if not profile_route:
+            raise PermissionError(f"EXECUTION_PROFILE_INVALID:{self.execution_profile}")
+        if self.execution_route is None:
+            self.execution_route = profile_route
 
     def preflight(self) -> str:
         if not self.mission_authorization_path:
             raise PermissionError("MISSION_AUTHORIZATION_REQUIRED:TOPIC_BELONGING_ASSESSMENT")
-        if self.execution_mode != "SYNTHETIC_TEST":
-            raise PermissionError("REAL_PROVIDER_NOT_AUTHORIZED: use SYNTHETIC_TEST only")
-        if self.mock_outputs is None or any(
-            stage not in self.mock_outputs or not isinstance(self.mock_outputs.get(stage), dict)
-            for stage in ("enrich", "produce", "review")
+        if self.execution_mode == "REAL" and not self.execution_profile:
+            raise PermissionError("REAL_EXECUTION_PROFILE_REQUIRED")
+        self._resolve_profile_route()
+        if self.execution_mode == "SYNTHETIC_TEST" and (
+            self.mock_outputs is None or any(
+                stage not in self.mock_outputs or not isinstance(self.mock_outputs.get(stage), dict)
+                for stage in ("enrich", "produce", "review")
+            )
         ):
             raise PermissionError("SYNTHETIC_MOCK_OUTPUTS_REQUIRED: real provider is not authorized")
         authority = load_operational_authority(self._operational_authority_path())
@@ -268,6 +300,8 @@ class ExecutionCognitiveBoundary:
             input_artifacts=[],
             output_schema="topic_belonging_input",
             execution_mode=self.execution_mode,
+            model=self.model_override,
+            reasoning_effort=self.reasoning_effort,
             execution_route=self.execution_route,
             execution_profile=self.execution_profile,
             output_artifact_kind="topic_belonging_input",
@@ -279,6 +313,8 @@ class ExecutionCognitiveBoundary:
                 "mission_authorization_path": self.mission_authorization_path,
                 "mission_operation": "EXECUTE_CAPABILITY",
                 "execution_interface": self.execution_interface,
+                "paid_cost_approved": self.paid_cost_approved,
+                "reasoning_effort": self.reasoning_effort,
                 "context_policy_path": "config/context_resolution_policy.json",
                 "context_references": self._context_references("enrich"),
                 "output_refs": ["topic_belonging_input:PREFLIGHT"],
@@ -370,7 +406,8 @@ class ExecutionCognitiveBoundary:
                 input_artifacts=input_artifacts,
                 output_schema=output_schema,
             execution_mode=self.execution_mode,
-            model="synthetic-structural-test" if self.execution_mode == "SYNTHETIC_TEST" else None,
+            model=("synthetic-structural-test" if self.execution_mode == "SYNTHETIC_TEST" else self.model_override),
+            reasoning_effort=self.reasoning_effort,
             provider="mock" if mock_output is not None else None,
                 mock_output=mock_output,
                 output_artifact_kind=output_kind,
@@ -389,6 +426,8 @@ class ExecutionCognitiveBoundary:
                     "execution_registry_path": self.execution_registry_path,
                     "mission_operation": "EXECUTE_CAPABILITY",
                     "execution_interface": self.execution_interface,
+                    "paid_cost_approved": self.paid_cost_approved,
+                    "reasoning_effort": self.reasoning_effort,
                     "context_policy_path": "config/context_resolution_policy.json",
                     "context_references": self._context_references(stage),
                     "input_refs": [f"{kind}:{item_id}" for kind, item_id, _, _ in inputs],
@@ -452,7 +491,7 @@ class ExecutionCognitiveBoundary:
             inputs=[("editorial_intake_handoff", handoff["source_interaction_id"], handoff, "")],
             mock_output=output,
             role_input_payload={
-                "TopicBelongingInput": {"human_input": human_input.to_dict(), "handoff": handoff},
+                "EditorialIntakeHandoff": handoff,
                 "active_editorial_profile": profile,
                 "initial_evidence": handoff.get("evidence_refs", []),
             },
@@ -1047,7 +1086,7 @@ class TopicBelongingTechnicalWorkflow:
             active_profile = self.profile_loader()
             prompt_inputs = {
                 "ENRICHMENT": {
-                    "TopicBelongingInput": {"human_input": human_input, "handoff": handoff},
+                    "EditorialIntakeHandoff": handoff,
                     "active_editorial_profile": active_profile,
                     "initial_evidence": handoff.get("evidence_refs", []),
                 },

@@ -54,8 +54,8 @@
       "prompt_id": "prompt_research_curation",
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
-      "objective": "Investigar, verificar y seleccionar fuentes y obras con evidencia rastreable.",
-      "authority": "Producir ResearchPack y CurationDecision. Determinar suficiencia de evidencia.",
+      "objective": "Investigar, verificar y seleccionar fuentes y obras con evidencia rastreable, sin convertir un marco especializado en explicación causal universal.",
+      "authority": "Producir ResearchPack y CurationDecision. Determinar suficiencia, alcance y límites de la evidencia.",
       "required_inputs": [
         "topic",
         "source_access",
@@ -94,7 +94,10 @@
       },
       "evidence_requirements": [
         "claims ledger con cada afirmacion referenciada",
-        "source access and evidence report"
+        "source access and evidence report",
+        "verificacion por claim de identidad de fuente, autor, titulo o documento, localizador reproducible y correspondencia entre contenido localizado y afirmacion; limitar o bloquear cuando no se sostenga",
+        "clasificacion explicita de evidencia, asociacion, analogia, interpretacion, hipotesis y causalidad demostrada",
+        "separacion entre evidencia narrativa y evidencia sobre realidad externa, con rivales, limites y restricciones materiales"
       ]
     },
     {
@@ -102,7 +105,7 @@
       "prompt_id": "prompt_narrative_architecture",
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
-      "objective": "Convertir investigacion curada en tesis, estructura narrativa y recorrido del espectador.",
+      "objective": "Convertir investigacion curada en una tesis situada, estructura narrativa y recorrido del espectador, preservando el alcance real de la evidencia.",
       "authority": "Producir NarrativePlan, ThesisArtifact, ViewerJourney. Decidir tipo de guion.",
       "required_inputs": [
         "research_pack",
@@ -140,7 +143,10 @@
       },
       "evidence_requirements": [
         "narrative plan versionado con bloques",
-        "thesis con reasoning de soporte"
+        "thesis con reasoning de soporte",
+        "rivales, supuestos, condiciones de revision y restricciones economicas, familiares, legales y materiales cuando apliquen",
+        "progression map donde cada bloque agrega, complica, contrasta, limita o transforma la comprension",
+        "funcion diferenciada de cada obra basada en escena, decision, tension y consecuencia"
       ]
     },
     {
@@ -148,7 +154,7 @@
       "prompt_id": "prompt_writing",
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
-      "objective": "Redactar el guion conforme al perfil editorial, plan narrativo y tesis aprobados.",
+      "objective": "Redactar el guion conforme al perfil editorial, plan narrativo y tesis aprobados, con razonamiento audible, concreto y progresivo.",
       "authority": "Producir ScriptDraft versionado. Aplicar memoria de bloques.",
       "required_inputs": [
         "narrative_plan",
@@ -186,7 +192,10 @@
       },
       "evidence_requirements": [
         "version manifest con checksum",
-        "script draft versionado"
+        "script draft versionado",
+        "desarrollo mediante escena o pasaje, tension, decision o accion, consecuencia e interpretacion",
+        "separacion de hechos, interpretaciones, hipotesis y causalidad; sin borrar restricciones ni alternativas",
+        "voz variada y oral, sin relleno, aforismos repetitivos ni patrones genericos"
       ]
     },
     {
@@ -194,7 +203,7 @@
       "prompt_id": "prompt_editor",
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
-      "objective": "Editar el guion: desarrollo, linea, oralidad y read-aloud review. Documentar todas las correcciones.",
+      "objective": "Editar el guion: desarrollo, linea, oralidad y read-aloud review; comprobar que el argumento y la voz sean concretos, variados y ganados. Documentar todas las correcciones.",
       "authority": "Modificar el guion. Producir EditorialEditReport con diff y categoria de cambio.",
       "required_inputs": [
         "script_draft",
@@ -231,7 +240,9 @@
       },
       "evidence_requirements": [
         "EditorialEditReport con input_version, output_version, edit_type y changes_by_category",
-        "diff del antes y despues"
+        "diff del antes y despues",
+        "revision de progresion, escenas, decisiones, tensiones, consecuencias, alcance factual y explicaciones rivales",
+        "eliminacion de relleno y patrones sentenciosos o simetricos sin perder razonamiento ni identidad de voz"
       ]
     },
     {
@@ -526,10 +537,10 @@
       "prompt_id": "prompt_channel_intelligence_producer",
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
-      "objective": "Preparar una evaluación cerrada de pertenencia temática contra el perfil activo exacto.",
-      "authority": "Puede producir TopicBelongingAssessment. No puede aprobar, activar perfiles ni decidir por el propietario.",
+      "objective": "En ENRICHMENT, convertir el EditorialIntakeHandoff en un TopicBelongingInput contractual; en PRODUCER, preparar una evaluación cerrada de pertenencia temática contra el perfil activo exacto.",
+      "authority": "Puede enriquecer el input o producir TopicBelongingAssessment según el stage contractual. No puede aprobar, activar perfiles ni decidir por el propietario.",
       "required_inputs": [
-        "TopicBelongingInput",
+          "EditorialIntakeHandoff (ENRICHMENT) or TopicBelongingInput (PRODUCER)",
         "active_editorial_profile",
         "initial_evidence"
       ],
@@ -543,8 +554,8 @@
         "resolver el perfil compilado exacto",
         "cargar política funcional canónica",
         "evaluar puerta narrativa, tesis, territorio, identidad y promesa",
-        "registrar triggers estratégicos",
-        "emitir únicamente TopicBelongingAssessment"
+        "registrar triggers estratégicos cuando el stage sea ENRICHMENT",
+        "emitir TopicBelongingInput en ENRICHMENT o TopicBelongingAssessment en PRODUCER, según el output contract"
       ],
       "forbidden_actions": [
         "aprobar",
@@ -553,7 +564,7 @@
         "emitir TopicBelongingDecision"
       ],
       "required_outputs": [
-        "TopicBelongingAssessment"
+        "TopicBelongingInput o TopicBelongingAssessment según el stage"
       ],
       "blocking_conditions": [
         "perfil ausente",

@@ -104,6 +104,40 @@ def test_valid_mission_gets_pass_and_preserves_protected_untracked(tmp_path: Pat
     assert result.evidence["push_policy"]["push_allowed"] is False
 
 
+def test_non_repair_authorization_does_not_require_repair_evidence(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    contract = _contract(root, material_auth=True)
+    contract = replace(
+        contract,
+        contains_material_repair=False,
+        repair_integrity_evidence_path=None,
+    )
+    authorization = json.loads((root / contract.mission_authorization_path).read_text(encoding="utf-8"))
+    authorization["authorization"]["contains_material_repair"] = False
+    authorization["authorization"]["repair_integrity_evidence_path"] = "NONE"
+    scope = {
+        key: authorization.get(key, authorization["authorization"].get(key))
+        for key in (
+            "mission_id", "capability_ids", "role_ids", "execution_profile_ids",
+            "execution_interface", "allowed_operations", "allowed_paths",
+            "allowed_routes", "execution_mode", "live_state_sha256",
+            "contains_material_repair", "repair_integrity_evidence_path",
+        )
+    }
+    authorization["authorization"]["authorized_scope_sha256"] = scope_checksum(scope)
+    authority_path = root / authorization["authorization"]["authority_ref"]
+    authority = json.loads(authority_path.read_text(encoding="utf-8"))
+    authority["authorized_scope_sha256"] = authorization["authorization"]["authorized_scope_sha256"]
+    authority_path.write_text(json.dumps(authority) + "\n", encoding="utf-8")
+    authorization["authorization"]["authority_sha256"] = hashlib.sha256(authority_path.read_bytes()).hexdigest()
+    auth_path = root / contract.mission_authorization_path
+    auth_path.write_text(json.dumps(authorization) + "\n", encoding="utf-8")
+    contract = replace(contract, mission_authorization_sha256=hashlib.sha256(auth_path.read_bytes()).hexdigest())
+    result = run_mission_completion_gate(contract, root)
+    assert "REPAIR_COMPLETION_BLOCKED" not in result.violations
+    assert "REQUIRED_REFERENCE_UNRESOLVED" not in result.violations
+
+
 def test_material_repair_requires_an_evidence_path(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     with pytest.raises(MissionContractError, match="REPAIR_EVIDENCE_PATH_REQUIRED"):

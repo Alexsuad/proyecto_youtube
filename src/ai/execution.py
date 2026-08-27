@@ -14,7 +14,7 @@ from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus
 from src.ai.manifest import canonical_json, file_checksum, manifest_checksum as canonical_manifest_checksum
 from src.ai.providers import AgentExecutorProvider, AgentHandoffProvider, DeepSeekProvider, MockProvider, OllamaProvider, OpenAICompatibleProvider
 from src.ai.router import KNOWN_PROVIDERS, resolve_provider
-from src.ai.runtime_profiles import AgentRuntimePort, READY
+from src.ai.runtime_profiles import AgentRuntimePort, READY, _VERIFIED_ROUTE_TOKEN
 from src.core.contract_validation import load_schema, validate_against_schema
 from src.core.execution_preflight import preflight_controlled_execution
 from src.core.replay_protection import mark_mission_reservation
@@ -235,6 +235,7 @@ def _result(
     execution_profile = str(usage.get("execution_profile") or request.execution_profile or request.config.get("execution_profile") or "UNSPECIFIED_PROFILE")
     usage = {
         **usage,
+        **({"reasoning_effort": request.reasoning_effort} if request.reasoning_effort else {}),
         "provider_kind": _classify_provider_kind(provider, request, usage),
         "actual_executor": actual_executor,
         "actual_provider": actual_provider,
@@ -270,14 +271,16 @@ def _result(
     )
 
 
-def _bind_synthetic_runtime_fields(request: ExecutionRequest, output: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
-    """Bind required cognitive provenance fields to a runtime-generated ID.
+def _bind_runtime_fields(request: ExecutionRequest, output: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
+    """Bind cognitive provenance fields to the authoritative runtime ID.
 
-    A synthetic provider may omit runtime-owned IDs, but it cannot choose them.
-    Declared values are preserved so the application boundary can reject them
-    when they differ from the authoritative ``ExecutionResult.run_id``.
+    Synthetic providers may omit IDs, but declared values remain reviewable by
+    the application boundary. REAL provider output is bound to the runtime ID
+    so the provider cannot choose or forge execution lineage.
     """
-    if request.mock_output is None or request.execution_mode != "SYNTHETIC_TEST":
+    if request.execution_mode == "SYNTHETIC_TEST" and request.mock_output is None:
+        return output, None
+    if request.execution_mode not in {"SYNTHETIC_TEST", "REAL"}:
         return output, None
     run_key = {
         "topic_belonging_assessment": "producer_run_id",
@@ -290,11 +293,17 @@ def _bind_synthetic_runtime_fields(request: ExecutionRequest, output: dict[str, 
     provenance = bound.get("provenance")
     if not isinstance(provenance, dict):
         return bound, runtime_run_id
-    if not bound.get(run_key):
+    if request.execution_mode == "REAL":
         bound[run_key] = runtime_run_id
-    if not provenance.get("run_id"):
         provenance["run_id"] = runtime_run_id
+    else:
+        if not bound.get(run_key):
+            bound[run_key] = runtime_run_id
+        if not provenance.get("run_id"):
+            provenance["run_id"] = runtime_run_id
     return bound, runtime_run_id
+
+
 def validate_editorial_payload(payload: dict[str, Any], schema_name: str) -> list[str]:
     schema = load_schema(schema_name)
     required_exempt = EDITORIAL_RUNTIME_FIELDS | EDITORIAL_RUNTIME_NORMALIZED_FIELDS
@@ -332,6 +341,7 @@ def _normalized_run_configuration(request: ExecutionRequest) -> dict[str, Any] |
         "executor_override": request.config.get("executor_override"),
         "provider_override": request.config.get("provider_override"),
         "model_override": request.model,
+        "reasoning_effort": request.reasoning_effort or request.config.get("reasoning_effort"),
         "timeout_seconds": int(request.config.get("timeout_seconds") or request.timeout or 30),
         "max_retries": int(request.config.get("max_retries") or 0),
         "temperature": request.config.get("temperature"),
@@ -342,8 +352,16 @@ def _normalized_run_configuration(request: ExecutionRequest) -> dict[str, Any] |
 
 
 def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
-    request.provider = route.provider_adapter
+    # An explicitly requested canonical handoff remains handoff-only after
+    # profile resolution.  The selected profile is still resolved by
+    # AgentRuntimePort; this branch prevents the HANDOFF_ONLY route from being
+    # silently converted into the integrated AgentExecutorProvider.
+    request.resolved_route = route
+    request.resolved_route_token = _VERIFIED_ROUTE_TOKEN
+    handoff_requested = request.provider == "agent_handoff" or (request.execution_mode or "").lower() == "agent_handoff"
+    request.provider = "agent_handoff" if handoff_requested and route.route_type == "AGENT_HARNESS_RUNTIME" else route.provider_adapter
     request.model = route.model
+    request.reasoning_effort = route.reasoning_effort
     request.executor = route.executor
     request.timeout = float(route.timeout_seconds)
     request.execution_route = route.execution_route
@@ -361,6 +379,8 @@ def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
         "resolved_actual_executor": route.executor,
         "resolved_actual_provider": route.provider,
         "resolved_actual_model": route.model,
+        "reasoning_effort": route.reasoning_effort,
+        "reasoning_effort_supported": route.reasoning_effort_supported,
         "execution_profile": route.execution_profile,
         "execution_route": route.execution_route,
         "provider_label": route.provider_label,
@@ -372,6 +392,7 @@ def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
         "selected_model": route.model,
         "actual_provider": route.provider,
         "actual_model": route.model,
+        "runtime_route_resolved": True,
         "model_selection": route.model_selection,
         "executor_accepts_model_override": route.executor_accepts_model_override,
     }
@@ -519,11 +540,11 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
         status = ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER if availability.get("availability_status") in {"CREDENTIALS_MISSING", "MODEL_UNAVAILABLE", "PROVIDER_UNAVAILABLE", "TIMEOUT", "MODEL_INVOCATION_FAILED"} else (ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR if availability.get("availability_status") in {"BLOCKED_PENDING_OWNER_COST_AUTHORIZATION", "EXECUTOR_UNAVAILABLE", "AGENT_HARNESS_SMOKE_ONLY_UNTIL_R6_B_RETRY"} else ExecutionStatus.FAILED)
         return _result(request, provider_name, status, started, manifest, error=str(exc), usage=availability)
     output = editorial_only_payload(output or {}) if request.output_schema in EDITORIAL_ONLY_SCHEMAS else (output or {})
-    output, synthetic_runtime_run_id = _bind_synthetic_runtime_fields(request, output)
+    output, runtime_run_id = _bind_runtime_fields(request, output)
     violations = validate_editorial_payload(output, request.output_schema) if request.output_schema in EDITORIAL_ONLY_SCHEMAS else validate_against_schema(output, request.output_schema)
     if violations:
         return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, output=output, error="OUTPUT_CONTRACT_INVALID: " + "; ".join(violations), usage=usage)
-    return _result(request, provider_name, ExecutionStatus.SUCCEEDED, started, manifest, output=output, usage=usage, real=provider_name in REAL_EXTERNAL_PROVIDERS, run_id=synthetic_runtime_run_id)
+    return _result(request, provider_name, ExecutionStatus.SUCCEEDED, started, manifest, output=output, usage=usage, real=provider_name in REAL_EXTERNAL_PROVIDERS, run_id=runtime_run_id)
 
 
 def _execute_reduced_mission(request: ExecutionRequest, started: str, manifest: str, mission_contract: Any) -> ExecutionResult:

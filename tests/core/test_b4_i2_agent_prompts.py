@@ -290,6 +290,33 @@ def test_prompt_checksum_changes_when_exact_content_changes(tmp_path, monkeypatc
     assert first["prompt_checksum"] != second["prompt_checksum"]
 
 
+def test_editorial_quality_requirements_reach_effective_role_prompts(tmp_path):
+    """Protect the general editorial safeguards in the prompts actually resolved."""
+    runtime_path = _write_mock_runtime(tmp_path)
+    contracts = {
+        "RESEARCH_AND_CURATION": (
+            "actually supports the claim",
+            "demonstrated causality",
+        ),
+        "NARRATIVE_ARCHITECTURE": (
+            "rival explanations",
+            "progression map",
+        ),
+        "WRITING": (
+            "concrete scene or passage",
+            "varied, spoken syntax",
+        ),
+        "EDITOR": (
+            "merely illustrative works",
+            "symmetric generic contrasts",
+        ),
+    }
+    for role_id, markers in contracts.items():
+        resolved = resolve_execution(role_id, runtime_path)
+        prompt = resolved["prompt_content"].lower()
+        assert all(marker.lower() in prompt for marker in markers), role_id
+
+
 def test_resolve_execution_makes_no_external_calls(tmp_path, monkeypatch):
     def fail_socket(*args, **kwargs):
         raise AssertionError("No debe abrir sockets")

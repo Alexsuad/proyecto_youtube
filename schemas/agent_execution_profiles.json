@@ -93,6 +93,7 @@
           "command": {"type": "string"},
           "status": {"enum": ["READY", "HANDOFF_ONLY", "UNAVAILABLE"]},
           "accepts_model_override": {"type": "boolean"},
+          "supports_reasoning_effort": {"type": "boolean"},
           "managed_provider_identity": {"type": "string", "minLength": 1},
           "managed_model_identity": {"type": "string", "minLength": 1}
         }
@@ -118,6 +119,7 @@
           "default_model": {"type": ["string", "null"]},
           "model_env": {"type": ["string", "null"]},
           "model_selection": {"enum": ["USER_SELECTED", "USER_SELECTED_OR_EXECUTOR_MANAGED", "EXECUTOR_MANAGED"]},
+          "supports_reasoning_effort": {"type": "boolean"},
           "temperature": {"type": ["number", "null"]},
           "max_tokens": {"type": ["integer", "null"], "minimum": 1},
           "budget_limit": {"type": ["number", "integer", "null"], "minimum": 0},

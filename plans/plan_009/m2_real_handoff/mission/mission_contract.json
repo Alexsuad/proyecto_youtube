@@ -1,0 +1,159 @@
+{
+  "mission_id": "R2_M2_P2_PLAN009_REAL_TOPIC_BELONGING",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN009_M2_P2_REAL_HANDOFF_PREPARATION",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_009/",
+    "schemas/",
+    "src/ai/",
+    "src/application/",
+    "src/core/",
+    "src/cli.py",
+    "src/scripts/run_agent_role.py",
+    "tests/ai/",
+    "prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md",
+    "tests/harness/test_mission_completion_gate.py",
+    "tests/harness/test_plan009_m1_vertical.py",
+    "tests/integration/test_r1_m11_integration.py",
+    "config/"
+  ],
+  "protected_untracked_paths": [],
+  "protected_untracked_baseline": [],
+  "required_tests": [
+    {
+      "label": "PLAN009_M2_HANDOFF_PREPARATION_FOCUSED",
+      "command": [
+        "py",
+        "-3",
+        "-c",
+        "import json; from pathlib import Path; from src.application.storage import VaultEpisodeStore; from src.core.mission_authorization import load_mission_authorization; from src.core.contract_validation import validate_against_schema; a=load_mission_authorization('plans/plan_009/m2_real_handoff/mission/mission-authorization.json'); assert a.mission_id=='R2_M2_P2_PLAN009_REAL_TOPIC_BELONGING'; assert a.execution_profile_ids==('codex_current',); assert a.execution_mode=='REAL'; assert 'ANY' not in a.execution_profile_ids+a.allowed_routes; s=VaultEpisodeStore.from_settings(Path('config/local_settings.json')); f=Path(s.resume('ep_0002')['folder']); h=json.loads((f/'01_editorial_intake_handoff.json').read_text(encoding='utf-8')); assert validate_against_schema(h,'editorial_intake_handoff')==[]; print('P2_HANDOFF_PREP_FOCUSED_OK')"
+      ],
+      "timeout_seconds": 60
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "efea7896b7bcd9d6349f72de15d0e7c9fbe09794"
+  },
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/plan_009/m2_real_handoff/mission/mission-authorization.json",
+  "mission_authorization_sha256": "d42187378368b563a477d5dc978ae05c0d3d8eec1ccf0a17e20d79ae66847911",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "R2_M2_P2_PLAN009_REAL_TOPIC_BELONGING",
+      "PLAN_009_STATUS": "M2_P2_IN_PROGRESS",
+      "PLAN_009_OPERATIONAL_AUTHORITY": "OWNER_AUTHORIZED_R2_M2_P2",
+      "PLAN_009_PRODUCT_USE_AUTHORIZED": "NO"
+    },
+    "forbidden": {
+      "B5_I3_AUTHORIZED": [
+        "YES"
+      ],
+      "PLAN_010_P2": [
+        "AUTHORIZED"
+      ]
+    }
+  },
+  "schema_checks": [
+    {
+      "path": "plans/plan_009/m2_real_handoff/mission/mission_contract.json",
+      "schema": "mission_contract"
+    },
+    {
+      "path": "config/agent_execution_profiles.json",
+      "schema": "agent_execution_profiles"
+    },
+    {
+      "path": "plans/plan_009/m2_real_handoff/mission/run_configuration.json",
+      "schema": "run_configuration"
+    }
+  ],
+  "objective": "Recuperar ep_0002, preparar y ejecutar únicamente el ENRICHMENT canónico mediante agent_handoff, importar y validar TopicBelongingInput y detenerse antes de Producer.",
+  "preconditions": [
+    "CURRENT_MISSION matches the live control.",
+    "Owner selected execution_profile codex_current and model_override gpt-5.6-luna.",
+    "reasoning_effort is omitted because codex_current does not declare support.",
+    "REAL_COGNITIVE_EXECUTION is limited to the owner-selected ENRICHMENT handoff.",
+    "No API or local model execution is authorized."
+  ],
+  "canonical_inputs": [
+    "vault://MasAllaDelGuion/ep_0002/00_human_input.json",
+    "vault://MasAllaDelGuion/ep_0002/01_editorial_intake_handoff.json",
+    "schemas/topic_belonging_input.json",
+    "config/agent_execution_profiles.json",
+    "plans/001_CONTROL_OPERATIVO.md"
+  ],
+  "allowed_files": [
+    "plans/plan_009/m2_real_handoff/",
+    "plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "schemas/",
+    "src/ai/",
+    "src/application/",
+    "src/cli.py",
+    "src/scripts/run_agent_role.py",
+    "tests/ai/",
+    "tests/harness/test_plan009_m1_vertical.py",
+    "tests/integration/test_r1_m11_integration.py",
+    "config/"
+  ],
+  "non_objectives": [
+    "Generating synthetic or imported output",
+    "INTEGRATED_PROVIDER_EXECUTION",
+    "Executing Producer or Reviewer",
+    "API or local-model execution",
+    "Producer/reviewer run creation",
+    "P3.1, commit, push or AutoZIP"
+  ],
+  "expected_outputs": [
+    "Valid human input and editorial intake handoff bound to the supplied topic and question",
+    "Valid current MissionAuthorization for codex_current and agent_harness",
+    "Fresh completion gate evidence bound to current mission inputs",
+    "Imported and contractually valid TopicBelongingInput from the owner-selected ENRICHMENT handoff",
+    "Producer handoff remains blocked until separately authorized"
+  ],
+  "deterministic_validations": [
+    "MissionAuthorization loader and exact scope verification",
+    "MissionContract schema validation",
+    "Editorial intake handoff schema validation",
+    "Fresh MissionCompletionGate verification",
+    "AgentHandoffProvider package checksum and manifest validation",
+    "No ANY and no fallback route",
+    "Owner-selected model is transported without unsupported reasoning_effort",
+    "AgentHandoffProvider import_result checksum, manifest and output-contract validation",
+    "No API, local-model or integrated-executor fallback"
+  ],
+  "adversarial_cases": [
+    "CURRENT_MISSION mismatch",
+    "ANY profile or route widening",
+    "Forged material decision binding",
+    "Missing unresolved enrichment fields treated as a TopicBelongingInput",
+    "Corrupt or incompatible imported result",
+    "Synthetic output passed as real",
+    "Unsupported reasoning_effort reaches handoff preparation",
+    "Handoff preparation bypasses canonical runtime resolution",
+    "Fabricated ResolvedExecutionRoute without resolver evidence reaches handoff preparation"
+  ],
+  "stop_conditions": [
+    "Missing canonical contract or gate",
+    "Missing real topic_belonging_input for producer handoff",
+    "Owner model or unsupported reasoning is inferred",
+    "Any fallback to API, local model, mock or synthetic output",
+    "Authorization or provenance mismatch",
+    "Canonical vault_root is missing or unresolved",
+    "P3.1, commit or push requested implicitly"
+  ],
+  "review_policy": {
+    "required_review": "INDEPENDENT_REVIEW",
+    "independent_review": "REQUIRED",
+    "owner_review": true
+  },
+  "owner_closure": {
+    "required": false
+  }
+}

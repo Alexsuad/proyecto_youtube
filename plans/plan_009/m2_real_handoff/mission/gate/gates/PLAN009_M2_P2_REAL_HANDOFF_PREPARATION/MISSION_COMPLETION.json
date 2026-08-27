@@ -1,0 +1,329 @@
+{
+  "gate_id": "MISSION_COMPLETION",
+  "artifact_id": "PLAN009_M2_P2_REAL_HANDOFF_PREPARATION",
+  "artifact_version": "1.0.0",
+  "status": "PASS",
+  "summary": "Deterministic mission completion checks passed.",
+  "violations": [],
+  "warnings": [],
+  "evidence": {
+    "mission_id": "R2_M2_P2_PLAN009_REAL_TOPIC_BELONGING",
+    "binding": {
+      "binding_version": "1.0.0",
+      "gate_source": "run_mission_completion_gate",
+      "mission_contract_sha256": "4383fa86fa092fb940cdd56546171aba8ddc7405d798e4f59b3ba07086c742ae",
+      "git_head": "efea7896b7bcd9d6349f72de15d0e7c9fbe09794",
+      "git_status_sha256": "8cccb7283913d618553cae8b54026b7e780fabba5b1a5228e2138456e07f48e1",
+      "repo_root": "C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube-plan009"
+    },
+    "git": {
+      "status_lines": [
+        " M config/agent_prompt_registry.json",
+        " M plans/001_CONTROL_OPERATIVO.md",
+        " M plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md",
+        " M prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md",
+        " M schemas/agent_execution_profiles.json",
+        " M schemas/execution_provenance_registry.json",
+        " M schemas/run_configuration.json",
+        " M src/ai/contracts.py",
+        " M src/ai/execution.py",
+        " M src/ai/providers/agent_executor.py",
+        " M src/ai/providers/agent_handoff.py",
+        " M src/ai/registry.py",
+        " M src/ai/role_execution.py",
+        " M src/ai/runtime_profiles.py",
+        " M src/application/topic_belonging.py",
+        " M src/cli.py",
+        " M src/core/mission_completion_gate.py",
+        " M src/scripts/run_agent_role.py",
+        " M tests/ai/test_hybrid_runtime.py",
+        " M tests/ai/test_r6_b_0_hybrid_runtime.py",
+        " M tests/ai/test_role_execution_contract.py",
+        " M tests/ai/test_unified_execution_harness.py",
+        " M tests/harness/test_mission_completion_gate.py",
+        " M tests/harness/test_plan009_m1_vertical.py",
+        " M tests/integration/test_r1_m11_integration.py",
+        "?? plans/plan_009/m2_real_handoff/mission/authority.json",
+        "?? plans/plan_009/m2_real_handoff/mission/gate/gates/PLAN009_M2_P2_REAL_HANDOFF_PREPARATION/MISSION_COMPLETION.json",
+        "?? plans/plan_009/m2_real_handoff/mission/gate/gates/PLAN009_M2_P2_REAL_HANDOFF_PREPARATION/MISSION_COMPLETION.md",
+        "?? plans/plan_009/m2_real_handoff/mission/mission-authorization.json",
+        "?? plans/plan_009/m2_real_handoff/mission/mission_contract.json",
+        "?? plans/plan_009/m2_real_handoff/mission/run_configuration.json"
+      ],
+      "modified_files": [
+        "config/agent_prompt_registry.json",
+        "plans/001_CONTROL_OPERATIVO.md",
+        "plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md",
+        "prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md",
+        "schemas/agent_execution_profiles.json",
+        "schemas/execution_provenance_registry.json",
+        "schemas/run_configuration.json",
+        "src/ai/contracts.py",
+        "src/ai/execution.py",
+        "src/ai/providers/agent_executor.py",
+        "src/ai/providers/agent_handoff.py",
+        "src/ai/registry.py",
+        "src/ai/role_execution.py",
+        "src/ai/runtime_profiles.py",
+        "src/application/topic_belonging.py",
+        "src/cli.py",
+        "src/core/mission_completion_gate.py",
+        "src/scripts/run_agent_role.py",
+        "tests/ai/test_hybrid_runtime.py",
+        "tests/ai/test_r6_b_0_hybrid_runtime.py",
+        "tests/ai/test_role_execution_contract.py",
+        "tests/ai/test_unified_execution_harness.py",
+        "tests/harness/test_mission_completion_gate.py",
+        "tests/harness/test_plan009_m1_vertical.py",
+        "tests/integration/test_r1_m11_integration.py"
+      ],
+      "staged_files": [],
+      "untracked_files": [
+        "plans/plan_009/m2_real_handoff/mission/authority.json",
+        "plans/plan_009/m2_real_handoff/mission/gate/gates/PLAN009_M2_P2_REAL_HANDOFF_PREPARATION/MISSION_COMPLETION.json",
+        "plans/plan_009/m2_real_handoff/mission/gate/gates/PLAN009_M2_P2_REAL_HANDOFF_PREPARATION/MISSION_COMPLETION.md",
+        "plans/plan_009/m2_real_handoff/mission/mission-authorization.json",
+        "plans/plan_009/m2_real_handoff/mission/mission_contract.json",
+        "plans/plan_009/m2_real_handoff/mission/run_configuration.json"
+      ],
+      "outside_scope": [],
+      "unexpected_files": [],
+      "diff_check": {
+        "unstaged": {
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "warning: in the working copy of 'config/agent_prompt_registry.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'plans/001_CONTROL_OPERATIVO.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'schemas/agent_execution_profiles.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'schemas/execution_provenance_registry.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'schemas/run_configuration.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/contracts.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/execution.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/providers/agent_executor.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/providers/agent_handoff.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/registry.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/role_execution.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/runtime_profiles.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/application/topic_belonging.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/cli.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/core/mission_completion_gate.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/scripts/run_agent_role.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/ai/test_hybrid_runtime.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/ai/test_r6_b_0_hybrid_runtime.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/ai/test_role_execution_contract.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/ai/test_unified_execution_harness.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/harness/test_mission_completion_gate.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/harness/test_plan009_m1_vertical.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/integration/test_r1_m11_integration.py', LF will be replaced by CRLF the next time Git touches it\n"
+        },
+        "staged": {
+          "returncode": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      }
+    },
+    "protected_untracked": {
+      "declared": [],
+      "missing": [],
+      "baseline_missing": [],
+      "baseline_outside_scope": [],
+      "untracked_files": [],
+      "unexpected_files": [],
+      "checksum_mismatches": [],
+      "preserved": true
+    },
+    "structural": {
+      "json": [
+        {
+          "path": "config/agent_prompt_registry.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_009/m2_real_handoff/mission/authority.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_009/m2_real_handoff/mission/gate/gates/PLAN009_M2_P2_REAL_HANDOFF_PREPARATION/MISSION_COMPLETION.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_009/m2_real_handoff/mission/mission-authorization.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_009/m2_real_handoff/mission/mission_contract.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_009/m2_real_handoff/mission/run_configuration.json",
+          "valid": true
+        },
+        {
+          "path": "schemas/agent_execution_profiles.json",
+          "valid": true
+        },
+        {
+          "path": "schemas/execution_provenance_registry.json",
+          "valid": true
+        },
+        {
+          "path": "schemas/run_configuration.json",
+          "valid": true
+        }
+      ],
+      "yaml": [],
+      "yaml_markdown": [
+        {
+          "path": "plans/001_CONTROL_OPERATIVO.md",
+          "blocks": [
+            {
+              "valid": true
+            }
+          ]
+        },
+        {
+          "path": "plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md",
+          "blocks": [
+            {
+              "valid": true
+            }
+          ]
+        },
+        {
+          "path": "plans/plan_009/m2_real_handoff/mission/gate/gates/PLAN009_M2_P2_REAL_HANDOFF_PREPARATION/MISSION_COMPLETION.md",
+          "blocks": []
+        },
+        {
+          "path": "prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md",
+          "blocks": []
+        }
+      ],
+      "python": [
+        {
+          "path": "src/ai/contracts.py",
+          "valid": true
+        },
+        {
+          "path": "src/ai/execution.py",
+          "valid": true
+        },
+        {
+          "path": "src/ai/providers/agent_executor.py",
+          "valid": true
+        },
+        {
+          "path": "src/ai/providers/agent_handoff.py",
+          "valid": true
+        },
+        {
+          "path": "src/ai/registry.py",
+          "valid": true
+        },
+        {
+          "path": "src/ai/role_execution.py",
+          "valid": true
+        },
+        {
+          "path": "src/ai/runtime_profiles.py",
+          "valid": true
+        },
+        {
+          "path": "src/application/topic_belonging.py",
+          "valid": true
+        },
+        {
+          "path": "src/cli.py",
+          "valid": true
+        },
+        {
+          "path": "src/core/mission_completion_gate.py",
+          "valid": true
+        },
+        {
+          "path": "src/scripts/run_agent_role.py",
+          "valid": true
+        },
+        {
+          "path": "tests/ai/test_hybrid_runtime.py",
+          "valid": true
+        },
+        {
+          "path": "tests/ai/test_r6_b_0_hybrid_runtime.py",
+          "valid": true
+        },
+        {
+          "path": "tests/ai/test_role_execution_contract.py",
+          "valid": true
+        },
+        {
+          "path": "tests/ai/test_unified_execution_harness.py",
+          "valid": true
+        },
+        {
+          "path": "tests/harness/test_mission_completion_gate.py",
+          "valid": true
+        },
+        {
+          "path": "tests/harness/test_plan009_m1_vertical.py",
+          "valid": true
+        },
+        {
+          "path": "tests/integration/test_r1_m11_integration.py",
+          "valid": true
+        }
+      ],
+      "schemas": [
+        {
+          "path": "plans/plan_009/m2_real_handoff/mission/mission_contract.json",
+          "schema": "mission_contract",
+          "violations": []
+        },
+        {
+          "path": "config/agent_execution_profiles.json",
+          "schema": "agent_execution_profiles",
+          "violations": []
+        },
+        {
+          "path": "plans/plan_009/m2_real_handoff/mission/run_configuration.json",
+          "schema": "run_configuration",
+          "violations": []
+        }
+      ]
+    },
+    "mission_authorization": {
+      "required": true,
+      "path": "plans/plan_009/m2_real_handoff/mission/mission-authorization.json",
+      "expected_sha256": "d42187378368b563a477d5dc978ae05c0d3d8eec1ccf0a17e20d79ae66847911",
+      "actual_sha256": "d42187378368b563a477d5dc978ae05c0d3d8eec1ccf0a17e20d79ae66847911",
+      "mission_id": "R2_M2_P2_PLAN009_REAL_TOPIC_BELONGING",
+      "contains_material_repair": false,
+      "repair_integrity_evidence_path": "NONE",
+      "authorized_scope_sha256": "58d23f8342d8bb2d04848103cd14d892669ff11d9e597e589c7bf3f222217b9f",
+      "status": "PASS"
+    },
+    "repair_integrity": {
+      "required": false,
+      "status": "NOT_REQUIRED"
+    },
+    "required_tests": [
+      {
+        "label": "PLAN009_M2_HANDOFF_PREPARATION_FOCUSED",
+        "command": [
+          "py",
+          "-3",
+          "-c",
+          "import json; from pathlib import Path; from src.application.storage import VaultEpisodeStore; from src.core.mission_authorization import load_mission_authorization; from src.core.contract_validation import validate_against_schema; a=load_mission_authorization('plans/plan_009/m2_real_handoff/mission/mission-authorization.json'); assert a.mission_id=='R2_M2_P2_PLAN009_REAL_TOPIC_BELONGING'; assert a.execution_profile_ids==('codex_current',); assert a.execution_mode=='REAL'; assert 'ANY' not in a.execution_profile_ids+a.allowed_routes; s=VaultEpisodeStore.from_settings(Path('config/local_settings.json')); f=Path(s.resume('ep_0002')['folder']); h=json.loads((f/'01_editorial_intake_handoff.json').read_text(encoding='utf-8')); assert validate_against_schema(h,'editorial_intake_handoff')==[]; print('P2_HANDOFF_PREP_FOCUSED_OK')"
+        ],
+        "returncode": 0,
+        "stdout": "P2_HANDOFF_PREP_FOCUSED_OK\n",
+        "stderr": ""
+      }
+    ],
+    "state": {
+      "control_path": "plans/001_CONTROL_OPERATIVO.md",
+      "read": true,
+      "required": [],
+      "forbidden": []
+    },
+    "push_policy": {
+      "push_allowed": false,
+      "verification": "LOCAL_REF",
+      "remote": "LOCAL",
+      "ref": "HEAD",
+      "baseline_remote_commit": "efea7896b7bcd9d6349f72de15d0e7c9fbe09794",
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "returncode": 0,
+      "stdout": "efea7896b7bcd9d6349f72de15d0e7c9fbe09794\n",
+      "stderr": "",
+      "verified": true,
+      "enforced": true,
+      "observed_remote_commit": "efea7896b7bcd9d6349f72de15d0e7c9fbe09794"
+    }
+  },
+  "checked_at": "2026-08-25T19:03:22.860312+00:00",
+  "checker_version": "1.0.0",
+  "exit_code": 0
+}

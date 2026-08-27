@@ -1,0 +1,12 @@
+{
+  "artifact_version": "1.0.0",
+  "authorized_scope_sha256": "58d23f8342d8bb2d04848103cd14d892669ff11d9e597e589c7bf3f222217b9f",
+  "decision": "APPROVE",
+  "material_decision_binding": {
+    "decision_id": "MD-CI-001",
+    "decision_sha256": "25f21f5c413a366b5565d0200264e22ccb0ea18def0dd452c3e51bf76864ca9c",
+    "registry_path": "docs/legacy/material_decision_registry.json",
+    "subject_ref": "capability:TOPIC_BELONGING_ASSESSMENT"
+  },
+  "mission_id": "R2_M2_P2_PLAN009_REAL_TOPIC_BELONGING"
+}

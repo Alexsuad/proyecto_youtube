@@ -16,6 +16,8 @@ UNAVAILABLE_FROM_EXECUTOR = "UNAVAILABLE_FROM_EXECUTOR"
 MANAGED_BY_EXECUTOR = "MANAGED_BY_EXECUTOR"
 READY = "READY"
 NON_EXECUTABLE_PROFILES = {"NONE_SELECTED"}
+# Process-local capability issued only by the canonical route-resolution path.
+_VERIFIED_ROUTE_TOKEN = object()
 
 
 @dataclass(frozen=True)
@@ -29,6 +31,8 @@ class ResolvedExecutionRoute:
     provider_adapter: str
     model: str
     status: str
+    reasoning_effort: str | None = None
+    reasoning_effort_supported: bool = False
     timeout_seconds: int = 30
     max_retries: int = 0
     temperature: float | None = None
@@ -54,6 +58,7 @@ class ResolvedExecutionRoute:
             "executor_override": self.executor,
             "provider_override": None if self.provider == MANAGED_BY_EXECUTOR else self.provider,
             "model_override": None if self.model == UNAVAILABLE_FROM_EXECUTOR else self.model,
+            "reasoning_effort": self.reasoning_effort,
             "timeout_seconds": self.timeout_seconds,
             "max_retries": self.max_retries,
             "temperature": self.temperature,
@@ -126,6 +131,8 @@ def _build_blocked(
     cost_policy: str,
     provider_config_ref: str | None,
     blocking_reason: str,
+    reasoning_effort: str | None = None,
+    reasoning_effort_supported: bool = False,
     api_base_env: str | None = None,
     api_key_env: str | None = None,
     model_env: str | None = None,
@@ -142,6 +149,8 @@ def _build_blocked(
         provider=provider,
         provider_adapter=provider_adapter,
         model=model,
+        reasoning_effort=reasoning_effort,
+        reasoning_effort_supported=reasoning_effort_supported,
         status=blocking_reason,
         timeout_seconds=timeout_seconds,
         max_retries=max_retries,
@@ -348,6 +357,14 @@ def resolve_run_configuration(
     if run_configuration.get("model_override") not in (None, "") and not supports_model_override:
         raise ValueError(f"override no permitido para {execution_profile}: model_override")
 
+    reasoning_effort = run_configuration.get("reasoning_effort")
+    reasoning_effort = str(reasoning_effort).strip() if reasoning_effort is not None else None
+    supports_reasoning_effort = bool(
+        profile.get("supports_reasoning_effort", executor_entry.get("supports_reasoning_effort", False))
+    )
+    if reasoning_effort and not supports_reasoning_effort:
+        raise ValueError(f"reasoning_effort no soportado para {execution_profile}")
+
     model_env = str(
         _pick(
             provider_entry.get("model_env"),
@@ -442,6 +459,8 @@ def resolve_run_configuration(
             provider=MANAGED_BY_EXECUTOR,
             provider_adapter="agent_executor",
             model=model or UNAVAILABLE_FROM_EXECUTOR,
+            reasoning_effort=reasoning_effort,
+            reasoning_effort_supported=supports_reasoning_effort,
             status=READY,
             timeout_seconds=timeout_seconds,
             max_retries=max_retries,
@@ -467,6 +486,8 @@ def resolve_run_configuration(
             provider=provider,
             provider_adapter=provider_adapter,
             model=model or UNAVAILABLE,
+            reasoning_effort=reasoning_effort,
+            reasoning_effort_supported=supports_reasoning_effort,
             timeout_seconds=timeout_seconds,
             max_retries=max_retries,
             temperature=temperature,
@@ -547,6 +568,8 @@ def resolve_run_configuration(
         provider=provider,
         provider_adapter=provider_adapter,
         model=model,
+        reasoning_effort=reasoning_effort,
+        reasoning_effort_supported=supports_reasoning_effort,
         status=READY,
         timeout_seconds=timeout_seconds,
         max_retries=max_retries,

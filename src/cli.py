@@ -39,6 +39,10 @@ def _service(
     mission_authorization_path: str | None = None,
     execution_mode: str = "REAL",
     mock_outputs: dict[str, dict[str, Any]] | None = None,
+    execution_profile: str | None = None,
+    model_override: str | None = None,
+    reasoning_effort: str | None = None,
+    paid_cost_approved: bool = False,
 ) -> EpisodeApplicationService:
     store = VaultEpisodeStore.from_settings(settings)
     return EpisodeApplicationService(
@@ -50,6 +54,10 @@ def _service(
                 mission_authorization_path=mission_authorization_path,
                 execution_mode=execution_mode,
                 mock_outputs=mock_outputs,
+                execution_profile=execution_profile,
+                model_override=model_override,
+                reasoning_effort=reasoning_effort,
+                paid_cost_approved=paid_cost_approved,
             ),
         ),
         interaction=TerminalInteraction(),
@@ -63,6 +71,10 @@ def _service_from_args(args: argparse.Namespace) -> EpisodeApplicationService:
         mission_authorization_path=getattr(args, "mission_authorization", None),
         execution_mode="SYNTHETIC_TEST" if synthetic_outputs is not None else "REAL",
         mock_outputs=synthetic_outputs,
+        execution_profile=getattr(args, "execution_profile", None),
+        model_override=getattr(args, "model_override", None),
+        reasoning_effort=getattr(args, "reasoning_effort", None),
+        paid_cost_approved=bool(getattr(args, "paid_cost_approved", False)),
     )
 
 
@@ -174,6 +186,10 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
     start.add_argument("--mission-authorization", help=argparse.SUPPRESS)
     start.add_argument("--synthetic-outputs", help=argparse.SUPPRESS)
+    start.add_argument("--execution-profile", help=argparse.SUPPRESS)
+    start.add_argument("--model", dest="model_override", help=argparse.SUPPRESS)
+    start.add_argument("--reasoning-effort", help=argparse.SUPPRESS)
+    start.add_argument("--paid-cost-approved", action="store_true", help=argparse.SUPPRESS)
     start.add_argument("--modo", choices=["tema", "obra", "corpus"], help="Omitir para usar el flujo interactivo")
     start.add_argument("--tema")
     start.add_argument("--obra")
@@ -186,6 +202,10 @@ def build_parser() -> argparse.ArgumentParser:
     resume.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
     resume.add_argument("--mission-authorization", help=argparse.SUPPRESS)
     resume.add_argument("--synthetic-outputs", help=argparse.SUPPRESS)
+    resume.add_argument("--execution-profile", help=argparse.SUPPRESS)
+    resume.add_argument("--model", dest="model_override", help=argparse.SUPPRESS)
+    resume.add_argument("--reasoning-effort", help=argparse.SUPPRESS)
+    resume.add_argument("--paid-cost-approved", action="store_true", help=argparse.SUPPRESS)
     resume.set_defaults(handler=_resume)
     administrative_close = subparsers.add_parser(
         "cerrar-administrativamente",

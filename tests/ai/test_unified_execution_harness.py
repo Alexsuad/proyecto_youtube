@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import subprocess
@@ -44,11 +44,14 @@ def test_agent_executor_provider_returns_structured_smoke_payload(monkeypatch: p
         "execution_profile": "managed_current",
         "execution_route": "agent_harness",
         "model": None,
+        "reasoning_effort": "medium",
     })()
     payload, usage = AgentExecutorProvider().execute(request)
     assert payload["actual_provider"] == "MANAGED_BY_EXECUTOR"
     assert payload["actual_model"] == "UNAVAILABLE_FROM_EXECUTOR"
     assert payload["result"] == "SUCCEEDED"
+    assert payload["reasoning_effort"] == "medium"
+    assert usage["reasoning_effort"] == "medium"
     assert usage["actual_executor"] == executor_id
 
 

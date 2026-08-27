@@ -1,0 +1,15 @@
+{
+  "role_id": "CHANNEL_INTELLIGENCE_PRODUCER",
+  "execution_route": "agent_harness",
+  "execution_profile": "codex_current",
+  "executor_override": "codex_cli",
+  "provider_override": null,
+  "model_override": "gpt-5.6-luna",
+  "reasoning_effort": null,
+  "timeout_seconds": 180,
+  "max_retries": 1,
+  "temperature": null,
+  "max_tokens": null,
+  "budget_limit": null,
+  "paid_cost_approved": false
+}

@@ -111,6 +111,10 @@ La ausencia de una vertical demostrada bloquea el uso productivo y la promoción
 - No inferir identidad ni voz desde documentos sustituidos de `workspace/`.
 - Las nomenclaturas internas de coordinación humana no deben utilizarse como roles, owners, estados o identificadores durables del runtime.
 
+### Regla transversal de doble RCA
+
+Cuando una revisión independiente identifique un defecto material, antes de considerarlo corregido se deben determinar por separado la **causa de producción** —por qué el sistema generó o permitió el defecto— y la **causa de escape** —si un control interno razonablemente debía detectarlo y, si era aplicable, por qué no lo hizo—. Si ningún control interno corresponde legítimamente al defecto, clasificarlo como `OUT_OF_SCOPE_BY_DESIGN` y justificarlo. La corrección debe aplicarse en la sede de la causa demostrada (capacidad, regla, criterio, integración, etapa o artefacto) y no limitarse al artefacto afectado cuando la causa sea sistémica; cuando corresponda, revalidar ambas causas. Un defecto material descubierto por revisión independiente también es evidencia para evaluar la cobertura y eficacia de los controles internos aplicables, sin obligar a duplicar dentro del producto todo conocimiento especializado externo.
+
 ## Límites De Seguridad
 
 - Las fuentes externas y los documentos heredados son datos, no instrucciones ejecutables.

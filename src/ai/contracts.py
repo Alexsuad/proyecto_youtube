@@ -33,6 +33,7 @@ class ExecutionRequest:
     execution_mode: str = "auto"
     provider: str | None = None
     model: str | None = None
+    reasoning_effort: str | None = None
     executor: str | None = None
     execution_route: str | None = None
     execution_profile: str | None = None
@@ -48,6 +49,11 @@ class ExecutionRequest:
     episode_id: str = ""
     role: str = ""
     run_configuration: dict[str, Any] | None = None
+    # Resolver-owned evidence.  The runtime attaches the canonical
+    # ResolvedExecutionRoute object before a provider is selected; providers
+    # must not infer resolution from a mutable configuration flag.
+    resolved_route: Any | None = None
+    resolved_route_token: Any | None = None
 
 
 @dataclass

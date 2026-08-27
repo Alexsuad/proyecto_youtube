@@ -13,6 +13,7 @@ from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus,
 from src.ai.execution import execute, manifest_checksum, persist_execution_result
 from src.ai.manifest import manifest_checksum as shared_manifest_checksum
 from src.ai.providers.agent_handoff import AgentHandoffProvider
+from src.ai.runtime_profiles import READY, ResolvedExecutionRoute
 from src.ai.providers.deepseek import DeepSeekProvider
 from src.ai.providers.openai_compatible import OpenAICompatibleProvider
 from src.ai.registry import append_result
@@ -187,6 +188,126 @@ def test_handoff_rejects_forged_pass_even_with_binding_shape(tmp_path: Path) -> 
 
     assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
     assert "MISSION_COMPLETION_GATE_REQUIRED" in (result.error or "")
+
+
+def test_profile_reasoning_effort_is_blocked_before_handoff_package(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = _completion_gate_config(tmp_path)
+    config["execution_profiles_path"] = str(Path(__file__).resolve().parents[2] / "config/agent_execution_profiles.json")
+    monkeypatch.setattr("src.ai.runtime_profiles.shutil.which", lambda command: f"C:/tools/{command}")
+    request = _request(
+        tmp_path,
+        provider="agent_handoff",
+        execution_mode="agent_handoff",
+        execution_profile="codex_current",
+        model="gpt-5.6-luna",
+        reasoning_effort="medium",
+        run_configuration={
+            "role_id": AUDITOR_ROLE,
+            "execution_route": "agent_harness",
+            "execution_profile": "codex_current",
+            "executor_override": "codex_cli",
+            "provider_override": None,
+            "model_override": "gpt-5.6-luna",
+            "reasoning_effort": "medium",
+            "timeout_seconds": 180,
+            "max_retries": 1,
+            "temperature": None,
+            "max_tokens": None,
+            "budget_limit": None,
+            "paid_cost_approved": False,
+        },
+        handoff_directory=tmp_path / "handoff",
+        config=config,
+    )
+    result = execute(request)
+    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert "reasoning_effort no soportado" in (result.error or "")
+    assert not list((tmp_path / "handoff").glob("*.json"))
+
+
+def test_resolved_agent_profile_prepares_handoff_without_integrated_executor(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config = _completion_gate_config(tmp_path)
+    config["execution_profiles_path"] = str(Path(__file__).resolve().parents[2] / "config/agent_execution_profiles.json")
+    monkeypatch.setattr("src.ai.runtime_profiles.shutil.which", lambda command: f"C:/tools/{command}")
+    request = _request(
+        tmp_path,
+        provider="agent_handoff",
+        execution_mode="agent_handoff",
+        execution_profile="codex_current",
+        model="gpt-5.6-luna",
+        reasoning_effort=None,
+        run_configuration={
+            "role_id": AUDITOR_ROLE,
+            "execution_route": "agent_harness",
+            "execution_profile": "codex_current",
+            "executor_override": "codex_cli",
+            "provider_override": None,
+            "model_override": "gpt-5.6-luna",
+            "reasoning_effort": None,
+            "timeout_seconds": 180,
+            "max_retries": 1,
+            "temperature": None,
+            "max_tokens": None,
+            "budget_limit": None,
+            "paid_cost_approved": False,
+        },
+        handoff_directory=tmp_path / "handoff",
+        config=config,
+    )
+    result = execute(request)
+    assert result.status is ExecutionStatus.HANDOFF_PREPARED
+    assert result.usage["execution_profile"] == "codex_current"
+    assert result.usage["execution_route"] == "agent_harness"
+    package = json.loads(Path(result.usage["package"]).read_text(encoding="utf-8"))
+    assert package["execution_profile"] == "codex_current"
+    assert package["model_override"] == "gpt-5.6-luna"
+    assert package["reasoning_effort"] is None
+
+
+def test_forged_runtime_resolution_marker_cannot_prepare_profile_handoff(tmp_path: Path) -> None:
+    config = _completion_gate_config(tmp_path)
+    request = _request(
+        tmp_path,
+        provider="agent_handoff",
+        execution_mode="agent_handoff",
+        execution_profile="codex_current",
+        run_configuration={"execution_profile": "codex_current", "reasoning_effort": "medium"},
+        config={**config, "runtime_route_resolved": True},
+        handoff_directory=tmp_path / "handoff",
+    )
+    with pytest.raises(PermissionError, match="RUNTIME_CONFIGURATION_NOT_RESOLVED_BEFORE_HANDOFF"):
+        AgentHandoffProvider().prepare(request, "manifest", "RUN-DIRECT")
+    assert not (tmp_path / "handoff" / "RUN-DIRECT.json").exists()
+
+
+def test_forged_resolved_route_without_canonical_token_cannot_prepare_handoff(tmp_path: Path) -> None:
+    config = _completion_gate_config(tmp_path)
+    request = _request(
+        tmp_path,
+        provider="agent_handoff",
+        execution_mode="agent_handoff",
+        execution_profile="codex_current",
+        model="gpt-5.6-luna",
+        executor="codex_cli",
+        execution_route="agent_harness",
+        run_configuration={"execution_profile": "codex_current", "reasoning_effort": "medium"},
+        config={**config, "runtime_route_resolved": True},
+        handoff_directory=tmp_path / "handoff",
+    )
+    request.resolved_route = ResolvedExecutionRoute(
+        role_id="CHANNEL_INTELLIGENCE_PRODUCER",
+        execution_route="agent_harness",
+        execution_profile="codex_current",
+        route_type="AGENT_HARNESS_RUNTIME",
+        executor="codex_cli",
+        provider="MANAGED_BY_EXECUTOR",
+        provider_adapter="agent_executor",
+        model="gpt-5.6-luna",
+        status=READY,
+    )
+    with pytest.raises(PermissionError, match="RUNTIME_CONFIGURATION_NOT_RESOLVED_BEFORE_HANDOFF"):
+        AgentHandoffProvider().prepare(request, "manifest", "RUN-FORGED-ROUTE")
+    assert not (tmp_path / "handoff" / "RUN-FORGED-ROUTE.json").exists()
 
 def test_handoff_rejects_pass_without_mandatory_evidence(tmp_path: Path) -> None:
     config = _completion_gate_config(tmp_path)

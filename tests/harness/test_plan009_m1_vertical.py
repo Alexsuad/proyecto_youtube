@@ -4,6 +4,8 @@ import hashlib
 import json
 import re
 import shutil
+import tempfile
+import copy
 from pathlib import Path
 
 import pytest
@@ -45,6 +47,9 @@ def _mission_authorization(
     tmp_path: Path,
     *,
     execution_interface: str = "TOPIC_BELONGING_TEST",
+    execution_mode: str = "SYNTHETIC_TEST",
+    execution_profile: str = "ollama_local",
+    allowed_routes: list[str] | None = None,
     single_use: bool = False,
     mission_id: str | None = None,
     live_state_path: str = "plans/001_CONTROL_OPERATIVO.md",
@@ -67,12 +72,12 @@ def _mission_authorization(
         "mission_id": mission_id or current_mission,
         "capability_ids": ["TOPIC_BELONGING_ASSESSMENT"],
         "role_ids": ["CHANNEL_INTELLIGENCE_PRODUCER", "CHANNEL_INTELLIGENCE_REVIEWER"],
-        "execution_profile_ids": ["ollama_local"],
+        "execution_profile_ids": [execution_profile],
         "execution_interface": execution_interface,
         "allowed_operations": ["EXECUTE_CAPABILITY"],
         "allowed_paths": [],
-        "allowed_routes": ["local_model"],
-        "execution_mode": "SYNTHETIC_TEST",
+        "allowed_routes": allowed_routes or ["local_model"],
+        "execution_mode": execution_mode,
         "live_state_sha256": state_sha,
         "contains_material_repair": False,
         "repair_integrity_evidence_path": "NONE",
@@ -456,6 +461,110 @@ def test_m1_real_provider_and_mock_injection_are_blocked() -> None:
         ExecutionCognitiveBoundary(execution_mode="REAL", mock_outputs=_outputs())
 
 
+def test_m2_real_requires_explicit_execution_profile() -> None:
+    with pytest.raises(PermissionError, match="REAL_EXECUTION_PROFILE_REQUIRED"):
+        ExecutionCognitiveBoundary(execution_mode="REAL", mission_authorization_path="auth.json").preflight()
+
+
+def test_m2_real_without_authorization_blocks_before_provider() -> None:
+    boundary = ExecutionCognitiveBoundary(execution_mode="REAL", execution_profile="ollama_local")
+    with pytest.raises(PermissionError, match="MISSION_AUTHORIZATION_REQUIRED"):
+        boundary.preflight()
+
+
+def test_m2_real_profile_mismatch_is_fail_closed(tmp_path: Path) -> None:
+    mission_auth = _mission_authorization(
+        tmp_path,
+        execution_interface="TOPIC_BELONGING_TEST",
+        execution_mode="REAL",
+        execution_profile="ollama_local",
+    )
+    boundary = ExecutionCognitiveBoundary(
+        repository_root=ROOT,
+        mission_authorization_path=mission_auth,
+        execution_mode="REAL",
+        execution_interface="TOPIC_BELONGING_TEST",
+        execution_profile="deepseek_chat",
+        model_override="test-model",
+    )
+    with pytest.raises(PermissionError, match="MISSION_AUTHORIZATION_INVALID"):
+        boundary.preflight()
+
+
+def test_m2_explicit_agent_profile_derives_only_declared_route(tmp_path: Path) -> None:
+    mission_auth = _mission_authorization(
+        tmp_path,
+        execution_interface="TOPIC_BELONGING_TEST",
+        execution_mode="REAL",
+        execution_profile="codex_current",
+        allowed_routes=["agent_harness"],
+    )
+    boundary = ExecutionCognitiveBoundary(
+        repository_root=ROOT,
+        mission_authorization_path=mission_auth,
+        execution_mode="REAL",
+        execution_interface="TOPIC_BELONGING_TEST",
+        execution_profile="codex_current",
+    )
+    assert boundary.execution_route is None
+    assert boundary.preflight()
+    assert boundary.execution_route == "agent_harness"
+
+
+def test_m2_real_authorized_reaches_provider_boundary_without_external_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import src.ai.execution as ai_execution
+
+    mission_auth = _mission_authorization(
+        tmp_path,
+        execution_interface="TOPIC_BELONGING_TEST",
+        execution_mode="REAL",
+        execution_profile="ollama_local",
+    )
+    outputs = _outputs()
+
+    class ProviderDouble:
+        name = "ollama"
+
+        def execute(self, request: ExecutionRequest):
+            output = copy.deepcopy({
+                "topic_belonging_input": outputs["enrich"],
+                "topic_belonging_assessment": outputs["produce"],
+                "topic_belonging_decision": outputs["review"],
+            }[request.output_schema])
+            if request.output_schema == "topic_belonging_decision":
+                assessment = json.loads(request.input_artifacts[1].path.read_text(encoding="utf-8"))
+                output["producer_artifact_checksum"] = assessment["artifact_checksum"]
+                output["reviewer_input_checksum"] = assessment["artifact_checksum"]
+                output["provenance"]["input_checksum"] = assessment["artifact_checksum"]
+                output["provenance"]["output_checksum"] = canonical_checksum(output, "decision")
+            return output, {"provider_or_adapter": "ollama", "model_or_evaluator": request.model}
+
+    monkeypatch.setattr(ai_execution, "OllamaProvider", ProviderDouble)
+    boundary = ExecutionCognitiveBoundary(
+        repository_root=ROOT,
+        mission_authorization_path=mission_auth,
+        execution_mode="REAL",
+        execution_interface="TOPIC_BELONGING_TEST",
+        execution_profile="ollama_local",
+        model_override="test-double-model",
+    )
+    short_root = Path(tempfile.mkdtemp(prefix="p009-m2-", dir=tmp_path))
+    try:
+        store = VaultEpisodeStore(short_root / "vault", "C")
+        workflow = TopicBelongingTechnicalWorkflow(store, boundary=boundary)
+        result = EpisodeApplicationService(store, workflow=workflow).start(
+            HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
+        )
+        executions = json.loads((result.episode.folder / "topic_belonging_execution.json").read_text(encoding="utf-8"))["executions"]
+        assert all(item["execution_mode"] == "REAL" for item in executions)
+        assert all(item["provider_or_adapter"] == "ollama" for item in executions)
+        assert all(item["model_or_evaluator"] == "test-double-model" for item in executions)
+    finally:
+        shutil.rmtree(short_root, ignore_errors=True)
+
+
 def test_m1_real_provider_mode_is_blocked_before_episode_creation(tmp_path: Path, mission_auth: str) -> None:
     store = VaultEpisodeStore(tmp_path / "vault", "CHANNEL")
     boundary = ExecutionCognitiveBoundary(
@@ -464,7 +573,7 @@ def test_m1_real_provider_mode_is_blocked_before_episode_creation(tmp_path: Path
         execution_mode="REAL",
     )
     workflow = TopicBelongingTechnicalWorkflow(store, boundary=boundary)
-    with pytest.raises(PermissionError, match="REAL_PROVIDER_NOT_AUTHORIZED"):
+    with pytest.raises(PermissionError, match="REAL_EXECUTION_PROFILE_REQUIRED"):
         EpisodeApplicationService(store, workflow=workflow).start(
             HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
         )

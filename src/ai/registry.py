@@ -232,6 +232,7 @@ def _provenance_fields(
         "actual_executor": str(usage.get("actual_executor") or ("NONE" if provider == "agent_handoff" else "native_provider")),
         "actual_provider": str(usage.get("actual_provider") or provider),
         "actual_model": str(usage.get("actual_model") or model or "NONE"),
+        **({"reasoning_effort": str(usage["reasoning_effort"])} if usage.get("reasoning_effort") else {}),
         "provider": provider,
         "model": model or "NONE",
         "prompt_version": prompt_version,

@@ -47,6 +47,52 @@ def test_invalid_input_and_missing_role_are_classified() -> None:
         resolve_role_execution_contract("UNKNOWN_ROLE","execution_smoke_report",{},_runtime_values())
 
 
+def test_channel_intelligence_producer_prompt_is_stage_aware() -> None:
+    enrichment_payload = {
+        "EditorialIntakeHandoff": {"contract": "editorial_intake_handoff"},
+        "active_editorial_profile": {"profile_id": "mas_alla_del_guion"},
+        "initial_evidence": [],
+    }
+    enrichment = build_model_prompt(resolve_role_execution_contract(
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "topic_belonging_input",
+        enrichment_payload,
+        {"stage": "ENRICHMENT", "execution_profile": "codex_current"},
+    ))
+    producer_payload = {
+        "TopicBelongingInput": {"topic_input_id": "TBI-1"},
+        "active_editorial_profile": {"profile_id": "mas_alla_del_guion"},
+        "initial_evidence": [],
+    }
+    producer = build_model_prompt(resolve_role_execution_contract(
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "topic_belonging_assessment",
+        producer_payload,
+        {"stage": "PRODUCER", "execution_profile": "codex_current"},
+    ))
+    assert '"stage": "ENRICHMENT"' in enrichment
+    assert "produce únicamente un `TopicBelongingInput`" in enrichment
+    assert '"stage": "PRODUCER"' in producer
+    assert "produce únicamente `TopicBelongingAssessment`" in producer
+
+
+def test_channel_intelligence_stage_input_contracts_are_not_circular() -> None:
+    with pytest.raises(RoleExecutionContractError, match="TopicBelongingInput"):
+        resolve_role_execution_contract(
+            "CHANNEL_INTELLIGENCE_PRODUCER",
+            "topic_belonging_assessment",
+            {"active_editorial_profile": {}, "initial_evidence": []},
+            {"stage": "PRODUCER", "execution_profile": "codex_current"},
+        )
+    contract = resolve_role_execution_contract(
+        "CHANNEL_INTELLIGENCE_PRODUCER",
+        "topic_belonging_input",
+        {"EditorialIntakeHandoff": {}, "active_editorial_profile": {}, "initial_evidence": []},
+        {"stage": "ENRICHMENT", "execution_profile": "codex_current"},
+    )
+    assert contract["output_schema_name"] == "topic_belonging_input"
+
+
 def test_ollama_response_parsing_allows_only_documented_fence_cleanup() -> None:
     assert OllamaProvider._parse_response({"response":"```json" + chr(10) + '{"ok": true}' + chr(10) + "```"}) == {"ok":True}
     with pytest.raises(ValueError, match="EMPTY_RESPONSE"): OllamaProvider._parse_response({"response":""})

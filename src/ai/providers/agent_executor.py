@@ -1,4 +1,4 @@
-"""Subprocess-based smoke harness for controlled executors."""
+"""Controlled executor smoke path; integrated execution requires a declared protocol."""
 from __future__ import annotations
 
 import shutil
@@ -14,7 +14,10 @@ class AgentExecutorProvider:
 
     def execute(self, request: ExecutionRequest) -> tuple[dict[str, Any] | None, dict[str, Any]]:
         if not request.config.get("smoke_test", False):
-            raise PermissionError("AGENT_HARNESS_SMOKE_ONLY_UNTIL_R6_B_RETRY")
+            raise PermissionError(
+                "AGENT_HARNESS_SMOKE_ONLY_UNTIL_R6_B_RETRY: "
+                "INTEGRATED_EXECUTOR_PROTOCOL_REQUIRED"
+            )
         executor = str(request.executor or request.config.get("selected_executor") or "").strip()
         if not executor:
             raise RuntimeError("EXECUTOR_UNAVAILABLE")
@@ -37,6 +40,7 @@ class AgentExecutorProvider:
 
         actual_provider = str(request.config.get("actual_provider") or "MANAGED_BY_EXECUTOR")
         actual_model = str(request.config.get("actual_model") or "UNAVAILABLE_FROM_EXECUTOR")
+        reasoning_effort = request.reasoning_effort or request.config.get("reasoning_effort")
         payload = {
             "smoke_id": f"SMOKE-{uuid.uuid4().hex}",
             "role_id": request.role or request.capability_id,
@@ -48,6 +52,7 @@ class AgentExecutorProvider:
             "actual_executor": executor,
             "actual_provider": actual_provider,
             "actual_model": actual_model,
+            "reasoning_effort": reasoning_effort,
             "result": "SUCCEEDED" if completed.returncode == 0 else "BLOCKED",
             "decision": "SMOKE_PASS" if completed.returncode == 0 else "SMOKE_NONZERO_EXIT",
             "stdout_preview": (completed.stdout or "")[:4000],
@@ -61,6 +66,7 @@ class AgentExecutorProvider:
             "actual_executor": executor,
             "actual_provider": actual_provider,
             "actual_model": actual_model,
+            "reasoning_effort": reasoning_effort,
             "exit_code": completed.returncode,
             "stdout_preview": payload["stdout_preview"],
             "stderr_preview": payload["stderr_preview"],

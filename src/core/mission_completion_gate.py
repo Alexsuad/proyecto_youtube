@@ -382,9 +382,12 @@ def _run_structural_checks(root: Path, changed: Sequence[str], schema_checks: Se
 
 
 def _run_repair_integrity_if_required(contract: MissionContract, root: Path) -> dict[str, Any]:
-    if not contract.contains_material_repair and (
-        not contract.mission_authorization_path or contract.mission_authorization_path == "NONE"
-    ):
+    # MissionAuthorization may govern a non-repair execution mission.  Its
+    # validation is handled by _verify_mission_scope_authorization; repair
+    # evidence is required only when the mission actually declares a material
+    # repair.  Do not turn the presence of an authorization path into a repair
+    # obligation.
+    if not contract.contains_material_repair:
         return {"violations": [], "evidence": {"required": False, "status": "NOT_REQUIRED"}}
     from src.scripts.repair_integrity_gate import run_repair_integrity_gate
 

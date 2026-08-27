@@ -434,28 +434,40 @@ STOP
 
 # 8. P2 — PRIMERA EJECUCIÓN COGNITIVA REAL
 
-**Estado:** `BLOCKED_PENDING_EXPLICIT_AUTHORIZATION`
+**Estado:** `OWNER_AUTHORIZED_HANDOFF_SELECTION_COMPLETE_STOP_LOCAL`
 
-La autorización de P1 no autoriza:
+La autorización vigente de P2 se resuelve exclusivamente en
+`plans/001_CONTROL_OPERATIVO.md`. Para este tramo el owner ya seleccionó
+explícitamente `codex_current` y `gpt-5.6-luna`; `reasoning_effort` permanece
+omitido porque el perfil no declara soporte verificable. Esa selección es
+local a este handoff y no crea un default global. Siguen bloqueados:
 
-- provider real;
-- profile real;
-- route real;
-- mode real;
-- P2.
+- cualquier provider API de pago;
+- cualquier modelo local no seleccionado y disponible;
+- cualquier agente/perfil distinto del elegido explícitamente por el owner;
+- la cognición real hasta completar handoff e importación canónica.
 
 ## 8.1 Objetivo
 
-Probar desde terminal una ejecución cognitiva real:
+Probar desde terminal una `REAL_COGNITIVE_EXECUTION` mediante el mecanismo
+canónico `agent_handoff`:
 
 ```text
-Terminal
-→ Topic Belonging real
-→ reviewer real
+paquete contractual
+→ agent_handoff (agente/harness seleccionado explícitamente por el owner)
+→ cognición real fuera del runtime
+→ importación canónica y validación de checksum
+→ Topic Belonging / reviewer independiente
 → gate
 → persistencia
 → STOP
 ```
+
+`REAL_COGNITIVE_EXECUTION` no equivale a `INTEGRATED_PROVIDER_EXECUTION`.
+Para P2 basta la primera ruta; desarrollar un executor integrado específico
+queda fuera del MVP/P2. `HANDOFF_PREPARED` solo demuestra preparación y nunca
+se declara como cognición real hasta que exista resultado del agente e
+importación canónica válida.
 
 ## 8.2 Autorización exacta
 
@@ -474,11 +486,22 @@ checksums válidos
 
 No usar `ANY`.
 
-## 8.3 Provider
+## 8.3 Ruta de ejecución
 
-La selección del provider ocurre en la misión P2, no en PLAN 009.
+La selección se realiza por ejecución y pertenece al owner. Debe existir un
+`execution_profile` explícito (por ejemplo, `codex_current`) y, cuando el
+executor lo permita, un `model/model_override` explícito. `reasoning_effort`
+solo se transporta si el executor seleccionado lo soporta; no se introduce
+ningún default vinculante.
 
-Si no existe provider configurado/autorizado:
+La familia `AGENT/HARNESS` usa `agent_handoff` como mecanismo canónico. No se
+trata como provider nativo ni se añade a `REAL_EXTERNAL_PROVIDERS`.
+
+Las familias `API_PROVIDER` y `LOCAL_MODEL` permanecen desacopladas y siguen
+sujetas a sus propias autorizaciones; no hay fallback entre familias.
+
+Si no existe un perfil/agente explícitamente seleccionado y autorizado, o no
+existe una ruta canónica de handoff/importación válida:
 
 ```text
 BLOCKED
@@ -486,7 +509,7 @@ BLOCKED
 
 con mensaje accionable.
 
-Nunca fallback a fake.
+Nunca fallback a fake, `SYNTHETIC_TEST`, API o modelo local.
 
 ## 8.4 Input real
 
@@ -506,13 +529,23 @@ BLOCK
 u otro estado canónico
 ```
 
-si demuestra que el runtime real, reviewer, gate y persistencia funcionaron correctamente.
+si demuestra que la cognición real verificable, el reviewer, el gate y la persistencia funcionaron correctamente.
+
+El resultado solo puede clasificarse como `REAL_COGNITIVE_EXECUTION` cuando
+la entrada procede del paquete contractual, el agente seleccionado realizó la
+cognición, `agent_handoff.import_result` (o su consumidor canónico equivalente)
+validó paquete, input y output, y provenance/MissionAuthorization siguen
+siendo válidas. La preparación del paquete, por sí sola, permanece
+`HANDOFF_PREPARED`.
 
 ## 8.6 Cierre P2
 
 P2 cierra solo con:
 
-- runtime real alcanzado;
+- `REAL_COGNITIVE_EXECUTION` alcanzada mediante una ruta permitida y verificable;
+- `REAL_COGNITIVE_EXECUTION` no equivale a `INTEGRATED_PROVIDER_EXECUTION`;
+- `HANDOFF_PREPARED` no equivale a `REAL_COGNITIVE_EXECUTION`;
+- `HANDOFF_IMPORTED` no equivale por sí solo a `P2 PASS`;
 - provenance válida;
 - autorización exacta;
 - outputs contractuales;
@@ -815,7 +848,7 @@ La presencia de estas claves **no autoriza P1**.
 | ---- | -------------------------------- | ------------------ | ----------------------------------------------------- |
 | P0   | Base segura                      | según estado vivo  | misión correctiva vigente                             |
 | P1   | Vertical técnica Topic Belonging | BLOCKED            | autorización R2-M1 expresa                            |
-| P2   | Ejecución cognitiva real         | BLOCKED            | autorización P2 + provider/profile/route/mode exactos |
+| P2   | Ejecución cognitiva real         | AUTHORIZED/PENDING | perfil/agente y modelo explícitos + handoff/import canónicos |
 | P3   | B5-I1 incremental                | BLOCKED            | autorización independiente por subfase                |
 | P4   | B5-I2                            | BLOCKED            | autorización explícita posterior                      |
 | P5   | B5-I3                            | BLOCKED            | autorización explícita posterior                      |
