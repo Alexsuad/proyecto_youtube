@@ -63,6 +63,25 @@ evidencia estructuradas. Un booleano o una declaración textual no autoriza
 `CONVERGED`. El resultado técnico indica el escalado exigido por
 `review_policy`; no equivale a `INDEPENDENT_REVIEW` ni a aprobación del owner.
 
+## Secuencia lean antes de revisión independiente
+
+Cuando una misión ya autorizada requiera convergencia técnica, reutilizar esta
+secuencia sin convertir al reviewer independiente en debugger iterativo:
+
+```text
+IMPLEMENT
+→ VERIFY
+→ SELF_ADVERSARIAL_REVIEW
+→ REPAIR
+→ REVERIFY
+→ CONVERGED
+→ INDEPENDENT_REVIEW
+```
+
+Agrupar findings relacionados y repetir únicamente la evidencia invalidada.
+Una revisión independiente solo se repite de forma completa cuando el cambio
+altera transversalmente la materia revisada.
+
 ## Límites
 
 No crear un segundo registry, contrato, gate o autoridad para cubrir una comprobación que ya existe. No convertir un resultado técnico en autorización de ejecución, aprobación funcional o readiness productivo.

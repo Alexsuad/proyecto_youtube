@@ -355,7 +355,7 @@ def test_controlled_integration_cannot_promote_technical_result_to_higher_state(
     control = Path("plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8")
     assert "R1_M11_STATUS: COMPLETED" in control
     assert "R1_M11_TECHNICAL_APPROVAL: APPROVED" in control
-    assert [line for line in control.splitlines() if line.startswith("CURRENT_MISSION:")] == ["CURRENT_MISSION: R2_M2_P2_PLAN009_REAL_TOPIC_BELONGING"]
+    assert [line for line in control.splitlines() if line.startswith("CURRENT_MISSION:")] == ["CURRENT_MISSION: NONE"]
     assert "R2_CONTROLLED_EXECUTION: AUTHORIZED" in control
     assert "R2_SCOPE: B5_I1_CONTROLLED_EXECUTION" in control
     assert "R2_EXECUTION: AUTHORIZED_CONTROLLED_B5_I1_ONLY" in control
