@@ -63,10 +63,16 @@ def _material_decision(root: Path, *, decision_id: str = "MD-1", subject_ref: st
     return decision, registry
 
 
-def _bound_authorization(root: Path, decision: dict, *, binding_overrides: dict | None = None) -> tuple[object, dict]:
-    state_digest = _write(root / "state.md", "CURRENT_MISSION: MATERIAL-BOUND\n")
+def _bound_authorization(
+    root: Path,
+    decision: dict,
+    *,
+    binding_overrides: dict | None = None,
+    mission_id: str = "MATERIAL-BOUND",
+) -> tuple[object, dict]:
+    state_digest = _write(root / "state.md", f"CURRENT_MISSION: {mission_id}\n")
     scope = {
-        "mission_id": "MATERIAL-BOUND", "capability_ids": ["CAP"], "role_ids": ["ROLE"],
+        "mission_id": mission_id, "capability_ids": ["CAP"], "role_ids": ["ROLE"],
         "execution_profile_ids": ["PROFILE"], "execution_interface": "INTERFACE",
         "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output/"],
         "allowed_routes": ["route"], "execution_mode": "SYNTHETIC", "live_state_sha256": state_digest,
@@ -80,11 +86,11 @@ def _bound_authorization(root: Path, decision: dict, *, binding_overrides: dict 
     }
     binding.update(binding_overrides or {})
     authority = {
-        "mission_id": "MATERIAL-BOUND", "decision": "AUTHORIZED", "artifact_version": "1.0.0",
+        "mission_id": mission_id, "decision": "AUTHORIZED", "artifact_version": "1.0.0",
         "authorized_scope_sha256": scope_checksum(scope), "material_decision_binding": binding,
     }
     authority_digest = _write(root / "authority.json", json.dumps(authority))
-    contract = {"mission_id": "MATERIAL-BOUND", "authorization": {
+    contract = {"mission_id": mission_id, "authorization": {
         "live_state_path": "state.md", "live_state_sha256": state_digest, "capability_ids": ["CAP"],
         "role_ids": ["ROLE"], "execution_profile_ids": ["PROFILE"], "execution_interface": "INTERFACE",
         "allowed_operations": ["EXECUTE_CAPABILITY"], "allowed_paths": ["output/"], "allowed_routes": ["route"],
@@ -184,6 +190,24 @@ def test_mission_authorization_binds_live_state_and_authority(tmp_path: Path) ->
         auth.verify(tmp_path, capability_id="CAP", role_id="ROLE", operation="EXECUTE_CAPABILITY",
                     path="output/result.json", execution_mode="SYNTHETIC", execution_route="route_a",
                     execution_profile_id="PROFILE", execution_interface="INTERFACE")
+
+
+def test_mission_authorization_rejects_none_as_inactive_current_mission(tmp_path: Path) -> None:
+    decision, _ = _material_decision(tmp_path)
+    auth, binding = _bound_authorization(tmp_path, decision, mission_id="NONE")
+    with pytest.raises(MissionAuthorizationError, match="NO_ACTIVE_CURRENT_MISSION"):
+        auth.verify(
+            tmp_path,
+            capability_id="CAP",
+            role_id="ROLE",
+            operation="EXECUTE_CAPABILITY",
+            path="output/result.json",
+            execution_mode="SYNTHETIC",
+            execution_route="route",
+            execution_profile_id="PROFILE",
+            execution_interface="INTERFACE",
+            required_material_decision_ref={key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")},
+        )
 
 
 def test_mission_authorization_material_decision_binding_is_fail_closed(tmp_path: Path) -> None:

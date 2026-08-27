@@ -568,14 +568,35 @@ def test_t2_incomplete_modern_episode_does_not_reexecute_under_mission_b(tmp_pat
 def test_new_execution_accepts_authorization_matching_live_current_mission(tmp_path: Path) -> None:
     mission_auth = _m1_mission_authorization(tmp_path, execution_interface="TOPIC_BELONGING_TEST")
     try:
+        authorization = json.loads((ROOT / mission_auth).read_text(encoding="utf-8"))
+        authorized_mission_id = authorization["mission_id"]
+        live_control = (ROOT / "plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8")
+        live_mission_id = next(
+            line.split(":", 1)[1].strip()
+            for line in live_control.splitlines()
+            if line.startswith("CURRENT_MISSION:")
+        )
+        assert authorized_mission_id == live_mission_id
         service = _m1_service(tmp_path, mission_auth, _m1_outputs())
         result = service.start(_m1_human_input())
         lineage = json.loads((result.episode.folder / "topic_belonging_lineage.json").read_text(encoding="utf-8"))
-        assert lineage["mission_id"] == "PLAN010_M2_M3_PRE_P2_RELIABILITY_AND_PROMPT_READINESS"
+        assert lineage["mission_id"] == authorized_mission_id
         state = json.loads((result.episode.folder / "episode_state.json").read_text(encoding="utf-8"))
         assert state["mission_id"] == lineage["mission_id"]
     finally:
         shutil.rmtree(ROOT / Path(mission_auth).parent, ignore_errors=True)
+
+
+def test_new_execution_rejects_none_as_inactive_current_mission(tmp_path: Path) -> None:
+    mission_auth, _, live_state = _synthetic_mission_setup(tmp_path, "none-current-mission", "NONE")
+    try:
+        service = _m1_service(tmp_path, mission_auth, _m1_outputs())
+        assert not service.store.episodes_path.exists()
+        with pytest.raises(PermissionError, match="NO_ACTIVE_CURRENT_MISSION"):
+            service.start(_m1_human_input())
+        assert not service.store.episodes_path.exists()
+    finally:
+        _cleanup_synthetic_mission(mission_auth, live_state)
 
 
 def test_new_execution_rejects_authorization_not_matching_live_current_mission(tmp_path: Path) -> None:
@@ -645,7 +666,7 @@ def test_new_execution_rejects_hash_valid_minimal_live_state(tmp_path: Path) -> 
     mission_auth = _m1_mission_authorization(
         tmp_path,
         execution_interface="TOPIC_BELONGING_TEST",
-        mission_id="PLAN010_M2_M3_PRE_P2_RELIABILITY_AND_PROMPT_READINESS",
+        mission_id="STALE_HISTORICAL_MISSION",
         live_state_path=live_state_path,
     )
     try:

@@ -28,6 +28,23 @@ Producir evidencia suficiente para revisar una intervención, proporcional a su 
 
 No pegar archivos completos si el diff y los fragmentos necesarios bastan. No afirmar que una suite terminó si fue interrumpida o limitada por el entorno.
 
+## Testing proporcional
+
+Para una misión sin cambios productivos, reutilizar evidencia vigente y seguir
+esta escalera:
+
+```text
+test focal
+→ grupo directamente relacionado
+→ regresiones afectadas
+→ suite amplia solo si aporta evidencia nueva
+```
+
+Un `PASS` puede reutilizarse mientras no exista un cambio material que lo
+invalide. Registrar de forma reproducible las invocaciones de pytest, suites
+amplias, reviewers independientes y gates, sin inventar tiempos ni
+porcentajes.
+
 ## Límites
 
 - No borrar ni ocultar cambios preexistentes.

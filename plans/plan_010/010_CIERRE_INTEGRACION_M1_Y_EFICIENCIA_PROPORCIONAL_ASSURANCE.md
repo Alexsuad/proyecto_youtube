@@ -9,8 +9,9 @@
 ## 0. Estado y autorización
 
 ```text
-PLAN_010_STATUS: IN_PROGRESS
-PLAN_010_IMPLEMENTATION: AUTHORIZED_FOR_M2_M3_ONLY
+CURRENT_MISSION: NONE
+PLAN_010_STATUS: OWNER_CLOSED
+PLAN_010_IMPLEMENTATION: COMPLETED
 PLAN_010_ACTIVE_BLOCK: NONE
 PLAN_010_M0_STATUS: COMPLETED
 PLAN_010_M1_STATUS: OWNER_ACCEPTED
@@ -18,6 +19,12 @@ PLAN_010_M1_COMMIT: COMPLETED
 PLAN_010_M1_PUSH: COMPLETED
 PLAN_010_M1_REMOTE_BRANCH: origin/plan010/m1-integration-lean-assurance
 PLAN_010_M2_M3: OWNER_ACCEPTED
+PLAN_010_M4_STATUS: OWNER_ACCEPTED
+PLAN_010_M5_STATUS: OWNER_ACCEPTED
+PLAN_010_M4_M5: OWNER_ACCEPTED
+PLAN_010_INDEPENDENT_REVIEW: PASS
+PLAN_010_COMPLETION_GATE: PASS
+PLAN_010_OWNER_CLOSURE: ACCEPTED
 PLAN_010_M2_M3_FILE_SCOPE:
   - plans/001_CONTROL_OPERATIVO.md
   - plans/plan_010/010_CIERRE_INTEGRACION_M1_Y_EFICIENCIA_PROPORCIONAL_ASSURANCE.md
@@ -333,6 +340,92 @@ Detener el bloque afectado cuando:
 - no exista consumer verificable para una pieza propuesta;
 - el estado vivo contradiga el bloque;
 - la evidencia no permita distinguir una reparación material de una mejora cosmética.
+
+## 10.1 Cierre técnico M4+M5
+
+M4 materializó únicamente assurance procedural y documental:
+
+- `AGENTS.md` ya no exige leer PLAN002 en la lectura inicial; PLAN002 permanece como propuesta sin autoridad operativa en la jerarquía.
+- `harness-determinista` explicita la convergencia `IMPLEMENT → VERIFY → SELF_ADVERSARIAL_REVIEW → REPAIR → REVERIFY → CONVERGED → INDEPENDENT_REVIEW`.
+- `evidencia-proporcional-git` explicita la ladder `focal → relacionado → regresiones afectadas → suite amplia solo si aporta evidencia nueva`.
+- No se creó skill, gate, cache, registry, runtime ni telemetría nuevos; `preparar-paquete-ejecucion-tecnica` no fue modificado porque SEARCH no demostró un consumer directo que evitara duplicación.
+
+M5 reutilizó las superficies existentes. Evidencia ejecutada:
+
+```text
+PLAN009 M1 vertical:                         54 passed
+PLAN010 M2+M3 completo:                       35 passed
+authorization/integrity:                     39 passed, 1 skipped
+integration completa:                        7 passed
+```
+
+Comandos exactos de la evidencia focal (intérprete `python`, exit code `0`):
+
+```text
+python -m pytest -q tests/harness/test_plan009_m1_vertical.py
+python -m pytest -q tests/core/test_transversal_capability_governance.py tests/core/test_plan_006_t1_historical_completion.py
+python -m pytest -q tests/harness/test_plan010_m2_m3.py
+python -m pytest -q tests/integration/test_r1_m11_integration.py
+python -m compileall -q src tests
+git diff --check
+```
+
+Los dos tests que fijaban `CURRENT_MISSION` a M2+M3 fueron corregidos para comprobar la autoridad viva y la propiedad estable de no promoción, respectivamente. La aceptación positiva de autorización para la misión vigente queda ahora `DEMONSTRATED`; no se modificó código productivo. El resto del entrypoint/factory/workflow M1 sintético, la separación producer–reviewer, persistencia, recovery, provenance, lineage, `episode_origin`, autorización fail-closed, provider real `NO`, P2 y uso productivo no autorizado permanecen demostrados por las superficies existentes.
+
+Medición proporcional observable:
+
+```text
+M4+M5 technical-cycle pytest invocations: 16
+broad suite invocations actuales:     0
+independent review invocations:        8 (previous cycle, superseded by Owner repair)
+MissionCompletionGate invocations:    11 (9 previous cycle attempts, 1 Owner-repair PASS superseded, 1 final PASS)
+comparación histórica M2+M3:          NOT_COMPARABLE (session-ses_fd11.md ausente)
+```
+
+Resultado técnico previo: `NO MATERIAL REGRESSION FOUND WITHIN EXECUTED EVIDENCE`, con `CURRENT_MISSION_ACCEPTANCE_COVERAGE = DEMONSTRATED`; queda superseded por la reparación Owner focal.
+
+La revisión independiente focal de la reparación fue `PASS`. El `MissionCompletionGate` canónico de la reparación fue `PASS` con `violations = []`; su evidencia se conserva en `.runtime-tmp/plan010-m4-m5/gates-owner-repair-final/gates/PLAN010_M4_M5_LEAN_ASSURANCE_AND_COMPARATIVE_CLOSURE/MISSION_COMPLETION.json`. No se afirma reducción porcentual, ausencia longitudinal de defectos, readiness ni autorización de uso productivo.
+
+## 10.2 Reparación focal de cierre Owner
+
+La revisión Owner detectó que `CURRENT_MISSION: NONE` podía coincidir con `authorization.mission_id: NONE` y alcanzar una nueva ejecución sintética. La reparación focal, sin cambiar la autoridad ni crear una ruta paralela, añade en `src/core/mission_authorization.py` el rechazo canónico `NO_ACTIVE_CURRENT_MISSION` antes de aceptar una misión coincidente con el sentinel inactivo.
+
+Pruebas añadidas dentro del scope autorizado:
+
+- core: artifacts válidos con `CURRENT_MISSION: NONE` y `mission_id: NONE` son rechazados;
+- vertical Topic Belonging: la ejecución sintética es rechazada y no materializa el directorio de episodios;
+- el caso de misión concreta coincidente y el caso mismatch continúan cubiertos.
+
+La reparación no cambia el `CURRENT_MISSION` vivo, mantiene `PLAN_010_STATUS: IN_PROGRESS`, `PLAN_010_ACTIVE_BLOCK: NONE`, M4/M5 y M4+M5 pendientes de Owner, y deja la comparación histórica como `NOT_COMPARABLE`.
+
+Medición reconciliada:
+
+```text
+M4+M5 technical-cycle pytest invocations: 16
+Owner closure repair pytest invocations:    7 (6 PASS, 1 construcción inicial corregida)
+Owner closure repair final M2+M3:            36 passed
+Owner closure repair final core group:       40 passed, 1 skipped
+Owner closure repair final M1:               54 passed
+Owner closure repair final integration:       7 passed
+Owner closure repair reviewer attempts:      2 (1 scope clarification, 1 PASS)
+```
+
+Comandos finales de la reparación Owner:
+
+```text
+python -m pytest -q tests/core/test_transversal_capability_governance.py tests/core/test_plan_006_t1_historical_completion.py
+python -m pytest -q tests/harness/test_plan010_m2_m3.py
+python -m pytest -q tests/harness/test_plan009_m1_vertical.py
+python -m pytest -q tests/integration/test_r1_m11_integration.py
+python -m compileall -q src tests
+git diff --check
+```
+
+La evidencia previa de reviewer y `MissionCompletionGate` queda conservada como historial técnico; la revisión focal y el gate de la reparación fueron completados antes del cierre Owner.
+
+## 10.3 Cierre administrativo Owner
+
+El Owner aceptó M4, M5 y el conjunto M4+M5. Antes de cambiar `CURRENT_MISSION` a `NONE`, el caso límite fue verificado como `CURRENT_MISSION: NONE → NO_ACTIVE_CURRENT_MISSION → fail-closed`; la transición administrativa no reabre desarrollo ni autoriza provider real, P2 o uso productivo.
 
 ## 11. Rutas previstas por futuras misiones
 

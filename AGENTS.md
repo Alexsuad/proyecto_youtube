@@ -18,9 +18,8 @@ Este archivo no duplica valores mutables de fases, misiones, autorizaciones ni d
 3. `plans/plan_001/README.md`
 4. `plans/plan_001/B0_1_roadmap_implementacion_post_p08.md` y `plans/plan_001/B0_2_cierre_documental_recuperacion_post_p08.md` cuando la misión afecte la integración post-P08 o R0 documental
 5. `plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md` solo como antecedente histórico de recuperación
-6. `plans/plan_002/002_CIERRE_ARQUITECTURA_OPERATIVA_Y_MADURACION_EDITORIAL.md`
-7. `config/editorial_profile_registry.json`
-8. Solo después, los archivos concretos de la misión activa
+6. `config/editorial_profile_registry.json`
+7. Solo después, los archivos concretos de la misión activa
 
 ## Jerarquía De Autoridad
 

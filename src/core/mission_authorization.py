@@ -296,6 +296,8 @@ class MissionAuthorization:
             )
         except (OSError, UnicodeDecodeError, ValueError, StopIteration) as exc:
             raise MissionAuthorizationError("MISSION_STALE_AGAINST_LIVE_STATE: CURRENT_MISSION missing") from exc
+        if current_mission.upper() == "NONE":
+            raise MissionAuthorizationError("NO_ACTIVE_CURRENT_MISSION")
         if current_mission != self.mission_id:
             raise MissionAuthorizationError("MISSION_STALE_AGAINST_LIVE_STATE: mission_id does not match CURRENT_MISSION")
 
