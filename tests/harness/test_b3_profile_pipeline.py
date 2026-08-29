@@ -13,7 +13,7 @@ def run(script, *args):
 
 
 def payload():
-    return json.loads((ROOT / "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json").read_text())
+    return json.loads((ROOT / "profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json").read_text())
 
 
 def approval(profile, checksum):

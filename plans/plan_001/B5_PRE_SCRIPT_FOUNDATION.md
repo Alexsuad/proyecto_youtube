@@ -364,11 +364,11 @@ Fuente: `03.1 Adaptación a YouTube.txt` — `source_date_or_version: NOT_AVAILA
 
 #### 9.1.5 Infrastructure Governance
 
-Fuentes: `Revisión equipo 04.txt`, `guia_base_para_gobernar_agentes.md`, `documento_maestro_lecciones_aprendidas_03_07_v1.5.md`, `auditoria_planeacion_proyecto_youtube_2026-07-27(1).md` — `source_date_or_version: NOT_AVAILABLE` — `audited_repository_or_snapshot: NOT_VERIFIED` — `current_status: NOT_VERIFIED` — `notes: source content unavailable during this execution`.
+Fuentes: `Revisión funcional histórica`, `guia_base_para_gobernar_agentes.md`, `documento_maestro_lecciones_aprendidas_03_07_v1.5.md`, `auditoria_planeacion_proyecto_youtube_2026-07-27(1).md` — `source_date_or_version: NOT_AVAILABLE` — `audited_repository_or_snapshot: NOT_VERIFIED` — `current_status: NOT_VERIFIED` — `notes: source content unavailable during this execution`.
 
 | finding_id | requirement_summary | current_repository_evidence | canonical_destination | implementation_phase |
 |---|---|---|---|---|
-| IG-01 | autoridad funcional vs. técnica | `B5_PRE_SCRIPT_FOUNDATION.md` §13; `docs/ALCANCE_Y_COORDINACION_EQUIPOS.md` | B5_PRE §13; ALCANCE_Y_COORDINACION_EQUIPOS.md | B5_PRE_M1 (plan) / M2 (implementación) |
+| IG-01 | autoridad funcional vs. técnica | `B5_PRE_SCRIPT_FOUNDATION.md` §13; especificación histórica de B3 (retirada) | B5_PRE §13; documentación canónica vigente | B5_PRE_M1 (plan) / M2 (implementación) |
 | IG-02 | registries | `config/editorial_profile_registry.json`; `config/responsibility_registry.json`; `config/skill_catalog.json`; `config/capability_registry.json` | registries en `config/` | M2 (saneamiento) |
 | IG-03 | maturity | `plans/001_CONTROL_OPERATIVO.md` (estados de madurez de bloques) | control_operativo | M2 (saneamiento) |
 | IG-04 | availability | `B5_PRE_SCRIPT_FOUNDATION.md` §7 (componentes existentes/faltantes) | B5_PRE §7 | B5_PRE_M1 (plan) / M2 (saneamiento) |
@@ -386,7 +386,7 @@ Fuentes: `Revisión equipo 04.txt`, `guia_base_para_gobernar_agentes.md`, `docum
 | `02.1 Auditoria de guiones.txt` | UNAVAILABLE | SP-I1-01 … SP-I1-12 | NOT_VERIFIED |
 | `Se ha pegado el markdown(42).md` | UNAVAILABLE | SP-I2-01 … SP-I2-10 | NOT_VERIFIED |
 | `03.1 Adaptación a YouTube.txt` | UNAVAILABLE | YT-01 … YT-11 | NOT_VERIFIED |
-| `Revisión equipo 04.txt` | UNAVAILABLE | IG-01 … IG-09 | NOT_VERIFIED |
+| `Revisión funcional histórica` | UNAVAILABLE | IG-01 … IG-09 | NOT_VERIFIED |
 | `guia_base_para_gobernar_agentes.md` | UNAVAILABLE | IG-01 … IG-09 | NOT_VERIFIED |
 | `documento_maestro_lecciones_aprendidas_03_07_v1.5.md` | UNAVAILABLE | IG-01 … IG-09 | NOT_VERIFIED |
 | `auditoria_planeacion_proyecto_youtube_2026-07-27(1).md` | UNAVAILABLE | IG-01 … IG-09 | NOT_VERIFIED |
@@ -407,7 +407,7 @@ Aclaración de cobertura: `CI-01…CI-14`, `SP-I1-01…SP-I1-12`, `SP-I2-01…SP
 
 | Hallazgo (fuente) | Afirmación anterior | Decisión canónica | Estado |
 |---|---|---|---|
-| `docs/specifications/B3_especificacion_funcional_equipo_01.md` §6 | El sistema debe admitir "una sola obra" y no debe establecerse "obligación de usar varias obras" | El formato principal exige 3–5 obras sustantivas finales y 5–8 candidatas; la afirmación "una sola obra" queda `SUPERSEDED` para el formato principal. Cualquier excepción material requiere aprobación del OWNER | SUPERSEDED |
+| Especificación histórica anterior de B3 (retirada) §6 | El sistema debe admitir "una sola obra" y no debe establecerse "obligación de usar varias obras" | El formato principal exige 3–5 obras sustantivas finales y 5–8 candidatas; la afirmación "una sola obra" queda `SUPERSEDED` para el formato principal. Cualquier excepción material requiere aprobación del OWNER | SUPERSEDED |
 | `.agent/skills/skill_curation_obras.md` | "sin mínimos rígidos de materiales" | La regla del formato principal (3–5 finales, 5–8 candidatas) es la autoridad de formato; la skill queda como trabajo técnico para Misión 2 (ver §15, fila 1) | CONTRADICTED → decisión documentada; corrección diferida a M2 |
 | `.agent/skills/skill_analisis_patrones.md` | "sin imponer una lista fija" (en contexto de análisis) | No contradice la regla 3–5: la lista fija se refiere a dimensiones de análisis, no a la cantidad de obras. No se cambia nada | RESOLVED (sin cambio) |
 | `workspace/` (referencias históricas 3–5) | Reglas 3–5 en documentos históricos | Se conservan como referencia histórica; la autoridad vigente está en las políticas de formato | STALE (para consumo operativo) |
@@ -1259,7 +1259,7 @@ INFRASTRUCTURE_GOVERNANCE → materialización técnica, contrato, schema, agent
 ```
 
 - Infraestructura no inventa criterio editorial.
-- Los equipos funcionales no prescriben arquitectura técnica.
+- Las responsabilidades funcionales no prescriben arquitectura técnica.
 
 ---
 
@@ -1268,8 +1268,6 @@ INFRASTRUCTURE_GOVERNANCE → materialización técnica, contrato, schema, agent
 ```text
 LIVE_STATE_AUTHORITY:
 plans/001_CONTROL_OPERATIVO.md
-PLAN_003:
-HISTORICAL_CLOSED_NON_NORMATIVE
 PLAN_001                        = PRODUCT_PLAN_RECTOR
 HISTORICAL_B5_PRE_M2                         = RECONCILED_NOT_IMPLEMENTED
 HISTORICAL_B5_PRE_M2_DEFINED_AS_NEXT_ACTION  = NO

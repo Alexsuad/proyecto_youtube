@@ -2,12 +2,12 @@
   "schema_version": "1.0.0",
   "plan_id": "PLAN_004",
   "mission_id": "TH-05",
-  "repository_revision": "ce044572298c5cd021436c30d266545278689296",
-  "generated_at": "2026-08-18T15:22:17.656244Z",
+  "repository_revision": "7e788c8430070da37bd12d125b5a78e0c6edee71",
+  "generated_at": "2026-08-29T09:47:05.377524Z",
   "source_inputs": [
     {
       "path": "config/capability_registry.json",
-      "sha256": "812afbd8ed7f4d06dc17f40f5728102ae27cac2a832700e36b5dd3574b2850d6"
+      "sha256": "78d1a00c056f7766deb777b2a8dc916a2218e73d937a6f8c2b8d5c65c2cc0fa1"
     },
     {
       "path": "config/responsibility_registry.json",
@@ -15,27 +15,27 @@
     },
     {
       "path": "config/agent_prompt_registry.json",
-      "sha256": "3df4376a40368c49a088849ed9b24e83a5e819129851465bb6b297f49b8e9a6a"
+      "sha256": "20be99018a5834cbf723c96cd71a9aa340c702be911330cbf3ca6bbfcf0956ae"
     },
     {
       "path": "config/agent_execution_profiles.json",
-      "sha256": "6f1809d92fc658a8c5f5afe1946fd85328fab24c7da2cdc753a78d48bf9fc6ff"
+      "sha256": "6f0f2201ab577355f628d9aac8170ba5c218e7580e1253cd1ead6b4a2aae3264"
     },
     {
       "path": "config/capability_routing.yaml",
-      "sha256": "d85f83d1f6855759da5584a5c9d595fe45ab13f997149fc1b7c594e72af85646"
+      "sha256": "7fe5637c784f5f1ef65f4a96f0d6f387cbdc0dd6bdc3c10a0b5b9fd466673235"
     },
     {
       "path": "config/skill_catalog.json",
-      "sha256": "1180a3ec5c57d646b9f5286d882a28303d22064341d0123f17e7413b88e39db6"
+      "sha256": "865bdd04cc8e9a4c86d4f1e365121799942c5dc3fecf0412cf4048418d83f564"
     },
     {
       "path": "reports/implementation/plan_004/TH04_capability_audit_universe.json",
-      "sha256": "de573052b66f3f99f435480352a37f07e0416f6943da356eaf6b7f9cf66f7bfc"
+      "sha256": "c348e8af219be3983d5829839a6ad8b950974698c23ad0a087ce10eded0206eb"
     },
     {
       "path": "src/core/cross_registry_integrity.py",
-      "sha256": "a6102ddff80a03a05ebf512a7686bd0ccf5b79101fafad4cc4480c384f6a94f8"
+      "sha256": "c6d99c3e31a7a63d78bd8d9b87918ba28e08860c26e5cf59f746fd3163e29210"
     }
   ],
   "evidence_refs": [

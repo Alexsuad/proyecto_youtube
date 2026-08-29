@@ -1,0 +1,35 @@
+{
+  "artifact_id": "mas_alla_del_guion",
+  "artifact_version": "1.2.2",
+  "checked_at": "2026-08-29T09:39:14Z",
+  "checker_version": "1.2.2",
+  "evidence": {
+    "profile_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b",
+    "approval_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b",
+    "voice_evidence_level": "AUTHENTIC_CORPUS_PARTIAL",
+      "lineage_sources": [
+        "B3-FUNCTIONAL-SPEC-CANONICAL"
+      ],
+    "corpus_status": "AUTHENTIC_CORPUS_PARTIAL",
+    "global_voice_representativeness": "NOT_VALIDATED",
+    "active_pointer_target": null,
+    "functional_source": {
+      "source_id": "B3-FUNCTIONAL-SPEC-CANONICAL",
+      "role": "FUNCTIONAL_SPECIFICATION",
+      "checksum": "73618cbe03da6ab3837f669e431fc7c7b21e7e698a9eb5a8d8b8ce32f0ddc8f1"
+    },
+    "validated_profile_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b",
+    "functional_approval_verified": true,
+    "owner_approval_verified": true,
+    "voice_corpus_state": "AUTHENTIC_CORPUS_PARTIAL"
+  },
+  "exit_code": 0,
+  "gate_id": "B3_TECHNICAL_PROFILE_VALIDATION",
+  "status": "PASS",
+  "summary": "Perfil editorial 1.2.2 validado tecnicamente para activacion canonica: checksum exacto verificado, aprobacion funcional del propietario registrada, lineage limitado a la especificacion canónica y corpus autentico parcial mantenido sin validacion global de representatividad.",
+  "violations": [],
+  "warnings": [
+    "VOICE_CORPUS_STATE = AUTHENTIC_CORPUS_PARTIAL",
+    "GLOBAL_VOICE_REPRESENTATIVENESS = NOT_VALIDATED"
+  ]
+}

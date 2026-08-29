@@ -15,8 +15,7 @@
 Lectura mínima para ejecutar una misión de este bloque:
 
 1. `AGENTS.md` del repositorio, si existe.
-2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md.
-3. `plans/001_CONTROL_OPERATIVO.md`.
+2. `plans/001_CONTROL_OPERATIVO.md`.
 4. Este archivo.
 5. La misión concreta y los archivos expresamente autorizados.
 
@@ -166,7 +165,7 @@ Solo después de la validación podrán evaluarse:
 
 - extraer el motor a otro repositorio;
 - convertir responsabilidades en subagentes;
-- implementar MCP estable de NotebookLM;
+- implementar un adaptador de investigación estable;
 - soportar otros canales;
 - añadir UI;
 - añadir base de datos;

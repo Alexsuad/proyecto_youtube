@@ -260,7 +260,7 @@ VALID_FIXTURES = {
         "episode_id": "EP-001",
         "brief_version": "1.0.0",
         "profile_id": "mas_alla_del_guion",
-        "profile_version": "1.1.0",
+        "profile_version": "1.2.2",
         "profile_checksum": "a" * 64,
         "tema": "El miedo al fracaso",
         "pregunta_central": "¿Por qué tememos fracasar?",
@@ -553,7 +553,7 @@ _VALID_PROFILE_CHECKSUM = "a" * 64
 _VALID_PROVENANCE = {"actor_id": "producer-1", "run_id": "run-producer", "role_id": "CHANNEL_INTELLIGENCE_PRODUCER", "input_checksums": ["a" * 64], "output_checksum": "a" * 64}
 VALID_FIXTURES["topic_belonging_assessment"] = {
     "assessment_id": "TBA-001", "producer_actor_id": "producer-1", "producer_run_id": "run-producer",
-    "producer_role_id": "CHANNEL_INTELLIGENCE_PRODUCER", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.1",
+    "producer_role_id": "CHANNEL_INTELLIGENCE_PRODUCER", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.2",
     "profile_checksum": _VALID_PROFILE_CHECKSUM, "topic": "Tema de fixture", "entry_mode": "ANCHOR_WORK_FIRST", "narrative_work": "Obra de fixture",
     "central_question": "Pregunta de fixture", "proposed_angle": "Ángulo de fixture", "proposed_territory": "Individuo e identidad",
     "initial_evidence": ["evidence-1"], "sensitive_risks": [], "territory_classification": "ACTIVE",
@@ -562,7 +562,7 @@ VALID_FIXTURES["topic_belonging_assessment"] = {
     "status": "CLOSED_FOR_REVIEW", "artifact_checksum": _VALID_PROFILE_CHECKSUM, "provenance": _VALID_PROVENANCE
 }
 VALID_FIXTURES["topic_belonging_decision"] = {
-    "decision_id": "TBD-001", "assessment_id": "TBA-001", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.1",
+    "decision_id": "TBD-001", "assessment_id": "TBA-001", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.2",
     "profile_checksum": _VALID_PROFILE_CHECKSUM, "producer_artifact_checksum": _VALID_PROFILE_CHECKSUM,
     "reviewer_actor_id": "reviewer-1", "reviewer_run_id": "run-reviewer", "reviewer_role_id": "CHANNEL_INTELLIGENCE_REVIEWER",
     "reviewer_input_checksum": _VALID_PROFILE_CHECKSUM, "decision": "APPROVE", "conditions": [], "exclusions": [], "risks": [],
@@ -579,7 +579,7 @@ _TOPIC_TRIGGERS = {key: False for key in [
     "positioning_expansion", "permanent_effect", "high_precedent_risk", "experimental_territory",
 ]}
 VALID_FIXTURES["topic_belonging_input"] = {
-    "topic_input_id": "TBI-FIXTURE", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.1",
+    "topic_input_id": "TBI-FIXTURE", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.2",
     "profile_checksum": "a" * 64, "topic": "Tema", "entry_mode": "ANCHOR_WORK_FIRST", "narrative_work": "Obra",
     "central_question": "Pregunta", "proposed_angle": "?ngulo", "proposed_territory": "Territorio",
     "initial_evidence": ["source-1"], "strategic_triggers": _TOPIC_TRIGGERS,
@@ -590,7 +590,7 @@ VALID_FIXTURES["topic_belonging_assessment"].update({
 })
 VALID_FIXTURES["topic_belonging_owner_decision"] = {
     "owner_decision_id": "TBO-FIXTURE", "topic_input_id": "TBI-FIXTURE", "assessment_id": "TBA-FIXTURE",
-    "review_decision_id": "TBD-FIXTURE", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.1",
+    "review_decision_id": "TBD-FIXTURE", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.2",
     "profile_checksum": "a" * 64, "assessment_checksum": "a" * 64, "review_decision_checksum": "a" * 64,
     "owner_actor_id": "owner", "decision": "OWNER_APPROVE", "conditions": [], "limitations": [],
     "decided_at": "2026-07-31T10:00:00Z", "owner_decision_checksum": "a" * 64,
@@ -601,7 +601,7 @@ VALID_FIXTURES["topic_belonging_owner_decision"] = {
 VALID_FIXTURES["youtube_adaptation_b5_i2_package"] = {
     "package_id": "YT-PKG-1",
     "episode_id": "EP-1",
-    "active_profile_reference": {"profile_id": "mas_alla_del_guion", "profile_version": "1.2.1", "profile_checksum": "a" * 64},
+    "active_profile_reference": {"profile_id": "mas_alla_del_guion", "profile_version": "1.2.2", "profile_checksum": "a" * 64},
     "input_references": {
         "episode_brief": {"artifact_id": "EP-1", "version": "1.0.0", "checksum": "a" * 64},
         "refined_thesis": {"artifact_id": "T-1", "version": "1.0.0", "checksum": "a" * 64},
@@ -696,7 +696,7 @@ VALID_FIXTURES["youtube_adaptation_review"] = {
     "producer_run_id": "RUN-PROD-1",
     "auditor_run_id": "RUN-AUD-1",
     "independence_check": {"producer_actor_id": "producer-1", "auditor_actor_id": "auditor-1", "producer_run_id": "RUN-PROD-1", "auditor_run_id": "RUN-AUD-1", "decision": "PASS"},
-    "active_profile_reference": {"profile_id": "mas_alla_del_guion", "profile_version": "1.2.1", "profile_checksum": "a" * 64},
+    "active_profile_reference": {"profile_id": "mas_alla_del_guion", "profile_version": "1.2.2", "profile_checksum": "a" * 64},
     "capability_results": {key: {"decision": "PASS", "rationale": "Evaluado.", "evidence_refs": ["E-1"], "mitigation_or_pending": "Mitigado.", "blocking_reason": None} for key in ["YT_EARLY_AUDIENCE_FIT", "YT_VISIBLE_PROMISE", "YT_EARLY_PACKAGING_HYPOTHESIS", "YT_PROMISE_CONTENT_ALIGNMENT", "YT_OPENING_READINESS", "YT_DURATION_ENVELOPE", "YT_OVERPROMISE_REVIEW", "YT_TEXT_PLATFORM_RISK", "YT_SCRIPT_RIGHTS_REUSE_RISK"]},
     "overpromise_decision": {"decision": "PASS", "rationale": "Evaluado.", "evidence_refs": ["E-1"], "mitigation_or_pending": "Mitigado.", "blocking_reason": None},
     "unsupported_elements": [],
@@ -912,7 +912,7 @@ VALID_FIXTURES["editorial_intake_handoff"] = {
     "target_contract": "topic_belonging_input", "status": "AWAITING_EDITORIAL_ENRICHMENT",
     "source_interaction_id": "INT-FIXTURE", "source_channel": "TERMINAL", "entry_mode": "TOPIC_FIRST",
     "field_bindings": {"topic": "Tema de fixture"}, "unresolved_fields": ["proposed_angle"],
-    "profile_binding": {"profile_id": "mas_alla_del_guion", "profile_version": "1.2.1", "profile_checksum": "a" * 64},
+    "profile_binding": {"profile_id": "mas_alla_del_guion", "profile_version": "1.2.2", "profile_checksum": "a" * 64},
     "provenance": {"source_ref": "human-input:INT-FIXTURE", "transformation": "BIND_USER_FIELDS_ONLY", "editorial_decisions_made": False},
 }
 VALID_FIXTURES["human_decision"] = {

@@ -21,8 +21,7 @@ También deberá estar integrada la política de spoilers por necesidad editoria
 Lectura mínima para ejecutar una misión de este bloque:
 
 1. `AGENTS.md` del repositorio, si existe.
-2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md.
-3. `plans/001_CONTROL_OPERATIVO.md`.
+2. `plans/001_CONTROL_OPERATIVO.md`.
 4. Este archivo.
 5. La misión concreta y los archivos expresamente autorizados.
 
@@ -38,39 +37,39 @@ No leer por defecto el Plan 001 completo, otros bloques, todo `workspace/` ni re
 
 ## 1. Objetivo
 
-Evaluar el candidato final sin mezclar edición y aprobación, enrutar correctamente los defectos y obtener la aprobación editorial de una versión exacta del guion antes de pasar a Adaptación a YouTube.
+Cerrar de forma integrada el candidato final del guion sin mezclar producción y auditoría: ejecutar las validaciones obligatorias independientes, enrutar correctamente los defectos, revalidar las versiones corregidas y obtener la aprobación editorial humana de una versión exacta. La adecuación textual a YouTube participa en este cierre; packaging final y producción permanecen fuera del MVP.
 
 ## 2. Misiones
 
-### B7-M1 — Auditorías separadas
+### B7-M1 — Validaciones obligatorias separadas
 
-Mantener separadas:
+El candidato final debe recibir, como mínimo, estas validaciones independientes, sin convertirlas en cuatro agentes ni en cuatro estados runtime:
 
-- auditoría editorial profunda;
-- alineación de voz;
-- auditoría antiartificialidad;
-- oralidad;
-- verificación factual;
-- riesgo de plataforma.
+- `SCRIPT_PRODUCT`: calidad editorial, estructura, progresión, tesis, escritura, edición, oralidad y cumplimiento del brief;
+- `CHANNEL_INTELLIGENCE`: coherencia con el `EditorialProfile`, propósito, posicionamiento, audiencia, promesa, voz, persona autoral y ausencia de deriva material;
+- responsabilidades existentes de investigación/evidencia y auditoría editorial: claims, soporte, interpretación, fidelidad, sobreinterpretación y contradicciones materiales;
+- `YOUTUBE_ADAPTATION`: adecuación textual del guion a audiencia, promesa, apertura, duración orientativa, sobrepromesa y riesgos de plataforma, copyright o reutilización originados en el texto.
 
-Un guion puede aprobar una revisión y fallar otra. El redactor no debe autoaprobarse como único auditor. Se debe permitir auditoría cruzada o ciega en fases posteriores. No es obligatorio activar todas las auditorías avanzadas en el MVP.
+El redactor no debe autoaprobarse como único auditor. Las auditorías avanzadas adicionales son opcionales y no crean requisitos nuevos del MVP.
 
-### B7-M1A — Auditoría editorial final independiente
+### B7-M1A — Auditoría final independiente
 
 El auditor:
 
 - recibe la versión editada;
 - trabaja en contexto limpio;
 - no modifica el guion;
-- evalúa perfil, brief, promesa, evidencia, tesis, recorrido, apertura, progresión, originalidad, oralidad y cierre;
+- emite únicamente su propia auditoría editorial dentro de su autoridad; las demás autoridades funcionales emiten sus propias validaciones, y B7 reúne esas evidencias separadas, todas sobre la misma versión y checksum, antes de `EDITORIAL_SCRIPT_APPROVED`;
 - emite `PASS`, `WARN`, `FAIL` o `BLOCKED`;
 - identifica ruta de corrección.
+
+Una validación no aprobada no se oculta con otra aprobación: produce hallazgo, ruta de corrección y revalidación.
 
 ### B7-M2 — Enrutamiento de correcciones
 
 Aplicar `CorrectionRoutingPolicy`.
 
-No se parchea texto final cuando el defecto pertenece a investigación, tesis, promesa o arquitectura.
+El auditor detecta y enruta; la responsabilidad productora corrige. No se parchea silenciosamente el texto final cuando el defecto pertenece a investigación, evidencia, tesis, promesa, recorrido o arquitectura.
 
 ### B7-M3 — Invalidación y revalidación
 
@@ -81,6 +80,8 @@ Registrar:
 - gates que deben repetirse;
 - estado de retorno;
 - evidencia de corrección.
+
+Una corrección que cambie el candidato invalida las aprobaciones de la versión anterior para el cierre. Todas las validaciones obligatorias deben repetirse sobre la versión exacta nueva.
 
 ### B7-M4 — Control de ciclos
 
@@ -108,32 +109,35 @@ version
 checksum
 decision
 approved_by
+approved_role
 approved_at
 notes
 ```
 
-Esta decisión se registra mediante `EditorialScriptApproval`. No autoriza producción audiovisual ni publicación y no permite declarar `YOUTUBE_PRODUCTION_READY` ni `YOUTUBE_READY`.
+Esta decisión se registra mediante `EditorialScriptApproval`. Para cerrar el MVP, la decisión `APPROVED` de este contrato es la decisión editorial aplicable a `EDITORIAL_SCRIPT_APPROVED`; `APPROVED_FOR_PRODUCTION` pertenece a `HumanProductionApproval` y al cierre posterior de B8.5, no al cierre editorial del MVP. Es la aprobación editorial humana de una versión exacta; no equivale a aprobación de producción, publicación, `YOUTUBE_PRODUCTION_READY` ni `YOUTUBE_READY`. El requisito de consolidar todas las evidencias obligatorias sobre esa versión está definido funcionalmente, pero su implementación debe comprobarse contra B1 y el código.
 
 Decisiones:
 
 ```text
-APPROVE
+APPROVED
 REQUEST_CHANGES
 REJECT
 ```
 
-Solo `APPROVE` permite iniciar B7.5. No permite todavía declarar `YOUTUBE_PRODUCTION_READY` ni `YOUTUBE_READY`.
+Solo `APPROVED`, con todas las validaciones obligatorias vigentes sobre el mismo checksum, permite pasar a etapas posteriores. No permite todavía declarar `YOUTUBE_PRODUCTION_READY` ni `YOUTUBE_READY`.
 
 ## 3. Gate B7
 
 ```text
 PASS si:
-- auditoría editorial final fue independiente;
+- las validaciones obligatorias fueron independientes y están aprobadas sobre el mismo `artifact_id`, versión y checksum;
 - defectos se enrutaron a la fase correcta;
+- las correcciones generaron invalidación y revalidación de la versión actual;
 - no se superó el máximo de ciclos sin decisión humana;
 - EditorialScriptApproval referencia versión y checksum;
 - no existen cambios posteriores sin invalidación;
-- el guion está autorizado para entrar en Adaptación a YouTube.
+- el guion queda cerrado editorialmente en `EDITORIAL_SCRIPT_APPROVED` y puede continuar a etapas posteriores autorizadas.
 ```
+El gate consume evidencias separadas de cada dominio obligatorio y las reúne solo para el cierre de una versión exacta. Sus etiquetas documentales no crean estados, enums ni contratos nuevos del runtime.
 
 ---

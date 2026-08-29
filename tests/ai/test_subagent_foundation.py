@@ -38,7 +38,7 @@ class TestSubagentFoundation(unittest.TestCase):
         self.assertNotEqual(one.context_path, two.context_path)
 
     def test_permissions_are_enforced(self):
-        assert_read_allowed(PRODUCER_FIXTURE, "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json")
+        assert_read_allowed(PRODUCER_FIXTURE, "profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json")
         with self.assertRaises(PermissionError):
             assert_write_allowed(PRODUCER_FIXTURE, "config/subagent_registry.json")
         with self.assertRaises(PermissionError):

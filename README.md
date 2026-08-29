@@ -23,15 +23,11 @@ Identidad y voz productivas
 Plan rector del producto
 → plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 
-Plan 001 / Plan 003
+Plan 001
 → PLAN_001 = PRODUCT_PLAN_RECTOR
-→ PLAN_003 = HISTORICAL_CLOSED_NON_NORMATIVE
 
 Estado vivo, misión, autorización, fase, incremento y siguiente acción
 → plans/001_CONTROL_OPERATIVO.md (única sede de autoridad)
-
-PLAN_002
-→ sustituido por la arquitectura aprobada; sin autoridad operativa
 
 Contratos ejecutables
 → schemas/ + config/ + src/

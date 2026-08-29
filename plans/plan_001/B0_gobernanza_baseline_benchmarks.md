@@ -15,7 +15,7 @@
 ``text
 STATUS_RECONCILED: PASS
 FINAL_CLOSURE_STATUS: OPEN
-EVIDENCE_REFS: Ver Plan 003 R1 y control operativo
+EVIDENCE_REFS: Ver control operativo y contratos actuales
 ```
 
 ## 0. Uso operativo
@@ -23,8 +23,7 @@ EVIDENCE_REFS: Ver Plan 003 R1 y control operativo
 Lectura mínima para ejecutar una misión de este bloque:
 
 1. `AGENTS.md` del repositorio, si existe.
-2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md.
-3. `plans/001_CONTROL_OPERATIVO.md`.
+2. `plans/001_CONTROL_OPERATIVO.md`.
 4. Este archivo.
 5. La misión concreta y los archivos expresamente autorizados.
 

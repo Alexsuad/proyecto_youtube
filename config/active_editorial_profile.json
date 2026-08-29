@@ -1,19 +1,19 @@
 {
   "ACTIVE_PROFILE_ID": "mas_alla_del_guion",
-  "ACTIVE_PROFILE_VERSION": "1.2.1",
-  "profile_checksum": "d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1",
+  "ACTIVE_PROFILE_VERSION": "1.2.2",
+  "profile_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b",
   "functional_approval": {
     "decision": "APPROVE",
-    "profile_checksum": "d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1"
+    "profile_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b"
   },
   "technical_validation": {
     "gate_id": "B3_TECHNICAL_PROFILE_VALIDATION",
     "status": "PASS",
-    "profile_checksum": "d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1"
+    "profile_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b"
   },
   "activation": {
-    "activated_by": "OWNER",
-    "activated_at": "2026-07-29T09:24:05.288498+00:00"
+    "activated_by": "owner_channel_intelligence",
+    "activated_at": "2026-08-29T09:58:17.795473+00:00"
   },
   "status": "ACTIVE"
 }

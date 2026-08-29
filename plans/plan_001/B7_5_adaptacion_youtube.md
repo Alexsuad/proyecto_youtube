@@ -19,8 +19,7 @@ Antes de activar B7.5 deberá integrarse en sus consumidores la política aproba
 Lectura mínima para ejecutar una misión de este bloque:
 
 1. `AGENTS.md` del repositorio, si existe.
-2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md.
-3. `plans/001_CONTROL_OPERATIVO.md`.
+2. `plans/001_CONTROL_OPERATIVO.md`.
 4. Este archivo.
 5. La misión concreta y los archivos expresamente autorizados.
 
@@ -37,31 +36,31 @@ No leer por defecto el Plan 001 completo, otros bloques, todo `workspace/` ni re
 
 ## 1. Objetivo
 
-Convertir el guion aprobado editorialmente en una propuesta coherente para YouTube sin alterar la tesis ni la identidad del canal.
+Gestionar, después de `EDITORIAL_SCRIPT_APPROVED`, packaging final, correspondencia, continuidad y preparación posterior para YouTube sin alterar la tesis ni la identidad del canal. B7.5 no es el primer lugar donde se determina la adecuación textual necesaria para cerrar el MVP: esa validación participa en B7.
 
 ### 1.1 Interfaz temprana con B5
 
-La audiencia concreta y la `PackagingHypothesis` se originan antes del outline, dentro del flujo de B5, pero son decisiones funcionales del Equipo 03 coordinadas con el Equipo 02.
+La audiencia concreta y la `PackagingHypothesis` se originan antes del outline, dentro del flujo de B5, pero son decisiones funcionales de `YOUTUBE_ADAPTATION` coordinadas con `SCRIPT_PRODUCT`.
 
 ```text
-Equipo 03:
+YOUTUBE_ADAPTATION:
 define o aprueba audiencia, promesa visible e hipótesis de packaging.
 
-Equipo 02:
+SCRIPT_PRODUCT:
 valida que tesis y arquitectura puedan cumplirla.
 
-Equipo 03:
+YOUTUBE_ADAPTATION:
 no modifica unilateralmente la tesis.
 
-Equipo 02:
+SCRIPT_PRODUCT:
 no aprueba unilateralmente el packaging.
 ```
 
-B7.5 recibe esa hipótesis versionada, comprueba su correspondencia con el guion aprobado y produce la decisión final de packaging.
+B7.5 recibe esa hipótesis versionada, comprueba su correspondencia con el guion aprobado y produce la decisión final de packaging. La adecuación textual inicial de audiencia, apertura, duración y riesgos originados en el texto se valida en B7; B7.5 solo puede revalidarla cuando un cambio posterior lo requiera.
 
 ## 2. Misiones
 
-### B7.5-M1 — Correspondencia de promesa
+### B7.5-M1 — Correspondencia de packaging posterior
 
 Generar `PromiseCorrespondenceReport`.
 
@@ -83,6 +82,8 @@ Conclusión
 
 Un incumplimiento grave devuelve el episodio a la fase correspondiente.
 
+Esta misión trata la correspondencia entre packaging final y guion aprobado. Si un cambio de packaging revela un problema textual del guion, se solicita revalidación o corrección mediante la ruta de B7; no se sustituye la validación textual inicial del cierre.
+
 ### B7.5-M2 — Decisión final de packaging
 
 Rediseñar funcionalmente `skill_packaging.md` para que produzca `YouTubePackagingDecision`.
@@ -101,11 +102,11 @@ No se implementa todavía la miniatura física.
 
 ### B7.5-M3 — Políticas de YouTube versionadas
 
-Apertura, packaging, riesgo publicitario, copyright, contenido sintético, duración, Shorts, metadatos y continuidad pueden estar gobernados por políticas versionadas. Los cambios de YouTube no deben requerir reconstruir el motor editorial. Una OpeningPolicy futura podrá evolucionar independientemente del EditorialProfile. Packaging, apertura y guion deben mantener correspondencia. El Equipo 03 conserva autoridad funcional sobre estas políticas.
+Apertura, packaging, riesgo publicitario, copyright, contenido sintético, duración, Shorts, metadatos y continuidad pueden estar gobernados por políticas versionadas. Los cambios de YouTube no deben requerir reconstruir el motor editorial. Una OpeningPolicy futura podrá evolucionar independientemente del EditorialProfile. Packaging, apertura y guion deben mantener correspondencia. `YOUTUBE_ADAPTATION` conserva autoridad funcional sobre estas políticas.
 
 No incorporar como verdad permanente afirmaciones no verificadas sobre el algoritmo.
 
-### B7.5-M3A — Adecuación de apertura y duración
+### B7.5-M3A — Revalidación posterior de apertura y duración
 
 Validar:
 
@@ -117,16 +118,18 @@ Validar:
 
 No imponer una duración universal.
 
+La validación textual inicial de apertura y duración orientativa que puede afectar al cierre del MVP se realiza en B7. Aquí solo se revalida cuando una decisión posterior de YouTube lo exige o cuando cambia el paquete posterior.
+
 La frontera funcional es:
 
 ```text
 APERTURA
-Equipo 02 → calidad narrativa y argumental.
-Equipo 03 → adecuación a la experiencia de YouTube.
+SCRIPT_PRODUCT → calidad narrativa y argumental.
+YOUTUBE_ADAPTATION → adecuación a la experiencia de YouTube.
 
 DURACIÓN
-Equipo 02 → duración necesaria para desarrollar el argumento.
-Equipo 03 → adecuación orientativa al consumo en plataforma.
+SCRIPT_PRODUCT → duración necesaria para desarrollar el argumento.
+YOUTUBE_ADAPTATION → adecuación orientativa al consumo en plataforma.
 ```
 
 ### B7.5-M4 — Continuidad de sesión
@@ -183,8 +186,9 @@ Los timestamps finales quedan `BLOCKED` hasta existir edición audiovisual real.
 
 ```text
 PASS si:
+- `EDITORIAL_SCRIPT_APPROVED` ya existe y no se usa B7.5 para aprobar por primera vez la adecuación textual del MVP;
 - la audiencia concreta deriva del EditorialProfile aprobado;
-- PackagingHypothesis tiene aprobación funcional del Equipo 03;
+- PackagingHypothesis tiene aprobación funcional de `YOUTUBE_ADAPTATION`;
 - Producto Guion validó que el guion puede cumplir la promesa;
 - existe correspondencia verificable entre promesa y contenido;
 - packaging recomendado no es engañoso;
@@ -196,5 +200,7 @@ PASS si:
 - metadatos son correctos;
 - ningún cambio altera el guion aprobado sin invalidarlo.
 ```
+
+Este gate es posterior al cierre del MVP y no convierte packaging, títulos, miniaturas, Shorts, SEO, metadatos o producción audiovisual en requisitos de `EDITORIAL_SCRIPT_APPROVED`.
 
 ---

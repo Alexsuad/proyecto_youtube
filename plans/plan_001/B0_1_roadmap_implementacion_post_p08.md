@@ -50,7 +50,7 @@ ejecución simulada
 ≠ vertical real
 
 aprobación funcional de un dominio
-≠ autorización interequipos para producto
+≠ autorización de uso productivo
 ```
 
 ### 1.2 Baseline aprobado
@@ -89,8 +89,8 @@ R0  Cierre documental y recuperación
 → R4  B5-I3 — recorrido, OPENING_UNIT, cierre, arquitectura y outline
 → R5  B5.5 — prototipo editorial controlado
 → R6  B6 — redacción completa, ensamblaje, edición y verificación
-→ R7  Aprobación editorial independiente
-→ R8  Adaptación profesional a YouTube y production readiness
+→ R7  Cierre integrado del guion y aprobación editorial independiente
+→ R8  Packaging, plataforma y production readiness posterior
 → R9  Pilotos, aprendizaje, cierre, Lean/5S y portabilidad
 ```
 
@@ -168,7 +168,7 @@ Como referencia no normativa, durante la preparación de este roadmap se detect�
 
 ## Misiones previstas
 
-> Son unidades futuras de planeación; no constituyen instrucciones para Codex.
+> Son unidades futuras de planeación; no constituyen misiones operativas.
 
 - `R0-M1 — Incorporar baseline IR-0`
 - `R0-M2 — Sanear índice operativo de Plan 001`
@@ -545,7 +545,7 @@ B5_I1_REAL_EXECUTION: NOT_DEMONSTRATED
 - dossiers abiertos;
 - ledger de claims;
 - tesis provisional con rivalidad e incertidumbre;
-- auditoría funcional del Equipo 02.
+- auditoría funcional de `SCRIPT_PRODUCT`.
 
 ## Gate de salida
 
@@ -1040,7 +1040,7 @@ Autoriza someter el candidato a aprobación editorial independiente. No equivale
 
 ## Objetivo
 
-Auditar el guion completo, enrutar correcciones, controlar ciclos, revalidar dependencias y emitir aprobación editorial funcional separada de la producción y de YouTube.
+Cerrar de forma integrada el candidato final del guion: ejecutar validaciones independientes de calidad editorial, identidad, factualidad/interpretación/fidelidad y adecuación textual a YouTube; enrutar correcciones; controlar ciclos; revalidar dependencias; y emitir aprobación editorial funcional sobre una versión exacta, separada de producción y publicación.
 
 ## Requisitos P-08 e IR aplicables
 
@@ -1072,7 +1072,8 @@ EDITORIAL_SCRIPT_APPROVAL: NOT_DEMONSTRATED
 - rutas de corrección por origen;
 - límites de ciclos;
 - revalidación después de correcciones;
-- aprobación exacta de versión;
+- aprobación exacta de versión con todas las validaciones obligatorias sobre el mismo checksum;
+- consolidación técnica de esas evidencias todavía no demostrada por el contrato actual;
 - evidencia de que el auditor no corrigió silenciosamente;
 - separación de aprobación editorial y product readiness.
 
@@ -1085,17 +1086,18 @@ EDITORIAL_SCRIPT_APPROVAL: NOT_DEMONSTRATED
 ## Owner funcional
 
 - `SCRIPT_PRODUCT`
-- revisiones condicionales CI/YA
+- validaciones obligatorias de `CHANNEL_INTELLIGENCE` y `YOUTUBE_ADAPTATION` sobre la versión exacta
 - técnica: `INFRASTRUCTURE_GOVERNANCE`
 
 ## Orden técnico
 
-1. auditorías separadas;
+1. validaciones obligatorias separadas;
 2. decisión consolidada sin fusionar autoridades;
-3. correcciones;
-4. revalidación;
-5. control de ciclos;
-6. aprobación de versión exacta.
+3. hallazgos y rutas de corrección;
+4. nueva versión e invalidación cuando corresponda;
+5. revalidación;
+6. control de ciclos;
+7. aprobación de versión exacta.
 
 ## Misiones previstas
 
@@ -1124,16 +1126,22 @@ EDITORIAL_SCRIPT_APPROVAL: NOT_DEMONSTRATED
 
 ## Gate de salida
 
+Las etiquetas `SCRIPT_PRODUCT_FUNCTIONAL_APPROVAL`, `CHANNEL_INTELLIGENCE_VALIDATION`, `FACTUAL_INTERPRETIVE_FIDELITY_VALIDATION`, `YOUTUBE_TEXTUAL_ADAPTATION_VALIDATION` y `ALL_REQUIRED_EVIDENCE_SAME_VERSION_AND_CHECKSUM` son criterios funcionales/documentales de este roadmap. No son estados, enums ni contratos nuevos del runtime.
+
 ```text
 R7_GATE:
 EDITORIAL_SCRIPT_APPROVED
 SCRIPT_PRODUCT_FUNCTIONAL_APPROVAL: PASS
+CHANNEL_INTELLIGENCE_VALIDATION: PASS
+FACTUAL_INTERPRETIVE_FIDELITY_VALIDATION: PASS
+YOUTUBE_TEXTUAL_ADAPTATION_VALIDATION: PASS
+ALL_REQUIRED_EVIDENCE_SAME_VERSION_AND_CHECKSUM: YES
 VERSION_IMMUTABLE_AFTER_APPROVAL: YES
 ```
 
 ## Criterio de autorización
 
-Autoriza Adaptación a YouTube final. No autoriza producción, publicación o episodio real.
+Autoriza únicamente el paso a etapas posteriores autorizadas, donde puede prepararse packaging y distribución. No autoriza producción, publicación o episodio real.
 
 ---
 
@@ -1141,7 +1149,7 @@ Autoriza Adaptación a YouTube final. No autoriza producción, publicación o ep
 
 ## Objetivo
 
-Convertir el guion editorialmente aprobado en un paquete coherente para YouTube: correspondencia total, packaging final, apertura y duración, continuidad, plataforma, monetización, copyright, reutilización y aprobación humana para producción.
+Convertir el guion editorialmente aprobado en un paquete posterior coherente para YouTube: correspondencia de packaging, packaging final, continuidad, plataforma, monetización, copyright, reutilización y aprobación humana para producción. La adecuación textual necesaria para cerrar el MVP ya fue una validación de R7; R8 no la desplaza ni convierte packaging en requisito del MVP.
 
 ## Requisitos P-08 e IR aplicables
 
@@ -1184,7 +1192,7 @@ YOUTUBE_PRODUCTION_READY: NOT_AUTHORIZED
 
 ## Dependencias
 
-- guion aprobado R7.
+- guion aprobado R7, incluida la validación textual de YouTube sobre la versión exacta.
 - fuentes oficiales vigentes para política.
 - derechos y reutilización conectados a dossiers y manifest.
 
@@ -1200,7 +1208,7 @@ YOUTUBE_PRODUCTION_READY: NOT_AUTHORIZED
 
 1. correspondencia completa;
 2. packaging final;
-3. apertura/duración final;
+3. revalidación posterior de apertura/duración si cambia el paquete;
 4. continuidad y CTA;
 5. plataforma y monetización;
 6. copyright/reutilización;
@@ -1303,7 +1311,7 @@ PORTABILITY_END_TO_END: NOT_DEMONSTRATED
 - eliminación de superficies paralelas;
 - documentación instalable;
 - prueba multi-proveedor;
-- independencia de ChatGPT/Antigravity/Codex;
+- independencia de herramientas externas específicas;
 - cierre y versión.
 
 ## Dependencias
@@ -1867,7 +1875,7 @@ DEFINED
 CODE_MODIFIED:
 NO
 
-CODEX_MISSIONS_PREPARED:
+OPERATIONAL_MISSIONS_PREPARED:
 NO
 
 R0_EXECUTION:

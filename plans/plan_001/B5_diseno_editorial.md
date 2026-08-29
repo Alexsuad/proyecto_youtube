@@ -15,7 +15,7 @@
 ``text
 STATUS_RECONCILED: PASS
 FINAL_CLOSURE_STATUS: OPEN
-EVIDENCE_REFS: Ver Plan 003 R1 y control operativo
+EVIDENCE_REFS: Ver control operativo y contratos actuales
 ```
 
 ## 0. Uso operativo
@@ -23,8 +23,7 @@ EVIDENCE_REFS: Ver Plan 003 R1 y control operativo
 Lectura mínima para ejecutar una misión de este bloque:
 
 1. `AGENTS.md` del repositorio, si existe.
-2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md.
-3. `plans/001_CONTROL_OPERATIVO.md`.
+2. `plans/001_CONTROL_OPERATIVO.md`.
 4. Este archivo.
 5. La misión concreta y los archivos expresamente autorizados.
 
@@ -43,6 +42,8 @@ No leer por defecto el Plan 001 completo, otros bloques, todo `workspace/` ni re
 Convertir brief, investigación, evidencia, tesis, curación, promesa editorial del guion, recorrido y outline en un diseño profesional antes de redactar.
 
 ## 2. Misiones
+
+La secuencia funcional se mantiene separada de la numeración histórica de las misiones: `B5-M8` diseña el recorrido del espectador; después `B5-M11` consolida la arquitectura narrativa global, incluyendo el cierre cuando corresponda; `B5-M9` desarrolla la apertura específica; y `B5-M12` detalla y audita el outline. No se renumeran IDs ni se crean agentes o estados por cada paso.
 
 ### B5-M1 — Brief unificado y tipo de guion
 
@@ -166,7 +167,7 @@ Un cambio sustancial en audiencia, promesa editorial, tesis o tensión central i
 
 ### B5-M7 — Tesis refinada
 
-Después de evidencia, análisis narrativo y humano, curación final y promesa editorial del guion:
+Después de evidencia, análisis narrativo y humano, curación final y promesa editorial temprana del guion:
 
 - tesis defendible;
 - matiz;

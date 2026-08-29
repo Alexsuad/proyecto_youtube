@@ -26,7 +26,7 @@ def valid_brief() -> dict:
         "episode_id": "EP-001",
         "brief_version": "1.0.0",
         "profile_id": "mas_alla_del_guion",
-        "profile_version": "1.1.0",
+        "profile_version": "1.2.2",
         "profile_checksum": CHECKSUM,
         "tema": "Miedo al fracaso",
         "pregunta_central": "¿Por qué evitamos aquello que más deseamos?",
@@ -195,7 +195,7 @@ def write_inputs(tmp_path: Path, brief: dict | None = None, research: dict | Non
         json.dumps(
             {
                 "ACTIVE_PROFILE_ID": "mas_alla_del_guion",
-                "ACTIVE_PROFILE_VERSION": "1.1.0",
+                "ACTIVE_PROFILE_VERSION": "1.2.2",
                 "profile_checksum": CHECKSUM,
             }
         ),

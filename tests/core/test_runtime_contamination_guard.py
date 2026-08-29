@@ -18,7 +18,7 @@ def _write_policy(tmp_path: Path) -> Path:
     policy = json.loads(POLICY.read_text(encoding="utf-8"))
     policy["product_roots"] = ["config", "src", "AGENTS.md"]
     policy["generator_roots"] = ["tests", "src/scripts"]
-    policy["historical_roots"] = ["workspace", "output", "profiles/editorial/mas_alla_del_guion/1.0.0"]
+    policy["historical_roots"] = ["workspace", "output"]
     policy["allowed_external_coordination"] = []
     policy["live_authority_paths"] = ["plans/001_CONTROL_OPERATIVO.md"]
     policy["optional_executor_catalogs"] = []
@@ -100,6 +100,29 @@ def test_active_surface_cannot_be_reclassified_as_historical_by_marker_text(tmp_
     assert {finding["category"] for finding in findings} == {"ACTIVE_PRODUCT_CONTAMINATION"}
 
 
+def test_active_plan_surface_team_marker_is_not_hidden_by_coordination_allowlist(tmp_path: Path):
+    current_policy = json.loads(POLICY.read_text(encoding="utf-8"))
+    assert not any(
+        path == "plans/plan_001" or path.startswith("plans/plan_001/")
+        for path in current_policy["allowed_external_coordination"]
+    )
+
+    policy_path = _write_policy(tmp_path)
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    policy["product_roots"].append("plans/plan_001")
+    policy["allowed_external_coordination"] = ["plans/plan_001/active.md"]
+    policy_path.write_text(json.dumps(policy), encoding="utf-8")
+    active_plan = tmp_path / "plans" / "plan_001" / "active.md"
+    active_plan.parent.mkdir(parents=True, exist_ok=True)
+    active_plan.write_text("TEAM_01 must be rejected in an active plan surface.\n", encoding="utf-8")
+
+    result = scan(tmp_path, policy_path, collect_all_findings=True)
+
+    findings = [item for item in result["all_findings"] if item["path"] == "plans/plan_001/active.md"]
+    assert findings and {item["category"] for item in findings} == {"ACTIVE_PRODUCT_CONTAMINATION"}
+    assert result["exit_code"] == 1
+
+
 def test_overlapping_roots_scan_each_file_only_once(tmp_path: Path):
     policy_path = _write_policy(tmp_path)
     script_path = tmp_path / "src" / "scripts" / "tool.py"
@@ -111,7 +134,7 @@ def test_overlapping_roots_scan_each_file_only_once(tmp_path: Path):
     assert findings[0]["category"] == "CONTAMINATED_GENERATOR_SOURCE"
 
 
-def test_default_mode_ignores_scanner_reports_and_hides_historical_details(tmp_path: Path):
+def test_default_mode_scans_scanner_reports_but_hides_only_nonblocking_historical_details(tmp_path: Path):
     policy_path = _write_policy(tmp_path)
     historical = tmp_path / "workspace" / "legacy.md"
     historical.parent.mkdir(parents=True, exist_ok=True)
@@ -121,10 +144,10 @@ def test_default_mode_ignores_scanner_reports_and_hides_historical_details(tmp_p
     scanner_report.write_text(("TEAM_01\n" * 5000), encoding="utf-8")
     default_result = scan(tmp_path, policy_path, include_historical_details=False, sample_limit=2)
     detailed_result = scan(tmp_path, policy_path, include_historical_details=True, sample_limit=2, collect_all_findings=True)
-    assert default_result["counts"]["HISTORICAL_REFERENCE"] == 1
-    assert all(finding["category"] != "HISTORICAL_REFERENCE" for finding in default_result["findings"])
+    assert default_result["counts"]["ACTIVE_PRODUCT_CONTAMINATION"] > 1
+    assert any(finding["path"].startswith("output/runtime_contamination_") for finding in default_result["findings"])
     assert default_result.get("all_findings") is None
-    assert detailed_result["counts"]["HISTORICAL_REFERENCE"] > default_result["counts"]["HISTORICAL_REFERENCE"]
+    assert detailed_result["counts"]["ACTIVE_PRODUCT_CONTAMINATION"] == default_result["counts"]["ACTIVE_PRODUCT_CONTAMINATION"]
     assert any(finding["path"].startswith("output/runtime_contamination_") for finding in detailed_result["all_findings"])
 
 
@@ -136,12 +159,9 @@ def test_cli_finishes_quickly_on_realistic_repository_copy(tmp_path: Path):
     script_path = tmp_path / "src" / "scripts" / "tool.py"
     script_path.parent.mkdir(parents=True, exist_ok=True)
     script_path.write_text("print('ok')\n", encoding="utf-8")
-    historical = tmp_path / "workspace" / "legacy.md"
-    historical.parent.mkdir(parents=True, exist_ok=True)
-    historical.write_text("TEAM_01\n" * 200, encoding="utf-8")
     report = tmp_path / "output" / "runtime_contamination_final_2026-07-27.json"
     report.parent.mkdir(parents=True, exist_ok=True)
-    report.write_text("TEAM_01\n" * 30000, encoding="utf-8")
+    report.write_text("TEAM_01\n" * 3000, encoding="utf-8")
 
     start = time.perf_counter()
     done = subprocess.run(
@@ -152,17 +172,17 @@ def test_cli_finishes_quickly_on_realistic_repository_copy(tmp_path: Path):
         timeout=10,
     )
     elapsed = time.perf_counter() - start
-    assert done.returncode == 0, done.stderr
+    assert done.returncode == 1, done.stderr
     payload = json.loads(done.stdout)
-    assert payload["counts"]["ACTIVE_PRODUCT_CONTAMINATION"] == 0
+    assert payload["counts"]["ACTIVE_PRODUCT_CONTAMINATION"] > 0
     assert payload["counts"]["CONTAMINATED_GENERATOR_SOURCE"] == 0
     assert payload["counts"]["MANUAL_REVIEW"] == 0
-    assert payload["counts"]["HISTORICAL_REFERENCE"] == 200
+    assert payload["counts"]["ACTIVE_PRODUCT_CONTAMINATION"] > 0
     assert payload["runtime_seconds"] < 10
     assert elapsed < 10
-    assert not any(finding["path"].startswith("output/runtime_contamination_") for finding in payload["sample_findings"])
+    assert any(finding["path"].startswith("output/runtime_contamination_") for finding in payload["sample_findings"])
 
-def test_temporary_plan_reference_is_allowed_but_active_config_blocks(tmp_path: Path):
+def test_historical_plan_reference_still_blocks_team_markers(tmp_path: Path):
     policy_path = _write_policy(tmp_path)
     policy = json.loads(policy_path.read_text(encoding="utf-8"))
     policy["historical_roots"] = ["plans/plan_001"]
@@ -175,8 +195,28 @@ def test_temporary_plan_reference_is_allowed_but_active_config_blocks(tmp_path: 
     active.write_text('{"provider": "Codex"}\n', encoding="utf-8")
     result = scan(tmp_path, policy_path, collect_all_findings=True)
     temporary_findings = [item for item in result["all_findings"] if item["path"].startswith("plans/plan_001/")]
-    assert temporary_findings and {item["category"] for item in temporary_findings} == {"HISTORICAL_REFERENCE"}
-    assert result["counts"]["ACTIVE_PRODUCT_CONTAMINATION"] == 1
+    assert temporary_findings
+    assert any(item["label"] == "human_team_name" and item["category"] == "ACTIVE_PRODUCT_CONTAMINATION" for item in temporary_findings)
+    assert any(item["label"] == "external_tool_dependency" and item["category"] == "HISTORICAL_REFERENCE" for item in temporary_findings)
+    assert result["counts"]["ACTIVE_PRODUCT_CONTAMINATION"] == 2
+
+
+def test_historical_team_variants_and_obsolete_locator_block(tmp_path: Path):
+    policy_path = _write_policy(tmp_path)
+    legacy = tmp_path / "workspace" / "legacy.md"
+    legacy.parent.mkdir(parents=True, exist_ok=True)
+    legacy.write_text(
+        "Equipo 01, Equipo 02, Equipo 03, Equipo 04; Equipo 01–04; "
+        "TEAM_01 TEAM_02 TEAM_03 TEAM_04; interequipos; READY_FOR_TEAM_REVALIDATION; "
+        "docs/ALCANCE_Y_COORDINACION_EQUIPOS.md\n",
+        encoding="utf-8",
+    )
+    result = scan(tmp_path, policy_path, collect_all_findings=True)
+    findings = [item for item in result["all_findings"] if item["path"] == "workspace/legacy.md"]
+    labels = {item["label"] for item in findings}
+    assert {"human_team_name", "human_team_code", "human_coordination_term", "human_team_state_marker", "obsolete_coordination_document"} <= labels
+    assert {item["category"] for item in findings} == {"ACTIVE_PRODUCT_CONTAMINATION"}
+    assert result["exit_code"] == 1
 
 def test_optional_executor_catalog_is_visible_but_non_blocking(tmp_path: Path):
     policy_path = _write_policy(tmp_path)

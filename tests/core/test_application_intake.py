@@ -22,7 +22,7 @@ from src.core.contract_validation import validate_against_schema
 
 PROFILE = {
     "ACTIVE_PROFILE_ID": "mas_alla_del_guion",
-    "ACTIVE_PROFILE_VERSION": "1.2.1",
+    "ACTIVE_PROFILE_VERSION": "1.2.2",
     "profile_checksum": "a" * 64,
 }
 

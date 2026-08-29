@@ -282,9 +282,9 @@ class TestB2Harness(unittest.TestCase):
     def test_gate0_portable_path_does_not_require_local_settings_or_vault(self):
         with self.tempdir("gate0_portable") as temp:
             root = Path(temp)
-            for relative in (".agent/rules", ".agent/skills", ".agent/workflows", "templates", "workspace", "config"):
+            for relative in (".agent/rules", ".agent/skills", ".agent/workflows", "templates", "config"):
                 (root / relative).mkdir(parents=True)
-            for name in ("00_reglas_globales.md", "01_formato_outputs.md", "02_reglas_notebooklm.md"):
+            for name in ("00_reglas_globales.md", "01_formato_outputs.md"):
                 (root / ".agent/rules" / name).write_text("rule", encoding="utf-8")
             with patch.object(gate0_auditoria, "REPO_ROOT", root), patch.object(gate0_integridad, "REPO_ROOT", root), patch.object(
                 gate0_integridad, "scan", return_value={"exit_code": 0}
@@ -301,9 +301,9 @@ class TestB2Harness(unittest.TestCase):
             root = Path(temp); vault = root / "vault"; index = vault / "channel/index/episodes_index.json"
             index.parent.mkdir(parents=True); index.write_text(json.dumps({"episodes": []}), encoding="utf-8")
             (root / "config").mkdir(); (root / "config/local_settings.json").write_text(json.dumps({"vault_root": str(vault), "channel_id": "channel"}), encoding="utf-8")
-            for relative in (".agent/rules", ".agent/skills", ".agent/workflows", "templates", "workspace"):
+            for relative in (".agent/rules", ".agent/skills", ".agent/workflows", "templates"):
                 (root / relative).mkdir(parents=True)
-            for name in ("00_reglas_globales.md", "01_formato_outputs.md", "02_reglas_notebooklm.md"):
+            for name in ("00_reglas_globales.md", "01_formato_outputs.md"):
                 (root / ".agent/rules" / name).write_text("rule", encoding="utf-8")
             with patch.object(gate0_auditoria, "REPO_ROOT", root), patch.object(gate0_integridad, "REPO_ROOT", root), patch.object(
                 gate0_integridad, "scan", return_value={"exit_code": 0}

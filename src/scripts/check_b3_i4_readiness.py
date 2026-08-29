@@ -15,10 +15,21 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.core.contract_validation import validate_against_schema
+from src.core.editorial_profile_registry import load_active_profile_authority
 
 
 DEFAULT_MANIFEST = ROOT / "profiles/voice/corpus_manifest.json"
-DEFAULT_PROFILE = ROOT / "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json"
+
+
+def resolve_active_profile_path(repository_root: Path) -> Path:
+    """Resolve the active payload through the canonical pointer and registry."""
+    pointer = load_active_profile_authority() if repository_root.resolve() == ROOT.resolve() else json.loads(
+        (repository_root / "config" / "active_editorial_profile.json").read_text(encoding="utf-8")
+    )
+    registry = json.loads((repository_root / "config" / "editorial_profile_registry.json").read_text(encoding="utf-8"))
+    key = f"{pointer['ACTIVE_PROFILE_ID']}@{pointer['ACTIVE_PROFILE_VERSION']}"
+    entry = registry["profiles"][key]
+    return repository_root / entry["profile_path"]
 
 
 def _safe_sample_path(locator: str, repository_root: Path) -> Path | None:
@@ -98,10 +109,11 @@ def assess_manifest(manifest_path: Path, profile_path: Path, repository_root: Pa
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
-    parser.add_argument("--profile", type=Path, default=DEFAULT_PROFILE)
+    parser.add_argument("--profile", type=Path)
     parser.add_argument("--repository-root", type=Path, default=ROOT)
     args = parser.parse_args(argv)
-    result = assess_manifest(args.manifest, args.profile, args.repository_root)
+    profile_path = args.profile or resolve_active_profile_path(args.repository_root)
+    result = assess_manifest(args.manifest, profile_path, args.repository_root)
     for key in (
         "VOICE_EVIDENCE_LEVEL",
         "AUTHENTIC_EDITORIAL_WRITING_SAMPLE_STATUS",

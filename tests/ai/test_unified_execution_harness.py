@@ -59,7 +59,7 @@ def _contractual_producer_smoke_input() -> dict[str, object]:
     return {
         "mode": "CONTROLLED_SMOKE",
         "episode_id": "SMOKE-CONTRACTUAL",
-        "active_editorial_profile_reference": {"profile_id": "mas_alla_del_guion", "version": "1.2.1"},
+        "active_editorial_profile_reference": {"profile_id": "mas_alla_del_guion", "version": "1.2.2"},
         "episode_brief": {"brief_id": "brief-smoke", "title": "Smoke contractual"},
         "research_pack": {"research_id": "research-smoke"},
         "source_access_and_evidence_report": {"evidence_report_id": "evidence-smoke"},

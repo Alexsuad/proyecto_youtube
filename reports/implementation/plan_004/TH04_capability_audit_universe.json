@@ -7,37 +7,68 @@
       ],
       "candidate_id": "B5_I2_SEMANTIC_AUDITOR",
       "canonical_identity": "B5_I2_SEMANTIC_AUDITOR",
-      "classification_reason": "Routing-declared candidate absent from canonical registry.",
-      "current_registry_presence": false,
+      "classification_reason": "Canonical capability registry entry.",
+      "current_registry_presence": true,
       "disposition": "CURRENT",
       "evidence_refs": [
-        "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR"
+        "config/active_editorial_profile.json",
+        "config/agent_execution_profiles.json",
+        "config/capability_registry.json",
+        "config/capability_routing.yaml",
+        "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR",
+        "config/editorial_profile_registry.json",
+        "config/skill_catalog.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "src/scripts/run_b5_i2_semantic_audit.py"
       ],
       "inconsistencies": [],
-      "maturity_observed": null,
-      "maturity_observed_raw": null,
-      "object_class": "UNRESOLVED_CANDIDATE",
+      "maturity_observed": "IMPLEMENTED",
+      "maturity_observed_raw": "IMPLEMENTED",
+      "object_class": "EXECUTABLE_CAPABILITY",
       "observed_refs": {
-        "contracts": [],
-        "implementation": [],
-        "profiles": [],
+        "contracts": [
+          "schemas/b5_i2_semantic_sufficiency_audit.json"
+        ],
+        "implementation": [
+          "config/active_editorial_profile.json",
+          "config/editorial_profile_registry.json",
+          "config/skill_catalog.json",
+          "src/scripts/run_b5_i2_semantic_audit.py"
+        ],
+        "profiles": [
+          "config/active_editorial_profile.json",
+          "config/agent_execution_profiles.json",
+          "config/editorial_profile_registry.json"
+        ],
         "prompts": [],
         "roles": [],
         "routes": [
+          "config/capability_routing.yaml",
           "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR"
         ],
         "tests": []
       },
       "observed_tests": [],
       "owner_observation": {
-        "status": "UNRESOLVED"
+        "decision_authority": "SCRIPT_PRODUCT_AUDITOR_SEMANTIC_AUDIT_ONLY",
+        "functional_authority_domain": "SCRIPT_PRODUCT",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
       },
-      "registry_state": "UNREGISTERED",
-      "resolved_artifacts": [],
+      "registry_state": "REGISTERED",
+      "resolved_artifacts": [
+        "config/active_editorial_profile.json",
+        "config/agent_execution_profiles.json",
+        "config/capability_routing.yaml",
+        "config/editorial_profile_registry.json",
+        "config/skill_catalog.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "src/scripts/run_b5_i2_semantic_audit.py"
+      ],
       "source_refs": [
+        "config/capability_registry.json",
         "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR"
       ],
-      "source_type": "CAPABILITY_ROUTING"
+      "source_type": "CAPABILITY_REGISTRY"
     },
     {
       "aliases": [
@@ -117,6 +148,82 @@
     },
     {
       "aliases": [
+        "GATE:La convención de outputs de workspace/06 y los contratos auxiliares de workspace/ quedan como referencia histórica; no constituyen gate ni autoridad universal obligatoria."
+      ],
+      "candidate_id": "GATE:La convención de outputs de workspace/06 y los contratos auxiliares de workspace/ quedan como referencia histórica; no constituyen gate ni autoridad universal obligatoria.",
+      "canonical_identity": "GATE_LA_CONVENCIÓN_DE_OUTPUTS_DE_WORKSPACE_06_Y_LOS_CONTRATOS_AUXILIARES_DE_WORKSPACE_QUEDAN_COMO_REFERENCIA_HISTÓRICA_NO_CONSTITUYEN_GATE_NI_AUTORIDAD_UNIVERSAL_OBLIGATORIA",
+      "classification_reason": "Explicitly reachable gate reference; not a capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[5].decision"
+      ],
+      "inconsistencies": [
+        "UNRESOLVED_REFERENCE:La convención de outputs de workspace/06 y los contratos auxiliares de workspace/ quedan como referencia histórica; no constituyen gate ni autoridad universal obligatoria."
+      ],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "GATE",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "UNRESOLVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[5].decision"
+      ],
+      "source_type": "EXPLICIT_REACHABLE_REFERENCE"
+    },
+    {
+      "aliases": [
+        "GATE:La Misión 3 del PLAN 008 retira la apariencia de NotebookLM como autoridad o gate universal; workspace/06 y contratos auxiliares son HISTORICAL_REFERENCE según README."
+      ],
+      "candidate_id": "GATE:La Misión 3 del PLAN 008 retira la apariencia de NotebookLM como autoridad o gate universal; workspace/06 y contratos auxiliares son HISTORICAL_REFERENCE según README.",
+      "canonical_identity": "GATE_LA_MISIÓN_3_DEL_PLAN_008_RETIRA_LA_APARIENCIA_DE_NOTEBOOKLM_COMO_AUTORIDAD_O_GATE_UNIVERSAL_WORKSPACE_06_Y_CONTRATOS_AUXILIARES_SON_HISTORICAL_REFERENCE_SEGÚN_README",
+      "classification_reason": "Explicitly reachable gate reference; not a capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[5].reason"
+      ],
+      "inconsistencies": [
+        "UNRESOLVED_REFERENCE:La Misión 3 del PLAN 008 retira la apariencia de NotebookLM como autoridad o gate universal; workspace/06 y contratos auxiliares son HISTORICAL_REFERENCE según README."
+      ],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "GATE",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "UNRESOLVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[5].reason"
+      ],
+      "source_type": "EXPLICIT_REACHABLE_REFERENCE"
+    },
+    {
+      "aliases": [
         "IDENTITY_DRIFT_AUDIT"
       ],
       "candidate_id": "IDENTITY_DRIFT_AUDIT",
@@ -155,6 +262,48 @@
     },
     {
       "aliases": [
+        "POLICY:config/runtime_contamination_policy.json"
+      ],
+      "candidate_id": "POLICY:config/runtime_contamination_policy.json",
+      "canonical_identity": "POLICY_CONFIG_RUNTIME_CONTAMINATION_POLICY_JSON",
+      "classification_reason": "Explicitly reachable policy reference; not a capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/runtime_contamination_policy.json#false_positive_paths[4]",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "docs/legacy/material_decision_registry.json#decisions[5].evidence_refs[2]"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "POLICY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        "config/runtime_contamination_policy.json"
+      ],
+      "source_refs": [
+        "config/runtime_contamination_policy.json#false_positive_paths[4]",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "docs/legacy/material_decision_registry.json#decisions[5].evidence_refs[2]"
+      ],
+      "source_type": "EXPLICIT_REACHABLE_REFERENCE"
+    },
+    {
+      "aliases": [
         "POLICY:policies/channel_intelligence/topic_belonging_policy.md"
       ],
       "candidate_id": "POLICY:policies/channel_intelligence/topic_belonging_policy.md",
@@ -165,7 +314,8 @@
       "evidence_refs": [
         "config/agent_prompt_registry.json#prompts[10].required_context[3]",
         "config/agent_prompt_registry.json#prompts[11].required_context[3]",
-        "config/capability_registry.json#capabilities[0].dependencies[3]"
+        "config/capability_registry.json#capabilities[0].dependencies[3]",
+        "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[2]"
       ],
       "inconsistencies": [],
       "maturity_observed": null,
@@ -191,7 +341,128 @@
       "source_refs": [
         "config/agent_prompt_registry.json#prompts[10].required_context[3]",
         "config/agent_prompt_registry.json#prompts[11].required_context[3]",
-        "config/capability_registry.json#capabilities[0].dependencies[3]"
+        "config/capability_registry.json#capabilities[0].dependencies[3]",
+        "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[2]"
+      ],
+      "source_type": "EXPLICIT_REACHABLE_REFERENCE"
+    },
+    {
+      "aliases": [
+        "POLICY:policies/script_product/main_episode_format_policy.md"
+      ],
+      "candidate_id": "POLICY:policies/script_product/main_episode_format_policy.md",
+      "canonical_identity": "POLICY_POLICIES_SCRIPT_PRODUCT_MAIN_EPISODE_FORMAT_POLICY_MD",
+      "classification_reason": "Explicitly reachable policy reference; not a capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "docs/legacy/material_decision_registry.json#legacy_files[15].autoridad_sucesor",
+        "docs/legacy/material_decision_registry.json#legacy_files[16].autoridad_sucesor",
+        "docs/legacy/material_decision_registry.json#legacy_files[3].autoridad_sucesor"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "POLICY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        "policies/script_product/main_episode_format_policy.md"
+      ],
+      "source_refs": [
+        "docs/legacy/material_decision_registry.json#legacy_files[15].autoridad_sucesor",
+        "docs/legacy/material_decision_registry.json#legacy_files[16].autoridad_sucesor",
+        "docs/legacy/material_decision_registry.json#legacy_files[3].autoridad_sucesor"
+      ],
+      "source_type": "EXPLICIT_REACHABLE_REFERENCE"
+    },
+    {
+      "aliases": [
+        "POLICY:workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md"
+      ],
+      "candidate_id": "POLICY:workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md",
+      "canonical_identity": "POLICY_WORKSPACE_POLICY_POLICY_DETECCION_PATRONES_Y_CLICHES_V2_MD",
+      "classification_reason": "Explicitly reachable policy reference; not a capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[6].evidence_refs[0]",
+        "docs/legacy/material_decision_registry.json#legacy_files[15].file_path"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "POLICY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [
+        "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md"
+      ],
+      "source_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[6].evidence_refs[0]",
+        "docs/legacy/material_decision_registry.json#legacy_files[15].file_path"
+      ],
+      "source_type": "EXPLICIT_REACHABLE_REFERENCE"
+    },
+    {
+      "aliases": [
+        "POLICY:workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md y templates/evento_template_v2.md (material editorial legacy omitido en el índice inicial)"
+      ],
+      "candidate_id": "POLICY:workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md y templates/evento_template_v2.md (material editorial legacy omitido en el índice inicial)",
+      "canonical_identity": "POLICY_WORKSPACE_POLICY_POLICY_DETECCION_PATRONES_Y_CLICHES_V2_MD_Y_TEMPLATES_EVENTO_TEMPLATE_V2_MD_MATERIAL_EDITORIAL_LEGACY_OMITIDO_EN_EL_ÍNDICE_INICIAL",
+      "classification_reason": "Explicitly reachable policy reference; not a capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[6].subject_ref"
+      ],
+      "inconsistencies": [
+        "UNRESOLVED_REFERENCE:workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md y templates/evento_template_v2.md (material editorial legacy omitido en el índice inicial)"
+      ],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "POLICY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "UNRESOLVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[6].subject_ref"
       ],
       "source_type": "EXPLICIT_REACHABLE_REFERENCE"
     },
@@ -307,6 +578,114 @@
     },
     {
       "aliases": [
+        "PROFILE:EDITOR"
+      ],
+      "candidate_id": "PROFILE:EDITOR",
+      "canonical_identity": "PROFILE_EDITOR",
+      "classification_reason": "Execution profile is routing configuration, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "source_type": "EXECUTION_PROFILE_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROFILE:NARRATIVE_ARCHITECTURE"
+      ],
+      "candidate_id": "PROFILE:NARRATIVE_ARCHITECTURE",
+      "canonical_identity": "PROFILE_NARRATIVE_ARCHITECTURE",
+      "classification_reason": "Execution profile is routing configuration, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "source_type": "EXECUTION_PROFILE_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROFILE:RESEARCH_AND_CURATION"
+      ],
+      "candidate_id": "PROFILE:RESEARCH_AND_CURATION",
+      "canonical_identity": "PROFILE_RESEARCH_AND_CURATION",
+      "classification_reason": "Execution profile is routing configuration, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "source_type": "EXECUTION_PROFILE_REGISTRY"
+    },
+    {
+      "aliases": [
         "PROFILE:SCRIPT_PRODUCT_AUDITOR"
       ],
       "candidate_id": "PROFILE:SCRIPT_PRODUCT_AUDITOR",
@@ -347,6 +726,42 @@
       ],
       "candidate_id": "PROFILE:SCRIPT_PRODUCT_PRODUCER",
       "canonical_identity": "PROFILE_SCRIPT_PRODUCT_PRODUCER",
+      "classification_reason": "Execution profile is routing configuration, not a product capability.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "ORCHESTRATION_ONLY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "status": "UNRESOLVED"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "source_type": "EXECUTION_PROFILE_REGISTRY"
+    },
+    {
+      "aliases": [
+        "PROFILE:WRITING"
+      ],
+      "candidate_id": "PROFILE:WRITING",
+      "canonical_identity": "PROFILE_WRITING",
       "classification_reason": "Execution profile is routing configuration, not a product capability.",
       "current_registry_presence": false,
       "disposition": "CURRENT",
@@ -1037,6 +1452,43 @@
       ],
       "candidate_id": "ROLE:RESEARCH_AND_CURATION",
       "canonical_identity": "ROLE_RESEARCH_AND_CURATION",
+      "classification_reason": "Registered responsibility is not a capability by itself.",
+      "current_registry_presence": false,
+      "disposition": "CURRENT",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "inconsistencies": [],
+      "maturity_observed": null,
+      "maturity_observed_raw": null,
+      "object_class": "NON_EXECUTABLE_RESPONSIBILITY",
+      "observed_refs": {
+        "contracts": [],
+        "implementation": [],
+        "profiles": [],
+        "prompts": [],
+        "roles": [],
+        "routes": [],
+        "tests": []
+      },
+      "observed_tests": [],
+      "owner_observation": {
+        "functional_authority_domain": "SCRIPT_PRODUCT",
+        "status": "RESOLVED_FROM_CANONICAL_FIELD"
+      },
+      "registry_state": "NOT_OBSERVED",
+      "resolved_artifacts": [],
+      "source_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "source_type": "RESPONSIBILITY_REGISTRY"
+    },
+    {
+      "aliases": [
+        "ROLE:SCRIPT_PRODUCT_AUDITOR"
+      ],
+      "candidate_id": "ROLE:SCRIPT_PRODUCT_AUDITOR",
+      "canonical_identity": "ROLE_SCRIPT_PRODUCT_AUDITOR",
       "classification_reason": "Registered responsibility is not a capability by itself.",
       "current_registry_presence": false,
       "disposition": "CURRENT",
@@ -2213,13 +2665,17 @@
         "config/capability_routing.yaml",
         "config/capability_routing.yaml#TOPIC_BELONGING_ASSESSMENT",
         "config/editorial_profile_registry.json",
+        "docs/legacy/material_decision_registry.json",
         "policies/channel_intelligence/topic_belonging_policy.md",
         "profiles/voice/corpus_manifest.json",
+        "schemas/topic_belonging_assessment.json",
         "schemas/topic_belonging_decision.json",
         "schemas/topic_belonging_input.json",
         "schemas/topic_belonging_owner_decision.json",
+        "src/application/topic_belonging.py",
         "src/scripts/channel_intelligence.py",
-        "src/scripts/topic_belonging_flow.py"
+        "src/scripts/topic_belonging_flow.py",
+        "tests/harness/test_plan009_m1_vertical.py"
       ],
       "inconsistencies": [],
       "maturity_observed": "IMPLEMENTED",
@@ -2227,17 +2683,21 @@
       "object_class": "EXECUTABLE_CAPABILITY",
       "observed_refs": {
         "contracts": [
+          "schemas/topic_belonging_assessment.json",
           "schemas/topic_belonging_decision.json",
           "schemas/topic_belonging_input.json"
         ],
         "implementation": [
           "config/active_editorial_profile.json",
           "config/editorial_profile_registry.json",
+          "docs/legacy/material_decision_registry.json",
           "policies/channel_intelligence/topic_belonging_policy.md",
           "profiles/voice/corpus_manifest.json",
           "schemas/topic_belonging_owner_decision.json",
+          "src/application/topic_belonging.py",
           "src/scripts/channel_intelligence.py",
-          "src/scripts/topic_belonging_flow.py"
+          "src/scripts/topic_belonging_flow.py",
+          "tests/harness/test_plan009_m1_vertical.py"
         ],
         "profiles": [
           "config/active_editorial_profile.json",
@@ -2252,7 +2712,9 @@
         ],
         "tests": []
       },
-      "observed_tests": [],
+      "observed_tests": [
+        "tests/harness/test_plan009_m1_vertical.py"
+      ],
       "owner_observation": {
         "decision_authority": "CHANNEL_INTELLIGENCE_REVIEWER_FOR_ORDINARY_TOPICS",
         "functional_authority_domain": "CHANNEL_INTELLIGENCE",
@@ -2264,13 +2726,17 @@
         "config/agent_execution_profiles.json",
         "config/capability_routing.yaml",
         "config/editorial_profile_registry.json",
+        "docs/legacy/material_decision_registry.json",
         "policies/channel_intelligence/topic_belonging_policy.md",
         "profiles/voice/corpus_manifest.json",
+        "schemas/topic_belonging_assessment.json",
         "schemas/topic_belonging_decision.json",
         "schemas/topic_belonging_input.json",
         "schemas/topic_belonging_owner_decision.json",
+        "src/application/topic_belonging.py",
         "src/scripts/channel_intelligence.py",
-        "src/scripts/topic_belonging_flow.py"
+        "src/scripts/topic_belonging_flow.py",
+        "tests/harness/test_plan009_m1_vertical.py"
       ],
       "source_refs": [
         "config/capability_registry.json",
@@ -2365,11 +2831,11 @@
     "config/capability_routing.yaml",
     "config/skill_catalog.json"
   ],
-  "generated_at": "2026-08-11T00:00:00Z",
+  "generated_at": "2026-08-29T09:50:00Z",
   "limitations": [],
   "mission_id": "TH-04",
   "plan_id": "PLAN_004",
-  "repository_revision": "fd594e032bcab8d1567e7351223eca5d8e248d20",
+  "repository_revision": "7e788c8430070da37bd12d125b5a78e0c6edee71",
   "resolved_references": [
     {
       "object_class": null,
@@ -2555,11 +3021,23 @@
       "provenance_chain": [
         "config/capability_registry.json",
         "config/capability_registry.json#capabilities[0].contract_refs[1]",
+        "schemas/topic_belonging_assessment.json"
+      ],
+      "reference": "schemas/topic_belonging_assessment.json",
+      "resolved_path": "schemas/topic_belonging_assessment.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].contract_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].contract_refs[2]",
         "schemas/topic_belonging_decision.json"
       ],
       "reference": "schemas/topic_belonging_decision.json",
       "resolved_path": "schemas/topic_belonging_decision.json",
-      "source_ref": "config/capability_registry.json#capabilities[0].contract_refs[1]",
+      "source_ref": "config/capability_registry.json#capabilities[0].contract_refs[2]",
       "status": "RESOLVED"
     },
     {
@@ -2626,6 +3104,18 @@
       "object_class": null,
       "provenance_chain": [
         "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].evidence_refs[0]",
+        "tests/harness/test_plan009_m1_vertical.py"
+      ],
+      "reference": "tests/harness/test_plan009_m1_vertical.py",
+      "resolved_path": "tests/harness/test_plan009_m1_vertical.py",
+      "source_ref": "config/capability_registry.json#capabilities[0].evidence_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
         "config/capability_registry.json#capabilities[0].execution_profile_refs[0]",
         "config/agent_execution_profiles.json"
       ],
@@ -2639,11 +3129,35 @@
       "provenance_chain": [
         "config/capability_registry.json",
         "config/capability_registry.json#capabilities[0].implementation_refs[0]",
+        "src/application/topic_belonging.py"
+      ],
+      "reference": "src/application/topic_belonging.py",
+      "resolved_path": "src/application/topic_belonging.py",
+      "source_ref": "config/capability_registry.json#capabilities[0].implementation_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].implementation_refs[1]",
         "src/scripts/channel_intelligence.py"
       ],
       "reference": "src/scripts/channel_intelligence.py",
       "resolved_path": "src/scripts/channel_intelligence.py",
-      "source_ref": "config/capability_registry.json#capabilities[0].implementation_refs[0]",
+      "source_ref": "config/capability_registry.json#capabilities[0].implementation_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].implementation_refs[2]",
+        "src/scripts/topic_belonging_flow.py"
+      ],
+      "reference": "src/scripts/topic_belonging_flow.py",
+      "resolved_path": "src/scripts/topic_belonging_flow.py",
+      "source_ref": "config/capability_registry.json#capabilities[0].implementation_refs[2]",
       "status": "RESOLVED"
     },
     {
@@ -2656,6 +3170,18 @@
       "reference": "schemas/topic_belonging_input.json",
       "resolved_path": "schemas/topic_belonging_input.json",
       "source_ref": "config/capability_registry.json#capabilities[0].input_contract",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json"
+      ],
+      "reference": "docs/legacy/material_decision_registry.json",
+      "resolved_path": "docs/legacy/material_decision_registry.json",
+      "source_ref": "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
       "status": "RESOLVED"
     },
     {
@@ -2710,6 +3236,126 @@
       "object_class": null,
       "provenance_chain": [
         "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json"
+      ],
+      "reference": "schemas/b5_i2_semantic_sufficiency_audit.json",
+      "resolved_path": "schemas/b5_i2_semantic_sufficiency_audit.json",
+      "source_ref": "config/capability_registry.json#capabilities[1].contract_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].dependencies[0]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/capability_registry.json#capabilities[1].dependencies[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].dependencies[1]",
+        "config/editorial_profile_registry.json"
+      ],
+      "reference": "config/editorial_profile_registry.json",
+      "resolved_path": "config/editorial_profile_registry.json",
+      "source_ref": "config/capability_registry.json#capabilities[1].dependencies[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].dependencies[2]",
+        "config/skill_catalog.json"
+      ],
+      "reference": "config/skill_catalog.json",
+      "resolved_path": "config/skill_catalog.json",
+      "source_ref": "config/capability_registry.json#capabilities[1].dependencies[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].execution_profile_refs[0]",
+        "config/agent_execution_profiles.json"
+      ],
+      "reference": "config/agent_execution_profiles.json",
+      "resolved_path": "config/agent_execution_profiles.json",
+      "source_ref": "config/capability_registry.json#capabilities[1].execution_profile_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].implementation_refs[0]",
+        "src/scripts/run_b5_i2_semantic_audit.py"
+      ],
+      "reference": "src/scripts/run_b5_i2_semantic_audit.py",
+      "resolved_path": "src/scripts/run_b5_i2_semantic_audit.py",
+      "source_ref": "config/capability_registry.json#capabilities[1].implementation_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].output_contract",
+        "schemas/b5_i2_semantic_sufficiency_audit.json"
+      ],
+      "reference": "schemas/b5_i2_semantic_sufficiency_audit.json",
+      "resolved_path": "schemas/b5_i2_semantic_sufficiency_audit.json",
+      "source_ref": "config/capability_registry.json#capabilities[1].output_contract",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].profile_refs[0]",
+        "config/active_editorial_profile.json"
+      ],
+      "reference": "config/active_editorial_profile.json",
+      "resolved_path": "config/active_editorial_profile.json",
+      "source_ref": "config/capability_registry.json#capabilities[1].profile_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].profile_refs[1]",
+        "config/editorial_profile_registry.json"
+      ],
+      "reference": "config/editorial_profile_registry.json",
+      "resolved_path": "config/editorial_profile_registry.json",
+      "source_ref": "config/capability_registry.json#capabilities[1].profile_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].routing_ref",
+        "config/capability_routing.yaml"
+      ],
+      "reference": "config/capability_routing.yaml",
+      "resolved_path": "config/capability_routing.yaml",
+      "source_ref": "config/capability_registry.json#capabilities[1].routing_ref",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
         "config/capability_registry.json#routing_consumer",
         "config/capability_routing.yaml"
       ],
@@ -2722,11 +3368,23 @@
       "object_class": null,
       "provenance_chain": [
         "config/capability_routing.yaml",
-        "config/capability_routing.yaml#capabilities.TOPIC_BELONGING_ASSESSMENT.entrypoint",
-        "src/scripts/topic_belonging_flow.py"
+        "config/capability_routing.yaml#capabilities.B5_I2_SEMANTIC_AUDITOR.entrypoint",
+        "src/scripts/run_b5_i2_semantic_audit.py"
       ],
-      "reference": "src/scripts/topic_belonging_flow.py",
-      "resolved_path": "src/scripts/topic_belonging_flow.py",
+      "reference": "src/scripts/run_b5_i2_semantic_audit.py",
+      "resolved_path": "src/scripts/run_b5_i2_semantic_audit.py",
+      "source_ref": "config/capability_routing.yaml#capabilities.B5_I2_SEMANTIC_AUDITOR.entrypoint",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_routing.yaml",
+        "config/capability_routing.yaml#capabilities.TOPIC_BELONGING_ASSESSMENT.entrypoint",
+        "src/application/topic_belonging.py"
+      ],
+      "reference": "src/application/topic_belonging.py",
+      "resolved_path": "src/application/topic_belonging.py",
       "source_ref": "config/capability_routing.yaml#capabilities.TOPIC_BELONGING_ASSESSMENT.entrypoint",
       "status": "RESOLVED"
     },
@@ -2736,12 +3394,12 @@
         "config/agent_prompt_registry.json",
         "config/agent_prompt_registry.json#prompts[10].required_context[1]",
         "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.approval_path",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json"
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.approval_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.2/functional_approval.json"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.approval_path",
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.2/functional_approval.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.2/functional_approval.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.approval_path",
       "status": "RESOLVED"
     },
     {
@@ -2750,12 +3408,12 @@
         "config/agent_prompt_registry.json",
         "config/agent_prompt_registry.json#prompts[10].required_context[1]",
         "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json"
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.2/editorial_profile.json"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.2/editorial_profile.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.2/editorial_profile.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.compiled_profile_path",
       "status": "RESOLVED"
     },
     {
@@ -2764,250 +3422,693 @@
         "config/agent_prompt_registry.json",
         "config/agent_prompt_registry.json#prompts[10].required_context[1]",
         "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.pending_decisions[3]"
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.profile.source_lineage[0].locator",
+        "docs/specifications/B3_editorial_profile_functional_specification.md"
       ],
-      "reference": "La versión 1.1.0 incorpora RC-01 a RC-06 y su activación productiva se gobierna por `functional_approval.json`, `technical_validation.json` y `config/active_editorial_profile.json`.",
+      "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.profile.source_lineage[0].locator",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.profile_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/agent_prompt_registry.json",
+        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
+        "config/editorial_profile_registry.json",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.technical_validation_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.2/technical_validation.json"
+      ],
+      "reference": "profiles/editorial/mas_alla_del_guion/1.2.2/technical_validation.json",
+      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.2/technical_validation.json",
+      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.technical_validation_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#field_level_exceptions[0].path",
+        "config/local_settings.json",
+        "config/local_settings.json#vault_root"
+      ],
+      "reference": "C:\\YT_VAULT",
       "resolved_path": null,
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.pending_decisions[3]",
+      "source_ref": "config/local_settings.json#vault_root",
       "status": "UNRESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[0]",
+        "AGENTS.md"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
+      "reference": "AGENTS.md",
+      "resolved_path": "AGENTS.md",
+      "source_ref": "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[0]",
       "status": "RESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[1].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json"
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[10]"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[1].locator",
-      "status": "RESOLVED"
+      "reference": "docs/contracts",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[10]",
+      "status": "UNRESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[2].locator",
-        "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[2].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile_path",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.technical_validation_path",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/technical_validation.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/technical_validation.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/technical_validation.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.technical_validation_path",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.approval_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/functional_approval.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.2.0/functional_approval.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.0/functional_approval.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.approval_path",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.compiled_profile_path",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile.source_lineage[0].locator",
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[11]",
         "docs/specifications/B3_editorial_profile_functional_specification.md"
       ],
       "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
       "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile.source_lineage[0].locator",
+      "source_ref": "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[11]",
       "status": "RESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile.source_lineage[1].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[6]"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile.source_lineage[1].locator",
-      "status": "RESOLVED"
+      "reference": ".agent/rules",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[6]",
+      "status": "UNRESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json"
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[7]"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile_path",
-      "status": "RESOLVED"
+      "reference": ".agent/skills",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[7]",
+      "status": "UNRESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.technical_validation_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/technical_validation.json"
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[8]"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.2.0/technical_validation.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.0/technical_validation.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.technical_validation_path",
-      "status": "RESOLVED"
+      "reference": ".agent/workflows",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[8]",
+      "status": "UNRESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.approval_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/functional_approval.json"
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[9]"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.2.1/functional_approval.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.1/functional_approval.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.approval_path",
-      "status": "RESOLVED"
+      "reference": "docs/product",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#document_classes.ACTIVE_PRODUCT_SURFACE[9]",
+      "status": "UNRESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json"
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#document_classes.LIVE_OPERATIONAL_CONTROL[0]",
+        "plans/001_CONTROL_OPERATIVO.md"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.compiled_profile_path",
+      "reference": "plans/001_CONTROL_OPERATIVO.md",
+      "resolved_path": "plans/001_CONTROL_OPERATIVO.md",
+      "source_ref": "config/runtime_contamination_policy.json#document_classes.LIVE_OPERATIONAL_CONTROL[0]",
       "status": "RESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile.source_lineage[0].locator",
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#document_classes.TEMPORARY_IMPLEMENTATION_PLAN[0]",
+        "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md"
+      ],
+      "reference": "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
+      "resolved_path": "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
+      "source_ref": "config/runtime_contamination_policy.json#document_classes.TEMPORARY_IMPLEMENTATION_PLAN[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#document_classes.TEMPORARY_IMPLEMENTATION_PLAN[1]"
+      ],
+      "reference": "plans/plan_001",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#document_classes.TEMPORARY_IMPLEMENTATION_PLAN[1]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#false_positive_paths[0]",
+        "tests/core/test_runtime_contamination_guard.py"
+      ],
+      "reference": "tests/core/test_runtime_contamination_guard.py",
+      "resolved_path": "tests/core/test_runtime_contamination_guard.py",
+      "source_ref": "config/runtime_contamination_policy.json#false_positive_paths[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#false_positive_paths[1]",
+        "tests/core/test_repair_integrity.py"
+      ],
+      "reference": "tests/core/test_repair_integrity.py",
+      "resolved_path": "tests/core/test_repair_integrity.py",
+      "source_ref": "config/runtime_contamination_policy.json#false_positive_paths[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#false_positive_paths[2]",
+        "tests/core/test_b4_i1_contracts.py"
+      ],
+      "reference": "tests/core/test_b4_i1_contracts.py",
+      "resolved_path": "tests/core/test_b4_i1_contracts.py",
+      "source_ref": "config/runtime_contamination_policy.json#false_positive_paths[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#false_positive_paths[3]",
+        "tests/core/test_b4_i2_agent_prompts.py"
+      ],
+      "reference": "tests/core/test_b4_i2_agent_prompts.py",
+      "resolved_path": "tests/core/test_b4_i2_agent_prompts.py",
+      "source_ref": "config/runtime_contamination_policy.json#false_positive_paths[3]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#false_positive_paths[4]",
+        "config/runtime_contamination_policy.json"
+      ],
+      "reference": "config/runtime_contamination_policy.json",
+      "resolved_path": "config/runtime_contamination_policy.json",
+      "source_ref": "config/runtime_contamination_policy.json#false_positive_paths[4]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#false_positive_paths[5]",
+        "tests/ai/test_r6_b_0_hybrid_runtime.py"
+      ],
+      "reference": "tests/ai/test_r6_b_0_hybrid_runtime.py",
+      "resolved_path": "tests/ai/test_r6_b_0_hybrid_runtime.py",
+      "source_ref": "config/runtime_contamination_policy.json#false_positive_paths[5]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#false_positive_paths[6]",
+        ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md"
+      ],
+      "reference": ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md",
+      "resolved_path": ".agent/skills/skill_verificacion_veracidad_fuente_externa_historica.md",
+      "source_ref": "config/runtime_contamination_policy.json#false_positive_paths[6]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#field_level_exceptions[0].path",
+        "config/local_settings.json"
+      ],
+      "reference": "config/local_settings.json",
+      "resolved_path": "config/local_settings.json",
+      "source_ref": "config/runtime_contamination_policy.json#field_level_exceptions[0].path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#generator_roots[0]"
+      ],
+      "reference": ".agent/skills",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#generator_roots[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#generator_roots[1]"
+      ],
+      "reference": ".agent/workflows",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#generator_roots[1]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#generator_roots[2]"
+      ],
+      "reference": "src/scripts",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#generator_roots[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#historical_roots[3]",
+        ".agent/rules/02_reglas_notebooklm.md"
+      ],
+      "reference": ".agent/rules/02_reglas_notebooklm.md",
+      "resolved_path": ".agent/rules/02_reglas_notebooklm.md",
+      "source_ref": "config/runtime_contamination_policy.json#historical_roots[3]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#historical_roots[4]",
+        "plans/plan_001/B5_PRE_SCRIPT_FOUNDATION.md"
+      ],
+      "reference": "plans/plan_001/B5_PRE_SCRIPT_FOUNDATION.md",
+      "resolved_path": "plans/plan_001/B5_PRE_SCRIPT_FOUNDATION.md",
+      "source_ref": "config/runtime_contamination_policy.json#historical_roots[4]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#historical_roots[5]",
+        "plans/plan_001/R1_IR_TRACEABILITY_MATRIX.md"
+      ],
+      "reference": "plans/plan_001/R1_IR_TRACEABILITY_MATRIX.md",
+      "resolved_path": "plans/plan_001/R1_IR_TRACEABILITY_MATRIX.md",
+      "source_ref": "config/runtime_contamination_policy.json#historical_roots[5]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#live_authority_paths[0]",
+        "plans/001_CONTROL_OPERATIVO.md"
+      ],
+      "reference": "plans/001_CONTROL_OPERATIVO.md",
+      "resolved_path": "plans/001_CONTROL_OPERATIVO.md",
+      "source_ref": "config/runtime_contamination_policy.json#live_authority_paths[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#negative_contamination_assertion_patterns[0]"
+      ],
+      "reference": "assert\\s+[\"'](?:ChatGPT|Antigravity|Codex|OpenCode|NotebookLM)[\"']\\s+not\\s+in",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#negative_contamination_assertion_patterns[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#negative_contamination_assertion_patterns[1]"
+      ],
+      "reference": "FORBIDDEN_PROVIDER_MARKERS\\s*=",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#negative_contamination_assertion_patterns[1]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#negative_contamination_assertion_patterns[2]"
+      ],
+      "reference": "codex\\|opencode\\|chatgpt\\|antigravity\\|notebooklm\\|laboratorios",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#negative_contamination_assertion_patterns[2]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#optional_adapter_implementation_roots[0]"
+      ],
+      "reference": ".opencode/agents",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#optional_adapter_implementation_roots[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#optional_adapter_implementation_roots[1]"
+      ],
+      "reference": ".opencode/commands",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#optional_adapter_implementation_roots[1]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#optional_adapter_test_roots[0]"
+      ],
+      "reference": "tests/opencode",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#optional_adapter_test_roots[0]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#optional_executor_catalogs[0]",
+        "config/agent_execution_profiles.json"
+      ],
+      "reference": "config/agent_execution_profiles.json",
+      "resolved_path": "config/agent_execution_profiles.json",
+      "source_ref": "config/runtime_contamination_policy.json#optional_executor_catalogs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#product_roots[0]",
+        "AGENTS.md"
+      ],
+      "reference": "AGENTS.md",
+      "resolved_path": "AGENTS.md",
+      "source_ref": "config/runtime_contamination_policy.json#product_roots[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#product_roots[10]"
+      ],
+      "reference": "docs/contracts",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#product_roots[10]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#product_roots[11]",
         "docs/specifications/B3_editorial_profile_functional_specification.md"
       ],
       "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
       "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile.source_lineage[0].locator",
+      "source_ref": "config/runtime_contamination_policy.json#product_roots[11]",
       "status": "RESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile.source_lineage[1].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#product_roots[12]",
+        "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile.source_lineage[1].locator",
+      "reference": "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
+      "resolved_path": "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
+      "source_ref": "config/runtime_contamination_policy.json#product_roots[12]",
       "status": "RESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json"
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#product_roots[13]"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile_path",
-      "status": "RESOLVED"
+      "reference": "plans/plan_001",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#product_roots[13]",
+      "status": "UNRESOLVED"
     },
     {
       "object_class": null,
       "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.technical_validation_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/technical_validation.json"
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#product_roots[6]"
       ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.2.1/technical_validation.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.2.1/technical_validation.json",
-      "source_ref": "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.technical_validation_path",
-      "status": "RESOLVED"
+      "reference": ".agent/rules",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#product_roots[6]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#product_roots[7]"
+      ],
+      "reference": ".agent/skills",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#product_roots[7]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#product_roots[8]"
+      ],
+      "reference": ".agent/workflows",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#product_roots[8]",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json",
+        "config/runtime_contamination_policy.json#product_roots[9]"
+      ],
+      "reference": "docs/product",
+      "resolved_path": null,
+      "source_ref": "config/runtime_contamination_policy.json#product_roots[9]",
+      "status": "UNRESOLVED"
     },
     {
       "object_class": null,
@@ -3684,16 +4785,975 @@
     {
       "object_class": null,
       "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[0].decision"
+      ],
+      "reference": "TOPIC_BELONGING_ASSESSMENT queda autorizada exclusivamente para demostraciones controladas R2/B5-I1 destinadas a probar la aplicación; no activa globalmente la capability, no autoriza uso productivo ni autoriza ninguna capability posterior.",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[0].decision",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[0]",
+        "plans/001_CONTROL_OPERATIVO.md"
+      ],
+      "reference": "plans/001_CONTROL_OPERATIVO.md",
+      "resolved_path": "plans/001_CONTROL_OPERATIVO.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[1]",
+        "config/capability_registry.json"
+      ],
+      "reference": "config/capability_registry.json",
+      "resolved_path": "config/capability_registry.json",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[2]",
+        "policies/channel_intelligence/topic_belonging_policy.md"
+      ],
+      "reference": "policies/channel_intelligence/topic_belonging_policy.md",
+      "resolved_path": "policies/channel_intelligence/topic_belonging_policy.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[3]",
+        "schemas/topic_belonging_input.json"
+      ],
+      "reference": "schemas/topic_belonging_input.json",
+      "resolved_path": "schemas/topic_belonging_input.json",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[3]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[4]",
+        "schemas/topic_belonging_decision.json"
+      ],
+      "reference": "schemas/topic_belonging_decision.json",
+      "resolved_path": "schemas/topic_belonging_decision.json",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[4]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].decision"
+      ],
+      "reference": "La documentación legacy material de workspace/ se clasifica como histórica o fuente de migración, no ejecutable, y queda sujeta a la vista per-file derivada de este registro. Ningún documento legacy puede actuar como autoridad activa del runtime.",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[1].decision",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[0]",
+        "README.md"
+      ],
+      "reference": "README.md",
+      "resolved_path": "README.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "config/runtime_contamination_policy.json"
+      ],
+      "reference": "config/runtime_contamination_policy.json",
+      "resolved_path": "config/runtime_contamination_policy.json",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[2]",
+        "src/scripts/check_b3_canonical_consumption.py"
+      ],
+      "reference": "src/scripts/check_b3_canonical_consumption.py",
+      "resolved_path": "src/scripts/check_b3_canonical_consumption.py",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].reason"
+      ],
+      "reference": "La arquitectura vigente consume exclusivamente config/, schemas/, src/, policies/ y profiles/. README clasifica workspace/00 como SUPERSEDED_NON_EXECUTABLE, workspace/01,02,03,05 como MIGRATION_SOURCE y workspace/06 y contratos auxiliares como HISTORICAL_REFERENCE; la política de contaminación de runtime trata workspace/ como raíz histórica.",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[1].reason",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[1].subject_ref"
+      ],
+      "reference": "workspace/* (documentación legacy material)",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[1].subject_ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[2].evidence_refs[0]",
+        "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md"
+      ],
+      "reference": "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
+      "resolved_path": "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[2].evidence_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[2].evidence_refs[1]",
+        "plans/plan_001/B3_perfil_editorial_frontera_canal.md"
+      ],
+      "reference": "plans/plan_001/B3_perfil_editorial_frontera_canal.md",
+      "resolved_path": "plans/plan_001/B3_perfil_editorial_frontera_canal.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[2].evidence_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[2].evidence_refs[2]",
+        "src/scripts/check_b3_canonical_consumption.py"
+      ],
+      "reference": "src/scripts/check_b3_canonical_consumption.py",
+      "resolved_path": "src/scripts/check_b3_canonical_consumption.py",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[2].evidence_refs[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[2].evidence_refs[3]",
+        "tests/harness/test_b3_i3_canonical_consumption.py"
+      ],
+      "reference": "tests/harness/test_b3_i3_canonical_consumption.py",
+      "resolved_path": "tests/harness/test_b3_i3_canonical_consumption.py",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[2].evidence_refs[3]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[3].decision"
+      ],
+      "reference": "El sistema de agentes v1 descrito en workspace/00 queda sustituido por la gobernanza operativa vigente (plans/001_CONTROL_OPERATIVO.md) y la arquitectura del motor agéntico (plans/001_reestructuracion_motor_agentico_editorial_y_harness.md). El archivo se conserva como evidencia histórica no ejecutable.",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[3].decision",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[3].evidence_refs[0]",
+        "README.md"
+      ],
+      "reference": "README.md",
+      "resolved_path": "README.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[3].evidence_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[3].evidence_refs[1]",
+        "plans/001_CONTROL_OPERATIVO.md"
+      ],
+      "reference": "plans/001_CONTROL_OPERATIVO.md",
+      "resolved_path": "plans/001_CONTROL_OPERATIVO.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[3].evidence_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[3].evidence_refs[2]",
+        "AGENTS.md"
+      ],
+      "reference": "AGENTS.md",
+      "resolved_path": "AGENTS.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[3].evidence_refs[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[3].reason"
+      ],
+      "reference": "README clasifica workspace/00 como SUPERSEDED_NON_EXECUTABLE; las nomenclaturas de coordinación humana no constituyen identidades durables del runtime (AGENTS.md).",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[3].reason",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[3].subject_ref",
+        "workspace/00_sistema_agentes_v1.md"
+      ],
+      "reference": "workspace/00_sistema_agentes_v1.md",
+      "resolved_path": "workspace/00_sistema_agentes_v1.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[3].subject_ref",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[4].decision"
+      ],
+      "reference": "La documentación editorial de workspace/01..05c y workspace/07 queda como fuente de migración o referencia histórica, sin autoridad activa; su contenido se conserva como evidencia y no como regla vigente.",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[4].decision",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[4].evidence_refs[0]",
+        "README.md"
+      ],
+      "reference": "README.md",
+      "resolved_path": "README.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[4].evidence_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[4].evidence_refs[1]",
+        "config/editorial_profile_registry.json"
+      ],
+      "reference": "config/editorial_profile_registry.json",
+      "resolved_path": "config/editorial_profile_registry.json",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[4].evidence_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[4].evidence_refs[2]",
+        "src/scripts/check_b3_canonical_consumption.py"
+      ],
+      "reference": "src/scripts/check_b3_canonical_consumption.py",
+      "resolved_path": "src/scripts/check_b3_canonical_consumption.py",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[4].evidence_refs[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[4].evidence_refs[3]",
+        "tests/harness/test_b3_i3_canonical_consumption.py"
+      ],
+      "reference": "tests/harness/test_b3_i3_canonical_consumption.py",
+      "resolved_path": "tests/harness/test_b3_i3_canonical_consumption.py",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[4].evidence_refs[3]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[4].reason"
+      ],
+      "reference": "El contenido editorial vigente reside en config/editorial_profile_registry.json, policies/ y .agent/rules/; workspace/01,02,03,05 es MIGRATION_SOURCE y workspace/04,05c,06,07 es HISTORICAL_REFERENCE. La política de consumo canónico B3-I3 prohíbe consumir estas rutas como fuentes vivas.",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[4].reason",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[4].subject_ref"
+      ],
+      "reference": "workspace/01..05c y workspace/07 (documentación editorial migrada o histórica)",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[4].subject_ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": "GATE",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[5].decision"
+      ],
+      "reference": "La convención de outputs de workspace/06 y los contratos auxiliares de workspace/ quedan como referencia histórica; no constituyen gate ni autoridad universal obligatoria.",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[5].decision",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[5].evidence_refs[0]",
+        "README.md"
+      ],
+      "reference": "README.md",
+      "resolved_path": "README.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[5].evidence_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[5].evidence_refs[1]",
+        "plans/plan_008/008_IMPLEMENTACION_TECNICA_REMEDIACION_LEGACY_Y_TRAZABILIDAD.md"
+      ],
+      "reference": "plans/plan_008/008_IMPLEMENTACION_TECNICA_REMEDIACION_LEGACY_Y_TRAZABILIDAD.md",
+      "resolved_path": "plans/plan_008/008_IMPLEMENTACION_TECNICA_REMEDIACION_LEGACY_Y_TRAZABILIDAD.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[5].evidence_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[5].evidence_refs[2]",
+        "config/runtime_contamination_policy.json"
+      ],
+      "reference": "config/runtime_contamination_policy.json",
+      "resolved_path": "config/runtime_contamination_policy.json",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[5].evidence_refs[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "GATE",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[5].reason"
+      ],
+      "reference": "La Misión 3 del PLAN 008 retira la apariencia de NotebookLM como autoridad o gate universal; workspace/06 y contratos auxiliares son HISTORICAL_REFERENCE según README.",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[5].reason",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[5].subject_ref"
+      ],
+      "reference": "workspace/06_convencion_outputs_y_notebooklm_v1.md y contratos auxiliares de workspace/",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[5].subject_ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[6].evidence_refs[0]",
+        "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md"
+      ],
+      "reference": "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md",
+      "resolved_path": "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[6].evidence_refs[0]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[6].evidence_refs[1]",
+        "templates/evento_template_v2.md"
+      ],
+      "reference": "templates/evento_template_v2.md",
+      "resolved_path": "templates/evento_template_v2.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[6].evidence_refs[1]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[6].evidence_refs[2]",
+        ".agent/workflows/piloto-outline.md"
+      ],
+      "reference": ".agent/workflows/piloto-outline.md",
+      "resolved_path": ".agent/workflows/piloto-outline.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[6].evidence_refs[2]",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[6].reason"
+      ],
+      "reference": "El inventario inicial de la Misión 1 omitió estos dos archivos materiales. El workflow .agent/workflows/piloto-outline.md queda registrado como no ejecutable y diferido; conserva fórmulas legacy solo como evidencia histórica. La sustitución funcional queda anclada a sus hitos futuros y no se activa en PLAN-008.",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[6].reason",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#decisions[6].subject_ref"
+      ],
+      "reference": "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md y templates/evento_template_v2.md (material editorial legacy omitido en el índice inicial)",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#decisions[6].subject_ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[0].autoridad_sucesor",
+        "plans/001_CONTROL_OPERATIVO.md"
+      ],
+      "reference": "plans/001_CONTROL_OPERATIVO.md",
+      "resolved_path": "plans/001_CONTROL_OPERATIVO.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[0].autoridad_sucesor",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[0].file_path",
+        "workspace/00_sistema_agentes_v1.md"
+      ],
+      "reference": "workspace/00_sistema_agentes_v1.md",
+      "resolved_path": "workspace/00_sistema_agentes_v1.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[0].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[10].file_path",
+        "workspace/CONTRATO_NOTEBOOKLM.md"
+      ],
+      "reference": "workspace/CONTRATO_NOTEBOOKLM.md",
+      "resolved_path": "workspace/CONTRATO_NOTEBOOKLM.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[10].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[11].file_path",
+        "workspace/INDICE_EPISODIOS.md"
+      ],
+      "reference": "workspace/INDICE_EPISODIOS.md",
+      "resolved_path": "workspace/INDICE_EPISODIOS.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[11].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[12].file_path",
+        "workspace/LISTA_DE_NO_COPIA.md"
+      ],
+      "reference": "workspace/LISTA_DE_NO_COPIA.md",
+      "resolved_path": "workspace/LISTA_DE_NO_COPIA.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[12].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[13].file_path",
+        "workspace/MAPA_DE_LENTES.md"
+      ],
+      "reference": "workspace/MAPA_DE_LENTES.md",
+      "resolved_path": "workspace/MAPA_DE_LENTES.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[13].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[14].file_path",
+        "reference/estilo_usuario/README.md"
+      ],
+      "reference": "reference/estilo_usuario/README.md",
+      "resolved_path": "reference/estilo_usuario/README.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[14].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[15].autoridad_sucesor",
+        "policies/script_product/main_episode_format_policy.md"
+      ],
+      "reference": "policies/script_product/main_episode_format_policy.md",
+      "resolved_path": "policies/script_product/main_episode_format_policy.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[15].autoridad_sucesor",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[15].duplicacion_material"
+      ],
+      "reference": "Reglas de patrones, clichés, ritmo, cierre y voz; aspectos de voz remiten al perfil activo y la política de spoilers a su integración en B5-I3/B6/B7.5",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[15].duplicacion_material",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[15].file_path",
+        "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md"
+      ],
+      "reference": "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md",
+      "resolved_path": "workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[15].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[16].autoridad_sucesor",
+        "policies/script_product/main_episode_format_policy.md"
+      ],
+      "reference": "policies/script_product/main_episode_format_policy.md",
+      "resolved_path": "policies/script_product/main_episode_format_policy.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[16].autoridad_sucesor",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[16].duplicacion_material"
+      ],
+      "reference": "Estructura de evento legacy (re-hook, proporciones obra/análisis) sustituida por la política de formato vigente",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[16].duplicacion_material",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[16].file_path",
+        "templates/evento_template_v2.md"
+      ],
+      "reference": "templates/evento_template_v2.md",
+      "resolved_path": "templates/evento_template_v2.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[16].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[1].autoridad_sucesor",
+        "config/editorial_profile_registry.json"
+      ],
+      "reference": "config/editorial_profile_registry.json",
+      "resolved_path": "config/editorial_profile_registry.json",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[1].autoridad_sucesor",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[1].file_path",
+        "workspace/01_canal_identidad.md"
+      ],
+      "reference": "workspace/01_canal_identidad.md",
+      "resolved_path": "workspace/01_canal_identidad.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[1].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[2].autoridad_sucesor"
+      ],
+      "reference": ".agent/rules/",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[2].autoridad_sucesor",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[2].duplicacion_material"
+      ],
+      "reference": "Reglas editoriales activas en .agent/rules/ y perfil",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[2].duplicacion_material",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[2].file_path",
+        "workspace/02_reglas_editoriales.md"
+      ],
+      "reference": "workspace/02_reglas_editoriales.md",
+      "resolved_path": "workspace/02_reglas_editoriales.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[2].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": "POLICY",
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[3].autoridad_sucesor",
+        "policies/script_product/main_episode_format_policy.md"
+      ],
+      "reference": "policies/script_product/main_episode_format_policy.md",
+      "resolved_path": "policies/script_product/main_episode_format_policy.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[3].autoridad_sucesor",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[3].file_path",
+        "workspace/03_formato_longform.md"
+      ],
+      "reference": "workspace/03_formato_longform.md",
+      "resolved_path": "workspace/03_formato_longform.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[3].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[4].duplicacion_material"
+      ],
+      "reference": "Política de spoilers pendiente de integración en consumidores canónicos (prerrequisito B5-I3/B6/B7.5)",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[4].duplicacion_material",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[4].file_path",
+        "workspace/04_politica_spoilers.md"
+      ],
+      "reference": "workspace/04_politica_spoilers.md",
+      "resolved_path": "workspace/04_politica_spoilers.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[4].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[5].autoridad_sucesor",
+        "config/editorial_profile_registry.json"
+      ],
+      "reference": "config/editorial_profile_registry.json",
+      "resolved_path": "config/editorial_profile_registry.json",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[5].autoridad_sucesor",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[5].file_path",
+        "workspace/05_estilo_y_voz.md"
+      ],
+      "reference": "workspace/05_estilo_y_voz.md",
+      "resolved_path": "workspace/05_estilo_y_voz.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[5].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[6].file_path",
+        "workspace/05c_voice_profile.md"
+      ],
+      "reference": "workspace/05c_voice_profile.md",
+      "resolved_path": "workspace/05c_voice_profile.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[6].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[7].autoridad_sucesor",
+        ".agent/rules/01_formato_outputs.md"
+      ],
+      "reference": ".agent/rules/01_formato_outputs.md",
+      "resolved_path": ".agent/rules/01_formato_outputs.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[7].autoridad_sucesor",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[7].duplicacion_material"
+      ],
+      "reference": "Convención de outputs activa en .agent/rules/",
+      "resolved_path": null,
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[7].duplicacion_material",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[7].file_path",
+        "workspace/06_convencion_outputs_y_notebooklm_v1.md"
+      ],
+      "reference": "workspace/06_convencion_outputs_y_notebooklm_v1.md",
+      "resolved_path": "workspace/06_convencion_outputs_y_notebooklm_v1.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[7].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[8].file_path",
+        "workspace/07_arquitectura_storage_repo_vs_vault_v1_2.md"
+      ],
+      "reference": "workspace/07_arquitectura_storage_repo_vs_vault_v1_2.md",
+      "resolved_path": "workspace/07_arquitectura_storage_repo_vs_vault_v1_2.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[8].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].material_decision_ref.registry_path",
+        "docs/legacy/material_decision_registry.json",
+        "docs/legacy/material_decision_registry.json#legacy_files[9].file_path",
+        "workspace/CHECKLIST_REVISION_COMPETENCIA.md"
+      ],
+      "reference": "workspace/CHECKLIST_REVISION_COMPETENCIA.md",
+      "resolved_path": "workspace/CHECKLIST_REVISION_COMPETENCIA.md",
+      "source_ref": "docs/legacy/material_decision_registry.json#legacy_files[9].file_path",
+      "status": "RESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
         "config/subagent_registry.json",
         "config/subagent_registry.json#agents[0].provenance.registry_path",
         "output/execution_provenance_registry.json",
-        "output/execution_provenance_registry.json#attempts[0].evidence_path",
-        "output/r6_b/control_valid_producer_retry.json"
+        "output/execution_provenance_registry.json#attempts[0].evidence_path"
       ],
       "reference": "output/r6_b/control_valid_producer_retry.json",
-      "resolved_path": "output/r6_b/control_valid_producer_retry.json",
+      "resolved_path": null,
       "source_ref": "output/execution_provenance_registry.json#attempts[0].evidence_path",
-      "status": "RESOLVED"
+      "status": "UNRESOLVED"
     },
     {
       "object_class": null,
@@ -3701,43 +5761,11 @@
         "config/subagent_registry.json",
         "config/subagent_registry.json#agents[0].provenance.registry_path",
         "output/execution_provenance_registry.json",
-        "output/execution_provenance_registry.json#attempts[1].evidence_path",
-        "output/r6_b/control_valid_producer.json"
+        "output/execution_provenance_registry.json#attempts[1].evidence_path"
       ],
       "reference": "output/r6_b/control_valid_producer.json",
-      "resolved_path": "output/r6_b/control_valid_producer.json",
+      "resolved_path": null,
       "source_ref": "output/execution_provenance_registry.json#attempts[1].evidence_path",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[2].locator",
-        "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
-        "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json#source_lineage[0].locator",
-        "docs/specifications/B3_especificacion_funcional_equipo_01.md"
-      ],
-      "reference": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
-      "resolved_path": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json#source_lineage[0].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.pending_decisions[3]"
-      ],
-      "reference": "La versión 1.1.0 incorpora RC-01 a RC-06 y su activación productiva se gobierna por `functional_approval.json`, `technical_validation.json` y `config/active_editorial_profile.json`.",
-      "resolved_path": null,
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.pending_decisions[3]",
       "status": "UNRESOLVED"
     },
     {
@@ -3746,125 +5774,14 @@
         "config/agent_prompt_registry.json",
         "config/agent_prompt_registry.json#prompts[10].required_context[1]",
         "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[0].locator",
-        "docs/specifications/B3_especificacion_funcional_equipo_01.md"
-      ],
-      "reference": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
-      "resolved_path": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[0].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[1].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[1].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[2].locator",
-        "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json#profile.source_lineage[2].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#pending_decisions[3]"
-      ],
-      "reference": "La versión 1.1.0 incorpora RC-01 a RC-06 y su activación productiva se gobierna por `functional_approval.json`, `technical_validation.json` y `config/active_editorial_profile.json`.",
-      "resolved_path": null,
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#pending_decisions[3]",
-      "status": "UNRESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[0].locator",
-        "docs/specifications/B3_especificacion_funcional_equipo_01.md"
-      ],
-      "reference": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
-      "resolved_path": "docs/specifications/B3_especificacion_funcional_equipo_01.md",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[0].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[1].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[1].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.1.0.profile.source_lineage[0].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[2].locator",
-        "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json#source_lineage[2].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json#profile.source_lineage[0].locator",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.compiled_profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.2/editorial_profile.json",
+        "profiles/editorial/mas_alla_del_guion/1.2.2/editorial_profile.json#profile.source_lineage[0].locator",
         "docs/specifications/B3_editorial_profile_functional_specification.md"
       ],
       "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
       "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json#profile.source_lineage[0].locator",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.2/editorial_profile.json#profile.source_lineage[0].locator",
       "status": "RESOLVED"
     },
     {
@@ -3873,110 +5790,14 @@
         "config/agent_prompt_registry.json",
         "config/agent_prompt_registry.json#prompts[10].required_context[1]",
         "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json#profile.source_lineage[1].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.0/editorial_profile.json#profile.source_lineage[1].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json#source_lineage[0].locator",
+        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.2.profile_path",
+        "profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json",
+        "profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json#source_lineage[0].locator",
         "docs/specifications/B3_editorial_profile_functional_specification.md"
       ],
       "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
       "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json#source_lineage[0].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.0.profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json",
-        "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json#source_lineage[1].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.0/profile_payload.json#source_lineage[1].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json#profile.source_lineage[0].locator",
-        "docs/specifications/B3_editorial_profile_functional_specification.md"
-      ],
-      "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
-      "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json#profile.source_lineage[0].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.compiled_profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json#profile.source_lineage[1].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.1/editorial_profile.json#profile.source_lineage[1].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json#source_lineage[0].locator",
-        "docs/specifications/B3_editorial_profile_functional_specification.md"
-      ],
-      "reference": "docs/specifications/B3_editorial_profile_functional_specification.md",
-      "resolved_path": "docs/specifications/B3_editorial_profile_functional_specification.md",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json#source_lineage[0].locator",
-      "status": "RESOLVED"
-    },
-    {
-      "object_class": null,
-      "provenance_chain": [
-        "config/agent_prompt_registry.json",
-        "config/agent_prompt_registry.json#prompts[10].required_context[1]",
-        "config/editorial_profile_registry.json",
-        "config/editorial_profile_registry.json#profiles.mas_alla_del_guion@1.2.1.profile_path",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json",
-        "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json#source_lineage[1].locator",
-        "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json"
-      ],
-      "reference": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "resolved_path": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.1/profile_payload.json#source_lineage[1].locator",
+      "source_ref": "profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json#source_lineage[0].locator",
       "status": "RESOLVED"
     },
     {
@@ -4038,6 +5859,149 @@
     {
       "object_class": null,
       "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#definitions.anchored_finding.properties.evidence_excerpts.items.$ref"
+      ],
+      "reference": "#/definitions/evidence_excerpt",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#definitions.anchored_finding.properties.evidence_excerpts.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#definitions.criterion_finding.properties.anchored_findings.items.$ref"
+      ],
+      "reference": "#/definitions/anchored_finding",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#definitions.criterion_finding.properties.anchored_findings.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#properties.artifact_checksums.items.$ref"
+      ],
+      "reference": "#/definitions/artifact_checksum",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#properties.artifact_checksums.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#properties.audited_artifact_versions.items.$ref"
+      ],
+      "reference": "#/definitions/audited_artifact_version",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#properties.audited_artifact_versions.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#properties.blocking_defects.items.$ref"
+      ],
+      "reference": "#/definitions/defect",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#properties.blocking_defects.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#properties.criteria_results.items.$ref"
+      ],
+      "reference": "#/definitions/criteria_result",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#properties.criteria_results.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#properties.dimension_results.items.$ref"
+      ],
+      "reference": "#/definitions/dimension_result",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#properties.dimension_results.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#properties.findings.items.$ref"
+      ],
+      "reference": "#/definitions/criterion_finding",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#properties.findings.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#properties.non_blocking_defects.items.$ref"
+      ],
+      "reference": "#/definitions/defect",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#properties.non_blocking_defects.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#properties.required_changes.items.$ref"
+      ],
+      "reference": "#/definitions/required_correction",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#properties.required_changes.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[1].contract_refs[0]",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json#properties.required_corrections.items.$ref"
+      ],
+      "reference": "#/definitions/required_correction",
+      "resolved_path": null,
+      "source_ref": "schemas/b5_i2_semantic_sufficiency_audit.json#properties.required_corrections.items.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
         "config/agent_prompt_registry.json",
         "config/agent_prompt_registry.json#prompts[8].required_context[2]",
         "schemas/early_packaging_hypothesis.json",
@@ -4079,6 +6043,19 @@
       "provenance_chain": [
         "config/capability_registry.json",
         "config/capability_registry.json#capabilities[0].contract_refs[1]",
+        "schemas/topic_belonging_assessment.json",
+        "schemas/topic_belonging_assessment.json#properties.provenance.$ref"
+      ],
+      "reference": "#/$defs/provenance",
+      "resolved_path": null,
+      "source_ref": "schemas/topic_belonging_assessment.json#properties.provenance.$ref",
+      "status": "UNRESOLVED"
+    },
+    {
+      "object_class": null,
+      "provenance_chain": [
+        "config/capability_registry.json",
+        "config/capability_registry.json#capabilities[0].contract_refs[2]",
         "schemas/topic_belonging_decision.json",
         "schemas/topic_belonging_decision.json#properties.provenance.$ref"
       ],
@@ -4119,35 +6096,37 @@
   "source_inputs": [
     {
       "path": "config/capability_registry.json",
-      "sha256": "929d87458288eaa047f10b9aa592a5e913ae27d1fa76bb8cd9ac3f974ee2ac5b"
+      "sha256": "78d1a00c056f7766deb777b2a8dc916a2218e73d937a6f8c2b8d5c65c2cc0fa1"
     },
     {
       "path": "config/responsibility_registry.json",
-      "sha256": "d950488039410870ccf97d4e435ca3071ab43078cf592c24d1a9b73da100d6c4"
+      "sha256": "c05115caaab92a58ac833b8a3aaf8a866fbceb869cc86d8ee01d59cee5de0600"
     },
     {
       "path": "config/agent_prompt_registry.json",
-      "sha256": "f441aa3703bf8b69f7b2c5ab79f256549de6d9e9f1cff33b508415fb7da3477a"
+      "sha256": "20be99018a5834cbf723c96cd71a9aa340c702be911330cbf3ca6bbfcf0956ae"
     },
     {
       "path": "config/agent_execution_profiles.json",
-      "sha256": "6f1809d92fc658a8c5f5afe1946fd85328fab24c7da2cdc753a78d48bf9fc6ff"
+      "sha256": "6f0f2201ab577355f628d9aac8170ba5c218e7580e1253cd1ead6b4a2aae3264"
     },
     {
       "path": "config/subagent_registry.json",
-      "sha256": "896410fd230d0e6c6b3d4a9b926968191dcca10d2b42fe5f1f7ec5af15772d52"
+      "sha256": "d9d57bead6776d4b6afbde8be6abc279f4d9c804b11acc68ec9d7cefd153dbff"
     },
     {
       "path": "config/capability_routing.yaml",
-      "sha256": "a5b1dda9c8c08a7ed457d9e39b326bbe16fa8f036c6ac664369d5f6a85dd8e2b"
+      "sha256": "7fe5637c784f5f1ef65f4a96f0d6f387cbdc0dd6bdc3c10a0b5b9fd466673235"
     },
     {
       "path": "config/skill_catalog.json",
-      "sha256": "1180a3ec5c57d646b9f5286d882a28303d22064341d0123f17e7413b88e39db6"
+      "sha256": "865bdd04cc8e9a4c86d4f1e365121799942c5dc3fecf0412cf4048418d83f564"
     }
   ],
   "unresolved_candidates": [
-    "B5_I2_SEMANTIC_AUDITOR",
+    "GATE:La Misión 3 del PLAN 008 retira la apariencia de NotebookLM como autoridad o gate universal; workspace/06 y contratos auxiliares son HISTORICAL_REFERENCE según README.",
+    "GATE:La convención de outputs de workspace/06 y los contratos auxiliares de workspace/ quedan como referencia histórica; no constituyen gate ni autoridad universal obligatoria.",
+    "POLICY:workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md y templates/evento_template_v2.md (material editorial legacy omitido en el índice inicial)",
     "SUBAGENT:SCRIPT_PRODUCT_AUDITOR",
     "SUBAGENT:SCRIPT_PRODUCT_PRODUCER",
     "SUBAGENT:YOUTUBE_ADAPTATION_AUDITOR",

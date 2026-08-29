@@ -14,18 +14,18 @@ def load_json(relative_path: str):
     return json.loads((ROOT / relative_path).read_text(encoding="utf-8"))
 
 
-def test_initial_profile_payload_remains_historical_and_non_canonical():
-    payload = load_json("profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json")
+def test_active_profile_payload_is_canonical_and_schema_valid():
+    payload = load_json("profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json")
     errors = validate_against_schema(payload, "editorial_profile")
-    assert any("functional_owner_role" in error for error in errors)
-    assert payload["functional_owner_role"] == "TEAM_" + "01"
-    assert payload["status"] == "DRAFT"
-    assert payload["voice_profile"]["corpus_status"] == "SPECIFICATION_BASED"
-    assert payload["voice_profile"]["approved_sample_ids"] == []
+    assert errors == []
+    assert payload["functional_owner_role"] == "CHANNEL_INTELLIGENCE"
+    assert payload["version"] == "1.2.2"
+    assert payload["status"] == "PENDING_FUNCTIONAL_APPROVAL"
+    assert payload["voice_profile"]["corpus_status"] == "AUTHENTIC_CORPUS_PARTIAL"
 
 
 def test_profile_rejects_rigid_audience_and_platform_policy_in_stable_identity():
-    payload = load_json("profiles/editorial/mas_alla_del_guion/1.0.0/profile_payload.json")
+    payload = load_json("profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json")
     rigid_audience = copy.deepcopy(payload)
     rigid_audience["audience_hypotheses"][0]["status"] = "CONFIRMED"
     assert validate_against_schema(rigid_audience, "editorial_profile")

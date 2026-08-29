@@ -7,15 +7,10 @@
 ## Estado operativo
 
 ```text
-ACTIVE_EDITORIAL_PROFILE: mas_alla_del_guion@1.2.1
-PROFILE_1_1_0_STATUS: INVALID_APPROVAL_CHAIN
-PROFILE_1_1_0_ACTIVE: false
-PROFILE_1_2_0_STATUS: FUNCTIONAL_REVIEW_BLOCKED
-PROFILE_1_2_0_ACTIVE: false
-PROFILE_1_2_0_CHECKSUM: b1029e85289c51d4585c555ed20566dfd6f1f6db30b875f989fc23bf46fc5977
-PROFILE_1_2_1_STATUS: ACTIVE
-PROFILE_1_2_1_ACTIVE: true
-PROFILE_1_2_1_CHECKSUM: d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1
+ACTIVE_EDITORIAL_PROFILE: mas_alla_del_guion@1.2.2
+PROFILE_1_2_2_STATUS: ACTIVE
+PROFILE_1_2_2_ACTIVE: true
+PROFILE_1_2_2_CHECKSUM: 2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b
 VOICE_CORPUS_STATE: AUTHENTIC_CORPUS_PARTIAL
 B3_IMPLEMENTATION_STATUS: COMPLETED
 B3_TECHNICAL_VALIDATION_STATUS: PASS
@@ -31,13 +26,13 @@ NEXT_ALLOWED_ACTION: PREPARE_R6_B
 
 B3 materializa la especificación funcional canónica en un perfil versionado y trazable. La validación técnica no sustituye la aprobación funcional, y ningún consumidor puede seleccionar automáticamente una versión o reconstruir identidad desde fuentes históricas.
 
-La versión 1.2.0 permanece inactiva como antecedente sustituido. La versión activa es 1.2.1 y su checksum coincide con las aprobaciones funcional y técnica registradas. El corpus de voz es `AUTHENTIC_CORPUS_PARTIAL`; esta situación limita la representatividad global, pero no invalida la activación ya aprobada.
+La versión activa es 1.2.2 y su checksum coincide con las aprobaciones funcional y técnica registradas. Conserva el contenido funcional vigente y sanea el lineage para depender únicamente de la especificación canónica. El corpus de voz es `AUTHENTIC_CORPUS_PARTIAL`; esta situación limita la representatividad global y no autoriza uso productivo.
 
 ## Evidencia canónica
 
 - `config/editorial_profile_registry.json`
-- `profiles/editorial/mas_alla_del_guion/1.2.1/functional_approval.json`
-- `profiles/editorial/mas_alla_del_guion/1.2.1/technical_validation.json`
+- `profiles/editorial/mas_alla_del_guion/1.2.2/functional_approval.json`
+- `profiles/editorial/mas_alla_del_guion/1.2.2/technical_validation.json`
 - `config/active_editorial_profile.json`
 - `profiles/voice/corpus_manifest.json`
 

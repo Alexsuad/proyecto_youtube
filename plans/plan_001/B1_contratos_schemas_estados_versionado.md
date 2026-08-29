@@ -15,8 +15,7 @@
 Lectura mínima para ejecutar una misión de este bloque:
 
 1. `AGENTS.md` del repositorio, si existe.
-2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md.
-3. `plans/001_CONTROL_OPERATIVO.md`.
+2. `plans/001_CONTROL_OPERATIVO.md`.
 4. Este archivo.
 5. La misión concreta y los archivos expresamente autorizados.
 
@@ -189,13 +188,10 @@ pregunta_que_el_espectador_espera_resolver
 diferenciador_del_video
 riesgo_de_sobrepromesa
 
-functional_owner
-team_03_approval_status
-team_03_approved_by
-team_03_approved_at
-
-team_02_deliverability_validation
-team_02_validation_notes
+functional_owner_role
+authorized_approval_status
+authorized_approved_by
+authorized_approved_at
 
 alignment_with_thesis
 alignment_with_opening
@@ -208,16 +204,16 @@ La audiencia concreta debe derivarse del `EditorialProfile` aprobado. No puede u
 La autoridad funcional se divide así:
 
 ```text
-publicación
+YOUTUBE_ADAPTATION
 → define o aprueba audiencia concreta, promesa visible
   e hipótesis temprana de packaging.
 
-editorial
+SCRIPT_PRODUCT
 → valida que la tesis y la arquitectura puedan cumplir
   honestamente la promesa.
 
-La responsabilidad editorial no aprueba unilateralmente el packaging.
-La responsabilidad de publicación no modifica unilateralmente la tesis.
+`SCRIPT_PRODUCT` no aprueba unilateralmente el packaging.
+`YOUTUBE_ADAPTATION` no modifica unilateralmente la tesis.
 ```
 
 ### B1-C5 — ViewerJourney
@@ -428,6 +424,8 @@ correction_route
 
 El auditor no modifica el guion auditado.
 
+`production_readiness` en este reporte no equivale a `YOUTUBE_PRODUCTION_READY`: cualquier aprobación de producción audiovisual pertenece a B8.5 y queda fuera del cierre editorial del MVP.
+
 ### B1-C15 — FinalDeliveryManifest
 
 Debe identificar:
@@ -626,13 +624,14 @@ script_version
 checksum
 decision
 approved_by
+approved_role
 approved_at
 notes
 invalidated_at
 invalidation_reason
 ```
 
-Esta aprobación confirma que el guion puede pasar a Adaptación a YouTube. No autoriza publicación.
+Este contrato registra la aprobación editorial humana de una versión exacta. Para cerrar el MVP, la decisión `APPROVED` de `EditorialScriptApproval` es la decisión editorial aplicable a `EDITORIAL_SCRIPT_APPROVED`; `APPROVED_FOR_PRODUCTION` no pertenece a este schema y corresponde exclusivamente a `HumanProductionApproval` y al cierre posterior de B8.5. No es, por sí solo, un manifest que consolide las aprobaciones independientes de calidad editorial, identidad, factualidad/interpretación/fidelidad y adecuación textual a YouTube. El requisito funcional de que todas esas evidencias correspondan al mismo `artifact_id`, versión y checksum está definido en B7, pero el schema actual solo demuestra la aprobación individual y no la consolidación técnica completa: `IMPLEMENTATION_GAP` documental pendiente de implementación/demostración. Esta aprobación no autoriza producción ni publicación.
 
 ### B1-C24 — HumanProductionApproval
 
@@ -981,12 +980,14 @@ src/core/invalidation.py
 - PlatformAndMonetizationRiskReport no puede sustituir la auditoría editorial ni la auditoría de adaptación a YouTube;
 - aprendizaje `CANDIDATE` no puede modificar el perfil activo.
 
+Estas pruebas cubren contratos individuales, versionado e invalidación. No demuestran por sí mismas la consolidación técnica de todas las aprobaciones obligatorias del cierre sobre una misma versión; esa consolidación permanece como `IMPLEMENTATION_GAP` cuando el código no la materializa.
+
 ## 5. Gate B1
 
 ```text
 PASS si:
 - todos los contratos están documentados y versionados;
-- Producto aprueba los campos editoriales;
+- las responsabilidades funcionales pertinentes validan los campos editoriales;
 - Desarrollo aprueba su implementabilidad;
 - existe un módulo único de estados;
 - versionado e invalidación tienen tests;

@@ -16,8 +16,10 @@
                           ".agent/skills",
                           ".agent/workflows",
                           "docs/product",
-                          "docs/contracts",
-                          "docs/specifications/B3_editorial_profile_functional_specification.md"
+                             "docs/contracts",
+                             "docs/specifications/B3_editorial_profile_functional_specification.md",
+                             "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
+                             "plans/plan_001"
                       ],
     "generator_roots":  [
                             ".agent/skills",
@@ -36,19 +38,11 @@
                              "workspace",
                              "output",
                              "deliverables",
-                             "profiles/editorial/mas_alla_del_guion/1.0.0",
-                             "profiles/editorial/mas_alla_del_guion/1.1.0",
-                             "docs/specifications/B3_especificacion_funcional_equipo_01.md",
-                             ".agent/rules/02_reglas_notebooklm.md"
+                             ".agent/rules/02_reglas_notebooklm.md",
+                             "plans/plan_001/B5_PRE_SCRIPT_FOUNDATION.md",
+                             "plans/plan_001/R1_IR_TRACEABILITY_MATRIX.md"
                          ],
-    "allowed_external_coordination":  [
-                                          "docs/ALCANCE_Y_COORDINACION_EQUIPOS.md",
-                                          "plans/002_CIERRE_ARQUITECTURA_OPERATIVA_Y_MADURACION_EDITORIAL.md",
-                                          "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
-                                          "plans/plan_001",
-                                          "plans/plan_003",
-                                          "plans/001_CONTROL_OPERATIVO.md"
-                                      ],
+    "allowed_external_coordination":  [],
     "live_authority_paths":  [
                                  "plans/001_CONTROL_OPERATIVO.md"
                              ],
@@ -74,6 +68,15 @@
                                "NON_EXECUTABLE",
                                "SUPERSEDED"
                            ],
+    "historical_blocking_labels":  [
+                                       "human_team_name",
+                                       "human_team_code",
+                                       "human_coordination_term",
+                                       "human_team_state_marker",
+                                       "obsolete_coordination_document",
+                                       "contaminated_lineage_id",
+                                       "contaminated_spec_locator"
+                                   ],
     "patterns":  [
                      {
                          "pattern":  "(?<![A-Za-z0-9_])Equipo 0[1-4](?=[^A-Za-z0-9]|$)",
@@ -83,6 +86,21 @@
                      {
                          "pattern":  "(?<![A-Za-z0-9_])TEAM[_ ]?0[1-4](?=[^A-Za-z0-9]|$)",
                          "label":  "human_team_code",
+                         "severity":  "HIGH"
+                     },
+                     {
+                         "pattern":  "\\binterequipos?\\b",
+                         "label":  "human_coordination_term",
+                         "severity":  "HIGH"
+                     },
+                     {
+                         "pattern":  "READY_FOR_TEAM_",
+                         "label":  "human_team_state_marker",
+                         "severity":  "HIGH"
+                     },
+                     {
+                         "pattern":  "docs/ALCANCE_Y_COORDINACION_EQUIPOS\\.md",
+                         "label":  "obsolete_coordination_document",
                          "severity":  "HIGH"
                      },
                      {
@@ -167,15 +185,11 @@
                                                         ],
                              "TEMPORARY_IMPLEMENTATION_PLAN":  [
                                                                    "plans/001_reestructuracion_motor_agentico_editorial_y_harness.md",
-                                                                   "plans/plan_001",
-                                                                   "plans/plan_003"
+                                                                   "plans/plan_001"
                                                                ],
                              "LIVE_OPERATIONAL_CONTROL":  [
                                                               "plans/001_CONTROL_OPERATIVO.md"
                                                           ],
-                             "EXTERNAL_COORDINATION_DOCUMENT":  [
-                                                                    "docs/ALCANCE_Y_COORDINACION_EQUIPOS.md"
-                                                                ],
                              "HISTORICAL_DOCUMENT":  [
                                                          "workspace",
                                                          "output",

@@ -145,6 +145,18 @@ def test_universe_resolves_explicit_references_without_root_scan(tmp_path: Path)
     assert resolved["config/missing_policy.json"]["status"] == "UNRESOLVED"
 
 
+def test_detector_patterns_are_not_treated_as_artifact_references(tmp_path: Path) -> None:
+    _seed_repository(tmp_path)
+    _write_json(tmp_path, "policies/known_policy.json", {
+        "gate_ref": "src/scripts/transitive_gate.py",
+        "patterns": [{"pattern": "docs/ALCANCE_Y_COORDINACION_EQUIPOS\\.md"}],
+    })
+
+    universe = build_capability_audit_universe(tmp_path, generated_at="2026-08-10T00:00:00Z")
+
+    assert not any("ALCANCE_Y_COORDINACION_EQUIPOS" in item["reference"] for item in universe["resolved_references"])
+
+
 def test_policy_and_gate_are_reachable_non_capability_classes(tmp_path: Path) -> None:
     _seed_repository(tmp_path)
     universe = build_capability_audit_universe(tmp_path, generated_at="2026-08-10T00:00:00Z")

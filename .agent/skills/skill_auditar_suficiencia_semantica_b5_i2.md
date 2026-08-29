@@ -115,7 +115,7 @@ materiales candidatos
 materiales seleccionados y excluidos
 ```
 
-### Entrada interequipos opcional
+### Entrada de coordinación funcional opcional
 
 Puede recibir, en modo de solo lectura:
 

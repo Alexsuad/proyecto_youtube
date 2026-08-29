@@ -61,11 +61,6 @@ def _line_excerpt(text: str, line: int) -> str:
     return text.splitlines()[line - 1].strip()[:240]
 
 
-def _is_scanner_generated_report(rel: str) -> bool:
-    normalized = rel.replace("\\", "/")
-    return normalized.startswith("output/runtime_contamination_") and normalized.endswith(".json")
-
-
 def _path_matches(rel: str, candidate: str) -> bool:
     return rel == candidate or rel.startswith(candidate + "/")
 
@@ -91,7 +86,12 @@ def _path_category(rel: str, policy: dict[str, Any]) -> str:
     if not matches:
         return "MANUAL_REVIEW"
     matches.sort(key=lambda item: (-item[0], item[1]))
-    return matches[0][2]
+    category = matches[0][2]
+    if category == "ALLOWED_EXTERNAL_COORDINATION" and any(
+        _path_matches(rel, item) for item in policy.get("product_roots", [])
+    ):
+        return "ACTIVE_PRODUCT_CONTAMINATION"
+    return category
 
 
 def _has_structured_historical_marker(text: str, markers: list[str]) -> bool:
@@ -131,10 +131,7 @@ def _iter_policy_paths(root: Path, policy: dict[str, Any], *, include_historical
         *policy.get("optional_adapter_implementation_roots", []),
         *policy.get("false_positive_paths", []),
     ]
-    if include_historical_details:
-        groups.extend(policy.get("historical_roots", []))
-    else:
-        groups.extend(item for item in policy.get("historical_roots", []) if not item.startswith("output"))
+    groups.extend(policy.get("historical_roots", []))
     for item in groups:
         candidate = root / item
         if candidate.exists() and candidate not in seen:
@@ -161,8 +158,6 @@ def _iter_unique_files(root: Path, policy: dict[str, Any], *, include_historical
             if any(part.startswith("tmppytest-") for part in relative_parts):
                 continue
             rel = "/".join(relative_parts) if relative_parts else path.name
-            if not include_historical_details and _is_scanner_generated_report(rel):
-                continue
             if path.suffix.lower() not in DEFAULT_TEXT_EXTENSIONS and path.name not in {"AGENTS.md", "README.md"}:
                 continue
             seen.add(resolved)
@@ -181,7 +176,9 @@ def _is_field_level_exception(rel: str, label: str, excerpt: str, policy: dict[s
     return False
 
 
-def _finding_category(rel: str, excerpt: str, category: str, policy: dict[str, Any]) -> str:
+def _finding_category(rel: str, excerpt: str, label: str, category: str, policy: dict[str, Any]) -> str:
+    if category == "HISTORICAL_REFERENCE" and label in set(policy.get("historical_blocking_labels", [])):
+        return "ACTIVE_PRODUCT_CONTAMINATION"
     if category != "CONTAMINATED_GENERATOR_SOURCE":
         return category
     for pattern in policy.get("negative_contamination_assertion_patterns", []):
@@ -268,7 +265,7 @@ def scan(
                 excerpt = _line_excerpt(text, line)
                 if _is_field_level_exception(rel, item["label"], excerpt, policy):
                     continue
-                finding_category = _finding_category(rel, excerpt, category, policy)
+                finding_category = _finding_category(rel, excerpt, item["label"], category, policy)
                 finding = Finding(rel, line, item["pattern"], item["label"], item["severity"], finding_category, excerpt)
                 counts[finding_category] += 1
                 if finding_category != "HISTORICAL_REFERENCE" or include_historical_details:

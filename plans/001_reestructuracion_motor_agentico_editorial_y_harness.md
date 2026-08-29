@@ -4,10 +4,10 @@
 **Repositorio de referencia:** `proyecto_youtube_2026-07-21_10-00-29.zip`  
 **Versión del plan:** 1.4
 **Fecha de revisión:** 2026-07-22
-**Estado del snapshot:** `READY_FOR_EXTERNAL_AUDIT` / `TEMPORARILY_PAUSED_BY_PLAN_003_R0`
+**Estado del snapshot:** `READY_FOR_EXTERNAL_AUDIT`; el estado vivo se resuelve exclusivamente en el control operativo.
 **Estado vivo:** consultar exclusivamente `plans/001_CONTROL_OPERATIVO.md`; los estados y acciones de este documento son históricos/no normativos.
-**Auditorías funcionales incorporadas:** `TEAM_01_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_02_APPROVED_WITH_REQUIRED_AMENDMENTS` + `TEAM_03_APPROVED_WITH_REQUIRED_AMENDMENTS` + `PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT`
-**Implementación autorizada:** `LIMITED_TO_PLAN_003_R0` mientras dure la recuperación
+**Auditorías funcionales incorporadas:** `CHANNEL_INTELLIGENCE_APPROVED_WITH_REQUIRED_AMENDMENTS` + `SCRIPT_PRODUCT_APPROVED_WITH_REQUIRED_AMENDMENTS` + `YOUTUBE_ADAPTATION_APPROVED_WITH_REQUIRED_AMENDMENTS` + `PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT`
+**Implementación autorizada:** consultar exclusivamente el control operativo vigente.
 **Progreso global inicial:** `0 %`  
 **Ruta objetivo en el repositorio:** `plans/001_reestructuracion_motor_agentico_editorial_y_harness.md`
 
@@ -38,7 +38,7 @@ El objetivo no es aumentar el número de agentes, skills, scripts o documentos. 
 
 ## Mapa global de implementación y prioridades
 
-La prioridad activa del producto sigue siendo cerrar el núcleo profesional de Guion hasta `EDITORIAL_SCRIPT_APPROVED`. Sin embargo, durante R0 del Plan 003 la continuación de implementación del Plan 001 queda temporalmente pausada para resolver autoridad, baseline y falsos cierres. La adaptación y distribución en YouTube se conserva como una segunda etapa diferida y no autorizada.
+La prioridad activa del producto sigue siendo cerrar el núcleo profesional de Guion hasta `EDITORIAL_SCRIPT_APPROVED`. El estado vivo y la autorización de continuación se resuelven exclusivamente mediante `plans/001_CONTROL_OPERATIVO.md`. La adecuación textual del guion a YouTube forma parte del cierre previo a `EDITORIAL_SCRIPT_APPROVED`; packaging, preparación y distribución posteriores se conservan como segunda etapa diferida y no autorizada.
 
 | Etapa global | Bloques | Objetivo y entregable principal | Dependencia / cierre | Estado |
 |---|---|---|---|---|
@@ -144,17 +144,17 @@ ANÁLISIS NARRATIVO Y HUMANO
         ↓
 CURACIÓN FINAL Y FUNCIÓN NARRATIVA
         ↓
-AUDIENCIA CONCRETA, PROMESA VISIBLE E HIPÓTESIS DE PACKAGING
+AUDIENCIA CONCRETA, PROMESA EDITORIAL E HIPÓTESIS TEMPRANA DE PACKAGING
         ↓
 TESIS REFINADA
         ↓
 RECORRIDO DEL ESPECTADOR
         ↓
-DISEÑO DE APERTURA Y CIERRE
-        ↓
 ARQUITECTURA NARRATIVA GLOBAL
         ↓
-PRESUPUESTO DE PALABRAS Y BLOQUES
+DISEÑO ESPECÍFICO DE APERTURA Y CIERRE COMO COMPONENTES DE LA ARQUITECTURA
+        ↓
+OUTLINE DETALLADO Y PRESUPUESTO DE PALABRAS/BLOQUES
         ↓
 PROTOTIPO EDITORIAL TEMPRANO, CUANDO CORRESPONDA
         ↓
@@ -172,13 +172,20 @@ VERIFICACIÓN FACTUAL E INTERPRETATIVA
         ↓
 REVISIÓN DE ORIGINALIDAD Y TRANSFORMACIÓN DE FUENTES
         ↓
-AUDITORÍA EDITORIAL FINAL INDEPENDIENTE
+VALIDACIONES OBLIGATORIAS INDEPENDIENTES SOBRE EL CANDIDATO FINAL:
+SCRIPT_PRODUCT · CHANNEL_INTELLIGENCE · FACTUALIDAD/INTERPRETACIÓN/FIDELIDAD · YOUTUBE_ADAPTATION TEXTUAL
         ↓
-CORRECCIÓN ENRUTADA A LA FASE CORRECTA, SI APLICA
+APROBAR / CORREGIR / BLOQUEAR
+        ↓
+HALLAZGO Y RUTA DE CORRECCIÓN A LA FASE RESPONSABLE, SI APLICA
+        ↓
+NUEVA VERSIÓN Y REVALIDACIÓN, SI LA CORRECCIÓN CAMBIA EL CANDIDATO
+        ↓
+TODAS LAS APROBACIONES OBLIGATORIAS SOBRE LA MISMA VERSIÓN Y CHECKSUM
         ↓
 EDITORIAL_SCRIPT_APPROVED
         ↓
-ADAPTACIÓN PROFESIONAL A YOUTUBE
+PACKAGING FINAL Y PREPARACIÓN/DISTRIBUCIÓN POSTERIOR A YOUTUBE
         ↓
 PACKAGING FINAL Y AUDITORÍA DE CORRESPONDENCIA DE PROMESA
         ↓
@@ -208,7 +215,7 @@ REGISTRO DE LA VERSIÓN PUBLICADA
 APRENDIZAJES EDITORIALES Y DE YOUTUBE CANDIDATOS, NO AUTOMÁTICOS
 ```
 
-La hipótesis temprana de packaging es una interfaz entre los equipos 02 y 03. El Equipo 03 define o aprueba su forma visible; el Equipo 02 valida que la tesis y la arquitectura puedan cumplirla.
+La hipótesis temprana de packaging es una interfaz entre `SCRIPT_PRODUCT` y `YOUTUBE_ADAPTATION`. `YOUTUBE_ADAPTATION` define o aprueba su forma visible; `SCRIPT_PRODUCT` valida que la tesis y la arquitectura puedan cumplirla.
 
 `EDITORIAL_SCRIPT_APPROVED`, `YOUTUBE_PRODUCTION_READY`, `YOUTUBE_READY` y `PUBLISHED` son estados distintos y no intercambiables.
 
@@ -218,19 +225,18 @@ El Plan 001 mantiene documentadas las etapas posteriores, pero la prioridad actu
 
 ## 4. Fuentes rectoras y jerarquía de autoridad
 
-La autoridad se interpreta por dominio funcional, no como una cadena lineal que permita a un documento invadir la especialidad de otro equipo.
+La autoridad se interpreta por dominio funcional, no como una cadena lineal que permita a un documento invadir la especialidad de otra responsabilidad.
 
 Cuando exista una contradicción, se aplicará esta jerarquía:
 
 1. Decisiones explícitas y posteriores del propietario del proyecto.
-2. `docs/ALCANCE_Y_COORDINACION_EQUIPOS.md`, como documento rector de responsabilidades y límites.
-3. Decisiones funcionales aprobadas del equipo competente dentro de su especialidad:
-   - Equipo 01 para identidad, posicionamiento, audiencia, promesa de canal, voz y `EditorialProfile`;
-   - Equipo 02 para tesis, investigación, curación, diseño, escritura, edición y aprobación editorial del guion;
-   - Equipo 03 para audiencia concreta del episodio, promesa visible, packaging, adaptación a YouTube, plataforma, monetización, derechos y paquete de producción o publicación;
-   - Equipo 04 para arquitectura, contratos técnicos, schemas, estados, gates, pruebas, portabilidad e implementación.
+2. Decisiones funcionales aprobadas del dominio competente:
+   - `CHANNEL_INTELLIGENCE` para identidad, posicionamiento, audiencia, promesa de canal, voz y `EditorialProfile`;
+   - `SCRIPT_PRODUCT` para tesis, investigación, curación, diseño, escritura, edición y aprobación editorial del guion;
+   - `YOUTUBE_ADAPTATION` para audiencia concreta del episodio, promesa visible, packaging, adaptación a YouTube, plataforma, monetización, derechos y paquete de producción o publicación;
+   - `TECHNICAL_GOVERNANCE` para arquitectura, contratos técnicos, schemas, estados, gates, pruebas, portabilidad e implementación.
 4. Este Plan 001 versión 1.4, como traducción integrada y gobernada de esas decisiones.
-5. Auditorías finales vigentes de los equipos 01, 02, 03 y 04.
+5. Validaciones finales vigentes de las responsabilidades funcionales y técnicas competentes.
 6. Auditoría funcional y arquitectónica del repositorio del 2026-07-21.
 7. Auditoría editorial de skills y scripts.
 8. Política de fraccionamiento de guiones largos.
@@ -241,8 +247,8 @@ Cuando exista una contradicción, se aplicará esta jerarquía:
 
 ### 4.1 Regla de autoridad
 
-- Cada equipo decide y aprueba únicamente dentro de su especialidad.
-- El Plan 001 coordina y traduce decisiones, pero no puede redefinir unilateralmente una decisión perteneciente a otro equipo.
+- Cada dominio o responsabilidad funcional decide y aprueba únicamente dentro de su especialidad.
+- El Plan 001 coordina y traduce decisiones, pero no puede redefinir unilateralmente una decisión perteneciente a otra responsabilidad o dominio funcional.
 - Una auditoría técnica no sustituye una aprobación funcional.
 - Una aprobación funcional no sustituye una validación técnica.
 - Un documento histórico conserva valor como evidencia, pero no puede gobernar una versión nueva del sistema.
@@ -355,7 +361,7 @@ El Plan 001 v1.0 queda marcado como `SUPERSEDED_BY_PLAN_001_V1_1`.
 
 El Plan 001 v1.1 queda marcado como `SUPERSEDED_BY_PLAN_001_V1_2`.
 
-La versión 1.4 es la versión rectora vigente del Plan 001. Su continuación de implementación permanece temporalmente pausada por el Plan 003.
+La versión 1.4 es la versión rectora vigente del Plan 001. Su continuación de implementación y autorización se resuelven exclusivamente mediante el control operativo.
 
 ---
 
@@ -371,7 +377,7 @@ No se autoriza crear un repositorio nuevo ni reescribir todo el sistema durante 
 
 ### 7.3 El repositorio es la fuente de verdad
 
-Ninguna decisión estable puede vivir únicamente en un chat, NotebookLM o la memoria de un IDE agéntico.
+Ninguna decisión estable puede vivir únicamente en un chat, una herramienta de investigación externa o la memoria de un IDE agéntico.
 
 ### 7.4 La identidad se separa del proceso, pero no se elimina
 
@@ -423,7 +429,7 @@ Un gate automático no puede forzar simplificaciones editoriales incorrectas.
 
 No se crea un agente si basta una responsabilidad o modo. No se crea una skill si basta un script, gate, regla o checklist.
 
-### 7.15 NotebookLM es una capacidad opcional, no el runtime
+### 7.15 El adaptador de investigación externo es opcional, no el runtime
 
 El pipeline debe conservar un camino local, auditable y portable.
 
@@ -538,7 +544,7 @@ Contiene:
 
 ### 8.4 Capa D — Adaptación a YouTube, publicación y aprendizaje
 
-Esta capa comienza durante el diseño mediante la hipótesis de packaging y continúa después de la aprobación editorial del guion.
+La adecuación textual del guion a YouTube se valida antes de `EDITORIAL_SCRIPT_APPROVED`. Esta capa continúa después de esa aprobación con packaging, publicación y aprendizaje posteriores; no desplaza la validación textual al tramo post-aprobación.
 
 Su responsabilidad es convertir una pieza editorial aprobada en un producto publicable, descubrible, coherente y conectado dentro de YouTube, sin deformar la identidad del canal ni la tesis del contenido.
 
@@ -566,7 +572,7 @@ Incluye:
 - captura inicial de desempeño;
 - aprendizajes de YouTube candidatos y gobernados.
 
-La hipótesis temprana de packaging se produce durante el diseño editorial, pero su autoridad funcional corresponde al Equipo 03 en coordinación con el Equipo 02. El Equipo 02 valida su entregabilidad editorial; el Equipo 03 valida su forma visible y adecuación a YouTube. El packaging final y los paquetes de producción o publicación pertenecen al Equipo 03.
+La hipótesis temprana de packaging se produce durante el diseño editorial, pero su autoridad funcional corresponde a `YOUTUBE_ADAPTATION` en coordinación con `SCRIPT_PRODUCT`. `SCRIPT_PRODUCT` valida su entregabilidad editorial; `YOUTUBE_ADAPTATION` valida su forma visible y adecuación a YouTube. El packaging final y los paquetes de producción o publicación pertenecen a `YOUTUBE_ADAPTATION`.
 
 Esta capa no garantiza monetización, distribución ni rendimiento. Evalúa riesgos, coherencia y preparación con la evidencia disponible.
 
@@ -598,7 +604,7 @@ Quedan fuera del alcance inmediato:
 
 Inteligencia del Canal no se convierte automáticamente en un agente adicional.
 
-Su contenido funcional pertenece al Equipo 01 y debe incluir capacidades para:
+Su contenido funcional pertenece a `CHANNEL_INTELLIGENCE` y debe incluir capacidades para:
 
 - construir o actualizar el `EditorialProfile`;
 - auditar coherencia de identidad;
@@ -611,9 +617,9 @@ Su contenido funcional pertenece al Equipo 01 y debe incluir capacidades para:
 - validar aprendizajes antes de activarlos;
 - bloquear versiones funcionalmente no aprobadas.
 
-El Equipo 04 decidirá si cada capacidad se materializa como skill, regla, gate, workflow, compilador, auditoría o checklist.
+`TECHNICAL_GOVERNANCE` decidirá si cada capacidad se materializa como skill, regla, gate, workflow, compilador, auditoría o checklist.
 
-La implementación técnica no puede sustituir la aprobación funcional del Equipo 01.
+La implementación técnica no puede sustituir la aprobación funcional de `CHANNEL_INTELLIGENCE`.
 
 ### 9.1.2 Adaptación a YouTube como capa funcional transversal
 
@@ -1105,7 +1111,7 @@ APRENDIZAJES_APROBADOS
 DECISIONES_PENDIENTES
 ```
 
-La aprobación funcional del contenido corresponde al Equipo 01. La validación técnica del contrato, compilación, lineage, versionado, checksum e invalidación corresponde al Equipo 04.
+La aprobación funcional del contenido corresponde a `CHANNEL_INTELLIGENCE`. La validación técnica del contrato, compilación, lineage, versionado, checksum e invalidación corresponde a `TECHNICAL_GOVERNANCE`.
 
 ### B1-C2 — EpisodeBrief
 
@@ -1177,13 +1183,10 @@ pregunta_que_el_espectador_espera_resolver
 diferenciador_del_video
 riesgo_de_sobrepromesa
 
-functional_owner
-team_03_approval_status
-team_03_approved_by
-team_03_approved_at
-
-team_02_deliverability_validation
-team_02_validation_notes
+functional_owner_role
+authorized_approval_status
+authorized_approved_by
+authorized_approved_at
 
 alignment_with_thesis
 alignment_with_opening
@@ -1196,16 +1199,16 @@ La audiencia concreta debe derivarse del `EditorialProfile` aprobado. No puede u
 La autoridad funcional se divide así:
 
 ```text
-Equipo 03
+YOUTUBE_ADAPTATION
 → define o aprueba audiencia concreta, promesa visible
   e hipótesis temprana de packaging.
 
-Equipo 02
+SCRIPT_PRODUCT
 → valida que la tesis y la arquitectura puedan cumplir
   honestamente la promesa.
 
-Equipo 02 no aprueba unilateralmente el packaging.
-Equipo 03 no modifica unilateralmente la tesis.
+SCRIPT_PRODUCT no aprueba unilateralmente el packaging.
+YOUTUBE_ADAPTATION no modifica unilateralmente la tesis.
 ```
 
 ### B1-C5 — ViewerJourney
@@ -1614,13 +1617,14 @@ script_version
 checksum
 decision
 approved_by
+approved_role
 approved_at
 notes
 invalidated_at
 invalidation_reason
 ```
 
-Esta aprobación confirma que el guion puede pasar a Adaptación a YouTube. No autoriza publicación.
+Este contrato registra la aprobación editorial humana de una versión exacta. Para cerrar el MVP, la decisión `APPROVED` de `EditorialScriptApproval` es la decisión editorial aplicable a `EDITORIAL_SCRIPT_APPROVED`; no debe sustituirse por `APPROVED_FOR_PRODUCTION`, que pertenece a `HumanProductionApproval` y al cierre posterior de B8.5. No es, por sí solo, un manifest que consolide las aprobaciones independientes de calidad editorial, identidad, factualidad/interpretación/fidelidad y adecuación textual a YouTube. El requisito funcional de que todas esas evidencias correspondan al mismo `artifact_id`, versión y checksum está definido en B7, pero el schema actual solo demuestra la aprobación individual y no la consolidación técnica completa: `IMPLEMENTATION_GAP` documental pendiente de implementación/demostración. Esta aprobación no autoriza producción ni publicación.
 
 ### B1-C24 — HumanProductionApproval
 
@@ -1974,7 +1978,7 @@ src/core/invalidation.py
 ```text
 PASS si:
 - todos los contratos están documentados y versionados;
-- Producto aprueba los campos editoriales;
+- las responsabilidades funcionales pertinentes validan los campos editoriales;
 - Desarrollo aprueba su implementabilidad;
 - existe un módulo único de estados;
 - versionado e invalidación tienen tests;
@@ -2160,14 +2164,14 @@ Crear un proceso reproducible que:
 - genere versión;
 - registre lineage y hashes;
 - produzca checksum;
-- solicite y registre la aprobación funcional del Equipo 01;
-- solicite y registre la validación técnica del Equipo 04;
+- solicite y registre la aprobación funcional de `CHANNEL_INTELLIGENCE`;
+- solicite y registre la validación técnica de `TECHNICAL_GOVERNANCE`;
 - no active automáticamente cambios no aprobados.
 
 La aprobación debe quedar separada:
 
 ```text
-TEAM_01_PROFILE_APPROVAL
+CHANNEL_INTELLIGENCE_PROFILE_APPROVAL
 → valida identidad, posicionamiento, audiencia, promesa, territorios,
   personalidad, voz, principios conceptuales y contenido funcional.
 
@@ -2176,7 +2180,7 @@ TECHNICAL_PROFILE_VALIDATION
   configuración e invalidación.
 ```
 
-La validación técnica del Equipo 04 no autoriza el contenido funcional. La aprobación del Equipo 01 no sustituye la validación técnica.
+La validación técnica de `TECHNICAL_GOVERNANCE` no autoriza el contenido funcional. La aprobación de `CHANNEL_INTELLIGENCE` no sustituye la validación técnica.
 
 ### B3-M3 — Perfil activo y selección por configuración
 
@@ -2222,7 +2226,7 @@ Debe indicar qué episodios o artefactos requieren revisión.
 - registrar candidatos;
 - acumular evidencia;
 - aprobar o rechazar;
-- crear nueva versión solo con aprobación funcional del Equipo 01 y validación técnica del Equipo 04.
+- crear nueva versión solo con aprobación funcional de `CHANNEL_INTELLIGENCE` y validación técnica de `TECHNICAL_GOVERNANCE`.
 
 ### B3-M8 — Corpus y voz inicial
 
@@ -2246,7 +2250,7 @@ Los textos actuales son un punto de partida, no una definición definitiva de vo
 ```text
 PASS si:
 - existe EditorialProfile versionado;
-- TEAM_01_PROFILE_APPROVAL = PASS;
+- CHANNEL_INTELLIGENCE_PROFILE_APPROVAL = PASS;
 - TECHNICAL_PROFILE_VALIDATION = PASS;
 - la aprobación funcional y la validación técnica corresponden a la misma versión y checksum;
 - el lineage está completo;
@@ -2263,7 +2267,7 @@ PASS si:
 
 ## 17.1 Objetivo
 
-Alinear los once roles actuales con seis responsabilidades funcionales claras, sin crear subagentes innecesarios y sin acoplar el sistema a Antigravity.
+Alinear los once roles actuales con seis responsabilidades funcionales claras, sin crear subagentes innecesarios y sin acoplar el sistema a una herramienta externa.
 
 ## 17.2 Misiones
 
@@ -2346,7 +2350,7 @@ La auditoría final debe ejecutarse en contexto limpio o sesión separada.
 
 Cada responsabilidad estable debe contar con prompt oficial versionado. No se permiten prompts improvisados en el workflow activo.
 
-### B4-M5 — Proyección al entorno Antigravity
+### B4-M5 — Proyección a un entorno de agente externo
 
 Los archivos `.agent/` actúan como adapter operativo, no como única sede de la arquitectura.
 
@@ -2389,7 +2393,7 @@ PolicyPack o equivalente
 
 No imponer nombres técnicos definitivos si el bloque aún no los ha decidido.
 
-Antigravity, Codex y OpenCode son agentes operativos de desarrollo, no dependencias obligatorias del producto. Los proveedores deben seleccionarse por configuración. Telegram, voz, web o API serán futuras entradas que normalicen hacia un contrato canónico. No implementar esos adaptadores en B4 si están fuera del MVP.
+Los agentes operativos externos son herramientas de desarrollo opcionales, no dependencias obligatorias del producto. Los proveedores deben seleccionarse por configuración. Telegram, voz, web o API serán futuras entradas que normalicen hacia un contrato canónico. No implementar esos adaptadores en B4 si están fuera del MVP.
 
 ### B4-M7 — Política de subagentes
 
@@ -2401,8 +2405,8 @@ Mantener `0` subagentes reales hasta que exista evidencia de necesidad.
 PASS si:
 - todas las responsabilidades operativas y familias funcionales canónicas tienen contrato;
 - cada capacidad tiene dueño funcional identificado;
-- Inteligencia del Canal está representada y conserva la aprobación funcional del Equipo 01;
-- Adaptación a YouTube está representada y conserva la autoridad funcional del Equipo 03;
+- `CHANNEL_INTELLIGENCE` está representada y conserva la aprobación funcional de su dominio;
+- `YOUTUBE_ADAPTATION` está representada y conserva la autoridad funcional de su dominio;
 - Editor y Auditor están separados;
 - cada skill tiene dueño funcional;
 - prompts oficiales están versionados;
@@ -2417,7 +2421,7 @@ PASS si:
 
 ## 18.1 Objetivo
 
-Convertir brief, investigación, evidencia, tesis, curación, packaging, recorrido y outline en un diseño profesional antes de redactar.
+Convertir brief, investigación, evidencia, tesis, curación, promesa editorial, hipótesis temprana de packaging, recorrido y outline en un diseño profesional antes de redactar. La hipótesis temprana no equivale a packaging final.
 
 ## 18.2 Misiones
 
@@ -2547,22 +2551,22 @@ La hipótesis temprana debe incluir:
 La autoridad funcional se distribuye así:
 
 ```text
-Equipo 03
+YOUTUBE_ADAPTATION
 → define o aprueba la audiencia concreta,
   la promesa visible y la hipótesis de packaging.
 
-Equipo 02
+SCRIPT_PRODUCT
 → valida que la tesis, la evidencia y la arquitectura
   puedan cumplir honestamente esa promesa.
 ```
 
-El Equipo 02 no puede aprobar unilateralmente el packaging. El Equipo 03 no puede modificar unilateralmente la tesis.
+`SCRIPT_PRODUCT` no puede aprobar unilateralmente el packaging. `YOUTUBE_ADAPTATION` no puede modificar unilateralmente la tesis.
 
 Un cambio sustancial en audiencia concreta, promesa visible, tesis o conflicto central invalida los artefactos dependientes.
 
 ### B5-M7 — Tesis refinada
 
-Después de evidencia, análisis narrativo y humano, curación final y packaging:
+Después de evidencia, análisis narrativo y humano, curación final y la hipótesis temprana de promesa y packaging:
 
 - tesis defendible;
 - matiz;
@@ -2660,7 +2664,7 @@ PASS si:
 - hechos narrativos, interpretaciones e hipótesis están diferenciados;
 - los límites de las analogías con la vida real están declarados;
 - curación asigna funciones y contribuciones distintas;
-- PackagingHypothesis tiene aprobación funcional del Equipo 03;
+- PackagingHypothesis tiene aprobación funcional de `YOUTUBE_ADAPTATION`;
 - Producto Guion confirmó que la tesis y la arquitectura pueden cumplir la promesa;
 - PackagingHypothesis no sobrepromete;
 - ViewerJourney muestra transformación;
@@ -2979,39 +2983,39 @@ PASS si:
 
 ## 21.1 Objetivo
 
-Evaluar el candidato final sin mezclar edición y aprobación, enrutar correctamente los defectos y obtener la aprobación editorial de una versión exacta del guion antes de pasar a Adaptación a YouTube.
+Cerrar de forma integrada el candidato final del guion sin mezclar producción y auditoría: ejecutar las validaciones obligatorias independientes, enrutar correctamente los defectos, revalidar las versiones corregidas y obtener la aprobación editorial humana de una versión exacta. La adecuación textual a YouTube participa en este cierre; packaging final y producción permanecen fuera del MVP.
 
 ## 21.2 Misiones
 
-### B7-M1 — Auditorías separadas
+### B7-M1 — Validaciones obligatorias separadas
 
-Mantener separadas:
+El candidato final debe recibir, como mínimo, estas validaciones independientes, sin convertirlas en cuatro agentes ni en cuatro estados runtime:
 
-- auditoría editorial profunda;
-- alineación de voz;
-- auditoría antiartificialidad;
-- oralidad;
-- verificación factual;
-- riesgo de plataforma.
+- `SCRIPT_PRODUCT`: calidad editorial, estructura, progresión, tesis, escritura, edición, oralidad y cumplimiento del brief;
+- `CHANNEL_INTELLIGENCE`: coherencia con el `EditorialProfile`, propósito, posicionamiento, audiencia, promesa, voz, persona autoral y ausencia de deriva material;
+- responsabilidades existentes de investigación/evidencia y auditoría editorial: claims, soporte, interpretación, fidelidad, sobreinterpretación y contradicciones materiales;
+- `YOUTUBE_ADAPTATION`: adecuación textual del guion a audiencia, promesa, apertura, duración orientativa, sobrepromesa y riesgos de plataforma, copyright o reutilización originados en el texto.
 
-Un guion puede aprobar una revisión y fallar otra. El redactor no debe autoaprobarse como único auditor. Se debe permitir auditoría cruzada o ciega en fases posteriores. No es obligatorio activar todas las auditorías avanzadas en el MVP.
+El redactor no debe autoaprobarse como único auditor. Las auditorías avanzadas adicionales son opcionales y no crean requisitos nuevos del MVP.
 
-### B7-M1A — Auditoría editorial final independiente
+### B7-M1A — Auditoría final independiente
 
 El auditor:
 
 - recibe la versión editada;
 - trabaja en contexto limpio;
 - no modifica el guion;
-- evalúa perfil, brief, promesa, evidencia, tesis, recorrido, apertura, progresión, originalidad, oralidad y cierre;
+- emite únicamente su propia auditoría editorial dentro de su autoridad; las demás autoridades funcionales emiten sus propias validaciones, y el gate de cierre reúne esas evidencias separadas, todas sobre la misma versión y checksum, antes de `EDITORIAL_SCRIPT_APPROVED`;
 - emite `PASS`, `WARN`, `FAIL` o `BLOCKED`;
 - identifica ruta de corrección.
+
+Una validación no aprobada no se oculta con otra aprobación: produce hallazgo, ruta de corrección y revalidación.
 
 ### B7-M2 — Enrutamiento de correcciones
 
 Aplicar `CorrectionRoutingPolicy`.
 
-No se parchea texto final cuando el defecto pertenece a investigación, tesis, promesa o arquitectura.
+El auditor detecta y enruta; la responsabilidad productora corrige. No se parchea silenciosamente el texto final cuando el defecto pertenece a investigación, evidencia, tesis, promesa, recorrido o arquitectura.
 
 ### B7-M3 — Invalidación y revalidación
 
@@ -3022,6 +3026,8 @@ Registrar:
 - gates que deben repetirse;
 - estado de retorno;
 - evidencia de corrección.
+
+Una corrección que cambie el candidato invalida las aprobaciones de la versión anterior para el cierre. Todas las validaciones obligatorias deben repetirse sobre la versión exacta nueva.
 
 ### B7-M4 — Control de ciclos
 
@@ -3049,33 +3055,36 @@ version
 checksum
 decision
 approved_by
+approved_role
 approved_at
 notes
 ```
 
-Esta decisión se registra mediante `EditorialScriptApproval`. No autoriza producción audiovisual ni publicación y no permite declarar `YOUTUBE_PRODUCTION_READY` ni `YOUTUBE_READY`.
+Esta decisión se registra mediante `EditorialScriptApproval`. Para cerrar el MVP, la decisión `APPROVED` de este contrato es la decisión editorial aplicable a `EDITORIAL_SCRIPT_APPROVED`; no debe sustituirse por `APPROVED_FOR_PRODUCTION`, que pertenece a `HumanProductionApproval` y al cierre posterior de B8.5. Es la aprobación editorial humana de una versión exacta; no equivale a aprobación de producción, publicación, `YOUTUBE_PRODUCTION_READY` ni `YOUTUBE_READY`. El requisito de consolidar todas las evidencias obligatorias sobre esa versión está definido funcionalmente, pero su implementación debe comprobarse contra B1 y el código.
 
 Decisiones:
 
 ```text
-APPROVE
+APPROVED
 REQUEST_CHANGES
 REJECT
 ```
 
-Solo `APPROVE` permite iniciar B7.5. No permite todavía declarar `YOUTUBE_PRODUCTION_READY` ni `YOUTUBE_READY`.
+Solo `APPROVED`, con todas las validaciones obligatorias vigentes sobre el mismo checksum, permite pasar a etapas posteriores. No permite todavía declarar `YOUTUBE_PRODUCTION_READY` ni `YOUTUBE_READY`.
 
 ## 21.3 Gate B7
 
 ```text
 PASS si:
-- auditoría editorial final fue independiente;
+- las validaciones obligatorias fueron independientes y están aprobadas sobre el mismo `artifact_id`, versión y checksum;
 - defectos se enrutaron a la fase correcta;
+- las correcciones generaron invalidación y revalidación de la versión actual;
 - no se superó el máximo de ciclos sin decisión humana;
 - EditorialScriptApproval referencia versión y checksum;
 - no existen cambios posteriores sin invalidación;
-- el guion está autorizado para entrar en Adaptación a YouTube.
+- el guion queda cerrado editorialmente en `EDITORIAL_SCRIPT_APPROVED` y puede continuar a etapas posteriores autorizadas.
 ```
+El gate consume evidencias separadas de cada dominio obligatorio y las reúne solo para el cierre de una versión exacta. Sus etiquetas documentales no crean estados, enums ni contratos nuevos del runtime.
 
 ---
 
@@ -3083,11 +3092,11 @@ PASS si:
 
 ## 22.1 Objetivo
 
-Convertir el guion aprobado editorialmente en una propuesta coherente para YouTube sin alterar la tesis ni la identidad del canal.
+Gestionar, después de `EDITORIAL_SCRIPT_APPROVED`, packaging final, correspondencia, continuidad y preparación posterior para YouTube sin alterar la tesis ni la identidad del canal. B7.5 no es el primer lugar donde se determina la adecuación textual necesaria para cerrar el MVP: esa validación participa en B7.
 
 ## 22.2 Misiones
 
-### B7.5-M1 — Correspondencia de promesa
+### B7.5-M1 — Correspondencia de packaging posterior
 
 Generar `PromiseCorrespondenceReport`.
 
@@ -3109,6 +3118,8 @@ Conclusión
 
 Un incumplimiento grave devuelve el episodio a la fase correspondiente.
 
+Esta misión trata la correspondencia entre packaging final y guion aprobado. Si un cambio de packaging revela un problema textual del guion, se solicita revalidación o corrección mediante la ruta de B7; no se sustituye la validación textual inicial del cierre.
+
 ### B7.5-M2 — Decisión final de packaging
 
 Rediseñar funcionalmente `skill_packaging.md` para que produzca `YouTubePackagingDecision`.
@@ -3127,11 +3138,11 @@ No se implementa todavía la miniatura física.
 
 ### B7.5-M3 — Políticas de YouTube versionadas
 
-Apertura, packaging, riesgo publicitario, copyright, contenido sintético, duración, Shorts, metadatos y continuidad pueden estar gobernados por políticas versionadas. Los cambios de YouTube no deben requerir reconstruir el motor editorial. Una OpeningPolicy futura podrá evolucionar independientemente del EditorialProfile. Packaging, apertura y guion deben mantener correspondencia. El Equipo 03 conserva autoridad funcional sobre estas políticas.
+Apertura, packaging, riesgo publicitario, copyright, contenido sintético, duración, Shorts, metadatos y continuidad pueden estar gobernados por políticas versionadas. Los cambios de YouTube no deben requerir reconstruir el motor editorial. Una OpeningPolicy futura podrá evolucionar independientemente del EditorialProfile. Packaging, apertura y guion deben mantener correspondencia. `YOUTUBE_ADAPTATION` conserva autoridad funcional sobre estas políticas.
 
 No incorporar como verdad permanente afirmaciones no verificadas sobre el algoritmo.
 
-### B7.5-M3A — Adecuación de apertura y duración
+### B7.5-M3A — Revalidación posterior de apertura y duración
 
 Validar:
 
@@ -3142,6 +3153,8 @@ Validar:
 * duración justificada por el valor y el tipo de pieza.
 
 No imponer una duración universal.
+
+La validación textual inicial de apertura y duración orientativa que puede afectar al cierre del MVP se realiza en B7. Aquí solo se revalida cuando una decisión posterior de YouTube lo exige o cuando cambia el paquete posterior.
 
 ### B7.5-M4 — Continuidad de sesión
 
@@ -3197,6 +3210,7 @@ Los timestamps finales quedan `BLOCKED` hasta existir edición audiovisual real.
 
 ```text
 PASS si:
+- `EDITORIAL_SCRIPT_APPROVED` ya existe y no se usa B7.5 para aprobar por primera vez la adecuación textual del MVP;
 - existe correspondencia verificable entre promesa y contenido;
 - packaging recomendado no es engañoso;
 - apertura confirma la expectativa;
@@ -3206,6 +3220,8 @@ PASS si:
 - metadatos son correctos;
 - ningún cambio altera el guion aprobado sin invalidarlo.
 ```
+
+Este gate es posterior al cierre del MVP y no convierte packaging, títulos, miniaturas, Shorts, SEO, metadatos o producción audiovisual en requisitos de `EDITORIAL_SCRIPT_APPROVED`.
 
 ---
 
@@ -3548,7 +3564,7 @@ Cuando sea viable, al menos una evaluación comparativa se realizará de forma c
 0 claims críticos sin tratamiento
 0 aprobaciones aplicadas a otra versión
 0 cambios posteriores a `EditorialScriptApproval` sin invalidación
-3/3 EDITORIAL_SCRIPT_APPROVAL = APPROVE
+3/3 EDITORIAL_SCRIPT_APPROVAL = APPROVED
 ```
 
 Las métricas de edición se comparan contra el baseline. No se inventa un porcentaje de mejora sin datos.
@@ -3830,7 +3846,7 @@ Solo después de la validación podrán evaluarse:
 
 - extraer el motor a otro repositorio;
 - convertir responsabilidades en subagentes;
-- implementar MCP estable de NotebookLM;
+- implementar un adaptador de investigación estable;
 - soportar otros canales;
 - añadir UI;
 - añadir base de datos;
@@ -3886,7 +3902,7 @@ autorización futura → B7.5 → componentes diferidos de B8 → B8.5 → valid
 
 No se inicia B6 sin PASS de B5.5.
 
-No se inicia B7.5 sin `EditorialScriptApproval = APPROVE`.
+No se inicia B7.5 sin `EditorialScriptApproval = APPROVED`; esta condición habilita únicamente la etapa posterior autorizada y no amplía el MVP.
 
 No se declara `YOUTUBE_PRODUCTION_READY` sin PASS de B8, HumanProductionApproval y Gate B8.5.
 
@@ -3945,7 +3961,7 @@ READY_FOR_EXTERNAL_AUDIT: YES/NO
 | 1.0 | 2026-07-21 | Borrador inicial | Consolidar auditorías técnicas y editoriales | Base del plan | `SUPERSEDED` |
 | 1.1 | 2026-07-21 | Reescritura integral con auditoría de Producto | Completar el producto editorial y evitar generalización prematura | Cambia arquitectura funcional, contratos y bloques | `READY_FOR_FINAL_APPROVAL` |
 | 1.2 | 2026-07-21 | Incorporación de Adaptación profesional a YouTube | Completar packaging, correspondencia, plataforma, derechos, publicación y aprendizaje | Amplía contratos y tramo final sin cambiar el producto rector | `READY_FOR_FINAL_APPROVAL` |
-| 1.3 | 2026-07-21 | Incorporación consolidada de auditorías finales de los equipos 01, 02 y 03 | Corregir autoridad funcional, EditorialProfile, análisis narrativo y humano, oficio de escritura, interfaz 02–03, aprobación para producción, reserva de YOUTUBE_READY y trazabilidad pospublicación | Modifica contratos y estados sin cambiar bloques ni autorizar implementación | `READY_FOR_TEAM_REVALIDATION` |
+| 1.3 | 2026-07-21 | Incorporación consolidada de validaciones finales funcionales | Corregir autoridad funcional, EditorialProfile, análisis narrativo y humano, oficio de escritura, interfaces funcionales, aprobación para producción, reserva de YOUTUBE_READY y trazabilidad pospublicación | Modifica contratos y estados sin cambiar bloques ni autorizar implementación | `READY_FOR_REVALIDATION` |
 | 1.4 | 2026-07-22 | PRE-B3 evolutionary architecture alignment | Principio de evolucionabilidad, EditorialProfile extensible, corpus y voz, puntos de extensión en B4, OPENING_UNIT en B5, antiartificialidad en B6, auditorías separadas en B7, políticas YouTube versionadas en B7.5, validación de sistema vivo en B9, aprendizaje extendido en B9.5, MVP/post-MVP | Documentación exclusiva; no cambia bloques, contratos, schemas ni autorización | `READY_FOR_EXTERNAL_AUDIT` |
 
 ### 29.1 Regla de modificación
@@ -3979,7 +3995,7 @@ READY_FOR_EXTERNAL_AUDIT: YES/NO
 | Pérdida de trazabilidad por sobrescritura | Media | Alta | Manifest, checksum e inmutabilidad |
 | Copia o imitación de fuentes | Media | Alta | Originality Review |
 | Perfil contaminado por una corrección | Alta | Alta | LearningCandidate gobernado |
-| Dependencia de NotebookLM | Media | Alta | Camino local y adapters |
+| Dependencia de un adaptador de investigación externo | Media | Alta | Camino local y adapters |
 | Borrar evidencia en limpieza | Media | Alta | Archivar antes de eliminar |
 | Validación editorial demasiado tardía | Media | Alta | B5.5 prototipo controlado |
 | Loops infinitos | Media | Media | Máximo tres ciclos y bloqueo humano |
@@ -4101,7 +4117,9 @@ La Etapa 1 se considera completada cuando el núcleo profesional de Guion alcanz
 - [ ] documentos históricos están clasificados;
 - [ ] rutas, configuración y README son portables;
 - [ ] los tres episodios de validación obtienen PASS;
-- [ ] Producto, Sistema y Humano aprueban el cierre editorial de la Etapa 1.
+- [ ] las validaciones funcionales obligatorias están aprobadas para la misma versión y checksum;
+- [ ] el sistema verifica contratos, invariantes, versionado y consistencia del cierre;
+- [ ] la aprobación editorial humana correspondiente está registrada por separado y no se confunde con aprobación de producción o publicación.
 
 ### Definition of Done futura — Etapa 2 (`DEFERRED_NOT_AUTHORIZED`)
 
@@ -4125,9 +4143,7 @@ Los siguientes requisitos pertenecen a la Etapa 2 y no bloquean el cierre de la 
 
 B0, B3 y B4 permanecen abiertos en recuperación; B1 y B2 conservan cierre `PASS`. B5-I1 mantiene pase técnico pendiente de confirmación funcional y B5-I2 sigue implementado con validación mock, pero pendiente de ejecución real y confirmación funcional.
 
-La siguiente acción permitida es:
-
-R1_STATUS_AND_EVIDENCE_RECONCILIATION
+La siguiente acción permitida se resuelve exclusivamente mediante el control operativo vigente.
 
 B5-I3 no está autorizado. La Etapa 2 permanece diferida y no puede iniciarse automáticamente.
 
@@ -4140,17 +4156,15 @@ PLAN_ID: PLAN-001
 PLAN_VERSION: 1.4
 PLAN_STATUS: READY_FOR_EXTERNAL_AUDIT
 FUNCTIONAL_AUDIT_SOURCES:
-- TEAM_01_APPROVED_WITH_REQUIRED_AMENDMENTS
-- TEAM_02_APPROVED_WITH_REQUIRED_AMENDMENTS
-- TEAM_03_APPROVED_WITH_REQUIRED_AMENDMENTS
+- CHANNEL_INTELLIGENCE_APPROVED_WITH_REQUIRED_AMENDMENTS
+- SCRIPT_PRODUCT_APPROVED_WITH_REQUIRED_AMENDMENTS
+- YOUTUBE_ADAPTATION_APPROVED_WITH_REQUIRED_AMENDMENTS
 - PRE-B3-EVOLUTIONARY-ARCHITECTURE-ALIGNMENT
-CONSOLIDATION_OWNER: TEAM_04_INFRASTRUCTURE_AND_GOVERNANCE
+CONSOLIDATION_OWNER: TECHNICAL_GOVERNANCE
 REQUIRED_AMENDMENTS_INCORPORATED: YES
-IMPLEMENTATION_AUTHORIZED: LIMITED_TO_PLAN_003_R0
-PLAN_001_SUSPENDED_AT_BLOCK: B5-I2
-PLAN_001_SUSPENDED_AT_INCREMENT: B5-I2
-CURRENT_ACTIVE_PLAN: PLAN_003
-CURRENT_ACTIVE_PHASE: R1_CLOSED
+IMPLEMENTATION_AUTHORIZED: SEE_LIVE_OPERATIONAL_CONTROL
+PLAN_001_STATUS: SEE_LIVE_OPERATIONAL_CONTROL
+CURRENT_ACTIVE_PHASE: SEE_LIVE_OPERATIONAL_CONTROL
 B5_I2_IMPLEMENTATION: COMPLETED
 B5_I2_TECHNICAL_CORRECTION: PASS_WITH_RESIDUAL_RISK
 B5_I2_REAL_SEMANTIC_AUDIT: NOT_DEMONSTRATED

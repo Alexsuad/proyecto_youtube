@@ -236,4 +236,23 @@ class EditorialProfileRegistry:
             or evidence.get("profile_checksum") != checksum
         ):
             raise ValueError("Validación técnica no coincide con el perfil")
+        lineage = profile.get("source_lineage", [])
+        lineage_by_id = {item.get("source_id"): item for item in lineage if isinstance(item, dict)}
+        functional_source = evidence.get("functional_source")
+        if functional_source is not None:
+            if not isinstance(functional_source, dict):
+                raise ValueError("La fuente funcional de la validación técnica no es válida")
+            source_id = functional_source.get("source_id")
+            expected_source = lineage_by_id.get(source_id)
+            if expected_source is None or any(
+                functional_source.get(field) != expected_source.get(field)
+                for field in ("source_id", "role", "checksum")
+            ):
+                raise ValueError("La fuente funcional de la validación técnica no coincide con el lineage")
+        lineage_sources = evidence.get("lineage_sources")
+        if lineage_sources is not None:
+            if not isinstance(lineage_sources, list) or len(lineage_sources) != len(set(lineage_sources)):
+                raise ValueError("La validación técnica contiene lineage_sources duplicados o inválidos")
+            if set(lineage_sources) != set(lineage_by_id):
+                raise ValueError("La validación técnica contiene fuentes de lineage inexistentes o incompletas")
         return checksum

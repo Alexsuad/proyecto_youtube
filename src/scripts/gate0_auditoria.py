@@ -14,8 +14,8 @@ from src.core.input_validation import InputRequirement, validate_inputs
 from src.core.path_resolution import REPO_ROOT, expand_path
 from src.core.status import GateStatus
 
-REQUIRED_DIRS = [".agent/rules", ".agent/skills", ".agent/workflows", "templates", "workspace", "config"]
-REQUIRED_RULES = ["00_reglas_globales.md", "01_formato_outputs.md", "02_reglas_notebooklm.md"]
+REQUIRED_DIRS = [".agent/rules", ".agent/skills", ".agent/workflows", "templates", "config"]
+REQUIRED_RULES = ["00_reglas_globales.md", "01_formato_outputs.md"]
 
 def evaluate() -> GateResult:
     config_path = REPO_ROOT / "config" / "local_settings.json"

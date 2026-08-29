@@ -21,7 +21,6 @@ config/local_settings.json
 Thumbs.db
 
 docs/*
-!docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 !docs/contracts/
 !docs/contracts/**
 !docs/product/

@@ -17,22 +17,18 @@ Este archivo no duplica valores mutables de fases, misiones, autorizaciones ni d
 2. `docs/product/MVP_BASELINE.md`
 3. `plans/plan_001/README.md`
 4. `plans/plan_001/B0_1_roadmap_implementacion_post_p08.md` y `plans/plan_001/B0_2_cierre_documental_recuperacion_post_p08.md` cuando la misión afecte la integración post-P08 o R0 documental
-5. `plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md` solo como antecedente histórico de recuperación
-6. `config/editorial_profile_registry.json`
-7. Solo después, los archivos concretos de la misión activa
+5. `config/editorial_profile_registry.json`
+6. Solo después, los archivos concretos de la misión activa
 
 ## Jerarquía De Autoridad
 
 ```text
 Decisiones expresas posteriores del OWNER
-→ docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 → docs/product/MVP_BASELINE.md
 → plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 → plans/001_CONTROL_OPERATIVO.md (única autoridad del estado vivo)
 → plans/plan_001/README.md + `B0_1`/`B0_2` para navegación documental de Plan 001 cuando aplique
-→ plans/plan_002/002_CIERRE_ARQUITECTURA_OPERATIVA_Y_MADURACION_EDITORIAL.md (solo propuesta; sin autoridad operativa)
 → contratos en schemas/ + config/ + src/
-→ plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md (histórico, cerrado y no normativo)
 → documentación histórica clasificada en workspace/
 ```
 
@@ -46,7 +42,6 @@ Cuando exista una recuperación temporal documentada, su alcance vigente se resu
 - Navegación documental de Plan 001: `plans/plan_001/README.md`
 - Roadmap maestro post-P08: `plans/plan_001/B0_1_roadmap_implementacion_post_p08.md`
 - Plan documental de R0: `plans/plan_001/B0_2_cierre_documental_recuperacion_post_p08.md`
-- Registro histórico de recuperación: `plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md`
 - Plan rector del producto: `plans/001_reestructuracion_motor_agentico_editorial_y_harness.md`
 - Alcance y frontera del MVP: `docs/product/MVP_BASELINE.md`
 - Estado de perfiles editoriales: `config/editorial_profile_registry.json`

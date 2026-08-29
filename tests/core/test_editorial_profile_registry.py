@@ -10,7 +10,7 @@ from src.core.version_manifest import compute_checksum
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def payload(version="1.2.0"):
+def payload(version="1.2.2"):
     return json.loads((ROOT / "profiles" / "editorial" / "mas_alla_del_guion" / version / "profile_payload.json").read_text())
 
 
@@ -34,6 +34,7 @@ def approval(profile, checksum):
 
 
 def gate(profile, checksum):
+    lineage = profile["source_lineage"]
     return {
         "gate_id": "B3_TECHNICAL_PROFILE_VALIDATION",
         "artifact_id": profile["profile_id"],
@@ -42,7 +43,13 @@ def gate(profile, checksum):
         "summary": "ok",
         "violations": [],
         "warnings": [],
-        "evidence": {"profile_checksum": checksum},
+        "evidence": {
+            "profile_checksum": checksum,
+            "lineage_sources": [item["source_id"] for item in lineage],
+            "functional_source": {
+                field: lineage[0][field] for field in ("source_id", "role", "checksum")
+            },
+        },
         "checked_at": "2026-07-27T12:15:00Z",
         "checker_version": "1.2.0",
         "exit_code": 0,
@@ -76,7 +83,7 @@ def test_activation_requires_matching_evidence_and_updates_registry(tmp_path: Pa
         technical_validation_path="technical.json",
     ) == checksum
     saved = json.loads(registry.path.read_text())
-    key = "mas_alla_del_guion@1.2.0"
+    key = "mas_alla_del_guion@1.2.2"
     assert saved["active_profile_key"] == key
     assert saved["profiles"][key]["status"] == "ACTIVE"
     assert saved["profiles"][key]["active"] is True
@@ -85,23 +92,72 @@ def test_activation_requires_matching_evidence_and_updates_registry(tmp_path: Pa
         EditorialProfileRegistry.verify_activation(profile, approval_record, technical)
 
 
+def test_activation_rejects_obsolete_functional_source_checksum(tmp_path: Path):
+    registry = EditorialProfileRegistry(tmp_path / f"registry_{uuid4().hex}.json")
+    profile = payload()
+    checksum = compute_checksum(profile)
+    approval_record = approval(profile, checksum)
+    technical = gate(profile, checksum)
+    technical["evidence"]["functional_source"]["checksum"] = "a" * 64
+    with pytest.raises(ValueError, match="fuente funcional"):
+        registry.record_activation(
+            profile, approval_record, technical,
+            actor="TECHNICAL_GOVERNANCE", profile_path="payload.json",
+            compiled_profile_path="compiled.json", approval_path="approval.json",
+            technical_validation_path="technical.json",
+        )
+
+
+def test_activation_rejects_invented_functional_source(tmp_path: Path):
+    registry = EditorialProfileRegistry(tmp_path / f"registry_{uuid4().hex}.json")
+    profile = payload()
+    checksum = compute_checksum(profile)
+    approval_record = approval(profile, checksum)
+    technical = gate(profile, checksum)
+    technical["evidence"]["functional_source"]["source_id"] = "INVENTED-SOURCE"
+    with pytest.raises(ValueError, match="fuente funcional"):
+        registry.record_activation(
+            profile, approval_record, technical,
+            actor="TECHNICAL_GOVERNANCE", profile_path="payload.json",
+            compiled_profile_path="compiled.json", approval_path="approval.json",
+            technical_validation_path="technical.json",
+        )
+
+
+def test_activation_rejects_duplicate_or_inconsistent_lineage_sources(tmp_path: Path):
+    registry = EditorialProfileRegistry(tmp_path / f"registry_{uuid4().hex}.json")
+    profile = payload()
+    checksum = compute_checksum(profile)
+    approval_record = approval(profile, checksum)
+    technical = gate(profile, checksum)
+    technical["evidence"]["lineage_sources"] = ["B3-FUNCTIONAL-SPEC-CANONICAL"] * 2
+    with pytest.raises(ValueError, match="lineage_sources"):
+        registry.record_activation(
+            profile, approval_record, technical,
+            actor="TECHNICAL_GOVERNANCE", profile_path="payload.json",
+            compiled_profile_path="compiled.json", approval_path="approval.json",
+            technical_validation_path="technical.json",
+        )
+
+
 def test_invalid_approval_chain_is_recorded_without_mutating_profile_files(tmp_path: Path):
     registry = EditorialProfileRegistry(tmp_path / f"registry_{uuid4().hex}.json")
-    profile = payload("1.1.0")
+    profile = payload()
+    profile["version"] = "9.9.9"
     observed = compute_checksum(profile)
     registry.mark_invalid_approval_chain(
         profile,
         reason="profile checksum does not match functional approval checksum",
         approval_checksum="dbe94dbfcee5e9e30a956dab20097f62216e4fb58beddb3ef8fa3086fd95ee8c",
         technical_validation_checksum="dbe94dbfcee5e9e30a956dab20097f62216e4fb58beddb3ef8fa3086fd95ee8c",
-        profile_path="profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-        compiled_profile_path="profiles/editorial/mas_alla_del_guion/1.1.0/editorial_profile.json",
-        approval_path="profiles/editorial/mas_alla_del_guion/1.1.0/functional_approval.json",
-        technical_validation_path="profiles/editorial/mas_alla_del_guion/1.1.0/technical_validation.json",
-        superseded_by="mas_alla_del_guion@1.2.0",
+        profile_path="synthetic/profile_payload.json",
+        compiled_profile_path="synthetic/editorial_profile.json",
+        approval_path="synthetic/functional_approval.json",
+        technical_validation_path="synthetic/technical_validation.json",
+        superseded_by="synthetic@10.0.0",
     )
     saved = json.loads(registry.path.read_text())
-    key = "mas_alla_del_guion@1.1.0"
+    key = "mas_alla_del_guion@9.9.9"
     assert saved["profiles"][key]["checksum"] == observed
     assert saved["profiles"][key]["status"] == "INVALID_APPROVAL_CHAIN"
     assert saved["profiles"][key]["active"] is False
@@ -112,7 +168,7 @@ def test_pending_profile_state_can_be_registered_without_active_pointer(tmp_path
     profile = payload()
     profile["status"] = "PENDING_FUNCTIONAL_APPROVAL"
     checksum = registry.register(profile, profile_path="payload.json", compiled_profile_path="compiled.json")
-    key = "mas_alla_del_guion@1.2.0"
+    key = "mas_alla_del_guion@1.2.2"
     registry.data["profiles"][key]["status"] = "PENDING_FUNCTIONAL_APPROVAL"
     registry.data["profiles"][key]["active"] = False
     registry.save()

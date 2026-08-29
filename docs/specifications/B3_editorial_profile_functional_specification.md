@@ -8,14 +8,14 @@ FUNCTIONAL_SPECIFICATION
 NON_ACTIVATING
 ```
 
-Este archivo es la referencia funcional neutral para `EditorialProfile 1.2.0`.
+Este archivo es la referencia funcional canónica y neutral para `EditorialProfile`.
 No activa perfiles, no sustituye la aprobación funcional y no autoriza por sí sola cambios de runtime.
 
 ## Autoridad funcional
 
 - Propietario: `CHANNEL_INTELLIGENCE`
 - Consumidores derivados: `SCRIPT_PRODUCT`, `YOUTUBE_ADAPTATION`, `TECHNICAL_GOVERNANCE`
-- Fuente histórica sustituida: especificación histórica original de B3, conservada solo para trazabilidad
+- La historia de versiones sustituidas pertenece al historial de Git y no forma parte del lineage vigente del producto.
 
 ## Identidad aprobada para revisión técnica
 

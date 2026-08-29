@@ -9,11 +9,11 @@
     "config/capability_routing.yaml",
     "config/skill_catalog.json"
   ],
-  "generated_at": "2026-08-11T00:00:00Z",
+  "generated_at": "2026-08-29T09:50:00Z",
   "limitations": [],
   "mission_id": "TH-04",
   "plan_id": "PLAN_004",
-  "repository_revision": "fd594e032bcab8d1567e7351223eca5d8e248d20",
+  "repository_revision": "7e788c8430070da37bd12d125b5a78e0c6edee71",
   "resolvable_roots": [
     "schemas",
     "src",
@@ -44,31 +44,31 @@
   "source_inputs": [
     {
       "path": "config/capability_registry.json",
-      "sha256": "929d87458288eaa047f10b9aa592a5e913ae27d1fa76bb8cd9ac3f974ee2ac5b"
+      "sha256": "78d1a00c056f7766deb777b2a8dc916a2218e73d937a6f8c2b8d5c65c2cc0fa1"
     },
     {
       "path": "config/responsibility_registry.json",
-      "sha256": "d950488039410870ccf97d4e435ca3071ab43078cf592c24d1a9b73da100d6c4"
+      "sha256": "c05115caaab92a58ac833b8a3aaf8a866fbceb869cc86d8ee01d59cee5de0600"
     },
     {
       "path": "config/agent_prompt_registry.json",
-      "sha256": "f441aa3703bf8b69f7b2c5ab79f256549de6d9e9f1cff33b508415fb7da3477a"
+      "sha256": "20be99018a5834cbf723c96cd71a9aa340c702be911330cbf3ca6bbfcf0956ae"
     },
     {
       "path": "config/agent_execution_profiles.json",
-      "sha256": "6f1809d92fc658a8c5f5afe1946fd85328fab24c7da2cdc753a78d48bf9fc6ff"
+      "sha256": "6f0f2201ab577355f628d9aac8170ba5c218e7580e1253cd1ead6b4a2aae3264"
     },
     {
       "path": "config/subagent_registry.json",
-      "sha256": "896410fd230d0e6c6b3d4a9b926968191dcca10d2b42fe5f1f7ec5af15772d52"
+      "sha256": "d9d57bead6776d4b6afbde8be6abc279f4d9c804b11acc68ec9d7cefd153dbff"
     },
     {
       "path": "config/capability_routing.yaml",
-      "sha256": "a5b1dda9c8c08a7ed457d9e39b326bbe16fa8f036c6ac664369d5f6a85dd8e2b"
+      "sha256": "7fe5637c784f5f1ef65f4a96f0d6f387cbdc0dd6bdc3c10a0b5b9fd466673235"
     },
     {
       "path": "config/skill_catalog.json",
-      "sha256": "1180a3ec5c57d646b9f5286d882a28303d22064341d0123f17e7413b88e39db6"
+      "sha256": "865bdd04cc8e9a4c86d4f1e365121799942c5dc3fecf0412cf4048418d83f564"
     }
   ]
 }

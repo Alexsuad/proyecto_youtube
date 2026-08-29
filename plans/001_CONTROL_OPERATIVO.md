@@ -11,8 +11,6 @@
 
 ```yaml
 PLAN_001: PRODUCT_PLAN_RECTOR
-PLAN_003: HISTORICAL_CLOSED_NON_NORMATIVE
-PLAN_002: SUPERSEDED_BY_APPROVED_ARCHITECTURE
 CURRENT_RECOVERY_PLAN: NONE
 CURRENT_RECOVERY_PHASE: NONE
 PLAN_001_EXECUTION: R2_CONTROLLED_EXECUTION_AUTHORIZED
@@ -332,22 +330,14 @@ NEXT_ALLOWED_ACTION: R2_CONTROLLED_EXECUTION
 R2_EXECUTION: AUTHORIZED_CONTROLLED_B5_I1_ONLY
 ACTIVE_PRODUCT_STAGE: SCRIPT_CORE
 CURRENT_INCREMENT: B5-I1_CONTROLLED_EXECUTION
-ACTIVE_EDITORIAL_PROFILE: mas_alla_del_guion@1.2.1
-ACTIVE_EDITORIAL_PROFILE_CHECKSUM: d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1
-PROFILE_1_1_0_STATUS: INVALID_APPROVAL_CHAIN
-PROFILE_1_1_0_ACTIVE: false
-PROFILE_1_2_0_STATUS: FUNCTIONAL_REVIEW_BLOCKED
-PROFILE_1_2_0_ACTIVE: false
-PROFILE_1_2_1_STATUS: ACTIVE
-PROFILE_1_2_1_ACTIVE: true
-PROFILE_1_2_1_CHECKSUM: d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1
+ACTIVE_EDITORIAL_PROFILE: mas_alla_del_guion@1.2.2
+ACTIVE_EDITORIAL_PROFILE_CHECKSUM: 2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b
+PROFILE_1_2_2_STATUS: ACTIVE
+PROFILE_1_2_2_ACTIVE: true
+PROFILE_1_2_2_CHECKSUM: 2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b
 REAL_OPERATIONAL_SUBAGENTS: 0
 REAL_MULTIAGENT_RUNTIME: NOT_DEMONSTRATED
 END_TO_END_AGENTIC_EXECUTION: NOT_DEMONSTRATED
-PLAN_002_DOCUMENT_STATUS: SUPERSEDED_BY_APPROVED_ARCHITECTURE
-PLAN_002_OPERATIONAL_AUTHORITY: NOT_GRANTED
-PLAN_002_AGENT_ARCHITECTURE: APPROVED_REPLACEMENT_MODEL
-PLAN_002_FINAL_DECISION: SUPERSEDED_BY_APPROVED_ARCHITECTURE
 R4_STATUS: PASS
 R4_CURRENT_PHASE: CLOSED
 R4_EXECUTION: NOT_AUTHORIZED
@@ -364,7 +354,7 @@ R5A_STATUS: PASS
 R5A_CURRENT_PHASE: CLOSED
 R5B_STATUS: PASS
 R5B_CURRENT_PHASE: CLOSED
-PROFILE_CANDIDATE: mas_alla_del_guion@1.2.1
+PROFILE_CANDIDATE: mas_alla_del_guion@1.2.2
 PROFILE_ACTIVATION: PASS
 VOICE_CORPUS_STATE: AUTHENTIC_CORPUS_PARTIAL
 GLOBAL_VOICE_REPRESENTATIVENESS: NOT_VALIDATED
@@ -425,8 +415,6 @@ B3_NEUTRAL_SPEC_TRACKABLE: YES
 NEW_AGENT_IMPLEMENTATION: NOT_AUTHORIZED
 B5_I3: NOT_AUTHORIZED
 S5_REAL_EXECUTION: BLOCKED
-PROFILE_1_2_0_ACTIVATION: NOT_AUTHORIZED
-PROFILE_1_2_1_ACTIVATION: PASS
 REAL_EPISODE_PRODUCTION: NOT_AUTHORIZED
 SCRIPT_PRODUCT_B5_I2_FUNCTIONAL_SPECIFICATION: COMPLETE
 SCRIPT_PRODUCT_B5_I2_IMPLEMENTATION: PASS
@@ -472,22 +460,19 @@ SANITATION:
 active_plan: plans/001_reestructuracion_motor_agentico_editorial_y_harness.md
 ```
 
-El Plan 001 sigue siendo el plan rector del producto y `plans/001_CONTROL_OPERATIVO.md` es la única autoridad del estado vivo. Plan 003 queda cerrado como referencia histórica no normativa. La referencia histórica de B5_PRE_M2 queda desactivada y no constituye misión activa. `ACTIVE_EDITORIAL_PROFILE` permanece en `mas_alla_del_guion@1.2.1` con checksum activo `d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1`; la voz sigue en `AUTHENTIC_CORPUS_PARTIAL` y `NOT_VALIDATED` a nivel global. El diagnóstico de Ollama quedó cerrado y diferido: no existe ruta contractual completa viable en el hardware actual, no se recuperó la evidencia real anterior de R6-B y la independencia productor–auditor sigue `NOT_DEMONSTRATED`. La implementación técnica de `SCRIPT_PRODUCT` para B5-I2 y la reparación transversal de integridad textual ya están cerradas. La fase previa al guion queda consolidada solo como referencia histórica. B5-I3, S5 real, una nueva ejecución real de R6-B, packaging final, producción y publicación permanecen no autorizados.
+El Plan 001 sigue siendo el plan rector del producto y `plans/001_CONTROL_OPERATIVO.md` es la única autoridad del estado vivo. `ACTIVE_EDITORIAL_PROFILE` está en `mas_alla_del_guion@1.2.2` con checksum activo `2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b`; la voz sigue en `AUTHENTIC_CORPUS_PARTIAL` y `NOT_VALIDATED` a nivel global. El diagnóstico de Ollama quedó cerrado y diferido: no existe ruta contractual completa viable en el hardware actual, no se recuperó la evidencia real anterior de R6-B y la independencia productor–auditor sigue `NOT_DEMONSTRATED`. La implementación técnica de `SCRIPT_PRODUCT` para B5-I2 y la reparación transversal de integridad textual ya están cerradas. La fase previa al guion queda consolidada solo como referencia histórica. B5-I3, S5 real, una nueva ejecución real de R6-B, packaging final, producción y publicación permanecen no autorizados.
 
 ## 2. Autoridad documental
 
 ```text
 1. Decisiones explícitas posteriores del propietario
-2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
-3. docs/product/MVP_BASELINE.md
-4. Decisiones funcionales aprobadas de la responsabilidad competente
-5. Plan 003 como referencia histórica de recuperación y reconciliación
-6. Plan 001 v1.4 como plan rector del producto
-7. PLAN 002 sustituido por la arquitectura aprobada; sin autoridad operativa
-8. Este control operativo como única sede del estado vivo
-9. Archivo del bloque activo
-10. Misión técnica autorizada
-11. Reportes del agente ejecutor
+2. docs/product/MVP_BASELINE.md
+3. Decisiones funcionales aprobadas de la responsabilidad competente
+5. Plan 001 v1.4 como plan rector del producto
+7. Este control operativo como única sede del estado vivo
+8. Archivo del bloque activo
+9. Misión técnica autorizada
+10. Reportes del agente ejecutor
 ```
 
 Este control resume estado y navegación. No sustituye contratos, criterios ni decisiones del plan rector.
@@ -499,7 +484,6 @@ La autoridad se resuelve por especialidad. El Plan 001 y este control operativo 
 ```text
 OBLIGATORIO:
 - AGENTS.md
-- docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 - plans/001_CONTROL_OPERATIVO.md
 - plans/plan_001/<BLOQUE_ACTIVO>.md
 - misión técnica autorizada
@@ -583,7 +567,7 @@ ETAPA 2 DIFERIDA: autorización futura → B7.5 → componentes diferidos de B8 
 | B0 | Gobernanza, baseline y benchmarks editoriales | Ninguna | `OPEN` (evidencia pendiente de revisión) | [B0_gobernanza_baseline_benchmarks.md](plan_001/B0_gobernanza_baseline_benchmarks.md) |
 | B1 | Contratos, schemas, estados y versionado | B0 | `PASS` (auditoría aprobada, 29/29 tests) | [B1_contratos_schemas_estados_versionado.md](plan_001/B1_contratos_schemas_estados_versionado.md) |
 | B2 | Reparación del arnés y gates críticos | B1 | `PASS` | [B2_reparacion_harness_gates.md](plan_001/B2_reparacion_harness_gates.md) |
-| B3 | Perfil editorial y frontera del canal | B1–B2 | `PASS` (1.2.1 aprobado, validado y activo; 1.2.0 sustituido e inactivo) | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
+| B3 | Perfil editorial y frontera del canal | B1–B2 | `PASS` (1.2.2 aprobado, validado y activo) | [B3_perfil_editorial_frontera_canal.md](plan_001/B3_perfil_editorial_frontera_canal.md) |
 | B4 | Responsabilidades, skills, prompts y portabilidad | B3 | `OPEN` (foundation contractual validada; operación real no demostrada) | [B4_responsabilidades_skills_portabilidad.md](plan_001/B4_responsabilidades_skills_portabilidad.md) |
 | B5 | Profesionalización del diseño editorial | B3–B4 | `IN_PROGRESS` (B5-I1 y B5-I2 abiertos hasta reconciliación de estados y evidencias) | [B5_diseno_editorial.md](plan_001/B5_diseno_editorial.md) |
 | B5.5 | Prototipo editorial controlado | B5 | `PLANNED` | [B5_5_prototipo_editorial.md](plan_001/B5_5_prototipo_editorial.md) |
@@ -628,7 +612,6 @@ Una modificación del plan rector debe:
 
 ```text
 HISTORICAL_STATE: YES
-PLAN_003: HISTORICAL_CLOSED_NON_NORMATIVE
 PLAN_001: PRODUCT_PLAN_RECTOR
 HISTORICAL_B5_PRE_M2_STATUS: RECONCILED_NOT_IMPLEMENTED
 HISTORICAL_B5_PRE_M2_DEFINED_AS_NEXT_ACTION: NO

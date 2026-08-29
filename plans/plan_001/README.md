@@ -35,11 +35,10 @@ Los archivos de esta carpeta:
 ### Leer siempre
 
 1. `AGENTS.md`, cuando exista.
-2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md.
-3. `plans/001_CONTROL_OPERATIVO.md`.
-4. El archivo del bloque activo.
-5. La misión concreta.
-6. Solo los archivos expresamente indicados o necesarios para ejecutar esa misión.
+2. `plans/001_CONTROL_OPERATIVO.md`.
+3. El archivo del bloque activo.
+4. La misión concreta.
+5. Solo los archivos expresamente indicados o necesarios para ejecutar esa misión.
 
 ### No leer por defecto
 

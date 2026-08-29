@@ -1,5 +1,5 @@
 {
-  "checksum": "d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1",
+  "checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b",
   "profile": {
     "audience_hypotheses": [
       {
@@ -200,21 +200,15 @@
       "Nuevas muestras aut\u00e9nticas solo podr\u00e1n incorporarse con checksum, autor\u00eda, autorizaci\u00f3n, representatividad y lineage verificables.",
       "Definir referencias versionadas para pol\u00edticas editoriales, de plataforma y preferencias de formato fuera de la identidad estable.",
       "Toda nueva versi\u00f3n requerir\u00e1 aprobaci\u00f3n funcional y validaci\u00f3n t\u00e9cnica sobre su checksum exacto antes de activarse.",
-      "La versi\u00f3n 1.2.1 preserva el contenido funcional vigente y corrige la trazabilidad de lineage y representatividad del corpus; requiere nueva aprobaci\u00f3n funcional antes de activarse."
+      "La versi\u00f3n 1.2.2 preserva el contenido funcional vigente y sanea el lineage para depender \u00fanicamente de la especificaci\u00f3n can\u00f3nica; requiere aprobaci\u00f3n funcional y validaci\u00f3n t\u00e9cnica sobre su checksum exacto antes de activarse."
     ],
     "profile_id": "mas_alla_del_guion",
     "source_lineage": [
       {
-        "checksum": "c2108e34fa5113e22c01dc70888e8e510eede12c7b54ccff76bd810045a6aadc",
+        "checksum": "73618cbe03da6ab3837f669e431fc7c7b21e7e698a9eb5a8d8b8ce32f0ddc8f1",
         "locator": "docs/specifications/B3_editorial_profile_functional_specification.md",
         "role": "FUNCTIONAL_SPECIFICATION",
         "source_id": "B3-FUNCTIONAL-SPEC-CANONICAL"
-      },
-      {
-        "checksum": "bde2f67dac8ed2db7f4ddf0282ea1899e161cfd1370bf87089f7b68edd291fc5",
-        "locator": "profiles/editorial/mas_alla_del_guion/1.1.0/profile_payload.json",
-        "role": "MIGRATION_SOURCE",
-        "source_id": "EDITORIAL-PROFILE-MAS-ALLA-DEL-GUION-1.1.0"
       }
     ],
     "status": "PENDING_FUNCTIONAL_APPROVAL",
@@ -226,7 +220,7 @@
       "AUDIO_CONTENT",
       "COMPATIBLE_DERIVATIVE"
     ],
-    "version": "1.2.1",
+    "version": "1.2.2",
     "voice_profile": {
       "anti_imitation_rules": [
         "La voz editorial se rige por la especificaci\u00f3n can\u00f3nica y por la evidencia aut\u00e9ntica autorizada disponible",

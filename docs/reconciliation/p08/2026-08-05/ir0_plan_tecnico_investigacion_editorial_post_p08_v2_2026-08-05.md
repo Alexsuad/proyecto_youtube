@@ -66,7 +66,7 @@ No existe todavía una capacidad completa de investigación editorial. Las brech
 - Extender independencia productor–auditor a toda la investigación.
 - Completar rutas de corrección e invalidación dependientes de P-07.
 - Materializar `SOURCE_GROUNDED_RESEARCH_ADAPTER` como interfaz opcional, agnóstica y no autoritativa.
-- Mantener separados aprobación funcional, activación técnica y autorización interequipos.
+- Mantener separados aprobación funcional, activación técnica y autorización de uso productivo.
 
 **Dependencia:** paquetes 2–5.
 

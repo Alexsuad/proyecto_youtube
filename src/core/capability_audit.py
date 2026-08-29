@@ -42,6 +42,7 @@ JSON_SEED_SCHEMAS = {
     "config/skill_catalog.json": "skill_catalog",
 }
 REFERENCE_SUFFIXES = (".json", ".yaml", ".yml", ".py", ".md")
+NON_REFERENCE_KEYS = {"pattern", "regex", "regexp", "regular_expression"}
 
 
 class CapabilityAuditInputError(ValueError):
@@ -289,6 +290,8 @@ def _looks_like_reference(value: str) -> bool:
 def _iter_explicit_references(value: Any, location: str = "") -> Iterable[tuple[str, str, str]]:
     if isinstance(value, dict):
         for key, child in value.items():
+            if str(key).lower() in NON_REFERENCE_KEYS:
+                continue
             child_location = f"{location}.{key}" if location else str(key)
             yield from _iter_explicit_references(child, child_location)
     elif isinstance(value, list):

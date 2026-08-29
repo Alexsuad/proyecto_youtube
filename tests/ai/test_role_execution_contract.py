@@ -17,7 +17,7 @@ def _runtime_values() -> dict[str, object]:
 
 def _producer_input() -> dict[str, object]:
     return {
-        "active_editorial_profile_reference": {"profile_id": "mas_alla_del_guion", "version": "1.2.1"},
+        "active_editorial_profile_reference": {"profile_id": "mas_alla_del_guion", "version": "1.2.2"},
         "episode_brief": {"episode_id": "EP-1"},
         "research_pack": {"research_id": "R-1"},
         "source_access_and_evidence_report": {"report_id": "ER-1"},

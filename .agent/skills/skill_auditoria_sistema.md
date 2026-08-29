@@ -25,12 +25,11 @@ Este skill corresponde al **Gate 0** técnico. La ruta portable no requiere conf
   - `.agent/skills/`
   - `.agent/workflows/`
   - `templates/`
-  - `workspace/`
 - Validar presencia de reglas core:
   - `00_reglas_globales.md`
   - `01_formato_outputs.md`
-  - `02_reglas_notebooklm.md`
-- **Acción:** Si falta algo crítico 🔴 STOP. Si falta algo menor 🟡 WARN.
+Las reglas del adaptador de investigación externo y la configuración Vault son opcionales; no bloquean la ruta portable.
+- **Acción:** Si falta una estructura contractual del checkout 🔴 STOP. Si falta una dependencia legacy opcional 🟡 WARN.
 
 ### 3. Verificación del Vault (solo adaptador legacy seleccionado)
 - Usar las rutas leídas de la config: `<VAULT_ROOT>\<CHANNEL_ID>\`.

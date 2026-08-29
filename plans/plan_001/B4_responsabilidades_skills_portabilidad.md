@@ -15,7 +15,7 @@
 ``text
 STATUS_RECONCILED: PASS
 FINAL_CLOSURE_STATUS: OPEN
-EVIDENCE_REFS: Ver Plan 003 R1 y control operativo
+EVIDENCE_REFS: Ver control operativo y contratos actuales
 ```
 
 ## 0. Uso operativo
@@ -23,8 +23,7 @@ EVIDENCE_REFS: Ver Plan 003 R1 y control operativo
 Lectura mínima para ejecutar una misión de este bloque:
 
 1. `AGENTS.md` del repositorio, si existe.
-2. docs/ALCANCE_Y_COORDINACION_EQUIPOS.md.
-3. `plans/001_CONTROL_OPERATIVO.md`.
+2. `plans/001_CONTROL_OPERATIVO.md`.
 4. Este archivo.
 5. La misión concreta y los archivos expresamente autorizados.
 
@@ -34,13 +33,12 @@ No leer por defecto el Plan 001 completo, otros bloques, todo `workspace/` ni re
 
 - §9 Modelo funcional y agéntico
 - §7.14 No crear componentes por entusiasmo
-- docs/ALCANCE_Y_COORDINACION_EQUIPOS.md
 
 ---
 
 ## 1. Objetivo
 
-Alinear los once roles actuales con responsabilidades operativas base y familias funcionales canónicas, asignando dueño funcional, contrato, veto y evidencia sin crear subagentes innecesarios ni acoplar el sistema a Antigravity.
+Alinear los once roles actuales con responsabilidades operativas base y familias funcionales canónicas, asignando dueño funcional, contrato, veto y evidencia sin crear subagentes innecesarios ni acoplar el sistema a una herramienta externa.
 
 ## 2. Misiones
 
@@ -83,9 +81,9 @@ La auditoría final debe ejecutarse en contexto limpio o sesión separada.
 - controlar evolución de voz;
 - gestionar decisiones pendientes;
 - validar aprendizajes antes de activarlos;
-- registrar aprobación funcional del Equipo 01.
+- registrar aprobación funcional de `CHANNEL_INTELLIGENCE`.
 
-Estas capacidades son propiedad funcional del Equipo 01. El Equipo 04 decide su forma técnica.
+Estas capacidades son propiedad funcional de `CHANNEL_INTELLIGENCE`. `TECHNICAL_GOVERNANCE` decide su forma técnica.
 
 #### Investigación, análisis narrativo y humano, y curación
 
@@ -100,7 +98,7 @@ Estas capacidades son propiedad funcional del Equipo 01. El Equipo 04 decide su 
 
 - clasificar tipo de guion;
 - tesis provisional/refinada;
-- consumir la PackagingHypothesis aprobada funcionalmente por el Equipo 03;
+- consumir la PackagingHypothesis aprobada funcionalmente por `YOUTUBE_ADAPTATION`;
 - validar que la tesis y la arquitectura puedan cumplirla honestamente;
 - viewer journey;
 - opening/closing design;
@@ -146,7 +144,7 @@ Estas capacidades son propiedad funcional del Equipo 01. El Equipo 04 decide su 
 
 Cada responsabilidad estable debe contar con prompt oficial versionado. No se permiten prompts improvisados en el workflow activo.
 
-### B4-M5 — Proyección al entorno Antigravity
+### B4-M5 — Proyección a un entorno de agente externo
 
 Los archivos `.agent/` actúan como adapter operativo, no como única sede de la arquitectura.
 
@@ -179,7 +177,7 @@ La arquitectura debe poder incorporar, sin modificar el core:
 
 Definir conceptualmente interfaces o adapters, sin diseñar todavía implementación concreta. Ejemplos válidos: AIProvider, InputAdapter, ReviewModule, PolicyPack o equivalentes.
 
-Antigravity, Codex y OpenCode son agentes operativos de desarrollo, no dependencias obligatorias del producto. Los proveedores deben seleccionarse por configuración. Telegram, voz, web o API serán futuras entradas que normalicen hacia un contrato canónico. No implementar esos adaptadores en B4 si están fuera del MVP.
+Los agentes operativos externos son herramientas de desarrollo opcionales, no dependencias obligatorias del producto. Los proveedores deben seleccionarse por configuración. Telegram, voz, web o API serán futuras entradas que normalicen hacia un contrato canónico. No implementar esos adaptadores en B4 si están fuera del MVP.
 
 ### B4-M7 — Política de subagentes
 
@@ -191,15 +189,15 @@ Mantener `0` subagentes reales hasta que exista evidencia de necesidad.
 PASS si:
 - todas las responsabilidades operativas y familias funcionales canónicas tienen contrato;
 - cada capacidad tiene dueño funcional identificado;
-- Inteligencia del Canal está representada y conserva la aprobación funcional del Equipo 01;
-- Adaptación a YouTube está representada y conserva la autoridad funcional del Equipo 03;
+- `CHANNEL_INTELLIGENCE` está representada y conserva la aprobación funcional de su dominio;
+- `YOUTUBE_ADAPTATION` está representada y conserva la autoridad funcional de su dominio;
 - Editor y Auditor están separados;
 - cada skill tiene dueño funcional;
 - prompts oficiales están versionados;
 - el sistema funciona en modo single-agent;
 - la arquitectura no depende de una marca de IDE o modelo;
 - los puntos de extensión para proveedor, entrada, auditoría y política están definidos conceptualmente;
-- Antigravity, Codex y OpenCode no son dependencias obligatorias del producto;
+- las herramientas de desarrollo externas no son dependencias obligatorias del producto;
 - no se crearon subagentes sin justificación;
 - los adaptadores de entrada adicionales (Telegram, voz, web, API) no se implementaron en MVP.
 ```

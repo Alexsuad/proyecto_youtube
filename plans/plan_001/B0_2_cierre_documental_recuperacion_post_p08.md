@@ -9,7 +9,7 @@
 **IMPLEMENTATION_AUTHORIZED:** `NO`
 **R1_IMPLEMENTATION:** `NOT_AUTHORIZED`
 **R2_TO_R9:** `NOT_AUTHORIZED`
-**CODEX_MISSIONS_PREPARED:** `NO`
+**OPERATIONAL_MISSIONS_PREPARED:** `NO`
 
 ---
 
@@ -20,7 +20,7 @@ R0 debe converger y sanear la documentación posterior a P-08 e IR-0 antes de cu
 1. `plans/001_CONTROL_OPERATIVO.md` sea la única autoridad normativa de estado vivo;
 2. el roadmap post-P08 gobierne únicamente planeación, dependencias, gates y criterios de autorización;
 3. los artefactos IR-0 gobiernen únicamente trazabilidad y planeación técnica;
-4. Plan 003 deje de operar como autoridad temporal y quede histórico, cerrado y no normativo;
+4. la recuperación documental anterior quede cerrada y no normativa;
 5. desaparezcan referencias vigentes a Misión 01E y autorizaciones anteriores incompatibles;
 6. se restauren los defectos textuales y estructurales detectados en `AGENTS.md` y `B5_PRE_SCRIPT_FOUNDATION.md` sin alterar requisitos funcionales;
 7. la matriz IR-0 v3 y el plan técnico IR-0 se incorporen como copias binarias exactas, con procedencia verificable;
@@ -46,8 +46,8 @@ plans/plan_001/B0_1_roadmap_implementacion_post_p08.md
 ROADMAP_STATE_SNAPSHOT:
 NON_NORMATIVE_REFERENCE_ONLY
 
-PLAN_003_AUTHORITY_STATUS:
-HISTORICAL_NON_NORMATIVE
+HISTORICAL_RECOVERY_AUTHORITY_STATUS:
+CLOSED_NON_NORMATIVE
 
 IR0_TRACEABILITY_BASELINE:
 docs/reconciliation/p08/2026-08-05/ir0_matriz_investigacion_editorial_post_p08_v3_2026-08-05.xlsx
@@ -158,7 +158,7 @@ No gobiernan estado vivo ni autorizan implementación.
 **Ruta:**
 
 ```text
-docs/reconciliation/p08/2026-08-05/r0_documentary_convergence_report_2026-08-05.md
+historial de Git: reporte R0 retirado
 ```
 
 Registra resultados, hashes y validaciones. No reemplaza el control operativo.
@@ -356,7 +356,7 @@ Debe:
 - retirar estados antiguos, autorizaciones activas y “siguiente acción” duplicada;
 - no publicar estado vivo propio.
 
-### D. `plans/plan_003/003_RECUPERACION_RECONCILIACION_Y_CIERRE_DE_FALSOS_POSITIVOS.md`
+### D. Registro histórico de recuperación retirado
 
 **Tipo:** autoridad temporal anterior.
 **Acción:** cierre documental obligatorio.
@@ -364,7 +364,7 @@ Debe:
 Debe quedar marcado como:
 
 ```text
-PLAN_003_STATUS: CLOSED_HISTORICAL
+HISTORICAL_RECOVERY_STATUS: CLOSED
 AUTHORITY_STATUS: HISTORICAL_NON_NORMATIVE
 IMPLEMENTATION_AUTHORIZED: NO
 SUPERSEDED_FOR_LIVE_STATE_BY: plans/001_CONTROL_OPERATIVO.md
@@ -460,7 +460,7 @@ La procedencia se registra en el reporte de cierre, no dentro del archivo.
 **Ruta:**
 
 ```text
-docs/reconciliation/p08/2026-08-05/r0_documentary_convergence_report_2026-08-05.md
+historial de Git: reporte R0 retirado
 ```
 
 Debe incluir:
@@ -472,7 +472,7 @@ Debe incluir:
 - archivos modificados;
 - validaciones realizadas;
 - defectos textuales corregidos;
-- cierre de Plan 003;
+- cierre de la recuperación documental anterior;
 - confirmación de autoridad única;
 - conteos IR-0 verificados;
 - confirmación de R1 no autorizado;
@@ -534,7 +534,7 @@ No modificar:
 
 ### Unidad R0-2 — Sanear autoridad y recuperación
 
-1. cerrar Plan 003 como histórico no normativo;
+1. mantener cerrada la recuperación documental anterior como no normativa;
 2. sanear `plans/plan_001/README.md`;
 3. reparar `AGENTS.md`;
 4. reparar `B5_PRE_SCRIPT_FOUNDATION.md`;
@@ -562,7 +562,7 @@ No modificar:
 
 **Gate:** `R0_CLOSURE_GATE`.
 
-No se preparan misiones para Codex hasta que este plan v4 sea aprobado.
+No se preparan misiones operativas hasta que este plan v4 sea aprobado.
 
 ---
 
@@ -631,7 +631,7 @@ HISTORICAL_MISSION_01E_RESULT_MARKER
 Resultado esperado:
 
 - estado vivo activo solo en `plans/001_CONTROL_OPERATIVO.md`;
-- Plan 003 histórico no normativo;
+- recuperación documental anterior cerrada y no normativa;
 - roadmap sin estado vivo;
 - README sin estado vivo;
 - R1 no autorizado.
@@ -723,7 +723,7 @@ El paquete de evidencia de R0 debe contener:
 8. conteos IR-0;
 9. reporte de detección de mojibake;
 10. reporte de estructura Markdown;
-11. prueba de cierre de Plan 003;
+11. prueba de cierre de la recuperación documental anterior;
 12. prueba de eliminación de referencias vigentes a Misión 01E;
 13. prueba de autoridad única del control operativo;
 14. confirmación de R1 no autorizado;
@@ -743,7 +743,7 @@ R0 solo puede declararse listo para revisión del propietario cuando todos los c
 5. el roadmap canónico registra hash de origen y destino;
 6. el roadmap no autoriza R1 al cerrar R0;
 7. `plans/001_CONTROL_OPERATIVO.md` no conserva Misión 01E como acción vigente;
-8. Plan 003 está cerrado, histórico y no normativo;
+8. la recuperación documental anterior está cerrada y no normativa;
 9. `AGENTS.md` no contiene corrupción ni duplicaciones materiales;
 10. `B5_PRE_SCRIPT_FOUNDATION.md` no contiene corrupción ni estructura rota;
 11. `plans/plan_001/README.md` es solo índice y recuperación;
@@ -803,7 +803,7 @@ NO
 
 **Control:** allowlist de archivos y ausencia total de cambios técnicos.
 
-### Riesgo 8 — Plan 003 sigue activo por redacción residual
+### Riesgo 8 — La recuperación documental anterior sigue activa por redacción residual
 
 **Control:** búsqueda de `APPROVED_ACTIVE` e `IMPLEMENTATION_AUTHORIZED: YES`, más declaración histórica explícita.
 
@@ -819,7 +819,7 @@ Cada unidad de R0 debe ser reversible de manera independiente antes de commit.
 
 - **R0-0:** no inicia cambios de repositorio; si falla una dependencia, detener.
 - **R0-1:** restaurar únicamente `plans/001_CONTROL_OPERATIVO.md` al estado previo.
-- **R0-2:** restaurar Plan 003, README, AGENTS y B5_PRE desde el snapshot anterior si una validación semántica falla.
+- **R0-2:** revisar el control operativo y la documentación canónica si una validación semántica falla; no reactivar documentación histórica.
 - **R0-3:** eliminar copias incorporadas y restaurar roadmap canónico si hashes o procedencia fallan.
 - **R0-4:** retirar reporte de cierre y restaurar el control operativo a R0 en progreso si el gate no pasa.
 
@@ -848,7 +848,7 @@ R0-3 CANONICAL_ARTIFACT_INTEGRATION
 R0-4 VALIDATION_EVIDENCE_AND_CLOSURE
 ```
 
-No son todavía misiones para Codex.
+No son todavía misiones operativas.
 
 Solo podrán convertirse en misiones operativas después de:
 
@@ -892,7 +892,7 @@ NO
 R1_PREPARED:
 NO
 
-CODEX_MISSIONS_PREPARED:
+OPERATIONAL_MISSIONS_PREPARED:
 NO
 
 IMPLEMENTATION_AUTHORIZED:

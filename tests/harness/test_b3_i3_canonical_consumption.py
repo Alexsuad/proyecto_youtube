@@ -25,7 +25,7 @@ def candidate():
     return {
         "learning_id": "learning-001",
         "target_profile_id": "mas_alla_del_guion",
-        "target_profile_version": "1.0.0",
+        "target_profile_version": "1.2.2",
         "observed_change": "Preferir aperturas directas.",
         "scope": "VOICE",
         "lineage": ["episode-001", "human-final-script"],

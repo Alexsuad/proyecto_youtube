@@ -162,6 +162,12 @@ class TestContractValidation(unittest.TestCase):
         violations = validate_editorial_script_approval(VALID_EDITORIAL_SCRIPT_APPROVAL)
         self.assertEqual(len(violations), 0)
 
+    def test_editorial_script_approval_for_production_is_invalid(self):
+        approval = deepcopy(VALID_EDITORIAL_SCRIPT_APPROVAL)
+        approval["decision"] = "APPROVED_FOR_PRODUCTION"
+        violations = validate_editorial_script_approval(approval)
+        self.assertTrue(violations)
+
     def test_editorial_script_approval_ambiguous_approver(self):
         violations = validate_editorial_script_approval(INVALID_EDITORIAL_SCRIPT_APPROVAL_AMBIGUOUS_APPROVER)
         self.assertTrue(any("Identidad del aprobador invalida o ambigua" in v for v in violations))

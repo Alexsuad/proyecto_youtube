@@ -15,17 +15,25 @@
     "FUNCTIONALLY_APPROVE",
     "PROMOTE_TO_DEMONSTRATED"
   ],
-  "generated_at": "2026-08-11T00:00:00Z",
+  "generated_at": "2026-08-29T09:50:00Z",
   "limitations": [],
   "mission_id": "TH-04",
   "operations": [
     {
       "candidate_id": "B5_I2_SEMANTIC_AUDITOR",
       "evidence_refs": [
-        "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR"
+        "config/active_editorial_profile.json",
+        "config/agent_execution_profiles.json",
+        "config/capability_registry.json",
+        "config/capability_routing.yaml",
+        "config/capability_routing.yaml#B5_I2_SEMANTIC_AUDITOR",
+        "config/editorial_profile_registry.json",
+        "config/skill_catalog.json",
+        "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "src/scripts/run_b5_i2_semantic_audit.py"
       ],
       "operation": "NO_CHANGE",
-      "reason": "Routing-declared candidate absent from canonical registry."
+      "reason": "Canonical capability registry entry."
     },
     {
       "candidate_id": "EDITORIAL_PROFILE_FUNCTIONAL_REVIEW",
@@ -44,6 +52,22 @@
       "reason": "Canonical capability registry entry."
     },
     {
+      "candidate_id": "GATE:La convención de outputs de workspace/06 y los contratos auxiliares de workspace/ quedan como referencia histórica; no constituyen gate ni autoridad universal obligatoria.",
+      "evidence_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[5].decision"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Explicitly reachable gate reference; not a capability."
+    },
+    {
+      "candidate_id": "GATE:La Misión 3 del PLAN 008 retira la apariencia de NotebookLM como autoridad o gate universal; workspace/06 y contratos auxiliares son HISTORICAL_REFERENCE según README.",
+      "evidence_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[5].reason"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Explicitly reachable gate reference; not a capability."
+    },
+    {
       "candidate_id": "IDENTITY_DRIFT_AUDIT",
       "evidence_refs": [
         "config/capability_registry.json"
@@ -52,11 +76,49 @@
       "reason": "Canonical capability registry entry."
     },
     {
+      "candidate_id": "POLICY:config/runtime_contamination_policy.json",
+      "evidence_refs": [
+        "config/runtime_contamination_policy.json#false_positive_paths[4]",
+        "docs/legacy/material_decision_registry.json#decisions[1].evidence_refs[1]",
+        "docs/legacy/material_decision_registry.json#decisions[5].evidence_refs[2]"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Explicitly reachable policy reference; not a capability."
+    },
+    {
       "candidate_id": "POLICY:policies/channel_intelligence/topic_belonging_policy.md",
       "evidence_refs": [
         "config/agent_prompt_registry.json#prompts[10].required_context[3]",
         "config/agent_prompt_registry.json#prompts[11].required_context[3]",
-        "config/capability_registry.json#capabilities[0].dependencies[3]"
+        "config/capability_registry.json#capabilities[0].dependencies[3]",
+        "docs/legacy/material_decision_registry.json#decisions[0].evidence_refs[2]"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Explicitly reachable policy reference; not a capability."
+    },
+    {
+      "candidate_id": "POLICY:policies/script_product/main_episode_format_policy.md",
+      "evidence_refs": [
+        "docs/legacy/material_decision_registry.json#legacy_files[15].autoridad_sucesor",
+        "docs/legacy/material_decision_registry.json#legacy_files[16].autoridad_sucesor",
+        "docs/legacy/material_decision_registry.json#legacy_files[3].autoridad_sucesor"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Explicitly reachable policy reference; not a capability."
+    },
+    {
+      "candidate_id": "POLICY:workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md",
+      "evidence_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[6].evidence_refs[0]",
+        "docs/legacy/material_decision_registry.json#legacy_files[15].file_path"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Explicitly reachable policy reference; not a capability."
+    },
+    {
+      "candidate_id": "POLICY:workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md y templates/evento_template_v2.md (material editorial legacy omitido en el índice inicial)",
+      "evidence_refs": [
+        "docs/legacy/material_decision_registry.json#decisions[6].subject_ref"
       ],
       "operation": "NO_CHANGE",
       "reason": "Explicitly reachable policy reference; not a capability."
@@ -86,6 +148,30 @@
       "reason": "Execution profile is routing configuration, not a product capability."
     },
     {
+      "candidate_id": "PROFILE:EDITOR",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Execution profile is routing configuration, not a product capability."
+    },
+    {
+      "candidate_id": "PROFILE:NARRATIVE_ARCHITECTURE",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Execution profile is routing configuration, not a product capability."
+    },
+    {
+      "candidate_id": "PROFILE:RESEARCH_AND_CURATION",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Execution profile is routing configuration, not a product capability."
+    },
+    {
       "candidate_id": "PROFILE:SCRIPT_PRODUCT_AUDITOR",
       "evidence_refs": [
         "config/agent_execution_profiles.json"
@@ -95,6 +181,14 @@
     },
     {
       "candidate_id": "PROFILE:SCRIPT_PRODUCT_PRODUCER",
+      "evidence_refs": [
+        "config/agent_execution_profiles.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Execution profile is routing configuration, not a product capability."
+    },
+    {
+      "candidate_id": "PROFILE:WRITING",
       "evidence_refs": [
         "config/agent_execution_profiles.json"
       ],
@@ -247,6 +341,14 @@
     },
     {
       "candidate_id": "ROLE:RESEARCH_AND_CURATION",
+      "evidence_refs": [
+        "config/responsibility_registry.json"
+      ],
+      "operation": "NO_CHANGE",
+      "reason": "Registered responsibility is not a capability by itself."
+    },
+    {
+      "candidate_id": "ROLE:SCRIPT_PRODUCT_AUDITOR",
       "evidence_refs": [
         "config/responsibility_registry.json"
       ],
@@ -508,13 +610,17 @@
         "config/capability_routing.yaml",
         "config/capability_routing.yaml#TOPIC_BELONGING_ASSESSMENT",
         "config/editorial_profile_registry.json",
+        "docs/legacy/material_decision_registry.json",
         "policies/channel_intelligence/topic_belonging_policy.md",
         "profiles/voice/corpus_manifest.json",
+        "schemas/topic_belonging_assessment.json",
         "schemas/topic_belonging_decision.json",
         "schemas/topic_belonging_input.json",
         "schemas/topic_belonging_owner_decision.json",
+        "src/application/topic_belonging.py",
         "src/scripts/channel_intelligence.py",
-        "src/scripts/topic_belonging_flow.py"
+        "src/scripts/topic_belonging_flow.py",
+        "tests/harness/test_plan009_m1_vertical.py"
       ],
       "operation": "NO_CHANGE",
       "reason": "Canonical capability registry entry."
@@ -538,37 +644,37 @@
   ],
   "plan_id": "PLAN_004",
   "registry_write_mode": "READ_ONLY",
-  "repository_revision": "fd594e032bcab8d1567e7351223eca5d8e248d20",
+  "repository_revision": "7e788c8430070da37bd12d125b5a78e0c6edee71",
   "result": "PROPOSAL_ONLY",
   "schema_version": "1.0.0",
   "source_inputs": [
     {
       "path": "config/capability_registry.json",
-      "sha256": "929d87458288eaa047f10b9aa592a5e913ae27d1fa76bb8cd9ac3f974ee2ac5b"
+      "sha256": "78d1a00c056f7766deb777b2a8dc916a2218e73d937a6f8c2b8d5c65c2cc0fa1"
     },
     {
       "path": "config/responsibility_registry.json",
-      "sha256": "d950488039410870ccf97d4e435ca3071ab43078cf592c24d1a9b73da100d6c4"
+      "sha256": "c05115caaab92a58ac833b8a3aaf8a866fbceb869cc86d8ee01d59cee5de0600"
     },
     {
       "path": "config/agent_prompt_registry.json",
-      "sha256": "f441aa3703bf8b69f7b2c5ab79f256549de6d9e9f1cff33b508415fb7da3477a"
+      "sha256": "20be99018a5834cbf723c96cd71a9aa340c702be911330cbf3ca6bbfcf0956ae"
     },
     {
       "path": "config/agent_execution_profiles.json",
-      "sha256": "6f1809d92fc658a8c5f5afe1946fd85328fab24c7da2cdc753a78d48bf9fc6ff"
+      "sha256": "6f0f2201ab577355f628d9aac8170ba5c218e7580e1253cd1ead6b4a2aae3264"
     },
     {
       "path": "config/subagent_registry.json",
-      "sha256": "896410fd230d0e6c6b3d4a9b926968191dcca10d2b42fe5f1f7ec5af15772d52"
+      "sha256": "d9d57bead6776d4b6afbde8be6abc279f4d9c804b11acc68ec9d7cefd153dbff"
     },
     {
       "path": "config/capability_routing.yaml",
-      "sha256": "a5b1dda9c8c08a7ed457d9e39b326bbe16fa8f036c6ac664369d5f6a85dd8e2b"
+      "sha256": "7fe5637c784f5f1ef65f4a96f0d6f387cbdc0dd6bdc3c10a0b5b9fd466673235"
     },
     {
       "path": "config/skill_catalog.json",
-      "sha256": "1180a3ec5c57d646b9f5286d882a28303d22064341d0123f17e7413b88e39db6"
+      "sha256": "865bdd04cc8e9a4c86d4f1e365121799942c5dc3fecf0412cf4048418d83f564"
     }
   ]
 }

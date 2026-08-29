@@ -31,7 +31,6 @@
       "type": "string",
       "enum": [
         "APPROVED",
-        "APPROVED_FOR_PRODUCTION",
         "REQUEST_CHANGES",
         "REJECT"
       ]

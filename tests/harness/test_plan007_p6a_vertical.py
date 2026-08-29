@@ -45,7 +45,7 @@ def test_p6a_topic_first_vertical_reaches_canonical_b5_i2_route(tmp_path: Path) 
     assert validate_assessment(assessed, enriched) == []
     reviewed = decision(assessed, pre_b5_i1_evidence={"topic_input_checksum": canonical_checksum(enriched, "input"), "research_ref": enriched["research_ref"], "narrative_door_evidence_refs": enriched["narrative_door_evidence_refs"], "candidate_work_refs": enriched["candidate_work_refs"]})
     paths = _write_case(tmp_path)
-    brief = json.loads(paths["brief"].read_text(encoding="utf-8")); brief.update({"episode_id": EP, "profile_version": "1.2.1", "profile_checksum": "d0355ea43f1d46f6ec94499bd81ae2f99c48f11e4402d1604c634abde70d48f1"}); brief = bind_episode_brief_to_topic_decision(brief, reviewed); _write(paths["brief"], brief)
+    brief = json.loads(paths["brief"].read_text(encoding="utf-8")); brief.update({"episode_id": EP, "profile_version": "1.2.2", "profile_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b"}); brief = bind_episode_brief_to_topic_decision(brief, reviewed); _write(paths["brief"], brief)
     for name in ("research", "evidence", "audit", "provisional"):
         value = json.loads(paths[name].read_text(encoding="utf-8")); value["episode_id"] = EP; _write(paths[name], value)
     analysis_value = json.loads(paths["analysis"].read_text(encoding="utf-8")); analysis_value["episode_id"] = EP; analysis_value["artifact_version"] = "1.0.0"; _write(paths["analysis"], analysis_value)
