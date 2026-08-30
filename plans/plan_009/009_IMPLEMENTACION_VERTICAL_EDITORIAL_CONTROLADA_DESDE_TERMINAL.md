@@ -28,6 +28,26 @@ Este registro es histórico y no constituye `P2_PASS`,
 productivo. P2 real permanece sin ejecutar y su roundtrip requiere una
 misión independiente de integración con autorización expresa del OWNER.
 
+## Registro histórico de cierre de la integración técnica P2
+
+La misión `PLAN009_P2_ROUNDTRIP_INTEGRATION` queda cerrada tras la
+implementación técnica aprobada y la revisión independiente del OWNER.
+
+```text
+PLAN009_P2_ROUNDTRIP_INTEGRATION: CLOSED
+TECHNICAL_IMPLEMENTATION: PASS
+INDEPENDENT_OWNER_REVIEW: PASS
+P2_TECHNICAL_INFRASTRUCTURE: READY
+P2_REAL_EXECUTION: NOT_EXECUTED
+REAL_COGNITIVE_EXECUTION: NOT_DEMONSTRATED
+AUTHORIZED_FOR_PRODUCT_USE: NO
+NEXT_STEP: OWNER_AUTHORIZATION_REQUIRED_FOR_P2_REAL_EXECUTION
+```
+
+Este cierre es exclusivamente técnico y documental. No equivale a `P2_PASS`,
+no ejecuta cognición real, no autoriza uso productivo y no sustituye la
+autorización OWNER separada necesaria para una futura ejecución P2 real.
+
 ---
 
 # 0. Propósito
@@ -71,6 +91,28 @@ Cada tramo se implementa y prueba por separado.
 - autorización de uso productivo.
 
 PLAN 009 únicamente describe la hoja de ruta de implementación.
+
+La integración técnica de roundtrip P2 es una misión independiente y no
+equivale a ejecutar cognición real. Su ruta canónica conserva el control en
+Proyecto YouTube y permite el ciclo persistido:
+
+```text
+HANDOFF_PREPARED
+→ PENDING_EXTERNAL_RESULT
+→ import_result
+→ VALIDATED
+→ PERSISTED
+→ resume
+```
+
+El mismo resultado importado es idempotente; un resultado distinto para una
+etapa cerrada se bloquea. El estado y el resultado original se conservan en
+el almacenamiento del episodio para que un proceso nuevo pueda reanudar sin
+memoria de proceso. `AGENT_HARNESS` sigue siendo neutral: el propietario
+selecciona externamente el harness y el modelo. Esta infraestructura no
+declara `REAL_COGNITIVE_EXECUTION`, no activa P2 real ni autoriza uso
+productivo; la misión de integración técnica queda cerrada, pero para la
+ejecución P2 real se requiere una autorización OWNER separada.
 
 Si existe contradicción:
 
