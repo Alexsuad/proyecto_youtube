@@ -5,9 +5,28 @@
 **Proyecto:** YouTube — _Más Allá del Guion_  
 **Fecha:** 2026-08-22  
 **Naturaleza:** plan de implementación progresiva  
-**Estado documental:** `MATERIALIZED_PENDING_OPERATIONAL_AUTHORIZATION`  
+**Estado documental:** hoja de ruta; el estado vivo se resuelve exclusivamente en `plans/001_CONTROL_OPERATIVO.md`
 **Autorización operativa por este documento:** `NO`  
 **Autoridad de estado vivo:** `plans/001_CONTROL_OPERATIVO.md`
+
+## Registro histórico de cierre de la misión correctiva
+
+`PLAN009_P2_CORRECTIVE_RUNTIME_NEUTRALITY` queda cerrada administrativamente
+después de la evidencia técnica aprobada y de la revisión independiente del
+OWNER sobre `proyecto_youtube_2026-08-30_10-26-27.zip`:
+
+```text
+TECHNICAL_IMPLEMENTATION: PASS
+MissionCompletionGate: PASS
+INDEPENDENT_OWNER_REVIEW: PASS
+CORRECTIVE_MISSION: CLOSED
+mission_contract_sha256: e0976e48247a61adf39a2c63b12c2e190d5590ee2b3a6b977d5d95fa12d30d8c
+```
+
+Este registro es histórico y no constituye `P2_PASS`,
+`REAL_COGNITIVE_EXECUTION`, `PRODUCT_READY` ni autorización de uso
+productivo. P2 real permanece sin ejecutar y su roundtrip requiere una
+misión independiente de integración con autorización expresa del OWNER.
 
 ---
 
@@ -434,18 +453,21 @@ STOP
 
 # 8. P2 — PRIMERA EJECUCIÓN COGNITIVA REAL
 
-**Estado:** `OWNER_AUTHORIZED_HANDOFF_SELECTION_COMPLETE_STOP_LOCAL`
+**Estado operativo:** consultar `plans/001_CONTROL_OPERATIVO.md`; la autorización
+no equivale a ejecutabilidad.
 
-La autorización vigente de P2 se resuelve exclusivamente en
-`plans/001_CONTROL_OPERATIVO.md`. Para este tramo el owner ya seleccionó
-explícitamente `codex_current` y `gpt-5.6-luna`; `reasoning_effort` permanece
-omitido porque el perfil no declara soporte verificable. Esa selección es
-local a este handoff y no crea un default global. Siguen bloqueados:
+La selección de P2 se resuelve exclusivamente en
+`plans/001_CONTROL_OPERATIVO.md` y en el selector booleano canónico
+`config/execution_family_selection.json`. Para el MVP queda activa únicamente
+la familia `AGENT_HARNESS`. El producto no selecciona agente, proveedor ni
+modelo: el OWNER opera el harness y el modelo que ya tenga activo. Ningún
+perfil concreto, executor, proveedor o modelo se convierte en dependencia
+funcional del producto. Siguen bloqueados:
 
 - cualquier provider API de pago;
-- cualquier modelo local no seleccionado y disponible;
-- cualquier agente/perfil distinto del elegido explícitamente por el owner;
-- la cognición real hasta completar handoff e importación canónica.
+- cualquier modelo local o provider API;
+- la cognición real hasta completar handoff e importación canónica;
+- toda promoción de madurez, uso productivo o fase posterior.
 
 ## 8.1 Objetivo
 
@@ -475,7 +497,7 @@ Antes de ejecutar debe existir una MissionAuthorization estrecha con:
 
 ```text
 capability exacta
-profile exacto
+familia exacta
 route exacta
 mode exacto
 roles permitidos
@@ -488,11 +510,11 @@ No usar `ANY`.
 
 ## 8.3 Ruta de ejecución
 
-La selección se realiza por ejecución y pertenece al owner. Debe existir un
-`execution_profile` explícito (por ejemplo, `codex_current`) y, cuando el
-executor lo permita, un `model/model_override` explícito. `reasoning_effort`
-solo se transporta si el executor seleccionado lo soporta; no se introduce
-ningún default vinculante.
+La selección se realiza por ejecución y pertenece al owner. En el MVP se
+declara una sola familia booleana activa. Para `AGENT_HARNESS` no se declara
+perfil, executor, provider ni modelo: esos valores pertenecen al harness que
+esté operando el OWNER. Los overrides solo se transportan para familias que
+los autoricen explícitamente; no se introduce ningún default vinculante.
 
 La familia `AGENT/HARNESS` usa `agent_handoff` como mecanismo canónico. No se
 trata como provider nativo ni se añade a `REAL_EXTERNAL_PROVIDERS`.
@@ -500,8 +522,8 @@ trata como provider nativo ni se añade a `REAL_EXTERNAL_PROVIDERS`.
 Las familias `API_PROVIDER` y `LOCAL_MODEL` permanecen desacopladas y siguen
 sujetas a sus propias autorizaciones; no hay fallback entre familias.
 
-Si no existe un perfil/agente explícitamente seleccionado y autorizado, o no
-existe una ruta canónica de handoff/importación válida:
+Si no existe una familia explícitamente seleccionada y autorizada, o no existe
+una ruta canónica de handoff/importación válida:
 
 ```text
 BLOCKED
@@ -833,12 +855,11 @@ Referencia recomendada:
 
 ```yaml
 PLAN_009_DOCUMENT: plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md
-PLAN_009_STATUS: MATERIALIZED_PENDING_EXECUTION
-PLAN_009_OPERATIONAL_AUTHORITY: NOT_GRANTED_BY_PLAN
-PLAN_009_PRODUCT_USE_AUTHORIZED: NO
+PLAN_009_LIVE_STATE_AUTHORITY: plans/001_CONTROL_OPERATIVO.md
+PLAN_009_MUTABLE_STATE: RESOLVED_EXCLUSIVELY_FROM_LIVE_STATE_AUTHORITY
 ```
 
-La presencia de estas claves **no autoriza P1**.
+La presencia de estas claves **no autoriza ninguna fase ni duplica el estado vivo**.
 
 ---
 
@@ -848,7 +869,7 @@ La presencia de estas claves **no autoriza P1**.
 | ---- | -------------------------------- | ------------------ | ----------------------------------------------------- |
 | P0   | Base segura                      | según estado vivo  | misión correctiva vigente                             |
 | P1   | Vertical técnica Topic Belonging | BLOCKED            | autorización R2-M1 expresa                            |
-| P2   | Ejecución cognitiva real         | AUTHORIZED/PENDING | perfil/agente y modelo explícitos + handoff/import canónicos |
+| P2   | Ejecución cognitiva real         | SEGÚN_AUTORIDAD_VIVA | familia autorizada + handoff/import canónicos; `OWNER_MANAGED_EXTERNALLY` |
 | P3   | B5-I1 incremental                | BLOCKED            | autorización independiente por subfase                |
 | P4   | B5-I2                            | BLOCKED            | autorización explícita posterior                      |
 | P5   | B5-I3                            | BLOCKED            | autorización explícita posterior                      |
@@ -857,37 +878,24 @@ La presencia de estas claves **no autoriza P1**.
 
 ---
 
-# 20. Primera acción tras materializar PLAN 009
+# 20. Acción operativa vigente
 
-No iniciar automáticamente P1.
-
-Secuencia:
-
-```text
-1. Verificar cierre/auditoría de P0.
-2. Si P0 no está cerrado → terminar P0.
-3. Si P0 está cerrado → STOP.
-4. Solicitar y obtener autorización expresa de P1 en 001_CONTROL_OPERATIVO.
-5. Solo entonces ejecutar P1.
-```
-
-Después:
+La secuencia operativa vigente se resuelve exclusivamente contra el control
+operativo vivo. Este roadmap no replica estados mutables ni concede autoridad.
+Cuando el control operativo autorice el tramo correspondiente, la secuencia es:
 
 ```text
-P1 PASS
-→ STOP
-→ autorización expresa P2
-
-P2 PASS
-→ STOP
-→ autorización expresa P3.1
-
-P3.1 PASS
-→ STOP
-→ autorización expresa P3.2
+1. Resolver la misión activa desde `plans/001_CONTROL_OPERATIVO.md`.
+2. Verificar la MissionAuthorization vigente de esa misión.
+3. Ejecutar únicamente el roundtrip P2 si existe autorización específica para
+   su integración y el handoff/import canónicos.
+4. Ejecutar reviewer, gate y persistencia.
+5. STOP y actualizar el estado vivo; P2 PASS no autoriza P3.1.
 ```
 
-y así sucesivamente.
+Si falla la resolución del executor, la importación, la provenance, el gate o
+la persistencia, aplicar `STOP_LOCAL` y solicitar una reparación específica.
+No se inicia P3 ni se infiere autorización de fases posteriores.
 
 ---
 
