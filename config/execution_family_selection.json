@@ -1,0 +1,8 @@
+{
+  "selection_version": "1.0.0",
+  "families": {
+    "AGENT_HARNESS": true,
+    "API_PROVIDER": false,
+    "LOCAL_MODEL": false
+  }
+}

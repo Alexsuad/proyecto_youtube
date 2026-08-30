@@ -242,6 +242,12 @@ def _result(
         "actual_model": actual_model,
         "execution_route": execution_route,
         "execution_profile": execution_profile,
+        "execution_family": str(
+            usage.get("execution_family")
+            or request.execution_family
+            or request.config.get("execution_family")
+            or "UNSPECIFIED_FAMILY"
+        ),
         "error_type": str(usage.get("error_type") or usage.get("availability_status") or "NONE"),
     }
     if request.output_artifact_path and request.output_artifact_path.exists():
@@ -332,12 +338,16 @@ def editorial_projection_schema(schema_name: str) -> dict[str, Any]:
 def _normalized_run_configuration(request: ExecutionRequest) -> dict[str, Any] | None:
     if request.run_configuration:
         return dict(request.run_configuration)
-    if not request.execution_profile:
+    if not request.execution_profile and not request.execution_family and not request.config.get("execution_family"):
         return None
+    selection_path = request.config.get("execution_family_selection_path")
+    if str(request.execution_mode).upper() in {"SYNTHETIC", "SYNTHETIC_TEST", "MOCK"}:
+        selection_path = None
     return {
         "role_id": request.role,
         "execution_route": request.execution_route or request.config.get("execution_route") or request.config.get("default_execution_route") or "local_model",
         "execution_profile": request.execution_profile,
+        "execution_family": request.execution_family or request.config.get("execution_family"),
         "executor_override": request.config.get("executor_override"),
         "provider_override": request.config.get("provider_override"),
         "model_override": request.model,
@@ -348,6 +358,10 @@ def _normalized_run_configuration(request: ExecutionRequest) -> dict[str, Any] |
         "max_tokens": request.config.get("max_tokens"),
         "budget_limit": request.config.get("budget_limit"),
         "paid_cost_approved": bool(request.config.get("paid_cost_approved", False)),
+        "execution_family_selection_path": selection_path,
+        "mission_contract_path": request.config.get("mission_contract_path"),
+        "completion_gate_result_path": request.config.get("completion_gate_result_path"),
+        "mission_repo_root": request.config.get("mission_repo_root"),
     }
 
 
@@ -358,14 +372,19 @@ def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
     # silently converted into the integrated AgentExecutorProvider.
     request.resolved_route = route
     request.resolved_route_token = _VERIFIED_ROUTE_TOKEN
-    handoff_requested = request.provider == "agent_handoff" or (request.execution_mode or "").lower() == "agent_handoff"
-    request.provider = "agent_handoff" if handoff_requested and route.route_type == "AGENT_HARNESS_RUNTIME" else route.provider_adapter
+    handoff_requested = (
+        request.provider == "agent_handoff"
+        or (request.execution_mode or "").lower() == "agent_handoff"
+        or getattr(route, "execution_family", None) == "AGENT_HARNESS"
+    )
+    request.provider = "agent_handoff" if handoff_requested and getattr(route, "route_type", None) == "AGENT_HARNESS_RUNTIME" else route.provider_adapter
     request.model = route.model
-    request.reasoning_effort = route.reasoning_effort
+    request.reasoning_effort = getattr(route, "reasoning_effort", None)
     request.executor = route.executor
     request.timeout = float(route.timeout_seconds)
     request.execution_route = route.execution_route
     request.execution_profile = route.execution_profile
+    request.execution_family = getattr(route, "execution_family", None)
     request.config = {
         **request.config,
         "timeout_seconds": route.timeout_seconds,
@@ -379,22 +398,23 @@ def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
         "resolved_actual_executor": route.executor,
         "resolved_actual_provider": route.provider,
         "resolved_actual_model": route.model,
-        "reasoning_effort": route.reasoning_effort,
-        "reasoning_effort_supported": route.reasoning_effort_supported,
+        "reasoning_effort": getattr(route, "reasoning_effort", None),
+        "reasoning_effort_supported": getattr(route, "reasoning_effort_supported", False),
         "execution_profile": route.execution_profile,
+        "execution_family": getattr(route, "execution_family", None),
         "execution_route": route.execution_route,
-        "provider_label": route.provider_label,
-        "api_base_env": route.api_base_env,
-        "api_key_env": route.api_key_env,
-        "model_env": route.model_env,
+        "provider_label": getattr(route, "provider_label", None),
+        "api_base_env": getattr(route, "api_base_env", None),
+        "api_key_env": getattr(route, "api_key_env", None),
+        "model_env": getattr(route, "model_env", None),
         "selected_executor": route.executor,
         "selected_provider": route.provider,
         "selected_model": route.model,
         "actual_provider": route.provider,
         "actual_model": route.model,
         "runtime_route_resolved": True,
-        "model_selection": route.model_selection,
-        "executor_accepts_model_override": route.executor_accepts_model_override,
+        "model_selection": getattr(route, "model_selection", "USER_SELECTED"),
+        "executor_accepts_model_override": getattr(route, "executor_accepts_model_override", False),
     }
 
 
@@ -428,8 +448,19 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
     runtime_port = AgentRuntimePort(Path(request.config["execution_profiles_path"]) if request.config.get("execution_profiles_path") else None)
     run_configuration = _normalized_run_configuration(request)
     if run_configuration:
+        request.config = {
+            **request.config,
+            **{
+                key: run_configuration[key]
+                for key in ("execution_family_selection_path", "mission_contract_path", "completion_gate_result_path", "mission_repo_root")
+                if run_configuration.get(key) not in (None, "")
+            },
+        }
         try:
-            route = runtime_port.resolve_run_configuration(run_configuration)
+            route = runtime_port.resolve_run_configuration(
+                run_configuration,
+                enforce_selector=str(request.execution_mode).upper() not in {"SYNTHETIC", "SYNTHETIC_TEST", "MOCK"},
+            )
         except ValueError as exc:
             return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=str(exc), usage=_availability_metadata(str(exc)))
         if route.status != READY:
@@ -482,14 +513,15 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
             )
         _apply_route_resolution(request, route)
     resolved_authorization = preflight.get("authorization")
-    if resolved_authorization is not None and callable(getattr(resolved_authorization, "verify", None)) and request.execution_profile and request.execution_route:
+    if resolved_authorization is not None and callable(getattr(resolved_authorization, "verify", None)) and (request.execution_profile or request.execution_family) and request.execution_route:
         try:
             resolved_authorization.verify(
                 repository_root,
                 capability_id=str(request.capability_id),
                 role_id=str(request.role),
                 operation=str(request.config.get("mission_operation") or "EXECUTE_CAPABILITY"),
-                execution_profile_id=str(request.execution_profile),
+                execution_profile_id=request.execution_profile,
+                execution_family=request.execution_family or request.config.get("execution_family"),
                 execution_route=str(request.execution_route),
                 execution_interface=str(request.config.get("execution_interface") or "UNSPECIFIED_INTERFACE"),
                 required_material_decision_ref=preflight.get("required_material_decision_ref"),

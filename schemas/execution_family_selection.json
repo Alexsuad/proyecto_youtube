@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/execution_family_selection.json",
+  "title": "ExecutionFamilySelection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["selection_version", "families"],
+  "properties": {
+    "selection_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "families": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["AGENT_HARNESS", "API_PROVIDER", "LOCAL_MODEL"],
+      "properties": {
+        "AGENT_HARNESS": {"type": "boolean"},
+        "API_PROVIDER": {"type": "boolean"},
+        "LOCAL_MODEL": {"type": "boolean"}
+      }
+    }
+  }
+}

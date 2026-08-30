@@ -773,6 +773,10 @@ VALID_FIXTURES["mission_contract"] = {
     "state_requirements": {"control_path": "plans/001_CONTROL_OPERATIVO.md", "required": {}, "forbidden": {}},
     "schema_checks": []
 }
+VALID_FIXTURES["execution_family_selection"] = {
+    "selection_version": "1.0.0",
+    "families": {"AGENT_HARNESS": True, "API_PROVIDER": False, "LOCAL_MODEL": False},
+}
 VALID_FIXTURES["research_stop_decision"] = {"decision_id": "RSD-1", "decision_version": "1.0.0", "subject_kind": "MATERIAL_CLAIM", "subject_ref": "CLAIM-001", "intended_use": "CENTRAL_CLAIM_SUPPORT", "evidence_refs": ["S-1"], "claim_decision": "CLAIM_ALLOWED", "sufficiency_status": "SUFFICIENT_FOR_INTENDED_USE", "limitations": [], "pending_matters": [], "unresolved_material_contradiction_refs": [], "invalidators": ["CLAIM_OR_USE_CHANGED"], "invalidator_codes": ["CLAIM_OR_SCOPE_CHANGED"], "return_route": "Revalidar si cambia el uso.", "return_route_code": "AUTHORIZE_INTENDED_USE_ONLY", "decision_basis": "Evidencia primaria suficiente para el uso evaluado."}
 VALID_FIXTURES["source_grounded_research_adapter"] = {"adapter_id": "ADAPTER-FIXTURE-1", "contract_version": "1.0.0", "provider": "fixture-provider", "availability": "AVAILABLE", "source_refs": ["S-1"], "findings": [{"finding_id": "AF-1", "statement": "Contexto recuperado.", "evidence_refs": ["S-1"], "status": "LIMITED"}], "limitations": ["No es memoria canónica."], "canonicality": "NOT_CANONICAL_MEMORY", "veracity_authority": "NOT_VERACITY_AUTHORITY", "gate_behavior": "NOT_REQUIRED_GATE", "decision_authority": "SCRIPT_PRODUCT"}
 VALID_FIXTURES["delegation_decision"] = {"decision": "INLINE", "reasons": ["fixture"], "policy_version": "1.0.0", "evidence_refs": []}

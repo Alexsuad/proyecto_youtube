@@ -32,10 +32,10 @@ class AgentHandoffProvider:
     name = "agent_handoff"
 
     def prepare(self, request: ExecutionRequest, manifest_checksum: str, run_id: str) -> Path:
-        # Explicit profile/run-configuration handoffs must arrive with the
+        # Explicit runtime selections must arrive with the
         # resolver-owned route object.  A mutable request flag is diagnostic
         # only and cannot authorize preparation by itself.
-        if request.execution_profile or request.run_configuration is not None:
+        if request.execution_profile or request.execution_family or request.run_configuration is not None:
             from src.ai.runtime_profiles import READY, ResolvedExecutionRoute, _VERIFIED_ROUTE_TOKEN
 
             route = request.resolved_route
@@ -47,6 +47,7 @@ class AgentHandoffProvider:
                 raise PermissionError("RUNTIME_CONFIGURATION_NOT_RESOLVED_BEFORE_HANDOFF")
             if (
                 route.execution_profile != request.execution_profile
+                or route.execution_family != (request.execution_family or request.config.get("execution_family"))
                 or route.execution_route != request.execution_route
                 or route.model != (request.model or "")
                 or route.executor != (request.executor or "")
@@ -79,10 +80,13 @@ class AgentHandoffProvider:
             "output_schema": request.output_schema,
             "prompt": request.config.get("prompt", ""),
             "expected_provider_or_agent": request.config.get("expected_provider_or_agent"),
+            "execution_family": request.execution_family or request.config.get("execution_family"),
             "execution_profile": request.execution_profile,
             "execution_route": request.execution_route,
             "execution_mode": request.execution_mode,
-            "model_override": request.model,
+            "model_override": None
+            if (request.execution_family or request.config.get("execution_family")) == "AGENT_HARNESS"
+            else request.model,
             "reasoning_effort": request.reasoning_effort,
             "artifacts": artifacts,
             "completion_gate": completion_gate.to_dict(),

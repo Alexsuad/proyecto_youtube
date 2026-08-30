@@ -207,7 +207,7 @@ def test_ready_not_authorized_with_exact_fixture_scope_reaches_runtime(tmp_path:
         authorized_profiles=["mock"],
         authorized_mode="mock",
     )
-    monkeypatch.setattr("src.ai.execution.AgentRuntimePort.resolve_run_configuration", lambda self, config: _ready_route())
+    monkeypatch.setattr("src.ai.execution.AgentRuntimePort.resolve_run_configuration", lambda self, config, **kwargs: _ready_route())
     result = execute(_request(tmp_path, execution_route="local_model"))
     assert result.status is ExecutionStatus.SUCCEEDED, result.error
 
@@ -247,6 +247,6 @@ def test_active_capability_keeps_no_authorization_path_semantics(tmp_path: Path,
     )
     request = _request(tmp_path, execution_route="local_model")
     request.config.pop("mission_authorization_path")
-    monkeypatch.setattr("src.ai.execution.AgentRuntimePort.resolve_run_configuration", lambda self, config: _ready_route())
+    monkeypatch.setattr("src.ai.execution.AgentRuntimePort.resolve_run_configuration", lambda self, config, **kwargs: _ready_route())
     result = execute(request)
     assert "MISSION_AUTHORIZATION_REQUIRED" not in (result.error or "")

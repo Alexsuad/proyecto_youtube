@@ -11,6 +11,8 @@ from typing import Any
 from src.core.contract_validation import validate_against_schema
 
 PROFILE_PATH = Path("config/agent_execution_profiles.json")
+EXECUTION_FAMILY_SELECTION_PATH = Path("config/execution_family_selection.json")
+EXECUTION_FAMILIES = ("AGENT_HARNESS", "API_PROVIDER", "LOCAL_MODEL")
 UNAVAILABLE = "UNAVAILABLE_FROM_PROVIDER"
 UNAVAILABLE_FROM_EXECUTOR = "UNAVAILABLE_FROM_EXECUTOR"
 MANAGED_BY_EXECUTOR = "MANAGED_BY_EXECUTOR"
@@ -24,7 +26,7 @@ _VERIFIED_ROUTE_TOKEN = object()
 class ResolvedExecutionRoute:
     role_id: str
     execution_route: str
-    execution_profile: str
+    execution_profile: str | None
     route_type: str
     executor: str
     provider: str
@@ -49,12 +51,14 @@ class ResolvedExecutionRoute:
     provider_label: str | None = None
     executor_accepts_model_override: bool = False
     model_selection: str = "USER_SELECTED"
+    execution_family: str | None = None
 
     def as_run_configuration(self) -> dict[str, Any]:
         return {
             "role_id": self.role_id,
             "execution_route": self.execution_route,
             "execution_profile": self.execution_profile,
+            "execution_family": self.execution_family,
             "executor_override": self.executor,
             "provider_override": None if self.provider == MANAGED_BY_EXECUTOR else self.provider,
             "model_override": None if self.model == UNAVAILABLE_FROM_EXECUTOR else self.model,
@@ -75,6 +79,70 @@ def load_execution_profiles(path: Path | None = None) -> dict[str, Any]:
     if violations:
         raise ValueError("AgentExecutionProfiles invalido: " + "; ".join(violations))
     return data
+
+
+def load_execution_family_selection(path: Path | None = None) -> dict[str, Any]:
+    target = path or EXECUTION_FAMILY_SELECTION_PATH
+    data = json.loads(target.read_text(encoding="utf-8"))
+    violations = validate_against_schema(data, "execution_family_selection")
+    if violations:
+        raise ValueError("ExecutionFamilySelection invalida: " + "; ".join(violations))
+    families = data["families"]
+    if sum(bool(families[name]) for name in EXECUTION_FAMILIES) != 1:
+        raise ValueError("EXECUTION_FAMILY_SELECTION_MUST_HAVE_EXACTLY_ONE_ACTIVE_FAMILY")
+    return data
+
+
+def selected_execution_family(path: Path | None = None) -> str:
+    data = load_execution_family_selection(path)
+    return next(name for name in EXECUTION_FAMILIES if data["families"][name])
+
+
+def resolve_profile_family(
+    profile_id: str,
+    *,
+    profiles: dict[str, Any] | None = None,
+) -> str:
+    """Derive the execution family from the canonical profile registry."""
+    profiles = profiles or load_execution_profiles()
+    profile = profiles.get("execution_profiles", {}).get(profile_id)
+    if not isinstance(profile, dict):
+        raise ValueError(f"execution_profile inexistente: {profile_id}")
+    route_type = str(profile.get("route_type") or "").strip().upper()
+    if route_type == "AGENT_HARNESS_RUNTIME":
+        return "AGENT_HARNESS"
+    if route_type == "LOCAL_MODEL_RUNTIME":
+        return "LOCAL_MODEL"
+    if route_type == "API_MODEL_RUNTIME":
+        return "API_PROVIDER"
+    raise ValueError(f"execution_profile route_type invalido: {profile_id}")
+
+
+def validate_execution_family_selection(
+    requested_family: str | None,
+    path: Path | None = None,
+    *,
+    requested_profile: str | None = None,
+    profiles: dict[str, Any] | None = None,
+) -> str:
+    """Read the canonical selector and reject contradictory overrides."""
+    selected = selected_execution_family(path)
+    if requested_family is not None:
+        requested = str(requested_family).strip().upper()
+        if requested not in EXECUTION_FAMILIES:
+            raise ValueError(f"familia de ejecución desconocida: {requested}")
+        if requested != selected:
+            raise ValueError(
+                f"EXECUTION_FAMILY_SELECTION_MISMATCH: requested={requested}, selected={selected}"
+            )
+    if requested_profile is not None:
+        profile_family = resolve_profile_family(requested_profile, profiles=profiles)
+        if profile_family != selected:
+            raise ValueError(
+                "EXECUTION_FAMILY_SELECTION_PROFILE_MISMATCH: "
+                f"profile={requested_profile}, profile_family={profile_family}, selected={selected}"
+            )
+    return selected
 
 
 def validate_run_configuration(run_configuration: dict[str, Any]) -> list[str]:
@@ -192,6 +260,7 @@ def resolve_run_configuration(
     *,
     profiles: dict[str, Any] | None = None,
     environ: dict[str, str] | None = None,
+    enforce_selector: bool = True,
 ) -> ResolvedExecutionRoute:
     profiles = profiles or load_execution_profiles()
     environ = environ or os.environ
@@ -199,11 +268,54 @@ def resolve_run_configuration(
     if violations:
         raise ValueError("RunConfiguration invalido: " + "; ".join(violations))
 
+    if enforce_selector:
+        selection_path_value = run_configuration.get("execution_family_selection_path")
+        selection_path = Path(str(selection_path_value)) if selection_path_value else None
+        validate_execution_family_selection(
+            run_configuration.get("execution_family"),
+            selection_path,
+            requested_profile=run_configuration.get("execution_profile"),
+            profiles=profiles,
+        )
+
     role_id = str(run_configuration["role_id"])
     global_defaults = profiles.get("global_defaults", {})
     role_defaults = profiles.get("role_defaults", {}).get(role_id)
     if role_defaults is None:
         raise ValueError(f"role no tiene defaults de seleccion: {role_id}")
+
+    execution_family = run_configuration.get("execution_family")
+    if execution_family is not None:
+        execution_family = str(execution_family).strip().upper()
+        if execution_family not in EXECUTION_FAMILIES:
+            raise ValueError(f"familia de ejecución desconocida: {execution_family}")
+        if execution_family == "AGENT_HARNESS":
+            if any(
+                run_configuration.get(key) not in (None, "")
+                for key in ("execution_profile", "executor_override", "provider_override", "model_override")
+            ):
+                raise ValueError("AGENT_HARNESS_DOES_NOT_SELECT_PROFILE_EXECUTOR_PROVIDER_OR_MODEL")
+            return ResolvedExecutionRoute(
+                role_id=role_id,
+                execution_route="agent_harness",
+                execution_profile=None,
+                route_type="AGENT_HARNESS_RUNTIME",
+                executor="OWNER_MANAGED",
+                provider=MANAGED_BY_EXECUTOR,
+                provider_adapter="agent_executor",
+                model=UNAVAILABLE_FROM_EXECUTOR,
+                status=READY,
+                timeout_seconds=int(run_configuration.get("timeout_seconds", 30)),
+                max_retries=int(run_configuration.get("max_retries", 0)),
+                temperature=_float_or_none(run_configuration.get("temperature")),
+                max_tokens=_int_or_none(run_configuration.get("max_tokens")),
+                budget_limit=run_configuration.get("budget_limit"),
+                paid_cost_approved=bool(run_configuration.get("paid_cost_approved", False)),
+                cost_policy="OWNER_MANAGED",
+                model_selection="OWNER_MANAGED",
+                execution_family=execution_family,
+            )
+        raise ValueError(f"EXECUTION_FAMILY_REQUIRES_EXPLICIT_PROFILE:{execution_family}")
 
     execution_profile = str(
         _pick(
@@ -625,6 +737,7 @@ def resolve_execution_route(
         },
         profiles=profiles,
         environ=environ,
+        enforce_selector=False,
     )
 
 
@@ -637,8 +750,17 @@ class AgentRuntimePort:
     def resolve(self, role_id: str, execution_route: str) -> ResolvedExecutionRoute:
         return resolve_execution_route(role_id, execution_route, profiles=load_execution_profiles(self._profiles_path))
 
-    def resolve_run_configuration(self, run_configuration: dict[str, Any]) -> ResolvedExecutionRoute:
-        return resolve_run_configuration(run_configuration, profiles=load_execution_profiles(self._profiles_path))
+    def resolve_run_configuration(
+        self,
+        run_configuration: dict[str, Any],
+        *,
+        enforce_selector: bool = True,
+    ) -> ResolvedExecutionRoute:
+        return resolve_run_configuration(
+            run_configuration,
+            profiles=load_execution_profiles(self._profiles_path),
+            enforce_selector=enforce_selector,
+        )
 
     def allowed_profiles(self, role_id: str) -> list[str]:
         return allowed_profiles_for_role(role_id, profiles=load_execution_profiles(self._profiles_path))

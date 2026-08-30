@@ -27,6 +27,7 @@
     "delegation_lineage_ref": {"type": "string", "minLength": 1},
     "conversation_history_inherited": {"type": "boolean"},
     "execution_profile_id": {"type": "string", "minLength": 1},
+    "execution_family": {"enum": ["AGENT_HARNESS", "API_PROVIDER", "LOCAL_MODEL"]},
     "prompt_id": {"type": "string", "minLength": 1},
     "input_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "output_refs": {"type": "array", "items": {"type": "string", "minLength": 1}}

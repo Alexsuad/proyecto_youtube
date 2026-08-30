@@ -1,0 +1,162 @@
+{
+  "mission_id": "PLAN009_P2_CORRECTIVE_RUNTIME_NEUTRALITY",
+  "mission_mode": "LEGACY",
+  "artifact_id": "PLAN009_P2_CORRECTIVE_RUNTIME_NEUTRALITY",
+  "artifact_version": "1.0.1",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md",
+    "plans/plan_009/p2_real_roundtrip/",
+    "config/execution_family_selection.json",
+    "config/agent_execution_profiles.json",
+    "schemas/execution_family_selection.json",
+    "schemas/run_configuration.json",
+    "schemas/mission_authorization_contract.json",
+    "schemas/resolved_context_manifest.json",
+    "src/ai/contracts.py",
+    "src/ai/execution.py",
+    "src/ai/providers/agent_handoff.py",
+    "src/ai/runtime_profiles.py",
+    "src/application/topic_belonging.py",
+    "src/cli.py",
+    "src/core/context_resolution.py",
+    "src/core/execution_preflight.py",
+    "src/core/mission_authorization.py",
+    "src/core/mission_completion_gate.py",
+    "tests/ai/test_hybrid_runtime.py",
+    "tests/ai/test_r6_b_0_hybrid_runtime.py",
+    "tests/harness/test_plan009_m1_vertical.py",
+    "tests/core/test_all_schemas.py",
+    "tests/core/test_execution_preflight_context_lineage.py",
+    "tests/core/test_plan_005_real_consumer_integration.py",
+    "handoff/",
+    "output/"
+  ],
+  "protected_untracked_paths": ["session-ses_fb28.md"],
+  "protected_untracked_baseline": [
+    {
+      "path": "session-ses_fb28.md",
+      "sha256": "d898f1429d6c29f3744e259e3f944abe55b2a3d298236284ea9fdad1ed37b47c"
+    }
+  ],
+  "required_tests": [
+    {
+      "label": "CORRECTIVE_COMPATIBILITY_REGRESSIONS",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_execution_preflight_context_lineage.py", "tests/core/test_plan_005_real_consumer_integration.py"],
+      "timeout_seconds": 180
+    },
+    {
+      "label": "P2_EXECUTION_FAMILY_AND_ROUTE_FOCUSED",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/ai/test_r6_b_0_hybrid_runtime.py", "-k", "execution_family or agent_harness_route or opencode_profile_requires_owner_model_selection"],
+      "timeout_seconds": 180
+    },
+    {
+      "label": "P2_HANDOFF_WIRING_FOCUSED",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/ai/test_hybrid_runtime.py", "-k", "handoff or completion_gate"],
+      "timeout_seconds": 180
+    },
+    {
+      "label": "P2_TOPIC_BELONGING_REGRESSION",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_plan009_m1_vertical.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "P2_NEUTRAL_AUTHORIZATION_DECLARATION",
+      "command": ["py", "-3", "-c", "import json; from src.ai.runtime_profiles import selected_execution_family; from src.core.mission_authorization import load_mission_authorization; a=load_mission_authorization('plans/plan_009/p2_real_roundtrip/mission/mission-authorization.json'); assert a.mission_id=='PLAN009_P2_CORRECTIVE_RUNTIME_NEUTRALITY'; assert a.execution_profile_ids==(); assert a.execution_family_ids==('AGENT_HARNESS',); assert selected_execution_family()=='AGENT_HARNESS'; print('P2_AUTHORIZATION_NEUTRAL_FAMILY_OK')"],
+      "timeout_seconds": 60
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "8e26fb2f5e6b4eb43198cebd0700519ce474146b"
+  },
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/plan_009/p2_real_roundtrip/mission/mission-authorization.json",
+  "mission_authorization_sha256": "1360a29138290707a3a0bfe278ebf0fb8f780bd5eeb2b447399b3ac0410013e9",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "PLAN009_P2_CORRECTIVE_RUNTIME_NEUTRALITY",
+      "PLAN_009_CURRENT_MISSION": "PLAN009_P2_CORRECTIVE_RUNTIME_NEUTRALITY",
+      "PLAN_009_P2_STATUS": "BLOCKED_BY_MISSING_ROUNDTRIP_INTEGRATION",
+      "PLAN_009_P2_EXECUTION_PROFILE": "NONE_SELECTED",
+      "PLAN_009_P2_EXECUTION_FAMILY": "AGENT_HARNESS",
+      "PLAN_009_P2_EXECUTION_ROUTE": "agent_harness",
+      "PLAN_009_P2_EXECUTION_MODE": "REAL",
+      "PLAN_009_P2_REAL_EXECUTION": "NOT_EXECUTED",
+      "REAL_COGNITIVE_EXECUTION": "NOT_DEMONSTRATED",
+      "AUTHORIZED_FOR_PRODUCT_USE": "NO",
+      "PLAN_009_P2_PRODUCT_USE": "NO"
+    },
+    "forbidden": {
+      "B5_I2_AUTHORIZED": ["YES"],
+      "B5_I3_AUTHORIZED": ["YES"],
+      "B5_5_AUTHORIZED": ["YES"],
+      "B6_AUTHORIZED": ["YES"],
+      "PLAN_010_P2": ["AUTHORIZED"]
+    }
+  },
+  "schema_checks": [
+    {"path": "plans/plan_009/p2_real_roundtrip/mission/mission_contract.json", "schema": "mission_contract"},
+    {"path": "plans/plan_009/p2_real_roundtrip/mission/run_configuration.json", "schema": "run_configuration"},
+    {"path": "config/execution_family_selection.json", "schema": "execution_family_selection"},
+    {"path": "config/agent_execution_profiles.json", "schema": "agent_execution_profiles"}
+  ],
+  "objective": "Reconciliar técnicamente P2 para seleccionar una familia AGENT_HARNESS neutral y transportar mission_contract_path, completion_gate_result_path y mission_repo_root hasta AgentHandoffProvider.prepare, sin ejecutar cognición real.",
+  "preconditions": [
+    "CURRENT_MISSION matches the live control.",
+    "The owner selected the AGENT_HARNESS execution family.",
+    "The product does not select an agent, provider or model for AGENT_HARNESS.",
+    "REAL_COGNITIVE_EXECUTION remains NOT_DEMONSTRATED until import_result validates a real result."
+  ],
+  "canonical_inputs": [
+    "Terminal human input",
+    "config/execution_family_selection.json",
+    "config/active_editorial_profile.json",
+    "config/editorial_profile_registry.json",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_009/p2_real_roundtrip/mission/mission-authorization.json"
+  ],
+  "non_objectives": [
+    "REAL_COGNITIVE_EXECUTION",
+    "INTEGRATED_PROVIDER_EXECUTION",
+    "Selecting or inferring a concrete agent, provider or model before execution",
+    "API or local-model execution",
+    "P3.1 or any later phase",
+    "Product use, production or publication",
+    "Creating a provider, client or integrated executor",
+    "Commit or push"
+  ],
+  "expected_outputs": [
+    "A valid single-family boolean selection.",
+    "A neutral AGENT_HARNESS route with no concrete profile, executor, provider or model selected by the product.",
+    "Canonical handoff preparation receives mission_contract_path, completion_gate_result_path and mission_repo_root.",
+    "P2 remains blocked by missing roundtrip integration and no cognitive result is declared."
+  ],
+  "deterministic_validations": [
+    "ExecutionFamilySelection schema and exactly-one-active-family validation",
+    "MissionAuthorization loader and family scope verification",
+    "AgentHandoffProvider canonical gate binding verification",
+    "Topic Belonging wiring and regression tests",
+    "No API, local-model or synthetic fallback"
+  ],
+  "adversarial_cases": [
+    "Zero or multiple active execution families",
+    "Concrete profile, executor, provider or model supplied under AGENT_HARNESS",
+    "CURRENT_MISSION mismatch",
+    "Corrupt handoff package or completion gate",
+    "Missing canonical handoff bindings"
+  ],
+  "stop_conditions": [
+    "Missing canonical contract, authorization or current control state",
+    "The owner-operated harness is unavailable at execution time",
+    "A concrete agent, provider or model is selected by the product",
+    "CLI handoff configuration missing completion-gate bindings",
+    "Any fallback to API, local model, mock or synthetic output",
+    "P3 or any later phase is requested"
+  ],
+  "review_policy": {"required_review": "INDEPENDENT_REVIEW", "independent_review": "REQUIRED", "owner_review": true},
+  "owner_closure": {"required": false}
+}

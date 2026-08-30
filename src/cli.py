@@ -40,9 +40,14 @@ def _service(
     execution_mode: str = "REAL",
     mock_outputs: dict[str, dict[str, Any]] | None = None,
     execution_profile: str | None = None,
+    execution_family: str | None = None,
+    execution_family_selection_path: str | None = None,
     model_override: str | None = None,
     reasoning_effort: str | None = None,
     paid_cost_approved: bool = False,
+    mission_contract_path: str | None = None,
+    completion_gate_result_path: str | None = None,
+    mission_repo_root: str | None = None,
 ) -> EpisodeApplicationService:
     store = VaultEpisodeStore.from_settings(settings)
     return EpisodeApplicationService(
@@ -55,9 +60,14 @@ def _service(
                 execution_mode=execution_mode,
                 mock_outputs=mock_outputs,
                 execution_profile=execution_profile,
+                execution_family=execution_family,
+                execution_family_selection_path=execution_family_selection_path,
                 model_override=model_override,
                 reasoning_effort=reasoning_effort,
                 paid_cost_approved=paid_cost_approved,
+                mission_contract_path=mission_contract_path,
+                completion_gate_result_path=completion_gate_result_path,
+                mission_repo_root=mission_repo_root,
             ),
         ),
         interaction=TerminalInteraction(),
@@ -72,9 +82,14 @@ def _service_from_args(args: argparse.Namespace) -> EpisodeApplicationService:
         execution_mode="SYNTHETIC_TEST" if synthetic_outputs is not None else "REAL",
         mock_outputs=synthetic_outputs,
         execution_profile=getattr(args, "execution_profile", None),
+        execution_family=getattr(args, "execution_family", None),
+        execution_family_selection_path=getattr(args, "execution_family_selection_path", None),
         model_override=getattr(args, "model_override", None),
         reasoning_effort=getattr(args, "reasoning_effort", None),
         paid_cost_approved=bool(getattr(args, "paid_cost_approved", False)),
+        mission_contract_path=getattr(args, "mission_contract_path", None),
+        completion_gate_result_path=getattr(args, "completion_gate_result_path", None),
+        mission_repo_root=getattr(args, "mission_repo_root", None),
     )
 
 
@@ -187,9 +202,14 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--mission-authorization", help=argparse.SUPPRESS)
     start.add_argument("--synthetic-outputs", help=argparse.SUPPRESS)
     start.add_argument("--execution-profile", help=argparse.SUPPRESS)
+    start.add_argument("--execution-family", help=argparse.SUPPRESS)
+    start.add_argument("--execution-family-selection", dest="execution_family_selection_path", help=argparse.SUPPRESS)
     start.add_argument("--model", dest="model_override", help=argparse.SUPPRESS)
     start.add_argument("--reasoning-effort", help=argparse.SUPPRESS)
     start.add_argument("--paid-cost-approved", action="store_true", help=argparse.SUPPRESS)
+    start.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
+    start.add_argument("--completion-gate", dest="completion_gate_result_path", help=argparse.SUPPRESS)
+    start.add_argument("--mission-repo-root", dest="mission_repo_root", help=argparse.SUPPRESS)
     start.add_argument("--modo", choices=["tema", "obra", "corpus"], help="Omitir para usar el flujo interactivo")
     start.add_argument("--tema")
     start.add_argument("--obra")
@@ -203,9 +223,14 @@ def build_parser() -> argparse.ArgumentParser:
     resume.add_argument("--mission-authorization", help=argparse.SUPPRESS)
     resume.add_argument("--synthetic-outputs", help=argparse.SUPPRESS)
     resume.add_argument("--execution-profile", help=argparse.SUPPRESS)
+    resume.add_argument("--execution-family", help=argparse.SUPPRESS)
+    resume.add_argument("--execution-family-selection", dest="execution_family_selection_path", help=argparse.SUPPRESS)
     resume.add_argument("--model", dest="model_override", help=argparse.SUPPRESS)
     resume.add_argument("--reasoning-effort", help=argparse.SUPPRESS)
     resume.add_argument("--paid-cost-approved", action="store_true", help=argparse.SUPPRESS)
+    resume.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
+    resume.add_argument("--completion-gate", dest="completion_gate_result_path", help=argparse.SUPPRESS)
+    resume.add_argument("--mission-repo-root", dest="mission_repo_root", help=argparse.SUPPRESS)
     resume.set_defaults(handler=_resume)
     administrative_close = subparsers.add_parser(
         "cerrar-administrativamente",

@@ -185,6 +185,15 @@ def _validate_gate_evidence(result: GateResult) -> None:
 def _gate_semantic_payload(result: GateResult) -> dict[str, Any]:
     data = result.to_dict()
     data.pop("checked_at", None)
+    required_tests = data.get("evidence", {}).get("required_tests")
+    if isinstance(required_tests, list):
+        for test in required_tests:
+            if isinstance(test, dict):
+                # Pytest output contains elapsed-time text.  Preserve the full
+                # output in the evidence artifact, but do not make a verified
+                # gate depend on nondeterministic timing across fresh checks.
+                test.pop("stdout", None)
+                test.pop("stderr", None)
     return data
 
 def load_mission_contract(path: str | Path) -> MissionContract:
@@ -458,6 +467,8 @@ def _verify_mission_scope_authorization(contract: MissionContract, root: Path) -
             capability_id=authorization.capability_ids[0],
             role_id=authorization.role_ids[0],
             operation=authorization.allowed_operations[0],
+            execution_family=authorization.execution_family_ids[0] if authorization.execution_family_ids else None,
+            execution_profile_id=authorization.execution_profile_ids[0] if authorization.execution_profile_ids else None,
         )
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError, MissionAuthorizationError, IndexError):
         return {"violations": ["MISSION_AUTHORIZATION_INVALID"], "evidence": {**evidence, "status": "INVALID"}}

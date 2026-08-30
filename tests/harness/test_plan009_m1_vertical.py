@@ -461,9 +461,9 @@ def test_m1_real_provider_and_mock_injection_are_blocked() -> None:
         ExecutionCognitiveBoundary(execution_mode="REAL", mock_outputs=_outputs())
 
 
-def test_m2_real_requires_explicit_execution_profile() -> None:
-    with pytest.raises(PermissionError, match="REAL_EXECUTION_PROFILE_REQUIRED"):
-        ExecutionCognitiveBoundary(execution_mode="REAL", mission_authorization_path="auth.json").preflight()
+def test_m2_real_requires_mission_authorization_even_with_neutral_family() -> None:
+    with pytest.raises(PermissionError, match="MISSION_AUTHORIZATION_REQUIRED"):
+        ExecutionCognitiveBoundary(execution_mode="REAL").preflight()
 
 
 def test_m2_real_without_authorization_blocks_before_provider() -> None:
@@ -522,6 +522,11 @@ def test_m2_real_authorized_reaches_provider_boundary_without_external_call(
         execution_mode="REAL",
         execution_profile="ollama_local",
     )
+    selection = tmp_path / "execution-family-selection.json"
+    selection.write_text(json.dumps({
+        "selection_version": "1.0.0",
+        "families": {"AGENT_HARNESS": False, "API_PROVIDER": False, "LOCAL_MODEL": True},
+    }), encoding="utf-8")
     outputs = _outputs()
 
     class ProviderDouble:
@@ -548,9 +553,11 @@ def test_m2_real_authorized_reaches_provider_boundary_without_external_call(
         execution_mode="REAL",
         execution_interface="TOPIC_BELONGING_TEST",
         execution_profile="ollama_local",
+        execution_family_selection_path=selection.relative_to(ROOT).as_posix(),
         model_override="test-double-model",
     )
-    short_root = Path(tempfile.mkdtemp(prefix="p009-m2-", dir=tmp_path))
+    short_root = tmp_path / "r"
+    short_root.mkdir()
     try:
         store = VaultEpisodeStore(short_root / "vault", "C")
         workflow = TopicBelongingTechnicalWorkflow(store, boundary=boundary)
@@ -573,7 +580,7 @@ def test_m1_real_provider_mode_is_blocked_before_episode_creation(tmp_path: Path
         execution_mode="REAL",
     )
     workflow = TopicBelongingTechnicalWorkflow(store, boundary=boundary)
-    with pytest.raises(PermissionError, match="REAL_EXECUTION_PROFILE_REQUIRED"):
+    with pytest.raises(PermissionError, match="MISSION_AUTHORIZATION_INVALID"):
         EpisodeApplicationService(store, workflow=workflow).start(
             HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
         )

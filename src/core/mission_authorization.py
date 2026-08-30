@@ -113,9 +113,10 @@ class MissionAuthorization:
     contains_material_repair: bool
     repair_integrity_evidence_path: str
     contract_path: str | None = None
+    execution_family_ids: tuple[str, ...] = ()
 
     def scope_payload(self) -> dict[str, Any]:
-        return {
+        payload = {
             "mission_id": self.mission_id,
             "capability_ids": list(self.capability_ids),
             "role_ids": list(self.role_ids),
@@ -129,6 +130,9 @@ class MissionAuthorization:
             "contains_material_repair": self.contains_material_repair,
             "repair_integrity_evidence_path": self.repair_integrity_evidence_path,
         }
+        if self.execution_family_ids:
+            payload["execution_family_ids"] = list(self.execution_family_ids)
+        return payload
 
     @classmethod
     def from_contract(
@@ -143,7 +147,7 @@ class MissionAuthorization:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authorization missing")
         required = (
             "live_state_path", "live_state_sha256", "capability_ids", "role_ids",
-            "execution_profile_ids", "execution_interface", "allowed_operations",
+            "execution_interface", "allowed_operations",
             "allowed_paths", "allowed_routes", "execution_mode", "single_use",
             "authority_ref", "authority_sha256", "authorized_scope_sha256",
             "executor_substitution_policy", "contains_material_repair",
@@ -152,11 +156,16 @@ class MissionAuthorization:
         missing = [key for key in required if key not in auth]
         if missing:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: " + ", ".join(missing))
+        if not auth.get("execution_profile_ids") and not auth.get("execution_family_ids"):
+            raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: execution profile or family scope missing")
         flat = {
             "mission_id": data["mission_id"],
             "contract_sha256": contract_sha256,
             **{key: auth[key] for key in required},
         }
+        for optional_scope_key in ("execution_profile_ids", "execution_family_ids"):
+            if optional_scope_key in auth:
+                flat[optional_scope_key] = auth[optional_scope_key]
         violations = validate_against_schema(flat, "mission_authorization_contract")
         if violations:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: " + "; ".join(violations))
@@ -167,7 +176,7 @@ class MissionAuthorization:
             live_state_sha256=str(auth["live_state_sha256"]).lower(),
             capability_ids=tuple(str(value) for value in auth["capability_ids"]),
             role_ids=tuple(str(value) for value in auth["role_ids"]),
-            execution_profile_ids=tuple(str(value) for value in auth["execution_profile_ids"]),
+            execution_profile_ids=tuple(str(value) for value in auth.get("execution_profile_ids", [])),
             execution_interface=str(auth["execution_interface"]),
             allowed_operations=tuple(str(value) for value in auth["allowed_operations"]),
             allowed_paths=tuple(str(value) for value in auth["allowed_paths"]),
@@ -181,6 +190,7 @@ class MissionAuthorization:
             contains_material_repair=bool(auth["contains_material_repair"]),
             repair_integrity_evidence_path=str(auth["repair_integrity_evidence_path"]),
             contract_path=contract_path,
+            execution_family_ids=tuple(str(value) for value in auth.get("execution_family_ids", [])),
         )
         if scope_checksum(instance.scope_payload()) != instance.authorized_scope_sha256:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authorized scope checksum")
@@ -197,6 +207,7 @@ class MissionAuthorization:
         execution_mode: str | None = None,
         execution_route: str | None = None,
         execution_profile_id: str | None = None,
+        execution_family: str | None = None,
         execution_interface: str | None = None,
         required_material_decision_ref: dict[str, Any] | None = None,
     ) -> None:
@@ -268,7 +279,9 @@ class MissionAuthorization:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: capability scope")
         if role_id not in self.role_ids:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: role scope")
-        if execution_profile_id and "ANY" not in self.execution_profile_ids and execution_profile_id not in self.execution_profile_ids:
+        if self.execution_family_ids and (execution_family not in self.execution_family_ids):
+            raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: execution family scope")
+        if execution_profile_id and self.execution_profile_ids and "ANY" not in self.execution_profile_ids and execution_profile_id not in self.execution_profile_ids:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: execution profile scope")
         if execution_interface and self.execution_interface not in {"ANY", execution_interface}:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: execution interface")

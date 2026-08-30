@@ -99,7 +99,38 @@ def preflight_controlled_execution(
         except ValueError:
             relative_output = str(output_path).replace("\\", "/")
     requested_route = str(request.execution_route or config.get("execution_route") or config.get("default_execution_route") or "")
-    requested_profile = str(request.execution_profile or config.get("execution_profile") or "UNSPECIFIED_PROFILE")
+    requested_profile_value = request.execution_profile or config.get("execution_profile")
+    requested_profile = str(requested_profile_value) if requested_profile_value else None
+    requested_family_value = getattr(request, "execution_family", None) or config.get("execution_family")
+    requested_family = str(requested_family_value) if requested_family_value else None
+    selection_path_value = config.get("execution_family_selection_path")
+    synthetic_execution = str(getattr(request, "execution_mode", "")).upper() in {"SYNTHETIC", "SYNTHETIC_TEST", "MOCK"}
+    if not synthetic_execution and (requested_family or requested_profile):
+        from src.ai.runtime_profiles import load_execution_profiles, validate_execution_family_selection
+
+        selection_candidate = Path(str(selection_path_value or "config/execution_family_selection.json"))
+        if selection_candidate.is_absolute() or ".." in selection_candidate.parts:
+            raise PermissionError("EXECUTION_FAMILY_SELECTION_INVALID: path outside repository")
+        selection_file = (repository_root / selection_candidate).resolve()
+        try:
+            selection_file.relative_to(repository_root)
+            profiles_path_value = config.get("execution_profiles_path")
+            profiles_file = Path(str(profiles_path_value)) if profiles_path_value else repository_root / "config/agent_execution_profiles.json"
+            if not profiles_file.is_absolute():
+                profiles_file = repository_root / profiles_file
+            profiles = load_execution_profiles(profiles_file)
+            selected_family = validate_execution_family_selection(
+                requested_family,
+                selection_file,
+                requested_profile=requested_profile,
+                profiles=profiles,
+            )
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise PermissionError("EXECUTION_FAMILY_SELECTION_INVALID") from exc
+        if requested_family and requested_family.strip().upper() != selected_family:
+            raise PermissionError(
+                f"EXECUTION_FAMILY_SELECTION_MISMATCH: requested={requested_family.strip().upper()}, selected={selected_family}"
+            )
     requested_interface = str(config.get("execution_interface") or "UNSPECIFIED_INTERFACE")
     authorization.verify(
         repository_root,
@@ -110,6 +141,7 @@ def preflight_controlled_execution(
         execution_mode=str(getattr(request, "execution_mode", "")),
         execution_route=requested_route or None,
         execution_profile_id=requested_profile,
+        execution_family=requested_family,
         execution_interface=requested_interface,
         required_material_decision_ref=registry_capability.get("material_decision_ref") if registry_capability else None,
 
@@ -148,6 +180,7 @@ def preflight_controlled_execution(
             policy_path=config.get("context_policy_path"),
             mission_id=str(config.get("mission_id") or authorization.mission_id),
             execution_profile_id=requested_profile,
+            execution_family=requested_family,
             prompt_id=str(config.get("prompt_id") or "UNSPECIFIED_PROMPT"),
             input_refs=[str(item) for item in config.get("input_refs", [])],
             output_refs=[str(item) for item in config.get("output_refs", ([relative_output] if relative_output else []))],

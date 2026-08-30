@@ -1,0 +1,22 @@
+{
+  "mission_id": "PLAN009_P2_CORRECTIVE_RUNTIME_NEUTRALITY",
+  "authorization": {
+    "allowed_operations": ["EXECUTE_CAPABILITY"],
+    "allowed_paths": ["handoff/", "output/"],
+    "allowed_routes": ["agent_harness"],
+    "authority_ref": "plans/plan_009/p2_real_roundtrip/mission/authority.json",
+    "authority_sha256": "06e614ca21eae3e020cc4b9ffc2188150c6ce39f9f65ffc32594ecf507d4ed80",
+    "authorized_scope_sha256": "6e08b9a687c5739d3112abaf2433ae7a1dc89b80c98858273f689b439ea50974",
+    "capability_ids": ["TOPIC_BELONGING_ASSESSMENT"],
+    "execution_family_ids": ["AGENT_HARNESS"],
+    "execution_interface": "TOPIC_BELONGING_TERMINAL",
+    "execution_mode": "REAL",
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "fcf9bb0d204fadedd77f0645ee4d05b6503234a48d418657f59223af290bbe4e",
+    "repair_integrity_evidence_path": "NONE",
+    "role_ids": ["CHANNEL_INTELLIGENCE_PRODUCER", "CHANNEL_INTELLIGENCE_REVIEWER"],
+    "single_use": false,
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false
+  }
+}

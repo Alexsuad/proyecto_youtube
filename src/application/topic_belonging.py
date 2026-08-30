@@ -16,7 +16,11 @@ from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus,
 from src.ai.execution import execute
 from src.ai.manifest import file_checksum, manifest_checksum
 from src.ai.role_execution import RoleExecutionContractError, build_model_prompt, resolve_role_execution_contract
-from src.ai.runtime_profiles import load_execution_profiles
+from src.ai.runtime_profiles import (
+    EXECUTION_FAMILY_SELECTION_PATH,
+    load_execution_profiles,
+    validate_execution_family_selection,
+)
 from src.application.contracts import HumanInput
 from src.application.storage import EpisodeHandle, StorageError, VaultEpisodeStore
 from src.application.authority import load_operational_authority
@@ -239,11 +243,16 @@ class ExecutionCognitiveBoundary:
     mock_outputs: dict[str, dict[str, Any]] | None = None
     execution_route: str | None = None
     execution_profile: str | None = None
+    execution_family: str | None = None
+    execution_family_selection_path: str | None = None
     model_override: str | None = None
     reasoning_effort: str | None = None
     paid_cost_approved: bool = False
     execution_registry_path: str | None = None
     operational_authority_path: str | None = None
+    mission_contract_path: str | None = None
+    completion_gate_result_path: str | None = None
+    mission_repo_root: str | None = None
     resolved_mission_id: str | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -253,6 +262,25 @@ class ExecutionCognitiveBoundary:
             self.execution_profile = "ollama_local"
         if self.execution_mode == "SYNTHETIC_TEST" and self.execution_route is None:
             self.execution_route = "local_model"
+        if self.execution_mode == "REAL":
+            selection_path = Path(self.execution_family_selection_path) if self.execution_family_selection_path else EXECUTION_FAMILY_SELECTION_PATH
+            if selection_path is not None and not selection_path.is_absolute():
+                selection_path = self.repository_root / selection_path
+            try:
+                selected_family = validate_execution_family_selection(
+                    self.execution_family,
+                    selection_path,
+                    requested_profile=self.execution_profile if self.execution_family else None,
+                    profiles=load_execution_profiles(self.repository_root / "config/agent_execution_profiles.json"),
+                )
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+                raise PermissionError("EXECUTION_FAMILY_SELECTION_INVALID") from exc
+            if self.execution_family is None and self.execution_profile is None:
+                self.execution_family = selected_family
+        if self.execution_family == "AGENT_HARNESS" and self.execution_profile:
+            raise PermissionError("AGENT_HARNESS_DOES_NOT_SELECT_PROFILE_EXECUTOR_PROVIDER_OR_MODEL")
+        if self.execution_family == "AGENT_HARNESS" and self.execution_route is None:
+            self.execution_route = "agent_harness"
 
     def _resolve_profile_route(self) -> None:
         """Bind the route declared by an explicitly selected profile only.
@@ -278,8 +306,8 @@ class ExecutionCognitiveBoundary:
     def preflight(self) -> str:
         if not self.mission_authorization_path:
             raise PermissionError("MISSION_AUTHORIZATION_REQUIRED:TOPIC_BELONGING_ASSESSMENT")
-        if self.execution_mode == "REAL" and not self.execution_profile:
-            raise PermissionError("REAL_EXECUTION_PROFILE_REQUIRED")
+        if self.execution_mode == "REAL" and not self.execution_family and not self.execution_profile:
+            raise PermissionError("EXECUTION_FAMILY_REQUIRED")
         self._resolve_profile_route()
         if self.execution_mode == "SYNTHETIC_TEST" and (
             self.mock_outputs is None or any(
@@ -313,6 +341,10 @@ class ExecutionCognitiveBoundary:
                 "mission_authorization_path": self.mission_authorization_path,
                 "mission_operation": "EXECUTE_CAPABILITY",
                 "execution_interface": self.execution_interface,
+                "execution_family": self.execution_family,
+                "mission_contract_path": self.mission_contract_path,
+                "execution_family_selection_path": self.execution_family_selection_path or str(EXECUTION_FAMILY_SELECTION_PATH),
+                "mission_repo_root": self.mission_repo_root or str(self.repository_root),
                 "paid_cost_approved": self.paid_cost_approved,
                 "reasoning_effort": self.reasoning_effort,
                 "context_policy_path": "config/context_resolution_policy.json",
@@ -405,27 +437,33 @@ class ExecutionCognitiveBoundary:
                 skill_version="1.0.0",
                 input_artifacts=input_artifacts,
                 output_schema=output_schema,
-            execution_mode=self.execution_mode,
-            model=("synthetic-structural-test" if self.execution_mode == "SYNTHETIC_TEST" else self.model_override),
-            reasoning_effort=self.reasoning_effort,
-            provider="mock" if mock_output is not None else None,
+                execution_mode=self.execution_mode,
+                model=("synthetic-structural-test" if self.execution_mode == "SYNTHETIC_TEST" else self.model_override),
+                reasoning_effort=self.reasoning_effort,
+                provider="mock" if mock_output is not None else None,
                 mock_output=mock_output,
                 output_artifact_kind=output_kind,
                 output_artifact_id=output_id,
                 output_artifact_ref=f"{output_kind}:{output_id}",
                 execution_route=self.execution_route,
                 execution_profile=self.execution_profile,
+                execution_family=self.execution_family,
                 episode_id=episode_id,
                 role=role,
                 config={
                     "repository_root": str(self.repository_root),
                     "mission_authorization_path": self.mission_authorization_path,
+                    "mission_contract_path": self.mission_contract_path,
+                    "completion_gate_result_path": self.completion_gate_result_path,
+                    "mission_repo_root": self.mission_repo_root or str(self.repository_root),
                     "execution_profiles_path": str(
                         (self.repository_root / "config/agent_execution_profiles.json").resolve()
                     ),
                     "execution_registry_path": self.execution_registry_path,
                     "mission_operation": "EXECUTE_CAPABILITY",
                     "execution_interface": self.execution_interface,
+                    "execution_family": self.execution_family,
+                    "execution_family_selection_path": self.execution_family_selection_path or str(EXECUTION_FAMILY_SELECTION_PATH),
                     "paid_cost_approved": self.paid_cost_approved,
                     "reasoning_effort": self.reasoning_effort,
                     "context_policy_path": "config/context_resolution_policy.json",

@@ -103,6 +103,7 @@ def resolve_context(
     authorized_context_refs: list[str] | None = None,
     conversation_history_inherited: bool = False,
     execution_profile_id: str | None = None,
+    execution_family: str | None = None,
     prompt_id: str | None = None,
     input_refs: list[str] | None = None,
     output_refs: list[str] | None = None,
@@ -181,6 +182,8 @@ def resolve_context(
     body["conversation_history_inherited"] = False
     if execution_profile_id is not None:
         body["execution_profile_id"] = execution_profile_id
+    if execution_family is not None:
+        body["execution_family"] = execution_family
     if prompt_id is not None:
         body["prompt_id"] = prompt_id
     if input_refs is not None:

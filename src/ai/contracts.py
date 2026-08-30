@@ -37,6 +37,7 @@ class ExecutionRequest:
     executor: str | None = None
     execution_route: str | None = None
     execution_profile: str | None = None
+    execution_family: str | None = None
     timeout: float = 30.0
     privacy: str = "normal"
     output_artifact_kind: str = ""
