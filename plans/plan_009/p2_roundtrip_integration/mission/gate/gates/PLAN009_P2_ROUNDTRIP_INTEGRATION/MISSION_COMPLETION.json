@@ -1,0 +1,259 @@
+{
+  "gate_id": "MISSION_COMPLETION",
+  "artifact_id": "PLAN009_P2_ROUNDTRIP_INTEGRATION",
+  "artifact_version": "1.0.0",
+  "status": "PASS",
+  "summary": "Deterministic mission completion checks passed.",
+  "violations": [],
+  "warnings": [],
+  "evidence": {
+    "mission_id": "PLAN009_P2_ROUNDTRIP_INTEGRATION",
+    "binding": {
+      "binding_version": "1.0.0",
+      "gate_source": "run_mission_completion_gate",
+      "mission_contract_sha256": "4472abfb5f7a720ec7beab490cce09e45dd49ebfdb16114ad079ca024d10a38c",
+      "git_head": "79aba2e8e665afd4d26eebd6625b45f1cd275dc2",
+      "git_status_sha256": "9bc22844a8966a84e83d8ec38d7039a0d613edca20ccb5cc4be927f301245538",
+      "repo_root": "C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube"
+    },
+    "git": {
+      "status_lines": [
+        " M plans/001_CONTROL_OPERATIVO.md",
+        " M plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md",
+        " M src/ai/execution.py",
+        " M src/ai/providers/agent_handoff.py",
+        " M src/application/service.py",
+        " M src/application/storage.py",
+        " M src/application/topic_belonging.py",
+        "?? plans/plan_009/p2_roundtrip_integration/mission/authority.json",
+        "?? plans/plan_009/p2_roundtrip_integration/mission/gate/gates/PLAN009_P2_ROUNDTRIP_INTEGRATION/MISSION_COMPLETION.json",
+        "?? plans/plan_009/p2_roundtrip_integration/mission/gate/gates/PLAN009_P2_ROUNDTRIP_INTEGRATION/MISSION_COMPLETION.md",
+        "?? plans/plan_009/p2_roundtrip_integration/mission/mission-authorization.json",
+        "?? plans/plan_009/p2_roundtrip_integration/mission/mission_contract.json",
+        "?? plans/plan_009/p2_roundtrip_integration/mission/run_configuration.json",
+        "?? tests/harness/test_plan009_p2_roundtrip.py"
+      ],
+      "modified_files": [
+        "plans/001_CONTROL_OPERATIVO.md",
+        "plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md",
+        "src/ai/execution.py",
+        "src/ai/providers/agent_handoff.py",
+        "src/application/service.py",
+        "src/application/storage.py",
+        "src/application/topic_belonging.py"
+      ],
+      "staged_files": [],
+      "untracked_files": [
+        "plans/plan_009/p2_roundtrip_integration/mission/authority.json",
+        "plans/plan_009/p2_roundtrip_integration/mission/gate/gates/PLAN009_P2_ROUNDTRIP_INTEGRATION/MISSION_COMPLETION.json",
+        "plans/plan_009/p2_roundtrip_integration/mission/gate/gates/PLAN009_P2_ROUNDTRIP_INTEGRATION/MISSION_COMPLETION.md",
+        "plans/plan_009/p2_roundtrip_integration/mission/mission-authorization.json",
+        "plans/plan_009/p2_roundtrip_integration/mission/mission_contract.json",
+        "plans/plan_009/p2_roundtrip_integration/mission/run_configuration.json",
+        "tests/harness/test_plan009_p2_roundtrip.py"
+      ],
+      "outside_scope": [],
+      "unexpected_files": [],
+      "diff_check": {
+        "unstaged": {
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "warning: in the working copy of 'plans/001_CONTROL_OPERATIVO.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/execution.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/providers/agent_handoff.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/application/service.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/application/storage.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/application/topic_belonging.py', LF will be replaced by CRLF the next time Git touches it\n"
+        },
+        "staged": {
+          "returncode": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      }
+    },
+    "protected_untracked": {
+      "declared": [],
+      "missing": [],
+      "baseline_missing": [],
+      "baseline_outside_scope": [],
+      "untracked_files": [],
+      "unexpected_files": [],
+      "checksum_mismatches": [],
+      "preserved": true
+    },
+    "structural": {
+      "json": [
+        {
+          "path": "plans/plan_009/p2_roundtrip_integration/mission/authority.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_009/p2_roundtrip_integration/mission/gate/gates/PLAN009_P2_ROUNDTRIP_INTEGRATION/MISSION_COMPLETION.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_009/p2_roundtrip_integration/mission/mission-authorization.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_009/p2_roundtrip_integration/mission/mission_contract.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_009/p2_roundtrip_integration/mission/run_configuration.json",
+          "valid": true
+        }
+      ],
+      "yaml": [],
+      "yaml_markdown": [
+        {
+          "path": "plans/001_CONTROL_OPERATIVO.md",
+          "blocks": [
+            {
+              "valid": true
+            }
+          ]
+        },
+        {
+          "path": "plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md",
+          "blocks": [
+            {
+              "valid": true
+            }
+          ]
+        },
+        {
+          "path": "plans/plan_009/p2_roundtrip_integration/mission/gate/gates/PLAN009_P2_ROUNDTRIP_INTEGRATION/MISSION_COMPLETION.md",
+          "blocks": []
+        }
+      ],
+      "python": [
+        {
+          "path": "src/ai/execution.py",
+          "valid": true
+        },
+        {
+          "path": "src/ai/providers/agent_handoff.py",
+          "valid": true
+        },
+        {
+          "path": "src/application/service.py",
+          "valid": true
+        },
+        {
+          "path": "src/application/storage.py",
+          "valid": true
+        },
+        {
+          "path": "src/application/topic_belonging.py",
+          "valid": true
+        },
+        {
+          "path": "tests/harness/test_plan009_p2_roundtrip.py",
+          "valid": true
+        }
+      ],
+      "schemas": [
+        {
+          "path": "plans/plan_009/p2_roundtrip_integration/mission/mission_contract.json",
+          "schema": "mission_contract",
+          "violations": []
+        },
+        {
+          "path": "plans/plan_009/p2_roundtrip_integration/mission/run_configuration.json",
+          "schema": "run_configuration",
+          "violations": []
+        },
+        {
+          "path": "config/execution_family_selection.json",
+          "schema": "execution_family_selection",
+          "violations": []
+        }
+      ]
+    },
+    "mission_authorization": {
+      "required": true,
+      "path": "plans/plan_009/p2_roundtrip_integration/mission/mission-authorization.json",
+      "expected_sha256": "b39c28ba8473e78a7a5ee43cf15b1b18e98f457971ac95825fb20427d2358f23",
+      "actual_sha256": "b39c28ba8473e78a7a5ee43cf15b1b18e98f457971ac95825fb20427d2358f23",
+      "mission_id": "PLAN009_P2_ROUNDTRIP_INTEGRATION",
+      "contains_material_repair": false,
+      "repair_integrity_evidence_path": "NONE",
+      "authorized_scope_sha256": "428c8e6fd9048ebc8ddd7c758832c13c4c1d8eece5aaf319ede90543ea73f932",
+      "status": "PASS"
+    },
+    "repair_integrity": {
+      "required": false,
+      "status": "NOT_REQUIRED"
+    },
+    "required_tests": [
+      {
+        "label": "P2_ROUNDTRIP_FOCUSED",
+        "command": [
+          "py",
+          "-3",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/harness/test_plan009_p2_roundtrip.py"
+        ],
+        "returncode": 0,
+        "stdout": ".....................                                                    [100%]\n============================== warnings summary ===============================\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n21 passed, 4 warnings in 44.35s\n",
+        "stderr": ""
+      },
+      {
+        "label": "P1_TOPIC_BELONGING_REGRESSION",
+        "command": [
+          "py",
+          "-3",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/harness/test_plan009_m1_vertical.py"
+        ],
+        "returncode": 0,
+        "stdout": "...........................................................              [100%]\n============================== warnings summary ===============================\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n59 passed, 4 warnings in 51.45s\n",
+        "stderr": ""
+      },
+      {
+        "label": "HANDOFF_REGRESSION",
+        "command": [
+          "py",
+          "-3",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/ai/test_hybrid_runtime.py",
+          "-k",
+          "handoff or completion_gate"
+        ],
+        "returncode": 0,
+        "stdout": "...............                                                          [100%]\n============================== warnings summary ===============================\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n15 passed, 33 deselected, 4 warnings in 35.18s\n",
+        "stderr": ""
+      }
+    ],
+    "state": {
+      "control_path": "plans/001_CONTROL_OPERATIVO.md",
+      "read": true,
+      "required": [],
+      "forbidden": []
+    },
+    "push_policy": {
+      "push_allowed": false,
+      "verification": "LOCAL_REF",
+      "remote": "LOCAL",
+      "ref": "HEAD",
+      "baseline_remote_commit": "79aba2e8e665afd4d26eebd6625b45f1cd275dc2",
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "returncode": 0,
+      "stdout": "79aba2e8e665afd4d26eebd6625b45f1cd275dc2\n",
+      "stderr": "",
+      "verified": true,
+      "enforced": true,
+      "observed_remote_commit": "79aba2e8e665afd4d26eebd6625b45f1cd275dc2"
+    }
+  },
+  "checked_at": "2026-08-30T16:37:01.713796+00:00",
+  "checker_version": "1.0.0",
+  "exit_code": 0
+}

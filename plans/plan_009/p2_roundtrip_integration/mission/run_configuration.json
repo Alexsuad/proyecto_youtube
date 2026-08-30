@@ -1,0 +1,20 @@
+{
+  "role_id": "CHANNEL_INTELLIGENCE_PRODUCER",
+  "execution_route": "agent_harness",
+  "execution_profile": null,
+  "execution_family": "AGENT_HARNESS",
+  "execution_family_selection_path": "config/execution_family_selection.json",
+  "executor_override": null,
+  "provider_override": null,
+  "model_override": null,
+  "reasoning_effort": null,
+  "mission_contract_path": "plans/plan_009/p2_roundtrip_integration/mission/mission_contract.json",
+  "completion_gate_result_path": null,
+  "mission_repo_root": ".",
+  "timeout_seconds": 180,
+  "max_retries": 1,
+  "temperature": null,
+  "max_tokens": null,
+  "budget_limit": null,
+  "paid_cost_approved": false
+}

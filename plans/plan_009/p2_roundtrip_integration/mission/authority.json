@@ -1,0 +1,12 @@
+{
+  "artifact_version": "1.0.0",
+  "authorized_scope_sha256": "428c8e6fd9048ebc8ddd7c758832c13c4c1d8eece5aaf319ede90543ea73f932",
+  "decision": "APPROVE",
+  "material_decision_binding": {
+    "decision_id": "MD-CI-001",
+    "decision_sha256": "25f21f5c413a366b5565d0200264e22ccb0ea18def0dd452c3e51bf76864ca9c",
+    "registry_path": "docs/legacy/material_decision_registry.json",
+    "subject_ref": "capability:TOPIC_BELONGING_ASSESSMENT"
+  },
+  "mission_id": "PLAN009_P2_ROUNDTRIP_INTEGRATION"
+}

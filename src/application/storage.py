@@ -37,6 +37,9 @@ class EpisodeHandle:
 
 def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    # Keep the destination directory explicit immediately before mkstemp; this
+    # also protects callers that construct a nested roundtrip result path.
+    os.makedirs(path.parent, exist_ok=True)
     fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
@@ -359,6 +362,103 @@ class VaultEpisodeStore:
                     except OSError:
                         pass
                 raise
+
+    def record_roundtrip_result(
+        self,
+        handle: EpisodeHandle,
+        *,
+        envelope: dict[str, Any],
+        workflow_state: dict[str, Any],
+    ) -> str:
+        """Persist one validated external result and its checkpoint idempotently."""
+        if not isinstance(envelope, dict) or not isinstance(workflow_state, dict):
+            raise StorageError("ROUNDTRIP_PERSISTENCE_REQUIRES_OBJECTS")
+        handoff_id = str(envelope.get("handoff_id") or "")
+        result_checksum = str(envelope.get("output_checksum") or "")
+        stage = str(envelope.get("stage") or "")
+        identity_fields = (
+            "mission_id",
+            "episode_id",
+            "capability_id",
+            "stage",
+            "role",
+            "handoff_id",
+            "package_checksum",
+            "output_checksum",
+            "result_run_id",
+        )
+        if any(not str(envelope.get(field) or "") for field in identity_fields):
+            raise StorageError("ROUNDTRIP_RESULT_BINDING_INCOMPLETE")
+        with self._index_lock():
+            results_path = handle.folder / "roundtrip_results.json"
+            results_dir = handle.folder / "roundtrip_results"
+            results_dir.mkdir(parents=True, exist_ok=True)
+            current = _read_json(results_path, {"results": []})
+            results = list(current.get("results", []))
+            existing_handoff = next((item for item in results if item.get("handoff_id") == handoff_id), None)
+            if existing_handoff is not None:
+                if all(existing_handoff.get(field) == envelope.get(field) for field in identity_fields):
+                    return "ALREADY_IMPORTED"
+                raise StorageError("ROUNDTRIP_RESULT_CONFLICT: handoff ya tiene otro resultado")
+            existing_stage = next((item for item in results if item.get("stage") == stage), None)
+            if existing_stage is not None:
+                raise StorageError("ROUNDTRIP_RESULT_CONFLICT: la etapa ya está cerrada")
+            result_run_id = str(envelope.get("result_run_id") or "")
+            if any(item.get("result_run_id") == result_run_id for item in results):
+                raise StorageError("ROUNDTRIP_RESULT_CONFLICT: result_run_id ya fue utilizado")
+
+            result_name = f"{stage.lower()}-{handoff_id}.json"
+            result_path = results_dir / result_name
+            result_record = {
+                "mission_id": envelope.get("mission_id"),
+                "episode_id": envelope.get("episode_id"),
+                "capability_id": envelope.get("capability_id"),
+                "stage": stage,
+                "role": envelope.get("role"),
+                "handoff_id": handoff_id,
+                "package_checksum": envelope.get("package_checksum"),
+                "handoff_package_ref": workflow_state.get("handoff_package_ref"),
+                "input_manifest_checksum": envelope.get("input_manifest_checksum"),
+                "skill_id": envelope.get("skill_id"),
+                "skill_version": envelope.get("skill_version"),
+                "result_run_id": envelope.get("result_run_id"),
+                "output_checksum": result_checksum,
+                "result_path": f"roundtrip_results/{result_name}",
+                "persisted_at": datetime.now(timezone.utc).isoformat(),
+            }
+            results.append(result_record)
+            prior_workflow = _read_json(handle.folder / "workflow_state.json") if (handle.folder / "workflow_state.json").exists() else None
+            prior_state = _read_json(handle.folder / "episode_state.json")
+            prior_index = self._load_index()
+            try:
+                _write_json_atomic(result_path, envelope)
+                _write_json_atomic(results_path, {"results": results})
+                _write_json_atomic(handle.folder / "workflow_state.json", workflow_state)
+                state = dict(prior_state)
+                state.update({"status": workflow_state["status"], "updated_at": datetime.now(timezone.utc).isoformat()})
+                _write_json_atomic(handle.folder / "episode_state.json", state)
+                index = dict(prior_index)
+                index["episodes"] = [dict(entry) for entry in prior_index.get("episodes", [])]
+                for entry in index["episodes"]:
+                    if entry.get("ep_id") == handle.episode_id:
+                        entry["application_status"] = workflow_state["status"]
+                        break
+                index["last_updated"] = datetime.now(timezone.utc).isoformat()
+                _write_json_atomic(self.index_path, index)
+            except Exception:
+                try:
+                    result_path.unlink(missing_ok=True)
+                    if prior_workflow is None:
+                        (handle.folder / "workflow_state.json").unlink(missing_ok=True)
+                    else:
+                        _write_json_atomic(handle.folder / "workflow_state.json", prior_workflow)
+                    _write_json_atomic(results_path, current)
+                    _write_json_atomic(handle.folder / "episode_state.json", prior_state)
+                    _write_json_atomic(self.index_path, prior_index)
+                except Exception:
+                    pass
+                raise
+            return "PERSISTED"
 
     def _entry(self, episode_id: str) -> dict[str, Any]:
         entry = next((item for item in self._load_index().get("episodes", []) if item.get("ep_id") == episode_id), None)

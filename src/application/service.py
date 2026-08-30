@@ -76,6 +76,22 @@ class EpisodeApplicationService:
         current = self.store.resume(episode_id)
         if current["entry"].get("estado") == self.store.ADMINISTRATIVE_CLOSED_INDEX_STATUS:
             raise StorageError("EPISODE_ADMINISTRATIVELY_CLOSED: no se reanuda un episodio cerrado por recovery")
+        roundtrip_resume = getattr(self.workflow, "resume_roundtrip", None)
+        if callable(roundtrip_resume) and current["state"].get("status") == "PERSISTED":
+            folder = Path(current["folder"])
+            handle = EpisodeHandle(
+                episode_id,
+                current["entry"].get("slug", "episodio"),
+                folder,
+                self.store.index_path,
+            )
+            outcome = roundtrip_resume(handle)
+            if outcome is not None:
+                self.store.record_workflow(handle, outcome)
+                return self.store.resume(episode_id)
+            return current
+        if callable(roundtrip_resume) and current["state"].get("status") in {"PENDING_EXTERNAL_RESULT", "VALIDATED"}:
+            return current
         request_path = Path(current["folder"]) / "human_decision_requests.json"
         requests = json.loads(request_path.read_text(encoding="utf-8")).get("requests", []) if request_path.exists() else []
         pending = None
@@ -154,6 +170,31 @@ class EpisodeApplicationService:
             return self.store.resume(episode_id)
         workflow_state = self._consume_decision(handle, human_input, handoff, request, record["decision"])
         self.store.record_workflow(handle, workflow_state)
+        return self.store.resume(episode_id)
+
+    def import_result(self, episode_id: str, result_path: str | Path) -> dict[str, Any]:
+        """Import one external handoff result through the active workflow."""
+        preflight = getattr(self.workflow, "preflight", None)
+        if callable(preflight):
+            preflight()
+        current = self.store.resume(episode_id)
+        if current["entry"].get("estado") == self.store.ADMINISTRATIVE_CLOSED_INDEX_STATUS:
+            raise StorageError("EPISODE_ADMINISTRATIVELY_CLOSED: no se importa resultado")
+        importer = getattr(self.workflow, "import_result", None)
+        if not callable(importer):
+            raise StorageError("ROUNDTRIP_IMPORT_UNAVAILABLE")
+        folder = Path(current["folder"])
+        handle = EpisodeHandle(
+            episode_id,
+            current["entry"].get("slug", "episodio"),
+            folder,
+            self.store.index_path,
+        )
+        outcome = importer(handle, Path(result_path))
+        if not isinstance(outcome, dict):
+            raise StorageError("ROUNDTRIP_IMPORT_INVALID_OUTCOME")
+        if outcome.get("status") == "ALREADY_IMPORTED":
+            return self.store.resume(episode_id)
         return self.store.resume(episode_id)
 
     def administratively_close_irrecoverable_episode(

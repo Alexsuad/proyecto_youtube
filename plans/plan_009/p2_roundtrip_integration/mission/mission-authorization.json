@@ -1,0 +1,22 @@
+{
+  "mission_id": "PLAN009_P2_ROUNDTRIP_INTEGRATION",
+  "authorization": {
+    "allowed_operations": ["EXECUTE_CAPABILITY"],
+    "allowed_paths": ["handoff/", "output/"],
+    "allowed_routes": ["agent_harness"],
+    "authority_ref": "plans/plan_009/p2_roundtrip_integration/mission/authority.json",
+    "authority_sha256": "4774c1eabc51ee4fa8712d4f74971825f3c6c49fd3e8e4a6d92368ed4d3b83ed",
+    "authorized_scope_sha256": "428c8e6fd9048ebc8ddd7c758832c13c4c1d8eece5aaf319ede90543ea73f932",
+    "capability_ids": ["TOPIC_BELONGING_ASSESSMENT"],
+    "execution_family_ids": ["AGENT_HARNESS"],
+    "execution_interface": "TOPIC_BELONGING_TERMINAL",
+    "execution_mode": "REAL",
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "84b467dca1221832e96473df8ad5a0d67768f468b2d529bbce967bfd73764fda",
+    "repair_integrity_evidence_path": "NONE",
+    "role_ids": ["CHANNEL_INTELLIGENCE_PRODUCER", "CHANNEL_INTELLIGENCE_REVIEWER"],
+    "single_use": false,
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false
+  }
+}

@@ -15,6 +15,7 @@ from uuid import uuid4
 from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
 from src.ai.execution import execute
 from src.ai.manifest import file_checksum, manifest_checksum
+from src.ai.providers.agent_handoff import AgentHandoffProvider
 from src.ai.role_execution import RoleExecutionContractError, build_model_prompt, resolve_role_execution_contract
 from src.ai.runtime_profiles import (
     EXECUTION_FAMILY_SELECTION_PATH,
@@ -66,6 +67,8 @@ VERTICAL_ARTIFACTS = (
     "topic_belonging_lineage.json",
     "topic_belonging_execution.json",
 )
+ROUNDTRIP_STATE_FILENAME = "roundtrip_state.json"
+ROUNDTRIP_RESULTS_FILENAME = "roundtrip_results.json"
 M1_ALLOWED_EPISODE_ARTIFACTS = frozenset(
     {
         "00_human_input.json",
@@ -75,6 +78,9 @@ M1_ALLOWED_EPISODE_ARTIFACTS = frozenset(
         "episode_state.json",
         "workflow_state.json",
     }
+)
+P2_ALLOWED_EPISODE_ARTIFACTS = M1_ALLOWED_EPISODE_ARTIFACTS | frozenset(
+    {ROUNDTRIP_STATE_FILENAME, ROUNDTRIP_RESULTS_FILENAME, "roundtrip_results"}
 )
 
 STOP_STATUS = "TOPIC_BELONGING_TECHNICAL_STOP"
@@ -253,6 +259,7 @@ class ExecutionCognitiveBoundary:
     mission_contract_path: str | None = None
     completion_gate_result_path: str | None = None
     mission_repo_root: str | None = None
+    handoff_directory: Path | None = None
     resolved_mission_id: str | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -339,7 +346,8 @@ class ExecutionCognitiveBoundary:
             config={
                 "repository_root": str(self.repository_root),
                 "mission_authorization_path": self.mission_authorization_path,
-                "mission_operation": "EXECUTE_CAPABILITY",
+                     "mission_operation": "EXECUTE_CAPABILITY",
+                     "mission_id": live_mission_id,
                 "execution_interface": self.execution_interface,
                 "execution_family": self.execution_family,
                 "mission_contract_path": self.mission_contract_path,
@@ -431,6 +439,14 @@ class ExecutionCognitiveBoundary:
                 path = Path(temp_dir) / f"{index}-{kind}.json"
                 path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
                 input_artifacts.append(InputArtifact(kind, artifact_id, path, producer_run_id))
+            convergence_ref = f"roundtrip:{episode_id}:{stage}"
+            convergence_callbacks = TopicBelongingTechnicalWorkflow._convergence_callbacks(
+                convergence_ref,
+                stage=stage,
+                output_schema=output_schema,
+                inputs=input_artifacts,
+                mock_output=mock_output,
+            )
             request = ExecutionRequest(
                 capability_id=CAPABILITY_ID,
                 skill_id="topic_belonging",
@@ -460,7 +476,8 @@ class ExecutionCognitiveBoundary:
                         (self.repository_root / "config/agent_execution_profiles.json").resolve()
                     ),
                     "execution_registry_path": self.execution_registry_path,
-                    "mission_operation": "EXECUTE_CAPABILITY",
+                     "mission_operation": "EXECUTE_CAPABILITY",
+                     "mission_id": self.resolved_mission_id or "UNRESOLVED_MISSION",
                     "execution_interface": self.execution_interface,
                     "execution_family": self.execution_family,
                     "execution_family_selection_path": self.execution_family_selection_path or str(EXECUTION_FAMILY_SELECTION_PATH),
@@ -481,10 +498,14 @@ class ExecutionCognitiveBoundary:
                         "prompt_version": prompt_contract["prompt_version"],
                         "output_schema_name": prompt_contract["output_schema_name"],
                     },
-                    "run_id": request_run_id,
-                    "handoff_target": REVIEWER_ROLE if stage == "produce" else CAPABILITY_ID,
-                },
-            )
+                     "run_id": request_run_id,
+                     "handoff_target": REVIEWER_ROLE if stage == "produce" else CAPABILITY_ID,
+                     "stage": {"enrich": "ENRICHMENT", "produce": "PRODUCER", "review": "REVIEWER"}[stage],
+                     "expected_return": output_schema,
+                     "convergence_callbacks": convergence_callbacks,
+                 },
+                 handoff_directory=self.handoff_directory,
+             )
             result = execute(request)
             result.usage.update(
                 {
@@ -494,6 +515,8 @@ class ExecutionCognitiveBoundary:
                     "prompt_input_checksum": prompt_contract["input_checksum"],
                 }
             )
+        if result.status is ExecutionStatus.HANDOFF_PREPARED:
+            return None, result
         if result.status is not ExecutionStatus.SUCCEEDED or not isinstance(result.output, dict):
             raise TopicBelongingExecutionError(
                 f"{stage.upper()}_EXECUTION_BLOCKED:{result.error or result.status.value}"
@@ -621,6 +644,8 @@ class TopicBelongingTechnicalWorkflow:
         if handoff_violations:
             raise TopicBelongingExecutionError("HANDOFF_INVALID: " + "; ".join(handoff_violations))
         topic_input, enrich_result = self.boundary.enrich(handoff, human_input, profile, handle.episode_id)
+        if enrich_result.status is ExecutionStatus.HANDOFF_PREPARED:
+            return self._pending_handoff_state(handle, run_id, enrich_result, "ENRICHMENT")
         enrichment_violations = _validate_enrichment_binding(topic_input, handoff)
         if enrichment_violations:
             raise TopicBelongingExecutionError("ENRICHMENT_INVALID: " + "; ".join(enrichment_violations))
@@ -629,6 +654,8 @@ class TopicBelongingTechnicalWorkflow:
             raise TopicBelongingExecutionError("TOPIC_INPUT_INVALID: " + "; ".join(input_violations))
 
         assessment, producer_result = self.boundary.produce(topic_input, profile, handle.episode_id, input_producer_run_id=enrich_result.run_id)
+        if producer_result.status is ExecutionStatus.HANDOFF_PREPARED:
+            return self._pending_handoff_state(handle, run_id, producer_result, "PRODUCER")
         assessment_violations = validate_assessment(assessment, topic_input)
         if assessment_violations:
             raise TopicBelongingExecutionError("ASSESSMENT_INVALID: " + "; ".join(assessment_violations))
@@ -636,6 +663,8 @@ class TopicBelongingTechnicalWorkflow:
             raise TopicBelongingExecutionError("ASSESSMENT_INVALID: PRODUCER_ACTOR_PROVENANCE_MISMATCH")
 
         decision, reviewer_result = self.boundary.review(topic_input, assessment, profile, handle.episode_id, input_producer_run_id=enrich_result.run_id)
+        if reviewer_result.status is ExecutionStatus.HANDOFF_PREPARED:
+            return self._pending_handoff_state(handle, run_id, reviewer_result, "REVIEWER")
         if producer_result.run_id == reviewer_result.run_id:
             raise TopicBelongingExecutionError("EXECUTION_INDEPENDENCE_INVALID:SAME_RUNTIME_RUN_ID")
         decision_violations = validate_decision(decision, assessment)
@@ -718,6 +747,517 @@ class TopicBelongingTechnicalWorkflow:
             "stop_boundary": "TOPIC_BELONGING_GATE",
             "blocked_capabilities": ["RESEARCH_PACK", "B5_I2", "B5_I3", "B5.5", "B6", "S5_REAL_EXECUTION", "PUBLICATION"],
         }
+
+    @staticmethod
+    def _pending_handoff_state(
+        handle: EpisodeHandle,
+        run_id: str,
+        result: ExecutionResult,
+        stage: str,
+    ) -> dict[str, Any]:
+        package_path = Path(str(result.usage.get("package") or ""))
+        if not package_path.is_file():
+            raise TopicBelongingExecutionError("HANDOFF_PACKAGE_MISSING")
+        try:
+            package = json.loads(package_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise TopicBelongingExecutionError(f"HANDOFF_PACKAGE_INVALID:{exc}") from exc
+        return {
+            "workflow_id": "P2_TOPIC_BELONGING_ROUNDTRIP",
+            "status": "PENDING_EXTERNAL_RESULT",
+            "episode_id": handle.episode_id,
+            "run_id": run_id,
+            "stage": stage,
+            "role": package.get("role"),
+            "handoff_id": package.get("handoff_id"),
+            "handoff_package_ref": str(package_path),
+            "handoff_package_checksum": package.get("package_checksum"),
+            "expected_return": package.get("expected_return") or package.get("output_schema"),
+            "execution_family": package.get("execution_family"),
+            "execution_route": package.get("execution_route"),
+            "execution_profile": package.get("execution_profile"),
+            "model_override": package.get("model_override"),
+            "completed_stages": [],
+            "next_stage": stage,
+            "real_cognitive_execution": "NOT_DEMONSTRATED",
+            "fixture_policy": "TEST_FIXTURE_ONLY",
+            "downstream_execution_started": False,
+        }
+
+    def import_result(self, handle: EpisodeHandle, result_path: Path) -> dict[str, Any]:
+        """Validate and persist the result for the currently pending stage."""
+        workflow = self._read_episode_file(handle, "workflow_state.json")
+        try:
+            raw_payload = json.loads(result_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise TopicBelongingExecutionError(f"ROUNDTRIP_RESULT_INVALID:{exc}") from exc
+        results_index = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME)
+        existing = next(
+            (item for item in results_index.get("results", []) if item.get("handoff_id") == raw_payload.get("handoff_id")),
+            None,
+        )
+        if existing is not None:
+            identity_fields = (
+                "mission_id",
+                "episode_id",
+                "capability_id",
+                "stage",
+                "role",
+                "handoff_id",
+                "package_checksum",
+                "output_checksum",
+                "result_run_id",
+            )
+            if all(existing.get(field) == raw_payload.get(field) for field in identity_fields):
+                stored_package_path = Path(str(existing.get("handoff_package_ref") or ""))
+                if not stored_package_path.is_file():
+                    raise TopicBelongingExecutionError("HANDOFF_PACKAGE_MISSING: persisted duplicate")
+                try:
+                    package = json.loads(stored_package_path.read_text(encoding="utf-8"))
+                    self._validate_result_provenance_bindings(package, raw_payload)
+                    AgentHandoffProvider().import_result(stored_package_path, result_path)
+                except TopicBelongingExecutionError as exc:
+                    raise TopicBelongingExecutionError(f"ROUNDTRIP_RESULT_BLOCKED:{exc}") from exc
+                except (OSError, UnicodeDecodeError, json.JSONDecodeError, PermissionError, ValueError) as exc:
+                    raise TopicBelongingExecutionError(f"ROUNDTRIP_RESULT_BLOCKED:{exc}") from exc
+                return {"status": "ALREADY_IMPORTED", "episode_id": handle.episode_id, "handoff_id": raw_payload.get("handoff_id")}
+            raise TopicBelongingExecutionError("ROUNDTRIP_RESULT_CONFLICT: imported handoff already has another result")
+        package_path = Path(str(workflow.get("handoff_package_ref") or ""))
+        if not package_path.is_file():
+            raise TopicBelongingExecutionError("HANDOFF_PACKAGE_MISSING")
+        try:
+            package = json.loads(package_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise TopicBelongingExecutionError(f"HANDOFF_PACKAGE_INVALID:{exc}") from exc
+        expected_bindings = {
+            "mission_id": self._mission_id,
+            "episode_id": handle.episode_id,
+            "capability_id": CAPABILITY_ID,
+            "stage": workflow.get("stage"),
+            "role": workflow.get("role"),
+            "handoff_id": workflow.get("handoff_id"),
+            "package_checksum": workflow.get("handoff_package_checksum"),
+        }
+        actual_bindings = {
+            "mission_id": package.get("mission_id"),
+            "episode_id": package.get("episode_id"),
+            "capability_id": package.get("capability_id"),
+            "stage": package.get("stage"),
+            "role": package.get("role"),
+            "handoff_id": package.get("handoff_id"),
+            "package_checksum": package.get("package_checksum"),
+        }
+        if workflow.get("status") != "PENDING_EXTERNAL_RESULT":
+            raise TopicBelongingExecutionError("ROUNDTRIP_IMPORT_BLOCKED:NO_PENDING_HANDOFF")
+        if any(actual_bindings[key] != expected for key, expected in expected_bindings.items()):
+            raise TopicBelongingExecutionError("ROUNDTRIP_CHECKPOINT_BINDING_INVALID")
+        self._validate_result_provenance_bindings(package, raw_payload)
+        try:
+            content = AgentHandoffProvider().import_result(package_path, result_path)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, PermissionError, ValueError) as exc:
+            raise TopicBelongingExecutionError(f"ROUNDTRIP_RESULT_BLOCKED:{exc}") from exc
+        if not isinstance(content, dict):
+            raise TopicBelongingExecutionError("ROUNDTRIP_RESULT_OUTPUT_INVALID")
+        stage = str(package.get("stage") or "")
+        result_run_id = str(raw_payload.get("result_run_id") or "")
+        if stage == "ENRICHMENT":
+            human_input = HumanInput.from_dict(self._read_episode_file(handle, "00_human_input.json"))
+            handoff = self._read_episode_file(handle, "01_editorial_intake_handoff.json")
+            violations = _validate_enrichment_binding(content, handoff)
+            violations.extend(validate_topic_input(content))
+            if violations:
+                raise TopicBelongingExecutionError("ENRICHMENT_INVALID: " + "; ".join(violations))
+            if _validate_human_handoff_binding(human_input.to_dict(), handoff):
+                raise TopicBelongingExecutionError("HANDOFF_INVALID: persisted intake binding")
+            next_stage = "PRODUCER"
+        elif stage == "PRODUCER":
+            topic_input = self._read_roundtrip_output(handle, "ENRICHMENT")
+            violations = validate_assessment(content, topic_input)
+            if content.get("producer_run_id") != result_run_id or content.get("provenance", {}).get("run_id") != result_run_id:
+                violations.append("PRODUCER_RESULT_RUN_BINDING_INVALID")
+            if violations:
+                raise TopicBelongingExecutionError("ASSESSMENT_INVALID: " + "; ".join(violations))
+            next_stage = "REVIEWER"
+        elif stage == "REVIEWER":
+            topic_input = self._read_roundtrip_output(handle, "ENRICHMENT")
+            assessment = self._read_roundtrip_output(handle, "PRODUCER")
+            violations = validate_decision(content, assessment)
+            if content.get("reviewer_run_id") != result_run_id or content.get("provenance", {}).get("run_id") != result_run_id:
+                violations.append("REVIEWER_RESULT_RUN_BINDING_INVALID")
+            if content.get("reviewer_run_id") == assessment.get("producer_run_id"):
+                violations.append("PRODUCER_REVIEWER_INDEPENDENCE_INVALID")
+            if violations:
+                raise TopicBelongingExecutionError("DECISION_INVALID: " + "; ".join(violations))
+            next_stage = "FINALIZE"
+        else:
+            raise TopicBelongingExecutionError("ROUNDTRIP_STAGE_INVALID")
+
+        completed = list(workflow.get("completed_stages", []))
+        if stage not in completed:
+            completed.append(stage)
+        persisted_state = {
+            "workflow_id": "P2_TOPIC_BELONGING_ROUNDTRIP",
+            "status": "PERSISTED",
+            "episode_id": handle.episode_id,
+            "run_id": workflow.get("run_id"),
+            "stage": stage,
+            "role": package.get("role"),
+            "handoff_id": package.get("handoff_id"),
+            "handoff_package_ref": str(package_path),
+            "handoff_package_checksum": package.get("package_checksum"),
+            "result_run_id": result_run_id,
+            "result_checksum": raw_payload.get("output_checksum"),
+            "completed_stages": completed,
+            "next_stage": next_stage,
+            "real_cognitive_execution": "NOT_DEMONSTRATED",
+            "fixture_policy": "TEST_FIXTURE_ONLY",
+            "downstream_execution_started": False,
+        }
+        status = self.store.record_roundtrip_result(
+            handle,
+            envelope=raw_payload,
+            workflow_state=persisted_state,
+        )
+        if status == "ALREADY_IMPORTED":
+            return {"status": status, "episode_id": handle.episode_id, "handoff_id": package.get("handoff_id")}
+        return persisted_state
+
+    @staticmethod
+    def _validate_result_provenance_bindings(
+        package: dict[str, Any],
+        payload: dict[str, Any],
+    ) -> None:
+        """Apply the same complete envelope rule to first and duplicate imports."""
+        required_result_bindings = (
+            "mission_id",
+            "episode_id",
+            "capability_id",
+            "stage",
+            "role",
+            "handoff_id",
+            "package_checksum",
+            "input_manifest_checksum",
+            "skill_id",
+            "skill_version",
+            "result_run_id",
+            "output_checksum",
+        )
+        if any(not str(payload.get(field) or "") for field in required_result_bindings):
+            raise TopicBelongingExecutionError("ROUNDTRIP_RESULT_BINDING_INCOMPLETE")
+        if any(
+            payload.get(field) != package.get(field)
+            for field in (
+                "mission_id", "episode_id", "capability_id", "stage", "role",
+                "handoff_id", "package_checksum", "input_manifest_checksum", "skill_id", "skill_version",
+            )
+        ):
+            raise TopicBelongingExecutionError("ROUNDTRIP_RESULT_PACKAGE_BINDING_INVALID")
+        provenance = payload.get("provenance")
+        if not isinstance(provenance, dict) or any(
+            provenance.get(field) != package.get(field)
+            for field in ("mission_id", "episode_id", "capability_id", "stage", "role")
+        ) or provenance.get("run_id") != payload.get("result_run_id"):
+            raise TopicBelongingExecutionError("ROUNDTRIP_RESULT_PROVENANCE_BINDING_INVALID")
+
+    @staticmethod
+    def _convergence_callbacks(
+        convergence_ref: str,
+        *,
+        stage: str,
+        output_schema: str,
+        inputs: list[InputArtifact],
+        mock_output: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Bound reduced convergence to handoff structure; never to cognition."""
+        def implement() -> dict[str, Any]:
+            passed = output_schema in {"topic_belonging_input", "topic_belonging_assessment", "topic_belonging_decision"}
+            return {
+                "passed": passed,
+                "evidence": [{"kind": "ROUNDTRIP_HANDOFF_IMPLEMENTATION", "ref": convergence_ref}],
+                **({"reason": "UNSUPPORTED_ROUNDTRIP_OUTPUT_SCHEMA"} if not passed else {}),
+            }
+
+        def verify() -> dict[str, Any]:
+            passed = (
+                mock_output is None
+                and stage in {"enrich", "produce", "review"}
+                and bool(inputs)
+                and all(item.path.is_file() and bool(item.artifact_id) for item in inputs)
+            )
+            return {
+                "passed": passed,
+                "evidence": [{"kind": "ROUNDTRIP_HANDOFF_VERIFICATION", "ref": convergence_ref}],
+                **({"reason": "HANDOFF_INPUT_BOUNDARY_INVALID"} if not passed else {}),
+            }
+
+        def adversarial_review() -> dict[str, Any]:
+            passed = stage in {"enrich", "produce", "review"} and output_schema.startswith("topic_belonging_")
+            return {
+                "passed": passed,
+                "evidence": [{"kind": "ROUNDTRIP_HANDOFF_SELF_REVIEW", "ref": convergence_ref}],
+                **({"reason": "ROUNDTRIP_BOUNDARY_SELF_REVIEW_FAILED"} if not passed else {}),
+            }
+
+        def repair(finding: dict[str, Any]) -> dict[str, Any]:
+            return {
+                "passed": False,
+                "evidence": [{"kind": "ROUNDTRIP_HANDOFF_REPAIR", "ref": convergence_ref}],
+                "reason": f"ROUNDTRIP_REPAIR_NOT_AUTOMATIC:{finding.get('stage', 'UNKNOWN')}",
+            }
+
+        return {
+            "implement": implement,
+            "verify": verify,
+            "adversarial_review": adversarial_review,
+            "repair": repair,
+        }
+
+    def _read_roundtrip_output(self, handle: EpisodeHandle, stage: str) -> dict[str, Any]:
+        results = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME).get("results", [])
+        record = next((item for item in results if item.get("stage") == stage), None)
+        if not isinstance(record, dict):
+            raise TopicBelongingExecutionError(f"ROUNDTRIP_RESULT_MISSING:{stage}")
+        package, envelope, output = self._revalidate_roundtrip_record(handle, record)
+        if stage == "ENRICHMENT":
+            violations = validate_topic_input(output)
+        elif stage == "PRODUCER":
+            violations = validate_assessment(output, self._read_roundtrip_output(handle, "ENRICHMENT"))
+        elif stage == "REVIEWER":
+            violations = validate_decision(output, self._read_roundtrip_output(handle, "PRODUCER"))
+        else:
+            violations = ["ROUNDTRIP_STAGE_INVALID"]
+        if violations:
+            raise TopicBelongingExecutionError(f"ROUNDTRIP_PERSISTED_OUTPUT_INVALID:{stage}:" + ";".join(violations))
+        if package.get("stage") != stage or envelope.get("stage") != stage:
+            raise TopicBelongingExecutionError(f"ROUNDTRIP_PERSISTED_STAGE_INVALID:{stage}")
+        return output
+
+    def _revalidate_roundtrip_record(
+        self,
+        handle: EpisodeHandle,
+        record: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+        """Revalidate a stored package/result pair before any resume transition."""
+        try:
+            result_path = (handle.folder / str(record.get("result_path") or "")).resolve()
+            result_path.relative_to(handle.folder.resolve())
+            package_path = Path(str(record.get("handoff_package_ref") or "")).resolve(strict=True)
+            package = json.loads(package_path.read_text(encoding="utf-8"))
+            envelope = json.loads(result_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise TopicBelongingExecutionError(f"ROUNDTRIP_PERSISTED_ENVELOPE_INVALID:{exc}") from exc
+        expected = {
+            "mission_id": self._mission_id,
+            "episode_id": handle.episode_id,
+            "capability_id": CAPABILITY_ID,
+            "stage": record.get("stage"),
+            "role": record.get("role"),
+            "handoff_id": record.get("handoff_id"),
+            "package_checksum": record.get("package_checksum"),
+            "input_manifest_checksum": record.get("input_manifest_checksum"),
+            "skill_id": record.get("skill_id"),
+            "skill_version": record.get("skill_version"),
+            "result_run_id": record.get("result_run_id"),
+            "output_checksum": record.get("output_checksum"),
+        }
+        actual = {
+            "mission_id": envelope.get("mission_id"),
+            "episode_id": envelope.get("episode_id"),
+            "capability_id": envelope.get("capability_id"),
+            "stage": envelope.get("stage"),
+            "role": envelope.get("role"),
+            "handoff_id": envelope.get("handoff_id"),
+            "package_checksum": envelope.get("package_checksum"),
+            "input_manifest_checksum": envelope.get("input_manifest_checksum"),
+            "skill_id": envelope.get("skill_id"),
+            "skill_version": envelope.get("skill_version"),
+            "result_run_id": envelope.get("result_run_id"),
+            "output_checksum": envelope.get("output_checksum"),
+        }
+        expected_role = {
+            "ENRICHMENT": PRODUCER_ROLE,
+            "PRODUCER": PRODUCER_ROLE,
+            "REVIEWER": REVIEWER_ROLE,
+        }.get(str(record.get("stage") or ""))
+        if expected_role is None or package.get("role") != expected_role:
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_PACKAGE_ROLE_INVALID")
+        package_identity = {
+            "mission_id": package.get("mission_id"),
+            "episode_id": package.get("episode_id"),
+            "capability_id": package.get("capability_id"),
+            "stage": package.get("stage"),
+            "role": package.get("role"),
+            "handoff_id": package.get("handoff_id"),
+            "package_checksum": package.get("package_checksum"),
+            "input_manifest_checksum": package.get("input_manifest_checksum"),
+            "skill_id": package.get("skill_id"),
+            "skill_version": package.get("skill_version"),
+        }
+        if any(expected.get(key) != value for key, value in package_identity.items()):
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_CHECKPOINT_BINDING_INVALID")
+        if any(actual[key] != value for key, value in expected.items()):
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_ENVELOPE_BINDING_INVALID")
+        provenance = envelope.get("provenance")
+        if not isinstance(provenance, dict) or any(
+            provenance.get(key) != package_identity[key]
+            for key in ("mission_id", "episode_id", "capability_id", "stage", "role")
+        ) or provenance.get("run_id") != envelope.get("result_run_id"):
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_PROVENANCE_INVALID")
+        try:
+            output = AgentHandoffProvider().import_result(package_path, result_path)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, PermissionError, ValueError) as exc:
+            raise TopicBelongingExecutionError(f"ROUNDTRIP_PERSISTED_ENVELOPE_INVALID:{exc}") from exc
+        if not isinstance(output, dict):
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_OUTPUT_INVALID")
+        return package, envelope, output
+
+    def _roundtrip_result_run_id(self, handle: EpisodeHandle, stage: str) -> str:
+        results = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME).get("results", [])
+        record = next((item for item in results if item.get("stage") == stage), None)
+        result_run_id = record.get("result_run_id") if isinstance(record, dict) else None
+        if not result_run_id:
+            raise TopicBelongingExecutionError(f"ROUNDTRIP_RESULT_RUN_ID_MISSING:{stage}")
+        return str(result_run_id)
+
+    def _read_episode_file_path(self, path: Path) -> dict[str, Any]:
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise TopicBelongingExecutionError(f"ROUNDTRIP_RESULT_READ_FAILED:{exc}") from exc
+
+    def resume_roundtrip(self, handle: EpisodeHandle) -> dict[str, Any] | None:
+        """Resume the next stage from persisted results, never from memory."""
+        workflow = self._read_episode_file(handle, "workflow_state.json")
+        if workflow.get("status") != "PERSISTED":
+            return None
+        next_stage = workflow.get("next_stage")
+        profile = self.profile_loader()
+        if next_stage == "PRODUCER":
+            topic_input = self._read_roundtrip_output(handle, "ENRICHMENT")
+            _, result = self.boundary.produce(
+                topic_input,
+                profile,
+                handle.episode_id,
+                input_producer_run_id=self._roundtrip_result_run_id(handle, "ENRICHMENT"),
+            )
+            if result.status is not ExecutionStatus.HANDOFF_PREPARED:
+                raise TopicBelongingExecutionError("PRODUCER_HANDOFF_NOT_PREPARED")
+            return self._pending_handoff_state(handle, str(workflow.get("run_id")), result, "PRODUCER") | {
+                "completed_stages": list(workflow.get("completed_stages", [])),
+            }
+        if next_stage == "REVIEWER":
+            topic_input = self._read_roundtrip_output(handle, "ENRICHMENT")
+            assessment = self._read_roundtrip_output(handle, "PRODUCER")
+            _, result = self.boundary.review(
+                topic_input,
+                assessment,
+                profile,
+                handle.episode_id,
+                input_producer_run_id=self._roundtrip_result_run_id(handle, "ENRICHMENT"),
+            )
+            if result.status is not ExecutionStatus.HANDOFF_PREPARED:
+                raise TopicBelongingExecutionError("REVIEWER_HANDOFF_NOT_PREPARED")
+            return self._pending_handoff_state(handle, str(workflow.get("run_id")), result, "REVIEWER") | {
+                "completed_stages": list(workflow.get("completed_stages", [])),
+            }
+        if next_stage == "FINALIZE":
+            topic_input = self._read_roundtrip_output(handle, "ENRICHMENT")
+            assessment = self._read_roundtrip_output(handle, "PRODUCER")
+            decision = self._read_roundtrip_output(handle, "REVIEWER")
+            gate = evaluate_topic_belonging_gate(decision, assessment, topic_input)
+            lineage = self._roundtrip_lineage(handle, topic_input, assessment, decision)
+            executions = self._roundtrip_execution_records(handle, topic_input, assessment, decision)
+            self.store.record_topic_belonging_vertical(
+                handle,
+                topic_input=topic_input,
+                assessment=assessment,
+                decision=decision,
+                gate_result=gate,
+                lineage=lineage,
+                executions=executions,
+            )
+            return self._build_stop_state(handle, str(workflow.get("run_id")), gate, decision)
+        raise TopicBelongingExecutionError(f"ROUNDTRIP_NEXT_STAGE_INVALID:{next_stage}")
+
+    def _roundtrip_lineage(self, handle: EpisodeHandle, topic_input: dict[str, Any], assessment: dict[str, Any], decision: dict[str, Any]) -> dict[str, Any]:
+        results = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME).get("results", [])
+        by_stage = {item.get("stage"): item for item in results}
+        return {
+            "mission_id": self._mission_id,
+            "episode_id": handle.episode_id,
+            "human_input_ref": f"episode:{handle.episode_id}/00_human_input.json",
+            "handoff_ref": f"episode:{handle.episode_id}/01_editorial_intake_handoff.json",
+            "topic_input_ref": f"episode:{handle.episode_id}/02_topic_belonging_input.json",
+            "assessment_ref": f"episode:{handle.episode_id}/03_topic_belonging_assessment.json",
+            "decision_ref": f"episode:{handle.episode_id}/04_topic_belonging_decision.json",
+            "gate_ref": f"episode:{handle.episode_id}/05_topic_belonging_gate.json",
+            "handoff_checksum": _json_checksum(self._read_episode_file(handle, "01_editorial_intake_handoff.json")),
+            "topic_input_checksum": canonical_checksum(topic_input, "input"),
+            "assessment_checksum": assessment["artifact_checksum"],
+            "decision_checksum": decision["provenance"]["output_checksum"],
+            "enrichment_run_id": by_stage["ENRICHMENT"].get("result_run_id"),
+            "producer_run_id": by_stage["PRODUCER"].get("result_run_id"),
+            "reviewer_run_id": by_stage["REVIEWER"].get("result_run_id"),
+            "producer_actor_id": assessment["producer_actor_id"],
+            "reviewer_actor_id": decision["reviewer_actor_id"],
+            "roundtrip_kind": "AGENT_HARNESS_ROUNDTRIP",
+            "stop_after": "TOPIC_BELONGING_GATE",
+        }
+
+    def _roundtrip_execution_records(self, handle: EpisodeHandle, topic_input: dict[str, Any], assessment: dict[str, Any], decision: dict[str, Any]) -> list[dict[str, Any]]:
+        results = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME).get("results", [])
+        envelopes = {item.get("stage"): self._read_episode_file_path(handle.folder / str(item.get("result_path"))) for item in results}
+        outputs = {"ENRICHMENT": topic_input, "PRODUCER": assessment, "REVIEWER": decision}
+        roles = {"ENRICHMENT": PRODUCER_ROLE, "PRODUCER": PRODUCER_ROLE, "REVIEWER": REVIEWER_ROLE}
+        refs = {
+            "ENRICHMENT": f"topic_belonging_input:{topic_input['topic_input_id']}",
+            "PRODUCER": f"topic_belonging_assessment:{assessment['assessment_id']}",
+            "REVIEWER": f"topic_belonging_decision:{decision['decision_id']}",
+        }
+        artifact_checksums = {
+            "ENRICHMENT": canonical_checksum(topic_input, "input"),
+            "PRODUCER": assessment["artifact_checksum"],
+            "REVIEWER": decision["provenance"]["output_checksum"],
+        }
+        records: list[dict[str, Any]] = []
+        for stage in ("ENRICHMENT", "PRODUCER", "REVIEWER"):
+            package = json.loads(self._find_package_for_result(handle, stage).read_text(encoding="utf-8"))
+            envelope = envelopes[stage]
+            package_inputs = package.get("input_manifest", {}).get("artifacts", [])
+            records.append({
+                "stage": stage,
+                "role": roles[stage],
+                "run_id": envelope["result_run_id"],
+                "status": "SUCCEEDED",
+                "provider_kind": "SYNTHETIC",
+                "provider_or_adapter": "agent_handoff",
+                "model_or_evaluator": str(envelope.get("provenance", {}).get("model_identity") or "UNAVAILABLE_FROM_PROVIDER"),
+                "input_manifest_checksum": package["input_manifest_checksum"],
+                "input_artifact_ids": [f"{item.get('artifact_kind')}:{item.get('artifact_id')}" for item in package_inputs],
+                "input_versions": [],
+                "output_checksum": envelope["output_checksum"],
+                "artifact_checksum": artifact_checksums[stage],
+                "artifact_ref": refs[stage],
+                "execution_mode": "SYNTHETIC",
+                "execution_family": "AGENT_HARNESS",
+                "execution_route": "agent_harness",
+                "execution_profile": None,
+                "prompt_id": package.get("prompt_id"),
+                "prompt_version": package.get("prompt_version"),
+                "prompt_checksum": package.get("prompt_checksum"),
+                "prompt_input_checksum": package.get("prompt_input_checksum"),
+                "fixture_policy": "TEST_FIXTURE_ONLY",
+            })
+        return records
+
+    def _find_package_for_result(self, handle: EpisodeHandle, stage: str) -> Path:
+        results = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME).get("results", [])
+        result = next(item for item in results if item.get("stage") == stage)
+        package_ref = str(result.get("handoff_package_ref") or "")
+        path = Path(package_ref)
+        if not path.is_file():
+            raise TopicBelongingExecutionError(f"HANDOFF_PACKAGE_MISSING:{stage}")
+        return path
 
     def complete(self, handle: EpisodeHandle, human_input: HumanInput, handoff: dict[str, Any], run_id: str) -> dict[str, Any] | None:
         """Complete an incomplete M1 vertical; idempotent when already stopped.
@@ -895,7 +1435,11 @@ class TopicBelongingTechnicalWorkflow:
         unexpected = sorted(
             path.name
             for path in handle.folder.iterdir()
-            if path.name not in M1_ALLOWED_EPISODE_ARTIFACTS
+            if path.name not in (
+                P2_ALLOWED_EPISODE_ARTIFACTS
+                if (handle.folder / ROUNDTRIP_RESULTS_FILENAME).is_file()
+                else M1_ALLOWED_EPISODE_ARTIFACTS
+            )
             and not any(
                 re.fullmatch(rf"r\d*-{re.escape(artifact)}", path.name)
                 for artifact in VERTICAL_ARTIFACTS
@@ -994,6 +1538,24 @@ class TopicBelongingTechnicalWorkflow:
             f"DECISION_INVALID: {violation}"
             for violation in validate_decision(decision, assessment)
         )
+
+        if lineage.get("roundtrip_kind") == "AGENT_HARNESS_ROUNDTRIP":
+            try:
+                self._validate_persisted_roundtrip(
+                    handle,
+                    workflow=self._read_episode_file(handle, "workflow_state.json"),
+                    persisted=persisted,
+                    handoff=handoff,
+                    human_input=human_input,
+                    lineage=lineage,
+                    execution_payload=execution_payload,
+                    episode_state=episode_state,
+                    index_entry=index_entry,
+                )
+            except TopicBelongingExecutionError as exc:
+                violations.append(str(exc))
+            if not violations:
+                return persisted
 
         expected_gate = evaluate_topic_belonging_gate(decision, assessment, topic_input)
         if gate != expected_gate:
@@ -1206,6 +1768,140 @@ class TopicBelongingTechnicalWorkflow:
                 "PERSISTED_VERTICAL_INTEGRITY_INVALID: " + "; ".join(violations)
             )
         return persisted
+
+    def _validate_persisted_roundtrip(
+        self,
+        handle: EpisodeHandle,
+        *,
+        workflow: dict[str, Any],
+        persisted: dict[str, dict[str, Any]],
+        handoff: dict[str, Any],
+        human_input: dict[str, Any],
+        lineage: dict[str, Any],
+        execution_payload: dict[str, Any],
+        episode_state: dict[str, Any],
+        index_entry: dict[str, Any],
+    ) -> None:
+        """Revalidate the complete persisted P2 evidence before final resume."""
+        if workflow.get("episode_id") != handle.episode_id:
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_WORKFLOW_EPISODE_MISMATCH")
+        if workflow.get("status") not in {"PERSISTED", STOP_STATUS}:
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_WORKFLOW_STATUS_INVALID")
+        if workflow.get("status") == "PERSISTED" and workflow.get("next_stage") != "FINALIZE":
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_WORKFLOW_NEXT_STAGE_INVALID")
+
+        results_index = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME)
+        results = results_index.get("results")
+        expected_stages = ("ENRICHMENT", "PRODUCER", "REVIEWER")
+        if not isinstance(results, list) or tuple(
+            item.get("stage") for item in results if isinstance(item, dict)
+        ) != expected_stages:
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_RESULTS_INDEX_INVALID")
+
+        role_by_stage = {
+            "ENRICHMENT": PRODUCER_ROLE,
+            "PRODUCER": PRODUCER_ROLE,
+            "REVIEWER": REVIEWER_ROLE,
+        }
+        outputs: dict[str, dict[str, Any]] = {}
+        result_run_ids: set[str] = set()
+        for stage, record in zip(expected_stages, results):
+            if not isinstance(record, dict):
+                raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_RESULT_RECORD_INVALID")
+            try:
+                package, envelope, output = self._revalidate_roundtrip_record(handle, record)
+            except TopicBelongingExecutionError:
+                raise
+            expected_manifest = _expected_input_manifest_checksum(
+                handle.episode_id,
+                stage,
+                handoff,
+                outputs.get("ENRICHMENT", persisted["02_topic_belonging_input.json"]),
+                outputs.get("PRODUCER", persisted["03_topic_belonging_assessment.json"]),
+            )
+            expected_identity = {
+                "mission_id": self._mission_id,
+                "episode_id": handle.episode_id,
+                "capability_id": CAPABILITY_ID,
+                "stage": stage,
+                "role": role_by_stage[stage],
+                "handoff_id": package.get("handoff_id"),
+                "package_checksum": package.get("package_checksum"),
+                "result_run_id": envelope.get("result_run_id"),
+                "output_checksum": envelope.get("output_checksum"),
+            }
+            if any(record.get(key) != value for key, value in expected_identity.items()):
+                raise TopicBelongingExecutionError(
+                    f"ROUNDTRIP_PERSISTED_RESULT_RECORD_BINDING_INVALID:{stage}"
+                )
+            if package.get("stage") != stage or package.get("role") != role_by_stage[stage]:
+                raise TopicBelongingExecutionError(f"ROUNDTRIP_PERSISTED_PACKAGE_BINDING_INVALID:{stage}")
+            if package.get("input_manifest_checksum") != expected_manifest:
+                raise TopicBelongingExecutionError(
+                    f"ROUNDTRIP_PERSISTED_INPUT_MANIFEST_INVALID:{stage}"
+                )
+            provenance = envelope.get("provenance")
+            if not isinstance(provenance, dict) or any(
+                provenance.get(key) != expected_identity[key]
+                for key in ("mission_id", "episode_id", "capability_id", "stage", "role")
+            ) or provenance.get("run_id") != envelope.get("result_run_id"):
+                raise TopicBelongingExecutionError(
+                    f"ROUNDTRIP_PERSISTED_PROVENANCE_INVALID:{stage}"
+                )
+            if envelope.get("result_run_id") in result_run_ids:
+                raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_RESULT_RUN_COLLISION")
+            result_run_ids.add(str(envelope.get("result_run_id")))
+            if stage == "ENRICHMENT":
+                violations = _validate_enrichment_binding(output, handoff)
+                violations.extend(validate_topic_input(output))
+            elif stage == "PRODUCER":
+                violations = validate_assessment(output, outputs["ENRICHMENT"])
+            else:
+                violations = validate_decision(output, outputs["PRODUCER"])
+            if violations:
+                raise TopicBelongingExecutionError(
+                    f"ROUNDTRIP_PERSISTED_OUTPUT_INVALID:{stage}:" + ";".join(violations)
+                )
+            outputs[stage] = output
+
+        if workflow.get("status") == "PERSISTED" and workflow.get("completed_stages") != list(expected_stages):
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_COMPLETED_STAGES_INVALID")
+
+        expected_artifacts = {
+            "02_topic_belonging_input.json": outputs["ENRICHMENT"],
+            "03_topic_belonging_assessment.json": outputs["PRODUCER"],
+            "04_topic_belonging_decision.json": outputs["REVIEWER"],
+            "05_topic_belonging_gate.json": evaluate_topic_belonging_gate(
+                outputs["REVIEWER"], outputs["PRODUCER"], outputs["ENRICHMENT"]
+            ),
+        }
+        for name, expected in expected_artifacts.items():
+            if persisted[name] != expected:
+                raise TopicBelongingExecutionError(f"ROUNDTRIP_PERSISTED_ARTIFACT_MISMATCH:{name}")
+
+        expected_lineage = self._roundtrip_lineage(
+            handle,
+            outputs["ENRICHMENT"],
+            outputs["PRODUCER"],
+            outputs["REVIEWER"],
+        )
+        if lineage != expected_lineage:
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_LINEAGE_MISMATCH")
+        expected_executions = self._roundtrip_execution_records(
+            handle,
+            outputs["ENRICHMENT"],
+            outputs["PRODUCER"],
+            outputs["REVIEWER"],
+        )
+        if execution_payload.get("executions") != expected_executions:
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_EXECUTION_EVIDENCE_MISMATCH")
+
+        self._validate_persisted_origin_binding(handle)
+        state_mission_id, index_mission_id, lineage_mission_id = self._persisted_mission_bindings(handle)
+        if {state_mission_id, index_mission_id, lineage_mission_id} != {self._mission_id}:
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_MISSION_BINDING_INVALID")
+        if episode_state.get("status") != index_entry.get("application_status"):
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_STORAGE_STATUS_INVALID")
 
     def _clear_partial_vertical(self, handle: EpisodeHandle) -> None:
         """Move partial evidence aside without deleting it before an atomic retry."""

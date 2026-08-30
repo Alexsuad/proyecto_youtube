@@ -1,0 +1,131 @@
+{
+  "mission_id": "PLAN009_P2_ROUNDTRIP_INTEGRATION",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN009_P2_ROUNDTRIP_INTEGRATION",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md",
+    "plans/plan_009/p2_roundtrip_integration/",
+    "src/ai/providers/agent_handoff.py",
+    "src/ai/execution.py",
+    "src/application/topic_belonging.py",
+    "src/application/service.py",
+    "src/application/storage.py",
+    "tests/harness/test_plan009_p2_roundtrip.py"
+  ],
+  "protected_untracked_paths": [],
+  "protected_untracked_baseline": [],
+  "required_tests": [
+    {
+      "label": "P2_ROUNDTRIP_FOCUSED",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_plan009_p2_roundtrip.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "P1_TOPIC_BELONGING_REGRESSION",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_plan009_m1_vertical.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "HANDOFF_REGRESSION",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/ai/test_hybrid_runtime.py", "-k", "handoff or completion_gate"],
+      "timeout_seconds": 360
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "79aba2e8e665afd4d26eebd6625b45f1cd275dc2"
+  },
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/plan_009/p2_roundtrip_integration/mission/mission-authorization.json",
+  "mission_authorization_sha256": "b39c28ba8473e78a7a5ee43cf15b1b18e98f457971ac95825fb20427d2358f23",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "PLAN009_P2_ROUNDTRIP_INTEGRATION",
+      "PLAN_009_CURRENT_MISSION": "PLAN009_P2_ROUNDTRIP_INTEGRATION",
+      "PLAN_009_P2_STATUS": "BLOCKED_BY_MISSING_ROUNDTRIP_INTEGRATION",
+      "PLAN_009_P2_REAL_EXECUTION": "NOT_EXECUTED",
+      "REAL_COGNITIVE_EXECUTION": "NOT_DEMONSTRATED",
+      "AUTHORIZED_FOR_PRODUCT_USE": "NO",
+      "P2_ROUNDTRIP_INTEGRATION": "IN_PROGRESS"
+    },
+    "forbidden": {
+      "B5_I2_AUTHORIZED": ["YES"],
+      "B5_I3_AUTHORIZED": ["YES"],
+      "B5_5_AUTHORIZED": ["YES"],
+      "B6_AUTHORIZED": ["YES"]
+    }
+  },
+  "schema_checks": [
+    {"path": "plans/plan_009/p2_roundtrip_integration/mission/mission_contract.json", "schema": "mission_contract"},
+    {"path": "plans/plan_009/p2_roundtrip_integration/mission/run_configuration.json", "schema": "run_configuration"},
+    {"path": "config/execution_family_selection.json", "schema": "execution_family_selection"}
+  ],
+  "objective": "Implementar el roundtrip persistente, verificable e idempotente de Topic Belonging mediante el contrato neutral AGENT_HARNESS, sin ejecutar cognición real.",
+  "preconditions": [
+    "CURRENT_MISSION matches this mission.",
+    "AGENT_HARNESS is the single active execution family.",
+    "The owner selects the external harness and model.",
+    "MissionCompletionGate is evidence final, not a first-handoff prerequisite."
+  ],
+  "canonical_inputs": [
+    "Terminal human input",
+    "Topic Belonging workflow",
+    "AgentHandoffProvider",
+    "MissionAuthorization",
+    "Persisted episode state"
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_009/009_IMPLEMENTACION_VERTICAL_EDITORIAL_CONTROLADA_DESDE_TERMINAL.md",
+    "plans/plan_009/p2_roundtrip_integration/mission/",
+    "src/ai/providers/agent_handoff.py",
+    "src/ai/execution.py",
+    "src/application/topic_belonging.py",
+    "src/application/service.py",
+    "src/application/storage.py",
+    "tests/harness/test_plan009_p2_roundtrip.py"
+  ],
+  "non_objectives": [
+    "REAL_COGNITIVE_EXECUTION",
+    "P2 real execution or product readiness",
+    "API_PROVIDER or LOCAL_MODEL execution",
+    "Provider, model, agent, or harness selection by the product",
+    "P3 or any later phase",
+    "Commit or push"
+  ],
+  "expected_outputs": [
+    "HANDOFF_PREPARED persists a pending stage",
+    "import_result validates and persists the original external envelope",
+    "resume continues exactly at the next Topic Belonging stage",
+    "duplicate results are idempotent and conflicting results are blocked",
+    "synthetic fixtures are never classified as REAL_COGNITIVE_EXECUTION"
+  ],
+  "deterministic_validations": [
+    "Three-stage Topic Belonging roundtrip",
+    "Mission, run, capability, stage, role, and checksum binding",
+    "Process restart recovery",
+    "Import and resume idempotency",
+    "Neutral AGENT_HARNESS route without final completion gate"
+  ],
+  "adversarial_cases": [
+    "Wrong mission, run, capability, stage, role, or checksum",
+    "Different result for a closed stage",
+    "Incompatible MissionAuthorization",
+    "Silent API or local-model fallback",
+    "Producer and reviewer sharing a handoff or result"
+  ],
+  "stop_conditions": [
+    "Missing canonical authorization or route",
+    "Invalid external result",
+    "Persisted state or binding conflict",
+    "Any real provider, local model, or external cognitive call",
+    "Any required scope expansion"
+  ],
+  "review_policy": {"required_review": "INDEPENDENT_REVIEW", "independent_review": "REQUIRED", "owner_review": true},
+  "owner_closure": {"required": false}
+}

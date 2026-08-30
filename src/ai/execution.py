@@ -436,15 +436,29 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
 
         if preflight.get("authorization") is not None:
             from src.ai.registry import _VERIFIED_AUTHORIZATION_TOKEN
-            request.config = {**request.config, "_mission_authorization_verified": True, "_mission_authorization_token": _VERIFIED_AUTHORIZATION_TOKEN}
+            request.config = {
+                **request.config,
+                "_mission_authorization_verified": True,
+                "_mission_authorization_token": _VERIFIED_AUTHORIZATION_TOKEN,
+                "mission_id": getattr(preflight["authorization"], "mission_id", request.config.get("mission_id")),
+                "mission_contract_sha256": getattr(preflight["authorization"], "contract_sha256", None),
+            }
         capture_pre_run_snapshot(request, authorization=preflight.get("authorization"), root=repository_root)
         if preflight.get("context_manifest") is not None:
-            request.config = {**request.config, "resolved_context_manifest": preflight["context_manifest"], "resolved_context_manifest_sha256": preflight["context_manifest"]["manifest_sha256"], "mission_contract_sha256": preflight["authorization"].contract_sha256}
+            request.config = {**request.config, "resolved_context_manifest": preflight["context_manifest"], "resolved_context_manifest_sha256": preflight["context_manifest"]["manifest_sha256"], "mission_contract_sha256": getattr(preflight.get("authorization"), "contract_sha256", None)}
     except (PermissionError, ValueError) as exc:
         return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=str(exc))
     mission_contract = preflight.get("mission_contract")
     if mission_contract is not None and mission_contract.mission_mode == "REDUCED":
-        return _execute_reduced_mission(request, started, manifest, mission_contract)
+        convergence_result = _execute_reduced_mission(request, started, manifest, mission_contract)
+        if convergence_result.status is not ExecutionStatus.CONVERGED:
+            return convergence_result
+        if request.execution_family != "AGENT_HARNESS" and request.execution_route != "agent_harness":
+            return convergence_result
+        request.config = {
+            **request.config,
+            "_mission_convergence": convergence_result.usage,
+        }
     runtime_port = AgentRuntimePort(Path(request.config["execution_profiles_path"]) if request.config.get("execution_profiles_path") else None)
     run_configuration = _normalized_run_configuration(request)
     if run_configuration:
@@ -555,7 +569,15 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
             from src.ai.registry import register_handoff
 
             register_handoff(Path(request.config["execution_registry_path"]), package, request)
-        return _result(request, provider_name, ExecutionStatus.HANDOFF_PREPARED, started, manifest, usage={"package": str(package)}, run_id=run_id)
+        return _result(
+            request,
+            provider_name,
+            ExecutionStatus.HANDOFF_PREPARED,
+            started,
+            manifest,
+            usage={"package": str(package), **request.config.get("_mission_convergence", {})},
+            run_id=run_id,
+        )
     provider = {
         "mock": MockProvider(),
         "ollama": OllamaProvider(),
