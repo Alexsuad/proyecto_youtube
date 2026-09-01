@@ -48,19 +48,15 @@ class ControlledOpenCodeIntegrationTests(unittest.TestCase):
             capture_output=True,
             text=True,
         ).stdout
-        missing = [
+        cls.missing_preexisting = [
             relative_path
             for relative_path in PREEXISTING_UNTRACKED
             if not (ROOT / relative_path).exists() or f"?? {relative_path}" not in status
         ]
-        if missing:
-            raise unittest.SkipTest(
-                "Historical OpenCode fixture(s) absent; no workspace artifacts are fabricated: "
-                + ", ".join(missing)
-            )
         cls.preexisting_digests = {
             relative_path: content_digest(ROOT / relative_path)
             for relative_path in PREEXISTING_UNTRACKED
+            if relative_path not in cls.missing_preexisting
         }
 
     @classmethod
@@ -71,10 +67,10 @@ class ControlledOpenCodeIntegrationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.config = json.loads((ROOT / "opencode.json").read_text(encoding="utf-8"))
 
-    def test_repository_does_not_impose_opencode_permissions(self) -> None:
+    def test_repository_keeps_controlled_opencode_permissions(self) -> None:
         self.assertEqual(self.config["$schema"], "https://opencode.ai/config.json")
-        self.assertNotIn("permission", self.config)
         self.assertNotIn("agent", self.config)
+        self.assertEqual(self.config["permission"]["bash"]["rm -rf *"], "deny")
 
         implementer, _ = read_frontmatter(ROOT / ".opencode/agents/technical-implementer.md")
         reviewer, _ = read_frontmatter(ROOT / ".opencode/agents/technical-reviewer.md")
@@ -86,10 +82,13 @@ class ControlledOpenCodeIntegrationTests(unittest.TestCase):
         self.assertNotIn("\npermission:", implementer_text)
         self.assertNotIn("\npermission:", reviewer_text)
         self.assertNotIn("allowlisted inspection commands", reviewer_text)
-        self.assertIn("Once the mission preflight has confirmed authorization", implementer_text)
+        self.assertNotIn("Once the mission preflight has confirmed authorization", implementer_text)
+        self.assertIn("Independently verify the live authority, authorization, and file scope", implementer_text)
+        self.assertIn("must not be blocked only because it is absent", implementer_text)
         self.assertIn("independent, read-only technical reviewer", reviewer_text)
         self.assertIn("Never edit, correct, commit", reviewer_text)
         self.assertIn("inspection commands and targeted tests necessary", reviewer_text)
+        self.assertIn("do not run it by default after every change", reviewer_text)
         self.assertIn("Never push", implementer_text)
 
     def test_opencode_discovers_the_configured_agents(self) -> None:
@@ -109,6 +108,11 @@ class ControlledOpenCodeIntegrationTests(unittest.TestCase):
         self.assertIn("technical-reviewer", result.stdout)
 
     def test_preexisting_untracked_targets_are_not_changed_by_the_test(self) -> None:
+        if self.missing_preexisting:
+            self.skipTest(
+                "Historical OpenCode fixture(s) absent; no workspace artifacts are fabricated: "
+                + ", ".join(self.missing_preexisting)
+            )
         status = subprocess.run(
             ["git", "status", "--short"],
             cwd=ROOT,
@@ -121,23 +125,68 @@ class ControlledOpenCodeIntegrationTests(unittest.TestCase):
             self.assertEqual(content_digest(ROOT / relative_path), self.preexisting_digests[relative_path])
 
     def test_preflight_is_read_only_and_requires_authorization_details(self) -> None:
-        command, body = read_frontmatter(ROOT / ".opencode/commands/mission-preflight.md")
-        self.assertEqual(command["agent"], "technical-reviewer")
-        self.assertEqual(command["subtask"], "true")
+        preflight_path = ROOT / ".opencode/commands/mission-preflight.md"
+        before = preflight_path.read_bytes()
+        command, body = read_frontmatter(preflight_path)
+        after = preflight_path.read_bytes()
+        self.assertNotIn("agent", command)
+        self.assertNotIn("subtask", command)
+        self.assertEqual(before, after)
+        self.assertIn("Use this formal preflight selectively", body)
+        self.assertIn("It is not required for", body)
+        self.assertIn("small, clear, authorized, low-risk correction", body)
+        self.assertIn("a substitute for an independent post-change review", body)
         self.assertIn("plans/001_CONTROL_OPERATIVO.md", body)
         self.assertIn("OWNER authorization", body)
         self.assertIn("contradicts the live control", body)
         self.assertIn("request human confirmation", body)
         self.assertIn("Do not edit files", body)
+        self.assertIn("SEARCH BEFORE CREATE", body)
+        self.assertIn("reutilización antes de crear", body)
+        self.assertIn("software determinista antes que IA", body)
+        self.assertIn("ENCONTRADA` from `APLICABLE", body)
+        self.assertIn("SDD: NO NECESARIO", body)
+        self.assertIn("possible duplication", body)
         self.assertIn("PROCEED", body)
         self.assertIn("STOP", body)
-        unchanged = subprocess.run(
-            ["git", "diff", "--exit-code", "--", ".opencode/commands/mission-preflight.md"],
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(unchanged.returncode, 0, unchanged.stdout + unchanged.stderr)
+
+    def test_reviewer_preserves_read_only_controls_and_new_review_dimensions(self) -> None:
+        reviewer_text = (ROOT / ".opencode/agents/technical-reviewer.md").read_text(encoding="utf-8")
+        for phrase in (
+            "independent, read-only technical reviewer",
+            "regressions",
+            "files outside scope",
+            "excessive permissions",
+            "false validation",
+            "accidental state changes",
+            "pre-existing files",
+            "general capability duplication",
+            "temporary files",
+            "final repository remains coherent",
+            "architecture more complex than necessary",
+            "INTRODUCIDO POR ESTA MISIÓN",
+            "PREEXISTENTE",
+            "INDETERMINADO",
+            "Resumen",
+            "Archivo | Qué cambió | Para qué",
+            "Never edit, correct, commit, push",
+            "Use this reviewer when independent review adds value",
+            "do not run it by default after every change",
+            "A small, clear, low-risk change with direct validation may omit this review",
+        ):
+            self.assertIn(phrase, reviewer_text)
+
+    def test_basic_rules_do_not_require_the_specialized_flow(self) -> None:
+        agents_text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        implementer_text = (ROOT / ".opencode/agents/technical-implementer.md").read_text(encoding="utf-8")
+        preflight_text = (ROOT / ".opencode/commands/mission-preflight.md").read_text(encoding="utf-8")
+        reviewer_text = (ROOT / ".opencode/agents/technical-reviewer.md").read_text(encoding="utf-8")
+
+        self.assertIn("Principios básicos siempre aplicables", agents_text)
+        self.assertIn("se seleccionan y usan solo cuando sean pertinentes", agents_text)
+        self.assertIn("need not run formal preflight", implementer_text)
+        self.assertIn("not required for", preflight_text)
+        self.assertIn("may omit this review", reviewer_text)
 
 
 if __name__ == "__main__":

@@ -55,7 +55,8 @@ Las skills de procedimiento para desarrollo, auditoría y verificación se descu
 
 - `.agent/skills/` contiene únicamente skills funcionales/editoriales gobernadas por `config/skill_catalog.json`.
 - `.agents/skills/` contiene únicamente procedimiento de ingeniería reutilizable; no se incorpora al catálogo productivo ni crea capabilities runtime.
-- Para una misión técnica, `technical-implementer`, `technical-reviewer` y `mission-preflight` deben consultar la skill de procedimiento pertinente después de leer la autoridad viva y antes de ampliar el alcance.
+- Principios básicos siempre aplicables: autorización y alcance, `SEARCH BEFORE CREATE`, `REUSE → EXTEND → CREATE`, software determinista antes que IA cuando sea suficiente, `ENCONTRADA ≠ APLICABLE`, no ampliar alcance sin necesidad, validación proporcional y evidencia antes de declarar `PASS`.
+- Las skills y capacidades especializadas, incluido `mission-preflight`, `technical-reviewer` y cualquier skill de procedimiento, se seleccionan y usan solo cuando sean pertinentes; una misión pequeña y clara no queda obligada a ejecutar una fase formal ni una revisión independiente si la validación directa es suficiente.
 - Las skills de ingeniería remiten a los gates, schemas, tests y contratos existentes; no sustituyen `MissionAuthorization`, `MissionCompletionGate`, `RepairIntegrity` ni la autoridad viva.
 
 
