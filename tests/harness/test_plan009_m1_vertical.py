@@ -55,7 +55,7 @@ def _mission_authorization(
     live_state_mission_id: str | None = None,
     live_state_path: str | None = None,
 ) -> str:
-    directory = ROOT / ".runtime-tmp" / f"plan009-m1-{tmp_path.name}"
+    directory = ROOT / ".runtime-tmp" / f"plan009-m1-{hashlib.sha256(str(tmp_path).encode()).hexdigest()[:12]}"
     directory.mkdir(parents=True, exist_ok=True)
     auth_ref = directory.relative_to(ROOT).as_posix() + "/mission-authorization.json"
     authority_ref = directory.relative_to(ROOT).as_posix() + "/authority.json"
@@ -185,6 +185,9 @@ def _assessment(topic_input: dict, run_id: str | None = None) -> dict:
             "output_checksum": "",
         },
     }
+    for key in ("corpus_ref", "narrative_work"):
+        if key in topic_input:
+            data[key] = topic_input[key]
     checksum = canonical_checksum(data, "assessment")
     data["artifact_checksum"] = checksum
     data["provenance"]["output_checksum"] = checksum
@@ -252,7 +255,13 @@ def _outputs(*, invalid_stage: str | None = None, same_reviewer_run: bool = Fals
     topic_input = _input()
     assessment = _assessment(topic_input)
     decision = _decision(assessment)
-    outputs = {"enrich": topic_input, "produce": assessment, "review": decision}
+    proposal = {
+        "proposed_angle": topic_input["proposed_angle"],
+        "proposed_territory": topic_input["proposed_territory"],
+        "initial_evidence": topic_input["initial_evidence"],
+        "strategic_triggers": topic_input["strategic_triggers"],
+    }
+    outputs = {"enrich": proposal, "produce": assessment, "review": decision}
     if invalid_stage:
         outputs[invalid_stage] = {"invalid": True}
     return outputs
@@ -287,6 +296,10 @@ def test_m1_happy_path_uses_cli_application_service_and_persists_stop(tmp_path: 
     lineage = json.loads((folder / "topic_belonging_lineage.json").read_text(encoding="utf-8"))
     assert lineage["producer_run_id"] != lineage["reviewer_run_id"]
     assert lineage["producer_actor_id"] != lineage["reviewer_actor_id"]
+    assert "topic" in lineage["field_ownership"]["USER_PROVIDED"]
+    assert "central_question" in lineage["field_ownership"]["USER_PROVIDED"]
+    assert "initial_evidence" in lineage["field_ownership"]["AI_PROPOSED"]
+    assert "topic_input_id" in lineage["field_ownership"]["SOFTWARE_OWNED"]
 
 
 def test_m1_terminal_cli_entrypoint_reaches_the_same_application_service(
@@ -384,6 +397,166 @@ def test_m1_invalid_cognitive_output_blocks_without_success(tmp_path: Path, miss
     assert folders and not (folders[0] / "05_topic_belonging_gate.json").exists()
 
 
+def test_m1_cognitive_proposal_cannot_emit_protected_fields(tmp_path: Path, mission_auth: str) -> None:
+    outputs = _outputs()
+    outputs["enrich"]["topic"] = "IA inventó este tema"
+    with pytest.raises(TopicBelongingExecutionError, match="ENRICH_EXECUTION_BLOCKED"):
+        _service(tmp_path, mission_auth, outputs).start(
+            HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
+        )
+
+
+def test_m1_topic_first_rejects_a_cognitive_topic_proposal(tmp_path: Path, mission_auth: str) -> None:
+    outputs = _outputs()
+    outputs["enrich"]["proposed_topic"] = "IA inventó este tema"
+    with pytest.raises(TopicBelongingExecutionError, match="ENRICHMENT_TOPIC_PROTECTED"):
+        _service(tmp_path, mission_auth, outputs).start(
+            HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
+        )
+
+
+@pytest.mark.parametrize("mode", ["ANCHOR_WORK_FIRST", "CORPUS_FIRST"])
+def test_m1_non_topic_modes_accept_ai_topic_and_preserve_extended_user_fields(
+    tmp_path: Path, mission_auth: str, mode: str
+) -> None:
+    outputs = _outputs()
+    proposed_topic = f"Tema propuesto para {mode}"
+    outputs["enrich"]["proposed_topic"] = proposed_topic
+    topic_input = _input()
+    topic_input.update(
+        {
+            "topic": proposed_topic,
+            "entry_mode": mode,
+            "central_question": "Pregunta de la modalidad",
+            "user_instructions": [{"category": "MUST_INCLUDE", "text": "Mantener esta indicación exacta."}],
+            "duration_target_minutes": 20,
+            "target_language": "en",
+        }
+    )
+    if mode == "ANCHOR_WORK_FIRST":
+        topic_input["narrative_work"] = "Obra ancla"
+        human = HumanInput.create(
+            mode=mode,
+            content="Obra ancla",
+            works=["Obra ancla"],
+            initial_question="Pregunta de la modalidad",
+            user_instructions=topic_input["user_instructions"],
+            duration_target_minutes=20,
+            target_language="en",
+            channel="TERMINAL",
+        )
+    else:
+        topic_input["candidate_work_refs"] = ["Obra 1", "Obra 2"]
+        human = HumanInput.create(
+            mode=mode,
+            works=topic_input["candidate_work_refs"],
+            initial_question="Pregunta de la modalidad",
+            user_instructions=topic_input["user_instructions"],
+            duration_target_minutes=20,
+            target_language="en",
+            channel="TERMINAL",
+        )
+        topic_input["corpus_ref"] = f"human-input:{human.interaction_id}"
+    outputs["produce"] = _assessment(topic_input)
+    outputs["review"] = _decision(outputs["produce"])
+    result = _service(tmp_path, mission_auth, outputs).start(human)
+    persisted = json.loads((result.episode.folder / "02_topic_belonging_input.json").read_text(encoding="utf-8"))
+    lineage = json.loads((result.episode.folder / "topic_belonging_lineage.json").read_text(encoding="utf-8"))
+    assert persisted["topic"] == proposed_topic
+    assert persisted["user_instructions"] == human.to_dict()["user_instructions"]
+    assert persisted["duration_target_minutes"] == 20
+    assert persisted["target_language"] == "en"
+    assert "topic" in lineage["field_ownership"]["AI_PROPOSED"]
+    assert "user_instructions" in lineage["field_ownership"]["USER_PROVIDED"]
+    assert "duration_target_minutes" in lineage["field_ownership"]["USER_PROVIDED"]
+    assert "target_language" in lineage["field_ownership"]["USER_PROVIDED"]
+
+
+def test_m1_software_combines_proposal_with_user_and_canonical_data(tmp_path: Path, mission_auth: str) -> None:
+    result = _service(tmp_path, mission_auth, _outputs()).start(
+        HumanInput.create(
+            mode="TOPIC_FIRST",
+            content="Tema sintético de prueba",
+            initial_question="¿Qué revela este conflicto sobre vivir con otros?",
+            channel="TERMINAL",
+        )
+    )
+    topic_input = json.loads((result.episode.folder / "02_topic_belonging_input.json").read_text(encoding="utf-8"))
+    assert topic_input["topic"] == "Tema sintético de prueba"
+    assert topic_input["central_question"] == "¿Qué revela este conflicto sobre vivir con otros?"
+    assert topic_input["topic_input_id"].startswith("TBI-")
+    assert "topic_input_id" not in _outputs()["enrich"]
+
+
+def test_m1_cognitive_proposal_cannot_replace_user_question(tmp_path: Path, mission_auth: str) -> None:
+    outputs = _outputs()
+    outputs["enrich"]["proposed_central_question"] = "Pregunta inventada por la IA"
+    with pytest.raises(TopicBelongingExecutionError, match="ENRICHMENT_CENTRAL_QUESTION_PROTECTED"):
+        _service(tmp_path, mission_auth, outputs).start(
+            HumanInput.create(
+                mode="TOPIC_FIRST",
+                content="Tema sintético de prueba",
+                initial_question="¿Qué revela este conflicto sobre vivir con otros?",
+                channel="TERMINAL",
+            )
+        )
+
+
+def test_m1_topic_first_accepts_cognitive_question_without_narrative_work(tmp_path: Path, mission_auth: str) -> None:
+    outputs = _outputs()
+    outputs["enrich"]["proposed_central_question"] = "¿Qué revela esta tensión sobre pertenecer?"
+    topic_input = _input()
+    topic_input["central_question"] = outputs["enrich"]["proposed_central_question"]
+    outputs["produce"] = _assessment(topic_input)
+    outputs["review"] = _decision(outputs["produce"])
+    result = _service(tmp_path, mission_auth, outputs).start(
+        HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
+    )
+    topic_input = json.loads((result.episode.folder / "02_topic_belonging_input.json").read_text(encoding="utf-8"))
+    lineage = json.loads((result.episode.folder / "topic_belonging_lineage.json").read_text(encoding="utf-8"))
+    assert topic_input["central_question"] == "¿Qué revela esta tensión sobre pertenecer?"
+    assert "narrative_work" not in topic_input
+    assert "central_question" in lineage["field_ownership"]["AI_PROPOSED"]
+
+
+def test_m1_persisted_cognitive_proposal_remains_bound_to_final_input(tmp_path: Path, mission_auth: str) -> None:
+    service = _service(tmp_path, mission_auth, _outputs())
+    result = service.start(
+        HumanInput.create(
+            mode="TOPIC_FIRST",
+            content="Tema sintético de prueba",
+            initial_question="¿Qué revela este conflicto sobre vivir con otros?",
+            channel="TERMINAL",
+        )
+    )
+    path = result.episode.folder / "topic_belonging_execution.json"
+    execution = json.loads(path.read_text(encoding="utf-8"))
+    execution["executions"][0]["cognitive_proposal"]["initial_evidence"] = ["ai-proposed://tampered"]
+    path.write_text(json.dumps(execution, ensure_ascii=False), encoding="utf-8")
+    with pytest.raises(TopicBelongingExecutionError, match="COGNITIVE_PROPOSAL_INITIAL_EVIDENCE_MISMATCH"):
+        service.resume(result.episode.episode_id)
+
+
+def test_m1_persisted_proposed_question_remains_bound_to_final_input(tmp_path: Path, mission_auth: str) -> None:
+    outputs = _outputs()
+    proposed_question = "¿Qué revela esta tensión sobre pertenecer?"
+    outputs["enrich"]["proposed_central_question"] = proposed_question
+    topic_input = _input()
+    topic_input["central_question"] = proposed_question
+    outputs["produce"] = _assessment(topic_input)
+    outputs["review"] = _decision(outputs["produce"])
+    service = _service(tmp_path, mission_auth, outputs)
+    result = service.start(
+        HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
+    )
+    path = result.episode.folder / "topic_belonging_execution.json"
+    execution = json.loads(path.read_text(encoding="utf-8"))
+    execution["executions"][0]["cognitive_proposal"]["proposed_central_question"] = "¿Pregunta alterada?"
+    path.write_text(json.dumps(execution, ensure_ascii=False), encoding="utf-8")
+    with pytest.raises(TopicBelongingExecutionError, match="COGNITIVE_PROPOSAL_PROPOSED_CENTRAL_QUESTION_MISMATCH"):
+        service.resume(result.episode.episode_id)
+
+
 def test_m1_reviewer_actor_provenance_mismatch_blocks_fresh_execution(tmp_path: Path, mission_auth: str) -> None:
     outputs = _outputs()
     outputs["review"]["provenance"]["actor_id"] = "FORGED-REVIEWER-ACTOR"
@@ -426,7 +599,7 @@ def test_m1_fake_producer_declared_run_id_cannot_override_runtime(tmp_path: Path
     outputs["produce"]["producer_run_id"] = "FAKE-PRODUCER-RUN"
     with pytest.raises(TopicBelongingExecutionError, match="PRODUCER_RUNTIME_PROVENANCE_MISMATCH"):
         _service(tmp_path, mission_auth, outputs).start(
-            HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
+            HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", initial_question="¿Qué revela este conflicto sobre vivir con otros?", channel="TERMINAL")
         )
 
 
@@ -435,7 +608,7 @@ def test_m1_fake_reviewer_declared_run_id_cannot_override_runtime(tmp_path: Path
     outputs["review"]["reviewer_run_id"] = "FAKE-REVIEWER-RUN"
     with pytest.raises(TopicBelongingExecutionError, match="REVIEWER_RUNTIME_PROVENANCE_MISMATCH"):
         _service(tmp_path, mission_auth, outputs).start(
-            HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
+            HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", initial_question="¿Qué revela este conflicto sobre vivir con otros?", channel="TERMINAL")
         )
 
 
@@ -452,7 +625,7 @@ def test_m1_missing_authorization_blocks_before_episode_creation(tmp_path: Path)
         mock_outputs=_outputs(),
     )
     workflow = TopicBelongingTechnicalWorkflow(store, boundary=boundary)
-    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_REQUIRED"):
+    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_(REQUIRED|MISSION_MISMATCH)"):
         EpisodeApplicationService(store, workflow=workflow).start(HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL"))
     assert not (tmp_path / "vault/CHANNEL/episodios").exists()
 
@@ -501,7 +674,7 @@ def test_m2_real_requires_mission_authorization_even_with_neutral_family(tmp_pat
     live_control = ROOT.joinpath("plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8")
     current_line = next(line for line in live_control.splitlines() if line.startswith("CURRENT_MISSION:"))
     control.write_text(live_control.replace(current_line, "CURRENT_MISSION: MISSION_WITHOUT_BUNDLE"), encoding="utf-8")
-    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_REQUIRED"):
+    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_(REQUIRED|MISSION_MISMATCH)"):
         ExecutionCognitiveBoundary(repository_root=ROOT, operational_authority_path=str(control), execution_mode="REAL").preflight()
 
 
@@ -516,7 +689,7 @@ def test_m2_real_without_authorization_blocks_before_provider(tmp_path: Path) ->
         execution_mode="REAL",
         execution_profile="ollama_local",
     )
-    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_REQUIRED"):
+    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_(REQUIRED|MISSION_MISMATCH)"):
         boundary.preflight()
 
 
@@ -584,10 +757,16 @@ def test_m2_real_authorized_reaches_provider_boundary_without_external_call(
 
         def execute(self, request: ExecutionRequest):
             output = copy.deepcopy({
-                "topic_belonging_input": outputs["enrich"],
+                "topic_belonging_cognitive_proposal": outputs["enrich"],
+                "topic_belonging_input": _input(),
                 "topic_belonging_assessment": outputs["produce"],
                 "topic_belonging_decision": outputs["review"],
             }[request.output_schema])
+            if request.output_schema == "topic_belonging_assessment":
+                topic_input = json.loads(request.input_artifacts[0].path.read_text(encoding="utf-8"))
+                output["topic_input_id"] = topic_input["topic_input_id"]
+                output["artifact_checksum"] = canonical_checksum(output, "assessment")
+                output["provenance"]["output_checksum"] = output["artifact_checksum"]
             if request.output_schema == "topic_belonging_decision":
                 assessment = json.loads(request.input_artifacts[1].path.read_text(encoding="utf-8"))
                 output["producer_artifact_checksum"] = assessment["artifact_checksum"]
@@ -613,7 +792,7 @@ def test_m2_real_authorized_reaches_provider_boundary_without_external_call(
         store = VaultEpisodeStore(short_root / "vault", "C")
         workflow = TopicBelongingTechnicalWorkflow(store, boundary=boundary)
         result = EpisodeApplicationService(store, workflow=workflow).start(
-            HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL")
+            HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", initial_question="¿Qué revela este conflicto sobre vivir con otros?", channel="TERMINAL")
         )
         executions = json.loads((result.episode.folder / "topic_belonging_execution.json").read_text(encoding="utf-8"))["executions"]
         assert all(item["execution_mode"] == "REAL" for item in executions)
@@ -804,7 +983,7 @@ def _index_episode_id(tmp_path: Path, channel: str = "CHANNEL") -> str:
 def test_m1_producer_failure_is_recoverable_via_resume(tmp_path: Path, mission_auth: str) -> None:
     service = _service(tmp_path, mission_auth, _outputs(invalid_stage="produce"))
     with pytest.raises(TopicBelongingExecutionError):
-        service.start(HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL"))
+        service.start(HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", initial_question="¿Qué revela este conflicto sobre vivir con otros?", channel="TERMINAL"))
     folders = list((tmp_path / "vault/CHANNEL/episodios").iterdir())
     assert len(folders) == 1
     assert not (folders[0] / "05_topic_belonging_gate.json").exists()
@@ -818,7 +997,7 @@ def test_m1_producer_failure_is_recoverable_via_resume(tmp_path: Path, mission_a
 def test_m1_reviewer_failure_is_recoverable_via_resume(tmp_path: Path, mission_auth: str) -> None:
     service = _service(tmp_path, mission_auth, _outputs(invalid_stage="review"))
     with pytest.raises(TopicBelongingExecutionError):
-        service.start(HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL"))
+        service.start(HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", initial_question="¿Qué revela este conflicto sobre vivir con otros?", channel="TERMINAL"))
     folders = list((tmp_path / "vault/CHANNEL/episodios").iterdir())
     assert len(folders) == 1
     assert not (folders[0] / "05_topic_belonging_gate.json").exists()

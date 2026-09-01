@@ -3,13 +3,23 @@
 ## Objetivo
 Crear un `ResearchPack` trazable y suficiente para evaluar evidencia y formular una tesis provisional.
 
+## Frontera de responsabilidad
+- Software asigna IDs, valida formato y procedencia, normaliza, deduplica,
+  vincula cobertura, calcula checksums y persiste.
+- La IA interpreta relevancia, contraste, relación con tesis, lectura rival y
+  evaluación semántica; no inventa metadata, localizadores, estados de acceso ni
+  checksums.
+- La fuente, la persona o la IA pueden aportar contenido o referencias según el
+  contrato, pero su procedencia debe conservarse.
+
 ## Entradas
 - `<EP_PATH>/episode_brief.json`;
 - fuentes y materiales accesibles;
 - políticas de fuentes del brief.
 
 ## Procedimiento
-1. Investigar por cobertura, no por una cantidad fija de URLs u obras.
+1. Investigar por cobertura, no por una cantidad fija de URLs u obras; tres
+   fuentes excelentes pueden ser suficientes.
 2. Cubrir explícitamente pregunta, conflicto, hipótesis inicial, fenómeno, material narrativo, claims críticos y perspectivas alternativas; cada dimensión se declara cubierta, parcial, pendiente o no verificable con decisión de reducción o bloqueo.
 3. Separar `NARRATIVE_EVIDENCE` (escena, pasaje, capítulo u otro elemento del medio) de `EXTERNAL_REALITY_EVIDENCE` (estudio, documento, dato, registro o análisis experto).
 4. Intentar confirmar, matizar o refutar la hipótesis inicial. En investigación profunda o crítica registrar rival, contradicción o justificación trazable de su ausencia.

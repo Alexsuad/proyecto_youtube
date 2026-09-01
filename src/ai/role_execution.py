@@ -94,6 +94,7 @@ ROLE_ALLOWED_OUTPUT_SCHEMAS = {
     },
     "CHANNEL_INTELLIGENCE_PRODUCER": {
         "execution_smoke_report",
+        "topic_belonging_cognitive_proposal",
         "topic_belonging_input",
         "topic_belonging_assessment",
     },
@@ -163,7 +164,7 @@ def _validate_role_payload(
         stage = str((runtime_values or {}).get("stage") or "").upper()
         required = (
             CHANNEL_INTELLIGENCE_ENRICHMENT_REQUIRED_INPUTS
-            if stage == "ENRICHMENT" or output_schema == "topic_belonging_input"
+            if stage == "ENRICHMENT" or output_schema in {"topic_belonging_input", "topic_belonging_cognitive_proposal"}
             else CHANNEL_INTELLIGENCE_PRODUCER_REQUIRED_INPUTS
         )
     missing = [key for key in required if key not in input_payload]

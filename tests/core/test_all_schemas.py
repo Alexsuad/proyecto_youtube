@@ -578,6 +578,12 @@ _TOPIC_TRIGGERS = {key: False for key in [
     "excluded_boundary_reinterpretation", "new_personal_exposure", "voice_or_author_persona_change",
     "positioning_expansion", "permanent_effect", "high_precedent_risk", "experimental_territory",
 ]}
+VALID_FIXTURES["topic_belonging_cognitive_proposal"] = {
+    "proposed_angle": "Ángulo cognitivo de fixture",
+    "proposed_territory": "Individuo e identidad",
+    "initial_evidence": ["source-1"],
+    "strategic_triggers": _TOPIC_TRIGGERS,
+}
 VALID_FIXTURES["topic_belonging_input"] = {
     "topic_input_id": "TBI-FIXTURE", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.2",
     "profile_checksum": "a" * 64, "topic": "Tema", "entry_mode": "ANCHOR_WORK_FIRST", "narrative_work": "Obra",

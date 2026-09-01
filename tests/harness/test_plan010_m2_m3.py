@@ -250,7 +250,16 @@ def test_m3_materializes_non_empty_canonical_prompt_at_cognitive_boundary(
     topic_input = _m1_topic_input()
     assessment = _m1_assessment(topic_input)
     decision = _m1_decision(assessment)
-    outputs = {"enrich": topic_input, "produce": assessment, "review": decision}
+    outputs = {
+        "enrich": {
+            "proposed_angle": topic_input["proposed_angle"],
+            "proposed_territory": topic_input["proposed_territory"],
+            "initial_evidence": topic_input["initial_evidence"],
+            "strategic_triggers": topic_input["strategic_triggers"],
+        },
+        "produce": assessment,
+        "review": decision,
+    }
     captured = []
     original_execute = topic_belonging.execute
 

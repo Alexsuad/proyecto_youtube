@@ -100,6 +100,61 @@ def test_question_and_context_are_distinct_bindings() -> None:
     assert "central_question" in without_question["unresolved_fields"]
 
 
+def test_extended_user_input_round_trips_through_handoff_without_losing_exact_instruction_text() -> None:
+    human = HumanInput.create(
+        mode="tema",
+        content="Tema",
+        user_instructions=[
+            {"category": "MUST_INCLUDE_VERBATIM", "text": "  Frase original, sin reescribir.  "},
+            {"category": "CONTEXT_ONLY", "text": "Contexto para orientar."},
+        ],
+        duration_target_minutes=20,
+        target_language="español",
+    )
+    handoff = build_editorial_handoff(human, PROFILE)
+    assert human.to_dict()["user_instructions"][0]["text"] == "  Frase original, sin reescribir.  "
+    assert human.to_dict()["target_language"] == "es"
+    assert handoff["field_bindings"]["user_instructions"] == human.to_dict()["user_instructions"]
+    assert handoff["field_bindings"]["duration_target_minutes"] == 20
+    assert handoff["field_bindings"]["target_language"] == "es"
+    assert validate_against_schema(human.to_dict(), "human_episode_input") == []
+    assert validate_against_schema(handoff, "editorial_intake_handoff") == []
+
+
+@pytest.mark.parametrize("duration", [0, -1, True, "20"])
+def test_duration_is_a_positive_integer_or_none(duration: object) -> None:
+    with pytest.raises(InputValidationError):
+        HumanInput.create(mode="tema", content="Tema", duration_target_minutes=duration)  # type: ignore[arg-type]
+
+
+def test_instruction_category_is_closed_and_text_is_required() -> None:
+    with pytest.raises(InputValidationError):
+        HumanInput.create(mode="tema", content="Tema", user_instructions=[{"category": "FREEFORM", "text": "x"}])
+    with pytest.raises(InputValidationError):
+        HumanInput.create(mode="tema", content="Tema", user_instructions=[{"category": "CONTEXT_ONLY", "text": "  "}])
+
+
+def test_non_interactive_cli_adapter_captures_duration_language_and_instruction_categories() -> None:
+    human = _non_interactive_input(
+        Namespace(
+            modo="tema",
+            tema="Tema",
+            obra=None,
+            obras=None,
+            pregunta=None,
+            contexto=None,
+            indicacion=["MUST_INCLUDE_VERBATIM: No cambies esta frase."],
+            duracion="personalizada",
+            duracion_minutos=25,
+            idioma="español",
+        )
+    )
+    assert human.user_instructions[0].category.value == "MUST_INCLUDE_VERBATIM"
+    assert human.user_instructions[0].text == " No cambies esta frase."
+    assert human.duration_target_minutes == 25
+    assert human.target_language == "es"
+
+
 def test_live_authority_parser_rejects_duplicate_and_malformed_canonical_state() -> None:
     current = ControlledB5I1Preparation.CONTROL_PATH.read_text(encoding="utf-8")
     duplicate = current.replace(
@@ -358,7 +413,7 @@ def test_workflow_requests_are_consumed_and_decisions_capture_the_full_request(t
 
 
 def test_interactive_and_non_interactive_adapters_share_normalized_fields(monkeypatch) -> None:
-    responses = iter(["1", "Tema", "Pregunta", "", "s"])
+    responses = iter(["1", "Tema", "Pregunta", "", "n", "1", "1", "s"])
     monkeypatch.setattr("builtins.input", lambda _prompt="": next(responses))
     interactive = _interactive_input()
     non_interactive = _non_interactive_input(
@@ -369,6 +424,43 @@ def test_interactive_and_non_interactive_adapters_share_normalized_fields(monkey
     assert interactive.initial_question == non_interactive.initial_question
     assert interactive.context == non_interactive.context
     assert interactive.works == non_interactive.works
+    assert interactive.user_instructions == ()
+    assert interactive.duration_target_minutes is None
+    assert interactive.target_language is None
+
+
+def test_interactive_input_captures_zero_or_more_instructions_custom_duration_and_other_language(monkeypatch) -> None:
+    responses = iter(
+        [
+            "1", "Tema", "", "", "s", "4", "  Mantener esta frase exactamente.  ",
+            "n", "6", "27", "4", "Français",
+            "s",
+        ]
+    )
+    monkeypatch.setattr("builtins.input", lambda _prompt="": next(responses))
+    human = _interactive_input()
+    assert human.user_instructions[0].category.value == "MUST_INCLUDE_VERBATIM"
+    assert human.user_instructions[0].text == "Mantener esta frase exactamente."
+    assert human.duration_target_minutes == 27
+    assert human.target_language == "Français"
+
+
+@pytest.mark.parametrize(
+    ("duration_option", "duration_minutes", "language_option", "expected_message"),
+    [
+        ("6", "", "1", "respuesta no puede estar vacía"),
+        ("1", "", "4", "respuesta no puede estar vacía"),
+    ],
+)
+def test_interactive_input_rejects_missing_custom_duration_or_other_language(
+    monkeypatch, duration_option: str, duration_minutes: str, language_option: str, expected_message: str
+) -> None:
+    responses = iter(["1", "Tema", "", "", "n", duration_option, duration_minutes])
+    if language_option == "4":
+        responses = iter(["1", "Tema", "", "", "n", duration_option, language_option, ""])
+    monkeypatch.setattr("builtins.input", lambda _prompt="": next(responses))
+    with pytest.raises(ValueError, match=expected_message):
+        _interactive_input()
 
 
 def test_active_mission_bundle_requires_an_explicit_canonical_pointer(tmp_path: Path) -> None:

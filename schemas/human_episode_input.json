@@ -18,6 +18,23 @@
     "works": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "actor_ref": {"type": "string", "minLength": 1},
     "provenance": {"type": "object"},
-    "processing_status": {"enum": ["RECEIVED", "REGISTERED", "READY", "CANCELLED"]}
+    "processing_status": {"enum": ["RECEIVED", "REGISTERED", "READY", "CANCELLED"]},
+    "user_instructions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/user_instruction"}
+    },
+    "duration_target_minutes": {"type": ["integer", "null"], "minimum": 1},
+    "target_language": {"type": ["string", "null"], "minLength": 1}
+  },
+  "$defs": {
+    "user_instruction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "text"],
+      "properties": {
+        "category": {"enum": ["CONTEXT_ONLY", "MAY_INCLUDE", "MUST_INCLUDE", "MUST_INCLUDE_VERBATIM"]},
+        "text": {"type": "string", "minLength": 1}
+      }
+    }
   }
 }

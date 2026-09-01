@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 import hashlib
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 import tempfile
 from typing import Any, Protocol
@@ -22,7 +23,7 @@ from src.ai.runtime_profiles import (
     load_execution_profiles,
     validate_execution_family_selection,
 )
-from src.application.contracts import HumanInput
+from src.application.contracts import EntryMode, HumanInput
 from src.application.storage import EpisodeHandle, StorageError, VaultEpisodeStore
 from src.application.authority import load_operational_authority, resolve_active_mission_bundle
 from src.core.editorial_profile_registry import load_active_profile_authority
@@ -84,6 +85,7 @@ P2_ALLOWED_EPISODE_ARTIFACTS = M1_ALLOWED_EPISODE_ARTIFACTS | frozenset(
 )
 
 STOP_STATUS = "TOPIC_BELONGING_TECHNICAL_STOP"
+COGNITIVE_PROPOSAL_SCHEMA = "topic_belonging_cognitive_proposal"
 
 
 def _prompt_contract_for_stage(stage: str) -> dict[str, Any]:
@@ -115,10 +117,11 @@ def _expected_raw_output_checksum(
     topic_input: dict[str, Any],
     assessment: dict[str, Any],
     decision: dict[str, Any],
+    enrichment_proposal: dict[str, Any] | None = None,
 ) -> str:
     """Reconstruct the synthetic runtime payload before provenance normalization."""
     if stage == "ENRICHMENT":
-        return _json_checksum(topic_input)
+        return _json_checksum(enrichment_proposal or topic_input)
     if stage == "PRODUCER":
         raw = copy.deepcopy(assessment)
         base = copy.deepcopy(raw)
@@ -129,19 +132,18 @@ def _expected_raw_output_checksum(
         raw["artifact_checksum"] = checksum
         provenance["output_checksum"] = checksum
         return _json_checksum(raw)
+    # Reconstruct the provider payload before the application boundary
+    # normalized ``provenance.output_checksum``.  The execution layer hashes
+    # the runtime-bound payload, while the persisted decision stores the
+    # canonical checksum of that payload (which excludes output_checksum).
     raw = copy.deepcopy(decision)
+    reviewer_run_id = raw.pop("reviewer_run_id", None)
     provenance = raw.setdefault("provenance", {})
-    raw_assessment = copy.deepcopy(assessment)
-    raw_assessment.pop("producer_run_id", None)
-    raw_assessment.setdefault("provenance", {}).pop("run_id", None)
-    raw_assessment_checksum = canonical_checksum(raw_assessment, "assessment")
-    base = copy.deepcopy(raw)
-    base["producer_artifact_checksum"] = raw_assessment_checksum
-    base["reviewer_input_checksum"] = raw_assessment_checksum
-    base.setdefault("provenance", {})["input_checksum"] = raw_assessment_checksum
-    base.pop("reviewer_run_id", None)
-    base.setdefault("provenance", {}).pop("run_id", None)
-    provenance["output_checksum"] = canonical_checksum(base, "decision")
+    reviewer_provenance_run_id = provenance.pop("run_id", None)
+    pre_runtime_checksum = canonical_checksum(raw, "decision")
+    raw["reviewer_run_id"] = reviewer_run_id
+    raw["provenance"]["run_id"] = reviewer_provenance_run_id
+    raw["provenance"]["output_checksum"] = pre_runtime_checksum
     return _json_checksum(raw)
 
 
@@ -189,9 +191,13 @@ def _validate_enrichment_binding(topic_input: dict[str, Any], handoff: dict[str,
         ("narrative_work", "narrative_work"),
         ("corpus_ref", "corpus_ref"),
         ("candidate_work_refs", "candidate_work_refs"),
+        ("user_instructions", "user_instructions"),
     ):
         supplied = bindings.get(handoff_key)
         if supplied not in (None, "", []) and topic_input.get(input_key) != supplied:
+            violations.append(f"ENRICHMENT_{input_key.upper()}_MISMATCH")
+    for input_key in ("duration_target_minutes", "target_language"):
+        if input_key in bindings and topic_input.get(input_key) != bindings.get(input_key):
             violations.append(f"ENRICHMENT_{input_key.upper()}_MISMATCH")
     if topic_input.get("entry_mode") != handoff.get("entry_mode"):
         violations.append("ENRICHMENT_ENTRY_MODE_MISMATCH")
@@ -200,6 +206,118 @@ def _validate_enrichment_binding(topic_input: dict[str, Any], handoff: dict[str,
         if topic_input.get(key) != profile.get(key):
             violations.append(f"ENRICHMENT_{key.upper()}_MISMATCH")
     return violations
+
+
+def _validate_cognitive_proposal(proposal: dict[str, Any]) -> list[str]:
+    return validate_against_schema(proposal, COGNITIVE_PROPOSAL_SCHEMA)
+
+
+def _validate_cognitive_proposal_binding(proposal: dict[str, Any], handoff: dict[str, Any]) -> list[str]:
+    """Reject cognitive claims for protected human-provided fields."""
+    bindings = handoff.get("field_bindings", {})
+    violations: list[str] = []
+    if bindings.get("central_question") and "proposed_central_question" in proposal:
+        violations.append("ENRICHMENT_CENTRAL_QUESTION_PROTECTED")
+    if handoff.get("entry_mode") == EntryMode.TOPIC_FIRST.value and "proposed_topic" in proposal:
+        violations.append("ENRICHMENT_TOPIC_PROTECTED")
+    if bindings.get("topic") and "proposed_topic" in proposal:
+        violations.append("ENRICHMENT_TOPIC_PROTECTED")
+    return violations
+
+
+def _validate_cognitive_proposal_result(
+    proposal: dict[str, Any], topic_input: dict[str, Any]
+) -> list[str]:
+    """Keep persisted cognitive values bound to the final input they formed."""
+    violations: list[str] = []
+    for proposal_key, input_key in (
+        ("proposed_topic", "topic"),
+        ("proposed_angle", "proposed_angle"),
+        ("proposed_territory", "proposed_territory"),
+        ("initial_evidence", "initial_evidence"),
+        ("strategic_triggers", "strategic_triggers"),
+        ("proposed_central_question", "central_question"),
+    ):
+        if proposal_key in proposal and proposal.get(proposal_key) != topic_input.get(input_key):
+            violations.append(f"COGNITIVE_PROPOSAL_{proposal_key.upper()}_MISMATCH")
+    return violations
+
+
+def _field_ownership(topic_input: dict[str, Any], handoff: dict[str, Any]) -> dict[str, list[str]]:
+    """Record ownership without adding provenance fields to the final contract."""
+    bindings = handoff.get("field_bindings", {})
+    user_fields = {
+        field
+        for field in ("topic", "entry_mode", "narrative_work", "corpus_ref", "candidate_work_refs")
+        if field in topic_input and bindings.get(field) not in (None, "", [])
+    }
+    if bindings.get("central_question") not in (None, ""):
+        user_fields.add("central_question")
+    if bindings.get("user_instructions") not in (None, "", []):
+        user_fields.add("user_instructions")
+    for field in ("duration_target_minutes", "target_language"):
+        if field in topic_input and field in bindings:
+            user_fields.add(field)
+    ai_fields = {
+        field
+        for field in (
+            "proposed_angle",
+            "proposed_territory",
+            "initial_evidence",
+            "strategic_triggers",
+        )
+        if field in topic_input
+    }
+    if "central_question" in topic_input and "central_question" not in user_fields:
+        ai_fields.add("central_question")
+    if "topic" in topic_input and "topic" not in user_fields:
+        ai_fields.add("topic")
+    software_fields = set(topic_input) - user_fields - ai_fields
+    return {
+        "USER_PROVIDED": sorted(user_fields),
+        "AI_PROPOSED": sorted(ai_fields),
+        "SOFTWARE_OWNED": sorted(software_fields),
+    }
+
+
+def _combine_cognitive_proposal(
+    proposal: dict[str, Any],
+    handoff: dict[str, Any],
+    profile: dict[str, Any],
+    episode_id: str,
+) -> dict[str, Any]:
+    bindings = handoff.get("field_bindings", {})
+    topic = bindings.get("topic")
+    if not isinstance(topic, str) or not topic.strip():
+        if handoff.get("entry_mode") in {EntryMode.ANCHOR_WORK_FIRST.value, EntryMode.CORPUS_FIRST.value}:
+            topic = proposal.get("proposed_topic")
+        if not isinstance(topic, str) or not topic.strip():
+            raise TopicBelongingExecutionError("ENRICHMENT_TOPIC_REQUIRED_FOR_FINAL_CONTRACT")
+    central_question = bindings.get("central_question") or proposal.get("proposed_central_question")
+    if not isinstance(central_question, str) or not central_question.strip():
+        raise TopicBelongingExecutionError("ENRICHMENT_CENTRAL_QUESTION_REQUIRED")
+    topic_input = {
+        "topic_input_id": f"TBI-{uuid4().hex}",
+        "profile_id": profile["ACTIVE_PROFILE_ID"],
+        "profile_version": profile["ACTIVE_PROFILE_VERSION"],
+        "profile_checksum": profile["profile_checksum"],
+        "topic": topic,
+        "entry_mode": handoff["entry_mode"],
+        "central_question": central_question,
+        "proposed_angle": proposal["proposed_angle"],
+        "proposed_territory": proposal["proposed_territory"],
+        "initial_evidence": proposal["initial_evidence"],
+        "strategic_triggers": proposal["strategic_triggers"],
+        "submitted_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "user_instructions": copy.deepcopy(bindings.get("user_instructions", [])),
+        "duration_target_minutes": bindings.get("duration_target_minutes"),
+        "target_language": bindings.get("target_language"),
+    }
+    for field_name in ("corpus_ref", "narrative_work", "candidate_work_refs"):
+        value = bindings.get(field_name)
+        if value not in (None, "", []):
+            topic_input[field_name] = copy.deepcopy(value)
+    return topic_input
 
 
 def _validate_human_handoff_binding(human_input: dict[str, Any], handoff: dict[str, Any]) -> list[str]:
@@ -232,6 +350,9 @@ def _validate_human_handoff_binding(human_input: dict[str, Any], handoff: dict[s
         ("initial_question", "initial_question"),
         ("context", "context"),
         ("works", "candidate_work_refs"),
+        ("user_instructions", "user_instructions"),
+        ("duration_target_minutes", "duration_target_minutes"),
+        ("target_language", "target_language"),
     ):
         if human_input.get(human_key) != bindings.get(handoff_key):
             violations.append(f"HUMAN_INPUT_{handoff_key.upper()}_MISMATCH")
@@ -547,12 +668,15 @@ class ExecutionCognitiveBoundary:
 
     def enrich(self, handoff: dict[str, Any], human_input: HumanInput, profile: dict[str, Any], episode_id: str) -> tuple[dict[str, Any], ExecutionResult]:
         output = self.mock_outputs.get("enrich") if self.mock_outputs is not None else None
+        output_id = f"PROPOSAL-{uuid4().hex}"
+        if isinstance(output, dict):
+            output_id = str(output.get("proposal_id") or output_id)
         return self._run(
             stage="enrich",
             role=PRODUCER_ROLE,
-            output_schema="topic_belonging_input",
-            output_kind="topic_belonging_input",
-            output_id=str((output or {}).get("topic_input_id") or f"TBI-{uuid4().hex}"),
+            output_schema=COGNITIVE_PROPOSAL_SCHEMA,
+            output_kind=COGNITIVE_PROPOSAL_SCHEMA,
+            output_id=output_id,
             episode_id=episode_id,
             inputs=[("editorial_intake_handoff", handoff["source_interaction_id"], handoff, "")],
             mock_output=output,
@@ -565,6 +689,13 @@ class ExecutionCognitiveBoundary:
 
     def produce(self, topic_input: dict[str, Any], profile: dict[str, Any], episode_id: str, *, input_producer_run_id: str = "") -> tuple[dict[str, Any], ExecutionResult]:
         output = self.mock_outputs.get("produce") if self.mock_outputs is not None else None
+        if output is not None:
+            output = copy.deepcopy(output)
+            # The final input identity is software-owned; a synthetic fixture
+            # cannot choose a different input artifact for the producer stage.
+            output["topic_input_id"] = topic_input["topic_input_id"]
+            output["artifact_checksum"] = canonical_checksum(output, "assessment")
+            output.setdefault("provenance", {})["output_checksum"] = output["artifact_checksum"]
         return self._run(
             stage="produce",
             role=PRODUCER_ROLE,
@@ -589,6 +720,8 @@ class ExecutionCognitiveBoundary:
             output["reviewer_input_checksum"] = assessment["artifact_checksum"]
             if isinstance(output.get("provenance"), dict):
                 output["provenance"]["input_checksum"] = assessment["artifact_checksum"]
+            if isinstance(output.get("provenance"), dict):
+                output["provenance"]["output_checksum"] = canonical_checksum(output, "decision")
         return self._run(
             stage="review",
             role=REVIEWER_ROLE,
@@ -648,9 +781,16 @@ class TopicBelongingTechnicalWorkflow:
         handoff_violations = _validate_human_handoff_binding(human_input.to_dict(), handoff)
         if handoff_violations:
             raise TopicBelongingExecutionError("HANDOFF_INVALID: " + "; ".join(handoff_violations))
-        topic_input, enrich_result = self.boundary.enrich(handoff, human_input, profile, handle.episode_id)
+        cognitive_proposal, enrich_result = self.boundary.enrich(handoff, human_input, profile, handle.episode_id)
         if enrich_result.status is ExecutionStatus.HANDOFF_PREPARED:
             return self._pending_handoff_state(handle, run_id, enrich_result, "ENRICHMENT")
+        enrichment_violations = _validate_cognitive_proposal(cognitive_proposal)
+        if enrichment_violations:
+            raise TopicBelongingExecutionError("COGNITIVE_PROPOSAL_INVALID: " + "; ".join(enrichment_violations))
+        enrichment_violations = _validate_cognitive_proposal_binding(cognitive_proposal, handoff)
+        if enrichment_violations:
+            raise TopicBelongingExecutionError("COGNITIVE_PROPOSAL_INVALID: " + "; ".join(enrichment_violations))
+        topic_input = _combine_cognitive_proposal(cognitive_proposal, handoff, profile, handle.episode_id)
         enrichment_violations = _validate_enrichment_binding(topic_input, handoff)
         if enrichment_violations:
             raise TopicBelongingExecutionError("ENRICHMENT_INVALID: " + "; ".join(enrichment_violations))
@@ -697,6 +837,7 @@ class TopicBelongingTechnicalWorkflow:
             "reviewer_run_id": reviewer_result.run_id,
             "producer_actor_id": assessment["producer_actor_id"],
             "reviewer_actor_id": decision["reviewer_actor_id"],
+            "field_ownership": _field_ownership(topic_input, handoff),
             "stop_after": "TOPIC_BELONGING_GATE",
         }
         executions = [
@@ -707,6 +848,8 @@ class TopicBelongingTechnicalWorkflow:
                 canonical_checksum(topic_input, "input"),
                 [f"editorial_intake_handoff:{handoff['source_interaction_id']}"],
                 [],
+                artifact_ref=f"topic_belonging_input:{topic_input['topic_input_id']}",
+                cognitive_proposal=cognitive_proposal,
             ),
             self._execution_record(
                 "PRODUCER",
@@ -975,7 +1118,7 @@ class TopicBelongingTechnicalWorkflow:
     ) -> dict[str, Any]:
         """Bound reduced convergence to handoff structure; never to cognition."""
         def implement() -> dict[str, Any]:
-            passed = output_schema in {"topic_belonging_input", "topic_belonging_assessment", "topic_belonging_decision"}
+            passed = output_schema in {COGNITIVE_PROPOSAL_SCHEMA, "topic_belonging_input", "topic_belonging_assessment", "topic_belonging_decision"}
             return {
                 "passed": passed,
                 "evidence": [{"kind": "ROUNDTRIP_HANDOFF_IMPLEMENTATION", "ref": convergence_ref}],
@@ -1641,6 +1784,31 @@ class TopicBelongingTechnicalWorkflow:
 
         executions = execution_payload.get("executions")
         expected_stages = ("ENRICHMENT", "PRODUCER", "REVIEWER")
+        enrichment_execution = next(
+            (item for item in executions or [] if isinstance(item, dict) and item.get("stage") == "ENRICHMENT"),
+            {},
+        )
+        stored_enrichment_proposal = enrichment_execution.get("cognitive_proposal")
+        if isinstance(stored_enrichment_proposal, dict):
+            proposal_violations = _validate_cognitive_proposal(stored_enrichment_proposal)
+            proposal_violations.extend(
+                _validate_cognitive_proposal_binding(stored_enrichment_proposal, handoff)
+            )
+            proposal_violations.extend(
+                _validate_cognitive_proposal_result(stored_enrichment_proposal, topic_input)
+            )
+            proposal_provenance = enrichment_execution.get("cognitive_proposal_provenance")
+            if proposal_provenance != {
+                "source": "AI_PROPOSED",
+                "fields": sorted(stored_enrichment_proposal),
+            }:
+                proposal_violations.append("COGNITIVE_PROPOSAL_PROVENANCE_INVALID")
+            if lineage.get("field_ownership") != _field_ownership(topic_input, handoff):
+                proposal_violations.append("FIELD_OWNERSHIP_INVALID")
+            violations.extend(
+                f"COGNITIVE_PROPOSAL_INVALID: {violation}"
+                for violation in proposal_violations
+            )
         if not isinstance(executions, list) or len(executions) != len(expected_stages):
             violations.append("EXECUTION_RECORDS_COUNT_INVALID")
             executions = []
@@ -1706,8 +1874,9 @@ class TopicBelongingTechnicalWorkflow:
                     "active_editorial_profile": active_profile,
                 },
             }
+            enrichment_uses_proposal = isinstance(stored_enrichment_proposal, dict)
             prompt_schemas = {
-                "ENRICHMENT": "topic_belonging_input",
+                "ENRICHMENT": COGNITIVE_PROPOSAL_SCHEMA if enrichment_uses_proposal else "topic_belonging_input",
                 "PRODUCER": "topic_belonging_assessment",
                 "REVIEWER": "topic_belonging_decision",
             }
@@ -1760,7 +1929,10 @@ class TopicBelongingTechnicalWorkflow:
                 checksum = execution.get(checksum_key)
                 if not isinstance(checksum, str) or re.fullmatch(r"[0-9a-fA-F]{64}", checksum) is None:
                     violations.append(f"EXECUTION_{stage}_{checksum_key.upper()}_INVALID")
-            expected_raw_checksum = _expected_raw_output_checksum(stage, topic_input, assessment, decision)
+            stored_proposal = stored_enrichment_proposal if stage == "ENRICHMENT" else None
+            expected_raw_checksum = _expected_raw_output_checksum(
+                stage, topic_input, assessment, decision, stored_proposal
+            )
             if execution.get("output_checksum") != expected_raw_checksum:
                 violations.append(f"EXECUTION_{stage}_RAW_OUTPUT_CHECKSUM_MISMATCH")
             if not isinstance(execution.get("execution_route"), str) or not execution.get("execution_route", "").strip():
@@ -1944,8 +2116,11 @@ class TopicBelongingTechnicalWorkflow:
         artifact_checksum: str,
         input_artifact_ids: list[str],
         input_versions: list[str],
+        *,
+        artifact_ref: str | None = None,
+        cognitive_proposal: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        return {
+        record = {
             "stage": stage,
             "role": role,
             "run_id": result.run_id,
@@ -1960,7 +2135,7 @@ class TopicBelongingTechnicalWorkflow:
             "output_checksum": result.output_checksum,
             # Canonical checksum of the persisted artifact after deterministic normalization/binding.
             "artifact_checksum": artifact_checksum,
-            "artifact_ref": result.output_artifact_ref,
+            "artifact_ref": artifact_ref or result.output_artifact_ref,
             "execution_mode": result.usage.get("execution_mode", "SYNTHETIC" if result.provider == "mock" else "REAL"),
             "execution_route": result.usage.get("execution_route"),
             "execution_profile": result.usage.get("execution_profile"),
@@ -1969,6 +2144,13 @@ class TopicBelongingTechnicalWorkflow:
             "prompt_checksum": result.usage.get("prompt_checksum"),
             "prompt_input_checksum": result.usage.get("prompt_input_checksum"),
         }
+        if cognitive_proposal is not None:
+            record["cognitive_proposal"] = copy.deepcopy(cognitive_proposal)
+            record["cognitive_proposal_provenance"] = {
+                "source": "AI_PROPOSED",
+                "fields": sorted(cognitive_proposal),
+            }
+        return record
 
     def resume(self, handle: EpisodeHandle, human_input: HumanInput, handoff: dict[str, Any], decision: Any, request: Any) -> dict[str, Any]:
         raise StorageError("La vertical Topic Belonging no admite decisiones humanas intermedias.")

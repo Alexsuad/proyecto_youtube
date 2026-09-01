@@ -1,0 +1,174 @@
+{
+  "mission_id": "PLAN011_M1_B5_I1_BOUNDARY_REBALANCE",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN011_M1_B5_I1_BOUNDARY_REBALANCE",
+  "artifact_version": "1.2.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_011/",
+    "src/application/contracts.py",
+    "src/application/handoff.py",
+    "src/cli.py",
+    "src/application/topic_belonging.py",
+    "src/ai/role_execution.py",
+    "schemas/topic_belonging_input.json",
+    "schemas/topic_belonging_cognitive_proposal.json",
+    "schemas/human_episode_input.json",
+    "schemas/editorial_intake_handoff.json",
+    "prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md",
+    ".agent/skills/skill_crear_brief_episodio.md",
+    ".agent/skills/skill_research_tema_y_obras.md",
+    ".agent/skills/skill_qa_brief_research.md",
+    "tests/core/",
+    "tests/harness/"
+  ],
+  "protected_untracked_paths": [".agents/skills/tests-validacion-cierre/"],
+  "protected_untracked_baseline": [
+    {
+      "path": ".agents/skills/tests-validacion-cierre/SKILL.md",
+      "sha256": "41cee8fb79b1b00ebd72b65c7088960f8f4a6a1c241444c481750127aef04334"
+    }
+  ],
+  "required_tests": [
+    {
+      "label": "PLAN009_M1_VERTICAL_REGRESSION",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_plan009_m1_vertical.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "B5_I1_EDITORIAL_INPUT",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_b5_i1_editorial_input.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "CHANNEL_INTELLIGENCE_CONTRACTS",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_channel_intelligence.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "ROLE_EXECUTION_CONTRACTS",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/ai/test_role_execution_contract.py"],
+      "timeout_seconds": 360
+    }
+  ],
+  "push_allowed": true,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "c3effdf6278702b36cedbcc8b7eec1c62c1e3bb6"
+  },
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/plan_011/mission/mission-authorization.json",
+  "mission_authorization_sha256": "c2eb80f66e60c53beb7ee856e458b31ca30000420271e1e4a4441c1463ac8ca8",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "PLAN011_M1_B5_I1_BOUNDARY_REBALANCE",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "plans/plan_011/mission/mission_contract.json",
+      "PLAN_011_IMPLEMENTATION_AUTHORIZED": "YES_M1_B5_I1_ONLY",
+      "PLAN_011_CURRENT_MISSION": "PLAN011_M1_B5_I1_BOUNDARY_REBALANCE",
+      "PLAN_011_M1_B5_I1_AUTHORIZED": "YES",
+      "PLAN_011_M1_STARTED": "YES",
+      "PLAN_011_B5_I2_AUTHORIZED": "NO",
+      "PLAN_011_B5_I3_AUTHORIZED": "NO",
+      "PLAN_011_B5_5_AUTHORIZED": "NO",
+      "PLAN_011_B6_AUTHORIZED": "NO",
+      "PLAN_011_B7_AUTHORIZED": "NO",
+      "AUTHORIZED_FOR_PRODUCT_USE": "NO"
+    },
+    "forbidden": {
+      "B5_I2_AUTHORIZED": ["YES"],
+      "B5_I3_AUTHORIZED": ["YES"],
+      "B5_5_AUTHORIZED": ["YES"],
+      "B6_AUTHORIZED": ["YES"],
+      "PLAN_011_B5_I2_AUTHORIZED": ["YES"],
+      "PLAN_011_B5_I3_AUTHORIZED": ["YES"],
+      "PLAN_011_B5_5_AUTHORIZED": ["YES"],
+      "PLAN_011_B6_AUTHORIZED": ["YES"],
+      "PLAN_011_B7_AUTHORIZED": ["YES"],
+      "P2_REAL_EXECUTION_NOW": ["YES"],
+      "REAL_COGNITIVE_EXECUTION": ["DEMONSTRATED", "AUTHORIZED"]
+    }
+  },
+  "schema_checks": [
+    {"path": "plans/plan_011/mission/mission_contract.json", "schema": "mission_contract"}
+  ],
+  "objective": "Separar la frontera determinista y cognitiva de B5-I1 en Topic Belonging, preservar la entrada humana ampliada y ejecutar únicamente cognición sintética.",
+  "preconditions": [
+    "CURRENT_MISSION matches this mission.",
+    "The active editorial profile is approved and activated.",
+    "Only synthetic cognitive boundary execution is used.",
+    "B5-I2 and later phases remain unauthorized."
+  ],
+  "canonical_inputs": [
+    "HumanInput and EditorialIntakeHandoff",
+    "ActiveEditorialProfile authority",
+    "Existing TopicBelongingInput contract with optional compatible intake extensions",
+    "Existing Topic Belonging workflow, storage, routing, and tests"
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_011/",
+    "src/application/contracts.py",
+    "src/application/handoff.py",
+    "src/cli.py",
+    "src/application/topic_belonging.py",
+    "src/ai/role_execution.py",
+    "schemas/topic_belonging_input.json",
+    "schemas/topic_belonging_cognitive_proposal.json",
+    "schemas/human_episode_input.json",
+    "schemas/editorial_intake_handoff.json",
+    "prompts/roles/CHANNEL_INTELLIGENCE_PRODUCER/1.0.0.md",
+    ".agent/skills/skill_crear_brief_episodio.md",
+    ".agent/skills/skill_research_tema_y_obras.md",
+    ".agent/skills/skill_qa_brief_research.md",
+    "tests/core/",
+    "tests/harness/"
+  ],
+  "non_objectives": [
+    "B5-I2, B5-I3, B5.5, B6, B7, P2 REAL, S5 REAL, or product use",
+    "New runtime, provider, registry, gate, lifecycle, provenance system, or state system",
+    "Retrospective rewriting or reclassification of persisted episodes",
+    "New implementation outside the approved M1 scope"
+  ],
+  "expected_outputs": [
+    "Software preserves human and canonical fields in an immutable base.",
+    "Synthetic IA output is limited to TopicBelongingCognitiveProposal.",
+    "Field ownership is explicit: user-bound fields are USER_PROVIDED and cognitive fields are AI_PROPOSED.",
+    "Software combines and validates the existing TopicBelongingInput contract.",
+    "TOPIC_FIRST remains valid without narrative work.",
+    "ANCHOR_WORK_FIRST and CORPUS_FIRST may receive an AI-proposed topic while TOPIC_FIRST protects the user topic.",
+    "User instructions, duration, and target language propagate unchanged through the handoff into TopicBelongingInput.",
+    "Persisted historical TopicBelongingInput episodes remain readable and unchanged."
+  ],
+  "deterministic_validations": [
+    "Mission contract, authorization, live state, and scope checks pass.",
+    "Topic Belonging focused synthetic tests pass.",
+    "A proposed central question is accepted only when the user supplied none, and its ownership is recorded as AI_PROPOSED.",
+    "AI-proposed evidence remains explicitly AI_PROPOSED and is not promoted to system-verified evidence.",
+    "Protected human and canonical fields reject conflicting cognitive output.",
+    "Final TopicBelongingInput validates before persistence.",
+    "Instructions preserve category and exact text; duration and language remain user-owned deterministic fields.",
+    "Historical compatibility and TOPIC_FIRST behavior are tested."
+  ],
+  "adversarial_cases": [
+    "Cognitive output attempts to overwrite topic, question, mode, profile, or references.",
+    "Cognitive output attempts to propose a topic in TOPIC_FIRST or omits a required topic proposal in another mode.",
+    "Cognitive output contains deterministic metadata or final-contract-only fields.",
+    "TOPIC_FIRST omits narrative work.",
+    "Existing persisted final input is loaded without a retrospective proposal."
+  ],
+  "stop_conditions": [
+    "Missing or stale live authorization.",
+    "Harness defect outside this mission.",
+    "Required compatibility decision is unresolved.",
+    "Any real provider, local model, or external cognitive call.",
+    "Any file or phase outside this scope is required."
+  ],
+  "review_policy": {
+    "required_review": "INDEPENDENT_REVIEW",
+    "independent_review": "REQUIRED",
+    "owner_review": true
+  },
+  "owner_closure": {"required": false}
+}

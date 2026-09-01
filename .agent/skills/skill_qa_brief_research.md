@@ -3,6 +3,14 @@
 ## Objetivo
 Auditar `EpisodeBrief` y `ResearchPack` antes del gate de suficiencia de evidencia.
 
+## Frontera de responsabilidad
+- El software ejecuta QA mecánico: presencia, schema, perfil, lineage, checksums,
+  cobertura estructural y persistencia.
+- La IA realiza únicamente la auditoría semántica de sustancia, relevancia,
+  rival, claims y preparación real.
+- Este QA no inventa evidencia, URLs, estados de acceso, metadata ni decisiones
+  editoriales reservadas.
+
 ## Entradas
 - `<EP_PATH>/episode_brief.json`;
 - `<EP_PATH>/research_pack.json`;

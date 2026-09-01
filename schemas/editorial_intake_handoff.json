@@ -13,7 +13,21 @@
     "source_interaction_id": {"type": "string", "minLength": 1},
     "source_channel": {"type": "string", "minLength": 1},
     "entry_mode": {"enum": ["TOPIC_FIRST", "ANCHOR_WORK_FIRST", "CORPUS_FIRST"]},
-    "field_bindings": {"type": "object"},
+    "field_bindings": {
+      "type": "object",
+      "properties": {
+        "topic": {"type": ["string", "null"]},
+        "narrative_work": {"type": ["string", "null"]},
+        "corpus_ref": {"type": ["string", "null"]},
+        "central_question": {"type": ["string", "null"]},
+        "initial_question": {"type": ["string", "null"]},
+        "context": {"type": ["string", "null"]},
+        "candidate_work_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "user_instructions": {"type": "array", "items": {"$ref": "#/$defs/user_instruction"}},
+        "duration_target_minutes": {"type": ["integer", "null"], "minimum": 1},
+        "target_language": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
     "unresolved_fields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "profile_binding": {
       "type": "object",
@@ -26,5 +40,16 @@
       }
     },
     "provenance": {"type": "object", "required": ["source_ref", "transformation", "editorial_decisions_made"], "properties": {"source_ref": {"type": "string", "minLength": 1}, "transformation": {"const": "BIND_USER_FIELDS_ONLY"}, "editorial_decisions_made": {"const": false}}}
+  },
+  "$defs": {
+    "user_instruction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "text"],
+      "properties": {
+        "category": {"enum": ["CONTEXT_ONLY", "MAY_INCLUDE", "MUST_INCLUDE", "MUST_INCLUDE_VERBATIM"]},
+        "text": {"type": "string", "minLength": 1}
+      }
+    }
   }
 }

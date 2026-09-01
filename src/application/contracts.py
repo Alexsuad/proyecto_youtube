@@ -15,6 +15,13 @@ class EntryMode(StrEnum):
     CORPUS_FIRST = "CORPUS_FIRST"
 
 
+class UserInstructionCategory(StrEnum):
+    CONTEXT_ONLY = "CONTEXT_ONLY"
+    MAY_INCLUDE = "MAY_INCLUDE"
+    MUST_INCLUDE = "MUST_INCLUDE"
+    MUST_INCLUDE_VERBATIM = "MUST_INCLUDE_VERBATIM"
+
+
 class InputValidationError(ValueError):
     """Raised when a human intake cannot become a valid canonical input."""
 
@@ -49,6 +56,68 @@ def normalize_entry_mode(value: EntryMode | str) -> EntryMode:
         ) from exc
 
 
+def normalize_target_language(value: str | None) -> str | None:
+    if value is None:
+        return None
+    clean = str(value).strip()
+    if not clean or clean.lower() in {"default", "predeterminado", "automatico", "automático"}:
+        return None
+    aliases = {
+        "español": "es",
+        "spanish": "es",
+        "inglés": "en",
+        "ingles": "en",
+        "english": "en",
+        "francés": "fr",
+        "frances": "fr",
+        "french": "fr",
+        "portugués": "pt",
+        "portugues": "pt",
+        "portuguese": "pt",
+    }
+    return aliases.get(clean.lower(), clean)
+
+
+@dataclass(frozen=True)
+class UserInstruction:
+    category: UserInstructionCategory
+    text: str
+
+    def __post_init__(self) -> None:
+        try:
+            category = UserInstructionCategory(str(self.category).strip().upper())
+        except ValueError as exc:
+            raise InputValidationError("Categoría de indicación inválida.") from exc
+        if not isinstance(self.text, str) or not self.text.strip():
+            raise InputValidationError("El texto de la indicación no puede estar vacío.")
+        object.__setattr__(self, "category", category)
+
+    @classmethod
+    def create(cls, *, category: UserInstructionCategory | str, text: str) -> "UserInstruction":
+        return cls(category=category, text=text)
+
+    def to_dict(self) -> dict[str, str]:
+        return {"category": self.category.value, "text": self.text}
+
+
+def normalize_user_instructions(
+    values: list[UserInstruction | dict[str, Any]] | tuple[UserInstruction | dict[str, Any], ...] | None,
+) -> tuple[UserInstruction, ...]:
+    if values is None:
+        return ()
+    if not isinstance(values, (list, tuple)):
+        raise InputValidationError("Las indicaciones deben ser una lista.")
+    normalized: list[UserInstruction] = []
+    for item in values:
+        if isinstance(item, UserInstruction):
+            normalized.append(item)
+        elif isinstance(item, dict):
+            normalized.append(UserInstruction.create(category=item.get("category", ""), text=item.get("text", "")))
+        else:
+            raise InputValidationError("Cada indicación debe tener categoría y texto.")
+    return tuple(normalized)
+
+
 @dataclass(frozen=True)
 class HumanInput:
     """The smallest durable representation of what a user actually supplied."""
@@ -61,6 +130,9 @@ class HumanInput:
     initial_question: str | None = None
     context: str | None = None
     works: tuple[str, ...] = ()
+    user_instructions: tuple[UserInstruction, ...] = ()
+    duration_target_minutes: int | None = None
+    target_language: str | None = None
     actor_ref: str = "local-user"
     provenance: dict[str, Any] = field(default_factory=dict)
     processing_status: str = "RECEIVED"
@@ -78,6 +150,10 @@ class HumanInput:
         initial_question: str | None = None,
         context: str | None = None,
         works: list[str] | tuple[str, ...] | None = None,
+        user_instructions: list[UserInstruction | dict[str, Any]] | tuple[UserInstruction | dict[str, Any], ...] | None = None,
+        instructions: list[UserInstruction | dict[str, Any]] | tuple[UserInstruction | dict[str, Any], ...] | None = None,
+        duration_target_minutes: int | None = None,
+        target_language: str | None = None,
         channel: str = "TERMINAL",
         actor_ref: str = "local-user",
         interaction_id: str | None = None,
@@ -89,6 +165,17 @@ class HumanInput:
         clean_content = str(content or "").strip()
         clean_question = str(initial_question).strip() if initial_question and str(initial_question).strip() else None
         clean_context = str(context).strip() if context and str(context).strip() else None
+        if user_instructions is not None and instructions is not None and user_instructions != instructions:
+            raise InputValidationError("No se pueden indicar dos listas de indicaciones distintas.")
+        clean_instructions = normalize_user_instructions(
+            user_instructions if user_instructions is not None else instructions
+        )
+        if isinstance(duration_target_minutes, bool) or (
+            duration_target_minutes is not None
+            and (not isinstance(duration_target_minutes, int) or duration_target_minutes <= 0)
+        ):
+            raise InputValidationError("La duración objetivo debe ser un número entero positivo o null.")
+        clean_language = normalize_target_language(target_language)
         if works is not None and (
             isinstance(works, str)
             or not isinstance(works, (list, tuple))
@@ -119,6 +206,9 @@ class HumanInput:
             initial_question=clean_question,
             context=clean_context,
             works=clean_works,
+            user_instructions=clean_instructions,
+            duration_target_minutes=duration_target_minutes,
+            target_language=clean_language,
             actor_ref=str(actor_ref).strip(),
             provenance=dict(provenance or {"capture_method": "TEXT", "source": "USER"}),
             processing_status=processing_status,
@@ -132,6 +222,9 @@ class HumanInput:
             initial_question=data.get("initial_question"),
             context=data.get("context"),
             works=data.get("works", []),
+            user_instructions=data.get("user_instructions", data.get("instructions", [])),
+            duration_target_minutes=data.get("duration_target_minutes"),
+            target_language=data.get("target_language"),
             channel=data.get("channel", ""),
             actor_ref=data.get("actor_ref", ""),
             interaction_id=data.get("interaction_id"),
@@ -152,6 +245,9 @@ class HumanInput:
             "initial_question": self.initial_question,
             "context": self.context,
             "works": list(self.works),
+            "user_instructions": [item.to_dict() for item in self.user_instructions],
+            "duration_target_minutes": self.duration_target_minutes,
+            "target_language": self.target_language,
             "actor_ref": self.actor_ref,
             "provenance": self.provenance,
             "processing_status": self.processing_status,

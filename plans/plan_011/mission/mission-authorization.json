@@ -1,0 +1,22 @@
+{
+  "mission_id": "PLAN011_M1_B5_I1_BOUNDARY_REBALANCE",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "a288ff250beb4fe15b4f12a4b94dae6083626492ca86b4b35de0167a88d838aa",
+    "capability_ids": ["TOPIC_BELONGING_ASSESSMENT"],
+    "role_ids": ["CHANNEL_INTELLIGENCE_PRODUCER", "CHANNEL_INTELLIGENCE_REVIEWER"],
+    "execution_profile_ids": ["ollama_local"],
+    "execution_interface": "TOPIC_BELONGING_TERMINAL",
+    "allowed_operations": ["EXECUTE_CAPABILITY"],
+    "allowed_paths": [],
+    "allowed_routes": ["local_model"],
+    "execution_mode": "SYNTHETIC_TEST",
+    "authority_ref": "plans/plan_011/mission/authority.json",
+    "authority_sha256": "5c1d66e9a1a7aa203b522cdf8d9801b940f743db264790198a40f9254671c754",
+    "authorized_scope_sha256": "2db2b46a46c050cb83c514cbe84cddf0ddd3ca843ec04c32c09133b883fcb6d6",
+    "single_use": false,
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false,
+    "repair_integrity_evidence_path": "NONE"
+  }
+}

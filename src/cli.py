@@ -121,17 +121,74 @@ def _interactive_input() -> HumanInput:
             works.append(item)
     initial_question = terminal.free_text("¿Tienes una pregunta concreta?", optional=True)
     context = terminal.free_text("¿Quieres añadir contexto o explicación adicional?", optional=True)
+    instructions: list[dict[str, str]] = []
+    while terminal.confirm("¿Quieres añadir una indicación?"):
+        category = terminal.choose(
+            "Selecciona la categoría de la indicación:",
+            [
+                ("CONTEXT_ONLY", "Solo contexto"),
+                ("MAY_INCLUDE", "Se puede incluir"),
+                ("MUST_INCLUDE", "Debe incluirse"),
+                ("MUST_INCLUDE_VERBATIM", "Debe incluirse literalmente"),
+            ],
+        )
+        text = terminal.free_text("Escribe la indicación:")
+        instructions.append({"category": category, "text": text})
+    duration_option = terminal.choose(
+        "Selecciona la duración objetivo:",
+        [
+            ("automatic", "Automática"),
+            ("15", "15 minutos"),
+            ("20", "20 minutos"),
+            ("25", "25 minutos"),
+            ("30", "30 minutos"),
+            ("custom", "Personalizada"),
+        ],
+    )
+    if duration_option == "custom":
+        raw_minutes = terminal.free_text("¿Cuántos minutos debe durar?")
+        try:
+            duration_minutes = int(raw_minutes)
+        except (TypeError, ValueError) as exc:
+            raise InputValidationError("La duración personalizada requiere minutos enteros.") from exc
+    elif duration_option == "automatic":
+        duration_minutes = None
+    else:
+        duration_minutes = int(duration_option)
+    language_option = terminal.choose(
+        "Selecciona el idioma objetivo:",
+        [
+            ("default", "Predeterminado del canal"),
+            ("es", "Español"),
+            ("en", "Inglés"),
+            ("other", "Otro"),
+        ],
+    )
+    target_language = terminal.free_text("¿Cuál es el idioma objetivo?") if language_option == "other" else language_option
     terminal.present(
         "\nResumen:\n"
         f"Modalidad: {mode}\n"
         f"Contenido: {content or '(corpus inicial)'}\n"
         f"Obras: {', '.join(works) if works else '(se determinarán durante el flujo editorial)'}\n"
         f"Pregunta inicial: {initial_question or '(sin pregunta inicial)'}\n"
-        f"Contexto: {context or '(sin contexto adicional)'}"
+        f"Contexto: {context or '(sin contexto adicional)'}\n"
+        f"Indicaciones: {len(instructions)}\n"
+        f"Duración objetivo: {duration_minutes or 'automática'}\n"
+        f"Idioma objetivo: {target_language or 'predeterminado del canal'}"
     )
     if not terminal.confirm("¿Iniciar?"):
         raise UserCancelled
-    return HumanInput.create(mode=mode, content=content, initial_question=initial_question, context=context, works=works, channel="TERMINAL")
+    return HumanInput.create(
+        mode=mode,
+        content=content,
+        initial_question=initial_question,
+        context=context,
+        works=works,
+        user_instructions=instructions,
+        duration_target_minutes=duration_minutes,
+        target_language=target_language,
+        channel="TERMINAL",
+    )
 
 
 def _non_interactive_input(args: argparse.Namespace) -> HumanInput:
@@ -142,12 +199,38 @@ def _non_interactive_input(args: argparse.Namespace) -> HumanInput:
         content, works = args.obra, [args.obra] if args.obra else []
     else:
         content, works = "", list(args.obras or [])
+    duration = getattr(args, "duracion", None)
+    custom_duration = getattr(args, "duracion_minutos", None)
+    if duration in {"automatico", "automático", "default", "predeterminado", None}:
+        if duration is not None and custom_duration is not None:
+            raise InputValidationError("Usa --duracion-minutos solo con duración personalizada.")
+        duration_minutes = custom_duration if duration is None else None
+    elif str(duration).lower() == "personalizada":
+        duration_minutes = custom_duration
+    else:
+        try:
+            duration_minutes = int(duration)
+        except (TypeError, ValueError) as exc:
+            raise InputValidationError("La duración debe ser automática, personalizada o un número de minutos.") from exc
+        if custom_duration is not None:
+            raise InputValidationError("Usa --duracion-minutos solo con duración personalizada.")
+    instructions = []
+    for raw_instruction in getattr(args, "indicacion", None) or []:
+        separator = next((item for item in (":", "|", "=") if item in raw_instruction), None)
+        if separator is None:
+            category, text = "CONTEXT_ONLY", raw_instruction
+        else:
+            category, text = raw_instruction.split(separator, 1)
+        instructions.append({"category": category, "text": text})
     return HumanInput.create(
         mode=mode,
         content=content,
         initial_question=getattr(args, "pregunta", None),
         context=getattr(args, "contexto", None),
         works=works,
+        user_instructions=instructions,
+        duration_target_minutes=duration_minutes,
+        target_language=getattr(args, "idioma", None),
         channel="TERMINAL",
     )
 
@@ -250,6 +333,10 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--obras", nargs="+")
     start.add_argument("--contexto")
     start.add_argument("--pregunta")
+    start.add_argument("--indicacion", action="append", help="Indicación como CATEGORIA: texto; puede repetirse")
+    start.add_argument("--duracion", help="Duración en minutos, automática o personalizada")
+    start.add_argument("--duracion-minutos", type=int)
+    start.add_argument("--idioma", help="Idioma objetivo; omitir para usar el predeterminado")
     start.set_defaults(handler=_start)
     resume = subparsers.add_parser("reanudar", help="Consultar y reanudar un episodio registrado")
     resume.add_argument("episodio")
