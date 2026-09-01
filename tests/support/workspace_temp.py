@@ -9,6 +9,8 @@ from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
 TMP_ROOT = ROOT / ".runtime-tmp" / "pytest" / f"pid_{os.getpid()}"
+PYTEST_TMP_ROOT = ROOT / ".runtime-tmp" / "pytest"
+PRESERVED_RUNTIME_DIRS = {"plan010-m4-m5"}
 
 
 def _slug(value: str) -> str:
@@ -37,8 +39,12 @@ def cleanup_path(path: Path) -> None:
 
 
 def cleanup_tmp_root() -> None:
-    if TMP_ROOT.exists():
-        shutil.rmtree(TMP_ROOT, ignore_errors=True)
+    runtime_root = ROOT / ".runtime-tmp"
+    if not runtime_root.exists():
+        return
+    for child in runtime_root.iterdir():
+        if child.name not in PRESERVED_RUNTIME_DIRS:
+            shutil.rmtree(child, ignore_errors=True)
 
 
 def root_tmp_artifacts() -> list[Path]:
