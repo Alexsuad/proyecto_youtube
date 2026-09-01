@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 import re
 from typing import Any
 
 import yaml
+
+from src.core.mission_authorization import MissionAuthorizationError, load_mission_authorization
+from src.core.mission_completion_gate import load_mission_contract
 
 
 class OperationalAuthorityError(PermissionError):
@@ -17,6 +21,15 @@ class OperationalAuthorityError(PermissionError):
 class OperationalAuthority:
     section: str
     values: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class ActiveMissionBundle:
+    """The minimum execution bundle resolved from the active authority."""
+
+    mission_id: str
+    mission_contract_path: str
+    mission_authorization_path: str
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
@@ -108,3 +121,61 @@ def load_operational_authority(path) -> OperationalAuthority:
     except OSError as exc:
         raise OperationalAuthorityError("No se pudo leer la autoridad operativa.") from exc
     return resolve_operational_authority(document)
+
+
+def _repository_reference(root: Path, reference: str, label: str) -> Path:
+    candidate = Path(reference)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        raise OperationalAuthorityError(f"{label}: path outside repository")
+    resolved = (root / candidate).resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise OperationalAuthorityError(f"{label}: path outside repository") from exc
+    return resolved
+
+
+def resolve_active_mission_bundle(
+    authority_path: str | Path,
+    *,
+    repository_root: str | Path,
+) -> ActiveMissionBundle:
+    """Resolve one explicit contract pointer for the active mission.
+
+    The authority owns the pointer; mission names are never converted into
+    filesystem paths by convention.  The contract then supplies the
+    authorization path already bound to that contract.
+    """
+
+    authority = load_operational_authority(Path(authority_path))
+    mission_id = str(authority.values.get("CURRENT_MISSION") or "").strip()
+    if not mission_id or mission_id.upper() == "NONE":
+        raise OperationalAuthorityError("NO_ACTIVE_CURRENT_MISSION")
+
+    bundle_reference = authority.values.get("CURRENT_MISSION_EXECUTION_BUNDLE")
+    if not isinstance(bundle_reference, str) or not bundle_reference.strip() or bundle_reference.strip().upper() == "NONE":
+        raise OperationalAuthorityError("ACTIVE_MISSION_EXECUTION_BUNDLE_REQUIRED")
+
+    root = Path(repository_root).resolve()
+    contract_path = _repository_reference(root, bundle_reference.strip(), "ACTIVE_MISSION_EXECUTION_BUNDLE_INVALID")
+    try:
+        contract = load_mission_contract(contract_path)
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        raise OperationalAuthorityError("ACTIVE_MISSION_EXECUTION_BUNDLE_INVALID") from exc
+    if contract.mission_id != mission_id:
+        raise OperationalAuthorityError("ACTIVE_MISSION_EXECUTION_BUNDLE_MISSION_MISMATCH")
+    authorization_reference = contract.mission_authorization_path
+    if not authorization_reference or authorization_reference.upper() == "NONE":
+        raise OperationalAuthorityError("ACTIVE_MISSION_AUTHORIZATION_REQUIRED")
+    authorization_path = _repository_reference(root, authorization_reference, "ACTIVE_MISSION_AUTHORIZATION_INVALID")
+    try:
+        authorization = load_mission_authorization(authorization_path)
+    except (OSError, UnicodeDecodeError, ValueError, MissionAuthorizationError) as exc:
+        raise OperationalAuthorityError("ACTIVE_MISSION_AUTHORIZATION_INVALID") from exc
+    if authorization.mission_id != mission_id:
+        raise OperationalAuthorityError("ACTIVE_MISSION_AUTHORIZATION_MISSION_MISMATCH")
+    return ActiveMissionBundle(
+        mission_id=mission_id,
+        mission_contract_path=contract_path.relative_to(root).as_posix(),
+        mission_authorization_path=authorization_path.relative_to(root).as_posix(),
+    )

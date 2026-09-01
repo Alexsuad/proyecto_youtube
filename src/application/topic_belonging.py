@@ -24,7 +24,7 @@ from src.ai.runtime_profiles import (
 )
 from src.application.contracts import HumanInput
 from src.application.storage import EpisodeHandle, StorageError, VaultEpisodeStore
-from src.application.authority import load_operational_authority
+from src.application.authority import load_operational_authority, resolve_active_mission_bundle
 from src.core.editorial_profile_registry import load_active_profile_authority
 from src.core.contract_validation import validate_against_schema
 from src.core.execution_preflight import preflight_controlled_execution
@@ -312,7 +312,12 @@ class ExecutionCognitiveBoundary:
 
     def preflight(self) -> str:
         if not self.mission_authorization_path:
-            raise PermissionError("MISSION_AUTHORIZATION_REQUIRED:TOPIC_BELONGING_ASSESSMENT")
+            bundle = resolve_active_mission_bundle(
+                self._operational_authority_path(),
+                repository_root=self.repository_root,
+            )
+            self.mission_authorization_path = bundle.mission_authorization_path
+            self.mission_contract_path = bundle.mission_contract_path
         if self.execution_mode == "REAL" and not self.execution_family and not self.execution_profile:
             raise PermissionError("EXECUTION_FAMILY_REQUIRED")
         self._resolve_profile_route()

@@ -12,6 +12,7 @@ from src.application.interaction import TerminalInteraction, UserCancelled
 from src.application.service import EpisodeApplicationService
 from src.application.storage import StorageError, VaultEpisodeStore
 from src.application.topic_belonging import ExecutionCognitiveBoundary, build_topic_belonging_service
+from src.core.p2_real_reporter import build_p2_report, render_p2_report
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -45,6 +46,7 @@ def _service(
     model_override: str | None = None,
     reasoning_effort: str | None = None,
     paid_cost_approved: bool = False,
+    operational_authority_path: str | None = None,
     mission_contract_path: str | None = None,
     completion_gate_result_path: str | None = None,
     mission_repo_root: str | None = None,
@@ -62,6 +64,7 @@ def _service(
                 execution_profile=execution_profile,
                 execution_family=execution_family,
                 execution_family_selection_path=execution_family_selection_path,
+                operational_authority_path=operational_authority_path,
                 model_override=model_override,
                 reasoning_effort=reasoning_effort,
                 paid_cost_approved=paid_cost_approved,
@@ -87,6 +90,7 @@ def _service_from_args(args: argparse.Namespace) -> EpisodeApplicationService:
         model_override=getattr(args, "model_override", None),
         reasoning_effort=getattr(args, "reasoning_effort", None),
         paid_cost_approved=bool(getattr(args, "paid_cost_approved", False)),
+        operational_authority_path=getattr(args, "operational_authority_path", None),
         mission_contract_path=getattr(args, "mission_contract_path", None),
         completion_gate_result_path=getattr(args, "completion_gate_result_path", None),
         mission_repo_root=getattr(args, "mission_repo_root", None),
@@ -160,7 +164,10 @@ def _start(args: argparse.Namespace) -> int:
         return 2
     print(f"Episodio creado: {result.episode.episode_id}")
     print("Entrada registrada.")
-    print("Topic Belonging alcanzó su gate técnico; el flujo se detuvo antes de investigación y guion.")
+    if result.workflow.get("status") == "PENDING_EXTERNAL_RESULT":
+        print("Primer handoff de Topic Belonging preparado; esperando resultado externo.")
+    else:
+        print("Topic Belonging alcanzó su gate técnico; el flujo se detuvo antes de investigación y guion.")
     return 0
 
 
@@ -174,6 +181,32 @@ def _resume(args: argparse.Namespace) -> int:
     print(f"Estado: {state['state'].get('status', 'desconocido')}")
     print(f"Ruta: {state['folder']}")
     return 0
+
+
+def _import_result(args: argparse.Namespace) -> int:
+    try:
+        state = _service_from_args(args).import_external_result(args.resultado)
+    except (StorageError, PermissionError, ValueError) as exc:
+        print(f"ERROR: {exc}")
+        return 2
+    episode_id = state["state"].get("episode_id", "desconocido")
+    status = state["state"].get("status", "desconocido")
+    print(f"Resultado externo importado: {episode_id}")
+    print(f"Estado: {status}")
+    return 0
+
+
+def _report_p2(args: argparse.Namespace) -> int:
+    try:
+        episode = VaultEpisodeStore.from_settings(args.config).resume(args.episodio)
+        if not episode["folder"]:
+            raise StorageError("P2_REPORT_UNAVAILABLE: el episodio no tiene carpeta persistida")
+        report = build_p2_report(episode["folder"])
+    except (StorageError, PermissionError, ValueError) as exc:
+        print(f"ERROR: {exc}")
+        return 2
+    print(render_p2_report(report), end="")
+    return report.exit_code
 
 
 def _administrative_close(args: argparse.Namespace) -> int:
@@ -207,6 +240,7 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--model", dest="model_override", help=argparse.SUPPRESS)
     start.add_argument("--reasoning-effort", help=argparse.SUPPRESS)
     start.add_argument("--paid-cost-approved", action="store_true", help=argparse.SUPPRESS)
+    start.add_argument("--operational-authority", dest="operational_authority_path", help=argparse.SUPPRESS)
     start.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
     start.add_argument("--completion-gate", dest="completion_gate_result_path", help=argparse.SUPPRESS)
     start.add_argument("--mission-repo-root", dest="mission_repo_root", help=argparse.SUPPRESS)
@@ -228,10 +262,25 @@ def build_parser() -> argparse.ArgumentParser:
     resume.add_argument("--model", dest="model_override", help=argparse.SUPPRESS)
     resume.add_argument("--reasoning-effort", help=argparse.SUPPRESS)
     resume.add_argument("--paid-cost-approved", action="store_true", help=argparse.SUPPRESS)
+    resume.add_argument("--operational-authority", dest="operational_authority_path", help=argparse.SUPPRESS)
     resume.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
     resume.add_argument("--completion-gate", dest="completion_gate_result_path", help=argparse.SUPPRESS)
     resume.add_argument("--mission-repo-root", dest="mission_repo_root", help=argparse.SUPPRESS)
     resume.set_defaults(handler=_resume)
+    import_result = subparsers.add_parser(
+        "importar-resultado",
+        help="Importar el resultado externo de un trabajo pendiente",
+    )
+    import_result.add_argument("resultado", type=Path, help="Archivo de resultado entregado por el trabajo externo")
+    import_result.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    import_result.set_defaults(handler=_import_result)
+    report_p2 = subparsers.add_parser(
+        "reportar-p2",
+        help="Mostrar el progreso determinista de un episodio P2",
+    )
+    report_p2.add_argument("episodio")
+    report_p2.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    report_p2.set_defaults(handler=_report_p2)
     administrative_close = subparsers.add_parser(
         "cerrar-administrativamente",
         help="Liberar un episodio técnicamente irrecuperable sin borrar evidencia",

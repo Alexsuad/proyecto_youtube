@@ -52,7 +52,8 @@ def _mission_authorization(
     allowed_routes: list[str] | None = None,
     single_use: bool = False,
     mission_id: str | None = None,
-    live_state_path: str = "plans/001_CONTROL_OPERATIVO.md",
+    live_state_mission_id: str | None = None,
+    live_state_path: str | None = None,
 ) -> str:
     directory = ROOT / ".runtime-tmp" / f"plan009-m1-{tmp_path.name}"
     directory.mkdir(parents=True, exist_ok=True)
@@ -61,7 +62,18 @@ def _mission_authorization(
     control = ROOT / "plans/001_CONTROL_OPERATIVO.md"
     material_registry = json.loads((ROOT / "docs/legacy/material_decision_registry.json").read_text(encoding="utf-8"))
     material = next(item for item in material_registry["decisions"] if item["decision_id"] == "MD-CI-001")
-    live_state = ROOT / live_state_path
+    if live_state_path is None:
+        live_state_path = directory.relative_to(ROOT).as_posix() + "/live-control.md"
+        live_state = ROOT / live_state_path
+        live_control = control.read_text(encoding="utf-8")
+        current_line = next(line for line in live_control.splitlines() if line.startswith("CURRENT_MISSION:"))
+        synthetic_mission = live_state_mission_id or mission_id or f"PLAN009_M1_SYNTHETIC_{tmp_path.name}"
+        live_state.write_text(
+            live_control.replace(current_line, f"CURRENT_MISSION: {synthetic_mission}"),
+            encoding="utf-8",
+        )
+    else:
+        live_state = ROOT / live_state_path
     state_sha = _sha(live_state)
     current_mission = next(
         line.split(":", 1)[1].strip()
@@ -115,8 +127,19 @@ def _mission_authorization(
 @pytest.fixture
 def mission_auth(tmp_path: Path):
     ref = _mission_authorization(tmp_path)
-    yield ref
-    shutil.rmtree(ROOT / Path(ref).parent, ignore_errors=True)
+    try:
+        yield ref
+    finally:
+        shutil.rmtree(ROOT / Path(ref).parent, ignore_errors=True)
+
+
+def _authority_path_for_authorization(mission_auth: str) -> str | None:
+    try:
+        payload = json.loads((ROOT / mission_auth).read_text(encoding="utf-8"))
+        live_state_path = payload["authorization"]["live_state_path"]
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError):
+        return None
+    return str(live_state_path)
 
 
 def _input() -> dict:
@@ -210,6 +233,7 @@ def _service(
 ) -> EpisodeApplicationService:
     tmp_path.mkdir(parents=True, exist_ok=True)
     store = VaultEpisodeStore(tmp_path / "vault", channel)
+    operational_authority_path = operational_authority_path or _authority_path_for_authorization(mission_auth)
     boundary = ExecutionCognitiveBoundary(
         repository_root=ROOT,
         mission_authorization_path=mission_auth,
@@ -296,6 +320,7 @@ def test_m1_terminal_cli_entrypoint_uses_real_factory_with_explicit_synthetic_bo
             "iniciar",
             "--config", str(settings),
             "--mission-authorization", mission_auth,
+            "--operational-authority", _authority_path_for_authorization(mission_auth),
             "--synthetic-outputs", str(outputs_path),
             "--modo", "tema",
             "--tema", "Tema sintético de prueba",
@@ -337,6 +362,7 @@ def test_m1_preflight_probe_does_not_reserve_single_use_authorization(tmp_path: 
         boundary = ExecutionCognitiveBoundary(
             repository_root=ROOT,
             mission_authorization_path=mission_auth,
+            operational_authority_path=_authority_path_for_authorization(mission_auth),
             execution_mode="SYNTHETIC_TEST",
             execution_interface="TOPIC_BELONGING_TEST",
             mock_outputs=_outputs(),
@@ -414,10 +440,19 @@ def test_m1_fake_reviewer_declared_run_id_cannot_override_runtime(tmp_path: Path
 
 
 def test_m1_missing_authorization_blocks_before_episode_creation(tmp_path: Path) -> None:
+    control = tmp_path / "control.md"
+    live_control = ROOT.joinpath("plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8")
+    current_line = next(line for line in live_control.splitlines() if line.startswith("CURRENT_MISSION:"))
+    control.write_text(live_control.replace(current_line, "CURRENT_MISSION: MISSION_WITHOUT_BUNDLE"), encoding="utf-8")
     store = VaultEpisodeStore(tmp_path / "vault", "CHANNEL")
-    boundary = ExecutionCognitiveBoundary(repository_root=ROOT, execution_mode="SYNTHETIC_TEST", mock_outputs=_outputs())
+    boundary = ExecutionCognitiveBoundary(
+        repository_root=ROOT,
+        operational_authority_path=str(control),
+        execution_mode="SYNTHETIC_TEST",
+        mock_outputs=_outputs(),
+    )
     workflow = TopicBelongingTechnicalWorkflow(store, boundary=boundary)
-    with pytest.raises(PermissionError, match="MISSION_AUTHORIZATION_REQUIRED"):
+    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_REQUIRED"):
         EpisodeApplicationService(store, workflow=workflow).start(HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL"))
     assert not (tmp_path / "vault/CHANNEL/episodios").exists()
 
@@ -461,14 +496,27 @@ def test_m1_real_provider_and_mock_injection_are_blocked() -> None:
         ExecutionCognitiveBoundary(execution_mode="REAL", mock_outputs=_outputs())
 
 
-def test_m2_real_requires_mission_authorization_even_with_neutral_family() -> None:
-    with pytest.raises(PermissionError, match="MISSION_AUTHORIZATION_REQUIRED"):
-        ExecutionCognitiveBoundary(execution_mode="REAL").preflight()
+def test_m2_real_requires_mission_authorization_even_with_neutral_family(tmp_path: Path) -> None:
+    control = tmp_path / "control.md"
+    live_control = ROOT.joinpath("plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8")
+    current_line = next(line for line in live_control.splitlines() if line.startswith("CURRENT_MISSION:"))
+    control.write_text(live_control.replace(current_line, "CURRENT_MISSION: MISSION_WITHOUT_BUNDLE"), encoding="utf-8")
+    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_REQUIRED"):
+        ExecutionCognitiveBoundary(repository_root=ROOT, operational_authority_path=str(control), execution_mode="REAL").preflight()
 
 
-def test_m2_real_without_authorization_blocks_before_provider() -> None:
-    boundary = ExecutionCognitiveBoundary(execution_mode="REAL", execution_profile="ollama_local")
-    with pytest.raises(PermissionError, match="MISSION_AUTHORIZATION_REQUIRED"):
+def test_m2_real_without_authorization_blocks_before_provider(tmp_path: Path) -> None:
+    control = tmp_path / "control.md"
+    live_control = ROOT.joinpath("plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8")
+    current_line = next(line for line in live_control.splitlines() if line.startswith("CURRENT_MISSION:"))
+    control.write_text(live_control.replace(current_line, "CURRENT_MISSION: MISSION_WITHOUT_BUNDLE"), encoding="utf-8")
+    boundary = ExecutionCognitiveBoundary(
+        repository_root=ROOT,
+        operational_authority_path=str(control),
+        execution_mode="REAL",
+        execution_profile="ollama_local",
+    )
+    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_REQUIRED"):
         boundary.preflight()
 
 
@@ -482,6 +530,7 @@ def test_m2_real_profile_mismatch_is_fail_closed(tmp_path: Path) -> None:
     boundary = ExecutionCognitiveBoundary(
         repository_root=ROOT,
         mission_authorization_path=mission_auth,
+        operational_authority_path=_authority_path_for_authorization(mission_auth),
         execution_mode="REAL",
         execution_interface="TOPIC_BELONGING_TEST",
         execution_profile="deepseek_chat",
@@ -502,6 +551,7 @@ def test_m2_explicit_agent_profile_derives_only_declared_route(tmp_path: Path) -
     boundary = ExecutionCognitiveBoundary(
         repository_root=ROOT,
         mission_authorization_path=mission_auth,
+        operational_authority_path=_authority_path_for_authorization(mission_auth),
         execution_mode="REAL",
         execution_interface="TOPIC_BELONGING_TEST",
         execution_profile="codex_current",
@@ -550,6 +600,7 @@ def test_m2_real_authorized_reaches_provider_boundary_without_external_call(
     boundary = ExecutionCognitiveBoundary(
         repository_root=ROOT,
         mission_authorization_path=mission_auth,
+        operational_authority_path=_authority_path_for_authorization(mission_auth),
         execution_mode="REAL",
         execution_interface="TOPIC_BELONGING_TEST",
         execution_profile="ollama_local",

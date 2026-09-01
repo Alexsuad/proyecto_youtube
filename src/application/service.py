@@ -197,6 +197,20 @@ class EpisodeApplicationService:
             return self.store.resume(episode_id)
         return self.store.resume(episode_id)
 
+    def import_external_result(self, result_path: str | Path) -> dict[str, Any]:
+        """Route a user-supplied result to its persisted episode and import it."""
+        path = Path(result_path)
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise StorageError(f"ROUNDTRIP_RESULT_INVALID:{exc}") from exc
+        if not isinstance(payload, dict):
+            raise StorageError("ROUNDTRIP_RESULT_INVALID: el resultado debe ser un objeto JSON.")
+        episode_id = payload.get("episode_id")
+        if not isinstance(episode_id, str) or not episode_id.strip():
+            raise StorageError("ROUNDTRIP_RESULT_INVALID: falta episode_id.")
+        return self.import_result(episode_id.strip(), path)
+
     def administratively_close_irrecoverable_episode(
         self,
         episode_id: str,

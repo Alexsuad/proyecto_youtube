@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
+import sys
 from argparse import Namespace
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -15,10 +18,17 @@ from src.application.interaction import DecisionRequest, HumanDecision, UserCanc
 from src.application.service import EpisodeApplicationService
 from src.application.storage import StorageError, VaultEpisodeStore
 from src.application.workflow import ControlledB5I1Preparation, WorkflowDecisionStale
-from src.application.authority import OperationalAuthorityError, resolve_operational_authority
+from src.application.authority import (
+    OperationalAuthorityError,
+    resolve_active_mission_bundle,
+    resolve_operational_authority,
+)
 from src.cli import _interactive_input, _non_interactive_input, main
 from src.core.contract_validation import validate_against_schema
+from src.core.mission_authorization import scope_checksum, sha256_file
 
+
+ROOT = Path(__file__).resolve().parents[2]
 
 PROFILE = {
     "ACTIVE_PROFILE_ID": "mas_alla_del_guion",
@@ -361,6 +371,149 @@ def test_interactive_and_non_interactive_adapters_share_normalized_fields(monkey
     assert interactive.works == non_interactive.works
 
 
+def test_active_mission_bundle_requires_an_explicit_canonical_pointer(tmp_path: Path) -> None:
+    control_path = tmp_path / "control.md"
+    control = ControlledB5I1Preparation.CONTROL_PATH.read_text(encoding="utf-8")
+    control_path.write_text(control.replace("CURRENT_MISSION: NONE", "CURRENT_MISSION: TEST_ACTIVE_MISSION"), encoding="utf-8")
+    with pytest.raises(OperationalAuthorityError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_REQUIRED"):
+        resolve_active_mission_bundle(
+            control_path,
+            repository_root=tmp_path,
+        )
+
+
+def _temporary_entrypoint_repository(tmp_path: Path) -> tuple[Path, Path, str]:
+    repo = tmp_path / "entrypoint-repo"
+    for relative in (
+        "src", "config", "docs/legacy", "policies", "prompts", "profiles/editorial", "schemas", ".agent/skills"
+    ):
+        shutil.copytree(ROOT / relative, repo / relative, ignore=shutil.ignore_patterns("__pycache__"))
+    (repo / "plans").mkdir()
+    (repo / "plans/001_CONTROL_OPERATIVO.md").write_text(
+        (ROOT / "plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    mission_id = "PLAN009_ENTRYPOINT_TEMPORARY_MISSION"
+    contract_ref = "plans/entrypoint_test/mission_contract.json"
+    bundle_root = repo / "plans/entrypoint_test"
+    bundle_root.mkdir(parents=True)
+    control_path = repo / "plans/001_CONTROL_OPERATIVO.md"
+    control = control_path.read_text(encoding="utf-8")
+    current_line = next(line for line in control.splitlines() if line.startswith("CURRENT_MISSION:"))
+    control = control.replace(current_line, f"CURRENT_MISSION: {mission_id}")
+    control = control.replace("CURRENT_MISSION_EXECUTION_BUNDLE: NONE", f"CURRENT_MISSION_EXECUTION_BUNDLE: {contract_ref}")
+    control_path.write_text(control, encoding="utf-8")
+
+    authority_ref = "plans/entrypoint_test/authority.json"
+    authorization_ref = "plans/entrypoint_test/mission-authorization.json"
+    scope = {
+        "mission_id": mission_id,
+        "capability_ids": ["TOPIC_BELONGING_ASSESSMENT"],
+        "role_ids": ["CHANNEL_INTELLIGENCE_PRODUCER", "CHANNEL_INTELLIGENCE_REVIEWER"],
+        "execution_profile_ids": [],
+        "execution_family_ids": ["AGENT_HARNESS"],
+        "execution_interface": "TOPIC_BELONGING_TERMINAL",
+        "allowed_operations": ["EXECUTE_CAPABILITY"],
+        "allowed_paths": ["handoff/", "output/"],
+        "allowed_routes": ["agent_harness"],
+        "execution_mode": "REAL",
+        "live_state_sha256": sha256_file(control_path),
+        "contains_material_repair": False,
+        "repair_integrity_evidence_path": "NONE",
+    }
+    material_registry = json.loads((repo / "docs/legacy/material_decision_registry.json").read_text(encoding="utf-8"))
+    material = next(item for item in material_registry["decisions"] if item["decision_id"] == "MD-CI-001")
+    authority = {
+        "mission_id": mission_id,
+        "decision": "APPROVE",
+        "artifact_version": "1.0.0",
+        "authorized_scope_sha256": scope_checksum(scope),
+        "material_decision_binding": {
+            "registry_path": "docs/legacy/material_decision_registry.json",
+            "decision_id": "MD-CI-001",
+            "subject_ref": "capability:TOPIC_BELONGING_ASSESSMENT",
+            "decision_sha256": scope_checksum(material),
+        },
+    }
+    authority_path = repo / authority_ref
+    authority_path.write_text(json.dumps(authority, ensure_ascii=False), encoding="utf-8")
+    authorization = {
+        "mission_id": mission_id,
+        "authorization": {
+            **scope,
+            "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+            "authority_ref": authority_ref,
+            "authority_sha256": sha256_file(authority_path),
+            "authorized_scope_sha256": scope_checksum(scope),
+            "single_use": False,
+            "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+        },
+    }
+    (repo / authorization_ref).write_text(json.dumps(authorization, ensure_ascii=False), encoding="utf-8")
+    contract = {
+        "mission_id": mission_id,
+        "mission_mode": "LEGACY",
+        "artifact_id": mission_id,
+        "artifact_version": "1.0.0",
+        "authorized_paths": ["handoff/", "output/"],
+        "protected_untracked_paths": [],
+        "protected_untracked_baseline": [],
+        "required_tests": [],
+        "push_allowed": False,
+        "push_guard": {"remote": "LOCAL", "ref": "HEAD", "baseline_remote_commit": "0" * 40},
+        "contains_material_repair": False,
+        "mission_authorization_path": authorization_ref,
+        "state_requirements": {
+            "control_path": "plans/001_CONTROL_OPERATIVO.md",
+            "required": {"CURRENT_MISSION": mission_id},
+            "forbidden": {},
+        },
+        "schema_checks": [],
+    }
+    (repo / contract_ref).write_text(json.dumps(contract, ensure_ascii=False), encoding="utf-8")
+    settings = tmp_path / "entrypoint-settings.json"
+    settings.write_text(json.dumps({"vault_root": str(tmp_path / "vault"), "channel_id": "CHANNEL"}), encoding="utf-8")
+    (repo / "config/local_settings.json").write_text(settings.read_text(encoding="utf-8"), encoding="utf-8")
+    return repo, settings, mission_id
+
+
+def test_cli_public_entrypoint_resolves_temporary_active_bundle_and_reaches_handoff(tmp_path: Path) -> None:
+    repo, _, mission_id = _temporary_entrypoint_repository(tmp_path)
+    bundle = resolve_active_mission_bundle(repo / "plans/001_CONTROL_OPERATIVO.md", repository_root=repo)
+    assert bundle.mission_id == mission_id
+    assert bundle.mission_contract_path == "plans/entrypoint_test/mission_contract.json"
+    completed = subprocess.run(
+        [sys.executable, "-m", "src.cli", "iniciar"],
+        cwd=repo,
+        input="1\nTema de entrada\nPregunta concreta\nContexto\ns\n",
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=60,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    output = completed.stdout
+    assert "Primer handoff de Topic Belonging preparado" in output
+    assert "MISSION_AUTHORIZATION" not in output
+    episodes = list((tmp_path / "vault/CHANNEL/episodios").iterdir())
+    assert len(episodes) == 1
+    workflow = json.loads((episodes[0] / "workflow_state.json").read_text(encoding="utf-8"))
+    assert workflow["status"] == "PENDING_EXTERNAL_RESULT"
+    episode_state = json.loads((episodes[0] / "episode_state.json").read_text(encoding="utf-8"))
+    assert episode_state["mission_id"] == mission_id
+    assert (repo / "handoff").is_dir()
+
+
+def test_active_mission_bundle_rejects_a_contract_for_another_mission(tmp_path: Path) -> None:
+    repo, _, _ = _temporary_entrypoint_repository(tmp_path)
+    contract_path = repo / "plans/entrypoint_test/mission_contract.json"
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    contract["mission_id"] = "OTHER_MISSION"
+    contract_path.write_text(json.dumps(contract), encoding="utf-8")
+    with pytest.raises(OperationalAuthorityError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_MISSION_MISMATCH"):
+        resolve_active_mission_bundle(repo / "plans/001_CONTROL_OPERATIVO.md", repository_root=repo)
+
+
 def test_cli_non_interactive_runs_the_same_application_service(tmp_path: Path, capsys) -> None:
     settings = tmp_path / "settings.json"
     settings.write_text(
@@ -378,7 +531,7 @@ def test_cli_non_interactive_runs_the_same_application_service(tmp_path: Path, c
             "Tema automatizable",
         ]
     ) == 2
-    assert "MISSION_AUTHORIZATION_REQUIRED:TOPIC_BELONGING_ASSESSMENT" in capsys.readouterr().out
+    assert "NO_ACTIVE_CURRENT_MISSION" in capsys.readouterr().out
 
 
 def test_human_decision_is_normalized_and_persisted(tmp_path: Path) -> None:

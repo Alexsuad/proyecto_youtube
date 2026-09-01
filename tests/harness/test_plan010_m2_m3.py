@@ -25,6 +25,7 @@ from tests.harness.test_plan009_m1_vertical import (
     _decision as _m1_decision,
     _input as _m1_topic_input,
     _mission_authorization as _m1_mission_authorization,
+    _authority_path_for_authorization as _m1_authority_path_for_authorization,
     _outputs as _m1_outputs,
     _service as _m1_service,
 )
@@ -570,7 +571,7 @@ def test_new_execution_accepts_authorization_matching_live_current_mission(tmp_p
     try:
         authorization = json.loads((ROOT / mission_auth).read_text(encoding="utf-8"))
         authorized_mission_id = authorization["mission_id"]
-        live_control = (ROOT / "plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8")
+        live_control = Path(_m1_authority_path_for_authorization(mission_auth)).read_text(encoding="utf-8")
         live_mission_id = next(
             line.split(":", 1)[1].strip()
             for line in live_control.splitlines()
@@ -604,6 +605,7 @@ def test_new_execution_rejects_authorization_not_matching_live_current_mission(t
         tmp_path,
         execution_interface="TOPIC_BELONGING_TEST",
         mission_id="FUTURE_SYNTHETIC_MISSION",
+        live_state_mission_id="CURRENT_SYNTHETIC_MISSION",
     )
     try:
         service = _m1_service(tmp_path, mission_auth, _m1_outputs())
@@ -618,6 +620,7 @@ def test_legacy_m1_lineage_id_is_not_valid_for_new_execution(tmp_path: Path) -> 
         tmp_path,
         execution_interface="TOPIC_BELONGING_TEST",
         mission_id="PLAN010_M1_TOPIC_BELONGING_INTEGRATION_CLOSURE",
+        live_state_mission_id="CURRENT_SYNTHETIC_MISSION",
     )
     try:
         service = _m1_service(tmp_path, mission_auth, _m1_outputs())
@@ -750,6 +753,7 @@ def test_m3_legacy_persisted_execution_requires_verifiable_origin(
         boundary = ExecutionCognitiveBoundary(
             repository_root=ROOT,
             mission_authorization_path=mission_auth,
+            operational_authority_path=_m1_authority_path_for_authorization(mission_auth),
             execution_mode="SYNTHETIC_TEST",
             execution_interface="TOPIC_BELONGING_TEST",
             mock_outputs=_m1_outputs(),
