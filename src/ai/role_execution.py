@@ -42,11 +42,16 @@ YOUTUBE_ADAPTATION_PRODUCER_REQUIRED_INPUTS = (
     "refined_thesis",
     "editorial_script_promise",
     "evidence_or_claims_reference",
+    "claims_ledger",
+    "evidence_report",
 )
 YOUTUBE_ADAPTATION_AUDITOR_REQUIRED_INPUTS = (
     "youtube_adaptation_b5_i2_package",
     "producer_run_reference",
     "active_editorial_profile_reference",
+    "refined_thesis",
+    "claims_ledger",
+    "evidence_report",
 )
 CHANNEL_INTELLIGENCE_ENRICHMENT_REQUIRED_INPUTS = (
     "EditorialIntakeHandoff",
@@ -229,6 +234,22 @@ def resolve_role_execution_contract(role_id: str, output_schema: str, input_payl
     if "active_editorial_profile" in prompt_contract.get("required_inputs", []) and not isinstance(profile, dict):
         raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: active editorial profile is required")
     schema = load_schema(output_schema)
+    if output_schema in {
+        "narrative_human_analysis",
+        "material_curation",
+        "refined_thesis",
+        "editorial_script_promise",
+        "b5_i2_semantic_sufficiency_audit",
+        "early_packaging_hypothesis",
+        "youtube_adaptation_b5_i2_package",
+        "youtube_adaptation_review",
+    }:
+        # Reuse the runtime's canonical projection so the model receives only
+        # the cognitive contract.  Software binds the omitted system fields
+        # after the provider returns.
+        from src.ai.execution import editorial_projection_schema
+
+        schema = editorial_projection_schema(output_schema)
     return {
         "role_id": role_id,
         "prompt_id": prompt_contract["prompt_id"],

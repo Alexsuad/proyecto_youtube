@@ -23,7 +23,7 @@ def _git(root: Path, *args: str) -> None:
     subprocess.run(["git", *args], cwd=root, check=True, capture_output=True, text=True)
 
 
-def _repo(tmp_path: Path, *, state: str = "NO") -> Path:
+def _repo(tmp_path: Path, *, state: str = "NO", protected_path: str = "protected.txt") -> Path:
     root = tmp_path / "repo"
     root.mkdir()
     _git(root, "init", "--quiet")
@@ -37,11 +37,13 @@ def _repo(tmp_path: Path, *, state: str = "NO") -> Path:
     _git(root, "add", ".")
     _git(root, "commit", "-m", "base", "--quiet")
 
-    (root / "protected.txt").write_text("preserve me\n", encoding="utf-8")
+    protected = root / protected_path
+    protected.parent.mkdir(parents=True, exist_ok=True)
+    protected.write_text("preserve me\n", encoding="utf-8")
     return root
 
 
-def _contract(root: Path, *, authorized: list[str] | None = None, tests: list[dict[str, object]] | None = None, forbidden: dict[str, object] | None = None, material_auth: bool = False) -> MissionContract:
+def _contract(root: Path, *, authorized: list[str] | None = None, tests: list[dict[str, object]] | None = None, forbidden: dict[str, object] | None = None, material_auth: bool = False, protected_path: str = "protected.txt") -> MissionContract:
     state_sha256 = hashlib.sha256((root / "control.md").read_bytes()).hexdigest()
     authorization_scope = {
         "mission_id": "TECHNICAL_HARDENING", "capability_ids": ["CAP"], "role_ids": ["ROLE"],
@@ -74,8 +76,8 @@ def _contract(root: Path, *, authorized: list[str] | None = None, tests: list[di
         "artifact_id": "mission-completion-gate",
         "artifact_version": "1.0.0",
         "authorized_paths": authorized_paths,
-        "protected_untracked_paths": ["protected.txt"],
-        "protected_untracked_baseline": [{"path": "protected.txt", "sha256": hashlib.sha256((root / "protected.txt").read_bytes()).hexdigest()}],
+        "protected_untracked_paths": [protected_path],
+        "protected_untracked_baseline": [{"path": protected_path, "sha256": hashlib.sha256((root / protected_path).read_bytes()).hexdigest()}],
         "required_tests": tests or [{"label": "required smoke", "command": [sys.executable, "-c", "raise SystemExit(0)"]}],
         "push_allowed": False,
         "contains_material_repair": material_auth,
@@ -372,6 +374,31 @@ def test_protected_untracked_content_change_prevents_pass(tmp_path: Path) -> Non
     root = _repo(tmp_path)
     contract = _contract(root)
     (root / "protected.txt").write_text("tampered\n", encoding="utf-8")
+
+    result = run_mission_completion_gate(contract, root)
+
+    assert result.status is GateStatus.FAIL
+    assert "PROTECTED_UNTRACKED_INTEGRITY_FAILED" in result.violations
+    assert result.evidence["protected_untracked"]["checksum_mismatches"]
+
+
+def test_dot_prefixed_protected_untracked_path_preserves_pass(tmp_path: Path) -> None:
+    protected_path = ".agents/skills/tests-validacion-cierre/SKILL.md"
+    root = _repo(tmp_path, protected_path=protected_path)
+    contract = _contract(root, protected_path=protected_path)
+
+    result = run_mission_completion_gate(contract, root)
+
+    assert result.status is GateStatus.PASS, result.to_dict()
+    assert result.evidence["protected_untracked"]["preserved"] is True
+    assert result.evidence["protected_untracked"]["checksum_mismatches"] == []
+
+
+def test_dot_prefixed_protected_untracked_content_change_prevents_pass(tmp_path: Path) -> None:
+    protected_path = ".agents/skills/tests-validacion-cierre/SKILL.md"
+    root = _repo(tmp_path, protected_path=protected_path)
+    contract = _contract(root, protected_path=protected_path)
+    (root / protected_path).write_text("tampered\n", encoding="utf-8")
 
     result = run_mission_completion_gate(contract, root)
 

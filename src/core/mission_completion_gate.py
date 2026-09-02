@@ -641,7 +641,10 @@ def _output(value: str | bytes | None) -> str:
 
 
 def _normalize_path(path: str) -> str:
-    return Path(path).as_posix().lstrip("./")
+    normalized = Path(path).as_posix()
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return normalized
 
 
 def _in_scope(path: str, allowed: Sequence[str]) -> bool:

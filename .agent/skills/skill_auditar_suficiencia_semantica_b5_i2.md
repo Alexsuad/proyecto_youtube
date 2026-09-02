@@ -18,6 +18,10 @@ Determinar si los artefactos editoriales producidos durante B5-I2 poseen suficie
 
 La skill debe impedir que B5-I2 avance con resultados formalmente completos y estructuralmente válidos, pero genéricos, formularios, decorativos o editorialmente inútiles.
 
+La salida de la IA contiene únicamente juicio semántico. IDs, versiones, fechas,
+checksums, referencias canónicas, perfil activo, lineage, provenance, estados y
+bindings pertenecen al Software y no deben ser inventados por la skill.
+
 Pregunta central:
 
 > ¿Los análisis, la curación y la tesis refinada contienen decisiones editoriales sustantivas y demostrables que permitan construir después un recorrido, una arquitectura y un outline profesionales?

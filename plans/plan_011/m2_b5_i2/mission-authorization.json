@@ -1,0 +1,27 @@
+{
+  "mission_id": "PLAN011_M2_B5_I2_BOUNDARY_REBALANCE",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "66ff6e1d96a703789a7ab16ada8cef855e6dcd935d64d2dc62dc13e53f6f8e77",
+    "capability_ids": ["B5_I2_SEMANTIC_AUDITOR"],
+    "role_ids": [
+      "SCRIPT_PRODUCT_PRODUCER",
+      "SCRIPT_PRODUCT_AUDITOR",
+      "YOUTUBE_ADAPTATION_PRODUCER",
+      "YOUTUBE_ADAPTATION_AUDITOR"
+    ],
+    "execution_family_ids": ["AGENT_HARNESS"],
+    "execution_interface": "PLAN011_M2_B5_I2_SYNTHETIC",
+    "allowed_operations": ["EXECUTE_CAPABILITY"],
+    "allowed_paths": ["plans/plan_011/m2_b5_i2/"],
+    "allowed_routes": ["synthetic"],
+    "execution_mode": "SYNTHETIC_TEST",
+    "single_use": false,
+    "authority_ref": "plans/plan_011/m2_b5_i2/authority.json",
+    "authority_sha256": "dce2024c1b8677f98a9a0c0e90f772858b529c31149d4cf190911effc86f8808",
+    "authorized_scope_sha256": "eef4566df876cbbf61f223248b17806d1b24ced04980c2656eadb9c6bdb3c4e7",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false,
+    "repair_integrity_evidence_path": "NONE"
+  }
+}

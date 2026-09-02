@@ -331,6 +331,25 @@ def test_auditor_that_did_not_consume_exact_package_fails(tmp_path: Path):
     assert evaluate(package_path, review_path, registry_path).status is GateStatus.FAIL
 
 
+def test_structural_handoff_rejects_missing_canonical_version(tmp_path: Path):
+    package = _valid_package()
+    artifacts = {}
+    payloads = {
+        "episode_brief": {"episode_id": "EP-1"},
+        "refined_thesis": {"thesis_id": "T-1"},
+        "editorial_script_promise": {"promise_id": "SP-1"},
+        "evidence_report": {"report_id": "ER-1"},
+        "claims_ledger": {"ledger_id": "CL-1"},
+    }
+    for field, payload in payloads.items():
+        path = tmp_path / f"{field}.json"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        artifacts[field] = path
+
+    with pytest.raises(ValueError, match="lacks a canonical version"):
+        build_structural_youtube_package(package, artifacts)
+
+
 def test_synthetic_run_cannot_close_real_gate(tmp_path: Path):
     _, _, package_path, review_path, registry_path = _paths(tmp_path)
     registry = json.loads(registry_path.read_text(encoding="utf-8"))

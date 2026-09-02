@@ -12,6 +12,14 @@ _FIELDS = {
     "claims_ledger": ("ledger_id", "claims_ledger"),
 }
 
+
+def _artifact_version(payload: dict[str, Any]) -> str | None:
+    for key in ("artifact_version", "brief_version", "script_version", "dossier_version", "version"):
+        value = payload.get(key)
+        if isinstance(value, str) and value:
+            return value
+    return None
+
 def build_structural_youtube_package(template: dict[str, Any], artifacts: dict[str, Path]) -> dict[str, Any]:
     """Build one YA package from the exact controlled B5 artifact files."""
     package = copy.deepcopy(template)
@@ -22,7 +30,13 @@ def build_structural_youtube_package(template: dict[str, Any], artifacts: dict[s
         artifact_id = payload.get(id_key)
         if not isinstance(artifact_id, str) or not artifact_id:
             raise ValueError(f"B5 artifact {field} lacks {id_key}")
-        refs[field] = {"artifact_id": artifact_id, "version": str(payload.get("brief_version") or payload.get("script_version") or "1.0.0"), "checksum": hashlib.sha256(path.read_bytes()).hexdigest()}
+        version = _artifact_version(payload)
+        if version is None and field == "editorial_script_promise":
+            thesis = json.loads(Path(artifacts["refined_thesis"]).read_text(encoding="utf-8"))
+            version = _artifact_version(thesis)
+        if version is None:
+            raise ValueError(f"B5 artifact {field} lacks a canonical version")
+        refs[field] = {"artifact_id": artifact_id, "version": version, "checksum": hashlib.sha256(path.read_bytes()).hexdigest()}
     package["episode_id"] = json.loads(Path(artifacts["episode_brief"]).read_text(encoding="utf-8"))["episode_id"]
     package["input_references"]["evidence_or_claims_reference"] = dict(refs["evidence_report"])
     return package

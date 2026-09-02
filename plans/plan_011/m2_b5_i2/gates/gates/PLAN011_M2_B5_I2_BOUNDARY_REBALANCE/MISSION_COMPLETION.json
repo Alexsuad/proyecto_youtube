@@ -1,0 +1,315 @@
+{
+  "gate_id": "MISSION_COMPLETION",
+  "artifact_id": "PLAN011_M2_B5_I2_BOUNDARY_REBALANCE",
+  "artifact_version": "1.0.0",
+  "status": "PASS",
+  "summary": "Deterministic mission completion checks passed.",
+  "violations": [],
+  "warnings": [],
+  "evidence": {
+    "mission_id": "PLAN011_M2_B5_I2_BOUNDARY_REBALANCE",
+    "binding": {
+      "binding_version": "1.0.0",
+      "gate_source": "run_mission_completion_gate",
+      "mission_contract_sha256": "16f41d0d67fbbab6d692c7f6b5e3ccbfb4a56dca69e2c86aa5813ab844b1ef21",
+      "git_head": "e1c3f2b0efab0c057a3745051b76c932f77dc7e2",
+      "git_status_sha256": "c4ada6a2852cb70026120c6ab49da02b69e9060fc16222366f5c202b53d2d6fa",
+      "repo_root": "C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube"
+    },
+    "git": {
+      "status_lines": [
+        " M .agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
+        " M .agent/workflows/01_pipeline_episodio.md",
+        " M plans/001_CONTROL_OPERATIVO.md",
+        " M prompts/roles/SCRIPT_PRODUCT_AUDITOR/1.0.0.md",
+        " M prompts/roles/SCRIPT_PRODUCT_PRODUCER/1.0.0.md",
+        " M prompts/roles/YOUTUBE_ADAPTATION_AUDITOR/1.0.0.md",
+        " M prompts/roles/YOUTUBE_ADAPTATION_PRODUCER/1.0.0.md",
+        " M src/ai/execution.py",
+        " M src/ai/role_execution.py",
+        " M src/core/mission_completion_gate.py",
+        " M src/scripts/run_b5_i2_semantic_audit.py",
+        " M src/scripts/youtube_adaptation_handoff.py",
+        " M tests/ai/test_role_execution_contract.py",
+        " M tests/harness/test_mission_completion_gate.py",
+        " M tests/harness/test_youtube_adaptation_b5_i2.py",
+        "?? .agents/skills/tests-validacion-cierre/SKILL.md",
+        "?? plans/plan_011/m2_b5_i2/authority.json",
+        "?? plans/plan_011/m2_b5_i2/gates/gates/PLAN011_M2_B5_I2_BOUNDARY_REBALANCE/MISSION_COMPLETION.json",
+        "?? plans/plan_011/m2_b5_i2/gates/gates/PLAN011_M2_B5_I2_BOUNDARY_REBALANCE/MISSION_COMPLETION.md",
+        "?? plans/plan_011/m2_b5_i2/mission-authorization.json",
+        "?? plans/plan_011/m2_b5_i2/mission_contract.json"
+      ],
+      "modified_files": [
+        ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
+        ".agent/workflows/01_pipeline_episodio.md",
+        "plans/001_CONTROL_OPERATIVO.md",
+        "prompts/roles/SCRIPT_PRODUCT_AUDITOR/1.0.0.md",
+        "prompts/roles/SCRIPT_PRODUCT_PRODUCER/1.0.0.md",
+        "prompts/roles/YOUTUBE_ADAPTATION_AUDITOR/1.0.0.md",
+        "prompts/roles/YOUTUBE_ADAPTATION_PRODUCER/1.0.0.md",
+        "src/ai/execution.py",
+        "src/ai/role_execution.py",
+        "src/core/mission_completion_gate.py",
+        "src/scripts/run_b5_i2_semantic_audit.py",
+        "src/scripts/youtube_adaptation_handoff.py",
+        "tests/ai/test_role_execution_contract.py",
+        "tests/harness/test_mission_completion_gate.py",
+        "tests/harness/test_youtube_adaptation_b5_i2.py"
+      ],
+      "staged_files": [],
+      "untracked_files": [
+        ".agents/skills/tests-validacion-cierre/SKILL.md",
+        "plans/plan_011/m2_b5_i2/authority.json",
+        "plans/plan_011/m2_b5_i2/gates/gates/PLAN011_M2_B5_I2_BOUNDARY_REBALANCE/MISSION_COMPLETION.json",
+        "plans/plan_011/m2_b5_i2/gates/gates/PLAN011_M2_B5_I2_BOUNDARY_REBALANCE/MISSION_COMPLETION.md",
+        "plans/plan_011/m2_b5_i2/mission-authorization.json",
+        "plans/plan_011/m2_b5_i2/mission_contract.json"
+      ],
+      "outside_scope": [],
+      "unexpected_files": [],
+      "diff_check": {
+        "unstaged": {
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "warning: in the working copy of '.agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of '.agent/workflows/01_pipeline_episodio.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'plans/001_CONTROL_OPERATIVO.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'prompts/roles/SCRIPT_PRODUCT_AUDITOR/1.0.0.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'prompts/roles/SCRIPT_PRODUCT_PRODUCER/1.0.0.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'prompts/roles/YOUTUBE_ADAPTATION_AUDITOR/1.0.0.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'prompts/roles/YOUTUBE_ADAPTATION_PRODUCER/1.0.0.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/execution.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/role_execution.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/core/mission_completion_gate.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/scripts/run_b5_i2_semantic_audit.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/scripts/youtube_adaptation_handoff.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/ai/test_role_execution_contract.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/harness/test_mission_completion_gate.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/harness/test_youtube_adaptation_b5_i2.py', LF will be replaced by CRLF the next time Git touches it\n"
+        },
+        "staged": {
+          "returncode": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      }
+    },
+    "protected_untracked": {
+      "declared": [
+        ".agents/skills/tests-validacion-cierre"
+      ],
+      "missing": [],
+      "baseline_missing": [],
+      "baseline_outside_scope": [],
+      "untracked_files": [
+        ".agents/skills/tests-validacion-cierre/SKILL.md"
+      ],
+      "unexpected_files": [],
+      "checksum_mismatches": [],
+      "preserved": true
+    },
+    "structural": {
+      "json": [
+        {
+          "path": "plans/plan_011/m2_b5_i2/authority.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_011/m2_b5_i2/gates/gates/PLAN011_M2_B5_I2_BOUNDARY_REBALANCE/MISSION_COMPLETION.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_011/m2_b5_i2/mission-authorization.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_011/m2_b5_i2/mission_contract.json",
+          "valid": true
+        }
+      ],
+      "yaml": [],
+      "yaml_markdown": [
+        {
+          "path": ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
+          "blocks": []
+        },
+        {
+          "path": ".agent/workflows/01_pipeline_episodio.md",
+          "blocks": []
+        },
+        {
+          "path": ".agents/skills/tests-validacion-cierre/SKILL.md",
+          "blocks": []
+        },
+        {
+          "path": "plans/001_CONTROL_OPERATIVO.md",
+          "blocks": [
+            {
+              "valid": true
+            }
+          ]
+        },
+        {
+          "path": "plans/plan_011/m2_b5_i2/gates/gates/PLAN011_M2_B5_I2_BOUNDARY_REBALANCE/MISSION_COMPLETION.md",
+          "blocks": []
+        },
+        {
+          "path": "prompts/roles/SCRIPT_PRODUCT_AUDITOR/1.0.0.md",
+          "blocks": []
+        },
+        {
+          "path": "prompts/roles/SCRIPT_PRODUCT_PRODUCER/1.0.0.md",
+          "blocks": []
+        },
+        {
+          "path": "prompts/roles/YOUTUBE_ADAPTATION_AUDITOR/1.0.0.md",
+          "blocks": []
+        },
+        {
+          "path": "prompts/roles/YOUTUBE_ADAPTATION_PRODUCER/1.0.0.md",
+          "blocks": []
+        }
+      ],
+      "python": [
+        {
+          "path": "src/ai/execution.py",
+          "valid": true
+        },
+        {
+          "path": "src/ai/role_execution.py",
+          "valid": true
+        },
+        {
+          "path": "src/core/mission_completion_gate.py",
+          "valid": true
+        },
+        {
+          "path": "src/scripts/run_b5_i2_semantic_audit.py",
+          "valid": true
+        },
+        {
+          "path": "src/scripts/youtube_adaptation_handoff.py",
+          "valid": true
+        },
+        {
+          "path": "tests/ai/test_role_execution_contract.py",
+          "valid": true
+        },
+        {
+          "path": "tests/harness/test_mission_completion_gate.py",
+          "valid": true
+        },
+        {
+          "path": "tests/harness/test_youtube_adaptation_b5_i2.py",
+          "valid": true
+        }
+      ],
+      "schemas": [
+        {
+          "path": "plans/plan_011/m2_b5_i2/mission_contract.json",
+          "schema": "mission_contract",
+          "violations": []
+        }
+      ]
+    },
+    "mission_authorization": {
+      "required": true,
+      "path": "plans/plan_011/m2_b5_i2/mission-authorization.json",
+      "expected_sha256": "9508ea777b00fe9a331b7a834f4d52508c0a9f60d82320e161c0aa65bea09e21",
+      "actual_sha256": "9508ea777b00fe9a331b7a834f4d52508c0a9f60d82320e161c0aa65bea09e21",
+      "mission_id": "PLAN011_M2_B5_I2_BOUNDARY_REBALANCE",
+      "contains_material_repair": false,
+      "repair_integrity_evidence_path": "NONE",
+      "authorized_scope_sha256": "eef4566df876cbbf61f223248b17806d1b24ced04980c2656eadb9c6bdb3c4e7",
+      "status": "PASS"
+    },
+    "repair_integrity": {
+      "required": false,
+      "status": "NOT_REQUIRED"
+    },
+    "required_tests": [
+      {
+        "label": "M2_GENERIC_PREFLIGHT",
+        "command": [
+          "py",
+          "-3",
+          "-c",
+          "from pathlib import Path; from src.application.authority import resolve_active_mission_bundle; from src.core.mission_authorization import load_mission_authorization; root=Path('.').resolve(); bundle=resolve_active_mission_bundle(root / 'plans/001_CONTROL_OPERATIVO.md', repository_root=root); assert bundle.mission_id == 'PLAN011_M2_B5_I2_BOUNDARY_REBALANCE'; auth=load_mission_authorization(root / bundle.mission_authorization_path); auth.verify(root, capability_id='B5_I2_SEMANTIC_AUDITOR', role_id='SCRIPT_PRODUCT_PRODUCER', operation='EXECUTE_CAPABILITY', execution_mode='SYNTHETIC_TEST', execution_route='synthetic', execution_family='AGENT_HARNESS', execution_interface='PLAN011_M2_B5_I2_SYNTHETIC'); print('M2_GENERIC_PREFLIGHT_PASS')"
+        ],
+        "returncode": 0,
+        "stdout": "M2_GENERIC_PREFLIGHT_PASS\n",
+        "stderr": ""
+      },
+      {
+        "label": "B5_I2_HARNESS",
+        "command": [
+          "py",
+          "-3",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/harness/test_b5_i2.py"
+        ],
+        "returncode": 0,
+        "stdout": "........................................................................ [ 90%]\n........                                                                 [100%]\n============================== warnings summary ===============================\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n80 passed, 4 warnings in 25.78s\n",
+        "stderr": ""
+      },
+      {
+        "label": "YOUTUBE_ADAPTATION_B5_I2_HARNESS",
+        "command": [
+          "py",
+          "-3",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/harness/test_youtube_adaptation_b5_i2.py"
+        ],
+        "returncode": 0,
+        "stdout": "..................................                                       [100%]\n============================== warnings summary ===============================\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n34 passed, 4 warnings in 5.90s\n",
+        "stderr": ""
+      },
+      {
+        "label": "ROLE_EXECUTION_CONTRACTS",
+        "command": [
+          "py",
+          "-3",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/ai/test_role_execution_contract.py"
+        ],
+        "returncode": 0,
+        "stdout": "...............                                                          [100%]\n============================== warnings summary ===============================\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n15 passed, 4 warnings in 4.98s\n",
+        "stderr": ""
+      },
+      {
+        "label": "MISSION_COMPLETION_GATE_PROTECTION",
+        "command": [
+          "py",
+          "-3",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/harness/test_mission_completion_gate.py"
+        ],
+        "returncode": 0,
+        "stdout": ".........................                                                [100%]\n============================== warnings summary ===============================\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n25 passed, 4 warnings in 53.08s\n",
+        "stderr": ""
+      }
+    ],
+    "state": {
+      "control_path": "plans/001_CONTROL_OPERATIVO.md",
+      "read": true,
+      "required": [],
+      "forbidden": []
+    },
+    "push_policy": {
+      "push_allowed": false,
+      "verification": "LOCAL_REF",
+      "remote": "LOCAL",
+      "ref": "HEAD",
+      "baseline_remote_commit": "e1c3f2b0efab0c057a3745051b76c932f77dc7e2",
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "returncode": 0,
+      "stdout": "e1c3f2b0efab0c057a3745051b76c932f77dc7e2\n",
+      "stderr": "",
+      "verified": true,
+      "enforced": true,
+      "observed_remote_commit": "e1c3f2b0efab0c057a3745051b76c932f77dc7e2"
+    }
+  },
+  "checked_at": "2026-09-02T00:05:29.114186+00:00",
+  "checker_version": "1.0.0",
+  "exit_code": 0
+}

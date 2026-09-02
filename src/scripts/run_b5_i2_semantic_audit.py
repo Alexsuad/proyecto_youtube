@@ -35,7 +35,7 @@ CRITICAL_CRITERIA = (
 )
 REQUIRED_AUDIT_INPUT_KINDS = {"research", "evidence_report", "provisional_thesis", "analysis", "curation", "refined_thesis", "script_promise"}
 OPTIONAL_AUDIT_INPUT_KINDS = {"early_packaging_hypothesis"}
-AUDIT_DIMENSIONS = (
+B5_I2_REQUIRED_DIMENSIONS = (
     "TRIVIAL_THESIS",
     "INTERCHANGEABLE_ANALYSIS",
     "DECORATIVE_OBJECTION",
@@ -121,15 +121,37 @@ def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: E
     })
     producer_run_ids = sorted({item.get("producer_run_id") for item in artifact_checksums if item.get("producer_run_id")})
     producer_run_reference = producer_run_ids[0] if len(producer_run_ids) == 1 else "MULTIPLE_PRODUCER_RUNS"
-    producer_actor_id = "SCRIPT_PRODUCT_PRODUCER" if len(producer_run_ids) == 1 else "MIXED_PRODUCER_ACTORS"
+    producer_actor_id = "UNVERIFIED_PRODUCER"
+    independence_verified = False
+    registry_path = request.config.get("execution_registry_path")
+    if registry_path:
+        try:
+            registry = json.loads(Path(registry_path).read_text(encoding="utf-8"))
+            runs = {
+                run.get("run_id"): run
+                for run in registry.get("runs", [])
+                if isinstance(run, dict) and run.get("run_id")
+            }
+            producer_runs = [runs.get(run_id) for run_id in producer_run_ids]
+            roles = {run.get("role") for run in producer_runs if isinstance(run, dict) and run.get("role")}
+            independence_verified = bool(
+                producer_runs
+                and all(isinstance(run, dict) for run in producer_runs)
+                and result.run_id not in runs
+                and all(run.get("role") != AUDITOR_ROLE for run in producer_runs if isinstance(run, dict))
+            )
+            if independence_verified:
+                producer_actor_id = next(iter(roles)) if len(roles) == 1 else "MIXED_PRODUCER_ACTORS"
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            independence_verified = False
     artifact_references = [f"{item['artifact_kind']}:{item['artifact_id']}" for item in artifact_checksums]
     dimension_rows = [item for item in payload.get("dimension_results", []) if isinstance(item, dict)]
     dimension_names = [item.get("dimension") for item in dimension_rows]
     dimension_issues = []
-    if set(dimension_names) != set(AUDIT_DIMENSIONS) or len(dimension_names) != len(set(dimension_names)):
-        missing = [name for name in AUDIT_DIMENSIONS if name not in dimension_names]
+    if set(dimension_names) != set(B5_I2_REQUIRED_DIMENSIONS) or len(dimension_names) != len(set(dimension_names)):
+        missing = [name for name in B5_I2_REQUIRED_DIMENSIONS if name not in dimension_names]
         duplicated = [name for name in set(dimension_names) if dimension_names.count(name) > 1]
-        unknown = [name for name in dimension_names if name not in AUDIT_DIMENSIONS]
+        unknown = [name for name in dimension_names if name not in B5_I2_REQUIRED_DIMENSIONS]
         dimension_issues = (
             (["FALTAN DIMENSIONES: " + ", ".join(sorted(missing))] if missing else [])
             + (["DIMENSIONES DUPLICADAS: " + ", ".join(sorted(duplicated))] if duplicated else [])
@@ -150,9 +172,9 @@ def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: E
         "episode_id": request.episode_id,
         "artifact_references": artifact_references,
         "artifact_checksums": artifact_checksums,
-        "producer_run_reference": audit.get("producer_run_reference") or producer_run_reference,
+        "producer_run_reference": producer_run_reference,
         "auditor_run_reference": result.run_id,
-        "producer_actor_id": audit.get("producer_actor_id") or producer_actor_id,
+        "producer_actor_id": producer_actor_id,
         "auditor_actor_id": AUDITOR_ROLE,
         "auditor_role": AUDITOR_ROLE,
         "auditor_run_id": result.run_id,
@@ -164,7 +186,7 @@ def _runtime_audit(payload: dict[str, Any], request: ExecutionRequest, result: E
         "input_manifest_checksum": result.input_manifest_checksum,
         "auditor_input_checksum": result.input_manifest_checksum,
         "auditor_write_scope": "AUDIT_ONLY",
-        "independence_result": "PASS" if producer_run_reference != result.run_id and producer_actor_id != AUDITOR_ROLE else "FAIL",
+        "independence_result": "PASS" if independence_verified else "BLOCKED",
         "audited_artifact_ids": [
             f"{item['artifact_kind']}:{item['artifact_id']}"
             for item in artifact_checksums

@@ -1,0 +1,216 @@
+{
+  "mission_id": "PLAN011_M2_B5_I2_BOUNDARY_REBALANCE",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN011_M2_B5_I2_BOUNDARY_REBALANCE",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_011/m2_b5_i2/",
+    "src/core/mission_completion_gate.py",
+    "src/ai/execution.py",
+    "src/ai/role_execution.py",
+    "src/ai/registry.py",
+    "src/scripts/b5_i2_gate.py",
+    "src/scripts/run_b5_i2_semantic_audit.py",
+    "src/scripts/youtube_adaptation_b5_i2_gate.py",
+    "src/scripts/youtube_adaptation_handoff.py",
+    "schemas/narrative_human_analysis.json",
+    "schemas/material_curation.json",
+    "schemas/refined_thesis.json",
+    "schemas/editorial_script_promise.json",
+    "schemas/b5_i2_semantic_sufficiency_audit.json",
+    "schemas/youtube_adaptation_b5_i2_package.json",
+    "schemas/youtube_adaptation_review.json",
+    "prompts/roles/SCRIPT_PRODUCT_PRODUCER/1.0.0.md",
+    "prompts/roles/SCRIPT_PRODUCT_AUDITOR/1.0.0.md",
+    "prompts/roles/YOUTUBE_ADAPTATION_PRODUCER/1.0.0.md",
+    "prompts/roles/YOUTUBE_ADAPTATION_AUDITOR/1.0.0.md",
+    ".agent/skills/skill_analisis_patrones.md",
+    ".agent/skills/skill_curation_obras.md",
+    ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
+    ".agent/workflows/01_pipeline_episodio.md",
+    "tests/harness/test_b5_i2.py",
+    "tests/harness/test_youtube_adaptation_b5_i2.py",
+    "tests/ai/test_role_execution_contract.py",
+    "tests/harness/test_mission_completion_gate.py"
+  ],
+  "protected_untracked_paths": [".agents/skills/tests-validacion-cierre/"],
+  "protected_untracked_baseline": [
+    {
+      "path": ".agents/skills/tests-validacion-cierre/SKILL.md",
+      "sha256": "41cee8fb79b1b00ebd72b65c7088960f8f4a6a1c241444c481750127aef04334"
+    }
+  ],
+  "required_tests": [
+    {
+      "label": "M2_GENERIC_PREFLIGHT",
+      "command": [
+        "py", "-3", "-c",
+        "from pathlib import Path; from src.application.authority import resolve_active_mission_bundle; from src.core.mission_authorization import load_mission_authorization; root=Path('.').resolve(); bundle=resolve_active_mission_bundle(root / 'plans/001_CONTROL_OPERATIVO.md', repository_root=root); assert bundle.mission_id == 'PLAN011_M2_B5_I2_BOUNDARY_REBALANCE'; auth=load_mission_authorization(root / bundle.mission_authorization_path); auth.verify(root, capability_id='B5_I2_SEMANTIC_AUDITOR', role_id='SCRIPT_PRODUCT_PRODUCER', operation='EXECUTE_CAPABILITY', execution_mode='SYNTHETIC_TEST', execution_route='synthetic', execution_family='AGENT_HARNESS', execution_interface='PLAN011_M2_B5_I2_SYNTHETIC'); print('M2_GENERIC_PREFLIGHT_PASS')"
+      ],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "B5_I2_HARNESS",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_b5_i2.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "YOUTUBE_ADAPTATION_B5_I2_HARNESS",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_youtube_adaptation_b5_i2.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "ROLE_EXECUTION_CONTRACTS",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/ai/test_role_execution_contract.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "MISSION_COMPLETION_GATE_PROTECTION",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_mission_completion_gate.py"],
+      "timeout_seconds": 360
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "e1c3f2b0efab0c057a3745051b76c932f77dc7e2"
+  },
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/plan_011/m2_b5_i2/mission-authorization.json",
+  "mission_authorization_sha256": "9508ea777b00fe9a331b7a834f4d52508c0a9f60d82320e161c0aa65bea09e21",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "PLAN011_M2_B5_I2_BOUNDARY_REBALANCE",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "plans/plan_011/m2_b5_i2/mission_contract.json",
+      "R2_SCOPE": "B5_I1_CONTROLLED_EXECUTION",
+      "R2_EXECUTION": "AUTHORIZED_CONTROLLED_B5_I1_ONLY",
+      "PLAN_011_IMPLEMENTATION_AUTHORIZED": "YES_M2_B5_I2_TECHNICAL_SYNTHETIC",
+      "PLAN_011_CURRENT_MISSION": "PLAN011_M2_B5_I2_BOUNDARY_REBALANCE",
+      "PLAN_011_B5_I2_AUTHORIZED": "YES",
+      "PLAN_011_B5_I3_AUTHORIZED": "NO",
+      "PLAN_011_B5_5_AUTHORIZED": "NO",
+      "PLAN_011_B6_AUTHORIZED": "NO",
+      "PLAN_011_B7_AUTHORIZED": "NO",
+      "B5_I2_AUTHORIZED": "NO",
+      "AUTHORIZED_FOR_PRODUCT_USE": "NO",
+      "REAL_AI_EXECUTION": "NO",
+      "P2_REAL_EXECUTION_NOW": "NO",
+      "M2_PLAN011_TECHNICAL_MISSION_ACTIVE": "YES",
+      "M2_SYNTHETIC_EXECUTION_ALLOWED": "YES",
+      "B5_I2_PRODUCT_EXECUTION": "NO",
+      "M3_PLUS": "NO"
+    },
+    "forbidden": {
+      "B5_I2_AUTHORIZED": ["YES"],
+      "B5_I3_AUTHORIZED": ["YES"],
+      "B5_5_AUTHORIZED": ["YES"],
+      "B6_AUTHORIZED": ["YES"],
+      "PLAN_011_B5_I3_AUTHORIZED": ["YES"],
+      "PLAN_011_B5_5_AUTHORIZED": ["YES"],
+      "PLAN_011_B6_AUTHORIZED": ["YES"],
+      "PLAN_011_B7_AUTHORIZED": ["YES"],
+      "P2_REAL_EXECUTION_NOW": ["YES"],
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "REAL_COGNITIVE_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "B5_I2_PRODUCT_EXECUTION": ["YES"],
+      "M3_PLUS": ["YES"]
+    }
+  },
+  "schema_checks": [
+    {"path": "plans/plan_011/m2_b5_i2/mission_contract.json", "schema": "mission_contract"}
+  ],
+  "objective": "Materializar y ejecutar técnicamente la separación Software–IA de B5-I2 con cognición únicamente sintética, sin activar B5-I2 como capacidad operativa del producto.",
+  "preconditions": [
+    "La misión activa coincide con este contrato.",
+    "El perfil editorial activo está aprobado y activado.",
+    "El preflight genérico reutilizado resuelve el bundle y verifica la autorización.",
+    "La ejecución cognitiva es exclusivamente sintética.",
+    "R2 sigue siendo B5-I1 controlado y B5-I2 de producto permanece no autorizado."
+  ],
+  "canonical_inputs": [
+    "Artefactos y contratos B5-I2 existentes.",
+    "Perfil editorial activo.",
+    "Runtime, gates, registry, persistencia, provenance y recovery existentes.",
+    "M1 B5-I1 cerrado, sin reabrir su evidencia."
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_011/m2_b5_i2/",
+    "src/core/mission_completion_gate.py",
+    "src/ai/execution.py",
+    "src/ai/role_execution.py",
+    "src/ai/registry.py",
+    "src/scripts/b5_i2_gate.py",
+    "src/scripts/run_b5_i2_semantic_audit.py",
+    "src/scripts/youtube_adaptation_b5_i2_gate.py",
+    "src/scripts/youtube_adaptation_handoff.py",
+    "schemas/narrative_human_analysis.json",
+    "schemas/material_curation.json",
+    "schemas/refined_thesis.json",
+    "schemas/editorial_script_promise.json",
+    "schemas/b5_i2_semantic_sufficiency_audit.json",
+    "schemas/youtube_adaptation_b5_i2_package.json",
+    "schemas/youtube_adaptation_review.json",
+    "prompts/roles/SCRIPT_PRODUCT_PRODUCER/1.0.0.md",
+    "prompts/roles/SCRIPT_PRODUCT_AUDITOR/1.0.0.md",
+    "prompts/roles/YOUTUBE_ADAPTATION_PRODUCER/1.0.0.md",
+    "prompts/roles/YOUTUBE_ADAPTATION_AUDITOR/1.0.0.md",
+    ".agent/skills/skill_analisis_patrones.md",
+    ".agent/skills/skill_curation_obras.md",
+    ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
+    ".agent/workflows/01_pipeline_episodio.md",
+    "tests/harness/test_b5_i2.py",
+    "tests/harness/test_youtube_adaptation_b5_i2.py",
+    "tests/ai/test_role_execution_contract.py",
+    "tests/harness/test_mission_completion_gate.py"
+  ],
+  "non_objectives": [
+    "Activar B5-I2 como capacidad operativa del producto.",
+    "Cambiar R2_SCOPE o authority.py.",
+    "Ejecutar IA real, proveedores reales, P2 REAL, B5-I3 o fases posteriores.",
+    "Modificar M1 cerrado o su evidencia.",
+    "Crear runtime, provider, gate, registry, storage, lifecycle, provenance o sistema de autorización nuevos.",
+    "Implementar memoria histórica o detección longitudinal de contradicciones."
+  ],
+  "expected_outputs": [
+    "El bundle M2 queda materializado y enlazado desde la autoridad viva.",
+    "El preflight genérico confirma misión activa, autorización sintética y no activación de producto.",
+    "Software conserva metadata, IDs, checksums, lineage, bindings, persistencia, recovery y QA mecánico.",
+    "La IA sintética queda limitada a propuestas cognitivas B5-I2.",
+    "La auditoría semántica no duplica QA mecánico.",
+    "La adaptación temprana mantiene separadas producción y auditoría.",
+    "Los artefactos históricos M1 permanecen intactos y legibles."
+  ],
+  "deterministic_validations": [
+    "El contrato y la autorización cumplen sus schemas canónicos.",
+    "El preflight resuelve el bundle activo y verifica MissionAuthorization con modo SYNTHETIC_TEST.",
+    "El estado conserva R2 B5-I1, B5_I2_AUTHORIZED=NO y uso productivo=NO.",
+    "Los tests focalizados B5-I2, adaptación y role execution pasan.",
+    "Los gates mecánicos no delegan en IA la validación determinista.",
+    "Se conserva el path protegido sin cambios."
+  ],
+  "adversarial_cases": [
+    "La salida cognitiva intenta escribir IDs, fechas, checksums, profile, lineage, estado o bindings.",
+    "La auditoría semántica intenta certificar existencia de archivos, schemas o checksums.",
+    "El productor intenta emitir el artefacto final con metadata del sistema.",
+    "La adaptación intenta fusionar producción y auditoría.",
+    "La misión intenta activar B5-I2 de producto, IA real, P2 REAL o M3+."
+  ],
+  "stop_conditions": [
+    "El bundle no resuelve desde CURRENT_MISSION_EXECUTION_BUNDLE.",
+    "La autorización está stale o no verifica contra el control vivo.",
+    "El preflight genérico no puede demostrar simultáneamente el límite sintético y la no activación de producto.",
+    "Se requiere modificar authority.py, workflow.py o una ruta fuera de este scope.",
+    "Aparece cualquier proveedor, modelo o llamada cognitiva real.",
+    "Una prueba exige reabrir o modificar la evidencia cerrada de M1."
+  ],
+  "review_policy": {
+    "required_review": "INDEPENDENT_REVIEW",
+    "independent_review": "REQUIRED",
+    "owner_review": true
+  },
+  "owner_closure": {"required": false}
+}

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import copy
+import json
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -34,7 +35,36 @@ B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
     },
 }
 EDITORIAL_RUNTIME_FIELDS = {
+    "analysis_id",
+    "analysis_ids",
+    "artifact_id",
+    "artifact_checksum",
+    "active_profile_reference",
     "episode_id",
+    "evidence_report_id",
+    "input_references",
+    "material_checksum",
+    "package_id",
+    "producer_run_id",
+    "provisional_thesis_id",
+    "promise_id",
+    "refined_thesis_checksum",
+    "refined_thesis_id",
+    "research_id",
+    "review_id",
+    "semantic_audit_id",
+    "thesis_id",
+    "brief_version",
+    "artifact_version",
+    "version",
+    "checksum",
+    "brief_checksum",
+    "packaging_id",
+    "profile_id",
+    "profile_version",
+    "profile_checksum",
+    "run_id",
+    "independence_check",
     "auditor_role",
     "auditor_run_id",
     "auditor_skill_id",
@@ -56,15 +86,10 @@ EDITORIAL_RUNTIME_FIELDS = {
     "auditor_write_scope",
     "independence_result",
 }
-EDITORIAL_RUNTIME_NORMALIZED_FIELDS = {
-    "required_changes",
-    "excluded_claims_detected",
-    "unsupported_inferences",
-    "redundancy_findings",
-    "progression_findings",
-    "blocking_reasons",
-    "reaudit_requirements",
-}
+# These fields are semantic findings, not runtime metadata.  They must remain
+# in the cognitive projection and are later carried into the software-owned
+# final audit envelope.
+EDITORIAL_RUNTIME_NORMALIZED_FIELDS: set[str] = set()
 EDITORIAL_ONLY_SCHEMAS = {
     "narrative_human_analysis",
     "material_curation",
@@ -292,9 +317,11 @@ def _bind_runtime_fields(request: ExecutionRequest, output: dict[str, Any]) -> t
         "topic_belonging_assessment": "producer_run_id",
         "topic_belonging_decision": "reviewer_run_id",
     }.get(request.output_schema)
-    if run_key is None:
+    if request.output_schema not in EDITORIAL_ONLY_SCHEMAS and run_key is None:
         return output, None
     runtime_run_id = f"RUN-AI-{uuid.uuid4().hex}"
+    if request.output_schema in EDITORIAL_ONLY_SCHEMAS:
+        return _bind_b5_i2_runtime_fields(request, output, runtime_run_id), runtime_run_id
     bound = copy.deepcopy(output)
     provenance = bound.get("provenance")
     if not isinstance(provenance, dict):
@@ -310,29 +337,283 @@ def _bind_runtime_fields(request: ExecutionRequest, output: dict[str, Any]) -> t
     return bound, runtime_run_id
 
 
+def _input_documents(request: ExecutionRequest) -> dict[str, tuple[dict[str, Any], Path, str]]:
+    documents: dict[str, tuple[dict[str, Any], Path, str]] = {}
+    for item in request.input_artifacts:
+        try:
+            payload = json.loads(item.path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, ValueError):
+            continue
+        if isinstance(payload, dict):
+            documents[item.artifact_kind] = (payload, item.path, item.producer_run_id)
+    return documents
+
+
+def _active_profile_reference() -> dict[str, str]:
+    from src.core.editorial_profile_registry import load_active_profile_authority
+
+    active = load_active_profile_authority()
+    return {
+        "profile_id": active["ACTIVE_PROFILE_ID"],
+        "profile_version": active["ACTIVE_PROFILE_VERSION"],
+        "profile_checksum": active["profile_checksum"],
+    }
+
+
+def _bind_b5_i2_runtime_fields(
+    request: ExecutionRequest,
+    output: dict[str, Any],
+    runtime_run_id: str,
+) -> dict[str, Any]:
+    """Assemble deterministic B5-I2 fields after the cognitive projection.
+
+    The provider sees only the projected editorial schema.  IDs, references,
+    checksums, profile bindings, run bindings and timestamps are reconstructed
+    from the request and canonical input files by Software.
+    """
+    bound = copy.deepcopy(output)
+    documents = _input_documents(request)
+    schema = request.output_schema
+    id_key = {
+        "narrative_human_analysis": "analysis_id",
+        "material_curation": "curation_id",
+        "refined_thesis": "thesis_id",
+        "editorial_script_promise": "promise_id",
+        "b5_i2_semantic_sufficiency_audit": "audit_id",
+        "early_packaging_hypothesis": "packaging_id",
+        "youtube_adaptation_b5_i2_package": "package_id",
+        "youtube_adaptation_review": "review_id",
+    }.get(schema)
+    if id_key:
+        bound[id_key] = request.output_artifact_id or f"{schema.upper()}-{runtime_run_id}"
+    if request.episode_id:
+        bound["episode_id"] = request.episode_id
+    else:
+        for payload, _, _ in documents.values():
+            if isinstance(payload.get("episode_id"), str) and payload["episode_id"]:
+                bound["episode_id"] = payload["episode_id"]
+                break
+    bound["created_at"] = _now()
+
+    if schema == "narrative_human_analysis":
+        for output_key, input_kind, input_key in (
+            ("research_id", "research", "research_id"),
+            ("evidence_report_id", "evidence_report", "report_id"),
+            ("semantic_audit_id", "semantic_sufficiency_audit", "audit_id"),
+        ):
+            payload = documents.get(input_kind, ({}, None, ""))[0]
+            if payload.get(input_key):
+                bound[output_key] = payload[input_key]
+        if bound.get("material_id"):
+            research = documents.get("research", ({}, None, ""))[0]
+            for category in ("facts", "interpretations", "hypotheses", "contradictions", "alternative_views", "narrative_evidence", "external_reality_evidence", "claims_candidates"):
+                match = next((item for item in research.get(category, []) if isinstance(item, dict) and item.get("material_id") == bound["material_id"]), None)
+                if match is not None:
+                    bound["material_checksum"] = hashlib.sha256(canonical_json(match)).hexdigest()
+                    break
+    elif schema == "material_curation":
+        research = documents.get("research", ({}, None, ""))[0]
+        analyses = []
+        for item in request.input_artifacts:
+            if item.artifact_kind != "analysis":
+                continue
+            try:
+                payload = json.loads(item.path.read_text(encoding="utf-8"))
+            except (OSError, UnicodeDecodeError, ValueError):
+                continue
+            if isinstance(payload, dict):
+                analyses.append(payload)
+        if research.get("research_id"):
+            bound["research_id"] = research["research_id"]
+        bound["analysis_ids"] = [payload["analysis_id"] for payload in analyses if payload.get("analysis_id")]
+    elif schema == "refined_thesis":
+        brief = documents.get("episode_brief", ({}, None, ""))[0]
+        research = documents.get("research", ({}, None, ""))[0]
+        evidence = documents.get("evidence_report", ({}, None, ""))[0]
+        provisional = documents.get("provisional_thesis", ({}, None, ""))[0]
+        audit = documents.get("semantic_sufficiency_audit", ({}, None, ""))[0]
+        curation = documents.get("curation", ({}, None, ""))[0]
+        bound.update({
+            "brief_version": brief.get("brief_version", ""),
+            "research_id": research.get("research_id", ""),
+            "evidence_report_id": evidence.get("report_id", ""),
+            "provisional_thesis_id": provisional.get("thesis_id", ""),
+            "semantic_audit_id": audit.get("audit_id", ""),
+            "curation_id": curation.get("curation_id", ""),
+            "analysis_ids": [item.artifact_id for item in request.input_artifacts if item.artifact_kind == "analysis" and item.artifact_id],
+        })
+    elif schema == "editorial_script_promise":
+        thesis = documents.get("refined_thesis", ({}, None, ""))[0]
+        thesis_document = documents.get("refined_thesis")
+        bound["refined_thesis_id"] = thesis.get("thesis_id", "")
+        if thesis_document is not None:
+            bound["refined_thesis_checksum"] = file_checksum(thesis_document[1])
+    elif schema == "early_packaging_hypothesis":
+        thesis_document = documents.get("refined_thesis")
+        brief_document = documents.get("episode_brief")
+        thesis = thesis_document[0] if thesis_document is not None else {}
+        bound["refined_thesis_id"] = thesis.get("thesis_id", "")
+        if thesis_document is not None:
+            bound["refined_thesis_checksum"] = file_checksum(thesis_document[1])
+        bound["status"] = "PROVISIONAL_YOUTUBE_ADAPTATION_INPUT"
+        audience = bound.get("audience")
+        if isinstance(audience, dict):
+            audience.update(_active_profile_reference())
+            if brief_document is not None:
+                audience["brief_checksum"] = file_checksum(brief_document[1])
+    elif schema == "youtube_adaptation_b5_i2_package":
+        from src.scripts.youtube_adaptation_handoff import build_structural_youtube_package
+
+        handoff_artifacts = {}
+        for field in ("episode_brief", "refined_thesis", "editorial_script_promise", "evidence_report", "claims_ledger"):
+            document = documents.get(field)
+            if document is None:
+                raise ValueError(f"Falta el artefacto canónico requerido para handoff: {field}")
+            handoff_artifacts[field] = document[1]
+        bound = build_structural_youtube_package(bound, handoff_artifacts)
+        bound["active_profile_reference"] = _active_profile_reference()
+        bound["producer_run_id"] = runtime_run_id
+    elif schema == "youtube_adaptation_review":
+        package_document = documents.get("youtube_adaptation_b5_i2_package")
+        package = package_document[0] if package_document else {}
+        bound["active_profile_reference"] = _active_profile_reference()
+        bound["auditor_run_id"] = runtime_run_id
+        bound["artifact_id"] = package.get("package_id", "")
+        if package_document is not None:
+            bound["artifact_checksum"] = file_checksum(package_document[1])
+        bound["producer_run_id"] = package.get("producer_run_id", "")
+        independence = bool(
+            bound["producer_run_id"]
+            and bound["producer_run_id"] != runtime_run_id
+            and request.config.get("independence_verified") is True
+        )
+        bound["independence_check"] = {
+            "producer_actor_id": "YOUTUBE_ADAPTATION_PRODUCER",
+            "auditor_actor_id": "YOUTUBE_ADAPTATION_AUDITOR",
+            "producer_run_id": bound["producer_run_id"],
+            "auditor_run_id": runtime_run_id,
+            "decision": "PASS" if independence else "FAIL",
+        }
+    elif schema == "b5_i2_semantic_sufficiency_audit":
+        artifact_checksums = [
+            {
+                "artifact_kind": item.artifact_kind,
+                "artifact_id": item.artifact_id,
+                "checksum": file_checksum(item.path),
+                "producer_run_id": item.producer_run_id,
+            }
+            for item in request.input_artifacts
+        ]
+        producer_run_ids = sorted({item["producer_run_id"] for item in artifact_checksums if item["producer_run_id"]})
+        producer_run_reference = producer_run_ids[0] if len(producer_run_ids) == 1 else "MULTIPLE_PRODUCER_RUNS"
+        producer_actor_id = "SCRIPT_PRODUCT_PRODUCER" if len(producer_run_ids) == 1 else "MIXED_PRODUCER_ACTORS"
+        independent = bool(
+            producer_run_ids
+            and runtime_run_id not in producer_run_ids
+            and request.config.get("independence_verified") is True
+        )
+        bound.update({
+            "auditor_role": request.role or "SCRIPT_PRODUCT_AUDITOR",
+            "auditor_run_id": runtime_run_id,
+            "auditor_skill_id": request.skill_id,
+            "auditor_skill_version": request.skill_version,
+            "provider_or_adapter": request.provider or "synthetic",
+            "model_or_evaluator": request.model or "synthetic-evaluator",
+            "execution_timestamp": bound["created_at"],
+            "input_manifest_checksum": manifest_checksum(request),
+            "auditor_input_checksum": manifest_checksum(request),
+            "artifact_checksums": artifact_checksums,
+            "artifact_references": [f"{item['artifact_kind']}:{item['artifact_id']}" for item in artifact_checksums],
+            "producer_run_reference": producer_run_reference,
+            "auditor_run_reference": runtime_run_id,
+            "producer_actor_id": producer_actor_id,
+            "auditor_actor_id": request.role or "SCRIPT_PRODUCT_AUDITOR",
+            "auditor_write_scope": "AUDIT_ONLY",
+            "independence_result": "PASS" if independent else "BLOCKED",
+            "audited_artifact_ids": [
+                f"{item['artifact_kind']}:{item['artifact_id']}"
+                for item in artifact_checksums
+                if item["artifact_kind"] in {"analysis", "curation", "refined_thesis", "script_promise"}
+            ],
+            "audited_artifact_versions": [
+                item
+                for item in artifact_checksums
+                if item["artifact_kind"] in {"analysis", "curation", "refined_thesis", "script_promise"}
+            ],
+            "audit_method": "AI_SEMANTIC_REVIEW",
+            "readiness": "BLOCKED" if str(request.execution_mode).upper() != "REAL" else bound.get("readiness", "BLOCKED"),
+        })
+    return bound
+
+
 def validate_editorial_payload(payload: dict[str, Any], schema_name: str) -> list[str]:
-    schema = load_schema(schema_name)
-    required_exempt = EDITORIAL_RUNTIME_FIELDS | EDITORIAL_RUNTIME_NORMALIZED_FIELDS
-    editorial_schema = {**schema, "required": [field for field in schema.get("required", []) if field not in required_exempt]}
-    editorial_schema["properties"] = {key: value for key, value in schema.get("properties", {}).items() if key not in EDITORIAL_RUNTIME_FIELDS}
-    errors = Draft7Validator(editorial_schema).iter_errors(payload)
+    errors = Draft7Validator(editorial_projection_schema(schema_name)).iter_errors(payload)
     return [
         f"[{' -> '.join(str(p) for p in error.path) if error.path else 'root'}] {error.message}"
         for error in sorted(errors, key=lambda e: e.path)
     ]
 
 
-def editorial_only_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in payload.items() if key not in EDITORIAL_RUNTIME_FIELDS}
+def _runtime_fields_for_schema(schema_name: str | None) -> set[str]:
+    return EDITORIAL_RUNTIME_FIELDS | ({"status"} if schema_name == "early_packaging_hypothesis" else set())
+
+
+def _project_nested_runtime_fields(schema_name: str | None) -> bool:
+    return schema_name == "early_packaging_hypothesis"
+
+
+def editorial_only_payload(payload: dict[str, Any], schema_name: str | None = None) -> dict[str, Any]:
+    runtime_fields = _runtime_fields_for_schema(schema_name)
+    if isinstance(payload, dict):
+        return {
+            key: editorial_only_payload(value, schema_name) if _project_nested_runtime_fields(schema_name) else value
+            for key, value in payload.items()
+            if key not in runtime_fields
+        }
+    if isinstance(payload, list):
+        return [editorial_only_payload(value, schema_name) for value in payload] if _project_nested_runtime_fields(schema_name) else payload
+    return payload
+
+
+def _runtime_field_paths(value: Any, path: str = "", runtime_fields: set[str] | None = None, recursive: bool = False) -> list[str]:
+    runtime_fields = runtime_fields or EDITORIAL_RUNTIME_FIELDS
+    paths: list[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            child_path = f"{path}.{key}" if path else key
+            if key in runtime_fields:
+                paths.append(child_path)
+            if recursive:
+                paths.extend(_runtime_field_paths(child, child_path, runtime_fields, recursive=True))
+    elif recursive and isinstance(value, list):
+        for index, child in enumerate(value):
+            paths.extend(_runtime_field_paths(child, f"{path}[{index}]", runtime_fields, recursive=True))
+    return paths
 
 
 def editorial_projection_schema(schema_name: str) -> dict[str, Any]:
     schema = load_schema(schema_name)
-    projected = dict(schema)
-    required_exempt = EDITORIAL_RUNTIME_FIELDS | EDITORIAL_RUNTIME_NORMALIZED_FIELDS
-    projected["required"] = [field for field in schema.get("required", []) if field not in required_exempt]
-    projected["properties"] = {key: value for key, value in schema.get("properties", {}).items() if key not in EDITORIAL_RUNTIME_FIELDS}
-    return projected
+    required_exempt = _runtime_fields_for_schema(schema_name) | EDITORIAL_RUNTIME_NORMALIZED_FIELDS
+    recursive = _project_nested_runtime_fields(schema_name)
+
+    def project(node: Any, *, nested: bool = False) -> Any:
+        if isinstance(node, list):
+            return [project(item, nested=(nested or not recursive)) for item in node]
+        if not isinstance(node, dict):
+            return node
+        projected = {key: project(value, nested=(nested or not recursive)) for key, value in node.items()}
+        fields = required_exempt if recursive or not nested else set()
+        if isinstance(node.get("required"), list) and fields:
+            projected["required"] = [field for field in node["required"] if field not in required_exempt]
+        if isinstance(node.get("properties"), dict) and fields:
+            projected["properties"] = {
+                key: project(value, nested=True)
+                for key, value in node["properties"].items()
+                if key not in required_exempt
+            }
+        return projected
+
+    return project(schema)
 
 
 def _normalized_run_configuration(request: ExecutionRequest) -> dict[str, Any] | None:
@@ -593,9 +874,27 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
         availability = _availability_metadata(str(exc))
         status = ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER if availability.get("availability_status") in {"CREDENTIALS_MISSING", "MODEL_UNAVAILABLE", "PROVIDER_UNAVAILABLE", "TIMEOUT", "MODEL_INVOCATION_FAILED"} else (ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR if availability.get("availability_status") in {"BLOCKED_PENDING_OWNER_COST_AUTHORIZATION", "EXECUTOR_UNAVAILABLE", "AGENT_HARNESS_SMOKE_ONLY_UNTIL_R6_B_RETRY"} else ExecutionStatus.FAILED)
         return _result(request, provider_name, status, started, manifest, error=str(exc), usage=availability)
-    output = editorial_only_payload(output or {}) if request.output_schema in EDITORIAL_ONLY_SCHEMAS else (output or {})
-    output, runtime_run_id = _bind_runtime_fields(request, output)
-    violations = validate_editorial_payload(output, request.output_schema) if request.output_schema in EDITORIAL_ONLY_SCHEMAS else validate_against_schema(output, request.output_schema)
+    if request.output_schema in EDITORIAL_ONLY_SCHEMAS:
+        provider_output = output or {}
+        runtime_fields = _runtime_fields_for_schema(request.output_schema)
+        output = editorial_only_payload(provider_output, request.output_schema)
+        violations = validate_editorial_payload(output, request.output_schema)
+        violations.extend(
+            f"[root] metadata técnica de IA no permitida: {path}"
+            for path in _runtime_field_paths(
+                provider_output,
+                runtime_fields=runtime_fields,
+                recursive=_project_nested_runtime_fields(request.output_schema),
+            )
+        )
+        if violations:
+            return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, output=output, error="OUTPUT_COGNITIVE_CONTRACT_INVALID: " + "; ".join(violations), usage=usage)
+        output, runtime_run_id = _bind_runtime_fields(request, output)
+        violations = validate_against_schema(output, request.output_schema)
+    else:
+        output = output or {}
+        runtime_run_id = None
+        violations = validate_against_schema(output, request.output_schema)
     if violations:
         return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, output=output, error="OUTPUT_CONTRACT_INVALID: " + "; ".join(violations), usage=usage)
     return _result(request, provider_name, ExecutionStatus.SUCCEEDED, started, manifest, output=output, usage=usage, real=provider_name in REAL_EXTERNAL_PROVIDERS, run_id=runtime_run_id)
