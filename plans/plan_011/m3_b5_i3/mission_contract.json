@@ -1,0 +1,178 @@
+{
+  "mission_id": "PLAN011_M3_B5_I3_BOUNDARY_REBALANCE",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN011_M3_B5_I3_BOUNDARY_REBALANCE",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_011/m3_b5_i3/",
+    "schemas/viewer_journey.json",
+    "schemas/narrative_plan.json",
+    "schemas/opening_design.json",
+    "schemas/closing_design.json",
+    "src/core/duration_envelope.py",
+    "src/ai/execution.py",
+    "src/ai/role_execution.py",
+    "src/application/storage.py",
+    "prompts/roles/NARRATIVE_ARCHITECTURE/1.0.0.md",
+    "config/agent_prompt_registry.json",
+    "config/responsibility_registry.json",
+    "config/capability_registry.json",
+    "config/skill_catalog.json",
+    ".agent/skills/skill_mapa_eventos_y_outline.md",
+    ".agent/workflows/piloto-outline.md",
+    "tests/harness/test_plan011_m3_b5_i3.py",
+    "tests/ai/test_role_execution_contract.py",
+    "tests/core/test_all_schemas.py"
+  ],
+  "protected_untracked_paths": [".agents/skills/tests-validacion-cierre/"],
+  "protected_untracked_baseline": [
+    {
+      "path": ".agents/skills/tests-validacion-cierre/SKILL.md",
+      "sha256": "41cee8fb79b1b00ebd72b65c7088960f8f4a6a1c241444c481750127aef04334"
+    }
+  ],
+  "required_tests": [
+    {
+      "label": "M3_REAL_PREFLIGHT",
+      "command": ["py", "-3", "-c", "from pathlib import Path; from src.application.authority import resolve_active_mission_bundle; from src.core.mission_authorization import load_mission_authorization; root=Path('.').resolve(); bundle=resolve_active_mission_bundle(root / 'plans/001_CONTROL_OPERATIVO.md', repository_root=root); assert bundle.mission_id == 'PLAN011_M3_B5_I3_BOUNDARY_REBALANCE'; auth=load_mission_authorization(root / bundle.mission_authorization_path); auth.verify(root, capability_id='B5_I3_NARRATIVE_ARCHITECTURE', role_id='NARRATIVE_ARCHITECTURE', operation='EXECUTE_CAPABILITY', execution_mode='SYNTHETIC_TEST', execution_route='synthetic', execution_profile_id='ANY', execution_interface='PLAN011_M3_B5_I3_SYNTHETIC'); print('M3_REAL_PREFLIGHT_PASS')"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "M3_TARGETED_TESTS",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_plan011_m3_b5_i3.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "ROLE_EXECUTION_CONTRACTS",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/ai/test_role_execution_contract.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "HISTORICAL_SCHEMA_COMPATIBILITY",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_all_schemas.py"],
+      "timeout_seconds": 360
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {"remote": "LOCAL", "ref": "HEAD", "baseline_remote_commit": "ccdafa71493559f9ab73b5f065d01db3221981b6"},
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/plan_011/m3_b5_i3/mission-authorization.json",
+  "mission_authorization_sha256": "c6b6473ed08e8666918d70e28d380da3f1aeb8ca1bc21fd6fdf51558393fa57a",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "PLAN011_M3_B5_I3_BOUNDARY_REBALANCE",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "plans/plan_011/m3_b5_i3/mission_contract.json",
+      "R2_SCOPE": "B5_I1_CONTROLLED_EXECUTION",
+      "R2_EXECUTION": "AUTHORIZED_CONTROLLED_B5_I1_ONLY",
+      "PLAN_011_STATUS": "M3_B5_I3_TECHNICAL_SYNTHETIC_ACTIVE",
+      "PLAN_011_IMPLEMENTATION_AUTHORIZED": "YES_M3_B5_I3_TECHNICAL_SYNTHETIC",
+      "PLAN_011_CURRENT_MISSION": "PLAN011_M3_B5_I3_BOUNDARY_REBALANCE",
+      "PLAN_011_B5_I3_AUTHORIZED": "YES_TECHNICAL_SYNTHETIC_ONLY",
+      "M3_PLAN011_TECHNICAL_MISSION_ACTIVE": "YES",
+      "M3_SYNTHETIC_EXECUTION_ALLOWED": "YES",
+      "B5_I3_PRODUCT_EXECUTION": "NO",
+      "M3_STATUS": "TECHNICALLY_COMPLETED_PENDING_OWNER_REVIEW",
+      "B5_I3_AUTHORIZED": "NO",
+      "B5_5_AUTHORIZED": "NO",
+      "B6_AUTHORIZED": "NO",
+      "M3_PLUS": "NO",
+      "AUTHORIZED_FOR_PRODUCT_USE": "NO",
+      "REAL_AI_EXECUTION": "NO",
+      "P2_REAL_EXECUTION_NOW": "NO"
+    },
+    "forbidden": {
+      "B5_I3_PRODUCT_EXECUTION": ["YES", "AUTHORIZED"],
+      "B5_I3_AUTHORIZED": ["YES"],
+      "B5_5_AUTHORIZED": ["YES"],
+      "B6_AUTHORIZED": ["YES"],
+      "M3_PLUS": ["YES"],
+      "AUTHORIZED_FOR_PRODUCT_USE": ["YES", "AUTHORIZED"],
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "P2_REAL_EXECUTION_NOW": ["YES", "AUTHORIZED"]
+    }
+  },
+  "schema_checks": [
+    {"path": "plans/plan_011/m3_b5_i3/mission_contract.json", "schema": "mission_contract"},
+    {"path": "config/agent_prompt_registry.json", "schema": "agent_prompt_registry"},
+    {"path": "config/responsibility_registry.json", "schema": "responsibility_registry"},
+    {"path": "config/capability_registry.json", "schema": "capability_registry"},
+    {"path": "config/skill_catalog.json", "schema": "skill_catalog"}
+  ],
+  "objective": "Materializar y validar técnicamente B5-I3 con cognición sintética, manteniendo la separación Software–IA y sin activar ejecución de producto.",
+  "preconditions": [
+    "La misión activa coincide con este contrato.",
+    "El perfil editorial activo está aprobado y activado.",
+    "El preflight genérico reutilizado resuelve el bundle y verifica la autorización.",
+    "La ejecución cognitiva es exclusivamente sintética.",
+    "R2 conserva el alcance B5-I1 controlado y B5-I3 de producto permanece no autorizado."
+  ],
+  "canonical_inputs": [
+    "Artefactos y contratos B5-I1/B5-I2 existentes.",
+    "Perfil editorial activo.",
+    "Runtime, contratos, registries, persistencia, provenance y recovery existentes.",
+    "Diff candidato M3 presente en el árbol de trabajo."
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_011/m3_b5_i3/",
+    "schemas/viewer_journey.json",
+    "schemas/narrative_plan.json",
+    "schemas/opening_design.json",
+    "schemas/closing_design.json",
+    "src/core/duration_envelope.py",
+    "src/ai/execution.py",
+    "src/ai/role_execution.py",
+    "src/application/storage.py",
+    "prompts/roles/NARRATIVE_ARCHITECTURE/1.0.0.md",
+    "config/agent_prompt_registry.json",
+    "config/responsibility_registry.json",
+    "config/capability_registry.json",
+    "config/skill_catalog.json",
+    ".agent/skills/skill_mapa_eventos_y_outline.md",
+    ".agent/workflows/piloto-outline.md",
+    "tests/harness/test_plan011_m3_b5_i3.py",
+    "tests/ai/test_role_execution_contract.py",
+    "tests/core/test_all_schemas.py"
+  ],
+  "non_objectives": [
+    "Activar B5-I3 como capacidad operativa del producto.",
+    "Cambiar authority.py, crear otro sistema de autorización o crear un nuevo lifecycle.",
+    "Ejecutar IA real, proveedores reales, P2 real, M7, M4, M5/B6 o M6/B7.",
+    "Modificar evidencia cerrada de M1/M2.",
+    "Reactivar reglas narrativas legacy o una estructura universal de guion."
+  ],
+  "expected_outputs": [
+    "El bundle M3 queda materializado y enlazado desde la autoridad viva.",
+    "El preflight genérico confirma misión activa, autorización sintética y no activación de producto.",
+    "Software conserva metadata, IDs, checksums, lineage, bindings, persistencia, recovery e invalidación.",
+    "La IA sintética queda limitada a propuestas cognitivas B5-I3.",
+    "Las registries y contratos modificados conservan validación histórica."
+  ],
+  "deterministic_validations": [
+    "Los contratos, autorización y registries cumplen sus schemas canónicos.",
+    "El preflight resuelve el bundle activo y verifica MissionAuthorization con modo SYNTHETIC_TEST.",
+    "El estado conserva R2 B5-I1, B5-I3 de producto=NO, M3_PLUS=NO y uso productivo=NO.",
+    "Los tests focales M3, role execution y compatibilidad histórica pasan.",
+    "El path protegido conserva su baseline sin cambios.",
+    "git diff --check no reporta errores."
+  ],
+  "adversarial_cases": [
+    "La salida cognitiva intenta escribir IDs, fechas, checksums, profile, lineage, estado o bindings.",
+    "La IA intenta alterar identidad de episodio, instrucciones, duración o lenguaje.",
+    "La persistencia intenta crear un lifecycle paralelo o acepta dependencias stale.",
+    "Un consumidor intenta activar producto, IA real, M7, M4 o M3+.",
+    "Una skill o workflow intenta reactivar reglas narrativas legacy."
+  ],
+  "stop_conditions": [
+    "El bundle no resuelve desde CURRENT_MISSION_EXECUTION_BUNDLE.",
+    "La autorización está stale o no verifica contra el control vivo.",
+    "El preflight genérico no demuestra simultáneamente el límite sintético y la no activación de producto.",
+    "Se requiere modificar authority.py, otro archivo fuera del scope o un nuevo sistema de autorización/lifecycle.",
+    "Aparece cualquier proveedor, modelo o llamada cognitiva real.",
+    "Una prueba exige reabrir o modificar evidencia cerrada de M1/M2."
+  ],
+  "review_policy": {"required_review": "INDEPENDENT_REVIEW", "independent_review": "REQUIRED", "owner_review": true},
+  "owner_closure": {"required": false}
+}

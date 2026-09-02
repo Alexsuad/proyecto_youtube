@@ -1,45 +1,37 @@
 ---
-description: Genera mapa de eventos y outline con una referencia editorial canónica explícita (sin inventar).
-status: DEFERRED_TO_B5_I3
-current_execution: BLOCKED_UNTIL_B5_I3_REMEDIATION
+description: Genera diseño narrativo B5-I3 mediante contratos modernos y referencia editorial canónica explícita.
+status: AVAILABLE_ONLY_IN_AUTHORIZED_B5_I3_MISSION
+current_execution: SOFTWARE_VALIDATES_AND_PERSISTS_AI_COGNITIVE_PROPOSALS
 ---
 
-> **NO EJECUTABLE EN EL ESTADO ACTUAL.** Este workflow conserva una formulación histórica de outline y solo puede reactivarse después de integrar los prerrequisitos documentados en B5-I3/B6/B7/B7.5. No aplicar ahora sus fórmulas de re-hook, timeline, número de eventos, CTA o estructura universal.
-
-> **Sede no canónica:** las entradas, salidas y reglas de este archivo no son instrucciones del flujo portable actual. La autoridad vigente de voz y formato se resuelve desde los contratos y el perfil editorial activo.
-
-
+> La ejecución requiere una misión B5-I3 activa y autorizada. No aplicar fórmulas de re-hook, timeline, número de eventos, CTA o estructura universal.
 
 ## Objetivo
-Crear el plan del episodio (mapa de eventos + outline con tiempos) sin escribir todavía el guion completo.
 
-## Entradas obligatorias (leer antes de actuar)
-- `<EP_PATH>/00_brief_episodio.md` ← **Fuente primaria (Vault V1.2)**
-- `input/brief_capitulo.md` ← Fuente legado (usar solo si no hay EP_PATH activo)
-- `profile_id`, `profile_version`, `profile_checksum` del perfil editorial activo
-- workspace/policy/POLICY_DETECCION_PATRONES_Y_CLICHES_V2.md
-- templates/evento_template_v2.md
+Convertir el diseño editorial validado en recorrido, apertura, cierre y NarrativePlan antes de redactar el guion.
 
-Si la referencia canónica no existe o no corresponde a un perfil activo válido, devolver `BLOCKED`. No sustituirla con fuentes históricas de identidad, voz o formato.
+## Entradas obligatorias
 
-## Reglas duras
-- No inventar datos (obras, años, directores, actores, detalles de trama).
-- Si falta información: escribir "PENDIENTE" y listar preguntas concretas al final.
-- Cumplir las reglas del perfil editorial exacto referenciado.
-- Re-hook obligatorio entre eventos (regla histórica; no ejecutable ni vigente).
+- EpisodeBrief y artefactos B5-I1/B5-I2 validados por Software.
+- `profile_id`, `profile_version`, `profile_checksum` del perfil editorial activo.
+- instrucciones del usuario, duración objetivo y lenguaje objetivo.
 
-## Salidas históricas (no crear en la ruta actual)
-1) `<EP_PATH>/03_mapa_eventos.md`
-   - Concepto del episodio
-   - Lista de eventos (obras) con objetivo emocional de cada uno
-   - Riesgos (spoilers, sensibilidad)
-2) `<EP_PATH>/05_outline_escenas.md`
-   - Timeline con bloques y tiempos sugeridos para 15–25 min:
-     Hook → Intro → Evento 1 → Evento 2 → Evento 3 → (opcional) → Clímax → CTA
+## Procedimiento
 
-## Paso a paso
-1) Lee el brief y detecta si faltan obras o variables.
-2) Si faltan obras: no propongas datos como hechos. Solo pregunta qué obras usar.
-3) Si el brief está completo, genera el mapa de eventos.
-4) Genera outline con tiempos y “re-hook” planeado entre eventos.
-5) Entrega una sección final: "Pendientes por confirmar" (si aplica).
+1. Software verifica contratos, perfil, bindings y checksums.
+2. IA decide contenido, función narrativa, progresión y distribución semántica por bloque.
+3. Software calcula el presupuesto total y valida la suma de bloques.
+4. Software valida schemas, referencias, lineage, persistencia, recuperación e invalidación.
+
+## Salidas contractuales
+
+- ViewerJourney.
+- OpeningDesign.
+- ClosingDesign.
+- NarrativePlan, que incluye los bloques del outline.
+
+## Límites
+
+- No hay re-hook obligatorio, tres eventos obligatorios, CTA obligatorio, Hook → Intro → Evento1 → Evento2 → Evento3 → Clímax → CTA ni 15–25 como estructura universal.
+- Cada bloque debe agregar, complicar, contrastar, limitar o transformar la comprensión.
+- El CTA puede ser `NONE`; Software no decide si mejora narrativamente el cierre.

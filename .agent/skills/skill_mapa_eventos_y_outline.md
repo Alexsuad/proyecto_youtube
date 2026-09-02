@@ -1,31 +1,32 @@
-# Skill — Mapa de eventos + Outline (estructura longform)
-> **ESTADO: NO EJECUTABLE ACTUALMENTE.** `config/skill_catalog.json` la difiere a B5-I3; sus reglas históricas no deben reactivarse hasta completar los prerrequisitos canónicos de B5-I3/B6/B7/B7.5.
-Objetivo: pasar de "ideas" a estructura clara del episodio.
+# Skill — Arquitectura narrativa y outline B5-I3
 
-> **Rol ejecutor actual:** el runtime operativo (en el futuro puede ser un agente Planner con modelo especializado en estructura narrativa)
+> **ESTADO: RECONCILIADA PARA B5-I3 TÉCNICO.** La skill no autoriza por sí sola una ejecución; consume únicamente contratos y perfil resueltos por Software.
 
----
+## Objetivo
+
+Convertir el diseño editorial en ViewerJourney, apertura, cierre y NarrativePlan sin imponer una fórmula narrativa.
 
 ## Entrada mínima
-- `<EP_PATH>/00_brief_episodio.md`
-- `<EP_PATH>/02_curation_obras.md`
-- `profile_id`, `profile_version`, `profile_checksum` del perfil editorial activo
 
----
+- EpisodeBrief, ResearchPack, ClaimsLedger y SourceAccessAndEvidenceReport validados.
+- NarrativeHumanAnalysis, MaterialCuration, RefinedThesis, EditorialScriptPromise.
+- B5I2SemanticAudit, YouTubeAdaptationReview y EarlyPackagingHypothesis.
+- Perfil activo, instrucciones, duración y lenguaje resueltos por Software.
 
-## Pasos
-1) Verificar el perfil editorial exacto y usar el brief del episodio. Si el perfil está ausente, devolver `BLOCKED`.
-   - `<EP_PATH>/02_curation_obras.md`
+## Procedimiento
 
-2) Usar el workflow existente:
-   - .agent/workflows/piloto-outline.md
-
-3) Crear:
-   - `<EP_PATH>/03_mapa_eventos.md`
-   - (si aplica) `<EP_PATH>/05_outline_escenas.md`
-
----
+1. Software verifica perfil, bindings, checksums y contratos de entrada.
+2. IA propone recorrido, función de apertura y cierre, progresión y bloques.
+3. Software valida schemas, presupuesto, referencias, lineage, persistencia e invalidación.
 
 ## Salida
-- `<EP_PATH>/03_mapa_eventos.md` (obligatorio)
-- `<EP_PATH>/05_outline_escenas.md` (si el flujo ya lo usa)
+
+- ViewerJourney, OpeningDesign, ClosingDesign y NarrativePlan contractuales.
+- No se crean mapas Markdown históricos ni un segundo artefacto de outline.
+
+## Límites
+
+- La IA decide contenido y función narrativa; no devuelve IDs, versiones, checksums, lineage, estados ni metadata de sistema.
+- No reactivar re-hook obligatorio, timeline universal, tres eventos obligatorios, CTA obligatorio, Hook → Intro → Evento1 → Evento2 → Evento3 → Clímax → CTA ni 15–25 como estructura.
+- Cada bloque debe poder agregar, complicar, contrastar, limitar o transformar; una secuencia de ejemplos confirmatorios no es progresión.
+- El CTA puede ser `NONE`; Software no decide si mejora narrativamente el cierre.

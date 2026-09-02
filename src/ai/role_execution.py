@@ -45,6 +45,23 @@ YOUTUBE_ADAPTATION_PRODUCER_REQUIRED_INPUTS = (
     "claims_ledger",
     "evidence_report",
 )
+NARRATIVE_ARCHITECTURE_REQUIRED_INPUTS = (
+    "active_editorial_profile_reference",
+    "episode_brief",
+    "research_pack",
+    "claims_ledger",
+    "source_access_and_evidence_report",
+    "narrative_human_analysis",
+    "material_curation",
+    "refined_thesis",
+    "editorial_script_promise",
+    "early_packaging_hypothesis",
+    "b5_i2_semantic_audit",
+    "youtube_adaptation_review",
+    "user_instructions",
+    "target_duration",
+    "target_language",
+)
 YOUTUBE_ADAPTATION_AUDITOR_REQUIRED_INPUTS = (
     "youtube_adaptation_b5_i2_package",
     "producer_run_reference",
@@ -73,6 +90,7 @@ ROLE_REQUIRED_INPUTS = {
     "SCRIPT_PRODUCT_AUDITOR": SCRIPT_PRODUCT_AUDITOR_REQUIRED_INPUTS,
     "YOUTUBE_ADAPTATION_PRODUCER": YOUTUBE_ADAPTATION_PRODUCER_REQUIRED_INPUTS,
     "YOUTUBE_ADAPTATION_AUDITOR": YOUTUBE_ADAPTATION_AUDITOR_REQUIRED_INPUTS,
+    "NARRATIVE_ARCHITECTURE": NARRATIVE_ARCHITECTURE_REQUIRED_INPUTS,
     "CHANNEL_INTELLIGENCE_PRODUCER": CHANNEL_INTELLIGENCE_PRODUCER_REQUIRED_INPUTS,
     "CHANNEL_INTELLIGENCE_REVIEWER": CHANNEL_INTELLIGENCE_REVIEWER_REQUIRED_INPUTS,
 }
@@ -96,6 +114,13 @@ ROLE_ALLOWED_OUTPUT_SCHEMAS = {
     "YOUTUBE_ADAPTATION_AUDITOR": {
         "execution_smoke_report",
         "youtube_adaptation_review",
+    },
+    "NARRATIVE_ARCHITECTURE": {
+        "execution_smoke_report",
+        "viewer_journey",
+        "opening_design",
+        "closing_design",
+        "narrative_plan",
     },
     "CHANNEL_INTELLIGENCE_PRODUCER": {
         "execution_smoke_report",
@@ -243,6 +268,10 @@ def resolve_role_execution_contract(role_id: str, output_schema: str, input_payl
         "early_packaging_hypothesis",
         "youtube_adaptation_b5_i2_package",
         "youtube_adaptation_review",
+        "viewer_journey",
+        "opening_design",
+        "closing_design",
+        "narrative_plan",
     }:
         # Reuse the runtime's canonical projection so the model receives only
         # the cognitive contract.  Software binds the omitted system fields

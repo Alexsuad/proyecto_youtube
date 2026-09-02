@@ -1,0 +1,22 @@
+{
+  "mission_id": "PLAN011_M3_B5_I3_BOUNDARY_REBALANCE",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "c17e3631b2b7f097fcab819c773cbc41660e9487f795f3b827fa7d1bc8b4278e",
+    "capability_ids": ["B5_I3_NARRATIVE_ARCHITECTURE"],
+    "role_ids": ["NARRATIVE_ARCHITECTURE"],
+    "execution_profile_ids": ["ANY"],
+    "execution_interface": "PLAN011_M3_B5_I3_SYNTHETIC",
+    "allowed_operations": ["EXECUTE_CAPABILITY"],
+    "allowed_paths": ["plans/plan_011/m3_b5_i3/"],
+    "allowed_routes": ["synthetic"],
+    "execution_mode": "SYNTHETIC_TEST",
+    "single_use": false,
+    "authority_ref": "plans/plan_011/m3_b5_i3/authority.json",
+    "authority_sha256": "39c7417e7a824cd03c0d7ec03d296bc4f6deb14ba6ab0e62951d86748220b87a",
+    "authorized_scope_sha256": "38607ba29e920a6c35443b1977408481e8a9be3103dbdce2f31382030a182b95",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false,
+    "repair_integrity_evidence_path": "NONE"
+  }
+}

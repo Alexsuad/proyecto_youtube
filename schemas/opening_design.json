@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/opening_design.json",
+  "title": "OpeningDesign",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["opening_design_id", "episode_id", "artifact_version", "hook_function", "opening_question", "initial_tension", "minimum_context", "early_payoff", "promise", "first_transition", "word_budget", "estimated_words", "estimated_time", "risks", "wpm_target", "lineage", "input_checksums", "schema_version", "checksum", "created_at"],
+  "properties": {
+    "opening_design_id": {"type": "string", "minLength": 1},
+    "episode_id": {"type": "string", "minLength": 1},
+    "artifact_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "hook_function": {"type": "string", "minLength": 1},
+    "opening_question": {"type": "string", "minLength": 1},
+    "initial_tension": {"type": "string", "minLength": 1},
+    "minimum_context": {"type": "string", "minLength": 1},
+    "early_payoff": {"type": "string", "minLength": 1},
+    "promise": {"type": "string", "minLength": 1},
+    "first_transition": {"type": "string", "minLength": 1},
+    "word_budget": {"type": "integer", "minimum": 1},
+    "estimated_words": {"type": "integer", "minimum": 1},
+    "estimated_time": {"type": "number", "minimum": 0},
+    "risks": {"type": "array", "items": {"type": "string"}},
+    "wpm_target": {"type": "integer", "minimum": 1},
+    "lineage": {"type": "object"},
+    "input_checksums": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

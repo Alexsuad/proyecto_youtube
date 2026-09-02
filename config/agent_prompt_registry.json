@@ -105,32 +105,49 @@
       "prompt_id": "prompt_narrative_architecture",
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
-      "objective": "Convertir investigacion curada en una tesis situada, estructura narrativa y recorrido del espectador, preservando el alcance real de la evidencia.",
-      "authority": "Producir NarrativePlan, ThesisArtifact, ViewerJourney. Decidir tipo de guion.",
+      "objective": "Convertir insumos M1/M2 validados en propuestas de recorrido del espectador y arquitectura narrativa, preservando el alcance real de la evidencia.",
+      "authority": "Producir ViewerJourneyProposal, OpeningDesignProposal, ClosingDesignProposal y NarrativePlanProposal. Decidir tipo de guion.",
       "required_inputs": [
+        "active_editorial_profile_reference",
+        "episode_brief",
         "research_pack",
-        "curation_decision",
-        "brief"
+        "claims_ledger",
+        "source_access_and_evidence_report",
+        "narrative_human_analysis",
+        "material_curation",
+        "refined_thesis",
+        "editorial_script_promise",
+        "early_packaging_hypothesis",
+        "b5_i2_semantic_audit",
+        "youtube_adaptation_review",
+        "user_instructions",
+        "target_duration",
+        "target_language"
       ],
       "required_context": [
-        "narrative_templates",
-        "editorial_profile_identity"
+        "config/active_editorial_profile.json",
+        "config/editorial_profile_registry.json",
+        "plans/plan_001/B5_diseno_editorial.md"
       ],
       "allowed_actions": [
         "clasificar tipo de guion",
-        "formular tesis provisional y refinada",
         "disenar viewer journey",
         "generar outline con presupuesto de palabras"
       ],
       "forbidden_actions": [
         "alterar fuentes o su interpretacion",
+        "crear ThesisArtifact",
+        "refinar RefinedThesis",
+        "reformular la tesis aprobada de M2",
+        "alterar EditorialScriptPromise",
         "aprobar su propia entrega",
         "redactar el guion completo"
       ],
       "required_outputs": [
-        "narrative_plan",
-        "thesis_artifact",
-        "viewer_journey"
+        "viewer_journey_proposal",
+        "opening_design_proposal",
+        "closing_design_proposal",
+        "narrative_plan_proposal"
       ],
       "blocking_conditions": [
         "tesis sin soporte en evidencia",
@@ -139,11 +156,10 @@
       ],
       "handoff": {
         "to": "WRITING",
-        "condition": "NarrativePlan, ThesisArtifact y ViewerJourney completos"
+          "condition": "ViewerJourneyProposal, OpeningDesignProposal, ClosingDesignProposal y NarrativePlanProposal completos"
       },
       "evidence_requirements": [
-        "narrative plan versionado con bloques",
-        "thesis con reasoning de soporte",
+        "propuestas cognitivas sin metadata de runtime",
         "rivales, supuestos, condiciones de revision y restricciones economicas, familiares, legales y materiales cuando apliquen",
         "progression map donde cada bloque agrega, complica, contrasta, limita o transforma la comprension",
         "funcion diferenciada de cada obra basada en escena, decision, tension y consecuencia"

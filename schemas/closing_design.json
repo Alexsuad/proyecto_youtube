@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/closing_design.json",
+  "title": "ClosingDesign",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["closing_design_id", "episode_id", "artifact_version", "central_question_answer", "thesis_payoff", "opening_callback", "final_image_or_idea", "emotional_resolution", "cta_strategy", "new_ideas_prohibited", "word_budget", "estimated_words", "estimated_time", "wpm_target", "lineage", "input_checksums", "schema_version", "checksum", "created_at"],
+  "properties": {
+    "closing_design_id": {"type": "string", "minLength": 1},
+    "episode_id": {"type": "string", "minLength": 1},
+    "artifact_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "central_question_answer": {"type": "string", "minLength": 1},
+    "thesis_payoff": {"type": "string", "minLength": 1},
+    "opening_callback": {"type": "string", "minLength": 1},
+    "final_image_or_idea": {"type": "string", "minLength": 1},
+    "emotional_resolution": {"type": "string", "minLength": 1},
+    "cta_strategy": {"type": "string", "enum": ["NONE", "OPTIONAL", "CTA"]},
+    "new_ideas_prohibited": {"type": "boolean", "const": true},
+    "word_budget": {"type": "integer", "minimum": 1},
+    "estimated_words": {"type": "integer", "minimum": 1},
+    "estimated_time": {"type": "number", "minimum": 0},
+    "wpm_target": {"type": "integer", "minimum": 1},
+    "lineage": {"type": "object"},
+    "input_checksums": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

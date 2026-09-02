@@ -84,27 +84,35 @@
       "role_id": "NARRATIVE_ARCHITECTURE",
       "contract_type": "BASE_RESPONSIBILITY",
       "functional_owner": "SCRIPT_PRODUCT",
-      "purpose": "Convertir investigación en tesis y estructura narrativa.",
+      "purpose": "Convertir el diseño editorial validado en propuestas de recorrido y estructura narrativa.",
       "when_used": "Después de investigación y antes de redacción.",
       "inputs": [
-        "research_pack",
-        "curation_decision",
-        "brief"
+        "validated M1/M2 artifacts",
+        "user instructions",
+        "target duration",
+        "target language"
       ],
       "outputs": [
-        "narrative_plan",
-        "thesis_artifact"
+        "ViewerJourneyProposal",
+        "OpeningDesignProposal",
+        "ClosingDesignProposal",
+        "NarrativePlanProposal"
       ],
       "read_permissions": [
         "research artifacts",
-        "brief"
+        "brief",
+        "RefinedThesis (read-only)",
+        "EditorialScriptPromise (read-only)"
       ],
       "write_permissions": [
-        "narrative plan",
-        "thesis"
+        "cognitive narrative proposals only"
       ],
       "forbidden_actions": [
         "alterar fuentes",
+        "crear ThesisArtifact",
+        "refinar RefinedThesis",
+        "reformular la tesis aprobada de M2",
+        "alterar EditorialScriptPromise",
         "aprobar su propia entrega"
       ],
       "veto_conditions": [
@@ -112,8 +120,9 @@
         "estructura incompleta"
       ],
       "evidence": [
-        "narrative plan",
-        "thesis"
+        "viewer journey proposal",
+        "opening and closing proposals",
+        "narrative plan proposal"
       ],
       "handoff": [
         "plan to writing"

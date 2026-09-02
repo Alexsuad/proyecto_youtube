@@ -26,6 +26,52 @@ _CAPABILITY_ID = "YT_DURATION_ENVELOPE"
 _GATE_ID = "youtube_adaptation_b5_i2_gate"
 
 
+def resolve_narrative_budget(target_duration: Any, *, wpm_target: int = 150) -> dict[str, int | None]:
+    """Resolve episode arithmetic without deciding its narrative distribution.
+
+    ``target_duration`` is user-provided. ``Automatic`` is the existing
+    application default, not an opening-duration rule. Block allocations remain
+    cognitive and are checked separately by ``validate_narrative_allocation``.
+    """
+    if isinstance(wpm_target, bool) or not isinstance(wpm_target, int) or wpm_target <= 0:
+        raise ValueError("wpm_target debe ser un entero positivo.")
+    if target_duration is None or str(target_duration).strip().lower() in {"", "automatic", "automático", "auto"}:
+        minutes: int | None = None
+    elif isinstance(target_duration, bool):
+        raise ValueError("duration_target debe ser un entero positivo, Automatic o Custom.")
+    elif isinstance(target_duration, int):
+        if target_duration <= 0:
+            raise ValueError("duration_target debe ser un entero positivo.")
+        minutes = target_duration
+    elif isinstance(target_duration, str) and target_duration.strip().lower() == "custom":
+        raise ValueError("Custom requiere una duración numérica explícita.")
+    else:
+        try:
+            minutes = int(str(target_duration).strip())
+        except ValueError as exc:
+            raise ValueError("duration_target debe ser un entero positivo, Automatic o Custom.") from exc
+        if minutes <= 0:
+            raise ValueError("duration_target debe ser un entero positivo.")
+    return {
+        "duration_target_minutes": minutes,
+        "wpm_target": wpm_target,
+        "word_budget_total": minutes * wpm_target if minutes is not None else None,
+    }
+
+
+def validate_narrative_allocation(blocks: Any, word_budget_total: int) -> None:
+    """Validate only arithmetic; block meaning and relative emphasis stay with AI."""
+    if not isinstance(blocks, list) or not blocks:
+        raise ValueError("NarrativePlan requiere bloques para validar el presupuesto.")
+    if isinstance(word_budget_total, bool) or not isinstance(word_budget_total, int) or word_budget_total <= 0:
+        raise ValueError("word_budget_total debe ser un entero positivo.")
+    allocations = [item.get("word_budget") for item in blocks if isinstance(item, dict)]
+    if len(allocations) != len(blocks) or any(isinstance(value, bool) or not isinstance(value, int) or value <= 0 for value in allocations):
+        raise ValueError("Cada bloque debe tener un word_budget entero positivo.")
+    if sum(allocations) != word_budget_total:
+        raise ValueError("La suma de word_budget de bloques no coincide con word_budget_total.")
+
+
 def canonical_duration_registry_path() -> Path:
     return (REPO_ROOT / "output" / "execution_provenance_registry.json").resolve()
 

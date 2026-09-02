@@ -355,10 +355,34 @@ VALID_FIXTURES = {
     "narrative_plan": {
         "script_plan_id": "PLAN-001",
         "episode_id": "EP-001",
+        "artifact_version": "1.0.0",
         "script_type": "LONGFORM",
-        "thesis_provisional": "El exito requiere paciencia.",
-        "blocks": [{}, {}],
-        "word_budget_total": 2000
+        "thesis": "El éxito requiere paciencia situada.",
+        "main_objection": "No siempre.",
+        "nuance": "Depende del contexto.",
+        "promise": "Comprender la tensión.",
+        "viewer_journey_ref": "VJ-1",
+        "opening_design_ref": "OD-1",
+        "closing_design_ref": "CD-1",
+        "climax": "La lectura cambia.",
+        "blocks": [{
+            "block_id": "B1", "function": "ADD", "central_question": "¿Qué ocurre?", "new_information": "Un dato.",
+            "emotional_or_intellectual_change": "Cambia la lectura.", "source_refs": [], "word_budget": 1000,
+            "entry_transition": "Inicio.", "exit_transition": "Sigue.", "must_not_repeat": "Nada.", "prepares_next": "Contexto.",
+            "viewer_state_before": "Inicial.", "viewer_state_after": "Atento.", "partial_payoff": "Aclara.", "open_question": "¿Por qué?"
+        }, {
+            "block_id": "B2", "function": "TRANSFORM", "central_question": "¿Por qué?", "new_information": "Contexto.",
+            "emotional_or_intellectual_change": "Integra matiz.", "source_refs": [], "word_budget": 1000,
+            "entry_transition": "Desde B1.", "exit_transition": "Cierre.", "must_not_repeat": "El dato.", "prepares_next": "Respuesta.",
+            "viewer_state_before": "Pregunta.", "viewer_state_after": "Comprende.", "partial_payoff": "Responde.", "open_question": "Final."
+        }],
+        "word_budget_total": 2000,
+        "wpm_target": 150,
+        "duration_target_minutes": 13,
+        "target_language": "es",
+        "user_instructions": [],
+        "lineage": {}, "input_checksums": {}, "schema_version": "1.0.0", "checksum": "a" * 64,
+        "created_at": "2026-09-01T00:00:00Z"
     },
     "packaging_hypothesis": {
         "episode_audience": "General",
@@ -491,11 +515,35 @@ VALID_FIXTURES = {
     "editorial_script_promise": {"promise_id":"SP-1","episode_id":"EP-1","refined_thesis_id":"T-1","refined_thesis_checksum":"a"*64,"audience":"Persona.","editorial_promise":"Promesa.","central_tension":"Tensión.","legitimate_expectations":["Comprensión."],"expectations_to_avoid":["No promesa."],"thesis_alignment":"Alineada.","textual_overpromise_risk":{"level":"LOW","justification":"Justificación.","mitigation_or_pending":None},"opening_obligations":["Abrir con tensión."],"inherited_constraint_ids":[],"status":"SCRIPT_CORE_INPUT","created_at":"2026-07-24T20:00:00Z"},
     "b5_i2_semantic_sufficiency_audit": {"audit_id":"B5I2-SSA-1","episode_id":"EP-1","auditor_role":"INDEPENDENT_EDITORIAL_AUDITOR","auditor_run_id":"RUN-AUDIT-1","auditor_skill_id":"skill_auditar_suficiencia_semantica_b5_i2","auditor_skill_version":"1.0.0","provider_or_adapter":"local-mock-semantic","model_or_evaluator":"semantic-mock-v1","execution_timestamp":"2026-07-25T08:00:00Z","input_manifest_checksum":"a"*64,"artifact_checksums":[{"artifact_kind":kind,"artifact_id":artifact_id,"checksum":"a"*64,"producer_run_id":"RUN-P"} for kind, artifact_id in [("research","R-1"),("evidence_report","E-1"),("provisional_thesis","TP-1"),("analysis","A-1"),("curation","C-1"),("refined_thesis","T-1"),("script_promise","SP-1")]],"audit_method":"AI_SEMANTIC_REVIEW","audited_artifact_ids":["analysis:A-1","curation:C-1","refined_thesis:T-1","script_promise:SP-1"],"audited_artifact_versions":[{"artifact_kind":"analysis","artifact_id":"A-1","checksum":"a"*64,"producer_run_id":"RUN-P"},{"artifact_kind":"curation","artifact_id":"C-1","checksum":"a"*64,"producer_run_id":"RUN-P"},{"artifact_kind":"refined_thesis","artifact_id":"T-1","checksum":"a"*64,"producer_run_id":"RUN-P"},{"artifact_kind":"script_promise","artifact_id":"SP-1","checksum":"a"*64,"producer_run_id":"RUN-P"}],"criteria_results":[{"criterion":criterion,"status":"SATISFIED","summary":"Evaluado."} for criterion in ["ANALYSIS_SPECIFICITY","EVIDENCE_TRACEABILITY","EPISTEMIC_SEPARATION","EDITORIAL_DEPTH_AND_UTILITY","MATERIAL_COVERAGE","CURATION_FUNCTION","CURATION_CONTRAST_AND_PROGRESSION","REDUNDANCY_AND_CONTEXT_COST","THESIS_REFINEMENT_SUBSTANCE","THESIS_ARGUMENTATIVE_QUALITY","MATERIAL_THESIS_CONTRIBUTION","INHERITED_RESTRICTIONS","SCRIPT_PROMISE_HONESTY","EARLY_PACKAGING_HONESTY","B5_I3_READINESS"]],"findings":[{"criterion":criterion,"status":"SATISFIED","anchored_findings":[{"artifact_kind":"analysis","artifact_id":"A-1","artifact_field":"statement","evaluated_excerpt":"Lectura.","evidence_refs":["F-1"],"evidence_excerpts":[{"evidence_ref":"F-1","excerpt":"Lectura."}],"editorial_comparison":"Comparación editorial trazable.","why_specific_or_generic":"Justificación editorial concreta.","decision":"SATISFIED"}],"rationale":"Evaluado."} for criterion in ["ANALYSIS_SPECIFICITY","EVIDENCE_TRACEABILITY","EPISTEMIC_SEPARATION","EDITORIAL_DEPTH_AND_UTILITY","MATERIAL_COVERAGE","CURATION_FUNCTION","CURATION_CONTRAST_AND_PROGRESSION","REDUNDANCY_AND_CONTEXT_COST","THESIS_REFINEMENT_SUBSTANCE","THESIS_ARGUMENTATIVE_QUALITY","MATERIAL_THESIS_CONTRIBUTION","INHERITED_RESTRICTIONS","SCRIPT_PROMISE_HONESTY","EARLY_PACKAGING_HONESTY","B5_I3_READINESS"]],"blocking_defects":[],"non_blocking_defects":[],"cited_evidence":["F-1"],"required_corrections":[],"unresolved_questions":[],"inherited_restrictions_checked":[],"auditor_statement":"Decision PASS emitida sobre artefactos B5-I2 con evidencia citada.","decision":"PASS","readiness":"BLOCKED","created_at":"2026-07-25T08:00:00Z"},
     "viewer_journey": {
+        "viewer_journey_id": "VJ-1", "episode_id": "EP-001", "artifact_version": "1.0.0",
         "estado_inicial_del_espectador": "Curioso y expectante",
         "creencia_inicial_probable": "Cree que es simple",
         "pregunta_que_lo_mantiene": "¿Cual es el giro narrativo?",
-        "estado_final_del_espectador": "Sorprendido e iluminado"
+        "primer_descubrimiento": "Aparece un costo.", "complicacion": "El contexto complica.",
+        "cambio_de_perspectiva": "La lectura se desplaza.", "tension_principal": "Agencia y contexto.",
+        "revelacion_o_payoff": "La contradicción importa.", "estado_final_del_espectador": "Sorprendido e iluminado",
+        "blocks": [{"block_id": "B1", "que_sabe_antes": "Poco", "que_sabe_despues": "Más", "que_siente_o_cuestiona": "Pregunta", "por_que_quiere_continuar": "Falta contexto", "promesa_parcial_resuelta": "Tensión", "pregunta_abierta": "¿Por qué?"}],
+        "lineage": {}, "input_checksums": {}, "schema_version": "1.0.0", "checksum": "a" * 64,
+        "created_at": "2026-09-01T00:00:00Z"
     }
+}
+
+VALID_FIXTURES["opening_design"] = {
+    "opening_design_id": "OD-1", "episode_id": "EP-001", "artifact_version": "1.0.0",
+    "hook_function": "Abrir tensión.", "opening_question": "¿Qué cambia?", "initial_tension": "Parece simple.",
+    "minimum_context": "Una escena.", "early_payoff": "Un costo.", "promise": "Seguir la pregunta.",
+    "first_transition": "Hacia contexto.", "word_budget": 180, "estimated_words": 180, "estimated_time": 72,
+    "risks": [], "wpm_target": 150, "lineage": {}, "input_checksums": {}, "schema_version": "1.0.0",
+    "checksum": "a" * 64, "created_at": "2026-09-01T00:00:00Z"
+}
+VALID_FIXTURES["closing_design"] = {
+    "closing_design_id": "CD-1", "episode_id": "EP-001", "artifact_version": "1.0.0",
+    "central_question_answer": "El contexto cambia la lectura.", "thesis_payoff": "La tesis se sostiene con límite.",
+    "opening_callback": "Retoma la pregunta.", "final_image_or_idea": "Una puerta entreabierta.",
+    "emotional_resolution": "La duda queda situada.", "cta_strategy": "NONE", "new_ideas_prohibited": True,
+    "word_budget": 270, "estimated_words": 270, "estimated_time": 108, "wpm_target": 150,
+    "lineage": {}, "input_checksums": {}, "schema_version": "1.0.0", "checksum": "a" * 64,
+    "created_at": "2026-09-01T00:00:00Z"
 }
 
 VALID_FIXTURES["independent_research_audit"] = {

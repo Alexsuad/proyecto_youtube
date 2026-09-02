@@ -17,6 +17,7 @@ from typing import Any
 
 from src.application.contracts import HumanInput
 from src.application.interaction import HumanDecision, HumanDecisionRequest, validate_human_decision
+from src.core.contract_validation import validate_against_schema
 
 
 class StorageError(RuntimeError):
@@ -362,6 +363,154 @@ class VaultEpisodeStore:
                     except OSError:
                         pass
                 raise
+
+    B5_I3_ARTIFACT_FILES = {
+        "viewer_journey": "06_viewer_journey.json",
+        "opening_design": "07_opening_design.json",
+        "closing_design": "08_closing_design.json",
+        "narrative_plan": "09_narrative_plan.json",
+    }
+
+    def record_b5_i3_design(
+        self,
+        handle: EpisodeHandle,
+        *,
+        artifacts: dict[str, dict[str, Any]],
+        dependency_snapshot: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        with self._index_lock():
+            return self._record_b5_i3_design(
+                handle,
+                artifacts=artifacts,
+                dependency_snapshot=dependency_snapshot,
+            )
+
+    def _record_b5_i3_design(
+        self,
+        handle: EpisodeHandle,
+        *,
+        artifacts: dict[str, dict[str, Any]],
+        dependency_snapshot: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Persist the validated B5-I3 design using the existing Vault adapter."""
+        self._validate_b5_i3_handle(handle)
+        required = set(self.B5_I3_ARTIFACT_FILES)
+        if set(artifacts) != required:
+            raise StorageError("B5_I3_DESIGN_ARTIFACT_SET_INCOMPLETE")
+        artifact_records: dict[str, Any] = {}
+        paths: list[Path] = []
+        for kind, filename in self.B5_I3_ARTIFACT_FILES.items():
+            payload = artifacts[kind]
+            if not isinstance(payload, dict) or payload.get("episode_id") != handle.episode_id:
+                raise StorageError("B5_I3_DESIGN_EPISODE_BINDING_INVALID")
+            violations = validate_against_schema(payload, kind)
+            if violations:
+                raise StorageError(f"B5_I3_DESIGN_SCHEMA_INVALID:{kind}:" + ";".join(violations))
+            path = handle.folder / filename
+            paths.append(path)
+            artifact_records[kind] = {
+                "artifact_id": payload.get("viewer_journey_id") or payload.get("opening_design_id") or payload.get("closing_design_id") or payload.get("script_plan_id"),
+                "artifact_path": filename,
+                "checksum": self._file_checksum(path) if path.exists() else None,
+            }
+        manifest_path = handle.folder / "b5_i3_design_manifest.json"
+        if any(path.exists() for path in [*paths, manifest_path]):
+            raise StorageError("B5_I3_DESIGN_ALREADY_PERSISTED")
+        normalized_dependencies = list(dependency_snapshot or [])
+        for dependency in normalized_dependencies:
+            if not isinstance(dependency, dict) or not dependency.get("artifact_id") or not dependency.get("checksum"):
+                raise StorageError("B5_I3_DEPENDENCY_SNAPSHOT_INVALID")
+        manifest = {
+            "manifest_version": "1.0.0",
+            "episode_id": handle.episode_id,
+            "status": "PERSISTED",
+            "artifact_records": artifact_records,
+            "dependency_snapshot": normalized_dependencies,
+            "lineage": artifacts["narrative_plan"].get("lineage", {}),
+            "persisted_at": datetime.now(timezone.utc).isoformat(),
+        }
+        try:
+            for kind, filename in self.B5_I3_ARTIFACT_FILES.items():
+                path = handle.folder / filename
+                _write_json_atomic(path, artifacts[kind])
+                artifact_records[kind]["checksum"] = self._file_checksum(path)
+            manifest["artifact_records"] = artifact_records
+            _write_json_atomic(manifest_path, manifest)
+        except Exception:
+            for path in [*paths, manifest_path]:
+                try:
+                    path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+            raise
+        return manifest
+
+    def recover_b5_i3_design(
+        self,
+        handle: EpisodeHandle,
+        *,
+        dependency_paths: dict[str, str | Path] | None = None,
+    ) -> dict[str, Any]:
+        with self._index_lock():
+            return self._recover_b5_i3_design(handle, dependency_paths=dependency_paths)
+
+    def _recover_b5_i3_design(
+        self,
+        handle: EpisodeHandle,
+        *,
+        dependency_paths: dict[str, str | Path] | None = None,
+    ) -> dict[str, Any]:
+        """Recover the design and fail explicitly when a dependency is stale."""
+        self._validate_b5_i3_handle(handle)
+        manifest_path = handle.folder / "b5_i3_design_manifest.json"
+        manifest = _read_json(manifest_path)
+        if manifest.get("episode_id") != handle.episode_id or manifest.get("status") != "PERSISTED":
+            raise StorageError("B5_I3_DESIGN_MANIFEST_INVALID")
+        if set(manifest.get("artifact_records", {})) != set(self.B5_I3_ARTIFACT_FILES):
+            raise StorageError("B5_I3_DESIGN_MANIFEST_INVALID")
+        artifacts: dict[str, dict[str, Any]] = {}
+        for kind, expected_filename in self.B5_I3_ARTIFACT_FILES.items():
+            record = manifest["artifact_records"].get(kind)
+            if kind not in self.B5_I3_ARTIFACT_FILES or not isinstance(record, dict):
+                raise StorageError("B5_I3_DESIGN_MANIFEST_INVALID")
+            if record.get("artifact_path") != expected_filename:
+                raise StorageError("B5_I3_DESIGN_MANIFEST_INVALID")
+            path = handle.folder / expected_filename
+            if not path.is_file() or self._file_checksum(path) != record.get("checksum"):
+                raise StorageError(f"B5_I3_DESIGN_RECOVERY_CHECKSUM_MISMATCH:{kind}")
+            try:
+                payload = _read_json(path)
+            except StorageError:
+                raise
+            violations = validate_against_schema(payload, kind)
+            if violations:
+                raise StorageError(f"B5_I3_DESIGN_RECOVERY_SCHEMA_INVALID:{kind}")
+            if payload.get("episode_id") != handle.episode_id:
+                raise StorageError("B5_I3_DESIGN_RECOVERY_EPISODE_BINDING_INVALID")
+            artifacts[kind] = payload
+        for dependency in manifest.get("dependency_snapshot", []):
+            if not isinstance(dependency, dict):
+                raise StorageError("B5_I3_DEPENDENCY_SNAPSHOT_INVALID")
+            path_value = dependency.get("artifact_path") or dependency.get("path")
+            if dependency_paths and dependency.get("artifact_id") in dependency_paths:
+                path_value = dependency_paths[dependency["artifact_id"]]
+            if not path_value:
+                raise StorageError(f"B5_I3_DESIGN_DEPENDENCY_UNRESOLVED:{dependency.get('artifact_id')}")
+            path = Path(path_value)
+            if not path.is_file() or self._file_checksum(path) != dependency.get("checksum"):
+                raise StorageError(f"B5_I3_DESIGN_INVALIDATED:{dependency.get('artifact_id')}")
+        return {"status": "PERSISTED", "manifest": manifest, "artifacts": artifacts}
+
+    def _validate_b5_i3_handle(self, handle: EpisodeHandle) -> None:
+        expected_folder = (self.episodes_path / f"{handle.episode_id}_{handle.slug}").resolve()
+        expected_index = self.index_path.resolve()
+        try:
+            actual_folder = handle.folder.resolve()
+            actual_index = handle.index_path.resolve()
+        except OSError as exc:
+            raise StorageError("B5_I3_EPISODE_HANDLE_INVALID") from exc
+        if actual_folder != expected_folder or actual_index != expected_index or not actual_folder.is_dir():
+            raise StorageError("B5_I3_EPISODE_HANDLE_INVALID")
 
     def record_roundtrip_result(
         self,

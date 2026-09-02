@@ -116,14 +116,13 @@
       "skill_id": "skill_mapa_eventos_y_outline",
       "path": ".agent/skills/skill_mapa_eventos_y_outline.md",
       "canonical_owner": "NARRATIVE_ARCHITECTURE",
-      "classification": "MODIFY_REQUIRED_IN_B5_I3",
+      "classification": "KEEP",
       "target_or_merge_destination": "NARRATIVE_ARCHITECTURE",
-      "rationale": "Problema funcional: outline depende de B5-I3.",
+      "rationale": "B5-I3 moderno: arquitectura y outline contractual sin reglas narrativas rígidas.",
       "covered_by_general_capability": [
         "decidir-tipo-pieza-sistema-agentico"
       ],
-      "future_block": "B5-I3",
-      "non_executable_current": true
+      "future_block": "B5-I3"
     },
     {
       "skill_id": "skill_owner_report",

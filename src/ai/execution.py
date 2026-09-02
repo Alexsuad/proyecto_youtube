@@ -85,6 +85,24 @@ EDITORIAL_RUNTIME_FIELDS = {
     "auditor_input_checksum",
     "auditor_write_scope",
     "independence_result",
+    "viewer_journey_id",
+    "opening_design_id",
+    "closing_design_id",
+    "script_plan_id",
+    "schema_version",
+    "lineage",
+    "input_checksums",
+    "target_duration",
+    "duration_target_minutes",
+    "target_language",
+    "user_instructions",
+    "original_user_text",
+    "source_ids",
+    "claims_ids",
+    "estimated_words",
+    "estimated_time",
+    "wpm_target",
+    "word_budget_total",
 }
 # These fields are semantic findings, not runtime metadata.  They must remain
 # in the cognitive projection and are later carried into the software-owned
@@ -99,6 +117,54 @@ EDITORIAL_ONLY_SCHEMAS = {
     "early_packaging_hypothesis",
     "youtube_adaptation_b5_i2_package",
     "youtube_adaptation_review",
+    "viewer_journey",
+    "opening_design",
+    "closing_design",
+    "narrative_plan",
+}
+M3_NARRATIVE_SCHEMAS = {"viewer_journey", "opening_design", "closing_design", "narrative_plan"}
+M3_REQUIRED_INPUT_KINDS = {
+    "human_input",
+    "active_editorial_profile_reference",
+    "episode_brief",
+    "research_pack",
+    "claims_ledger",
+    "source_access_and_evidence_report",
+    "narrative_human_analysis",
+    "material_curation",
+    "refined_thesis",
+    "editorial_script_promise",
+    "early_packaging_hypothesis",
+    "b5_i2_semantic_audit",
+    "youtube_adaptation_review",
+}
+M3_INPUT_SCHEMA_BY_KIND = {
+    "human_input": "human_episode_input",
+    "active_editorial_profile_reference": "active_editorial_profile",
+    "episode_brief": "episode_brief",
+    "research_pack": "research_pack",
+    "claims_ledger": "claims_ledger",
+    "source_access_and_evidence_report": "source_access_and_evidence_report",
+    "narrative_human_analysis": "narrative_human_analysis",
+    "material_curation": "material_curation",
+    "refined_thesis": "refined_thesis",
+    "editorial_script_promise": "editorial_script_promise",
+    "early_packaging_hypothesis": "early_packaging_hypothesis",
+    "b5_i2_semantic_audit": "b5_i2_semantic_sufficiency_audit",
+    "youtube_adaptation_review": "youtube_adaptation_review",
+}
+M3_CANONICAL_ID_FIELDS = {
+    "human_input": "interaction_id",
+    "research_pack": "research_id",
+    "claims_ledger": "ledger_id",
+    "source_access_and_evidence_report": "report_id",
+    "narrative_human_analysis": "analysis_id",
+    "material_curation": "curation_id",
+    "refined_thesis": "thesis_id",
+    "editorial_script_promise": "promise_id",
+    "early_packaging_hypothesis": "packaging_id",
+    "b5_i2_semantic_audit": "audit_id",
+    "youtube_adaptation_review": "review_id",
 }
 
 
@@ -320,6 +386,8 @@ def _bind_runtime_fields(request: ExecutionRequest, output: dict[str, Any]) -> t
     if request.output_schema not in EDITORIAL_ONLY_SCHEMAS and run_key is None:
         return output, None
     runtime_run_id = f"RUN-AI-{uuid.uuid4().hex}"
+    if request.output_schema in M3_NARRATIVE_SCHEMAS:
+        return _bind_m3_runtime_fields(request, output, runtime_run_id), runtime_run_id
     if request.output_schema in EDITORIAL_ONLY_SCHEMAS:
         return _bind_b5_i2_runtime_fields(request, output, runtime_run_id), runtime_run_id
     bound = copy.deepcopy(output)
@@ -546,6 +614,151 @@ def _bind_b5_i2_runtime_fields(
     return bound
 
 
+def _bind_m3_runtime_fields(
+    request: ExecutionRequest,
+    output: dict[str, Any],
+    runtime_run_id: str,
+) -> dict[str, Any]:
+    """Build the final B5-I3 envelope from a cognitive projection."""
+    from src.core.duration_envelope import resolve_narrative_budget, validate_narrative_allocation
+
+    bound = copy.deepcopy(output)
+    provided_input_kinds = {item.artifact_kind for item in request.input_artifacts}
+    missing_input_kinds = sorted(M3_REQUIRED_INPUT_KINDS - provided_input_kinds)
+    if missing_input_kinds:
+        raise ValueError("B5-I3 inputs canónicos ausentes: " + ", ".join(missing_input_kinds))
+    _validate_m3_input_artifacts(request)
+    documents = _input_documents(request)
+    human = documents.get("human_input", ({}, None, ""))[0]
+    episode_id = request.episode_id or str(human.get("episode_id") or "")
+    if not episode_id:
+        for payload, _, _ in documents.values():
+            if payload.get("episode_id"):
+                episode_id = str(payload["episode_id"])
+                break
+    if not episode_id:
+        raise ValueError("B5-I3 requiere episode_id canónico.")
+    id_key = {
+        "viewer_journey": "viewer_journey_id",
+        "opening_design": "opening_design_id",
+        "closing_design": "closing_design_id",
+        "narrative_plan": "script_plan_id",
+    }[request.output_schema]
+    bound[id_key] = request.output_artifact_id or f"{request.output_schema.upper()}-{runtime_run_id}"
+    bound["episode_id"] = episode_id
+    bound["artifact_version"] = str(request.config.get("artifact_version") or "1.0.0")
+    bound["schema_version"] = "1.0.0"
+    bound["created_at"] = _now()
+    parent_artifacts = []
+    input_checksums: dict[str, str] = {}
+    for item in request.input_artifacts:
+        checksum = file_checksum(item.path)
+        ref = f"{item.artifact_kind}:{item.artifact_id}"
+        parent_artifacts.append({
+            "artifact_kind": item.artifact_kind,
+            "artifact_id": item.artifact_id,
+            "checksum": checksum,
+            "producer_run_id": item.producer_run_id,
+        })
+        input_checksums[ref] = checksum
+    bound["input_checksums"] = input_checksums
+    bound["lineage"] = {
+        "root_episode_id": episode_id,
+        "parent_artifacts": parent_artifacts,
+        "generated_by": "SOFTWARE",
+        "generation_run_id": runtime_run_id,
+    }
+    if "human_input" in documents and request.output_schema == "narrative_plan":
+        bound["duration_target_minutes"] = human.get("duration_target_minutes")
+        bound["target_language"] = human.get("target_language")
+        bound["user_instructions"] = human.get("user_instructions", [])
+
+    resolved = resolve_narrative_budget(
+        human.get("duration_target_minutes"),
+        wpm_target=int(request.config.get("wpm_target") or 150),
+    )
+    wpm = int(resolved["wpm_target"])
+    if request.output_schema in {"opening_design", "closing_design"}:
+        word_budget = bound.get("word_budget")
+        if not isinstance(word_budget, int) or word_budget <= 0:
+            raise ValueError(f"{request.output_schema} requiere word_budget cognitivo.")
+        bound["estimated_words"] = word_budget
+        bound["estimated_time"] = round(word_budget / wpm * 60, 2)
+        bound["wpm_target"] = wpm
+    elif request.output_schema == "narrative_plan":
+        if resolved["word_budget_total"] is None:
+            raise ValueError("STOP_LOCAL_DURATION_UNRESOLVED: NarrativePlan requiere duración numérica canónica")
+        validate_narrative_allocation(bound.get("blocks"), int(resolved["word_budget_total"]))
+        bound["word_budget_total"] = int(resolved["word_budget_total"])
+        bound["wpm_target"] = wpm
+    bound["checksum"] = hashlib.sha256(
+        canonical_json({key: value for key, value in bound.items() if key != "checksum"})
+    ).hexdigest()
+    return bound
+
+
+def _validate_m3_input_artifacts(request: ExecutionRequest) -> None:
+    """Validate the complete canonical M1/M2 input set before cognition runs."""
+    from src.core.contract_validation import validate_against_schema
+
+    seen: set[str] = set()
+    human_episode_id = str(request.episode_id or "")
+    canonical_profile = None
+    try:
+        from src.ai.role_execution import load_active_profile_authority
+
+        canonical_profile = load_active_profile_authority()
+    except Exception as exc:
+        raise ValueError("B5-I3 perfil editorial activo no resoluble") from exc
+    for item in request.input_artifacts:
+        if item.artifact_kind in seen:
+            raise ValueError(f"B5-I3 input duplicado: {item.artifact_kind}")
+        seen.add(item.artifact_kind)
+        if not item.artifact_id or not item.producer_run_id:
+            raise ValueError(f"B5-I3 binding incompleto: {item.artifact_kind}")
+        if not item.path.is_file():
+            raise ValueError(f"B5-I3 input ilegible o inexistente: {item.artifact_kind}")
+        try:
+            payload = json.loads(item.path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError(f"B5-I3 JSON inválido: {item.artifact_kind}") from exc
+        if not isinstance(payload, dict):
+            raise ValueError(f"B5-I3 payload no objeto: {item.artifact_kind}")
+        canonical_id_field = M3_CANONICAL_ID_FIELDS.get(item.artifact_kind)
+        if canonical_id_field and item.artifact_id != str(payload.get(canonical_id_field) or ""):
+            raise ValueError(f"B5_I3_CANONICAL_ARTIFACT_ID_MISMATCH:{item.artifact_kind}")
+        schema_name = M3_INPUT_SCHEMA_BY_KIND.get(item.artifact_kind)
+        if schema_name:
+            violations = validate_against_schema(payload, schema_name)
+            if violations:
+                raise ValueError(
+                    f"B5-I3 schema inválido ({item.artifact_kind}): " + "; ".join(violations)
+                )
+        if item.artifact_kind == "active_editorial_profile_reference":
+            expected_profile = {
+                "profile_id": canonical_profile.get("ACTIVE_PROFILE_ID"),
+                "profile_version": canonical_profile.get("ACTIVE_PROFILE_VERSION"),
+                "profile_checksum": canonical_profile.get("profile_checksum"),
+            }
+            observed_profile = {
+                "profile_id": payload.get("ACTIVE_PROFILE_ID"),
+                "profile_version": payload.get("ACTIVE_PROFILE_VERSION"),
+                "profile_checksum": payload.get("profile_checksum"),
+            }
+            if observed_profile != expected_profile:
+                raise ValueError("B5-I3 perfil editorial activo no coincide con la autoridad canónica")
+        payload_episode_id = payload.get("episode_id")
+        if payload_episode_id is not None:
+            if not human_episode_id:
+                human_episode_id = str(payload_episode_id)
+            elif str(payload_episode_id) != human_episode_id:
+                raise ValueError(
+                    f"B5-I3 episode_id inconsistente: {item.artifact_kind}={payload_episode_id}, expected={human_episode_id}"
+                )
+    if not human_episode_id:
+        raise ValueError("B5-I3 episode_id canónico ausente")
+
+
 def validate_editorial_payload(payload: dict[str, Any], schema_name: str) -> list[str]:
     errors = Draft7Validator(editorial_projection_schema(schema_name)).iter_errors(payload)
     return [
@@ -734,7 +947,8 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
         convergence_result = _execute_reduced_mission(request, started, manifest, mission_contract)
         if convergence_result.status is not ExecutionStatus.CONVERGED:
             return convergence_result
-        if request.execution_family != "AGENT_HARNESS" and request.execution_route != "agent_harness":
+        synthetic_mode = str(request.execution_mode).upper() in {"SYNTHETIC", "SYNTHETIC_TEST", "MOCK"}
+        if not synthetic_mode and request.execution_family != "AGENT_HARNESS" and request.execution_route != "agent_harness":
             return convergence_result
         request.config = {
             **request.config,
@@ -889,7 +1103,19 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
         )
         if violations:
             return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, output=output, error="OUTPUT_COGNITIVE_CONTRACT_INVALID: " + "; ".join(violations), usage=usage)
-        output, runtime_run_id = _bind_runtime_fields(request, output)
+        try:
+            output, runtime_run_id = _bind_runtime_fields(request, output)
+        except ValueError as exc:
+            return _result(
+                request,
+                provider_name,
+                ExecutionStatus.FAILED,
+                started,
+                manifest,
+                output=output,
+                error=f"OUTPUT_BINDING_INVALID: {exc}",
+                usage=usage,
+            )
         violations = validate_against_schema(output, request.output_schema)
     else:
         output = output or {}

@@ -1,0 +1,339 @@
+{
+  "gate_id": "MISSION_COMPLETION",
+  "artifact_id": "PLAN011_M3_B5_I3_BOUNDARY_REBALANCE",
+  "artifact_version": "1.0.0",
+  "status": "PASS",
+  "summary": "Deterministic mission completion checks passed.",
+  "violations": [],
+  "warnings": [],
+  "evidence": {
+    "mission_id": "PLAN011_M3_B5_I3_BOUNDARY_REBALANCE",
+    "binding": {
+      "binding_version": "1.0.0",
+      "gate_source": "run_mission_completion_gate",
+      "mission_contract_sha256": "b1fec4b723f1db92e0177f1ce4426915ddcba2e3882a5dc0e4855db8c6ad2dc1",
+      "git_head": "ccdafa71493559f9ab73b5f065d01db3221981b6",
+      "git_status_sha256": "9a907ad6d88393c03d8de6a98fa24d987e75682f0e682f5efc1b15ba450624dc",
+      "repo_root": "C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube"
+    },
+    "git": {
+      "status_lines": [
+        " M .agent/skills/skill_mapa_eventos_y_outline.md",
+        " M .agent/workflows/piloto-outline.md",
+        " M config/agent_prompt_registry.json",
+        " M config/capability_registry.json",
+        " M config/responsibility_registry.json",
+        " M config/skill_catalog.json",
+        " M plans/001_CONTROL_OPERATIVO.md",
+        " M prompts/roles/NARRATIVE_ARCHITECTURE/1.0.0.md",
+        " M schemas/narrative_plan.json",
+        " M schemas/viewer_journey.json",
+        " M src/ai/execution.py",
+        " M src/ai/role_execution.py",
+        " M src/application/storage.py",
+        " M src/core/duration_envelope.py",
+        " M tests/core/test_all_schemas.py",
+        "?? .agents/skills/tests-validacion-cierre/SKILL.md",
+        "?? plans/plan_011/m3_b5_i3/authority.json",
+        "?? plans/plan_011/m3_b5_i3/gates/gates/PLAN011_M3_B5_I3_BOUNDARY_REBALANCE/MISSION_COMPLETION.json",
+        "?? plans/plan_011/m3_b5_i3/gates/gates/PLAN011_M3_B5_I3_BOUNDARY_REBALANCE/MISSION_COMPLETION.md",
+        "?? plans/plan_011/m3_b5_i3/mission-authorization.json",
+        "?? plans/plan_011/m3_b5_i3/mission_contract.json",
+        "?? schemas/closing_design.json",
+        "?? schemas/opening_design.json",
+        "?? tests/harness/test_plan011_m3_b5_i3.py"
+      ],
+      "modified_files": [
+        ".agent/skills/skill_mapa_eventos_y_outline.md",
+        ".agent/workflows/piloto-outline.md",
+        "config/agent_prompt_registry.json",
+        "config/capability_registry.json",
+        "config/responsibility_registry.json",
+        "config/skill_catalog.json",
+        "plans/001_CONTROL_OPERATIVO.md",
+        "prompts/roles/NARRATIVE_ARCHITECTURE/1.0.0.md",
+        "schemas/narrative_plan.json",
+        "schemas/viewer_journey.json",
+        "src/ai/execution.py",
+        "src/ai/role_execution.py",
+        "src/application/storage.py",
+        "src/core/duration_envelope.py",
+        "tests/core/test_all_schemas.py"
+      ],
+      "staged_files": [],
+      "untracked_files": [
+        ".agents/skills/tests-validacion-cierre/SKILL.md",
+        "plans/plan_011/m3_b5_i3/authority.json",
+        "plans/plan_011/m3_b5_i3/gates/gates/PLAN011_M3_B5_I3_BOUNDARY_REBALANCE/MISSION_COMPLETION.json",
+        "plans/plan_011/m3_b5_i3/gates/gates/PLAN011_M3_B5_I3_BOUNDARY_REBALANCE/MISSION_COMPLETION.md",
+        "plans/plan_011/m3_b5_i3/mission-authorization.json",
+        "plans/plan_011/m3_b5_i3/mission_contract.json",
+        "schemas/closing_design.json",
+        "schemas/opening_design.json",
+        "tests/harness/test_plan011_m3_b5_i3.py"
+      ],
+      "outside_scope": [],
+      "unexpected_files": [],
+      "diff_check": {
+        "unstaged": {
+          "returncode": 0,
+          "stdout": "",
+          "stderr": "warning: in the working copy of '.agent/skills/skill_mapa_eventos_y_outline.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of '.agent/workflows/piloto-outline.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'config/agent_prompt_registry.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'config/capability_registry.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'config/responsibility_registry.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'config/skill_catalog.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'plans/001_CONTROL_OPERATIVO.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'prompts/roles/NARRATIVE_ARCHITECTURE/1.0.0.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'schemas/narrative_plan.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'schemas/viewer_journey.json', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/execution.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/ai/role_execution.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/application/storage.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'src/core/duration_envelope.py', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'tests/core/test_all_schemas.py', LF will be replaced by CRLF the next time Git touches it\n"
+        },
+        "staged": {
+          "returncode": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      }
+    },
+    "protected_untracked": {
+      "declared": [
+        ".agents/skills/tests-validacion-cierre"
+      ],
+      "missing": [],
+      "baseline_missing": [],
+      "baseline_outside_scope": [],
+      "untracked_files": [
+        ".agents/skills/tests-validacion-cierre/SKILL.md"
+      ],
+      "unexpected_files": [],
+      "checksum_mismatches": [],
+      "preserved": true
+    },
+    "structural": {
+      "json": [
+        {
+          "path": "config/agent_prompt_registry.json",
+          "valid": true
+        },
+        {
+          "path": "config/capability_registry.json",
+          "valid": true
+        },
+        {
+          "path": "config/responsibility_registry.json",
+          "valid": true
+        },
+        {
+          "path": "config/skill_catalog.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_011/m3_b5_i3/authority.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_011/m3_b5_i3/gates/gates/PLAN011_M3_B5_I3_BOUNDARY_REBALANCE/MISSION_COMPLETION.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_011/m3_b5_i3/mission-authorization.json",
+          "valid": true
+        },
+        {
+          "path": "plans/plan_011/m3_b5_i3/mission_contract.json",
+          "valid": true
+        },
+        {
+          "path": "schemas/closing_design.json",
+          "valid": true
+        },
+        {
+          "path": "schemas/narrative_plan.json",
+          "valid": true
+        },
+        {
+          "path": "schemas/opening_design.json",
+          "valid": true
+        },
+        {
+          "path": "schemas/viewer_journey.json",
+          "valid": true
+        }
+      ],
+      "yaml": [],
+      "yaml_markdown": [
+        {
+          "path": ".agent/skills/skill_mapa_eventos_y_outline.md",
+          "blocks": []
+        },
+        {
+          "path": ".agent/workflows/piloto-outline.md",
+          "blocks": []
+        },
+        {
+          "path": ".agents/skills/tests-validacion-cierre/SKILL.md",
+          "blocks": []
+        },
+        {
+          "path": "plans/001_CONTROL_OPERATIVO.md",
+          "blocks": [
+            {
+              "valid": true
+            }
+          ]
+        },
+        {
+          "path": "plans/plan_011/m3_b5_i3/gates/gates/PLAN011_M3_B5_I3_BOUNDARY_REBALANCE/MISSION_COMPLETION.md",
+          "blocks": []
+        },
+        {
+          "path": "prompts/roles/NARRATIVE_ARCHITECTURE/1.0.0.md",
+          "blocks": []
+        }
+      ],
+      "python": [
+        {
+          "path": "src/ai/execution.py",
+          "valid": true
+        },
+        {
+          "path": "src/ai/role_execution.py",
+          "valid": true
+        },
+        {
+          "path": "src/application/storage.py",
+          "valid": true
+        },
+        {
+          "path": "src/core/duration_envelope.py",
+          "valid": true
+        },
+        {
+          "path": "tests/core/test_all_schemas.py",
+          "valid": true
+        },
+        {
+          "path": "tests/harness/test_plan011_m3_b5_i3.py",
+          "valid": true
+        }
+      ],
+      "schemas": [
+        {
+          "path": "plans/plan_011/m3_b5_i3/mission_contract.json",
+          "schema": "mission_contract",
+          "violations": []
+        },
+        {
+          "path": "config/agent_prompt_registry.json",
+          "schema": "agent_prompt_registry",
+          "violations": []
+        },
+        {
+          "path": "config/responsibility_registry.json",
+          "schema": "responsibility_registry",
+          "violations": []
+        },
+        {
+          "path": "config/capability_registry.json",
+          "schema": "capability_registry",
+          "violations": []
+        },
+        {
+          "path": "config/skill_catalog.json",
+          "schema": "skill_catalog",
+          "violations": []
+        }
+      ]
+    },
+    "mission_authorization": {
+      "required": true,
+      "path": "plans/plan_011/m3_b5_i3/mission-authorization.json",
+      "expected_sha256": "c6b6473ed08e8666918d70e28d380da3f1aeb8ca1bc21fd6fdf51558393fa57a",
+      "actual_sha256": "c6b6473ed08e8666918d70e28d380da3f1aeb8ca1bc21fd6fdf51558393fa57a",
+      "mission_id": "PLAN011_M3_B5_I3_BOUNDARY_REBALANCE",
+      "contains_material_repair": false,
+      "repair_integrity_evidence_path": "NONE",
+      "authorized_scope_sha256": "38607ba29e920a6c35443b1977408481e8a9be3103dbdce2f31382030a182b95",
+      "status": "PASS"
+    },
+    "repair_integrity": {
+      "required": false,
+      "status": "NOT_REQUIRED"
+    },
+    "required_tests": [
+      {
+        "label": "M3_REAL_PREFLIGHT",
+        "command": [
+          "py",
+          "-3",
+          "-c",
+          "from pathlib import Path; from src.application.authority import resolve_active_mission_bundle; from src.core.mission_authorization import load_mission_authorization; root=Path('.').resolve(); bundle=resolve_active_mission_bundle(root / 'plans/001_CONTROL_OPERATIVO.md', repository_root=root); assert bundle.mission_id == 'PLAN011_M3_B5_I3_BOUNDARY_REBALANCE'; auth=load_mission_authorization(root / bundle.mission_authorization_path); auth.verify(root, capability_id='B5_I3_NARRATIVE_ARCHITECTURE', role_id='NARRATIVE_ARCHITECTURE', operation='EXECUTE_CAPABILITY', execution_mode='SYNTHETIC_TEST', execution_route='synthetic', execution_profile_id='ANY', execution_interface='PLAN011_M3_B5_I3_SYNTHETIC'); print('M3_REAL_PREFLIGHT_PASS')"
+        ],
+        "returncode": 0,
+        "stdout": "M3_REAL_PREFLIGHT_PASS\n",
+        "stderr": ""
+      },
+      {
+        "label": "M3_TARGETED_TESTS",
+        "command": [
+          "py",
+          "-3",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/harness/test_plan011_m3_b5_i3.py"
+        ],
+        "returncode": 0,
+        "stdout": ".....................                                                    [100%]\n============================== warnings summary ===============================\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n21 passed, 4 warnings in 5.85s\n",
+        "stderr": ""
+      },
+      {
+        "label": "ROLE_EXECUTION_CONTRACTS",
+        "command": [
+          "py",
+          "-3",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/ai/test_role_execution_contract.py"
+        ],
+        "returncode": 0,
+        "stdout": "...............                                                          [100%]\n============================== warnings summary ===============================\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n15 passed, 4 warnings in 2.05s\n",
+        "stderr": ""
+      },
+      {
+        "label": "HISTORICAL_SCHEMA_COMPATIBILITY",
+        "command": [
+          "py",
+          "-3",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/core/test_all_schemas.py"
+        ],
+        "returncode": 0,
+        "stdout": "...... [100%]\n============================== warnings summary ===============================\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the https://github.com/python-jsonschema/referencing library, which provides more compliant referencing behavior as well as more flexible APIs for customization. A future release will remove RefResolver. Please file a feature request (on referencing) if you are missing an API for the kind of customization you need.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\nsrc\\core\\contract_validation.py:15\nsrc\\core\\contract_validation.py:15\n  C:\\Mis Documentos\\Proyectos_Wds\\proyecto_youtube\\src\\core\\contract_validation.py:15: DeprecationWarning: Accessing jsonschema.draft7_format_checker is deprecated and will be removed in a future release. Instead, use the FORMAT_CHECKER attribute on the corresponding Validator.\n    from jsonschema import Draft7Validator, RefResolver, draft7_format_checker\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n6 passed, 4 warnings, 247 subtests passed in 2.54s\n",
+        "stderr": ""
+      }
+    ],
+    "state": {
+      "control_path": "plans/001_CONTROL_OPERATIVO.md",
+      "read": true,
+      "required": [],
+      "forbidden": []
+    },
+    "push_policy": {
+      "push_allowed": false,
+      "verification": "LOCAL_REF",
+      "remote": "LOCAL",
+      "ref": "HEAD",
+      "baseline_remote_commit": "ccdafa71493559f9ab73b5f065d01db3221981b6",
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "returncode": 0,
+      "stdout": "ccdafa71493559f9ab73b5f065d01db3221981b6\n",
+      "stderr": "",
+      "verified": true,
+      "enforced": true,
+      "observed_remote_commit": "ccdafa71493559f9ab73b5f065d01db3221981b6"
+    }
+  },
+  "checked_at": "2026-09-02T17:21:29.033985+00:00",
+  "checker_version": "1.0.0",
+  "exit_code": 0
+}

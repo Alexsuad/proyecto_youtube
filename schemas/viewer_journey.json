@@ -3,13 +3,31 @@
   "$id": "https://masalladelguion.com/schemas/viewer_journey.json",
   "title": "ViewerJourney",
   "type": "object",
+  "additionalProperties": false,
   "required": [
+    "viewer_journey_id",
+    "episode_id",
+    "artifact_version",
     "estado_inicial_del_espectador",
     "creencia_inicial_probable",
     "pregunta_que_lo_mantiene",
+    "primer_descubrimiento",
+    "complicacion",
+    "cambio_de_perspectiva",
+    "tension_principal",
+    "revelacion_o_payoff",
+    "blocks",
+    "lineage",
+    "input_checksums",
+    "schema_version",
+    "checksum",
+    "created_at",
     "estado_final_del_espectador"
   ],
   "properties": {
+    "viewer_journey_id": {"type": "string", "minLength": 1},
+    "episode_id": {"type": "string", "minLength": 1},
+    "artifact_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
     "estado_inicial_del_espectador": {
       "type": "string"
     },
@@ -36,6 +54,37 @@
     },
     "estado_final_del_espectador": {
       "type": "string"
-    }
+    },
+    "blocks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "block_id",
+          "que_sabe_antes",
+          "que_sabe_despues",
+          "que_siente_o_cuestiona",
+          "por_que_quiere_continuar",
+          "promesa_parcial_resuelta",
+          "pregunta_abierta"
+        ],
+        "properties": {
+          "block_id": {"type": "string", "minLength": 1},
+          "que_sabe_antes": {"type": "string"},
+          "que_sabe_despues": {"type": "string"},
+          "que_siente_o_cuestiona": {"type": "string"},
+          "por_que_quiere_continuar": {"type": "string"},
+          "promesa_parcial_resuelta": {"type": "string"},
+          "pregunta_abierta": {"type": "string"}
+        }
+      }
+    },
+    "lineage": {"type": "object"},
+    "input_checksums": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "created_at": {"type": "string", "format": "date-time"}
   }
 }
