@@ -116,10 +116,38 @@
     "can_proceed": {
       "type": "boolean"
     },
-    "allowed_analyses": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-    "limited_analyses": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-    "prohibited_analyses": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-    "excluded_claims": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "allowed_analyses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "limited_analyses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "prohibited_analyses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "excluded_claims": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
     "required_disclosures": {
       "type": "array",
       "items": {
@@ -128,54 +156,284 @@
       },
       "uniqueItems": true
     },
-    "propagated_constraints": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-    "critical_claim_assessments": {"type": "array", "items": {"$ref": "#/definitions/criticalClaimAssessment"}},
-    "critical_claims_propagation": {"$ref": "#/definitions/criticalClaimsPropagation"},
-    "multilingual_research": {"$ref": "https://masalladelguion.com/schemas/research_pack.json#/definitions/multilingualResearch"},
-    "sufficiency_basis": {"type": "object", "additionalProperties": false, "required": ["central_question", "critical_claims", "analysis_type", "material_roles", "requested_depth", "research_coverage"], "properties": {"central_question": {"type": "string", "minLength": 1}, "critical_claims": {"type": "array", "items": {"type": "string", "minLength": 1}}, "analysis_type": {"type": "string", "minLength": 1}, "material_roles": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "requested_depth": {"type": "string", "minLength": 1}, "research_coverage": {"type": "string", "minLength": 1}}},
+    "propagated_constraints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "critical_claim_assessments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/criticalClaimAssessment"
+      }
+    },
+    "critical_claims_propagation": {
+      "$ref": "#/definitions/criticalClaimsPropagation"
+    },
+    "multilingual_research": {
+      "$ref": "https://masalladelguion.com/schemas/research_pack.json#/definitions/multilingualResearch"
+    },
+    "sufficiency_basis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "central_question",
+        "critical_claims",
+        "analysis_type",
+        "material_roles",
+        "requested_depth",
+        "research_coverage"
+      ],
+      "properties": {
+        "central_question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "critical_claims": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "analysis_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "material_roles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requested_depth": {
+          "type": "string",
+          "minLength": 1
+        },
+        "research_coverage": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
     "independence_groups": {
       "type": "array",
-      "items": {"$ref": "#/definitions/independenceGroup"}
+      "items": {
+        "$ref": "#/definitions/independenceGroup"
+      }
     },
     "coverage_gaps": {
       "type": "array",
-      "items": {"$ref": "#/definitions/coverageGap"}
+      "items": {
+        "$ref": "#/definitions/coverageGap"
+      }
     },
     "reopening_conditions": {
       "type": "array",
-      "items": {"$ref": "#/definitions/reopeningCondition"}
+      "items": {
+        "$ref": "#/definitions/reopeningCondition"
+      }
     },
     "claim_dependent_source_evaluations": {
       "type": "array",
-      "items": {"$ref": "#/definitions/claimDependentSourceEvaluation"}
+      "items": {
+        "$ref": "#/definitions/claimDependentSourceEvaluation"
+      }
     },
     "created_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "research_stage": {
+      "type": "string",
+      "enum": [
+        "PLANNING",
+        "DISCOVERY",
+        "BASE_RESEARCH",
+        "PRELIMINARY_FIDELITY",
+        "SELECTION",
+        "DEEP_RESEARCH",
+        "DEEP_FIDELITY",
+        "SYNTHESIS",
+        "REFINED",
+        "READY"
+      ]
+    },
+    "selection_state": {
+      "type": "string",
+      "enum": [
+        "NOT_EVALUATED",
+        "PENDING_DECISION",
+        "CANDIDATE",
+        "SELECTED",
+        "EXCLUDED",
+        "INVALIDATED"
+      ]
+    },
+    "preliminary_fidelity": {
+      "type": "string",
+      "enum": [
+        "NOT_ASSESSED",
+        "APTA",
+        "APTA_CON_RIESGOS",
+        "NO_APTA"
+      ]
+    },
+    "deep_fidelity": {
+      "type": "string",
+      "enum": [
+        "NOT_ASSESSED",
+        "APROBADA",
+        "APROBADA_CON_LIMITES",
+        "MAS_INVESTIGACION_REQUERIDA",
+        "NO_APROBADA"
+      ]
+    },
+    "research_sufficiency": {
+      "type": "string",
+      "enum": [
+        "SUFFICIENT_FOR_INTENDED_USE",
+        "LIMITED_BUT_USABLE",
+        "MORE_RESEARCH_REQUIRED",
+        "BLOCKED_BY_EVIDENCE"
+      ]
+    },
+    "artifact_validity": {
+      "type": "string",
+      "enum": [
+        "VALID",
+        "STALE",
+        "INVALID",
+        "PENDING_VALIDATION"
+      ]
+    },
+    "thesis_stage": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "PROVISIONAL",
+        "REFINED"
+      ]
+    },
+    "research_contract_version": {
+      "type": "string",
+      "enum": [
+        "1.0.0",
+        "2.0.0"
+      ]
+    },
+    "evidence_type_separation": {
+      "$ref": "#/definitions/v2EvidenceTypeSeparation"
+    },
+    "acquisition_bindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/v2AcquisitionBinding"
+      }
     }
   },
   "definitions": {
     "criticalClaimAssessment": {
-      "type": "object", "additionalProperties": false,
-      "required": ["claim_id", "claim_text", "support_status", "confidence", "allowed_scope", "evidence_refs"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "claim_text",
+        "support_status",
+        "confidence",
+        "allowed_scope",
+        "evidence_refs"
+      ],
       "properties": {
-        "claim_id": {"type": "string", "minLength": 1},
-        "claim_text": {"type": "string", "minLength": 1},
-        "support_status": {"type": "string", "enum": ["SUPPORTED", "LIMITED", "EXCLUDED", "INSUFFICIENT"]},
-        "confidence": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH"]},
-        "allowed_scope": {"type": "string", "minLength": 1}
-        ,"evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "claim_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "support_status": {
+          "type": "string",
+          "enum": [
+            "SUPPORTED",
+            "LIMITED",
+            "EXCLUDED",
+            "INSUFFICIENT"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        },
+        "allowed_scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
       }
     },
     "criticalClaimsPropagation": {
-      "type": "object", "additionalProperties": false,
-      "required": ["status", "claim_ids", "justification", "editorial_impact", "scope_decision"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "claim_ids",
+        "justification",
+        "editorial_impact",
+        "scope_decision"
+      ],
       "properties": {
-        "status": {"type": "string", "enum": ["IDENTIFIED", "NONE_JUSTIFIED"]},
-        "claim_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "justification": {"type": ["string", "null"]},
-        "editorial_impact": {"type": "string", "enum": ["NONE", "LIMITED", "MATERIAL", "CRITICAL"]},
-        "scope_decision": {"type": "string", "minLength": 1}
+        "status": {
+          "type": "string",
+          "enum": [
+            "IDENTIFIED",
+            "NONE_JUSTIFIED"
+          ]
+        },
+        "claim_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "justification": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "editorial_impact": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "LIMITED",
+            "MATERIAL",
+            "CRITICAL"
+          ]
+        },
+        "scope_decision": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "sourceEntry": {
@@ -199,7 +457,10 @@
           "type": "string",
           "minLength": 1
         },
-        "source_type": {"type": "string", "minLength": 1},
+        "source_type": {
+          "type": "string",
+          "minLength": 1
+        },
         "url": {
           "type": [
             "string",
@@ -227,7 +488,47 @@
             "HIGH"
           ]
         },
-        "provenance": {"$ref": "https://masalladelguion.com/schemas/research_pack.json#/definitions/sourceProvenance"}
+        "provenance": {
+          "$ref": "https://masalladelguion.com/schemas/research_pack.json#/definitions/sourceProvenance"
+        },
+        "evidence_domain": {
+          "type": "string",
+          "enum": [
+            "WORK_EVIDENCE",
+            "EXTERNAL_REALITY_EVIDENCE"
+          ]
+        },
+        "retrieval_status": {
+          "type": "string",
+          "enum": [
+            "RECOVERED",
+            "NOT_RECOVERED",
+            "FAILED",
+            "STALE"
+          ]
+        },
+        "evidence_status": {
+          "type": "string",
+          "enum": [
+            "CONSULTED",
+            "VERIFIED",
+            "EVIDENCE",
+            "NOT_EVIDENCE",
+            "PENDING"
+          ]
+        },
+        "recovery_artifact_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "retrieval_request_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "sceneEntry": {
@@ -361,10 +662,33 @@
         "independence"
       ],
       "properties": {
-        "group_id": {"type": "string", "minLength": 1},
-        "source_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "independence": {"type": "string", "enum": ["INDEPENDENT", "DERIVED", "SAME_ORIGIN"]},
-        "rationale": {"type": ["string", "null"]}
+        "group_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "independence": {
+          "type": "string",
+          "enum": [
+            "INDEPENDENT",
+            "DERIVED",
+            "SAME_ORIGIN"
+          ]
+        },
+        "rationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "coverageGap": {
@@ -376,10 +700,28 @@
         "impact"
       ],
       "properties": {
-        "dimension": {"type": "string", "minLength": 1},
-        "reason": {"type": "string", "minLength": 1},
-        "impact": {"type": "string", "enum": ["NON_CRITICAL", "MATERIAL", "CRITICAL"]},
-        "mitigation": {"type": ["string", "null"]}
+        "dimension": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "impact": {
+          "type": "string",
+          "enum": [
+            "NON_CRITICAL",
+            "MATERIAL",
+            "CRITICAL"
+          ]
+        },
+        "mitigation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "reopeningCondition": {
@@ -391,9 +733,24 @@
         "description"
       ],
       "properties": {
-        "condition_id": {"type": "string", "minLength": 1},
-        "trigger_type": {"type": "string", "enum": ["NEW_EVIDENCE", "CLAIM_REOPENED", "SUPPLEMENTAL_ACCESS", "TRANSLATION_REVIEWED", "VERIFICATION_UPDATED"]},
-        "description": {"type": "string", "minLength": 1}
+        "condition_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger_type": {
+          "type": "string",
+          "enum": [
+            "NEW_EVIDENCE",
+            "CLAIM_REOPENED",
+            "SUPPLEMENTAL_ACCESS",
+            "TRANSLATION_REVIEWED",
+            "VERIFICATION_UPDATED"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "claimDependentSourceEvaluation": {
@@ -411,17 +768,195 @@
         "assessment"
       ],
       "properties": {
-        "claim_id": {"type": "string", "minLength": 1},
-        "source_id": {"type": "string", "minLength": 1},
-        "object_relation": {"type": "string", "minLength": 1},
-        "claim_authority": {"type": "string", "minLength": 1},
-        "access_level": {"type": "string", "enum": ["DIRECT", "INDIRECT", "SECONDARY_ONLY"]},
-        "independence": {"type": "string", "enum": ["INDEPENDENT", "DERIVED", "SAME_ORIGIN"]},
-        "currency": {"type": "string", "minLength": 1},
-        "locator": {"type": "string", "minLength": 1},
-        "assessment": {"type": "string", "enum": ["SUPPORTED", "LIMITED", "EXCLUDED", "INSUFFICIENT"]},
-        "notes": {"type": ["string", "null"]},
-        "intended_use": {"type": "string", "enum": ["EXACT_QUOTE", "PROVE_WORK_CONTENT", "YOUTUBE_POLICY", "CONTEXT_ONLY", "INTERPRETATION", "LOCALIZER", "HYPOTHESIS"]}
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "object_relation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "claim_authority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "access_level": {
+          "type": "string",
+          "enum": [
+            "DIRECT",
+            "INDIRECT",
+            "SECONDARY_ONLY"
+          ]
+        },
+        "independence": {
+          "type": "string",
+          "enum": [
+            "INDEPENDENT",
+            "DERIVED",
+            "SAME_ORIGIN"
+          ]
+        },
+        "currency": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "assessment": {
+          "type": "string",
+          "enum": [
+            "SUPPORTED",
+            "LIMITED",
+            "EXCLUDED",
+            "INSUFFICIENT"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "intended_use": {
+          "type": "string",
+          "enum": [
+            "EXACT_QUOTE",
+            "PROVE_WORK_CONTENT",
+            "YOUTUBE_POLICY",
+            "CONTEXT_ONLY",
+            "INTERPRETATION",
+            "LOCALIZER",
+            "HYPOTHESIS"
+          ]
+        }
+      }
+    },
+    "v2DownstreamRestriction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "restriction_id",
+        "kind",
+        "statement",
+        "affected_consumers"
+      ],
+      "properties": {
+        "restriction_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "CLAIM_ALLOWED",
+            "CLAIM_LIMITED",
+            "CLAIM_BLOCKED",
+            "ATTRIBUTION_REQUIRED",
+            "INTERPRETATION_ONLY",
+            "NOT_AUTHORIZED",
+            "CONDITION_REQUIRED"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "affected_consumers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "v2EvidenceTypeSeparation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_evidence_refs",
+        "external_reality_evidence_refs"
+      ],
+      "properties": {
+        "work_evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "external_reality_evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "v2AcquisitionBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_ref",
+        "execution_ref",
+        "recovery_artifact_ref",
+        "source_ref",
+        "retrieval_status",
+        "evidence_status",
+        "software_controlled"
+      ],
+      "properties": {
+        "request_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recovery_artifact_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retrieval_status": {
+          "type": "string",
+          "enum": [
+            "RECOVERED",
+            "NOT_RECOVERED",
+            "FAILED",
+            "STALE"
+          ]
+        },
+        "evidence_status": {
+          "type": "string",
+          "enum": [
+            "CONSULTED",
+            "VERIFIED",
+            "EVIDENCE",
+            "NOT_EVIDENCE",
+            "PENDING"
+          ]
+        },
+        "software_controlled": {
+          "type": "boolean"
+        }
       }
     }
   }

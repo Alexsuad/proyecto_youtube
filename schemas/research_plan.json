@@ -1,0 +1,299 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/research_plan.json",
+  "title": "ResearchPlan V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "research_plan_id",
+    "episode_id",
+    "brief_version",
+    "research_role",
+    "editorial_intent",
+    "editorial_intent_provenance",
+    "origin",
+    "central_question",
+    "intended_use",
+    "scope",
+    "dimensions",
+    "subquestions",
+    "evidence_requirements",
+    "source_strategy",
+    "critical_claims",
+    "rival_refutation",
+    "gaps_risks",
+    "potential_specialists",
+    "sufficiency_criteria",
+    "target_final_works_decision",
+    "supplied_works",
+    "selection_policy",
+    "origin_artifact_refs",
+    "planned_stages",
+    "created_at"
+  ],
+  "properties": {
+    "contract": {"const": "research_plan"},
+    "contract_version": {"const": "2.0.0"},
+    "research_plan_id": {"type": "string", "minLength": 1},
+    "episode_id": {"type": "string", "minLength": 1},
+    "brief_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "research_role": {"type": "string", "enum": ["ANCLA", "NORMAL"]},
+    "editorial_intent": {"type": "string", "enum": ["NO_DECLARADA", "PREFERIDA", "REQUERIDA"]},
+    "editorial_intent_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "reference"],
+      "properties": {
+        "source": {"type": "string", "enum": ["USER_INTAKE", "OWNER_DECISION", "EXPLICIT_WORKFLOW"]},
+        "reference": {"type": "string", "minLength": 1}
+      }
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_ref", "source_kind"],
+      "properties": {
+        "input_ref": {"type": "string", "minLength": 1},
+        "source_kind": {"type": "string", "enum": ["HUMAN_EPISODE_INPUT", "EPISODE_BRIEF", "OWNER_DIRECTIVE", "WORKFLOW_CONTEXT"]},
+        "question_ref": {"type": ["string", "null"]}
+      }
+    },
+    "central_question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question", "decision_relevance"],
+      "properties": {
+        "question": {"type": "string", "minLength": 1},
+        "decision_relevance": {"type": "string", "minLength": 1}
+      }
+    },
+    "intended_use": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uses", "required_outputs"],
+      "properties": {
+        "uses": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "required_outputs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["included", "excluded"],
+      "properties": {
+        "included": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "excluded": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "dimensions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dimension_id", "label", "research_question"],
+        "properties": {
+          "dimension_id": {"type": "string", "minLength": 1},
+          "label": {"type": "string", "minLength": 1},
+          "research_question": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "subquestions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["subquestion_id", "dimension_id", "question"],
+        "properties": {
+          "subquestion_id": {"type": "string", "minLength": 1},
+          "dimension_id": {"type": "string", "minLength": 1},
+          "question": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "evidence_requirements": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_requirement_id", "subquestion_refs", "evidence_kind", "minimum_strength", "preferred_source_types"],
+        "properties": {
+          "evidence_requirement_id": {"type": "string", "minLength": 1},
+          "subquestion_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "evidence_kind": {"type": "string", "enum": ["WORK_EVIDENCE", "EXTERNAL_REALITY_EVIDENCE", "BOTH"]},
+          "minimum_strength": {"type": "string", "enum": ["LIMITED", "DIRECT", "PRIMARY_OR_SPECIALIST", "MULTIPLE_INDEPENDENT_SOURCES"]},
+          "preferred_source_types": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "failure_condition": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "source_strategy": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["strategy_id", "source_types", "purpose", "limitations"],
+        "properties": {
+          "strategy_id": {"type": "string", "minLength": 1},
+          "source_types": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "purpose": {"type": "string", "minLength": 1},
+          "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "critical_claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim_id", "statement", "intended_use", "strength", "evidence_requirement_refs", "material_if_false"],
+        "properties": {
+          "claim_id": {"type": "string", "minLength": 1},
+          "statement": {"type": "string", "minLength": 1},
+          "intended_use": {"type": "string", "minLength": 1},
+          "strength": {"type": "string", "enum": ["LIMITED", "DESCRIPTIVE", "ASSOCIATIVE", "CAUSAL", "GENERAL", "CONTROVERSIAL"]},
+          "evidence_requirement_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "material_if_false": {"type": "boolean"}
+        }
+      }
+    },
+    "rival_refutation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rival_id", "explanation", "refutation_signals", "evidence_requirement_refs"],
+        "properties": {
+          "rival_id": {"type": "string", "minLength": 1},
+          "explanation": {"type": "string", "minLength": 1},
+          "refutation_signals": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "evidence_requirement_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "gaps_risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gap_id", "kind", "description", "material_impact", "mitigation"],
+        "properties": {
+          "gap_id": {"type": "string", "minLength": 1},
+          "kind": {"type": "string", "enum": ["EVIDENCE", "SCOPE", "SOURCE_ACCESS", "FIDELITY", "INTERPRETATION", "OPERATIONAL"]},
+          "description": {"type": "string", "minLength": 1},
+          "material_impact": {"type": "string", "minLength": 1},
+          "mitigation": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "potential_specialists": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["specialist_id", "field", "activation_condition", "expected_contribution"],
+        "properties": {
+          "specialist_id": {"type": "string", "minLength": 1},
+          "field": {"type": "string", "minLength": 1},
+          "activation_condition": {"type": "string", "minLength": 1},
+          "expected_contribution": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "sufficiency_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["criterion_id", "dimension_id", "condition", "pass_route"],
+        "properties": {
+          "criterion_id": {"type": "string", "minLength": 1},
+          "dimension_id": {"type": "string", "minLength": 1},
+          "condition": {"type": "string", "minLength": 1},
+          "pass_route": {"type": "string", "enum": ["CONTINUE", "CONTINUE_WITH_LIMITATIONS", "RETURN_TO_RESEARCH", "BLOCK"]}
+        }
+      }
+    },
+    "target_final_works_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "requested_count", "decision_basis"],
+      "properties": {
+        "status": {"type": "string", "enum": ["NOT_DECLARED", "RECOMMENDED", "CONFIRMED", "DELEGATED"]},
+        "requested_count": {"type": ["integer", "null"], "minimum": 3, "maximum": 5},
+        "decision_basis": {"type": "string", "minLength": 1},
+        "decision_ref": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "supplied_works": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["work_ref", "research_role", "editorial_intent", "origin_ref"],
+        "properties": {
+          "work_ref": {"type": "string", "minLength": 1},
+          "research_role": {"type": "string", "enum": ["ANCLA", "NORMAL"]},
+          "editorial_intent": {"type": "string", "enum": ["NO_DECLARADA", "PREFERIDA", "REQUERIDA"]},
+          "origin_ref": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "selection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "decision_rule", "reconsideration_rule"],
+      "properties": {
+        "mode": {"type": "string", "enum": ["USER_SELECTION", "DELEGATED_SELECTION", "OWNER_OR_DELEGATED"]},
+        "decision_rule": {"type": "string", "minLength": 1},
+        "reconsideration_rule": {"type": "string", "minLength": 1},
+        "decision_ref": {"type": ["string", "null"]}
+      }
+    },
+    "origin_artifact_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifact_ref", "artifact_kind"],
+        "properties": {
+          "artifact_ref": {"type": "string", "minLength": 1},
+          "artifact_kind": {"type": "string", "minLength": 1},
+          "artifact_version": {"type": ["string", "null"]},
+          "checksum": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "planned_stages": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "enum": ["PLANNING", "DISCOVERY", "BASE_RESEARCH", "PRELIMINARY_FIDELITY", "SELECTION", "DEEP_RESEARCH", "DEEP_FIDELITY", "SYNTHESIS", "REFINED"]}
+    },
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"target_final_works_decision": {"properties": {"status": {"enum": ["CONFIRMED", "DELEGATED"]}}}}, "required": ["target_final_works_decision"]},
+      "then": {"properties": {"target_final_works_decision": {"required": ["requested_count", "decision_ref"]}}}
+    },
+    {
+      "if": {"properties": {"editorial_intent": {"const": "REQUERIDA"}}, "required": ["editorial_intent"]},
+      "then": {"properties": {"editorial_intent_provenance": {"properties": {"source": {"enum": ["USER_INTAKE", "OWNER_DECISION"]}}}}}
+    }
+  ]
+}

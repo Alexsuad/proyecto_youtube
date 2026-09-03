@@ -799,6 +799,142 @@ def _validate_specialist_research(
     return violations
 
 
+_V2_STATE_FIELDS = {
+    "research_stage",
+    "selection_state",
+    "preliminary_fidelity",
+    "deep_fidelity",
+    "research_sufficiency",
+    "artifact_validity",
+    "thesis_stage",
+}
+
+
+def _validate_v2_state_and_evidence(
+    data: Dict[str, Any],
+    context: str,
+    source_records: Optional[List[Dict[str, Any]]] = None,
+) -> List[str]:
+    """Validate the V2 boundary without turning orthogonal states into a lifecycle."""
+    violations: List[str] = []
+    if data.get("research_contract_version") != "2.0.0":
+        return violations
+    state_values = [data.get(field) for field in _V2_STATE_FIELDS if data.get(field) is not None]
+    if any(isinstance(value, str) and "DEEP_SELECTED_APPROVED_SUFFICIENT" in value for value in state_values):
+        violations.append(f"{context} no puede usar un mega-estado que combine selección, fidelidad y suficiencia.")
+    if "combined_state" in data or "lifecycle_state" in data:
+        violations.append(f"{context} debe conservar estados ortogonales; no puede declarar un estado combinado.")
+    separation = data.get("evidence_type_separation")
+    if isinstance(separation, dict):
+        overlap = set(separation.get("work_evidence_refs", [])) & set(separation.get("external_reality_evidence_refs", []))
+        if overlap:
+            violations.append(f"{context} mezcla WORK_EVIDENCE y EXTERNAL_REALITY_EVIDENCE: {', '.join(sorted(overlap))}.")
+    bindings = data.get("acquisition_bindings", [])
+    bindings_by_source: Dict[str, List[Dict[str, Any]]] = {}
+    for binding in bindings:
+        if isinstance(binding, dict) and binding.get("source_ref"):
+            bindings_by_source.setdefault(binding["source_ref"], []).append(binding)
+    for source in source_records or []:
+        if not isinstance(source, dict) or not source.get("source_id"):
+            continue
+        source_id = source["source_id"]
+        source_status = source.get("evidence_status")
+        provenance_status = (source.get("provenance") or {}).get("verification_status")
+        positive = source_status in {"CONSULTED", "VERIFIED", "EVIDENCE"} or provenance_status in {"PRIMARY_VERIFIED", "CREATOR_VERIFIED"}
+        matching = bindings_by_source.get(source_id, [])
+        if positive and not matching:
+            violations.append(f"{context}.source_registry '{source_id}' declara evidencia positiva sin acquisition_binding correspondiente.")
+        for binding in matching:
+            if source_status is not None and binding.get("evidence_status") != source_status:
+                violations.append(f"{context}.source '{source_id}' no coincide con el evidence_status de su binding.")
+            if source.get("retrieval_status") is not None and binding.get("retrieval_status") != source.get("retrieval_status"):
+                violations.append(f"{context}.source '{source_id}' no coincide con el retrieval_status de su binding.")
+    for source_ref in bindings_by_source:
+        if source_records is not None and source_ref not in {item.get("source_id") for item in source_records if isinstance(item, dict)}:
+            violations.append(f"{context}.acquisition_bindings referencia fuente inexistente: '{source_ref}'.")
+
+    for index, binding in enumerate(bindings):
+        if not isinstance(binding, dict):
+            continue
+        recovered = binding.get("retrieval_status") == "RECOVERED"
+        controlled = binding.get("software_controlled") is True
+        asserted_evidence = binding.get("evidence_status") in {"CONSULTED", "VERIFIED", "EVIDENCE"}
+        if asserted_evidence and (not recovered or not controlled):
+            violations.append(
+                f"{context}.acquisition_bindings[{index}] no puede declarar evidencia consultada/verificada sin recuperación real controlada por Software."
+            )
+        if recovered and not binding.get("recovery_artifact_ref"):
+            violations.append(f"{context}.acquisition_bindings[{index}] recuperado requiere recovery_artifact_ref.")
+    return violations
+
+
+def validate_research_plan(data: Dict[str, Any]) -> List[str]:
+    """Valida el plan explícito de Research V2 sin introducir defaults editoriales."""
+    violations = validate_against_schema(data, "research_plan")
+    dimensions = data.get("dimensions", [])
+    dimension_ids = [item.get("dimension_id") for item in dimensions if isinstance(item, dict)]
+    if len(dimension_ids) != len(set(dimension_ids)):
+        violations.append("ResearchPlan no puede duplicar dimension_id.")
+    known_dimensions = set(dimension_ids)
+    subquestions = data.get("subquestions", [])
+    subquestion_ids = [item.get("subquestion_id") for item in subquestions if isinstance(item, dict)]
+    if len(subquestion_ids) != len(set(subquestion_ids)):
+        violations.append("ResearchPlan no puede duplicar subquestion_id.")
+    known_subquestions = set(subquestion_ids)
+    for item in subquestions:
+        if isinstance(item, dict) and item.get("dimension_id") not in known_dimensions:
+            violations.append(f"ResearchPlan subquestion referencia dimensión inexistente: '{item.get('dimension_id')}'.")
+    evidence_ids = {
+        item.get("evidence_requirement_id")
+        for item in data.get("evidence_requirements", [])
+        if isinstance(item, dict) and item.get("evidence_requirement_id")
+    }
+    for item in data.get("evidence_requirements", []):
+        if isinstance(item, dict):
+            missing = set(item.get("subquestion_refs", [])) - known_subquestions
+            if missing:
+                violations.append(f"ResearchPlan evidence requirement referencia subpreguntas inexistentes: {', '.join(sorted(missing))}.")
+    for claim in data.get("critical_claims", []):
+        if isinstance(claim, dict):
+            missing = set(claim.get("evidence_requirement_refs", [])) - evidence_ids
+            if missing:
+                violations.append(f"ResearchPlan claim crítico referencia requisitos de evidencia inexistentes: {', '.join(sorted(missing))}.")
+    for rival in data.get("rival_refutation", []):
+        if isinstance(rival, dict):
+            missing = set(rival.get("evidence_requirement_refs", [])) - evidence_ids
+            if missing:
+                violations.append(f"ResearchPlan rival/refutación referencia requisitos de evidencia inexistentes: {', '.join(sorted(missing))}.")
+    for criterion in data.get("sufficiency_criteria", []):
+        if isinstance(criterion, dict) and criterion.get("dimension_id") not in known_dimensions:
+            violations.append(f"ResearchPlan criterio de suficiencia referencia dimensión inexistente: '{criterion.get('dimension_id')}'.")
+    decision = data.get("target_final_works_decision")
+    if isinstance(decision, dict) and decision.get("status") in {"RECOMMENDED", "CONFIRMED", "DELEGATED"}:
+        if decision.get("requested_count") not in {3, 4, 5}:
+            violations.append("ResearchPlan requiere una cantidad final explícita entre 3 y 5 para una recomendación, confirmación o delegación.")
+        if decision.get("status") in {"CONFIRMED", "DELEGATED"} and not decision.get("decision_ref"):
+            violations.append("ResearchPlan requiere la referencia de la decisión de cantidad final.")
+    elif isinstance(decision, dict) and decision.get("status") == "NOT_DECLARED" and decision.get("requested_count") is not None:
+        violations.append("ResearchPlan no puede asignar una cantidad cuando target_final_works aún está NOT_DECLARED.")
+    if data.get("editorial_intent") == "REQUERIDA":
+        provenance = data.get("editorial_intent_provenance", {})
+        if provenance.get("source") not in {"USER_INTAKE", "OWNER_DECISION"}:
+            violations.append("editorial_intent=REQUERIDA solo puede proceder de intake del usuario o decisión del OWNER.")
+    return violations
+
+
+def validate_research_ready_manifest(data: Dict[str, Any]) -> List[str]:
+    """Valida el handoff Research -> consumidores, separado de la suficiencia semántica."""
+    violations = validate_against_schema(data, "research_ready_manifest")
+    state = data.get("research_ready_state")
+    restrictions = data.get("downstream_restrictions", [])
+    bindings = data.get("state_bindings", {})
+    if state == "RESEARCH_READY_WITH_LIMITATIONS" and not restrictions:
+        violations.append("RESEARCH_READY_WITH_LIMITATIONS requiere restricciones downstream estructuradas.")
+    if state == "NOT_RESEARCH_READY" and bindings.get("research_sufficiency") not in {"MORE_RESEARCH_REQUIRED", "BLOCKED_BY_EVIDENCE"}:
+        violations.append("NOT_RESEARCH_READY requiere suficiencia MORE_RESEARCH_REQUIRED o BLOCKED_BY_EVIDENCE.")
+    return violations
+
+
 def validate_research_pack(
     data: Dict[str, Any],
     research_adapter: Optional[Dict[str, Any]] = None,
@@ -937,6 +1073,12 @@ def validate_research_pack(
             known_claim_ids,
         )
     )
+    violations.extend(_validate_v2_state_and_evidence(data, "ResearchPack", data.get("source_registry", [])))
+    if data.get("research_contract_version") == "2.0.0":
+        if data.get("narrative_opportunities"):
+            violations.append("ResearchPack V2 no puede requerir ni transportar decisiones narrativas de oportunidades.")
+        if data.get("editorial_uses"):
+            violations.append("ResearchPack V2 no puede transportar usos narrativos heredados; deben resolverse downstream.")
     return violations
 
 
@@ -1009,6 +1151,20 @@ def validate_claims_ledger(data: Dict[str, Any]) -> List[str]:
             if sufficiency == "LIMITED_BUT_USABLE" and not claim.get("limitations"):
                 violations.append(f"Claim '{claim.get('claim_id')}' LIMITED_BUT_USABLE requiere limitaciones explícitas.")
 
+    ledger_stage = data.get("ledger_stage")
+    if ledger_stage == "RESEARCH_PRE_SCRIPT":
+        if data.get("script_version") not in (None, ""):
+            violations.append("ClaimsLedger RESEARCH_PRE_SCRIPT no puede declarar script_version.")
+        for index, claim in enumerate(data.get("claims", [])):
+            if isinstance(claim, dict) and claim.get("script_location") not in (None, ""):
+                violations.append(f"ClaimsLedger RESEARCH_PRE_SCRIPT no puede declarar script_location en claim {index}.")
+    elif ledger_stage == "SCRIPT_BOUND":
+        if not data.get("script_version"):
+            violations.append("ClaimsLedger SCRIPT_BOUND requiere script_version.")
+        for index, claim in enumerate(data.get("claims", [])):
+            if isinstance(claim, dict) and not claim.get("script_location"):
+                violations.append(f"ClaimsLedger SCRIPT_BOUND requiere script_location en claim {index}.")
+
     return violations
 
 
@@ -1050,6 +1206,7 @@ def validate_research_stop_decision(
         violations.append("MORE_RESEARCH_REQUIRED requiere pendientes y ruta de investigación.")
     if status in {"SUFFICIENT_FOR_INTENDED_USE", "LIMITED_BUT_USABLE"} and data.get("unresolved_material_contradiction_refs"):
         violations.append("Una contradicción material abierta impide suficiencia positiva en R1-M6.")
+    violations.extend(_validate_v2_state_and_evidence(data, "ResearchStopDecision"))
     if subject_kind == "AGGREGATE_RESEARCH_PACK":
         refs = data.get("component_decision_refs") or []
         required_refs = data.get("required_component_decision_refs") or []
@@ -1359,6 +1516,13 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
             declared_claim_ids,
         )
     )
+    report_sources = [
+        item
+        for field in ("fuentes_primarias", "fuentes_secundarias")
+        for item in data.get(field, [])
+        if isinstance(item, dict)
+    ]
+    violations.extend(_validate_v2_state_and_evidence(data, "SourceAccessAndEvidenceReport", report_sources))
 
     return violations
 
@@ -1443,7 +1607,7 @@ def validate_work_research_dossier(
                     f"WorkResearchDossier.rival_interpretation_analysis_refs referencia análisis no declarado: '{analysis_id}'."
                 )
     function_ref = data.get("candidate_editorial_function_analysis_ref")
-    if function_ref not in declared_analysis_ids:
+    if function_ref is not None and function_ref not in declared_analysis_ids:
         violations.append(f"WorkResearchDossier.candidate_editorial_function_analysis_ref referencia análisis no declarado: '{function_ref}'.")
     for entry in data.get("locators", []):
         if isinstance(entry, dict) and entry.get("analysis_id") not in declared_analysis_ids:
@@ -1467,7 +1631,8 @@ def validate_work_research_dossier(
 
     if dispositions.get("claims_ledger_id") != claims_ledger.get("ledger_id"):
         violations.append("WorkResearchDossier referencia un claims_ledger_id distinto del ledger suministrado.")
-    if dispositions.get("claims_ledger_version") is not None and dispositions.get("claims_ledger_version") != claims_ledger.get("script_version"):
+    ledger_version = claims_ledger.get("artifact_version") or claims_ledger.get("script_version")
+    if dispositions.get("claims_ledger_version") is not None and dispositions.get("claims_ledger_version") != ledger_version:
         violations.append("WorkResearchDossier referencia una version de ClaimsLedger distinta del ledger suministrado.")
     if dispositions.get("claims_ledger_checksum") is not None and dispositions.get("claims_ledger_checksum") != _canonical_artifact_checksum(claims_ledger):
         violations.append("WorkResearchDossier referencia un checksum de ClaimsLedger distinto del ledger suministrado.")
@@ -1499,6 +1664,12 @@ def validate_work_lifecycle(
     """
     violations = validate_against_schema(data, "work_lifecycle")
     works = [item for item in data.get("works", []) if isinstance(item, dict)]
+    if data.get("research_contract_version") == "2.0.0":
+        violations.extend(_validate_v2_state_and_evidence(data, "WorkLifecycle"))
+    for work in works:
+        if isinstance(work.get("state"), str) and "DEEP_SELECTED_APPROVED_SUFFICIENT" in work["state"]:
+            violations.append(f"WorkLifecycle.work '{work.get('work_id')}' usa un estado combinado no permitido.")
+        violations.extend(_validate_v2_state_and_evidence(work, f"WorkLifecycle.work '{work.get('work_id')}'"))
     works_by_id = {item.get("work_id"): item for item in works if item.get("work_id")}
     if len(works_by_id) != len(works):
         violations.append("WorkLifecycle no permite work_id duplicados o ausentes.")

@@ -27,6 +27,8 @@ class InputValidationError(ValueError):
 
 
 PROCESSING_STATUSES = frozenset({"RECEIVED", "REGISTERED", "READY", "CANCELLED"})
+RESEARCH_ROLES = frozenset({"ANCLA", "NORMAL"})
+EDITORIAL_INTENTS = frozenset({"NO_DECLARADA", "PREFERIDA", "REQUERIDA"})
 
 
 def utc_now() -> str:
@@ -133,6 +135,8 @@ class HumanInput:
     user_instructions: tuple[UserInstruction, ...] = ()
     duration_target_minutes: int | None = None
     target_language: str | None = None
+    research_role: str | None = None
+    editorial_intent: str | None = None
     actor_ref: str = "local-user"
     provenance: dict[str, Any] = field(default_factory=dict)
     processing_status: str = "RECEIVED"
@@ -140,6 +144,10 @@ class HumanInput:
     def __post_init__(self) -> None:
         if self.processing_status not in PROCESSING_STATUSES:
             raise InputValidationError("Estado de procesamiento inválido.")
+        if self.research_role is not None and self.research_role not in RESEARCH_ROLES:
+            raise InputValidationError("research_role debe ser ANCLA o NORMAL.")
+        if self.editorial_intent is not None and self.editorial_intent not in EDITORIAL_INTENTS:
+            raise InputValidationError("editorial_intent no pertenece al vocabulario contractual.")
 
     @classmethod
     def create(
@@ -154,6 +162,8 @@ class HumanInput:
         instructions: list[UserInstruction | dict[str, Any]] | tuple[UserInstruction | dict[str, Any], ...] | None = None,
         duration_target_minutes: int | None = None,
         target_language: str | None = None,
+        research_role: str | None = None,
+        editorial_intent: str | None = None,
         channel: str = "TERMINAL",
         actor_ref: str = "local-user",
         interaction_id: str | None = None,
@@ -176,6 +186,12 @@ class HumanInput:
         ):
             raise InputValidationError("La duración objetivo debe ser un número entero positivo o null.")
         clean_language = normalize_target_language(target_language)
+        clean_research_role = str(research_role).strip().upper() if research_role is not None else None
+        clean_editorial_intent = str(editorial_intent).strip().upper() if editorial_intent is not None else None
+        if clean_research_role is not None and clean_research_role not in RESEARCH_ROLES:
+            raise InputValidationError("research_role debe ser ANCLA o NORMAL.")
+        if clean_editorial_intent is not None and clean_editorial_intent not in EDITORIAL_INTENTS:
+            raise InputValidationError("editorial_intent no pertenece al vocabulario contractual.")
         if works is not None and (
             isinstance(works, str)
             or not isinstance(works, (list, tuple))
@@ -209,6 +225,8 @@ class HumanInput:
             user_instructions=clean_instructions,
             duration_target_minutes=duration_target_minutes,
             target_language=clean_language,
+            research_role=clean_research_role,
+            editorial_intent=clean_editorial_intent,
             actor_ref=str(actor_ref).strip(),
             provenance=dict(provenance or {"capture_method": "TEXT", "source": "USER"}),
             processing_status=processing_status,
@@ -225,6 +243,8 @@ class HumanInput:
             user_instructions=data.get("user_instructions", data.get("instructions", [])),
             duration_target_minutes=data.get("duration_target_minutes"),
             target_language=data.get("target_language"),
+            research_role=data.get("research_role"),
+            editorial_intent=data.get("editorial_intent"),
             channel=data.get("channel", ""),
             actor_ref=data.get("actor_ref", ""),
             interaction_id=data.get("interaction_id"),
@@ -234,9 +254,9 @@ class HumanInput:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "contract": "human_episode_input",
-            "contract_version": "1.0.0",
+            "contract_version": "2.0.0" if self.research_role is not None or self.editorial_intent is not None else "1.0.0",
             "interaction_id": self.interaction_id,
             "occurred_at": self.occurred_at,
             "channel": self.channel,
@@ -252,3 +272,8 @@ class HumanInput:
             "provenance": self.provenance,
             "processing_status": self.processing_status,
         }
+        if self.research_role is not None:
+            payload["research_role"] = self.research_role
+        if self.editorial_intent is not None:
+            payload["editorial_intent"] = self.editorial_intent
+        return payload

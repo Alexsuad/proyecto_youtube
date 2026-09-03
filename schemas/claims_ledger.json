@@ -5,7 +5,6 @@
   "type": "object",
   "required": [
     "ledger_id",
-    "script_version",
     "claims"
   ],
   "properties": {
@@ -14,7 +13,10 @@
       "minLength": 1
     },
     "script_version": {
-      "type": "string",
+      "type": [
+        "string",
+        "null"
+      ],
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
     "claims": {
@@ -24,7 +26,6 @@
         "type": "object",
         "required": [
           "claim_id",
-          "script_location",
           "claim_text",
           "claim_type",
           "source_refs",
@@ -37,7 +38,10 @@
             "minLength": 1
           },
           "script_location": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "claim_text": {
             "type": "string",
@@ -101,49 +105,312 @@
           },
           "provenance_evidence_refs": {
             "type": "array",
-            "items": {"type": "string", "minLength": 1},
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
             "minItems": 1,
             "uniqueItems": true
           },
           "provenance_status": {
             "type": "string",
-            "enum": ["PRIMARY_VERIFIED", "DERIVED_LIMITED", "BLOCKED"]
+            "enum": [
+              "PRIMARY_VERIFIED",
+              "DERIVED_LIMITED",
+              "BLOCKED"
+            ]
           },
           "authority_basis": {
             "type": "string",
-            "enum": ["PRIMARY_SOURCE", "YOUTUBE_OFFICIAL_PRIMARY", "SECONDARY_ONLY", "INTERPRETIVE_ONLY", "NOT_APPLICABLE"]
+            "enum": [
+              "PRIMARY_SOURCE",
+              "YOUTUBE_OFFICIAL_PRIMARY",
+              "SECONDARY_ONLY",
+              "INTERPRETIVE_ONLY",
+              "NOT_APPLICABLE"
+            ]
           },
           "claim_decision": {
             "type": "string",
-            "enum": ["CLAIM_ALLOWED", "CLAIM_LIMITED", "CLAIM_BLOCKED"]
+            "enum": [
+              "CLAIM_ALLOWED",
+              "CLAIM_LIMITED",
+              "CLAIM_BLOCKED"
+            ]
           },
           "research_sufficiency": {
             "type": "string",
-            "enum": ["SUFFICIENT_FOR_INTENDED_USE", "LIMITED_BUT_USABLE", "MORE_RESEARCH_REQUIRED", "BLOCKED_BY_EVIDENCE"]
+            "enum": [
+              "SUFFICIENT_FOR_INTENDED_USE",
+              "LIMITED_BUT_USABLE",
+              "MORE_RESEARCH_REQUIRED",
+              "BLOCKED_BY_EVIDENCE"
+            ]
           },
           "materiality": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["is_material", "activation_criteria", "non_trigger_examples", "invalidator_codes", "return_route_code", "decision_ref"],
+            "required": [
+              "is_material",
+              "activation_criteria",
+              "non_trigger_examples",
+              "invalidator_codes",
+              "return_route_code",
+              "decision_ref"
+            ],
             "properties": {
-              "is_material": {"type": "boolean"},
-              "activation_criteria": {"type": "array", "items": {"type": "string", "enum": ["THESIS_DEPENDENCY", "CENTRAL_ARGUMENT_DEPENDENCY", "WORK_SELECTION_DEPENDENCY", "WORK_FIDELITY", "CAUSAL_OR_PSYCHOLOGICAL_EXPLANATION", "AUTHORIAL_INTENT", "SENSITIVE_OR_HARMFUL_ASSERTION", "NUMERICAL_OR_HISTORICAL_ASSERTION", "CONTROVERSIAL_OR_DISPUTED_ASSERTION", "VISIBLE_PROMISE_DEPENDENCY", "OPENING_OR_CONCLUSION_DEPENDENCY", "REPUTATIONAL_OR_ETHICAL_RISK", "TRANSLATION_OR_TRANSCRIPTION_DEPENDENCY", "RIVAL_READING_IMPACT", "REUSE_ORIGINALITY_DEPENDENCY"]}, "uniqueItems": true},
-              "non_trigger_examples": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-              "invalidator_codes": {"type": "array", "minItems": 1, "items": {"type": "string", "enum": ["CLAIM_OR_SCOPE_CHANGED", "INTENDED_USE_CHANGED", "MOVED_TO_OPENING_OR_CONCLUSION", "ADDED_TO_PACKAGING_OR_PROMISE", "THESIS_CHANGED", "WORK_VERSION_OR_ADAPTATION_CHANGED", "NEW_MATERIAL_EVIDENCE", "SOURCE_WITHDRAWN_OR_STALE", "UNDECLARED_SOURCE_DERIVATION", "MATERIAL_CONTRADICTION_FOUND", "TRANSLATION_OR_TRANSCRIPTION_CHANGED", "SENSITIVITY_OR_RISK_INCREASED", "CAUSALITY_STRENGTHENED", "LIMITATION_OR_DISCLOSURE_REMOVED", "EDITORIAL_CONTEXT_CHANGED"]}, "uniqueItems": true},
-              "return_route_code": {"type": "string", "enum": ["AUTHORIZE_INTENDED_USE_ONLY", "RESTRICT_FORMULATION_AND_DISCLOSE", "RETURN_TO_RESEARCH", "REMOVE_REPLACE_OR_REFORMULATE", "CHANNEL_INTELLIGENCE_REVIEW_REQUIRED", "YOUTUBE_ADAPTATION_REVIEW_REQUIRED", "RETURN_TO_ORIGIN_ARTIFACT", "NOT_APPLICABLE"]},
-              "decision_ref": {"type": ["string", "null"], "minLength": 1}
+              "is_material": {
+                "type": "boolean"
+              },
+              "activation_criteria": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "THESIS_DEPENDENCY",
+                    "CENTRAL_ARGUMENT_DEPENDENCY",
+                    "WORK_SELECTION_DEPENDENCY",
+                    "WORK_FIDELITY",
+                    "CAUSAL_OR_PSYCHOLOGICAL_EXPLANATION",
+                    "AUTHORIAL_INTENT",
+                    "SENSITIVE_OR_HARMFUL_ASSERTION",
+                    "NUMERICAL_OR_HISTORICAL_ASSERTION",
+                    "CONTROVERSIAL_OR_DISPUTED_ASSERTION",
+                    "VISIBLE_PROMISE_DEPENDENCY",
+                    "OPENING_OR_CONCLUSION_DEPENDENCY",
+                    "REPUTATIONAL_OR_ETHICAL_RISK",
+                    "TRANSLATION_OR_TRANSCRIPTION_DEPENDENCY",
+                    "RIVAL_READING_IMPACT",
+                    "REUSE_ORIGINALITY_DEPENDENCY"
+                  ]
+                },
+                "uniqueItems": true
+              },
+              "non_trigger_examples": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "invalidator_codes": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "CLAIM_OR_SCOPE_CHANGED",
+                    "INTENDED_USE_CHANGED",
+                    "MOVED_TO_OPENING_OR_CONCLUSION",
+                    "ADDED_TO_PACKAGING_OR_PROMISE",
+                    "THESIS_CHANGED",
+                    "WORK_VERSION_OR_ADAPTATION_CHANGED",
+                    "NEW_MATERIAL_EVIDENCE",
+                    "SOURCE_WITHDRAWN_OR_STALE",
+                    "UNDECLARED_SOURCE_DERIVATION",
+                    "MATERIAL_CONTRADICTION_FOUND",
+                    "TRANSLATION_OR_TRANSCRIPTION_CHANGED",
+                    "SENSITIVITY_OR_RISK_INCREASED",
+                    "CAUSALITY_STRENGTHENED",
+                    "LIMITATION_OR_DISCLOSURE_REMOVED",
+                    "EDITORIAL_CONTEXT_CHANGED"
+                  ]
+                },
+                "uniqueItems": true
+              },
+              "return_route_code": {
+                "type": "string",
+                "enum": [
+                  "AUTHORIZE_INTENDED_USE_ONLY",
+                  "RESTRICT_FORMULATION_AND_DISCLOSE",
+                  "RETURN_TO_RESEARCH",
+                  "REMOVE_REPLACE_OR_REFORMULATE",
+                  "CHANNEL_INTELLIGENCE_REVIEW_REQUIRED",
+                  "YOUTUBE_ADAPTATION_REVIEW_REQUIRED",
+                  "RETURN_TO_ORIGIN_ARTIFACT",
+                  "NOT_APPLICABLE"
+                ]
+              },
+              "decision_ref": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1
+              }
             },
             "allOf": [
-              {"if": {"properties": {"is_material": {"const": true}}, "required": ["is_material"]}, "then": {"properties": {"activation_criteria": {"minItems": 1}, "decision_ref": {"type": "string"}}}},
-              {"if": {"properties": {"is_material": {"const": false}}, "required": ["is_material"]}, "then": {"properties": {"activation_criteria": {"minItems": 0}, "decision_ref": {"type": "null"}}}}
+              {
+                "if": {
+                  "properties": {
+                    "is_material": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "is_material"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "activation_criteria": {
+                      "minItems": 1
+                    },
+                    "decision_ref": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "is_material": {
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "is_material"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "activation_criteria": {
+                      "minItems": 0
+                    },
+                    "decision_ref": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
             ]
           }
         },
         "allOf": [
-          {"if": {"properties": {"criticality": {"enum": ["CENTRAL", "SENSITIVE", "CONTROVERSIAL"]}}, "required": ["criticality"]}, "then": {"required": ["materiality"]}},
-          {"if": {"properties": {"intended_use": {"enum": ["CENTRAL_CLAIM_SUPPORT", "SENSITIVE_HANDLING", "CONTROVERSIAL_BALANCE", "EXACT_QUOTE", "PROVE_WORK_CONTENT", "YOUTUBE_POLICY"]}}, "required": ["intended_use"]}, "then": {"required": ["materiality"]}}
+          {
+            "if": {
+              "properties": {
+                "criticality": {
+                  "enum": [
+                    "CENTRAL",
+                    "SENSITIVE",
+                    "CONTROVERSIAL"
+                  ]
+                }
+              },
+              "required": [
+                "criticality"
+              ]
+            },
+            "then": {
+              "required": [
+                "materiality"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "intended_use": {
+                  "enum": [
+                    "CENTRAL_CLAIM_SUPPORT",
+                    "SENSITIVE_HANDLING",
+                    "CONTROVERSIAL_BALANCE",
+                    "EXACT_QUOTE",
+                    "PROVE_WORK_CONTENT",
+                    "YOUTUBE_POLICY"
+                  ]
+                }
+              },
+              "required": [
+                "intended_use"
+              ]
+            },
+            "then": {
+              "required": [
+                "materiality"
+              ]
+            }
+          }
         ]
+      }
+    },
+    "contract_version": {
+      "type": "string",
+      "enum": [
+        "1.0.0",
+        "2.0.0"
+      ]
+    },
+    "ledger_stage": {
+      "type": "string",
+      "enum": [
+        "RESEARCH_PRE_SCRIPT",
+        "SCRIPT_BOUND"
+      ]
+    },
+    "research_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "episode_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "lineage": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
     }
-  }
-}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ledger_stage": {
+            "const": "RESEARCH_PRE_SCRIPT"
+          }
+        },
+        "required": [
+          "ledger_stage"
+        ]
+      },
+      "then": {
+        "required": [
+          "research_id",
+          "episode_id"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ledger_stage": {
+            "const": "SCRIPT_BOUND"
+          }
+        },
+        "required": [
+          "ledger_stage"
+        ]
+      },
+      "then": {
+        "required": [
+          "script_version"
+        ]
+      }
+    }
+  ]
 }

@@ -1,0 +1,168 @@
+{
+  "mission_id": "PLAN012_M2_CONTRACTS_AND_RESEARCH_NARRATIVE_BOUNDARY",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN012_M2_CONTRACTS_AND_RESEARCH_NARRATIVE_BOUNDARY",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/b1_contract_boundary/m2_contracts_boundary/",
+    "schemas/research_plan.json",
+    "schemas/research_ready_manifest.json",
+    "schemas/human_episode_input.json",
+    "schemas/research_pack.json",
+    "schemas/claims_ledger.json",
+    "schemas/source_access_and_evidence_report.json",
+    "schemas/work_research_dossier.json",
+    "schemas/work_lifecycle.json",
+    "schemas/material_curation.json",
+    "schemas/narrative_human_analysis.json",
+    "schemas/refined_thesis.json",
+    "schemas/research_stop_decision.json",
+    "src/application/contracts.py",
+    "src/core/contract_validation.py",
+    "tests/core/"
+  ],
+  "protected_untracked_paths": [
+    ".agents/skills/tests-validacion-cierre/"
+  ],
+  "protected_untracked_baseline": [
+    {
+      "path": ".agents/skills/tests-validacion-cierre/SKILL.md",
+      "sha256": "41cee8fb79b1b00ebd72b65c7088960f8f4a6a1c241444c481750127aef04334"
+    }
+  ],
+  "required_tests": [
+    {
+      "label": "PLAN012_M2_FOCALIZED_CONTRACTS",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_plan012_m2_contracts.py"],
+      "timeout_seconds": 300
+    },
+    {
+      "label": "PLAN012_M2_INTAKE_COMPATIBILITY",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_application_intake.py"],
+      "timeout_seconds": 300
+    },
+    {
+      "label": "PLAN012_M2_B5_I3_COMPATIBILITY",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_b5_i1_editorial_input.py", "tests/harness/test_plan011_m3_b5_i3.py"],
+      "timeout_seconds": 600
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "67a86ce09381bbc8f8229f4d42cad8f390d2eb6b"
+  },
+  "contains_material_repair": false,
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "NONE",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "NONE",
+      "PLAN_012_STATUS": "M2_READY_FOR_OWNER_REVIEW",
+      "PLAN_012_CURRENT_BLOCK": "B1",
+      "PLAN_012_CURRENT_MISSION": "M2",
+      "PLAN_012_B1_STATUS": "M2_READY_FOR_OWNER_REVIEW",
+      "PLAN_012_B1_M1_STATUS": "CLOSED_OWNER_APPROVED",
+      "PLAN_012_B1_M2_STATUS": "READY_FOR_OWNER_REVIEW",
+      "PLAN_012_IMPLEMENTATION_AUTHORIZED": "YES_M2_ONLY",
+      "PLAN_012_REAL_AI_EXECUTION": "NO",
+      "PLAN_012_PRODUCT_USE_AUTHORIZED": "NO",
+      "PLAN_012_P2_REAL_EXECUTION": "NO",
+      "REAL_AI_EXECUTION": "NO",
+      "AUTHORIZED_FOR_PRODUCT_USE": "NO",
+      "P2_REAL_EXECUTION_NOW": "NO"
+    },
+    "forbidden": {
+      "CURRENT_MISSION": ["PLAN012_M2_CONTRACTS_AND_RESEARCH_NARRATIVE_BOUNDARY"],
+      "CURRENT_MISSION_EXECUTION_BUNDLE": ["plans/plan_012/b1_contract_boundary/m2_contracts_boundary/mission_contract.json"],
+      "PLAN_012_B1_M2_STATUS": ["AUTHORIZED_EXECUTING", "M2_EXECUTING", "CLOSED_OWNER_APPROVED"],
+      "PLAN_012_IMPLEMENTATION_AUTHORIZED": ["YES_M1_ONLY", "YES_ALL"],
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "AUTHORIZED_FOR_PRODUCT_USE": ["YES", "AUTHORIZED", "ACTIVE"],
+      "P2_REAL_EXECUTION_NOW": ["YES", "AUTHORIZED", "DEMONSTRATED"]
+    }
+  },
+  "schema_checks": [
+    {
+      "path": "plans/plan_012/b1_contract_boundary/m2_contracts_boundary/mission_contract.json",
+      "schema": "mission_contract"
+    },
+    {"path": "schemas/research_plan.json", "schema": "research_plan"},
+    {"path": "schemas/research_ready_manifest.json", "schema": "research_ready_manifest"}
+  ],
+  "objective": "Implementar la base contractual mínima de Research V2 y su frontera explícita hacia el consumidor B5-I3, sin modificar la semántica cerrada de B5-I3 ni ejecutar IA o producto.",
+  "preconditions": [
+    "M1 está CLOSED_OWNER_APPROVED y su informe es la autoridad técnica del alcance.",
+    "M3 permanece no autorizada.",
+    "La implementación se limita a contratos, validadores y pruebas focalizadas de la frontera aprobada.",
+    "Los cambios locales preexistentes deben preservarse.",
+    "No existe MissionAuthorization porque esta misión no ejecuta una capability ni runtime productivo."
+  ],
+  "canonical_inputs": [
+    "AGENTS.md",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/012_IMPLEMENTACION_SISTEMA_INVESTIGACION.md",
+    "plans/plan_012/b1_contract_boundary/B1_CONTRATOS_Y_FRONTERA.md",
+    "plans/plan_012/b1_contract_boundary/m1_inventory_design/M1_INVENTARIO_Y_DISENO_CONTRACTUAL.md",
+    "plans/plan_012/b1_contract_boundary/m1_inventory_design/mission_contract.json",
+    "schemas/, src/core/, src/application/ y tests/ únicamente para el alcance identificado por M1"
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/b1_contract_boundary/m2_contracts_boundary/",
+    "schemas/research_plan.json",
+    "schemas/research_ready_manifest.json",
+    "schemas/human_episode_input.json",
+    "schemas/research_pack.json",
+    "schemas/claims_ledger.json",
+    "schemas/source_access_and_evidence_report.json",
+    "schemas/work_research_dossier.json",
+    "schemas/work_lifecycle.json",
+    "schemas/material_curation.json",
+    "schemas/narrative_human_analysis.json",
+    "schemas/refined_thesis.json",
+    "schemas/research_stop_decision.json",
+    "src/application/contracts.py",
+    "src/core/contract_validation.py",
+    "tests/core/"
+  ],
+  "non_objectives": [
+    "Modificar B5-I3, sus schemas narrativos cerrados, su runtime, prompts, CLI o persistencia.",
+    "Crear capabilities, roles, agentes, skills, MissionAuthorization, authority.json o runtime nuevo.",
+    "Ejecutar IA real, investigación real, PRODUCT_USE, P2 real, M3, commit o push.",
+    "Refactorizar o corregir código no relacionado con la frontera contractual de Research V2."
+  ],
+  "expected_outputs": [
+    "MissionContract M2 válido contra el schema existente y sin referencias ficticias a capability, role o MissionAuthorization.",
+    "research_plan.json y research_ready_manifest.json si el alcance confirmado por M1 requiere su creación.",
+    "Extensiones mínimas de los contratos existentes para estados ortogonales, evidencia, fidelidad, claims pre-script e intake explícito.",
+    "Validadores y pruebas focalizadas que preservan fixtures históricos y la semántica cerrada de B5-I3.",
+    "Control operativo en M2_READY_FOR_OWNER_REVIEW al finalizar, con M3 no autorizada."
+  ],
+  "deterministic_validations": [
+    "Volver a leer y validar este MissionContract contra schemas/mission_contract.json.",
+    "Ejecutar las pruebas focalizadas de contratos, intake y compatibilidad B5-I3 declaradas arriba.",
+    "Comprobar que no se modifican src/ai, CLI, prompts, skills, config, agentes, capabilities ni tests cerrados fuera del alcance.",
+    "Comprobar que no se exige target_final_works=3 por defecto y que research_role y editorial_intent se conservan separados.",
+    "Comprobar claims pre-script, estados ortogonales, separación de evidencia y fidelity/research-ready con limitaciones.",
+    "Ejecutar git diff --check y revisar git status --short preservando cambios previos."
+  ],
+  "stop_conditions": [
+    "La autoridad viva no confirma M1 CLOSED_OWNER_APPROVED y M2 autorizada únicamente.",
+    "La compatibilidad Research V2 → B5-I3 exige cambiar su responsabilidad o semántica cerrada.",
+    "Para completar M2 se requiere modificar archivos fuera de allowed_files.",
+    "Se requiere crear capability, agente, role, MissionAuthorization, authority.json o ejecutar IA/runtime/producto.",
+    "Una modificación rompe fixtures históricos sin adaptación explícita.",
+    "Se detecta cambio inesperado fuera del alcance o alteración de la skill protegida."
+  ],
+  "review_policy": {
+    "required_review": "OWNER_REVIEW",
+    "independent_review": "ON_FAILURE",
+    "owner_review": true
+  },
+  "owner_closure": {
+    "required": false
+  }
+}

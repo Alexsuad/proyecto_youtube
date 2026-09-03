@@ -1,0 +1,131 @@
+{
+  "mission_id": "PLAN012_M1_INVENTORY_CONTRACT_DESIGN",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN012_M1_INVENTORY_CONTRACT_DESIGN",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/b1_contract_boundary/m1_inventory_design/"
+  ],
+  "protected_untracked_paths": [
+    ".agents/skills/tests-validacion-cierre/"
+  ],
+  "protected_untracked_baseline": [
+    {
+      "path": ".agents/skills/tests-validacion-cierre/SKILL.md",
+      "sha256": "41cee8fb79b1b00ebd72b65c7088960f8f4a6a1c241444c481750127aef04334"
+    }
+  ],
+  "required_tests": [
+    {
+      "label": "M1_MISSION_CONTRACT_SCHEMA",
+      "command": [
+        "py",
+        "-3",
+        "-c",
+        "import json; from pathlib import Path; from src.core.contract_validation import validate_against_schema; p=Path('plans/plan_012/b1_contract_boundary/m1_inventory_design/mission_contract.json'); data=json.loads(p.read_text(encoding='utf-8')); errors=validate_against_schema(data, 'mission_contract'); assert not errors, errors; print('M1_MISSION_CONTRACT_SCHEMA_PASS')"
+      ],
+      "timeout_seconds": 60
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "67a86ce09381bbc8f8229f4d42cad8f390d2eb6b"
+  },
+  "contains_material_repair": false,
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "NONE",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "NONE",
+      "PLAN_012_STATUS": "M1_READY_FOR_OWNER_REVIEW",
+      "PLAN_012_CURRENT_BLOCK": "B1",
+      "PLAN_012_CURRENT_MISSION": "M1",
+      "PLAN_012_B1_STATUS": "M1_READY_FOR_OWNER_REVIEW",
+      "PLAN_012_B1_M1_STATUS": "READY_FOR_OWNER_REVIEW",
+      "PLAN_012_B1_M2_STATUS": "DEFINED_NOT_AUTHORIZED",
+      "PLAN_012_IMPLEMENTATION_AUTHORIZED": "YES_M1_ONLY",
+      "PLAN_012_REAL_AI_EXECUTION": "NO",
+      "PLAN_012_PRODUCT_USE_AUTHORIZED": "NO",
+      "PLAN_012_P2_REAL_EXECUTION": "NO",
+      "REAL_AI_EXECUTION": "NO",
+      "AUTHORIZED_FOR_PRODUCT_USE": "NO",
+      "P2_REAL_EXECUTION_NOW": "NO"
+    },
+    "forbidden": {
+      "CURRENT_MISSION": ["PLAN012_M1_INVENTORY_CONTRACT_DESIGN"],
+      "CURRENT_MISSION_EXECUTION_BUNDLE": ["plans/plan_012/b1_contract_boundary/m1_inventory_design/mission_contract.json"],
+      "PLAN_012_B1_M2_STATUS": ["AUTHORIZED", "M2_EXECUTING", "READY_FOR_OWNER_REVIEW"],
+      "PLAN_012_IMPLEMENTATION_AUTHORIZED": ["YES_M2", "YES_ALL"],
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "AUTHORIZED_FOR_PRODUCT_USE": ["YES", "AUTHORIZED", "ACTIVE"],
+      "P2_REAL_EXECUTION_NOW": ["YES", "AUTHORIZED", "DEMONSTRATED"]
+    }
+  },
+  "schema_checks": [
+    {
+      "path": "plans/plan_012/b1_contract_boundary/m1_inventory_design/mission_contract.json",
+      "schema": "mission_contract"
+    }
+  ],
+  "objective": "Ejecutar M1 como inventario y diseño contractual documental verificable de B1, sin ejecutar capabilities, IA real, runtime productivo ni M2.",
+  "preconditions": [
+    "La autoridad viva indica PLAN012_CURRENT_BLOCK=B1 y M1 autorizada únicamente.",
+    "CURRENT_MISSION y CURRENT_MISSION_EXECUTION_BUNDLE permanecen NONE porque M1 no ejecuta runtime.",
+    "El árbol de trabajo puede contener cambios locales preexistentes y deben preservarse.",
+    "M2, PRODUCT_USE, P2 real y la ejecución de IA permanecen no autorizados."
+  ],
+  "canonical_inputs": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/012_IMPLEMENTACION_SISTEMA_INVESTIGACION.md",
+    "plans/plan_012/b1_contract_boundary/B1_CONTRATOS_Y_FRONTERA.md",
+    "plans/plan_012/b1_contract_boundary/m1_inventory_design/M1_INVENTARIO_Y_DISENO_CONTRACTUAL.md",
+    "schemas/, src/, config/, .agent/, .agents/ y tests/ únicamente como fuentes de lectura dirigidas para trazabilidad Research/B5-I3",
+    "Referencia cerrada de PLAN011 M3 y los artefactos realmente consumidos por B5-I3"
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/b1_contract_boundary/m1_inventory_design/"
+  ],
+  "non_objectives": [
+    "Crear o ejecutar capabilities, roles, agentes, MissionAuthorization o authority.json.",
+    "Modificar código, schemas, prompts, skills, registries, workflows, CLI, tests o B5-I3.",
+    "Ejecutar IA real, investigación real, PRODUCT_USE, P2 real, B5.5, B6, B7, commit o push.",
+    "Implementar contratos Research V2 o abrir M2.",
+    "Rehacer análisis ya sustentado por el borrador preliminar sin evidencia de error."
+  ],
+  "expected_outputs": [
+    "MissionContract M1 válido contra el schema existente, sin referencias ficticias a capability, role o MissionAuthorization.",
+    "Informe M1 completado a partir del borrador y verificado contra el repositorio real.",
+    "Matriz de disposiciones REUSE, EXTEND, MOVE_OR_RECONCILE y CREATE_REQUIRED/CREATE_ONLY_IF_GAP con evidencia concreta.",
+    "Modelo de estados ortogonales, mapa de responsabilidades cognitivas y consumer contract Research V2 → B5-I3.",
+    "Alcance preciso de M2 documentado sin implementar sus contratos.",
+    "Control operativo en M1_READY_FOR_OWNER_REVIEW al finalizar, con M2 no autorizada y bundle global NONE."
+  ],
+  "deterministic_validations": [
+    "El mission_contract.json se vuelve a leer y valida contra schemas/mission_contract.json.",
+    "El informe contiene evidencia de inventario, estados ortogonales, responsabilidades, B5-I3, adquisición de evidencia, no-progress y alcance M2.",
+    "Solo se modifican los archivos permitidos y se preservan cambios locales preexistentes.",
+    "No aparecen cambios en src/, schemas/, prompts/, .agent/, .agents/, config/, tests/ ni B5-I3.",
+    "CURRENT_MISSION_EXECUTION_BUNDLE, REAL_AI_EXECUTION, AUTHORIZED_FOR_PRODUCT_USE y P2_REAL_EXECUTION_NOW conservan sus valores prohibidos.",
+    "M2 permanece DEFINED_NOT_AUTHORIZED y no se crean capabilities, agentes, skills ni mecanismos de runtime."
+  ],
+  "stop_conditions": [
+    "Existe otra misión activa o el estado vivo contradice materialmente este contrato.",
+    "La evidencia no permite determinar el consumer contract real de B5-I3.",
+    "Para completar M1 se necesita modificar código, schemas, prompts, skills, registries, tests, CLI o B5-I3.",
+    "El framework exige una capability, role o MissionAuthorization para esta misión documental.",
+    "Se requiere ejecutar IA real, runtime productivo, investigación real, M2 o reabrir M3.",
+    "Aparece cualquier cambio inesperado fuera de los paths autorizados o se altera la skill protegida."
+  ],
+  "review_policy": {
+    "required_review": "OWNER_REVIEW",
+    "independent_review": "NOT_REQUIRED",
+    "owner_review": true
+  },
+  "owner_closure": {
+    "required": false
+  }
+}

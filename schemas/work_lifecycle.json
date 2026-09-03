@@ -4,133 +4,825 @@
   "title": "WorkLifecycle",
   "type": "object",
   "additionalProperties": false,
-  "required": ["lifecycle_id", "lifecycle_version", "episode_id", "research_id", "entry_mode", "anchor_work_id", "works", "transitions", "screening", "final_selection", "critical_doubts", "created_at"],
+  "required": [
+    "lifecycle_id",
+    "lifecycle_version",
+    "episode_id",
+    "research_id",
+    "entry_mode",
+    "anchor_work_id",
+    "works",
+    "transitions",
+    "screening",
+    "final_selection",
+    "critical_doubts",
+    "created_at"
+  ],
   "properties": {
-    "lifecycle_id": {"type": "string", "minLength": 1},
-    "lifecycle_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
-    "episode_id": {"type": "string", "minLength": 1},
-    "research_id": {"type": "string", "minLength": 1},
-    "entry_mode": {"type": "string", "enum": ["TOPIC_FIRST", "ANCHOR_WORK_FIRST", "CORPUS_FIRST"]},
-    "anchor_work_id": {"type": ["string", "null"], "minLength": 1},
-    "works": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/workState"}},
-    "transitions": {"type": "array", "items": {"$ref": "#/definitions/workTransition"}},
-    "screening": {"$ref": "#/definitions/screeningSet"},
-    "final_selection": {"$ref": "#/definitions/finalSelection"},
-    "critical_doubts": {"type": "array", "items": {"$ref": "#/definitions/criticalWorkDoubt"}, "uniqueItems": true},
-    "created_at": {"type": "string", "format": "date-time"}
+    "lifecycle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lifecycle_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "episode_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "research_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entry_mode": {
+      "type": "string",
+      "enum": [
+        "TOPIC_FIRST",
+        "ANCHOR_WORK_FIRST",
+        "CORPUS_FIRST"
+      ]
+    },
+    "anchor_work_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "works": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/workState"
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/workTransition"
+      }
+    },
+    "screening": {
+      "$ref": "#/definitions/screeningSet"
+    },
+    "final_selection": {
+      "$ref": "#/definitions/finalSelection"
+    },
+    "critical_doubts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/criticalWorkDoubt"
+      },
+      "uniqueItems": true
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "research_contract_version": {
+      "type": "string",
+      "enum": [
+        "1.0.0",
+        "2.0.0"
+      ]
+    }
   },
   "definitions": {
-    "state": {"type": "string", "enum": ["DISCOVERED_WORK", "SCREENED_WORK", "FINALIST_WORK", "FINAL_SELECTED_WORK", "EXCLUDED_WORK", "INVALIDATED_WORK"]},
+    "state": {
+      "type": "string",
+      "enum": [
+        "DISCOVERED_WORK",
+        "SCREENED_WORK",
+        "FINALIST_WORK",
+        "FINAL_SELECTED_WORK",
+        "EXCLUDED_WORK",
+        "INVALIDATED_WORK"
+      ]
+    },
     "workState": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["work_id", "state", "state_version", "identity_ref", "version_ref", "is_anchor", "lineage_refs", "stage_evidence_refs"],
+      "required": [
+        "work_id",
+        "state",
+        "state_version",
+        "identity_ref",
+        "version_ref",
+        "is_anchor",
+        "lineage_refs",
+        "stage_evidence_refs"
+      ],
       "properties": {
-        "work_id": {"type": "string", "minLength": 1},
-        "state": {"$ref": "#/definitions/state"},
-        "state_version": {"type": "string", "minLength": 1},
-        "identity_ref": {"type": "string", "minLength": 1},
-        "version_ref": {"type": ["string", "null"], "minLength": 1},
-        "is_anchor": {"type": "boolean"},
-        "lineage_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "stage_evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "screening_ref": {"type": ["string", "null"], "minLength": 1},
-        "dossier_ref": {"type": ["string", "null"], "minLength": 1},
-        "differentiated_function_ref": {"type": ["string", "null"], "minLength": 1},
-        "comparative_decision_ref": {"type": ["string", "null"], "minLength": 1}
+        "work_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "$ref": "#/definitions/state"
+        },
+        "state_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identity_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "is_anchor": {
+          "type": "boolean"
+        },
+        "lineage_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "stage_evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "screening_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "dossier_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "differentiated_function_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "comparative_decision_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "research_stage": {
+          "type": "string",
+          "enum": [
+            "PLANNING",
+            "DISCOVERY",
+            "BASE_RESEARCH",
+            "PRELIMINARY_FIDELITY",
+            "SELECTION",
+            "DEEP_RESEARCH",
+            "DEEP_FIDELITY",
+            "SYNTHESIS",
+            "REFINED",
+            "READY"
+          ]
+        },
+        "selection_state": {
+          "type": "string",
+          "enum": [
+            "NOT_EVALUATED",
+            "PENDING_DECISION",
+            "CANDIDATE",
+            "SELECTED",
+            "EXCLUDED",
+            "INVALIDATED"
+          ]
+        },
+        "preliminary_fidelity": {
+          "type": "string",
+          "enum": [
+            "NOT_ASSESSED",
+            "APTA",
+            "APTA_CON_RIESGOS",
+            "NO_APTA"
+          ]
+        },
+        "deep_fidelity": {
+          "type": "string",
+          "enum": [
+            "NOT_ASSESSED",
+            "APROBADA",
+            "APROBADA_CON_LIMITES",
+            "MAS_INVESTIGACION_REQUERIDA",
+            "NO_APROBADA"
+          ]
+        },
+        "research_sufficiency": {
+          "type": "string",
+          "enum": [
+            "SUFFICIENT_FOR_INTENDED_USE",
+            "LIMITED_BUT_USABLE",
+            "MORE_RESEARCH_REQUIRED",
+            "BLOCKED_BY_EVIDENCE"
+          ]
+        },
+        "artifact_validity": {
+          "type": "string",
+          "enum": [
+            "VALID",
+            "STALE",
+            "INVALID",
+            "PENDING_VALIDATION"
+          ]
+        },
+        "thesis_stage": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "PROVISIONAL",
+            "REFINED"
+          ]
+        },
+        "research_contract_version": {
+          "type": "string",
+          "enum": [
+            "1.0.0",
+            "2.0.0"
+          ]
+        }
       }
     },
     "decision": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["decision_id", "decision_version", "status"],
+      "required": [
+        "decision_id",
+        "decision_version",
+        "status"
+      ],
       "properties": {
-        "decision_id": {"type": "string", "minLength": 1},
-        "decision_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
-        "status": {"const": "EXPLICIT"}
+        "decision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "status": {
+          "const": "EXPLICIT"
+        }
       }
     },
     "workTransition": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["transition_id", "transition_version", "work_id", "previous_state", "target_state", "transition_type", "transition_reason", "evidence_refs", "input_version_refs", "transition_authority_ref", "authority_role", "decision", "occurred_at", "lineage_ref"],
+      "required": [
+        "transition_id",
+        "transition_version",
+        "work_id",
+        "previous_state",
+        "target_state",
+        "transition_type",
+        "transition_reason",
+        "evidence_refs",
+        "input_version_refs",
+        "transition_authority_ref",
+        "authority_role",
+        "decision",
+        "occurred_at",
+        "lineage_ref"
+      ],
       "properties": {
-        "transition_id": {"type": "string", "minLength": 1},
-        "transition_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
-        "work_id": {"type": "string", "minLength": 1},
-        "previous_state": {"$ref": "#/definitions/state"},
-        "target_state": {"$ref": "#/definitions/state"},
-        "transition_type": {"type": "string", "enum": ["PROMOTION", "EXCLUSION", "INVALIDATION", "REOPENED"]},
-        "transition_reason": {"type": "string", "minLength": 1},
-        "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "input_version_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "transition_authority_ref": {"type": "string", "pattern": "^config/responsibility_registry\\.json#responsibilities/[A-Z0-9_]+$"},
-        "authority_role": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
-        "decision": {"$ref": "#/definitions/decision"},
-        "occurred_at": {"type": "string", "format": "date-time"},
-        "lineage_ref": {"type": "string", "minLength": 1},
-        "previous_transition_ref": {"type": ["string", "null"], "minLength": 1},
-        "authorized_return_state": {"anyOf": [{"$ref": "#/definitions/state"}, {"type": "null"}]}
+        "transition_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "transition_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "work_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "previous_state": {
+          "$ref": "#/definitions/state"
+        },
+        "target_state": {
+          "$ref": "#/definitions/state"
+        },
+        "transition_type": {
+          "type": "string",
+          "enum": [
+            "PROMOTION",
+            "EXCLUSION",
+            "INVALIDATION",
+            "REOPENED"
+          ]
+        },
+        "transition_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "input_version_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "transition_authority_ref": {
+          "type": "string",
+          "pattern": "^config/responsibility_registry\\.json#responsibilities/[A-Z0-9_]+$"
+        },
+        "authority_role": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]+$"
+        },
+        "decision": {
+          "$ref": "#/definitions/decision"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lineage_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "previous_transition_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "authorized_return_state": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/state"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       }
     },
     "formatException": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["exception_ref", "exception_reason", "affected_format", "functional_owner", "owner_approval_ref", "duration_or_scope_impact", "argumentative_impact", "downstream_gate_effect"],
+      "required": [
+        "exception_ref",
+        "exception_reason",
+        "affected_format",
+        "functional_owner",
+        "owner_approval_ref",
+        "duration_or_scope_impact",
+        "argumentative_impact",
+        "downstream_gate_effect"
+      ],
       "properties": {
-        "exception_ref": {"type": "string", "minLength": 1},
-        "exception_reason": {"type": "string", "minLength": 1},
-        "affected_format": {"type": "string", "minLength": 1},
-        "functional_owner": {"const": "SCRIPT_PRODUCT"},
-        "owner_approval_ref": {"type": "string", "minLength": 1},
-        "duration_or_scope_impact": {"type": "string", "minLength": 1},
-        "argumentative_impact": {"type": "string", "minLength": 1},
-        "downstream_gate_effect": {"type": "string", "minLength": 1}
+        "exception_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exception_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "affected_format": {
+          "type": "string",
+          "minLength": 1
+        },
+        "functional_owner": {
+          "const": "SCRIPT_PRODUCT"
+        },
+        "owner_approval_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "duration_or_scope_impact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "argumentative_impact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "downstream_gate_effect": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "screeningSet": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["candidate_work_ids", "format_policy_ref", "range_status", "exception"],
+      "required": [
+        "candidate_work_ids",
+        "format_policy_ref",
+        "range_status",
+        "exception"
+      ],
       "properties": {
-        "candidate_work_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "format_policy_ref": {"const": "policies/script_product/main_episode_format_policy.md"},
-        "range_status": {"type": "string", "enum": ["NOT_APPLICABLE", "NORMAL", "EXCEPTION"]},
-        "exception": {"anyOf": [{"$ref": "#/definitions/formatException"}, {"type": "null"}]}
+        "candidate_work_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "format_policy_ref": {
+          "const": "policies/script_product/main_episode_format_policy.md"
+        },
+        "range_status": {
+          "type": "string",
+          "enum": [
+            "NOT_APPLICABLE",
+            "NORMAL",
+            "EXCEPTION"
+          ]
+        },
+        "exception": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/formatException"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       }
     },
     "finalSelection": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["selected_work_ids", "format_policy_ref", "range_status", "curation_ref", "exception"],
+      "required": [
+        "selected_work_ids",
+        "format_policy_ref",
+        "range_status",
+        "curation_ref",
+        "exception"
+      ],
       "properties": {
-        "selected_work_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "format_policy_ref": {"const": "policies/script_product/main_episode_format_policy.md"},
-        "range_status": {"type": "string", "enum": ["NOT_APPLICABLE", "NORMAL", "EXCEPTION"]},
-        "curation_ref": {"type": ["string", "null"], "minLength": 1},
-        "exception": {"anyOf": [{"$ref": "#/definitions/formatException"}, {"type": "null"}]}
+        "selected_work_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "format_policy_ref": {
+          "const": "policies/script_product/main_episode_format_policy.md"
+        },
+        "range_status": {
+          "type": "string",
+          "enum": [
+            "NOT_APPLICABLE",
+            "NORMAL",
+            "EXCEPTION"
+          ]
+        },
+        "curation_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "exception": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/formatException"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       }
     },
     "criticalWorkDoubt": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["doubt_id", "decision_id", "decision_version", "work_id", "authorization_status", "activation_criteria", "non_trigger_examples", "invalidators", "evidence_refs", "scope", "authorized_actions", "authorization_ref", "outcome", "return_route"],
+      "required": [
+        "doubt_id",
+        "decision_id",
+        "decision_version",
+        "work_id",
+        "authorization_status",
+        "activation_criteria",
+        "non_trigger_examples",
+        "invalidators",
+        "evidence_refs",
+        "scope",
+        "authorized_actions",
+        "authorization_ref",
+        "outcome",
+        "return_route"
+      ],
       "properties": {
-        "doubt_id": {"type": "string", "minLength": 1},
-        "decision_id": {"const": "SP-IR0-CRITICAL_WORK_DOUBT"},
-        "decision_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
-        "work_id": {"type": "string", "minLength": 1},
-        "authorization_status": {"type": "string", "enum": ["NOT_ACTIVATED", "ACTIVE", "RESOLVED", "INVALIDATED"]},
-        "activation_criteria": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["VERSION_OR_ADAPTATION_UNCERTAINTY", "PRIMARY_ACCESS_UNCERTAINTY", "SCENE_OR_PASSAGE_EXISTENCE_UNCERTAINTY", "FUNCTION_DIFFERENTIATION_UNCERTAINTY", "THESIS_IMPACT_UNCERTAINTY", "RIVAL_READING_UNCERTAINTY", "SENSITIVITY_OR_HARM_RISK", "ANCHOR_WORK_VIABILITY", "SCREENING_DECISION_BLOCKED", "CONTRADICTION_WITH_AVAILABLE_EVIDENCE"]}},
-        "non_trigger_examples": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["GENERAL_CURIOSITY", "WORK_POPULARITY", "ABUNDANT_EXTERNAL_ANALYSIS", "TEAM_FAMILIARITY", "AHEAD_OF_SELECTION_WORK", "COMPLETE_DOSSIER_PREMATURELY", "UNRELATED_INTERESTING_SCENE", "NON_MATERIAL_MISSING_DETAIL", "SUBJECTIVE_PREFERENCE", "ABSTRACT_ALTERNATIVE_READING", "DEEP_RESEARCH_ALL_CANDIDATES"]}},
-        "invalidators": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["QUESTION_RESOLVED", "WORK_EXCLUDED_WITHOUT_NEW_MATERIAL_EVIDENCE", "CENTRAL_QUESTION_CHANGED", "VERSION_OR_ADAPTATION_CHANGED", "SCOPE_EXPANDED_BEYOND_DECLARED_DOUBT", "IMPLICIT_FINALIST_PROMOTION", "CLAIM_OR_USE_UNSUSTAINABLE", "FUNCTION_COVERED_BY_OTHER_WORK", "CORPUS_OR_INTENT_CHANGED", "IDENTITY_OR_SCOPE_REVIEW_REQUIRED"]}},
-        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "scope": {"type": "string", "minLength": 1},
-        "authorized_actions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "enum": ["CONTINUE_SCREENING", "PROMOTE_TO_FINALIST_CONSIDERATION", "EXCLUDE_FOR_CURRENT_EPISODE", "REQUIRE_MORE_TARGETED_RESEARCH", "BLOCK_BY_EVIDENCE"]}},
-        "authorization_ref": {"type": ["string", "null"], "minLength": 1},
-        "outcome": {"type": "string", "enum": ["NOT_APPLICABLE", "CONTINUE_SCREENING", "PROMOTE_TO_FINALIST_CONSIDERATION", "EXCLUDE_FOR_CURRENT_EPISODE", "REQUIRE_MORE_TARGETED_RESEARCH", "BLOCK_BY_EVIDENCE"]},
-        "return_route": {"type": "string", "enum": ["RETURN_TO_SCREENING", "EXCLUDED_WORK", "MORE_TARGETED_RESEARCH_REQUIRED", "BLOCKED_BY_EVIDENCE", "CHANNEL_INTELLIGENCE_REVIEW_REQUIRED", "YOUTUBE_ADAPTATION_REVIEW_REQUIRED"]},
-        "return_trigger": {"anyOf": [{"type": "null"}, {"type": "string", "enum": ["MATERIAL_QUESTION_INTENT_TERRITORY_CHANGE", "VISIBLE_PROMISE_OR_EARLY_PACKAGING_IMPACT"]}]}
+        "doubt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_id": {
+          "const": "SP-IR0-CRITICAL_WORK_DOUBT"
+        },
+        "decision_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "work_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authorization_status": {
+          "type": "string",
+          "enum": [
+            "NOT_ACTIVATED",
+            "ACTIVE",
+            "RESOLVED",
+            "INVALIDATED"
+          ]
+        },
+        "activation_criteria": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "VERSION_OR_ADAPTATION_UNCERTAINTY",
+              "PRIMARY_ACCESS_UNCERTAINTY",
+              "SCENE_OR_PASSAGE_EXISTENCE_UNCERTAINTY",
+              "FUNCTION_DIFFERENTIATION_UNCERTAINTY",
+              "THESIS_IMPACT_UNCERTAINTY",
+              "RIVAL_READING_UNCERTAINTY",
+              "SENSITIVITY_OR_HARM_RISK",
+              "ANCHOR_WORK_VIABILITY",
+              "SCREENING_DECISION_BLOCKED",
+              "CONTRADICTION_WITH_AVAILABLE_EVIDENCE"
+            ]
+          }
+        },
+        "non_trigger_examples": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "GENERAL_CURIOSITY",
+              "WORK_POPULARITY",
+              "ABUNDANT_EXTERNAL_ANALYSIS",
+              "TEAM_FAMILIARITY",
+              "AHEAD_OF_SELECTION_WORK",
+              "COMPLETE_DOSSIER_PREMATURELY",
+              "UNRELATED_INTERESTING_SCENE",
+              "NON_MATERIAL_MISSING_DETAIL",
+              "SUBJECTIVE_PREFERENCE",
+              "ABSTRACT_ALTERNATIVE_READING",
+              "DEEP_RESEARCH_ALL_CANDIDATES"
+            ]
+          }
+        },
+        "invalidators": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "QUESTION_RESOLVED",
+              "WORK_EXCLUDED_WITHOUT_NEW_MATERIAL_EVIDENCE",
+              "CENTRAL_QUESTION_CHANGED",
+              "VERSION_OR_ADAPTATION_CHANGED",
+              "SCOPE_EXPANDED_BEYOND_DECLARED_DOUBT",
+              "IMPLICIT_FINALIST_PROMOTION",
+              "CLAIM_OR_USE_UNSUSTAINABLE",
+              "FUNCTION_COVERED_BY_OTHER_WORK",
+              "CORPUS_OR_INTENT_CHANGED",
+              "IDENTITY_OR_SCOPE_REVIEW_REQUIRED"
+            ]
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authorized_actions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "CONTINUE_SCREENING",
+              "PROMOTE_TO_FINALIST_CONSIDERATION",
+              "EXCLUDE_FOR_CURRENT_EPISODE",
+              "REQUIRE_MORE_TARGETED_RESEARCH",
+              "BLOCK_BY_EVIDENCE"
+            ]
+          }
+        },
+        "authorization_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "NOT_APPLICABLE",
+            "CONTINUE_SCREENING",
+            "PROMOTE_TO_FINALIST_CONSIDERATION",
+            "EXCLUDE_FOR_CURRENT_EPISODE",
+            "REQUIRE_MORE_TARGETED_RESEARCH",
+            "BLOCK_BY_EVIDENCE"
+          ]
+        },
+        "return_route": {
+          "type": "string",
+          "enum": [
+            "RETURN_TO_SCREENING",
+            "EXCLUDED_WORK",
+            "MORE_TARGETED_RESEARCH_REQUIRED",
+            "BLOCKED_BY_EVIDENCE",
+            "CHANNEL_INTELLIGENCE_REVIEW_REQUIRED",
+            "YOUTUBE_ADAPTATION_REVIEW_REQUIRED"
+          ]
+        },
+        "return_trigger": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "MATERIAL_QUESTION_INTENT_TERRITORY_CHANGE",
+                "VISIBLE_PROMISE_OR_EARLY_PACKAGING_IMPACT"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "v2DownstreamRestriction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "restriction_id",
+        "kind",
+        "statement",
+        "affected_consumers"
+      ],
+      "properties": {
+        "restriction_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "CLAIM_ALLOWED",
+            "CLAIM_LIMITED",
+            "CLAIM_BLOCKED",
+            "ATTRIBUTION_REQUIRED",
+            "INTERPRETATION_ONLY",
+            "NOT_AUTHORIZED",
+            "CONDITION_REQUIRED"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "affected_consumers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "v2EvidenceTypeSeparation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_evidence_refs",
+        "external_reality_evidence_refs"
+      ],
+      "properties": {
+        "work_evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "external_reality_evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "v2AcquisitionBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_ref",
+        "execution_ref",
+        "recovery_artifact_ref",
+        "source_ref",
+        "retrieval_status",
+        "evidence_status",
+        "software_controlled"
+      ],
+      "properties": {
+        "request_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recovery_artifact_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retrieval_status": {
+          "type": "string",
+          "enum": [
+            "RECOVERED",
+            "NOT_RECOVERED",
+            "FAILED",
+            "STALE"
+          ]
+        },
+        "evidence_status": {
+          "type": "string",
+          "enum": [
+            "CONSULTED",
+            "VERIFIED",
+            "EVIDENCE",
+            "NOT_EVIDENCE",
+            "PENDING"
+          ]
+        },
+        "software_controlled": {
+          "type": "boolean"
+        }
       }
     }
   }
