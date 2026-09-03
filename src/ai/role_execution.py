@@ -85,6 +85,12 @@ CHANNEL_INTELLIGENCE_REVIEWER_REQUIRED_INPUTS = (
     "TopicBelongingAssessment",
     "active_editorial_profile",
 )
+RESEARCH_AND_CURATION_REQUIRED_INPUTS = (
+    "topic",
+    "source_access",
+    "brief",
+    "channel_context",
+)
 ROLE_REQUIRED_INPUTS = {
     "SCRIPT_PRODUCT_PRODUCER": SCRIPT_PRODUCT_PRODUCER_REQUIRED_INPUTS,
     "SCRIPT_PRODUCT_AUDITOR": SCRIPT_PRODUCT_AUDITOR_REQUIRED_INPUTS,
@@ -93,6 +99,7 @@ ROLE_REQUIRED_INPUTS = {
     "NARRATIVE_ARCHITECTURE": NARRATIVE_ARCHITECTURE_REQUIRED_INPUTS,
     "CHANNEL_INTELLIGENCE_PRODUCER": CHANNEL_INTELLIGENCE_PRODUCER_REQUIRED_INPUTS,
     "CHANNEL_INTELLIGENCE_REVIEWER": CHANNEL_INTELLIGENCE_REVIEWER_REQUIRED_INPUTS,
+    "RESEARCH_AND_CURATION": RESEARCH_AND_CURATION_REQUIRED_INPUTS,
 }
 ROLE_ALLOWED_OUTPUT_SCHEMAS = {
     "SCRIPT_PRODUCT_PRODUCER": {
@@ -131,6 +138,18 @@ ROLE_ALLOWED_OUTPUT_SCHEMAS = {
     "CHANNEL_INTELLIGENCE_REVIEWER": {
         "execution_smoke_report",
         "topic_belonging_decision",
+    },
+    "RESEARCH_AND_CURATION": {
+        "execution_smoke_report",
+        "research_pack",
+        "work_lifecycle",
+        "work_research_dossier",
+        "research_stop_decision",
+        "thesis_artifact",
+        "research_comparison",
+        "curation_decision",
+        "claims_ledger",
+        "source_access_and_evidence_report",
     },
 }
 
@@ -190,6 +209,17 @@ def _validate_role_payload(
     runtime_values: dict[str, Any] | None = None,
 ) -> None:
     required = ROLE_REQUIRED_INPUTS.get(role_id, ())
+    if role_id == "RESEARCH_AND_CURATION" and output_schema not in {
+        "research_pack",
+        "work_lifecycle",
+        "work_research_dossier",
+        "research_stop_decision",
+        "thesis_artifact",
+        "research_comparison",
+    }:
+        # Preserve the historical smoke/legacy route. B2 opts into the
+        # explicit research input contract for its structured outputs.
+        required = ()
     if role_id == "CHANNEL_INTELLIGENCE_PRODUCER":
         stage = str((runtime_values or {}).get("stage") or "").upper()
         required = (

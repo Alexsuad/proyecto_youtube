@@ -990,6 +990,21 @@ VALID_FIXTURES["research_plan"] = {
     "planned_stages": ["PLANNING", "BASE_RESEARCH", "SYNTHESIS"],
     "created_at": "2026-08-22T00:00:00Z",
 }
+VALID_FIXTURES["research_comparison"] = {
+    "comparison_id": "COMP-FIXTURE", "comparison_version": "2.0.0",
+    "episode_id": "EP-1", "research_id": "R-1", "candidate_work_ids": ["M-1"],
+    "dimensions": ["CONTRIBUTION", "EVIDENCE"],
+    "entries": [{
+        "work_id": "M-1", "evidence_refs": ["D-M-1"],
+        "contribution": "Aporta evidencia propia.", "coverage": "Cubre una dimensión declarada.",
+        "complementarity": "Complementa el conjunto.", "redundancy": "Redundancia revisada.",
+        "contrast": "Permite contraste investigativo.", "fidelity": "Fidelidad preliminar compatible.",
+        "limitations": ["Límite declarado."],
+    }],
+    "decision_stage": "INITIAL_RESEARCH_COMPARISON",
+    "narrative_decision_made": False,
+    "created_at": "2026-08-22T00:00:00Z",
+}
 VALID_FIXTURES["research_ready_manifest"] = {
     "contract": "research_ready_manifest", "contract_version": "2.0.0", "manifest_id": "RRM-FIXTURE",
     "episode_id": "EP-1", "research_id": "R-1", "research_version": "2.0.0",

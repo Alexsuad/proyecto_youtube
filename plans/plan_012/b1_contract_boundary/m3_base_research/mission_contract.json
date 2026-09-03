@@ -1,0 +1,165 @@
+{
+  "mission_id": "PLAN012_M3_B2_BASE_RESEARCH",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN012_M3_B2_BASE_RESEARCH",
+  "artifact_version": "1.2.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/b1_contract_boundary/m3_base_research/",
+    "src/application/research_b2.py",
+    "src/application/storage.py",
+    "src/ai/role_execution.py",
+    "tests/core/test_plan012_m3_b2_base_research.py",
+    "tests/core/test_all_schemas.py",
+    "schemas/research_comparison.json",
+    "prompts/roles/RESEARCH_AND_CURATION/1.0.0.md",
+    ".agent/skills/skill_research_tema_y_obras.md"
+  ],
+  "protected_untracked_paths": [
+    ".agents/skills/tests-validacion-cierre/"
+  ],
+  "protected_untracked_baseline": [
+    {
+      "path": ".agents/skills/tests-validacion-cierre/SKILL.md",
+      "sha256": "41cee8fb79b1b00ebd72b65c7088960f8f4a6a1c241444c481750127aef04334"
+    }
+  ],
+  "required_tests": [
+    {
+      "label": "PLAN012_M3_B2_FOCALIZED",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_plan012_m3_b2_base_research.py"],
+      "timeout_seconds": 300
+    },
+    {
+      "label": "PLAN012_M2_COMPATIBILITY",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_plan012_m2_contracts.py"],
+      "timeout_seconds": 300
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "a89bed588aa1d738d47352b02ee7968ef56a9a0f"
+  },
+  "contains_material_repair": false,
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "PLAN012_M3_B2_BASE_RESEARCH",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "plans/plan_012/b1_contract_boundary/m3_base_research/mission_contract.json",
+      "PLAN_012_STATUS": "M3_READY_FOR_OWNER_REVIEW",
+      "PLAN_012_CURRENT_BLOCK": "B2",
+      "PLAN_012_CURRENT_MISSION": "M3",
+      "PLAN_012_B1_STATUS": "CLOSED",
+      "PLAN_012_B1_M1_STATUS": "CLOSED_OWNER_APPROVED",
+      "PLAN_012_B1_M2_STATUS": "CLOSED_OWNER_APPROVED",
+      "PLAN_012_B2_STATUS": "M3_READY_FOR_OWNER_REVIEW",
+      "PLAN_012_M3_STATUS": "READY_FOR_OWNER_REVIEW",
+      "PLAN_012_M4_STATUS": "NOT_AUTHORIZED",
+      "PLAN_012_IMPLEMENTATION_AUTHORIZED": "YES_M3_ONLY",
+      "CURRENT_MISSION_EXECUTION_BUNDLE_STATUS": "TECHNICAL_CONTRACT_ONLY",
+      "REAL_AI_EXECUTION": "NO",
+      "AUTHORIZED_FOR_PRODUCT_USE": "NO",
+      "P2_REAL_EXECUTION_NOW": "NO"
+    },
+    "forbidden": {
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "AUTHORIZED_FOR_PRODUCT_USE": ["YES", "AUTHORIZED", "ACTIVE"],
+      "P2_REAL_EXECUTION_NOW": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "PLAN_012_M4_STATUS": ["AUTHORIZED", "EXECUTING", "READY_FOR_OWNER_REVIEW", "CLOSED"]
+    }
+  },
+  "schema_checks": [
+    {
+      "path": "plans/plan_012/b1_contract_boundary/m3_base_research/mission_contract.json",
+      "schema": "mission_contract"
+    },
+    {"path": "schemas/research_plan.json", "schema": "research_plan"},
+    {"path": "schemas/research_pack.json", "schema": "research_pack"},
+    {"path": "schemas/work_lifecycle.json", "schema": "work_lifecycle"},
+    {"path": "schemas/work_research_dossier.json", "schema": "work_research_dossier"},
+    {"path": "schemas/research_stop_decision.json", "schema": "research_stop_decision"},
+    {"path": "schemas/thesis_artifact.json", "schema": "thesis_artifact"},
+    {"path": "schemas/research_comparison.json", "schema": "research_comparison"}
+  ],
+  "objective": "Completar el flujo técnico B2 de Research V2 para plan, investigación base del fenómeno, discovery, BASE_RESEARCH_POOL, fidelidad preliminar, suficiencia inicial, tesis provisional y comparativa investigativa, sin investigación real ni uso productivo. La misión mantiene BASE_RESEARCH_POOL como subconjunto no vacío del discovery, preserva obras filtradas y añade guardia anti-loop y adquisición de evidencia controlada por Software.",
+  "preconditions": [
+    "B1, M1 y M2 están cerrados y publicados.",
+    "M3 está autorizada únicamente como implementación técnica del flujo B2.",
+    "M4 permanece no autorizada.",
+    "La cognición se recibe por una frontera estructurada y no se invocan proveedores reales.",
+    "Los cambios locales preexistentes deben preservarse."
+  ],
+  "canonical_inputs": [
+    "AGENTS.md",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/012_IMPLEMENTACION_SISTEMA_INVESTIGACION.md",
+    "plans/plan_012/b1_contract_boundary/m1_inventory_design/M1_INVENTARIO_Y_DISENO_CONTRACTUAL.md",
+    "schemas/research_plan.json",
+    "schemas/research_pack.json",
+    "schemas/work_lifecycle.json",
+    "schemas/work_research_dossier.json",
+    "config/responsibility_registry.json",
+    "config/agent_prompt_registry.json",
+    "prompts/roles/RESEARCH_AND_CURATION/1.0.0.md"
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/b1_contract_boundary/m3_base_research/",
+    "src/application/research_b2.py",
+    "src/application/storage.py",
+    "src/ai/role_execution.py",
+    "tests/core/test_plan012_m3_b2_base_research.py",
+    "tests/core/test_all_schemas.py",
+    "schemas/research_comparison.json",
+    "prompts/roles/RESEARCH_AND_CURATION/1.0.0.md",
+    ".agent/skills/skill_research_tema_y_obras.md"
+  ],
+  "non_objectives": [
+    "Ejecutar investigación real de un episodio.",
+    "Invocar IA real, PRODUCT_USE o P2 real.",
+    "Modificar B5-I3, CLI, registries, agentes o capabilities, o modificar schemas, prompts o skills fuera de los paths autorizados para esta corrección.",
+    "Crear un agente permanente, una capability nueva o un runtime paralelo.",
+    "Implementar M4, selección final, deep research o tesis refinada.",
+    "Crear una cuota rígida de discovery o convertir la heurística de pool en gate."
+  ],
+  "expected_outputs": [
+    "Contrato de misión M3 válido contra MissionContract.",
+    "Orquestador B2 secuencial que exige ResearchPlan antes de toda cognición posterior.",
+    "ResearchPack de fenómeno, WorkLifecycle de discovery, dossiers de base research y fidelidad preliminar con persistencia y lineage.",
+    "ResearchStopDecision de suficiencia inicial, ThesisArtifact provisional bloqueado hasta suficiencia válida y ResearchComparison sin decisión narrativa.",
+    "Guardia operacional de no progreso separada de ResearchStopDecision y adquisición de evidencia con metadata técnica materializada por Software.",
+    "Tests focalizados de frontera Software→IA→Software, sin default de obras y sin mezcla Research/Narrative.",
+    "Prompt y skill Research V2 reconciliados, con revisión metodológica requerida y ruta legacy preservada.",
+    "Control operativo en M3_READY_FOR_OWNER_REVIEW al finalizar, con M4 no autorizada."
+  ],
+  "deterministic_validations": [
+    "Validar este MissionContract y los contratos existentes que consume B2.",
+    "Ejecutar tests focalizados M3 y compatibilidad M2.",
+    "Comprobar que cada etapa cognitiva vuelve a Software para validación y persistencia antes de la siguiente.",
+    "Comprobar que discovery no exige rango ni cuota rígida y que BASE_RESEARCH_POOL acepta un subconjunto no vacío sin convertir la heurística en gate.",
+    "Comprobar fidelidad preliminar APTA, APTA_CON_RIESGOS y NO_APTA con riesgos explícitos cuando corresponda.",
+    "Comprobar que ResearchStopDecision permite suficiencia inicial por ámbito y que tesis provisional solo continúa con suficiencia válida.",
+    "Comprobar comparativa por dimensiones investigativas sin función narrativa y sin selección final.",
+    "Comprobar que el guardia detecta repetición, ciclo A→B→A y límite operativo sin inferir suficiencia.",
+    "Comprobar que acquisition bindings, recovery refs, checksums y provenance técnico son materializados por Software y no por la salida cognitiva.",
+    "Comprobar la frontera B2 del prompt/skill Research V2, preservando el camino legacy y sin modificar B5-I3."
+  ],
+  "stop_conditions": [
+    "El estado vivo no confirma B1 cerrado y M3 autorizada como B2.",
+    "El plan no es válido antes de invocar cognición de investigación.",
+    "Una salida cognitiva no valida o intenta inventar metadata técnica.",
+    "La evidencia incumple el fail-closed de M2.",
+    "La implementación exige modificar B5-I3, crear una capability/agente o invocar IA real.",
+    "Aparece un cambio fuera de allowed_files o se modifica la skill protegida."
+  ],
+  "review_policy": {
+    "required_review": "OWNER_REVIEW",
+    "independent_review": "ON_FAILURE",
+    "owner_review": true
+  },
+  "owner_closure": {
+    "required": false
+  }
+}

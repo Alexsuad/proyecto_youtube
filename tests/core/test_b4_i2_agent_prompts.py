@@ -296,7 +296,9 @@ def test_editorial_quality_requirements_reach_effective_role_prompts(tmp_path):
     contracts = {
         "RESEARCH_AND_CURATION": (
             "actually supports the claim",
-            "demonstrated causality",
+            "association distinct from causality",
+            "evidence burden to the exact claim and its strength",
+            "claim categories are orientative, not a universal taxonomy",
         ),
         "NARRATIVE_ARCHITECTURE": (
             "rival explanations",
