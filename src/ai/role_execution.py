@@ -146,6 +146,7 @@ ROLE_ALLOWED_OUTPUT_SCHEMAS = {
         "work_research_dossier",
         "research_stop_decision",
         "thesis_artifact",
+        "refined_thesis",
         "research_comparison",
         "curation_decision",
         "claims_ledger",
@@ -215,6 +216,7 @@ def _validate_role_payload(
         "work_research_dossier",
         "research_stop_decision",
         "thesis_artifact",
+        "refined_thesis",
         "research_comparison",
     }:
         # Preserve the historical smoke/legacy route. B2 opts into the

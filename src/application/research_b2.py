@@ -899,6 +899,8 @@ class ResearchB2Orchestrator:
             raise ResearchB2Error("ResearchComparison debe ser un objeto")
         if value.get("narrative_decision_made") is not False:
             raise ResearchB2Error("La comparativa investigativa no puede decidir narrativa")
+        if value.get("decision_stage") != "INITIAL_RESEARCH_COMPARISON":
+            raise ResearchB2Error("B2 solo puede producir INITIAL_RESEARCH_COMPARISON")
         errors = validate_against_schema(value, "research_comparison")
         if errors:
             raise ResearchB2Error(" | ".join(errors))
