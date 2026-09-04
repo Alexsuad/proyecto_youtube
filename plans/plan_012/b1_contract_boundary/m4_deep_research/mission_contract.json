@@ -1,0 +1,207 @@
+{
+  "mission_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/b1_contract_boundary/m4_deep_research/",
+    "src/application/research_b2.py",
+    "src/application/research_b3.py",
+    "src/application/interaction.py",
+    "src/core/contract_validation.py",
+    "output/execution_provenance_registry.json",
+    "schemas/research_pack.json",
+    "schemas/work_research_dossier.json",
+    "schemas/research_comparison.json",
+    "tests/core/test_plan012_m4_b3_deep_research.py",
+    "tests/core/test_plan012_m3_b2_base_research.py",
+    "prompts/roles/RESEARCH_AND_CURATION/1.0.0.md",
+    ".agent/skills/skill_research_tema_y_obras.md"
+  ],
+  "protected_untracked_paths": [
+    ".agents/skills/tests-validacion-cierre/"
+  ],
+  "protected_untracked_baseline": [
+    {
+      "path": ".agents/skills/tests-validacion-cierre/SKILL.md",
+      "sha256": "41cee8fb79b1b00ebd72b65c7088960f8f4a6a1c241444c481750127aef04334"
+    }
+  ],
+  "required_tests": [
+    {
+      "label": "PLAN012_M4_B3_FOCALIZED",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_plan012_m4_b3_deep_research.py"],
+      "timeout_seconds": 300
+    },
+    {
+      "label": "PLAN012_M3_COMPATIBILITY",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_plan012_m3_b2_base_research.py"],
+      "timeout_seconds": 300
+    },
+    {
+      "label": "PLAN012_M2_COMPATIBILITY",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_plan012_m2_contracts.py"],
+      "timeout_seconds": 300
+    },
+    {
+      "label": "PLAN012_SCHEMA_COMPATIBILITY",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_all_schemas.py"],
+      "timeout_seconds": 300
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "5cdaed3dfbb9747a16112bff2de46e1a5f9425b9"
+  },
+  "contains_material_repair": true,
+  "repair_integrity_evidence_path": "plans/plan_012/b1_contract_boundary/m4_deep_research/repair_integrity_evidence.json",
+  "mission_authorization_path": "plans/plan_012/b1_contract_boundary/m4_deep_research/mission-authorization.json",
+  "mission_authorization_sha256": "52650d32e405a7f170d7ebd3290879e44e6dc863ba63e5c92f7815d888353c5f",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "plans/plan_012/b1_contract_boundary/m4_deep_research/mission_contract.json",
+      "PLAN_012_STATUS": "M4_READY_FOR_OWNER_REVIEW",
+      "PLAN_012_CURRENT_BLOCK": "B3",
+      "PLAN_012_CURRENT_MISSION": "M4",
+      "PLAN_012_B1_STATUS": "CLOSED",
+      "PLAN_012_B2_STATUS": "CLOSED",
+      "PLAN_012_B2_HANDOFF_STATUS": "MATERIAL_HANDOFF_DEFECT_DISCOVERED_IN_M4",
+      "PLAN_012_B2_HANDOFF_REPAIR_STATUS": "IMPLEMENTED_PENDING_REVIEW",
+      "PLAN_012_M3_STATUS": "CLOSED_OWNER_APPROVED",
+      "PLAN_012_M4_STATUS": "READY_FOR_OWNER_REVIEW",
+      "PLAN_012_M4_METHODOLOGICAL_REVIEW": "PENDING",
+      "PLAN_012_M5_STATUS": "NOT_AUTHORIZED",
+      "PLAN_012_IMPLEMENTATION_AUTHORIZED": "YES_M4_ONLY",
+      "REAL_AI_EXECUTION": "NO",
+      "AUTHORIZED_FOR_PRODUCT_USE": "NO",
+      "P2_REAL_EXECUTION_NOW": "NO"
+    },
+    "forbidden": {
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "AUTHORIZED_FOR_PRODUCT_USE": ["YES", "AUTHORIZED", "ACTIVE"],
+      "P2_REAL_EXECUTION_NOW": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "PLAN_012_M5_STATUS": ["AUTHORIZED", "EXECUTING", "READY_FOR_OWNER_REVIEW", "CLOSED"]
+    }
+  },
+  "schema_checks": [
+    {"path": "plans/plan_012/b1_contract_boundary/m4_deep_research/mission_contract.json", "schema": "mission_contract"},
+    {"path": "schemas/research_pack.json", "schema": "research_pack"},
+    {"path": "schemas/work_research_dossier.json", "schema": "work_research_dossier"},
+    {"path": "schemas/research_stop_decision.json", "schema": "research_stop_decision"},
+    {"path": "schemas/work_lifecycle.json", "schema": "work_lifecycle"},
+    {"path": "schemas/human_decision_request.json", "schema": "human_decision_request"},
+    {"path": "schemas/human_decision.json", "schema": "human_decision"},
+    {"path": "schemas/delegation_decision.json", "schema": "delegation_decision"}
+  ],
+  "objective": "Implementar la primera mitad de B3: selección humana o delegada para profundización, investigación profunda separada del fenómeno y de las obras seleccionadas, fidelidad profunda y ResearchStop por ámbito, sin IA real, investigación real, uso productivo ni trabajo de M5.",
+  "preconditions": [
+    "B1, B2, M1, M2 y M3 están cerrados y aprobados por el OWNER.",
+    "M4 está autorizada como implementación técnica; M5 permanece no autorizada.",
+    "La cognición se recibe por un callback inyectado y no se invoca ningún proveedor.",
+    "Los cambios locales preexistentes deben preservarse."
+  ],
+  "canonical_inputs": [
+    "AGENTS.md",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/012_IMPLEMENTACION_SISTEMA_INVESTIGACION.md",
+    "plans/plan_012/b1_contract_boundary/m1_inventory_design/M1_INVENTARIO_Y_DISENO_CONTRACTUAL.md",
+    "plans/plan_012/b1_contract_boundary/m2_contracts_boundary/mission_contract.json",
+    "plans/plan_012/b1_contract_boundary/m3_base_research/mission_contract.json",
+    "src/application/research_b2.py",
+    "src/application/interaction.py",
+    "schemas/work_research_dossier.json",
+    "schemas/research_stop_decision.json",
+    "schemas/human_decision.json",
+    "schemas/delegation_decision.json"
+    ,"schemas/thesis_artifact.json"
+    ,"schemas/research_comparison.json"
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_012/b1_contract_boundary/m4_deep_research/",
+    "src/application/research_b2.py",
+    "src/application/research_b3.py",
+    "src/core/contract_validation.py",
+    "output/execution_provenance_registry.json",
+    "schemas/research_pack.json",
+    "schemas/work_research_dossier.json",
+    "schemas/research_comparison.json",
+    "tests/core/test_plan012_m4_b3_deep_research.py",
+    "tests/core/test_plan012_m3_b2_base_research.py",
+    "prompts/roles/RESEARCH_AND_CURATION/1.0.0.md",
+    ".agent/skills/skill_research_tema_y_obras.md"
+  ],
+  "non_objectives": [
+    "Implementar M5: claims/evidence/rivales/gaps finales, reevaluación post-deep o tesis refinada.",
+    "Seleccionar obras para una función, orden o producto narrativo final.",
+    "Ejecutar IA real, investigación real, PRODUCT_USE o P2 real.",
+    "Crear capabilities, agentes permanentes, runtime paralelo o un segundo sistema de adquisición.",
+    "Modificar B5-I3, CLI, registries, schemas no relacionados o la skill protegida."
+  ],
+  "expected_outputs": [
+    "Handoff B2 materializado con targets de profundización derivados de los artefactos reales de B2.",
+    "Selección humana o delegada con alcance exacto y sin sustitución silenciosa.",
+    "Selección delegada con IDs seleccionados, justificación, criterios, evidencia y limitaciones preservados.",
+    "ResearchPack profundo del fenómeno y WorkResearchDossier profundo por obra seleccionada.",
+    "WorkResearchDossier V2 capaz de persistir contenido profundo sin depender de NarrativeHumanAnalysis legado.",
+    "Fidelidad profunda con restricciones downstream cuando corresponda.",
+    "ResearchStopDecision vinculado al fenómeno y a cada dossier real.",
+    "Persistencia atómica, lineage, adquisición y metadata técnica materializadas por Software.",
+    "Manifest de ejecución M4 sin outputs de M5, con resultados por scope y rutas focales de reapertura.",
+    "Selección delegada cognitiva, acotada por DelegationDecision y validada por Software.",
+    "Lifecycle con estados ortogonales de investigación profunda, tesis provisional y suficiencia real.",
+    "Tests focalizados de la frontera Software → IA → Software."
+  ],
+  "deterministic_validations": [
+    "Validar este MissionContract y los contratos existentes que consume M4.",
+    "Comprobar que la selección es una decisión explícita y que no sustituye obras manuales fuera del conjunto autorizado.",
+    "Comprobar que la profundización del fenómeno y de cada obra vuelve a Software para validación y persistencia.",
+    "Comprobar que la fidelidad profunda conserva riesgos preliminares y restricciones condicionales.",
+    "Exigir tesis provisional, ResearchComparison y targets B2 de profundización antes de iniciar M4.",
+    "Comprobar que cada ResearchStop apunta al subject real de esta ejecución y usa el intended use profundo correcto.",
+    "Comprobar que MORE_RESEARCH_REQUIRED y BLOCKED_BY_EVIDENCE abren una ruta focal y no se presentan como scope completo.",
+    "Comprobar que acquisition bindings, IDs, versiones, timestamps, checksums, lineage y provenance técnico no son autoridad de la cognición.",
+    "Comprobar que una representación nueva solo entra mediante binding de adquisición recuperada y controlada por Software.",
+    "Comprobar que la decisión de cantidad 3/4/5 y la selección delegada respetan el alcance materializado.",
+    "Comprobar que el handoff de targets de B2 procede de la salida real de B2 y no de datos fabricados por M4.",
+    "Comprobar que no se producen tesis refinadas, selección narrativa final ni trabajo de M5.",
+    "Ejecutar tests focalizados M4 y compatibilidad B2/M3."
+  ],
+  "adversarial_cases": [
+    "Cognición devuelve IDs o timestamps inventados.",
+    "Decisión humana intenta seleccionar una obra fuera del conjunto elegible.",
+    "Dossier intenta consultar una obra sin binding Software.",
+    "ResearchStop apunta a otro fenómeno u otra obra.",
+    "Fidelidad APROBADA_CON_LIMITES sin restricciones explícitas.",
+    "M4 se inicia sin tesis provisional, ResearchComparison o targets B2 materiales.",
+    "Selection policy DELEGATED_SELECTION se ejecuta como USER_SELECTION.",
+    "M4 se ejecuta sin el handoff de targets materializado por B2.",
+    "Target final confirmado en cuatro obras se resuelve seleccionando una sin decisión explícita nueva.",
+    "Target delegado de cuatro obras recibe una selección cognitiva de una sola obra.",
+    "Selección delegada devuelve automáticamente la primera opción o una obra fuera del scope.",
+    "Selección delegada omite justificación, criterios, evidencia o limitaciones.",
+    "ResearchStop B2 FORMULAR_TESIS_PROVISIONAL se reutiliza como suficiencia profunda.",
+    "Dossier profundo declara contenido o representación no vinculada por adquisición Software.",
+    "WorkLifecycle conserva estados de selección y base después de completar la fidelidad profunda."
+  ],
+  "stop_conditions": [
+    "El estado vivo no confirma M4 autorizada sobre B3 con M5 no autorizada.",
+    "La implementación exige IA real, investigación real, B5-I3, M5, una capability ficticia o un agente nuevo.",
+    "Una salida cognitiva obtiene autoridad sobre metadata técnica o evidencia no recuperada.",
+    "La evidencia no puede vincularse al fenómeno u obra real de esta ejecución.",
+    "Aparece un cambio fuera de allowed_files o se modifica la skill protegida."
+  ],
+  "review_policy": {
+    "required_review": "OWNER_REVIEW",
+    "independent_review": "ON_FAILURE",
+    "owner_review": true
+  },
+  "owner_closure": {
+    "required": false
+  }
+}

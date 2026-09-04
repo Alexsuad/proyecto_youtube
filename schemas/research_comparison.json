@@ -50,11 +50,40 @@
       "minItems": 1,
       "items": {"$ref": "#/definitions/comparisonEntry"}
     },
+    "deepening_targets": {"$ref": "#/definitions/deepeningTargets"},
     "decision_stage": {"const": "INITIAL_RESEARCH_COMPARISON"},
     "narrative_decision_made": {"const": false},
     "created_at": {"type": "string", "format": "date-time"}
   },
   "definitions": {
+    "deepeningTargetSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targets"],
+      "properties": {
+        "targets": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "material_claims": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "gaps": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "rivals": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "contradictions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "risks": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "limitations": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "intended_use": {"type": "string", "minLength": 1}
+      }
+    },
+    "deepeningTargets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phenomenon", "works"],
+      "properties": {
+        "phenomenon": {"$ref": "#/definitions/deepeningTargetSet"},
+        "works": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"$ref": "#/definitions/deepeningTargetSet"}
+        }
+      }
+    },
     "comparisonEntry": {
       "type": "object",
       "additionalProperties": false,

@@ -197,6 +197,21 @@
         "type": "string",
         "minLength": 1
       }
+    },
+    "evidence_type_separation": {
+      "$ref": "#/definitions/v2EvidenceTypeSeparation"
+    },
+    "acquisition_bindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/v2AcquisitionBinding"
+      }
+    },
+    "deep_research": {
+      "$ref": "#/definitions/deepResearch"
+    },
+    "provisional_thesis_relation": {
+      "$ref": "#/definitions/provisionalThesisRelation"
     }
   },
   "allOf": [
@@ -586,6 +601,65 @@
         }
       }
     },
+    "deepResearch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "facts",
+        "actions",
+        "decisions",
+        "consequences",
+        "interpretations",
+        "rival_readings",
+        "contradictions",
+        "limits",
+        "risks",
+        "pending_questions",
+        "work_evidence_refs",
+        "external_reality_evidence_refs"
+      ],
+      "properties": {
+        "facts": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "actions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "decisions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "consequences": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "interpretations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "rival_readings": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "contradictions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "limits": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "risks": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "pending_questions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "work_evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "external_reality_evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "category_status": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "facts": {"$ref": "#/definitions/deepResearchCategoryStatus"},
+            "actions": {"$ref": "#/definitions/deepResearchCategoryStatus"},
+            "decisions": {"$ref": "#/definitions/deepResearchCategoryStatus"},
+            "consequences": {"$ref": "#/definitions/deepResearchCategoryStatus"},
+            "interpretations": {"$ref": "#/definitions/deepResearchCategoryStatus"}
+          }
+        }
+      }
+    },
+    "deepResearchCategoryStatus": {
+      "type": "string",
+      "enum": ["MATERIAL", "NOT_MATERIAL", "NOT_APPLICABLE", "NOT_AVAILABLE", "UNRESOLVED"]
+    },
+    "provisionalThesisRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["thesis_ref", "supports", "qualifies", "does_not_establish", "refutation_signals"],
+      "properties": {
+        "thesis_ref": {"type": "string", "minLength": 1},
+        "supports": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "qualifies": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "does_not_establish": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "refutation_signals": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
     "v2AcquisitionBinding": {
       "type": "object",
       "additionalProperties": false,
@@ -638,6 +712,18 @@
         },
         "software_controlled": {
           "type": "boolean"
+        },
+        "representation_kind": {
+          "type": "string",
+          "enum": ["ORIGINAL_WORK", "ADAPTATION"]
+        },
+        "edition_or_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "consulted_locator": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }

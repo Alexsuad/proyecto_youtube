@@ -1,6 +1,279 @@
 {
   "registry_version": "1.0.0",
-  "runs": [],
+  "runs": [
+    {
+      "run_id": "RUN-PLAN012-M4-REPAIR-20260904",
+      "episode_id": "PLAN012-M4-REPAIR",
+      "role": "ORCHESTRATION",
+      "skill_id": "technical_governance_repair",
+      "skill_version": "1.0.0",
+      "provider_or_adapter": "technical_repair",
+      "provider_kind": "SYNTHETIC",
+      "model_or_evaluator": "deterministic",
+      "input_manifest_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "outputs": [
+        {
+          "artifact_kind": "execution_smoke_report",
+          "artifact_id": "PLAN012-M4-REPAIR-ACTIONS",
+          "artifact_path": "plans/plan_012/b1_contract_boundary/m4_deep_research/repair_actions.json",
+          "artifact_ref": "PLAN012-M4:REPAIR_ACTIONS",
+          "checksum": "9645d2f84aea66f8202ebc18607e52c776cf842298bff914aa59918e848456e7"
+        }
+      ],
+      "started_at": "2026-09-04T03:00:00Z",
+      "completed_at": "2026-09-04T03:01:00Z",
+      "status": "SUCCEEDED",
+      "execution_mode": "SYNTHETIC",
+      "prompt_id": "NO_COGNITIVE_PROMPT",
+      "prompt_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "input_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "output_checksum": "9645d2f84aea66f8202ebc18607e52c776cf842298bff914aa59918e848456e7",
+      "validation_result": "PASS",
+      "modification_manifest_source": "RUNTIME_PRE_POST_DIFF",
+      "modified_artifact_ids": [
+        "PLAN012-M4-REPAIR-ACTIONS"
+      ],
+      "modified_artifact_paths": [
+        "output/execution_provenance_registry.json",
+        "plans/001_CONTROL_OPERATIVO.md",
+        "plans/plan_012/b1_contract_boundary/m4_deep_research/authority.json",
+        "plans/plan_012/b1_contract_boundary/m4_deep_research/independent_review.json",
+        "plans/plan_012/b1_contract_boundary/m4_deep_research/mission-authorization.json",
+        "plans/plan_012/b1_contract_boundary/m4_deep_research/mission_contract.json",
+        "plans/plan_012/b1_contract_boundary/m4_deep_research/repair_actions.json",
+        "schemas/research_pack.json",
+        "schemas/work_research_dossier.json",
+        "src/application/research_b2.py",
+        "src/application/research_b3.py",
+        "src/core/contract_validation.py",
+        "tests/core/test_plan012_m4_b3_deep_research.py"
+      ],
+      "functional_identity": {
+        "mission_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+        "capability_id": "TECHNICAL_GOVERNANCE",
+        "role_id": "ORCHESTRATION",
+        "execution_profile_id": "ANY"
+      },
+      "reproducibility": {
+        "mission_contract_sha256": "8de65e6a52421ee7b53c45927de85d994186aac39fa422d64564d731408c1370",
+        "prompt_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "input_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "output_sha256": "9645d2f84aea66f8202ebc18607e52c776cf842298bff914aa59918e848456e7"
+      },
+      "operational_telemetry": {
+        "provider": "technical_repair",
+        "model": "deterministic"
+      },
+      "mission_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+      "capability_id": "TECHNICAL_GOVERNANCE",
+      "execution_profile_id": "ANY",
+      "mission_contract_sha256": "8de65e6a52421ee7b53c45927de85d994186aac39fa422d64564d731408c1370",
+      "output_sha256": "9645d2f84aea66f8202ebc18607e52c776cf842298bff914aa59918e848456e7",
+      "agent_id": "ORCHESTRATION",
+      "role_id": "ORCHESTRATION",
+      "execution_route": "synthetic",
+      "execution_profile": "ANY",
+      "actual_executor": "codex_m4_material_repair",
+      "actual_provider": "technical_repair",
+      "actual_model": "deterministic",
+      "provider": "technical_repair",
+      "model": "deterministic",
+      "prompt_version": "NO_COGNITIVE_PROMPT",
+      "input_artifact_ids": [],
+      "input_versions": [],
+      "input_checksums": [],
+      "output_artifact_ids": [
+        "PLAN012-M4:REPAIR_ACTIONS"
+      ],
+      "output_versions": [
+        "RUN-PLAN012-M4-REPAIR-20260904"
+      ],
+      "output_checksums": [
+        "9645d2f84aea66f8202ebc18607e52c776cf842298bff914aa59918e848456e7"
+      ],
+      "finished_at": "2026-09-04T03:01:00Z",
+      "latency": 60.0,
+      "input_tokens": "UNAVAILABLE_FROM_PROVIDER",
+      "output_tokens": "UNAVAILABLE_FROM_PROVIDER",
+      "estimated_cost": "UNAVAILABLE_FROM_PROVIDER",
+      "retry_count": 0,
+      "decision": "SUCCEEDED",
+      "error_type": "NONE",
+      "blocking_reason": null,
+      "handoff_target": "TECHNICAL_GOVERNANCE"
+    },
+    {
+      "run_id": "RUN-PLAN012-M4-REVIEW-20260904",
+      "episode_id": "PLAN012-M4-REVIEW",
+      "role": "ORCHESTRATION",
+      "skill_id": "repair_integrity_gate",
+      "skill_version": "1.0.0",
+      "provider_or_adapter": "repair_integrity_gate",
+      "provider_kind": "SYNTHETIC",
+      "model_or_evaluator": "deterministic",
+      "input_manifest_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "outputs": [
+        {
+          "artifact_kind": "execution_smoke_report",
+          "artifact_id": "PLAN012-M4-INDEPENDENT-REVIEW",
+          "artifact_path": "plans/plan_012/b1_contract_boundary/m4_deep_research/independent_review.json",
+          "artifact_ref": "PLAN012-M4:INDEPENDENT_REVIEW",
+          "checksum": "b2b24c31bc4aa0577d990bd40b7308e412cae9bd5cb17e1de0c63d42e802366f"
+        }
+      ],
+      "started_at": "2026-09-04T03:02:00Z",
+      "completed_at": "2026-09-04T03:03:00Z",
+      "status": "SUCCEEDED",
+      "execution_mode": "SYNTHETIC",
+      "prompt_id": "NO_COGNITIVE_REVIEW",
+      "prompt_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "input_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "output_checksum": "b2b24c31bc4aa0577d990bd40b7308e412cae9bd5cb17e1de0c63d42e802366f",
+      "validation_result": "PASS",
+      "modification_manifest_source": "RUNTIME_PRE_POST_DIFF",
+      "modified_artifact_ids": [],
+      "modified_artifact_paths": [],
+      "functional_identity": {
+        "mission_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+        "capability_id": "TECHNICAL_GOVERNANCE",
+        "role_id": "ORCHESTRATION",
+        "execution_profile_id": "ANY"
+      },
+      "reproducibility": {
+        "mission_contract_sha256": "8de65e6a52421ee7b53c45927de85d994186aac39fa422d64564d731408c1370",
+        "prompt_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "input_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "output_sha256": "b2b24c31bc4aa0577d990bd40b7308e412cae9bd5cb17e1de0c63d42e802366f"
+      },
+      "operational_telemetry": {
+        "provider": "repair_integrity_gate",
+        "model": "deterministic"
+      },
+      "mission_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+      "capability_id": "TECHNICAL_GOVERNANCE",
+      "execution_profile_id": "ANY",
+      "mission_contract_sha256": "8de65e6a52421ee7b53c45927de85d994186aac39fa422d64564d731408c1370",
+      "output_sha256": "b2b24c31bc4aa0577d990bd40b7308e412cae9bd5cb17e1de0c63d42e802366f",
+      "agent_id": "ORCHESTRATION",
+      "role_id": "ORCHESTRATION",
+      "execution_route": "synthetic",
+      "execution_profile": "ANY",
+      "actual_executor": "repair_integrity_gate_process",
+      "actual_provider": "repair_integrity_gate",
+      "actual_model": "deterministic",
+      "provider": "repair_integrity_gate",
+      "model": "deterministic",
+      "prompt_version": "NO_COGNITIVE_REVIEW",
+      "input_artifact_ids": [],
+      "input_versions": [],
+      "input_checksums": [],
+      "output_artifact_ids": [
+        "PLAN012-M4:INDEPENDENT_REVIEW"
+      ],
+      "output_versions": [
+        "RUN-PLAN012-M4-REVIEW-20260904"
+      ],
+      "output_checksums": [
+        "b2b24c31bc4aa0577d990bd40b7308e412cae9bd5cb17e1de0c63d42e802366f"
+      ],
+      "finished_at": "2026-09-04T03:03:00Z",
+      "latency": 60.0,
+      "input_tokens": "UNAVAILABLE_FROM_PROVIDER",
+      "output_tokens": "UNAVAILABLE_FROM_PROVIDER",
+      "estimated_cost": "UNAVAILABLE_FROM_PROVIDER",
+      "retry_count": 0,
+      "decision": "SUCCEEDED",
+      "error_type": "NONE",
+      "blocking_reason": null,
+      "handoff_target": "TECHNICAL_GOVERNANCE"
+    },
+    {
+      "run_id": "RUN-PLAN012-M4-REVIEW-2-20260904",
+      "episode_id": "PLAN012-M4-REVIEW",
+      "role": "ORCHESTRATION",
+      "skill_id": "repair_integrity_gate",
+      "skill_version": "1.0.0",
+      "provider_or_adapter": "repair_integrity_gate",
+      "provider_kind": "SYNTHETIC",
+      "model_or_evaluator": "deterministic",
+      "input_manifest_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "outputs": [
+        {
+          "artifact_kind": "execution_smoke_report",
+          "artifact_id": "PLAN012-M4-INDEPENDENT-REVIEW-2",
+          "artifact_path": "plans/plan_012/b1_contract_boundary/m4_deep_research/independent_review_run_output.json",
+          "artifact_ref": "PLAN012-M4:INDEPENDENT_REVIEW_RUN_OUTPUT",
+          "checksum": "34a1c160261559c96b01787f201a6ec2a0f6bd1c43711c903a740d7e5718c3af"
+        }
+      ],
+      "started_at": "2026-09-04T03:05:00Z",
+      "completed_at": "2026-09-04T03:06:00Z",
+      "status": "SUCCEEDED",
+      "execution_mode": "SYNTHETIC",
+      "prompt_id": "NO_COGNITIVE_REVIEW",
+      "prompt_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "input_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+      "output_checksum": "34a1c160261559c96b01787f201a6ec2a0f6bd1c43711c903a740d7e5718c3af",
+      "validation_result": "PASS",
+      "modification_manifest_source": "RUNTIME_PRE_POST_DIFF",
+      "modified_artifact_ids": [],
+      "modified_artifact_paths": [],
+      "functional_identity": {
+        "mission_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+        "capability_id": "TECHNICAL_GOVERNANCE",
+        "role_id": "ORCHESTRATION",
+        "execution_profile_id": "ANY"
+      },
+      "reproducibility": {
+        "mission_contract_sha256": "8de65e6a52421ee7b53c45927de85d994186aac39fa422d64564d731408c1370",
+        "prompt_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "input_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "output_sha256": "34a1c160261559c96b01787f201a6ec2a0f6bd1c43711c903a740d7e5718c3af"
+      },
+      "operational_telemetry": {
+        "provider": "repair_integrity_gate",
+        "model": "deterministic"
+      },
+      "mission_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+      "capability_id": "TECHNICAL_GOVERNANCE",
+      "execution_profile_id": "ANY",
+      "mission_contract_sha256": "8de65e6a52421ee7b53c45927de85d994186aac39fa422d64564d731408c1370",
+      "output_sha256": "34a1c160261559c96b01787f201a6ec2a0f6bd1c43711c903a740d7e5718c3af",
+      "agent_id": "ORCHESTRATION",
+      "role_id": "ORCHESTRATION",
+      "execution_route": "synthetic",
+      "execution_profile": "ANY",
+      "actual_executor": "repair_integrity_gate_process",
+      "actual_provider": "repair_integrity_gate",
+      "actual_model": "deterministic",
+      "provider": "repair_integrity_gate",
+      "model": "deterministic",
+      "prompt_version": "NO_COGNITIVE_REVIEW",
+      "input_artifact_ids": [],
+      "input_versions": [],
+      "input_checksums": [],
+      "output_artifact_ids": [
+        "PLAN012-M4:INDEPENDENT_REVIEW_RUN_OUTPUT"
+      ],
+      "output_versions": [
+        "RUN-PLAN012-M4-REVIEW-2-20260904"
+      ],
+      "output_checksums": [
+        "34a1c160261559c96b01787f201a6ec2a0f6bd1c43711c903a740d7e5718c3af"
+      ],
+      "finished_at": "2026-09-04T03:06:00Z",
+      "latency": 60.0,
+      "input_tokens": "UNAVAILABLE_FROM_PROVIDER",
+      "output_tokens": "UNAVAILABLE_FROM_PROVIDER",
+      "estimated_cost": "UNAVAILABLE_FROM_PROVIDER",
+      "retry_count": 0,
+      "decision": "SUCCEEDED",
+      "error_type": "NONE",
+      "blocking_reason": null,
+      "handoff_target": "TECHNICAL_GOVERNANCE"
+    }
+  ],
+  "dependencies": {},
   "handoffs": [],
   "attempts": [
     {

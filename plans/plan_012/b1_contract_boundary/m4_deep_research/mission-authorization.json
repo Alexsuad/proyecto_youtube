@@ -1,0 +1,35 @@
+{
+  "mission_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "f5888e70c538218de75258e31148bdd245e9ca5569148c8dd711fc153b3352f9",
+    "capability_ids": ["TECHNICAL_GOVERNANCE"],
+    "role_ids": ["ORCHESTRATION"],
+    "execution_profile_ids": ["ANY"],
+    "execution_interface": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+    "allowed_operations": ["COMPLETE_MISSION"],
+    "allowed_paths": [
+      "plans/001_CONTROL_OPERATIVO.md",
+      "plans/plan_012/b1_contract_boundary/m4_deep_research/",
+      "src/application/research_b2.py",
+      "src/application/research_b3.py",
+      "src/application/interaction.py",
+      "src/core/contract_validation.py",
+      "output/execution_provenance_registry.json",
+      "schemas/research_pack.json",
+      "schemas/work_research_dossier.json",
+      "schemas/research_comparison.json",
+      "tests/core/test_plan012_m3_b2_base_research.py",
+      "tests/core/test_plan012_m4_b3_deep_research.py"
+    ],
+    "allowed_routes": ["synthetic"],
+    "execution_mode": "SYNTHETIC_TEST",
+    "single_use": false,
+    "authority_ref": "plans/plan_012/b1_contract_boundary/m4_deep_research/authority.json",
+    "authority_sha256": "9e47e12a60b963958c6ec485185d0813247b2d309178d20910c99ec4d1f5b39c",
+    "authorized_scope_sha256": "282faa6fd36fc59e0066743263ee9b16cd3279e9b0fd390c64c7ac92e808aca8",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": true,
+    "repair_integrity_evidence_path": "plans/plan_012/b1_contract_boundary/m4_deep_research/repair_integrity_evidence.json"
+  }
+}

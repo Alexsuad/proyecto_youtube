@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0.0",
+  "repair_id": "PLAN012-M4-MATERIAL-REPAIR-20260904",
+  "finding_id": "M4-TARGET-COUNT-EVIDENCE-REFS-AUTHORITY",
+  "mission_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+  "mission_contract_sha256": "8de65e6a52421ee7b53c45927de85d994186aac39fa422d64564d731408c1370",
+  "contains_material_repair": true,
+  "capability_id": "TECHNICAL_GOVERNANCE",
+  "domain": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+  "symptom": "La selección podía aceptar una cantidad no autorizada y la cognición podía hacer pasar identificadores técnicos como referencias de evidencia; la autorización de reparación apuntaba a autoridades B5-I2 ajenas.",
+  "root_cause": "La validación de selección y evidencia no separaba suficientemente la decisión material de cantidad ni la semántica de evidencia de los identificadores técnicos, y el bundle conservaba una autoridad histórica incorrecta.",
+  "root_cause_class": "L4_EVIDENCE",
+  "origin_artifact": {
+    "ref_id": "origin-research-b3",
+    "artifact_path": "src/application/research_b3.py",
+    "artifact_type": "PYTHON",
+    "artifact_version": "UNDECLARED",
+    "artifact_sha256": "8b15f9260c07f8f894b46f6f85026ae1be2b8966848f4625c21de861ac415bd9",
+    "required": true
+  },
+  "affected_artifacts": [
+    "src/application/research_b3.py",
+    "src/application/research_b2.py",
+    "schemas/research_comparison.json",
+    "tests/core/test_plan012_m3_b2_base_research.py",
+    "tests/core/test_plan012_m4_b3_deep_research.py",
+    "plans/plan_012/b1_contract_boundary/m4_deep_research/mission-authorization.json",
+    "plans/plan_012/b1_contract_boundary/m4_deep_research/mission_contract.json",
+    "output/execution_provenance_registry.json"
+  ],
+  "repair_depth": "L4_EVIDENCE",
+  "repair_actions": [
+    "Se restringió target_final_works a una decisión material autorizada de 3, 4 o 5 obras y se bloquearon estados no resueltos.",
+    "Se sustituyó la recolección genérica de referencias por campos de evidencia y bindings de adquisición Software válidos.",
+    "Se actualizó la autorización M4 a TECHNICAL_GOVERNANCE / ORCHESTRATION, conservando el scope PLAN012_M4_B3_SELECTION_DEEP_RESEARCH.",
+    "Se registró una ejecución de reparación y una revisión determinista independiente con identidades distintas.",
+    "Se reconcilió el scope del handoff B2 para permitir únicamente targets Research de candidatas elegibles."
+  ],
+  "downstream_impact": {
+    "affected_artifacts": [],
+    "no_impact_justification": "La reparación endurece validaciones de entrada y provenance de M4; no cambia la semántica cerrada de B5-I3 ni produce artefactos de producto."
+  },
+  "downstream_invalidations": [],
+  "downstream_revalidations": [],
+  "detector_impact": "YES",
+  "detector_change_required": "YES",
+  "detector_changes": [
+    {
+      "path": "src/application/research_b3.py",
+      "change": "La validación determinista ahora rechaza cantidades no autorizadas y referencias técnicas usadas como evidencia."
+    }
+  ],
+  "sensitive_detector_changes": {
+    "changed": false,
+    "justification": "Los detectores existentes se conservaron; la corrección se realizó en la validación material de M4.",
+    "before_behavior": "La validación permitía resolver referencias desde identificadores técnicos o cantidades no autorizadas.",
+    "after_behavior": "La validación exige cantidad autorizada y referencias de evidencia materializadas.",
+    "reason_change_is_valid": "Es una reparación contra requisitos M4 ya aprobados, no un cambio de política.",
+    "regression_evidence_ref": []
+  },
+  "regression_evidence": {
+    "defect_no_longer_occurs": true,
+    "neighboring_valid_behavior": true,
+    "evidence_refs": [
+      {
+        "ref_id": "evidence-independent-review",
+        "artifact_path": "plans/plan_012/b1_contract_boundary/m4_deep_research/independent_review.json",
+        "artifact_type": "INDEPENDENT_REVIEW",
+        "artifact_version": "1.0.0",
+        "artifact_sha256": "b2b24c31bc4aa0577d990bd40b7308e412cae9bd5cb17e1de0c63d42e802366f",
+        "canonical_sha256": "aebacac0df660fcab44c1f97e7cd6738ff8a57e90d44f287474d0f00cb46f014",
+        "result": "PASS",
+        "required": true
+      }
+    ]
+  },
+  "compensating_changes": [],
+  "governance_change_requested": false,
+  "governance_resolution": null,
+  "provenance": {
+    "registry_path": "output/execution_provenance_registry.json",
+    "registry_sha256": "9c1e95dd220162a216e9ad1680bcb243f074c8775dd4879a1bd231ddc8bc2726",
+    "repair_run_id": "RUN-PLAN012-M4-REPAIR-20260904",
+    "review_run_id": "RUN-PLAN012-M4-REVIEW-2-20260904"
+  },
+  "executor_id": "codex_m4_material_repair",
+  "reviewer_id": "repair_integrity_gate_process",
+  "review_status": "APPROVED",
+  "review_evidence": {
+    "reviewer_id": "repair_integrity_gate_process",
+    "decision": "APPROVED",
+    "evidence_refs": [
+      {
+        "ref_id": "review-report",
+        "artifact_path": "plans/plan_012/b1_contract_boundary/m4_deep_research/independent_review.json",
+        "artifact_type": "INDEPENDENT_REVIEW",
+        "artifact_version": "1.0.0",
+        "artifact_sha256": "b2b24c31bc4aa0577d990bd40b7308e412cae9bd5cb17e1de0c63d42e802366f",
+        "canonical_sha256": "aebacac0df660fcab44c1f97e7cd6738ff8a57e90d44f287474d0f00cb46f014",
+        "result": "APPROVED",
+        "required": true
+      }
+    ],
+    "protected_artifact_refs": [
+      {
+        "ref_id": "origin-research-b3",
+        "artifact_path": "src/application/research_b3.py",
+        "artifact_type": "PYTHON",
+        "artifact_version": "UNDECLARED",
+        "artifact_sha256": "8b15f9260c07f8f894b46f6f85026ae1be2b8966848f4625c21de861ac415bd9",
+        "required": true
+      }
+    ],
+    "reviewer_modified_under_review": false
+  },
+  "created_at": "2026-09-04T03:04:00Z",
+  "evidence_sha256": "233b68c74fa46cfdeaca935a3596087e630199c7156aae9738ee4739361eb69b"
+}

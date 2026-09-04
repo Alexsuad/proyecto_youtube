@@ -106,6 +106,51 @@ ruta legacy o en una adaptación explícita.
 - targets de profundización para B3: claims externos materiales, obras que
   requieren profundización y gaps, rivales o contradicciones pendientes.
 
+## Modo B3 Research V2 — M4
+Cuando el flujo indique M4, trabajar únicamente sobre la selección humana o
+delegada materializada por Software. La selección delimita qué se profundiza;
+no es una selección narrativa final. La profundidad depende de la materialidad,
+la fuerza del claim, el riesgo, el uso previsto y la suficiencia, no de una
+cuota fija. Empezar siempre desde la tesis provisional y los targets
+estructurados de profundización producidos en B2.
+
+Separar la investigación profunda del fenómeno de la investigación profunda de
+cada obra. Para el fenómeno revisar mecanismos, estudios originales, datos,
+límites causales y de generalización, contexto, rivales y señales de refutación.
+Para cada obra revisar la obra y edición exactas y revisar escenas o pasajes,
+acciones, decisiones, consecuencias, motivos explícitos frente a inferidos,
+guion o transcripción, fuentes oficiales, crítica especializada, lecturas
+rivales, contradicciones y límites de fidelidad solo cuando sean materiales
+para el claim, la tesis provisional, la fidelidad o el uso previsto. Una
+categoría puede ser no material, no aplicable, no disponible o no resuelta;
+no inventar contenido para rellenarla. Devolver `ResearchPack`,
+`WorkResearchDossier`, `ResearchStopDecision` y fidelidad profunda con sus
+límites y restricciones downstream.
+
+La decisión de suficiencia debe apuntar al fenómeno o dossier real que se acaba
+de investigar y usar el intended use profundo correspondiente. Mantener
+separadas la evidencia de la obra y la evidencia de la realidad externa, y
+conservar las dudas, contradicciones, limitaciones de acceso y preguntas que
+requieran más investigación. `MORE_RESEARCH_REQUIRED` y
+`BLOCKED_BY_EVIDENCE` abren una ruta focal de retorno; no equivalen a alcance
+completo ni se resuelven contando iteraciones. No inventar localizadores,
+identidades, versiones, recuperaciones, checksums ni provenance técnico.
+
+M4 no produce la reevaluación del conjunto, el paquete final de claims,
+evidence, rivales y gaps, la tesis refinada ni decisiones de función u orden
+narrativo; esas tareas pertenecen a M5 o a Narrative.
+
+En `DELEGATED_SELECTION`, evaluar el conjunto completo como una optimización
+del conjunto, nunca como un ranking individual. Considerar de forma adaptativa
+el encaje con el fenómeno real, la calidad de la evidencia, la fidelidad, el
+aporte diferencial, la cobertura de dimensiones, la complementariedad, la
+diversidad útil, la redundancia, el riesgo de sobreinterpretación y las
+limitaciones materiales. No convertir estos factores en puntuación numérica,
+fórmula ni checklist rígido de cumplimiento total. Devolver
+`selected_work_ids`, la justificación del conjunto, `criteria_used`, evidencia
+y limitaciones; Software valida estructura, alcance, cantidad y referencias,
+no la calidad de la optimización.
+
 ## Regla
 La suficiencia depende del uso previsto, el claim, la fuerza del claim, la calidad,
 la independencia, los límites y las explicaciones rivales; no de un número fijo de

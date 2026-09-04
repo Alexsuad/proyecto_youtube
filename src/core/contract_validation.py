@@ -814,6 +814,7 @@ def _validate_v2_state_and_evidence(
     data: Dict[str, Any],
     context: str,
     source_records: Optional[List[Dict[str, Any]]] = None,
+    known_evidence_refs: Optional[set[str]] = None,
 ) -> List[str]:
     """Validate the V2 boundary without turning orthogonal states into a lifecycle."""
     violations: List[str] = []
@@ -829,6 +830,22 @@ def _validate_v2_state_and_evidence(
         overlap = set(separation.get("work_evidence_refs", [])) & set(separation.get("external_reality_evidence_refs", []))
         if overlap:
             violations.append(f"{context} mezcla WORK_EVIDENCE y EXTERNAL_REALITY_EVIDENCE: {', '.join(sorted(overlap))}.")
+        if known_evidence_refs is not None:
+            separated_refs = set(separation.get("work_evidence_refs", [])) | set(
+                separation.get("external_reality_evidence_refs", [])
+            )
+            unresolved = sorted(separated_refs - known_evidence_refs)
+            if unresolved:
+                violations.append(
+                    f"{context}.evidence_type_separation referencia evidencia inexistente: {', '.join(unresolved)}."
+                )
+    if known_evidence_refs is not None and isinstance(data.get("deep_research"), dict):
+        deep_refs = set(data["deep_research"].get("work_evidence_refs", [])) | set(
+            data["deep_research"].get("external_reality_evidence_refs", [])
+        )
+        unresolved = sorted(deep_refs - known_evidence_refs)
+        if unresolved:
+            violations.append(f"{context}.deep_research referencia evidencia inexistente: {', '.join(unresolved)}.")
     bindings = data.get("acquisition_bindings", [])
     bindings_by_source: Dict[str, List[Dict[str, Any]]] = {}
     for binding in bindings:
@@ -1536,9 +1553,21 @@ def validate_work_research_dossier(
     data: Dict[str, Any],
     claims_ledger: Optional[Dict[str, Any]] = None,
     narrative_analyses: Optional[List[Dict[str, Any]]] = None,
+    known_evidence_refs: Optional[set[str]] = None,
 ) -> List[str]:
     """Valida el dossier por madurez y resuelve referencias contra artefactos canonicos."""
     violations = validate_against_schema(data, "work_research_dossier")
+    if data.get("research_contract_version") == "2.0.0":
+        violations.extend(_validate_v2_state_and_evidence(data, "WorkResearchDossier", known_evidence_refs=known_evidence_refs))
+        if data.get("research_stage") in {"DEEP_RESEARCH", "DEEP_FIDELITY"}:
+            if not isinstance(data.get("deep_research"), dict):
+                violations.append("WorkResearchDossier deep V2 requiere deep_research estructurado.")
+            else:
+                violations.extend(_validate_adaptive_deep_research(data["deep_research"]))
+            if not isinstance(data.get("provisional_thesis_relation"), dict):
+                violations.append("WorkResearchDossier deep V2 requiere provisional_thesis_relation.")
+            if not isinstance(data.get("evidence_type_separation"), dict):
+                violations.append("WorkResearchDossier deep V2 requiere separación de evidencia.")
     stage = data.get("dossier_stage")
     mature_fields = {
         "analysis_references", "question_and_thesis_relation", "claim_dispositions",
@@ -1550,6 +1579,11 @@ def validate_work_research_dossier(
             violations.append(f"WorkResearchDossier IDENTIFIED no puede declarar artefacto maduro: '{field}'.")
         return violations
     mature_declared = bool(mature_fields.intersection(data))
+    if data.get("research_contract_version") == "2.0.0" and data.get("research_stage") in {"DEEP_RESEARCH", "DEEP_FIDELITY"}:
+        # Deep Research V2 carries its own structured research material.  The
+        # legacy NarrativeHumanAnalysis/ClaimsLedger chain remains available
+        # for historical dossiers, but is not a prerequisite for deep V2.
+        return violations
     if claims_ledger is None or narrative_analyses is None:
         if stage == "RESEARCH_REVIEW_PENDING" or (stage == "RESEARCH_IN_PROGRESS" and mature_declared):
             violations.append("WorkResearchDossier requiere artefactos canonicos para resolver referencias en la fase declarada.")
@@ -1644,6 +1678,25 @@ def validate_work_research_dossier(
         if claim_id not in known_claim_ids:
             violations.append(f"WorkResearchDossier referencia claim inexistente en ledger: '{claim_id}'.")
 
+    return violations
+
+
+def _validate_adaptive_deep_research(deep_research: Dict[str, Any]) -> List[str]:
+    """Require an explicit reason when a materiality-sensitive category is empty."""
+    violations: List[str] = []
+    categories = ("facts", "actions", "decisions", "consequences", "interpretations")
+    statuses = {"NOT_MATERIAL", "NOT_APPLICABLE", "NOT_AVAILABLE", "UNRESOLVED"}
+    category_status = deep_research.get("category_status")
+    for category in categories:
+        values = deep_research.get(category)
+        if isinstance(values, list) and values:
+            continue
+        status = category_status.get(category) if isinstance(category_status, dict) else None
+        if status not in statuses:
+            violations.append(
+                f"WorkResearchDossier deep V2 debe justificar la categoría vacía '{category}' "
+                "como no material, no aplicable, no disponible o no resuelta."
+            )
     return violations
 
 

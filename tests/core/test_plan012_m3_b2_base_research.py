@@ -120,7 +120,7 @@ def _work_binding(work_id: str) -> dict:
     }
 
 
-def _comparison(work_ids: list[str]) -> dict:
+def _comparison(work_ids: list[str], deepening_targets=None) -> dict:
     return {
         "comparison_id": "COMP-B2-1",
         "comparison_version": "2.0.0",
@@ -145,7 +145,57 @@ def _comparison(work_ids: list[str]) -> dict:
         "decision_stage": "INITIAL_RESEARCH_COMPARISON",
         "narrative_decision_made": False,
         "created_at": "2026-09-03T00:00:00+00:00",
+        "deepening_targets": deepening_targets or {
+            "phenomenon": {"targets": ["DEEPEN_MATERIAL_CLAIM_FROM_RESEARCH"]},
+            "works": {
+                work_id: {"targets": [f"DEEPEN_{work_id}_MATERIAL_CLAIM_FROM_RESEARCH"]}
+                for work_id in work_ids
+            },
+        },
     }
+
+
+def test_b2_deepening_targets_are_research_owned(tmp_path):
+    comparison = _comparison(
+        ["W1"],
+        deepening_targets={
+            "phenomenon": {"targets": ["REFUTE_PROVISIONAL_THESIS_POINT"]},
+            "works": {"W1": {"targets": ["CHECK_WORK_SPECIFIC_COUNTEREVIDENCE"]}},
+        },
+    )
+
+    result, _ = _run(tmp_path, comparison=comparison)
+
+    assert result["deepening_targets"]["phenomenon"]["targets"] == ["REFUTE_PROVISIONAL_THESIS_POINT"]
+    assert result["deepening_targets"]["works"]["W1"]["targets"] == ["CHECK_WORK_SPECIFIC_COUNTEREVIDENCE"]
+    assert "DEEPEN_WORK_EVIDENCE" not in result["deepening_targets"]["works"]["W1"]["targets"]
+
+
+def test_b2_rejects_comparison_without_cognitive_deepening_targets(tmp_path):
+    comparison = _comparison(["W1"])
+    comparison.pop("deepening_targets")
+
+    with pytest.raises(ResearchB2Error, match="targets de profundización cognitivos"):
+        _run(tmp_path, comparison=comparison)
+
+
+def test_b2_accepts_targets_only_for_eligible_researched_works(tmp_path):
+    comparison = _comparison(
+        ["W1"],
+        deepening_targets={
+            "phenomenon": {"targets": ["DEEPEN_PHENOMENON_CLAIM"]},
+            "works": {"W1": {"targets": ["DEEPEN_W1_CLAIM"]}},
+        },
+    )
+
+    result, _ = _run(
+        tmp_path,
+        work_ids=("W1", "W2"),
+        fidelity_by_work={"W1": "APTA", "W2": "NO_APTA"},
+        comparison=comparison,
+    )
+
+    assert set(result["deepening_targets"]["works"]) == {"W1"}
 
 
 def _context() -> dict:
@@ -157,7 +207,7 @@ def _context() -> dict:
     }
 
 
-def _run(tmp_path, *, work_ids=("W1",), pool_ids=None, phenomenon=None, fidelity="APTA", sufficiency=None, acquisition_bindings=None, comparison=None, thesis=None, work_bindings=None):
+def _run(tmp_path, *, work_ids=("W1",), pool_ids=None, phenomenon=None, fidelity="APTA", fidelity_by_work=None, sufficiency=None, acquisition_bindings=None, comparison=None, thesis=None, work_bindings=None):
     discovery = _discovery(list(work_ids))
     selected_pool_ids = list(pool_ids if pool_ids is not None else work_ids)
     pool = [_dossier(work_id) for work_id in selected_pool_ids]
@@ -165,10 +215,11 @@ def _run(tmp_path, *, work_ids=("W1",), pool_ids=None, phenomenon=None, fidelity
     for item in pool:
         result = deepcopy(item)
         result["research_stage"] = "PRELIMINARY_FIDELITY"
-        result["preliminary_fidelity"] = fidelity
-        if fidelity == "APTA":
+        item_fidelity = (fidelity_by_work or {}).get(item["work"]["material_id"], fidelity)
+        result["preliminary_fidelity"] = item_fidelity
+        if item_fidelity == "APTA":
             result["research_sufficiency"] = "LIMITED_BUT_USABLE"
-        elif fidelity == "APTA_CON_RIESGOS":
+        elif item_fidelity == "APTA_CON_RIESGOS":
             result["downstream_restrictions"] = [
                 {
                     "restriction_id": f"restriction:{item['work']['material_id']}",

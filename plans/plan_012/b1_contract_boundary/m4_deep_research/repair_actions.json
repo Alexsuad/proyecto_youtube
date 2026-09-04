@@ -1,0 +1,18 @@
+{
+  "artifact_version": "1.0.0",
+  "repair_id": "PLAN012-M4-MATERIAL-REPAIR-20260904",
+  "mission_id": "PLAN012_M4_B3_SELECTION_DEEP_RESEARCH",
+  "repair_scope": "target_final_works_and_semantic_evidence_refs",
+  "changes": [
+    "La selección exige una cantidad autorizada de 3, 4 o 5 obras.",
+    "Las referencias de evidencia se resuelven solo desde campos de evidencia y bindings Software válidos.",
+    "La autorización de reparación usa TECHNICAL_GOVERNANCE / ORCHESTRATION y no autoridades B5-I2."
+  ],
+  "validation": {
+    "m4_focalized_tests": "PASS",
+    "mission_authorization": "PASS",
+    "real_ai": false,
+    "real_research": false,
+    "product_use": false
+  }
+}

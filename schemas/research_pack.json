@@ -267,6 +267,11 @@
         "2.0.0"
       ]
     },
+    "lineage": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
     "research_ready_state": {
       "type": "string",
       "enum": [

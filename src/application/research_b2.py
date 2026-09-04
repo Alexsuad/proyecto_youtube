@@ -120,10 +120,49 @@ class SoftwareAcquisitionAdapter:
         bindings: Mapping[str, Mapping[str, Any]] | None = None,
         *,
         work_bindings: Mapping[str, Mapping[str, Any]] | None = None,
+        work_representation_bindings: Mapping[Any, Mapping[str, Any]] | None = None,
     ):
         self.bindings = {str(key): dict(value) for key, value in (bindings or {}).items()}
         self.work_bindings = {str(key): dict(value) for key, value in (work_bindings or {}).items()}
+        self.work_representation_bindings = {
+            self._representation_key_from_mapping_key(key, value): dict(value)
+            for key, value in (work_representation_bindings or {}).items()
+        }
         self.materialized_work_bindings: dict[str, dict[str, Any]] = {}
+
+    @staticmethod
+    def _representation_key(work_id: str, representation: Mapping[str, Any]) -> str:
+        return "|".join(
+            [str(work_id)]
+            + [str(representation.get(field, "")) for field in (
+                "representation_kind", "edition_or_version", "consulted_locator"
+            )]
+        )
+
+    @classmethod
+    def _representation_key_from_mapping_key(cls, key: Any, binding: Mapping[str, Any]) -> str:
+        if isinstance(key, tuple) and len(key) == 4:
+            work_id, representation_kind, edition_or_version, consulted_locator = key
+            return f"{work_id}|{representation_kind}|{edition_or_version}|{consulted_locator}"
+        return str(key)
+
+    @staticmethod
+    def _binding_matches_representation(binding: Mapping[str, Any], representation: Mapping[str, Any]) -> bool:
+        return all(binding.get(field) == representation.get(field) for field in (
+            "representation_kind", "edition_or_version", "consulted_locator"
+        ))
+
+    @staticmethod
+    def _validate_work_binding(binding: Mapping[str, Any], work_id: str) -> None:
+        if (
+            binding.get("retrieval_status") != "RECOVERED"
+            or binding.get("software_controlled") is not True
+            or not binding.get("recovery_artifact_ref")
+            or not binding.get("request_ref")
+            or not binding.get("execution_ref")
+            or binding.get("evidence_status") not in {"CONSULTED", "VERIFIED", "EVIDENCE"}
+        ):
+            raise ResearchB2Error(f"WORK_ACQUISITION_BINDING_INVALID: {work_id}")
 
     def materialize(self, research_pack: Mapping[str, Any]) -> dict[str, Any]:
         if not isinstance(research_pack, Mapping):
@@ -177,39 +216,51 @@ class SoftwareAcquisitionAdapter:
                 raise ResearchB2Error("WorkResearchDossier debe ser un objeto")
             work = dossier["work"]
             work_id = str(work.get("material_id") or "")
-            binding = self.work_bindings.get(work_id)
-            if not binding:
+            default_binding = self.work_bindings.get(work_id)
+            if not default_binding:
                 raise ResearchB2Error(f"WORK_ACQUISITION_BINDING_REQUIRED: {work_id}")
-            if (
-                binding.get("retrieval_status") != "RECOVERED"
-                or binding.get("software_controlled") is not True
-                or not binding.get("recovery_artifact_ref")
-                or not binding.get("request_ref")
-                or not binding.get("execution_ref")
-                or binding.get("evidence_status") not in {"CONSULTED", "VERIFIED", "EVIDENCE"}
-            ):
-                raise ResearchB2Error(f"WORK_ACQUISITION_BINDING_INVALID: {work_id}")
+            self._validate_work_binding(default_binding, work_id)
             representations = work.get("consulted_representations") or []
             if not representations:
                 raise ResearchB2Error(f"WORK_CONSULTED_REPRESENTATION_REQUIRED: {work_id}")
-            for representation in representations:
+            representation_bindings: list[dict[str, Any]] = []
+            manifest_bindings: list[dict[str, Any]] = []
+            for representation_index, representation in enumerate(representations, start=1):
                 if not isinstance(representation, dict):
                     raise ResearchB2Error(f"WORK_CONSULTED_REPRESENTATION_INVALID: {work_id}")
-                for field in ("representation_kind", "edition_or_version", "consulted_locator"):
-                    if representation.get(field) != binding.get(field):
-                        raise ResearchB2Error(f"WORK_LOCATOR_BINDING_MISMATCH: {work_id}:{field}")
-            binding_ref = f"software:work-acquisition:{work_id}"
-            dossier["lineage"] = sorted(set(dossier.get("lineage", [])) | {binding_ref})
-            materialized[work_id] = {
-                "binding_ref": binding_ref,
-                "work_id": work_id,
-                "request_ref": binding["request_ref"],
-                "execution_ref": binding["execution_ref"],
-                "recovery_artifact_ref": binding["recovery_artifact_ref"],
-                "retrieval_status": binding["retrieval_status"],
-                "evidence_status": binding["evidence_status"],
-                "software_controlled": binding["software_controlled"],
-            }
+                binding = default_binding if self._binding_matches_representation(default_binding, representation) else None
+                if binding is None:
+                    key = self._representation_key(work_id, representation)
+                    binding = self.work_representation_bindings.get(key)
+                if not binding:
+                    raise ResearchB2Error(f"WORK_LOCATOR_BINDING_MISMATCH: {work_id}:consulted_representation")
+                self._validate_work_binding(binding, work_id)
+                binding_ref = f"software:work-acquisition:{work_id}" if representation_index == 1 else f"software:work-acquisition:{work_id}:{representation_index}"
+                record = {
+                    "request_ref": binding["request_ref"],
+                    "execution_ref": binding["execution_ref"],
+                    "recovery_artifact_ref": binding["recovery_artifact_ref"],
+                    "source_ref": binding.get("source_ref", f"{work_id}:representation:{representation_index}"),
+                    "retrieval_status": binding["retrieval_status"],
+                    "evidence_status": binding["evidence_status"],
+                    "software_controlled": binding["software_controlled"],
+                    "representation_kind": representation["representation_kind"],
+                    "edition_or_version": representation["edition_or_version"],
+                    "consulted_locator": representation["consulted_locator"],
+                }
+                representation_bindings.append(record)
+                manifest_bindings.append({
+                    "binding_ref": binding_ref,
+                    "work_id": work_id,
+                    **record,
+                })
+            dossier["acquisition_bindings"] = copy.deepcopy(representation_bindings)
+            dossier["lineage"] = sorted(
+                set(dossier.get("lineage", [])) | {item["binding_ref"] for item in manifest_bindings}
+            )
+            materialized[work_id] = copy.deepcopy(manifest_bindings[0])
+            if len(manifest_bindings) > 1:
+                materialized[work_id]["representation_bindings"] = copy.deepcopy(manifest_bindings)
         self.materialized_work_bindings.update(materialized)
         return result
 
@@ -435,6 +486,10 @@ class ResearchB2Orchestrator:
         events.append({"stage": "RESEARCH_COMPARISON", "boundary": "SOFTWARE_PERSIST", "artifact_id": comparison_ref["artifact_id"]})
         artifacts.append(comparison_ref)
 
+        deepening_targets = self._build_deepening_targets(
+            plan, phenomenon, pool, fidelity, comparison, comparison_ref
+        )
+
         lifecycle = self._bind_fidelity_to_lifecycle(discovery, fidelity, fidelity_ref)
         lifecycle_ref = self.persistence.persist(
             "EXECUTION_MANIFEST",
@@ -459,6 +514,7 @@ class ResearchB2Orchestrator:
                 "events": events,
                 "iteration_guard": self.no_progress_guard.to_dict(),
                 "work_acquisition_bindings": self.acquisition_adapter.work_binding_manifest(),
+                "deepening_targets": deepening_targets,
                 "lifecycle_projection": lifecycle,
             },
             artifact_id=f"{plan['research_plan_id']}:B2",
@@ -473,9 +529,52 @@ class ResearchB2Orchestrator:
             "initial_sufficiency": sufficiency_ref,
             "provisional_thesis": thesis_ref,
             "research_comparison": comparison_ref,
+            "deepening_targets": copy.deepcopy(deepening_targets),
             "lifecycle_projection": lifecycle,
             "execution_manifest": lifecycle_ref,
             "events": events,
+        }
+
+    @staticmethod
+    def _build_deepening_targets(
+        plan: Mapping[str, Any],
+        phenomenon: Mapping[str, Any],
+        pool: list[dict[str, Any]],
+        fidelity: list[dict[str, Any]],
+        comparison: Mapping[str, Any],
+        comparison_ref: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Materialize only the cognitive deepening targets returned by Research.
+
+        Software owns identity, lineage and persistence metadata, but it must
+        not invent the research content that a later stage should deepen.
+        """
+        del phenomenon, fidelity
+        cognitive_targets = comparison.get("deepening_targets")
+        if not isinstance(cognitive_targets, Mapping):
+            raise ResearchB2Error("RESEARCH_COMPARISON debe aportar deepening_targets cognitivos")
+        phenomenon_targets = cognitive_targets.get("phenomenon")
+        cognitive_works = cognitive_targets.get("works")
+        if not isinstance(phenomenon_targets, Mapping) or not phenomenon_targets.get("targets"):
+            raise ResearchB2Error("La investigación debe identificar targets materiales del fenómeno")
+        if not isinstance(cognitive_works, Mapping):
+            raise ResearchB2Error("La investigación debe identificar targets materiales de las obras")
+        works: dict[str, Any] = {}
+        pool_ids = {str(dossier["work"]["material_id"]) for dossier in pool}
+        for work_id, target in cognitive_works.items():
+            if str(work_id) not in pool_ids:
+                raise ResearchB2Error(f"La investigación referencia una obra inexistente: {work_id}")
+            if not isinstance(target, Mapping) or not target.get("targets"):
+                raise ResearchB2Error(f"La investigación debe aportar targets materiales para {work_id}")
+            works[str(work_id)] = copy.deepcopy(dict(target))
+            works[str(work_id)]["work_id"] = str(work_id)
+        return {
+            "artifact_kind": "B2DeepeningTargets",
+            "artifact_version": CONTRACT_VERSION,
+            "source_artifact_ref": str(comparison_ref.get("artifact_id")),
+            "research_plan_id": str(plan.get("research_plan_id")),
+            "phenomenon": copy.deepcopy(dict(phenomenon_targets)),
+            "works": works,
         }
 
     def _step(
@@ -823,6 +922,18 @@ class ResearchB2Orchestrator:
         entry_ids = {item.get("work_id") for item in value.get("entries", [])}
         if entry_ids != eligible:
             raise ResearchB2Error("La comparativa debe tener una entrada por candidata elegible")
+        targets = value.get("deepening_targets")
+        if not isinstance(targets, Mapping) or not isinstance(targets.get("phenomenon"), Mapping):
+            raise ResearchB2Error("RESEARCH_COMPARISON debe aportar targets de profundización cognitivos")
+        works = targets.get("works")
+        if not isinstance(works, Mapping):
+            raise ResearchB2Error("RESEARCH_COMPARISON debe aportar targets por obra")
+        target_work_ids = {str(item) for item in works}
+        if not target_work_ids.issubset({str(item) for item in eligible}):
+            raise ResearchB2Error("RESEARCH_COMPARISON solo puede aportar targets para candidatas elegibles")
+        for work_id, target in works.items():
+            if not isinstance(target, Mapping) or not isinstance(target.get("targets"), list) or not target["targets"]:
+                raise ResearchB2Error(f"RESEARCH_COMPARISON debe aportar targets válidos para {work_id}")
 
     @staticmethod
     def _validate_pool(value: Any, discovery: dict[str, Any]) -> None:
