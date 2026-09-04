@@ -35,6 +35,24 @@ Contratos ejecutables
 
 Los documentos de `workspace/` se conservan como referencia histórica, de migración o apoyo humano. No se debe reconstruir identidad activa ni autoridad ejecutable desde ellos.
 
+## AutoZIP para revisión del OWNER
+
+`autozip` se usa únicamente al final de misiones que hayan creado o modificado
+archivos o carpetas y cuyo resultado necesite revisión del OWNER. Debe ejecutarse
+desde la raíz del repositorio, únicamente con:
+
+```text
+autozip
+```
+
+Es el último paso operativo, después de la implementación, las correcciones,
+las pruebas y la revisión final. El repositorio real es siempre la fuente de
+trabajo; el archivo generado es externo al desarrollo y no se usa como entrada,
+ni se edita, corrige o analiza como sustituto del repositorio.
+
+Esta regla no aplica a consultas, análisis, auditorías read-only, revisiones sin
+cambios, inspecciones de Git ni otras tareas que no creen o modifiquen archivos.
+
 ## Almacenamiento y portabilidad
 
 La ruta moderna portable usa los contratos y artefactos del checkout. El Content Vault externo se conserva como ruta legacy opcional para trabajo episódico:
