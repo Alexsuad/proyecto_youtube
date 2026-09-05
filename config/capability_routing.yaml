@@ -1,4 +1,12 @@
 capabilities:
+  PLAN012_M6_INDEPENDENT_RESEARCH_AUDIT:
+    entrypoint: src/application/research_b4.py
+    output_schema: independent_research_audit
+    routing:
+      explicit_mode: respect_requested_route
+      auto_agent_handoff: false
+      allow_external_api: false
+      unavailable: BLOCKED_BY_SEMANTIC_EVALUATOR
   B5_I2_SEMANTIC_AUDITOR:
     skill_id: skill_auditar_suficiencia_semantica_b5_i2
     entrypoint: src/scripts/run_b5_i2_semantic_audit.py

@@ -254,6 +254,20 @@
         "antigravity_current"
       ]
     },
+    "INDEPENDENT_RESEARCH_AUDITOR": {
+      "default_execution_profile": "NONE_SELECTED",
+      "default_execution_route": "local_model",
+      "allowed_execution_profiles": [
+        "ollama_local",
+        "deepseek_chat",
+        "openai_chat",
+        "gemini_chat",
+        "anthropic_messages",
+        "codex_current",
+        "opencode_free",
+        "antigravity_current"
+      ]
+    },
     "NARRATIVE_ARCHITECTURE": {
       "default_execution_profile": "NONE_SELECTED",
       "default_execution_route": "local_model",

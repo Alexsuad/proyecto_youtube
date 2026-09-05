@@ -130,6 +130,57 @@
       "prompt_version": "1.0.0"
     },
     {
+      "role_id": "INDEPENDENT_RESEARCH_AUDITOR",
+      "contract_type": "BASE_RESPONSIBILITY",
+      "functional_owner": "SCRIPT_PRODUCT",
+      "purpose": "Auditar de forma independiente la cadena de investigación Research y sus límites antes del handoff posterior.",
+      "when_used": "En M6, después de la consolidación post-deep y antes de cualquier handoff posterior.",
+      "inputs": [
+        "ResearchPlan",
+        "ResearchPack",
+        "SourceAccessAndEvidenceReport",
+        "ResearchB2ExecutionManifest",
+        "ResearchM4ExecutionManifest",
+        "ResearchM5ExecutionManifest",
+        "ClaimsLedger",
+        "ResearchComparison",
+        "RefinedThesis",
+        "WorkResearchDossierCollection",
+        "ResearchStopDecisionCollection"
+      ],
+      "outputs": [
+        "IndependentResearchAudit",
+        "ResearchReadyManifest"
+      ],
+      "read_permissions": [
+        "research artifacts",
+        "execution provenance"
+      ],
+      "write_permissions": [
+        "independent audit artifacts"
+      ],
+      "forbidden_actions": [
+        "modificar artefactos auditados",
+        "aprobar B5-I2 o B5-I3",
+        "iniciar REAL_AI",
+        "declarar uso productivo"
+      ],
+      "veto_conditions": [
+        "evidencia insuficiente",
+        "provenance no verificable",
+        "dependencia stale o invalidated",
+        "auditoría incompleta"
+      ],
+      "evidence": [
+        "independent research audit",
+        "research ready manifest"
+      ],
+      "handoff": [
+        "research audit to next authorized phase"
+      ],
+      "prompt_version": "1.0.0"
+    },
+    {
       "role_id": "WRITING",
       "contract_type": "BASE_RESPONSIBILITY",
       "functional_owner": "SCRIPT_PRODUCT",

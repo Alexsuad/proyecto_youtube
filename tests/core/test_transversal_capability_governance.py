@@ -467,7 +467,11 @@ def test_missing_entry_mode_is_rejected_by_canonical_schema() -> None:
 def test_topic_belonging_readiness_is_explicitly_authorized_by_m1() -> None:
     registry = json.loads((Path(__file__).parents[2] / "config" / "capability_registry.json").read_text(encoding="utf-8"))
     assert registry["compatibility_tokens"]["availability"]["IMPLEMENTED_NOT_DEMONSTRATED"] == "UNMAPPED_IMPLEMENTED_NOT_DEMONSTRATED"
-    assert registry["capabilities"][0]["availability_status"] == "READY_NOT_AUTHORIZED"
+    topic_belonging = next(
+        capability for capability in registry["capabilities"]
+        if capability["capability_id"] == "TOPIC_BELONGING_ASSESSMENT"
+    )
+    assert topic_belonging["availability_status"] == "READY_NOT_AUTHORIZED"
     assert validate_capability_registry() == []
 
 

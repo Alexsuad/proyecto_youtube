@@ -91,7 +91,8 @@
         "criterion": {"type": "string", "minLength": 1},
         "status": {"enum": ["SATISFIED", "LIMITED", "NOT_SATISFIED", "UNRESOLVED"]},
         "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
-        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "judgment_basis": {"type": "string", "minLength": 1}
       }
     },
     "defect": {
@@ -121,5 +122,11 @@
         "suggested_role": {"type": "string", "minLength": 1}
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"audit_version": {"const": "2.0.0"}}, "required": ["audit_version"]},
+      "then": {"properties": {"findings": {"items": {"required": ["judgment_basis"]}}}}
+    }
+  ]
 }

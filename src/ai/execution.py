@@ -914,7 +914,13 @@ def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
 
 def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
     started, manifest = _now(), manifest_checksum(request)
-    if request.execution_mode == "SYNTHETIC_TEST" and request.mock_output is None:
+    synthetic_cognitive_executor = request.config.get("_synthetic_cognitive_executor")
+    synthetic_output_binder = request.config.get("_synthetic_output_binder")
+    if (
+        request.execution_mode == "SYNTHETIC_TEST"
+        and request.mock_output is None
+        and not (callable(synthetic_cognitive_executor) and callable(synthetic_output_binder))
+    ):
         return _result(
             request,
             "none",
@@ -1072,6 +1078,88 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
             manifest,
             usage={"package": str(package), **request.config.get("_mission_convergence", {})},
             run_id=run_id,
+        )
+    if callable(synthetic_cognitive_executor) and callable(synthetic_output_binder):
+        runtime_run_id = str(request.config.get("_runtime_run_id") or f"RUN-AI-{uuid.uuid4().hex}")
+        request.config = {**request.config, "_runtime_run_id": runtime_run_id}
+        actual_executor = str(request.executor or "native_provider")
+        actual_provider = str(request.provider or provider_name)
+        actual_model = str(request.model or "structural-test-double")
+        runtime = {
+            "run_id": runtime_run_id,
+            "actor_id": str(request.role or "UNSPECIFIED_PRODUCER"),
+            "role": str(request.role or "UNSPECIFIED_PRODUCER"),
+            "actual_executor": actual_executor,
+            "actual_provider": actual_provider,
+            "actual_model": actual_model,
+        }
+        try:
+            cognitive_output = synthetic_cognitive_executor(request)
+            output = synthetic_output_binder(cognitive_output, runtime)
+        except Exception as exc:  # the application boundary converts this to a failed execution result
+            return _result(
+                request,
+                provider_name,
+                ExecutionStatus.FAILED,
+                started,
+                manifest,
+                error=f"SYNTHETIC_COGNITIVE_ADAPTER_FAILED: {exc}",
+                usage={
+                    "synthetic": True,
+                    "actual_executor": actual_executor,
+                    "actual_provider": actual_provider,
+                    "actual_model": actual_model,
+                },
+                run_id=runtime_run_id,
+            )
+        if not isinstance(output, dict):
+            return _result(
+                request,
+                provider_name,
+                ExecutionStatus.FAILED,
+                started,
+                manifest,
+                error="SYNTHETIC_COGNITIVE_ADAPTER_OUTPUT_MUST_BE_OBJECT",
+                usage={
+                    "synthetic": True,
+                    "actual_executor": actual_executor,
+                    "actual_provider": actual_provider,
+                    "actual_model": actual_model,
+                },
+                run_id=runtime_run_id,
+            )
+        violations = validate_against_schema(output, request.output_schema)
+        if violations:
+            return _result(
+                request,
+                provider_name,
+                ExecutionStatus.FAILED,
+                started,
+                manifest,
+                output=output,
+                error="OUTPUT_CONTRACT_INVALID: " + "; ".join(violations),
+                usage={
+                    "synthetic": True,
+                    "actual_executor": actual_executor,
+                    "actual_provider": actual_provider,
+                    "actual_model": actual_model,
+                },
+                run_id=runtime_run_id,
+            )
+        return _result(
+            request,
+            provider_name,
+            ExecutionStatus.SUCCEEDED,
+            started,
+            manifest,
+            output=output,
+            usage={
+                "synthetic": True,
+                "actual_executor": actual_executor,
+                "actual_provider": actual_provider,
+                "actual_model": actual_model,
+            },
+            run_id=runtime_run_id,
         )
     provider = {
         "mock": MockProvider(),

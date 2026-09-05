@@ -18,6 +18,8 @@ def _fixture(tmp_path: Path) -> Path:
     shutil.copytree(ROOT / "reports", tmp_path / "reports")
     for path in (
         "src/application/topic_belonging.py",
+        "src/application/research_b4.py",
+        "src/ai/execution.py",
         "src/scripts/channel_intelligence.py",
         "src/scripts/topic_belonging_flow.py",
         "src/scripts/run_b5_i2_semantic_audit.py",
@@ -25,6 +27,8 @@ def _fixture(tmp_path: Path) -> Path:
         "schemas/topic_belonging_assessment.json",
         "schemas/topic_belonging_decision.json",
         "schemas/b5_i2_semantic_sufficiency_audit.json",
+        "schemas/independent_research_audit.json",
+        "schemas/research_ready_manifest.json",
         ".agent/skills/skill_auditar_suficiencia_semantica_b5_i2.md",
     ):
         target = tmp_path / path; target.parent.mkdir(parents=True, exist_ok=True); shutil.copy(ROOT / path, target)
@@ -53,7 +57,11 @@ def test_arbitrary_or_cross_domain_role_never_resolves_authority(tmp_path: Path)
     root = _fixture(tmp_path)
     registry = root / "config/capability_registry.json"
     data = json.loads(registry.read_text(encoding="utf-8"))
-    data["capabilities"][0]["assigned_role"] = ["WRITING"]
+    topic_capability = next(
+        item for item in data["capabilities"]
+        if item["capability_id"] == "TOPIC_BELONGING_ASSESSMENT"
+    )
+    topic_capability["assigned_role"] = ["WRITING"]
     registry.write_text(json.dumps(data), encoding="utf-8")
     integrity, authority = audit_cross_registry(root, "2026-08-11T00:00:00Z")
     assert "AUTHORITY_CONTRADICTION:TOPIC_BELONGING_ASSESSMENT" in integrity["findings"]

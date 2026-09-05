@@ -100,6 +100,7 @@ ROLE_REQUIRED_INPUTS = {
     "CHANNEL_INTELLIGENCE_PRODUCER": CHANNEL_INTELLIGENCE_PRODUCER_REQUIRED_INPUTS,
     "CHANNEL_INTELLIGENCE_REVIEWER": CHANNEL_INTELLIGENCE_REVIEWER_REQUIRED_INPUTS,
     "RESEARCH_AND_CURATION": RESEARCH_AND_CURATION_REQUIRED_INPUTS,
+    "INDEPENDENT_RESEARCH_AUDITOR": RESEARCH_AND_CURATION_REQUIRED_INPUTS,
 }
 ROLE_ALLOWED_OUTPUT_SCHEMAS = {
     "SCRIPT_PRODUCT_PRODUCER": {
@@ -141,6 +142,7 @@ ROLE_ALLOWED_OUTPUT_SCHEMAS = {
     },
     "RESEARCH_AND_CURATION": {
         "execution_smoke_report",
+        "independent_research_audit",
         "research_pack",
         "work_lifecycle",
         "work_research_dossier",
@@ -152,6 +154,14 @@ ROLE_ALLOWED_OUTPUT_SCHEMAS = {
         "claims_ledger",
         "source_access_and_evidence_report",
     },
+    "INDEPENDENT_RESEARCH_AUDITOR": {
+        "execution_smoke_report",
+        "independent_research_audit",
+    },
+}
+
+ROLE_PROMPT_ALIASES = {
+    "INDEPENDENT_RESEARCH_AUDITOR": "RESEARCH_AND_CURATION",
 }
 
 
@@ -211,6 +221,7 @@ def _validate_role_payload(
 ) -> None:
     required = ROLE_REQUIRED_INPUTS.get(role_id, ())
     if role_id == "RESEARCH_AND_CURATION" and output_schema not in {
+        "independent_research_audit",
         "research_pack",
         "work_lifecycle",
         "work_research_dossier",
@@ -276,13 +287,14 @@ def resolve_role_execution_contract(role_id: str, output_schema: str, input_payl
     if not isinstance(input_payload, dict):
         raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: input payload must be a JSON object")
     _validate_role_payload(role_id, input_payload, output_schema, runtime_values)
+    prompt_role_id = ROLE_PROMPT_ALIASES.get(role_id, role_id)
     try:
-        prompt_contract = resolve_prompt(role_id)
+        prompt_contract = resolve_prompt(prompt_role_id)
     except PromptResolutionError as exc:
         message = str(exc)
         category = "PROMPT_NOT_FOUND" if "Prompt file" in message or "prompt_version" in message else "ROLE_NOT_REGISTERED"
         raise RoleExecutionContractError(f"{category}: {message}") from exc
-    prompt_path = ROOT / "prompts" / "roles" / role_id / f"{prompt_contract['prompt_version']}.md"
+    prompt_path = ROOT / "prompts" / "roles" / prompt_role_id / f"{prompt_contract['prompt_version']}.md"
     try:
         prompt_content = prompt_path.read_text(encoding="utf-8")
     except FileNotFoundError as exc:

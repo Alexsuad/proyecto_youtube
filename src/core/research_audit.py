@@ -62,6 +62,10 @@ def validate_independent_research_audit(data: dict[str, Any]) -> list[str]:
         violations.append("PASS_WITH_PENDING_FINDINGS")
     if data["decision"] == "PASS" and data["defects"]:
         violations.append("PASS_WITH_PENDING_DEFECTS")
+    if data.get("audit_version") == "2.0.0":
+        for finding in data["findings"]:
+            if finding["status"] == "LIMITED" and not finding.get("limitations"):
+                violations.append(f"LIMITED_FINDING_REQUIRES_LIMITATIONS:{finding['criterion']}")
     return sorted(set(violations))
 
 
