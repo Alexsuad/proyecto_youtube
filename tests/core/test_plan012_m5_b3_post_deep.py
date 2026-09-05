@@ -6,6 +6,7 @@ import pytest
 
 from src.application.research_b3 import ResearchB3Error, ResearchB3Orchestrator, ResearchB3Persistence
 from src.application.research_b2 import SoftwareAcquisitionAdapter
+from src.application.interaction import HumanDecision, HumanDecisionRequest
 from tests.core.test_plan012_m4_b3_deep_research import _baseline, _m4_context, _run_m4
 
 
@@ -666,6 +667,141 @@ def test_m5_rejects_modified_provisional_thesis_with_same_id(tmp_path):
     mutated["provisional_thesis"]["statement"] += " Modificación no heredada."
     with pytest.raises(ResearchB3Error, match="PROVISIONAL_THESIS_M4_BINDING_INVALID"):
         _run_m5(tmp_path / "m5", baseline=mutated, m4_result=m4_result)
+
+
+def test_m5_rejects_m4_output_with_same_id_but_different_canonical_binding(tmp_path):
+    baseline = _baseline(tmp_path / "fixture")
+    m4_result, _ = _run_m4(tmp_path / "m4", baseline=baseline)
+    original = m4_result["deep_work_research"]
+    altered_path = tmp_path / "altered_deep_work_research.json"
+    altered_path.write_text(json.dumps(_read(original), ensure_ascii=False), encoding="utf-8")
+    m4_result["deep_work_research"] = {
+        **original,
+        "path": str(altered_path),
+        "checksum": "0" * 64,
+    }
+    with pytest.raises(ResearchB3Error, match="M5_M4_INPUT_BINDING_INVALID"):
+        _run_m5(tmp_path / "m5", baseline=baseline, m4_result=m4_result)
+
+
+def test_m5_rejects_m4_work_evidence_reclassified_as_external_reality(tmp_path):
+    def reclassified(request):
+        if request.stage == "M5_CLAIMS_EVIDENCE_CONSOLIDATION":
+            value = _claims()
+            value["evidence_type_separation"]["work_evidence_refs"] = []
+            value["evidence_type_separation"]["external_reality_evidence_refs"].append("D-W1")
+            value["claims"][1].update(work_evidence_refs=[], external_reality_evidence_refs=["D-W1"])
+            return value
+        if request.stage == "M5_POST_DEEP_SET_REEVALUATION":
+            return _comparison(["W1", "W2", "W3"])
+        return _thesis("RP-FIXTURE:THESIS:PROVISIONAL")
+
+    with pytest.raises(ResearchB3Error, match="EVIDENCE_DOMAIN_RECLASSIFICATION"):
+        _run_m5(tmp_path, cognitive=reclassified)
+
+
+@pytest.mark.parametrize("action,affected_work_id,expected_ids", [
+    ("REMOVE", "W2", ["W1", "W3"]),
+    ("REDUCE", "W3", ["W1", "W2"]),
+])
+def test_m5_owner_approve_remove_reduce_updates_effective_selection(
+    tmp_path, action, affected_work_id, expected_ids,
+):
+    def change(request):
+        if request.stage == "M5_CLAIMS_EVIDENCE_CONSOLIDATION":
+            return _claims()
+        if request.stage == "M5_POST_DEEP_SET_REEVALUATION":
+            value = _comparison(["W1", "W2", "W3"])
+            value["set_recommendations"][0].update(
+                action=action,
+                affected_work_ids=[affected_work_id],
+                material_change=True,
+            )
+            value["human_decision_required"] = True
+            return value
+        return _thesis("RP-FIXTURE:THESIS:PROVISIONAL")
+
+    result, seen = _run_m5(
+        tmp_path,
+        cognitive=change,
+        selection_change_decision={"action": "APPROVE", "actor_ref": "OWNER"},
+    )
+    assert result["status"] == "READY_FOR_OWNER_REVIEW"
+    assert [request.stage for request in seen] == [
+        "M5_CLAIMS_EVIDENCE_CONSOLIDATION",
+        "M5_POST_DEEP_SET_REEVALUATION",
+        "M5_REFINED_THESIS",
+    ]
+    manifest = _read(result["execution_manifest"])
+    assert manifest["effective_selected_work_ids"] == expected_ids
+    assert _read(result["refined_thesis"])["material_contributions"][0]["material_id"] == "W1"
+
+
+def test_m5_recovers_persisted_human_decision_before_manifest_update(tmp_path):
+    baseline = _baseline(tmp_path / "fixture")
+    m4_result, _ = _run_m4(tmp_path / "m4", baseline=baseline)
+
+    def change(request):
+        if request.stage == "M5_CLAIMS_EVIDENCE_CONSOLIDATION":
+            return _claims()
+        if request.stage == "M5_POST_DEEP_SET_REEVALUATION":
+            value = _comparison(["W1", "W2", "W3"])
+            value["set_recommendations"][0].update(
+                action="REMOVE", affected_work_ids=["W2"], material_change=True,
+            )
+            value["human_decision_required"] = True
+            return value
+        raise AssertionError(request.stage)
+
+    state_root = tmp_path / "same-state"
+    pending, _ = _run_m5(state_root, baseline=baseline, m4_result=m4_result, cognitive=change)
+    request_payload = _read(pending["human_decision_request"])
+    request = HumanDecisionRequest.from_dict(request_payload, require_contract=True)
+    decision = HumanDecision(
+        request_id=request.request_id,
+        action="APPROVE",
+        actor_ref="OWNER",
+        channel="TERMINAL",
+    ).bind_request(request)
+    ResearchB3Persistence(state_root / "m5").persist(
+        "M5_SELECTION_CHANGE_DECISION",
+        decision.to_dict(),
+        artifact_id="RP-FIXTURE:M5:SELECTION_CHANGE:DECISION",
+        artifact_kind="HumanDecision",
+    )
+
+    def thesis_only(request):
+        assert request.stage == "M5_REFINED_THESIS"
+        return _thesis("RP-FIXTURE:THESIS:PROVISIONAL")
+
+    result, seen = _run_m5(
+        state_root,
+        baseline=baseline,
+        m4_result=m4_result,
+        cognitive=thesis_only,
+    )
+    assert pending["status"] == "PENDING_HUMAN_DECISION"
+    assert result["status"] == "READY_FOR_OWNER_REVIEW"
+    assert [request.stage for request in seen] == ["M5_REFINED_THESIS"]
+    assert _read(result["execution_manifest"])["effective_selected_work_ids"] == ["W1", "W3"]
+
+
+@pytest.mark.parametrize("mutator,match", [
+    (lambda value: value["material_contributions"][0].update(material_id="W-UNKNOWN"), "MATERIAL_CONTRIBUTION_WORK_INVALID"),
+    (lambda value: value["evidence_dependencies"].append("EVIDENCE-NOT-VERIFIED"), "EVIDENCE_REF_UNRESOLVED"),
+])
+def test_m5_refined_thesis_rejects_uninvestigated_work_or_unverified_evidence(tmp_path, mutator, match):
+    def bad_thesis(request):
+        if request.stage == "M5_CLAIMS_EVIDENCE_CONSOLIDATION":
+            return _claims()
+        if request.stage == "M5_POST_DEEP_SET_REEVALUATION":
+            return _comparison(["W1", "W2", "W3"])
+        value = _thesis("RP-FIXTURE:THESIS:PROVISIONAL")
+        mutator(value)
+        return value
+
+    with pytest.raises(ResearchB3Error, match=match):
+        _run_m5(tmp_path, cognitive=bad_thesis)
 
 
 @pytest.mark.parametrize("disposition", ["CONFIRMED", "MODIFIED", "REJECTED", "LIMITED"])

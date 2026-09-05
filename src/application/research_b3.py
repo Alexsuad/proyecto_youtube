@@ -234,6 +234,9 @@ _EVIDENCE_REFERENCE_FIELDS = frozenset(
     }
 )
 
+WORK_EVIDENCE_DOMAIN = "WORK_EVIDENCE"
+EXTERNAL_REALITY_EVIDENCE_DOMAIN = "EXTERNAL_REALITY_EVIDENCE"
+
 
 def _evidence_reference_values(value: Any) -> set[str]:
     """Collect only references explicitly declared as evidence by artifacts.
@@ -263,6 +266,33 @@ def _evidence_reference_values(value: Any) -> set[str]:
 
     visit(value)
     return found
+
+
+def _evidence_domain_values(value: Any) -> dict[str, set[str]]:
+    """Collect the canonical domain explicitly assigned to each evidence ref."""
+    domains: dict[str, set[str]] = {}
+
+    def collect(item: Any, domain: str) -> None:
+        if isinstance(item, str) and item.strip():
+            domains.setdefault(item.strip(), set()).add(domain)
+        elif isinstance(item, list):
+            for entry in item:
+                collect(entry, domain)
+
+    def visit(node: Any) -> None:
+        if isinstance(node, Mapping):
+            for key, item in node.items():
+                if str(key) == "work_evidence_refs":
+                    collect(item, WORK_EVIDENCE_DOMAIN)
+                elif str(key) == "external_reality_evidence_refs":
+                    collect(item, EXTERNAL_REALITY_EVIDENCE_DOMAIN)
+                visit(item)
+        elif isinstance(node, list):
+            for item in node:
+                visit(item)
+
+    visit(value)
+    return domains
 
 
 def _valid_acquisition_reference_values(bindings: Mapping[str, Mapping[str, Any]], *, include_keys: bool = False) -> set[str]:
@@ -660,6 +690,9 @@ class ResearchB3Orchestrator:
             raise ResearchB3Error("M5_CONTEXT_INVALID")
 
         m4_manifest_ref = result.get("execution_manifest")
+        self._validate_artifact_ref_metadata(
+            m4_manifest_ref, "M5_M4_EXECUTION_MANIFEST", expected_kind="ResearchM4ExecutionManifest"
+        )
         m4_manifest = self._load_persisted_json(m4_manifest_ref, "M4_EXECUTION_MANIFEST")
         self._validate_m4_handoff(m4_manifest)
         m4_thesis_ref = (m4_manifest.get("b2_inputs") or {}).get("provisional_thesis_ref")
@@ -682,18 +715,11 @@ class ResearchB3Orchestrator:
                 "deep_work_sufficiency",
             )
         }
+        self._validate_m4_input_bindings(m4_manifest, m4_refs)
         m4_payloads = {
             name: self._load_persisted_json(ref, name.upper())
             for name, ref in m4_refs.items()
         }
-        declared_m4_artifact_ids = {
-            str(item.get("artifact_id"))
-            for item in m4_manifest.get("artifacts", [])
-            if isinstance(item, Mapping) and item.get("artifact_id")
-        }
-        for name, ref in m4_refs.items():
-            if not isinstance(ref, Mapping) or str(ref.get("artifact_id")) not in declared_m4_artifact_ids:
-                raise ResearchB3Error(f"M5_M4_ARTIFACT_NOT_DECLARED: {name}")
         selected_ids = [str(item) for item in m4_manifest["selection"]["selected_work_ids"]]
         if not selected_ids or len(selected_ids) != len(set(selected_ids)):
             raise ResearchB3Error("M5_SELECTED_WORK_IDS_INVALID")
@@ -713,6 +739,19 @@ class ResearchB3Orchestrator:
         known_evidence_refs.update(_valid_acquisition_reference_values(self.acquisition_adapter.bindings))
         known_evidence_refs.update(_valid_acquisition_reference_values(self.acquisition_adapter.work_bindings))
         known_evidence_refs.update(_valid_acquisition_reference_values(self.acquisition_adapter.work_representation_bindings))
+        evidence_domains: dict[str, set[str]] = {}
+        for source in (data, *m4_payloads.values()):
+            for evidence_ref, domains in _evidence_domain_values(source).items():
+                evidence_domains.setdefault(evidence_ref, set()).update(domains)
+        for evidence_ref, domains in evidence_domains.items():
+            if len(domains) > 1:
+                raise ResearchB3Error(f"M5_M4_EVIDENCE_DOMAIN_CONFLICT: {evidence_ref}")
+        verified_evidence_refs = set().union(
+            *(_evidence_reference_values(payload) for payload in m4_payloads.values()),
+            _valid_acquisition_reference_values(self.acquisition_adapter.bindings),
+            _valid_acquisition_reference_values(self.acquisition_adapter.work_bindings),
+            _valid_acquisition_reference_values(self.acquisition_adapter.work_representation_bindings),
+        )
         m4_delegation_ref = None
         m4_delegation_payload = None
         if m4_manifest["selection"]["mode"] == "DELEGATED_SELECTION":
@@ -722,7 +761,10 @@ class ResearchB3Orchestrator:
             if selection_change_delegation is not None and _checksum(dict(selection_change_delegation)) != _checksum(m4_delegation_payload):
                 raise ResearchB3Error("M5_DELEGATION_AUTHORIZATION_MISMATCH")
         ctx["_known_evidence_refs"] = known_evidence_refs
+        ctx["_evidence_domains"] = evidence_domains
+        ctx["_verified_evidence_refs"] = verified_evidence_refs
         ctx["selected_work_ids"] = selected_ids
+        ctx["_investigated_work_ids"] = set(selected_ids)
         ctx["provisional_thesis"] = copy.deepcopy(provisional_thesis)
         ctx["selection_mode"] = m4_manifest["selection"]["mode"]
         ctx["selection_authority_ref"] = m4_manifest["selection"].get("authority_ref")
@@ -767,7 +809,9 @@ class ResearchB3Orchestrator:
                 {"name": name, "payload": copy.deepcopy(payload)}
                 for name, payload in m4_payloads.items()
             ] + [{"name": "provisional_thesis", "payload": copy.deepcopy(provisional_thesis)}],
-            lambda value: self._validate_m5_claims(value, known_evidence_refs, plan, ctx["_m5_subject_ids"]),
+            lambda value: self._validate_m5_claims(
+                value, known_evidence_refs, plan, ctx["_m5_subject_ids"], ctx["_evidence_domains"]
+            ),
         )
         claim_stops = self._materialize_m5_claim_stops(claims, plan, known_evidence_refs)
         for claim in claims["claims"]:
@@ -1343,6 +1387,19 @@ class ResearchB3Orchestrator:
                 or request.workflow_ref != f"{plan['research_plan_id']}:M5"
             ):
                 raise ResearchB3Error("M5_SELECTION_CHANGE_REQUEST_RECOVERY_BINDING_INVALID")
+            if decision_ref is None:
+                recovered_decision = self.persistence.load_existing(
+                    "M5_SELECTION_CHANGE_DECISION",
+                    artifact_id=f"{plan['research_plan_id']}:M5:SELECTION_CHANGE:DECISION",
+                    artifact_kind="HumanDecision",
+                )
+                if recovered_decision is not None:
+                    decision_ref, _ = recovered_decision
+                    context.setdefault("_m5_events", []).append({
+                        "stage": "M5_SELECTION_CHANGE_DECISION_RECOVERY",
+                        "boundary": "SOFTWARE_RECOVER",
+                        "artifact_id": decision_ref["artifact_id"],
+                    })
             if decision_ref is not None:
                 decision_payload = self._load_persisted_json(decision_ref, "M5_SELECTION_CHANGE_DECISION_RECOVERY")
                 try:
@@ -1392,6 +1449,23 @@ class ResearchB3Orchestrator:
             existing_manifest_ref=existing_m5_ref,
         )
 
+    @staticmethod
+    def _m5_effective_work_ids_after_human_approval(
+        comparison: Mapping[str, Any], selected_ids: Sequence[str],
+    ) -> list[str]:
+        """Apply only approved REMOVE/REDUCE recommendations to the effective set."""
+        effective = list(map(str, selected_ids))
+        for recommendation in comparison.get("set_recommendations", []):
+            if not isinstance(recommendation, Mapping):
+                continue
+            if recommendation.get("action") not in {"REMOVE", "REDUCE"}:
+                continue
+            affected = {str(work_id) for work_id in recommendation.get("affected_work_ids", [])}
+            effective = [work_id for work_id in effective if work_id not in affected]
+        if not effective:
+            raise ResearchB3Error("M5_EFFECTIVE_SELECTION_EMPTY")
+        return effective
+
     def _finish_m5(
         self,
         *,
@@ -1418,6 +1492,12 @@ class ResearchB3Orchestrator:
         decision_action = None
         if isinstance(selection_change_decision_payload, Mapping):
             decision_action = str(selection_change_decision_payload.get("action"))
+            if decision_action == "APPROVE":
+                effective_ids = self._m5_effective_work_ids_after_human_approval(
+                    comparison, context.get("selected_work_ids", [])
+                )
+                context["effective_selected_work_ids"] = effective_ids
+                context["selected_work_ids"] = list(effective_ids)
         elif isinstance(selection_change_delegation_payload, Mapping):
             decision_action = str(selection_change_delegation_payload.get("decision"))
             resulting_work_ids = selection_change_delegation_payload.get("resulting_work_ids")
@@ -1475,6 +1555,9 @@ class ResearchB3Orchestrator:
             lambda value: self._validate_m5_thesis(
                 value, provisional_thesis, claims, comparison, claim_stops, known_evidence_refs, plan,
                 claims_ref, comparison_ref, claim_stops_ref,
+                set(context.get("effective_selected_work_ids", context.get("selected_work_ids", []))),
+                set(context.get("_investigated_work_ids", [])),
+                set(context.get("_verified_evidence_refs", known_evidence_refs)),
             ),
         )
         thesis_ref = self.persistence.persist(
@@ -1762,6 +1845,40 @@ class ResearchB3Orchestrator:
             raise ResearchB3Error("M5_M4_NARRATIVE_SELECTION_FORBIDDEN")
 
     @staticmethod
+    def _validate_artifact_ref_metadata(
+        ref: Any, label: str, *, expected_kind: str | None = None,
+    ) -> None:
+        required = ("artifact_id", "artifact_kind", "artifact_version", "checksum", "path")
+        if not isinstance(ref, Mapping) or any(not ref.get(field) for field in required):
+            raise ResearchB3Error(f"{label}_REFERENCE_METADATA_INVALID")
+        if expected_kind is not None and ref.get("artifact_kind") != expected_kind:
+            raise ResearchB3Error(f"{label}_KIND_INVALID")
+
+    @classmethod
+    def _validate_m4_input_bindings(
+        cls, m4_manifest: Mapping[str, Any], m4_refs: Mapping[str, Any],
+    ) -> None:
+        artifacts = m4_manifest.get("artifacts")
+        if not isinstance(artifacts, list) or not artifacts:
+            raise ResearchB3Error("M5_M4_ARTIFACT_REGISTRY_INVALID")
+        canonical: dict[str, Mapping[str, Any]] = {}
+        for artifact in artifacts:
+            cls._validate_artifact_ref_metadata(artifact, "M5_M4_CANONICAL_ARTIFACT")
+            artifact_id = str(artifact["artifact_id"])
+            if artifact_id in canonical:
+                raise ResearchB3Error(f"M5_M4_ARTIFACT_REGISTRY_DUPLICATE:{artifact_id}")
+            canonical[artifact_id] = artifact
+        for name, ref in m4_refs.items():
+            cls._validate_artifact_ref_metadata(ref, f"M5_M4_INPUT:{name}")
+            expected = canonical.get(str(ref["artifact_id"]))
+            if expected is None:
+                raise ResearchB3Error(f"M5_M4_ARTIFACT_NOT_DECLARED: {name}")
+            if any(ref.get(field) != expected.get(field) for field in (
+                "artifact_id", "artifact_kind", "artifact_version", "checksum",
+            )):
+                raise ResearchB3Error(f"M5_M4_INPUT_BINDING_INVALID: {name}")
+
+    @staticmethod
     def _known_refs(value: Any, known: set[str], label: str, *, allow_empty: bool = True) -> set[str]:
         refs = value if isinstance(value, list) else []
         if not allow_empty and not refs:
@@ -1772,6 +1889,26 @@ class ResearchB3Orchestrator:
         if unresolved:
             raise ResearchB3Error(f"{label}_EVIDENCE_REF_UNRESOLVED: {', '.join(unresolved)}")
         return set(refs)
+
+    @classmethod
+    def _validate_m5_evidence_domains(
+        cls, separation: Any, evidence_domains: Mapping[str, set[str]] | None, label: str,
+    ) -> None:
+        if evidence_domains is None or not isinstance(separation, Mapping):
+            return
+        for field, domain in (
+            ("work_evidence_refs", WORK_EVIDENCE_DOMAIN),
+            ("external_reality_evidence_refs", EXTERNAL_REALITY_EVIDENCE_DOMAIN),
+        ):
+            refs = separation.get(field, [])
+            if not isinstance(refs, list):
+                continue
+            for evidence_ref in refs:
+                known_domains = evidence_domains.get(str(evidence_ref), set())
+                if known_domains and domain not in known_domains:
+                    raise ResearchB3Error(
+                        f"{label}_EVIDENCE_TYPES_MIXED:EVIDENCE_DOMAIN_RECLASSIFICATION:{evidence_ref}"
+                    )
 
     @classmethod
     def _validate_m5_evidence_separation(cls, value: Mapping[str, Any], known: set[str], label: str) -> set[str]:
@@ -1791,10 +1928,14 @@ class ResearchB3Orchestrator:
         known: set[str],
         plan: Mapping[str, Any],
         known_subject_ids: Mapping[str, set[str]] | None = None,
+        evidence_domains: Mapping[str, set[str]] | None = None,
     ) -> None:
         if not isinstance(value, Mapping) or not isinstance(value.get("claims"), list) or not value["claims"]:
             raise ResearchB3Error("M5_CLAIMS_REQUIRED")
         domain_refs = cls._validate_m5_evidence_separation(value, known, "M5_CLAIMS")
+        cls._validate_m5_evidence_domains(
+            value.get("evidence_type_separation"), evidence_domains, "M5_CLAIMS"
+        )
         claim_ids = {str(item.get("claim_id")) for item in value["claims"] if isinstance(item, Mapping)}
         if len(claim_ids) != len(value["claims"]) or "None" in claim_ids:
             raise ResearchB3Error("M5_CLAIM_IDS_INVALID")
@@ -1813,6 +1954,10 @@ class ResearchB3Orchestrator:
             )
             if work & external or source_refs != work | external:
                 raise ResearchB3Error(f"CLAIM:{claim.get('claim_id')}_EVIDENCE_TYPES_MIXED")
+            cls._validate_m5_evidence_domains(
+                {"work_evidence_refs": list(work), "external_reality_evidence_refs": list(external)},
+                evidence_domains, f"CLAIM:{claim.get('claim_id')}"
+            )
             if not supporting.issubset(source_refs):
                 raise ResearchB3Error(f"CLAIM:{claim.get('claim_id')}_SUPPORTING_EVIDENCE_NOT_IN_SOURCE_REFS")
             top_separation = value["evidence_type_separation"]
@@ -1977,6 +2122,7 @@ class ResearchB3Orchestrator:
         cls, value: Any, provisional: Mapping[str, Any], ledger: Mapping[str, Any], comparison: Mapping[str, Any],
         claim_stops: list[dict[str, Any]], known: set[str], plan: Mapping[str, Any], claims_ref: Mapping[str, Any],
         comparison_ref: Mapping[str, Any], claim_stops_ref: Mapping[str, Any],
+        effective_work_ids: set[str], investigated_work_ids: set[str], verified_evidence_refs: set[str],
     ) -> None:
         if not isinstance(value, Mapping):
             raise ResearchB3Error("M5_REFINED_THESIS_REQUIRED")
@@ -1996,6 +2142,14 @@ class ResearchB3Orchestrator:
             cls._known_refs(value.get(field), known, f"M5_THESIS_{field.upper()}", allow_empty=False)
         for dimension in value.get("refinement_dimensions", []):
             cls._known_refs(dimension.get("evidence_refs"), known, "M5_THESIS_DIMENSION", allow_empty=False)
+        cls._known_refs(
+            value.get("evidence_dependencies"), verified_evidence_refs,
+            "M5_THESIS_EVIDENCE_DEPENDENCIES", allow_empty=False,
+        )
+        authorized_investigated = effective_work_ids & investigated_work_ids
+        for contribution in value.get("material_contributions", []):
+            if not isinstance(contribution, Mapping) or str(contribution.get("material_id")) not in authorized_investigated:
+                raise ResearchB3Error("M5_THESIS_MATERIAL_CONTRIBUTION_WORK_INVALID")
         expected_lineage = {provisional.get("thesis_id"), claims_ref.get("artifact_id"), comparison_ref.get("artifact_id"), claim_stops_ref.get("artifact_id")}
         if not expected_lineage.issubset(set(value.get("lineage", []))):
             raise ResearchB3Error("M5_THESIS_LINEAGE_INCOMPLETE")
