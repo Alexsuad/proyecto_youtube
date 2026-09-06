@@ -11,6 +11,7 @@ from src.application.contracts import EntryMode, HumanInput, InputValidationErro
 from src.application.interaction import TerminalInteraction, UserCancelled
 from src.application.service import EpisodeApplicationService
 from src.application.storage import StorageError, VaultEpisodeStore
+from src.application.research_m7 import ResearchM7Error, ResearchM7SyntheticRunner
 from src.application.topic_belonging import ExecutionCognitiveBoundary, build_topic_belonging_service
 from src.core.p2_real_reporter import build_p2_report, render_p2_report
 
@@ -310,6 +311,45 @@ def _administrative_close(args: argparse.Namespace) -> int:
     return 0
 
 
+def _research_m7_synthetic(args: argparse.Namespace) -> int:
+    try:
+        runner = ResearchM7SyntheticRunner(
+            args.state_dir,
+            selection_mode=args.selection_mode,
+            delegated_scope=args.delegated_scope,
+        )
+        human_input = None
+        if not args.resume:
+            human_input = {
+                "episode_id": args.episodio_id,
+                "topic": args.tema,
+                "content": args.tema,
+                "initial_question": args.pregunta,
+                "context": args.contexto,
+                "works": list(args.obras or []),
+                "target_final_works": args.target_final_works,
+                "selected_work_ids": list(args.obras or []),
+            }
+        state = runner.run(
+            human_input,
+            resume=args.resume,
+            stop_after_stage=args.interrumpir_despues,
+            simulate_no_progress=args.no_progress,
+        )
+        runner.assert_software_boundaries(state)
+    except (ResearchM7Error, StorageError, PermissionError, ValueError) as exc:
+        print(f"ERROR: {exc}")
+        return 2
+    print(f"M7 synthetic state: {state['status']}")
+    print(f"Checkpoint: {args.state_dir}")
+    if state.get("research_vertical_e2e") == "PASS":
+        print("PLAN_012_RESEARCH_VERTICAL_E2E: PASS")
+    print("PLAN_012_REAL_AI_EXECUTION: NO")
+    print("PLAN_012_PRODUCT_USE_AUTHORIZED: NO")
+    print("PLAN_012_P2_REAL_EXECUTION: NO")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="proyecto-youtube", description="Operar un episodio sin conocer los contratos internos.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -382,6 +422,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     administrative_close.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
     administrative_close.set_defaults(handler=_administrative_close)
+    research_m7 = subparsers.add_parser(
+        "investigar-sintetico",
+        help="Recorrer la vertical Research V2 sintética hasta el handoff B5-I3",
+    )
+    research_m7.add_argument("--state-dir", required=True, type=Path)
+    research_m7.add_argument("--resume", action="store_true")
+    research_m7.add_argument("--episodio-id", default="EP-M7")
+    research_m7.add_argument("--tema")
+    research_m7.add_argument("--pregunta")
+    research_m7.add_argument("--contexto")
+    research_m7.add_argument("--obras", nargs="*")
+    research_m7.add_argument("--target-final-works", type=int)
+    research_m7.add_argument("--selection-mode", choices=["MANUAL", "DELEGATED"], default="MANUAL")
+    research_m7.add_argument("--delegated-scope", nargs="*", default=[])
+    research_m7.add_argument("--interrumpir-despues", choices=["B2", "M4", "M5"])
+    research_m7.add_argument("--no-progress", action="store_true")
+    research_m7.set_defaults(handler=_research_m7_synthetic)
     return parser
 
 

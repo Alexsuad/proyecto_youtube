@@ -24,6 +24,23 @@ python -m src.cli reanudar ep_0001
 
 La aplicación consulta el índice del Vault, reconstruye la entrada persistida y vuelve a entregar el episodio al coordinador controlado. La entrada humana original queda en `00_human_input.json` y el handoff hacia `topic_belonging_input` en `01_editorial_intake_handoff.json`. Las solicitudes pendientes se guardan en `human_decision_requests.json`; una respuesta se guarda en `human_decisions.json` y su consecuencia idempotente en `workflow_transitions.json`.
 
+## Demostración técnica PLAN012 M7
+
+La demostración sintética de Research V2 usa la CLI existente y no activa proveedores reales. El caso debe declarar las obras y el tamaño objetivo; M7 no inventa una selección ni impone tres obras:
+
+```powershell
+python -m src.cli investigar-sintetico --state-dir .runtime-tmp/plan012-m7 --tema "Tema de prueba" --pregunta "¿Qué puede afirmarse con evidencia?" --obras REAL-A REAL-B REAL-C --target-final-works 3
+```
+
+La ruta persistida recorre `INTAKE → RESEARCH_PLAN → B2 → M4 → M5 → M6 → B5_I3_HANDOFF` mediante `ResearchB2Orchestrator`, `ResearchB3Orchestrator.run`, `ResearchB3Orchestrator.run_m5` y `ResearchB4Orchestrator.run_m6`. Los payloads cognitivos son fixtures sintéticos inyectados; los contratos, validación, persistencia, lineage, provenance, ResearchReady y el chequeo contractual de inputs B5-I3 son canónicos. Puede interrumpirse después de B2, M4 o M5 y reanudarse con `--resume`:
+
+```powershell
+python -m src.cli investigar-sintetico --state-dir .runtime-tmp/plan012-m7 --tema "Tema de prueba" --pregunta "¿Qué puede afirmarse con evidencia?" --obras REAL-A REAL-B REAL-C --target-final-works 3 --interrumpir-despues M5
+python -m src.cli investigar-sintetico --state-dir .runtime-tmp/plan012-m7 --resume
+```
+
+Esta modalidad demuestra integración técnica sintética, recuperación materializada local, invalidación focal, guard no-progress y el handoff de investigación hacia la frontera contractual real de B5-I3. Termina inmediatamente después de validar los inputs Research V2 y no ejecuta cognición B5-I3, `Viewer Journey`, arquitectura narrativa ni guion. No demuestra investigación real, calidad funcional, autoriza IA real, P2, product use o cierre de M7.
+
 ## Fronteras
 
 `src.cli` solo presenta preguntas y normaliza respuestas del canal `TERMINAL`. `src/application` coordina contratos, workflow y persistencia. `VaultEpisodeStore` escribe en el `vault_root` y `channel_id` de `config/local_settings.json`; la ruta puede ser local, montada o sincronizada con Drive sin añadir Google OAuth ni una dependencia de Drive.

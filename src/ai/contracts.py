@@ -21,6 +21,7 @@ class InputArtifact:
     artifact_id: str
     path: Path
     producer_run_id: str = ""
+    artifact_version: str = ""
 
 
 @dataclass
