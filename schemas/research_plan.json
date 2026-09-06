@@ -129,9 +129,12 @@
           "evidence_requirement_id": {"type": "string", "minLength": 1},
           "subquestion_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
           "evidence_kind": {"type": "string", "enum": ["WORK_EVIDENCE", "EXTERNAL_REALITY_EVIDENCE", "BOTH"]},
-          "minimum_strength": {"type": "string", "enum": ["LIMITED", "DIRECT", "PRIMARY_OR_SPECIALIST", "MULTIPLE_INDEPENDENT_SOURCES"]},
+          "minimum_strength": {"type": "string", "minLength": 1},
           "preferred_source_types": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
-          "failure_condition": {"type": ["string", "null"]}
+          "failure_condition": {"type": ["string", "null"]},
+          "claim_specific_basis": {"type": ["string", "null"]},
+          "required_evidence_properties": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "disqualifying_conditions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
         }
       }
     },
@@ -161,9 +164,19 @@
           "claim_id": {"type": "string", "minLength": 1},
           "statement": {"type": "string", "minLength": 1},
           "intended_use": {"type": "string", "minLength": 1},
-          "strength": {"type": "string", "enum": ["LIMITED", "DESCRIPTIVE", "ASSOCIATIVE", "CAUSAL", "GENERAL", "CONTROVERSIAL"]},
+          "strength": {"type": "string", "minLength": 1},
           "evidence_requirement_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
-          "material_if_false": {"type": "boolean"}
+          "material_if_false": {"type": "boolean"},
+          "claim_dimensions": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nature": {"type": "string", "minLength": 1},
+              "scope": {"type": "string", "minLength": 1},
+              "contestation": {"type": "string", "minLength": 1},
+              "conditions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+            }
+          }
         }
       }
     },

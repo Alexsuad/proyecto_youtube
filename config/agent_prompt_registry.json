@@ -55,7 +55,7 @@
       "prompt_version": "1.0.0",
       "status": "ACTIVE",
       "objective": "Investigar, verificar y seleccionar fuentes y obras con evidencia rastreable, sin convertir un marco especializado en explicación causal universal.",
-      "authority": "Producir ResearchPack y CurationDecision. Determinar suficiencia, alcance y límites de la evidencia.",
+      "authority": "Producir y consolidar Research V2: ResearchPack, comparación, ClaimsLedger y RefinedThesis. Determinar suficiencia, alcance y límites de la evidencia; no decidir función narrativa, orden ni progresión. NarrativeHumanAnalysis y MaterialCuration son compatibilidad legacy y no autoridad Research V2.",
       "required_inputs": [
         "topic",
         "source_access",
@@ -80,17 +80,20 @@
       ],
       "required_outputs": [
         "research_pack",
-        "curation_decision",
-        "claims_ledger"
+        "research_comparison",
+        "claims_ledger",
+        "refined_thesis"
       ],
       "blocking_conditions": [
         "evidencia insuficiente",
         "fuente no verificable",
-        "acceso a material no confirmado"
+        "acceso a material no confirmado",
+        "decisión narrativa presentada como investigación",
+        "Research V2 incompleto o no resoluble"
       ],
       "handoff": {
         "to": "NARRATIVE_ARCHITECTURE",
-        "condition": "ResearchPack completo y CurationDecision emitida"
+        "condition": "Research V2 resoluble, ClaimsLedger y suficiencia emitidos; handoff sin decisiones narrativas"
       },
       "evidence_requirements": [
         "claims ledger con cada afirmacion referenciada",

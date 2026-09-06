@@ -32,6 +32,26 @@ def test_research_plan_is_explicit_and_has_no_silent_three_work_default() -> Non
     assert validate_research_plan(plan)
 
 
+def test_research_plan_uses_claim_specific_evidence_dimensions_without_universal_taxonomy() -> None:
+    plan = deepcopy(VALID_FIXTURES["research_plan"])
+    plan["evidence_requirements"][0].update({
+        "minimum_strength": "primary record appropriate to the claim",
+        "claim_specific_basis": "Identity, reproducible locator and correspondence with the statement.",
+        "required_evidence_properties": ["identity", "locator", "claim_alignment"],
+        "disqualifying_conditions": ["unresolvable source"],
+    })
+    plan["critical_claims"][0].update({
+        "strength": "descriptive within declared scope",
+        "claim_dimensions": {
+            "nature": "descriptive observation",
+            "scope": "declared corpus only",
+            "contestation": "open to rival explanation",
+            "conditions": ["no causal generalization"],
+        },
+    })
+    assert validate_research_plan(plan) == []
+
+
 def test_intake_keeps_research_role_and_editorial_intent_separate() -> None:
     without_research_fields = HumanInput.create(mode="tema", content="Fenómeno").to_dict()
     assert "research_role" not in without_research_fields

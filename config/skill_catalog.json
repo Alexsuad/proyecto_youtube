@@ -232,10 +232,10 @@
     {
       "skill_id": "skill_sintesis_tesis",
       "path": ".agent/skills/skill_sintesis_tesis.md",
-      "canonical_owner": "NARRATIVE_ARCHITECTURE",
+      "canonical_owner": "RESEARCH_AND_CURATION",
       "classification": "KEEP",
-      "target_or_merge_destination": "NARRATIVE_ARCHITECTURE",
-      "rationale": "B5-I1: produce THESIS_PROVISIONAL; modo refinado diferido a B5-I2.",
+      "target_or_merge_destination": "RESEARCH_AND_CURATION",
+      "rationale": "Research V2 owns THESIS_PROVISIONAL and RefinedThesis; historical NarrativeHumanAnalysis and MaterialCuration are non-authoritative compatibility inputs only, while Narrative Architecture reads RefinedThesis read-only.",
       "covered_by_general_capability": [
         "decidir-tipo-pieza-sistema-agentico"
       ]

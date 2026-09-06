@@ -23,6 +23,8 @@ from src.application.research_b4 import ResearchB4Orchestrator, ResearchB4Persis
 from src.application.research_m7_fixture import SyntheticResearchExecutor, b5_i3_transversal_fixtures, research_plan, source_report
 from src.application.storage import _write_json_atomic
 from src.core.contract_validation import validate_against_schema, validate_research_plan, validate_research_ready_manifest
+from src.core.gate_result import GateResult
+from src.core.gate_runtime import validate_gate_result
 from src.core.invalidation import InvalidationEngine
 
 M7_VERSION = "2.0.0"
@@ -210,6 +212,47 @@ class ResearchV2B5I3Adapter:
         if any("B5-I3" not in item.get("affected_consumers", []) for item in restrictions):
             raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESTRICTIONS_NOT_RESOLVABLE")
 
+        projection = handoff.get("research_v2_projection")
+        if not isinstance(projection, Mapping):
+            raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_V2_PROJECTION_MISSING")
+        if projection.get("projection_version") != M7_VERSION:
+            raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_V2_PROJECTION_VERSION_INVALID")
+        projection_manifest = projection.get("research_ready_manifest_ref")
+        if projection_manifest != expected_manifest_ref:
+            raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_V2_PROJECTION_MANIFEST_MISMATCH")
+        selected = {str(item) for item in projection.get("selected_work_ids", [])}
+        resolved = {str(item) for item in projection.get("resolved_work_ids", [])}
+        if not selected or selected != resolved:
+            raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_V2_WORK_SET_MISMATCH")
+        research_refs = projection.get("research_refs")
+        if not isinstance(research_refs, Mapping):
+            raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_V2_REFS_MISSING")
+        for label in ("deep_phenomenon_research", "deep_work_research", "deep_fidelity", "claims_ledger", "claim_sufficiency", "post_deep_comparison", "refined_thesis"):
+            ref = research_refs.get(label)
+            if not isinstance(ref, Mapping) or not Path(str(ref.get("path") or "")).is_file():
+                raise ResearchM7Error(f"B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_V2_REF_UNRESOLVED:{label}")
+            payload = _read(str(ref["path"]))
+            if _checksum(payload) != str(ref.get("checksum")):
+                raise ResearchM7Error(f"B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_V2_REF_CHECKSUM_MISMATCH:{label}")
+        deep_work = _read(str(research_refs["deep_work_research"]["path"]))
+        deep_fidelity = _read(str(research_refs["deep_fidelity"]["path"]))
+        dossier_ids = {
+            str(item.get("work", {}).get("material_id"))
+            for item in [*(deep_work.get("dossiers", []) if isinstance(deep_work, Mapping) else []), *(deep_fidelity.get("dossiers", []) if isinstance(deep_fidelity, Mapping) else [])]
+            if isinstance(item, Mapping) and isinstance(item.get("work"), Mapping)
+        }
+        if not selected.issubset(dossier_ids):
+            raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_V2_DOSSIERS_INCOMPLETE")
+        semantic_context = handoff.get("research_v2_semantic_context")
+        if semantic_context != projection:
+            raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:SEMANTIC_CONTEXT_PROJECTION_MISMATCH")
+        legacy_boundary = handoff.get("legacy_b5_i3_preflight")
+        if not isinstance(legacy_boundary, Mapping) or legacy_boundary.get("classification") != "LEGACY_TRANSVERSAL_FIXTURE" or legacy_boundary.get("non_authoritative") is not True:
+            raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:LEGACY_BOUNDARY_INVALID")
+        forbidden_research_fields = {"function", "narrative_use", "expected_order", "sequence_rationale", "progression_map", "viewer_journey"}
+        if forbidden_research_fields.intersection(json.dumps(semantic_context, ensure_ascii=False).lower().split('"')):
+            raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:NARRATIVE_FIELDS_IN_RESEARCH_CONTEXT")
+
         expected_input_bindings = [cls._input_binding(item) for item in inputs]
         if handoff.get("b5_i3_input_bindings") != expected_input_bindings:
             raise ResearchM7Error("B5_I3_RESEARCH_HANDOFF_PRECONDITION:INPUT_BINDING_MISMATCH")
@@ -221,9 +264,17 @@ class ResearchV2B5I3Adapter:
         }
         for input_kind, manifest_kind in cls._MANIFEST_KIND_BY_INPUT.items():
             binding = next((item for item in expected_input_bindings if item["artifact_kind"] == input_kind), None)
-            if binding is None or (binding["artifact_id"], manifest_kind, binding["artifact_version"], binding["checksum"]) not in manifest_artifacts:
+            projection_ref = research_refs.get("deep_phenomenon_research") if input_kind == "research_pack" else None
+            projection_binding = bool(
+                binding and isinstance(projection_ref, Mapping)
+                and binding["artifact_version"] == str(projection_ref.get("artifact_version"))
+                and binding["checksum"] == str(projection_ref.get("checksum"))
+                and str(projection_ref.get("artifact_kind")) == manifest_kind
+            )
+            if binding is None or ((binding["artifact_id"], manifest_kind, binding["artifact_version"], binding["checksum"]) not in manifest_artifacts and not projection_binding):
                 raise ResearchM7Error(f"B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_INPUT_UNBOUND:{input_kind}")
-            if handoff.get("research_owned_inputs", {}).get(input_kind) != manifest_artifacts_by_id.get(binding["artifact_id"]):
+            expected_owned = projection_ref if projection_binding else manifest_artifacts_by_id.get(binding["artifact_id"])
+            if handoff.get("research_owned_inputs", {}).get(input_kind) != expected_owned:
                 raise ResearchM7Error(f"B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_OWNED_INPUT_BINDING:{input_kind}")
         preflight = cls.validate_full_preflight(episode_id, inputs)
         return {
@@ -236,7 +287,7 @@ class ResearchV2B5I3Adapter:
         }
 
     @classmethod
-    def build(cls, manifest: Mapping[str, Any], *, manifest_ref: Mapping[str, Any], research_pack: Mapping[str, Any], claims: Mapping[str, Any], source_access: Mapping[str, Any], refined_thesis: Mapping[str, Any], refs: list[InputArtifact], selected_work_ids: list[str]) -> dict[str, Any]:
+    def build(cls, manifest: Mapping[str, Any], *, manifest_ref: Mapping[str, Any], research_pack: Mapping[str, Any], claims: Mapping[str, Any], source_access: Mapping[str, Any], refined_thesis: Mapping[str, Any], refs: list[InputArtifact], selected_work_ids: list[str], research_v2_projection: Mapping[str, Any]) -> dict[str, Any]:
         errors = validate_research_ready_manifest(dict(manifest))
         if errors:
             raise ResearchM7Error("B5_I3_HANDOFF_MANIFEST_INVALID:" + " | ".join(errors))
@@ -250,10 +301,16 @@ class ResearchV2B5I3Adapter:
             "restrictions_checksum": _checksum(manifest.get("downstream_restrictions", [])),
         }
         manifest_artifacts_by_id = {str(item["artifact_id"]): item for item in manifest.get("research_artifacts", [])}
+        projection = dict(research_v2_projection)
+        projection_refs = projection.get("research_refs", {})
         research_owned_inputs: dict[str, dict[str, Any]] = {}
         for input_kind, manifest_kind in cls._MANIFEST_KIND_BY_INPUT.items():
             binding = next((item for item in input_bindings if item["artifact_kind"] == input_kind), None)
             owned = manifest_artifacts_by_id.get(str(binding["artifact_id"])) if binding else None
+            if input_kind == "research_pack" and isinstance(projection_refs.get("deep_phenomenon_research"), Mapping):
+                deep_ref = projection_refs["deep_phenomenon_research"]
+                if binding and binding["artifact_version"] == str(deep_ref.get("artifact_version")) and binding["checksum"] == str(deep_ref.get("checksum")):
+                    owned = copy.deepcopy(dict(deep_ref))
             if binding is None or not owned or owned.get("artifact_kind") != manifest_kind or owned.get("artifact_version") != binding["artifact_version"] or owned.get("checksum") != binding["checksum"]:
                 raise ResearchM7Error(f"B5_I3_RESEARCH_HANDOFF_PRECONDITION:RESEARCH_INPUT_UNBOUND:{input_kind}")
             research_owned_inputs[input_kind] = copy.deepcopy(owned)
@@ -270,6 +327,15 @@ class ResearchV2B5I3Adapter:
             "required_input_kinds": sorted(M3_REQUIRED_INPUT_KINDS),
             "research_owned_inputs": research_owned_inputs,
             "selected_work_ids": list(selected_work_ids),
+            "research_v2_projection": copy.deepcopy(dict(research_v2_projection)),
+            "research_v2_semantic_context": copy.deepcopy(dict(research_v2_projection)),
+            "legacy_b5_i3_preflight": {
+                "classification": "LEGACY_TRANSVERSAL_FIXTURE",
+                "status": "COMPATIBILITY_ONLY",
+                "non_authoritative": True,
+                "input_kinds": ["narrative_human_analysis", "material_curation"],
+                "not_included_in_research_v2_semantic_context": True,
+            },
             "downstream_restrictions": copy.deepcopy(manifest.get("downstream_restrictions", [])),
             "downstream_restriction_binding": restriction_binding,
             "research_lineage": {"research_artifacts": copy.deepcopy(manifest.get("research_artifacts", [])), "lineage": copy.deepcopy(manifest.get("lineage", {}))},
@@ -338,6 +404,39 @@ class ResearchM7SyntheticRunner:
     def _event(state: dict[str, Any], boundary: str, stage: str, **extra: Any) -> None:
         state.setdefault("events", []).append({"boundary": boundary, "stage": stage, "at": _now(), **extra})
 
+    def _synthetic_run_for(
+        self,
+        state: Mapping[str, Any],
+        base: Mapping[str, Any],
+        ref: Mapping[str, Any],
+        run_id: str,
+        *,
+        role: str = "RESEARCH_AND_CURATION",
+        output_kind: str = "semantic_audit",
+    ) -> dict[str, Any]:
+        """Project a materialized synthetic artifact into the canonical registry."""
+        run = copy.deepcopy(dict(base))
+        artifact_ref = f"{ref['artifact_kind']}:{ref['artifact_id']}"
+        run.update({
+            "run_id": run_id,
+            "episode_id": state["human_input"]["episode_id"],
+            "role": role,
+            "role_id": role,
+            "agent_id": run_id,
+            "actual_executor": "synthetic-fixture",
+            "status": "SUCCEEDED",
+            "output_artifact_ids": [artifact_ref],
+            "output_versions": [ref["artifact_version"]],
+            "output_checksums": [ref["checksum"]],
+            "outputs": [{
+                "artifact_kind": output_kind,
+                "artifact_id": ref["artifact_id"],
+                "artifact_ref": artifact_ref,
+                "checksum": ref["checksum"],
+            }],
+        })
+        return run
+
     def _materialize_recovery(self, state: dict[str, Any]) -> None:
         recovery_dir = self.root / f"recovery_g{state.get('generation', 1)}"
         recovery_dir.mkdir(parents=True, exist_ok=True)
@@ -349,11 +448,38 @@ class ResearchM7SyntheticRunner:
             path = recovery_dir / f"{identifier}.json"
             _write_json_atomic(path, payload)
             state["recovery_artifacts"].append({"artifact_id": f"recovery:{identifier}", "artifact_kind": "RecoveredSourceFixture" if identifier == "S1" else "RecoveredWorkFixture", "artifact_version": "1.0.0", "path": str(path), "checksum": hashlib.sha256(path.read_bytes()).hexdigest()})
+        repo_root = self.root / "canonical_repo"
+        registry_source = Path(__file__).resolve().parents[2] / "output" / "execution_provenance_registry.json"
+        registry = _read(registry_source)
+        base = copy.deepcopy(registry["runs"][0])
+        registry["runs"] = [
+            self._synthetic_run_for(
+                state,
+                base,
+                artifact,
+                f"M7-ACQUISITION-{artifact['artifact_id'].split(':', 1)[1]}",
+                role="RESEARCH_ACQUISITION",
+                output_kind="research",
+            )
+            for artifact in state["recovery_artifacts"]
+        ]
+        _write_json_atomic(repo_root / "config" / "execution_provenance_policy.json", {"schema_version": "1.0.0", "canonical_registry_path": "output/execution_provenance_registry.json"})
+        _write_json_atomic(repo_root / "output" / "execution_provenance_registry.json", registry)
 
     def _adapter(self, state: Mapping[str, Any]) -> SoftwareAcquisitionAdapter:
-        bindings = {"S1": {"request_ref": "request:S1", "execution_ref": "execution:S1", "recovery_artifact_ref": "recovery:S1", "retrieval_status": "RECOVERED", "evidence_status": "VERIFIED", "software_controlled": True}}
-        work_bindings = {str(work_id): {"request_ref": f"request:{work_id}", "execution_ref": f"execution:{work_id}", "recovery_artifact_ref": f"recovery:{work_id}", "retrieval_status": "RECOVERED", "evidence_status": "VERIFIED", "software_controlled": True, "representation_kind": "ORIGINAL_WORK", "edition_or_version": "fixture-1", "consulted_locator": f"fixture://{work_id}"} for work_id in state["human_input"]["works"]}
-        return SoftwareAcquisitionAdapter(bindings, work_bindings=work_bindings)
+        bindings = {"S1": {"request_ref": "request:S1", "execution_ref": "M7-ACQUISITION-S1", "recovery_artifact_ref": "recovery:S1", "retrieval_status": "RECOVERED", "evidence_status": "VERIFIED", "software_controlled": True}}
+        work_bindings = {str(work_id): {"request_ref": f"request:{work_id}", "execution_ref": f"M7-ACQUISITION-{work_id}", "recovery_artifact_ref": f"recovery:{work_id}", "retrieval_status": "RECOVERED", "evidence_status": "VERIFIED", "software_controlled": True, "representation_kind": "ORIGINAL_WORK", "edition_or_version": "fixture-1", "consulted_locator": f"fixture://{work_id}"} for work_id in state["human_input"]["works"]}
+        recovery_artifacts = {
+            str(item["artifact_id"]): dict(item)
+            for item in state.get("recovery_artifacts", [])
+            if isinstance(item, Mapping) and item.get("artifact_id")
+        }
+        return SoftwareAcquisitionAdapter(
+            bindings,
+            work_bindings=work_bindings,
+            recovery_artifacts=recovery_artifacts,
+            execution_registry_path=self.root / "canonical_repo" / "output" / "execution_provenance_registry.json",
+        )
 
     def _context(self, state: Mapping[str, Any]) -> dict[str, Any]:
         inp = state["human_input"]
@@ -387,26 +513,80 @@ class ResearchM7SyntheticRunner:
 
     def _provenance(self, state: Mapping[str, Any], b2: Mapping[str, Any], m4: Mapping[str, Any], m5: Mapping[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         repo_root = self.root / "canonical_repo"
-        registry = _read(Path(__file__).resolve().parents[2] / "output" / "execution_provenance_registry.json")
+        local_registry_path = repo_root / "output" / "execution_provenance_registry.json"
+        registry_source = local_registry_path if local_registry_path.is_file() else Path(__file__).resolve().parents[2] / "output" / "execution_provenance_registry.json"
+        registry = _read(registry_source)
+        prior_runs = [item for item in registry.get("runs", []) if isinstance(item, Mapping)]
         base = copy.deepcopy(registry["runs"][0])
         b2_manifest = _read(b2["execution_manifest"]["path"])
         m4_manifest = _read(m4["execution_manifest"]["path"])
         m5_manifest = _read(m5["execution_manifest"]["path"])
         refs = [b2["execution_manifest"], *b2_manifest["artifacts"], m4["execution_manifest"], *m4_manifest["artifacts"], m5["execution_manifest"], *m5_manifest["m5_outputs"], state["source_ref"]]
         unique = {(r["artifact_id"], r["artifact_kind"], r["checksum"]): r for r in refs}
-        def run_for(ref: Mapping[str, Any], run_id: str) -> dict[str, Any]:
-            run = copy.deepcopy(base)
-            run.update({"run_id": run_id, "episode_id": state["human_input"]["episode_id"], "role": "RESEARCH_AND_CURATION", "role_id": "RESEARCH_AND_CURATION", "agent_id": run_id, "actual_executor": "synthetic-fixture", "status": "SUCCEEDED", "output_artifact_ids": [f"{ref['artifact_kind']}:{ref['artifact_id']}"], "output_versions": [ref["artifact_version"]], "output_checksums": [ref["checksum"]], "outputs": [{"artifact_kind": "semantic_audit", "artifact_id": ref["artifact_id"], "artifact_ref": f"{ref['artifact_kind']}:{ref['artifact_id']}", "checksum": ref["checksum"]}]})
-            return run
-        producer = run_for(m5["execution_manifest"], "M7-M5-PRODUCER")
-        upstream = [run_for(ref, f"M7-UPSTREAM-{index:03d}") for index, ref in enumerate(unique.values(), start=1) if ref is not m5["execution_manifest"]]
-        registry["runs"] = [producer, *upstream]
+        producer = self._synthetic_run_for(state, base, m5["execution_manifest"], "M7-M5-PRODUCER")
+        upstream = [self._synthetic_run_for(state, base, ref, f"M7-UPSTREAM-{index:03d}") for index, ref in enumerate(unique.values(), start=1) if ref is not m5["execution_manifest"]]
+        preserved_runs = [
+            run for run in prior_runs
+            if run.get("role") in {"INDEPENDENT_RESEARCH_AUDITOR", "RESEARCH_ACQUISITION"}
+            and run.get("run_id") not in {producer.get("run_id"), *(item.get("run_id") for item in upstream)}
+        ]
+        registry["runs"] = [producer, *upstream, *preserved_runs]
         _write_json_atomic(repo_root / "config" / "execution_provenance_policy.json", {"schema_version": "1.0.0", "canonical_registry_path": "output/execution_provenance_registry.json"})
         _write_json_atomic(repo_root / "output" / "execution_provenance_registry.json", registry)
         provenance = {"producer_provenance": {"actor_id": "M7-M5-PRODUCER", "run_id": "M7-M5-PRODUCER", "executor_id": "synthetic-fixture", "role": "RESEARCH_AND_CURATION", "provenance_ref": "output/execution_provenance_registry.json", "artifact_ref": {key: m5["execution_manifest"][key] for key in ("artifact_id", "artifact_kind", "artifact_version", "checksum")}}, "repository_root": str(repo_root), "execution_provenance_registry_ref": "output/execution_provenance_registry.json"}
         return {"artifact_refs": [b2["execution_manifest"], *b2_manifest["artifacts"], m4["execution_manifest"], *m4_manifest["artifacts"], state["source_ref"]]}, provenance
 
-    def _materialize_b5_i3_inputs(self, state: dict[str, Any], baseline: Mapping[str, Any], m5: Mapping[str, Any]) -> list[InputArtifact]:
+    def _research_v2_projection(self, state: Mapping[str, Any], manifest: Mapping[str, Any], manifest_ref: Mapping[str, Any], m4: Mapping[str, Any], m5: Mapping[str, Any], selected_work_ids: list[str]) -> dict[str, Any]:
+        refs = {
+            "deep_phenomenon_research": m4["deep_phenomenon_research"],
+            "deep_work_research": m4["deep_work_research"],
+            "deep_fidelity": m4["deep_fidelity"],
+            "claims_ledger": m5["claims_ledger"],
+            "claim_sufficiency": m5["claim_sufficiency"],
+            "post_deep_comparison": m5["post_deep_comparison"],
+            "refined_thesis": m5["refined_thesis"],
+        }
+        selected = [str(item) for item in selected_work_ids]
+        dossier_ids: set[str] = set()
+        for label in ("deep_work_research", "deep_fidelity"):
+            payload = _read(refs[label]["path"])
+            dossier_ids.update(
+                str(item.get("work", {}).get("material_id"))
+                for item in payload.get("dossiers", [])
+                if isinstance(item, Mapping) and isinstance(item.get("work"), Mapping)
+            )
+        if set(selected) != dossier_ids:
+            raise ResearchM7Error("B5_I3_RESEARCH_V2_PROJECTION_WORK_SET_INVALID")
+        thesis_payload = _read(refs["refined_thesis"]["path"])
+        thesis_work_ids = {
+            str(item.get("material_id"))
+            for item in thesis_payload.get("material_contributions", [])
+            if isinstance(item, Mapping) and item.get("material_id")
+        }
+        if thesis_work_ids != set(selected):
+            raise ResearchM7Error("B5_I3_RESEARCH_V2_REFINED_THESIS_CONTRIBUTIONS_INVALID")
+        return {
+            "projection_version": M7_VERSION,
+            "authority": "RESEARCH_V2",
+            "selected_work_ids": selected,
+            "resolved_work_ids": sorted(dossier_ids),
+            "research_ready_manifest_ref": ResearchV2B5I3Adapter._manifest_ref(manifest_ref),
+            "research_refs": {key: _ref_payload(value) for key, value in refs.items()},
+            "research_stop_refs": {
+                "claim_sufficiency": _ref_payload(m5["claim_sufficiency"]),
+            },
+            "downstream_restrictions": copy.deepcopy(manifest.get("downstream_restrictions", [])),
+            "lineage": copy.deepcopy(manifest.get("lineage", {})),
+            "refined_thesis_material_work_ids": sorted(thesis_work_ids),
+            "refined_thesis_contribution_binding": {
+                "artifact_id": str(refs["refined_thesis"]["artifact_id"]),
+                "checksum": str(refs["refined_thesis"]["checksum"]),
+                "work_ids": sorted(thesis_work_ids),
+            },
+            "legacy_compatibility_inputs_not_authoritative": ["narrative_human_analysis", "material_curation"],
+        }
+
+    def _materialize_b5_i3_inputs(self, state: dict[str, Any], baseline: Mapping[str, Any], m4: Mapping[str, Any], m5: Mapping[str, Any]) -> list[InputArtifact]:
         source = self._context(state)["source_access"]
         claims = _read(m5["claims_ledger"]["path"])
         thesis = _read(m5["refined_thesis"]["path"])
@@ -416,7 +596,7 @@ class ResearchM7SyntheticRunner:
             topic=str(state["human_input"]["topic"]),
             works=[str(item) for item in state["human_input"]["works"]],
             profile=profile,
-            research_pack=baseline["phenomenon_base_research"],
+            research_pack=_read(m4["deep_phenomenon_research"]["path"]),
             source_report_payload=source,
             claims_ledger=claims,
             refined_thesis_payload=thesis,
@@ -424,12 +604,12 @@ class ResearchM7SyntheticRunner:
         )
         b2_manifest_ref = next(item for item in state["artifacts"] if item["stage"] == "B2")
         b2_manifest = _read(b2_manifest_ref["path"])
-        research_ref = next(ref for ref in b2_manifest["artifacts"] if ref["artifact_kind"] == "ResearchPack" and ref["artifact_id"] == baseline["phenomenon_base_research"]["research_id"])
+        research_ref = dict(m4["deep_phenomenon_research"])
         refs: list[InputArtifact] = [
             InputArtifact("human_input", str(fixtures["human_input"]["interaction_id"]), self.root / "b5_i3_inputs" / f"g{state.get('generation', 1)}" / "human_input.json", "M7-TRANSVERSAL-FIXTURE"),
             InputArtifact("active_editorial_profile_reference", "ACTIVE_PROFILE_REFERENCE", self.root / "b5_i3_inputs" / f"g{state.get('generation', 1)}" / "active_editorial_profile_reference.json", "M7-PROFILE"),
             InputArtifact("episode_brief", str(fixtures["episode_brief"]["episode_id"]), self.root / "b5_i3_inputs" / f"g{state.get('generation', 1)}" / "episode_brief.json", "M7-TRANSVERSAL-FIXTURE"),
-            InputArtifact("research_pack", str(baseline["phenomenon_base_research"]["research_id"]), Path(research_ref["path"]), "M7-B2", str(research_ref["artifact_version"])),
+            InputArtifact("research_pack", str(_read(research_ref["path"])["research_id"]), Path(research_ref["path"]), "M7-M4", str(research_ref["artifact_version"])),
             InputArtifact("claims_ledger", str(claims["ledger_id"]), Path(m5["claims_ledger"]["path"]), "M7-M5", str(m5["claims_ledger"]["artifact_version"])),
             InputArtifact("source_access_and_evidence_report", str(source["report_id"]), Path(state["source_ref"]["path"]), "M7-SOURCE", str(state["source_ref"]["artifact_version"])),
             InputArtifact("narrative_human_analysis", str(fixtures["narrative_human_analysis"]["analysis_id"]), self.root / "b5_i3_inputs" / f"g{state.get('generation', 1)}" / "narrative_human_analysis.json", "M7-TRANSVERSAL-FIXTURE"),
@@ -457,14 +637,18 @@ class ResearchM7SyntheticRunner:
             _write_json_atomic(item.path, payload)
         return refs
 
-    def _validate_consumer(self, state: dict[str, Any], manifest: Mapping[str, Any], baseline: Mapping[str, Any], m5: Mapping[str, Any]) -> dict[str, Any]:
+    def _validate_consumer(self, state: dict[str, Any], manifest: Mapping[str, Any], baseline: Mapping[str, Any], m4: Mapping[str, Any], m5: Mapping[str, Any]) -> dict[str, Any]:
         source = self._context(state)["source_access"]
         claims = _read(m5["claims_ledger"]["path"])
         thesis = _read(m5["refined_thesis"]["path"])
-        inputs = self._materialize_b5_i3_inputs(state, baseline, m5)
+        inputs = self._materialize_b5_i3_inputs(state, baseline, m4, m5)
         manifest_ref = next(item for item in state["artifacts"] if item["stage"] == "M6")
         comparison = _read(m5["post_deep_comparison"]["path"])
-        return ResearchV2B5I3Adapter.build(manifest, manifest_ref=manifest_ref, research_pack=baseline["phenomenon_base_research"], claims=claims, source_access=source, refined_thesis=thesis, refs=inputs, selected_work_ids=[str(item) for item in comparison["selected_work_ids"]])
+        m4_ref = next(item for item in state["artifacts"] if item["stage"] == "M4")
+        m4_result = self._m4_result(m4_ref)
+        selected = [str(item) for item in comparison["selected_work_ids"]]
+        projection = self._research_v2_projection(state, manifest, manifest_ref, m4_result, m5, selected)
+        return ResearchV2B5I3Adapter.build(manifest, manifest_ref=manifest_ref, research_pack=_read(m4_result["deep_phenomenon_research"]["path"]), claims=claims, source_access=source, refined_thesis=thesis, refs=inputs, selected_work_ids=selected, research_v2_projection=projection)
 
     def _b2_result_from_state(self, state: Mapping[str, Any]) -> dict[str, Any]:
         manifest_ref = next(item for item in state["artifacts"] if item["stage"] == "B2")
@@ -480,6 +664,117 @@ class ResearchM7SyntheticRunner:
         for item in manifest["m5_outputs"]:
             result[{"ClaimsLedger": "claims_ledger", "ResearchStopDecisionCollection": "claim_sufficiency", "ResearchComparison": "post_deep_comparison", "RefinedThesis": "refined_thesis"}[item["artifact_kind"]]] = item
         return result
+
+    @staticmethod
+    def _coord_ref(path: Path, *, artifact_id: str, artifact_kind: str, artifact_version: str = M7_VERSION) -> dict[str, str]:
+        payload = _read(path)
+        return {
+            "artifact_id": artifact_id,
+            "artifact_kind": artifact_kind,
+            "artifact_version": artifact_version,
+            "path": str(path),
+            "checksum": _checksum(payload),
+        }
+
+    @staticmethod
+    def _verify_coord_ref(ref: Mapping[str, Any], label: str) -> None:
+        path = Path(str(ref.get("path") or ""))
+        if not path.is_file():
+            raise ResearchM7Error(f"M7_RECOVERY_{label}_MISSING")
+        payload_checksum = _checksum(_read(path))
+        if payload_checksum != str(ref.get("checksum") or ""):
+            raise ResearchM7Error(f"M7_RECOVERY_{label}_CHECKSUM_MISMATCH")
+
+    def _reconcile_persisted_stages(self, state: dict[str, Any]) -> None:
+        """Promote valid canonical files when the coordination checkpoint lagged."""
+        root = self.root / f"canonical_g{state.get('generation', 1)}"
+        b2_root = root / "b2"
+        b3_root = root / "b3"
+        artifacts = {str(item.get("stage")): item for item in state.get("artifacts", [])}
+        changed = False
+
+        b2_manifest_path = b2_root / "research_b2_execution.json"
+        if b2_manifest_path.is_file():
+            manifest = _read(b2_manifest_path)
+            if manifest.get("manifest_type") != "RESEARCH_B2_EXECUTION":
+                raise ResearchM7Error("M7_RECOVERY_B2_MANIFEST_INVALID")
+            plan_path = b2_root / "research_plan.json"
+            if not plan_path.is_file():
+                raise ResearchM7Error("M7_RECOVERY_B2_RESEARCH_PLAN_MISSING")
+            plan = _read(plan_path)
+            plan_ref = self._coord_ref(
+                plan_path,
+                artifact_id=str(plan.get("research_plan_id") or ""),
+                artifact_kind="ResearchPlan",
+                artifact_version=str(plan.get("research_contract_version") or M7_VERSION),
+            )
+            if not plan_ref["artifact_id"]:
+                raise ResearchM7Error("M7_RECOVERY_B2_RESEARCH_PLAN_INVALID")
+            for item in manifest.get("artifacts", []):
+                self._verify_coord_ref(item, "B2_ARTIFACT")
+            b2_ref = self._coord_ref(
+                b2_manifest_path,
+                artifact_id=str(manifest.get("research_plan_id") or f"{plan_ref['artifact_id']}:B2"),
+                artifact_kind="ResearchB2ExecutionManifest",
+                artifact_version=str(manifest.get("manifest_version") or M7_VERSION),
+            )
+            if "RESEARCH_PLAN" not in artifacts:
+                self._store_coord(state, "RESEARCH_PLAN", plan_ref, kind="ResearchPlan")
+                artifacts["RESEARCH_PLAN"] = state["artifacts"][-1]
+                changed = True
+            else:
+                self._verify_coord_ref(artifacts["RESEARCH_PLAN"], "RESEARCH_PLAN")
+            if "B2" not in artifacts:
+                self._store_coord(state, "B2", b2_ref, kind="ResearchB2ExecutionManifest")
+                artifacts["B2"] = state["artifacts"][-1]
+                changed = True
+            else:
+                self._verify_coord_ref(artifacts["B2"], "B2")
+            source_path = root / "source_access_and_evidence_report.json"
+            if source_path.is_file() and "source_ref" not in state:
+                source = _read(source_path)
+                state["source_ref"] = self._coord_ref(
+                    source_path,
+                    artifact_id=f"{plan_ref['artifact_id']}:SOURCE_ACCESS",
+                    artifact_kind="SourceAccessAndEvidenceReport",
+                    artifact_version=str(source.get("report_version") or "2.0.0"),
+                )
+                state.setdefault("canonical_refs", {})["SourceAccessAndEvidenceReport"] = [state["source_ref"]]
+                changed = True
+
+        for stage, filename, kind, suffix in (
+            ("M4", "research_m4_execution.json", "ResearchM4ExecutionManifest", ":M4"),
+            ("M5", "research_m5_execution.json", "ResearchM5ExecutionManifest", ":M5"),
+        ):
+            path = b3_root / filename
+            if not path.is_file():
+                continue
+            manifest = _read(path)
+            expected_type = f"RESEARCH_{stage}_EXECUTION"
+            if manifest.get("manifest_type") != expected_type:
+                raise ResearchM7Error(f"M7_RECOVERY_{stage}_MANIFEST_INVALID")
+            if stage not in artifacts:
+                plan_id = str(_read(b2_root / "research_plan.json").get("research_plan_id") or "")
+                ref = self._coord_ref(
+                    path,
+                    artifact_id=f"{plan_id}{suffix}",
+                    artifact_kind=kind,
+                    artifact_version=str(manifest.get("manifest_version") or M7_VERSION),
+                )
+                self._store_coord(state, stage, ref, kind=kind)
+                artifacts[stage] = state["artifacts"][-1]
+                changed = True
+            else:
+                self._verify_coord_ref(artifacts[stage], stage)
+
+        if changed:
+            completed = list(state.get("completed_stages", []))
+            for stage in ("INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5"):
+                if stage in artifacts and stage not in completed:
+                    completed.append(stage)
+            state["completed_stages"] = [stage for stage in STAGES if stage in completed]
+            state.update({"status": "INTERRUPTED", "updated_at": _now()})
+            self.store.save(state)
 
     def _mark_handoff_stale(self, state: dict[str, Any], reason: str) -> None:
         ref = next((item for item in state.get("artifacts", []) if item.get("stage") == "B5_I3_HANDOFF"), None)
@@ -513,14 +808,33 @@ class ResearchM7SyntheticRunner:
         context = self._context(state)
         context.update(provenance)
         execution_root = self.root / f"canonical_g{state.get('generation', 1)}"
-        m6 = ResearchB4Orchestrator(executor, ResearchB4Persistence(execution_root / "b3"), _test_provenance_repository_root=Path(provenance["repository_root"])).run_m6(m5, context=context, research_chain=chain, invalidation_engine=self.invalidation)
-        manifest = _read(m6["research_ready_manifest"]["path"])
+        m6_persistence = ResearchB4Persistence(execution_root / "b3")
+        manifest_path = execution_root / "b3" / "research_ready_manifest_m6.json"
+        gate_path = execution_root / "b3" / "research_ready_gate.json"
+        if manifest_path.is_file() and gate_path.is_file():
+            manifest = _read(manifest_path)
+            gate = _read(gate_path)
+            manifest_errors = validate_research_ready_manifest(manifest)
+            if manifest_errors:
+                raise ResearchM7Error("M7_RECOVERY_M6_MANIFEST_INVALID:" + " | ".join(manifest_errors))
+            try:
+                validate_gate_result(GateResult.from_dict(gate))
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ResearchM7Error("M7_RECOVERY_M6_GATE_INVALID") from exc
+            m6 = {
+                "status": manifest.get("research_ready_state"),
+                "research_ready_manifest": {"artifact_id": manifest["manifest_id"], "artifact_kind": "ResearchReadyManifest", "artifact_version": str(manifest.get("research_version", M7_VERSION)), "path": str(manifest_path), "checksum": _checksum(manifest)},
+                "research_ready_gate": {"artifact_id": f"{m5['execution_manifest']['artifact_id']}:M6:RESEARCH_READY_GATE", "artifact_kind": "GateResult", "artifact_version": M7_VERSION, "path": str(gate_path), "checksum": _checksum(gate)},
+            }
+        else:
+            m6 = ResearchB4Orchestrator(executor, m6_persistence, _test_provenance_repository_root=Path(provenance["repository_root"])).run_m6(m5, context=context, research_chain=chain, invalidation_engine=self.invalidation)
+            manifest = _read(m6["research_ready_manifest"]["path"])
         self._store_coord(state, "M6", m6["research_ready_manifest"], kind="ResearchReadyManifest")
         state["canonical_refs"]["M6Gate"] = [m6["research_ready_gate"]]
         state["canonical_invocations"] = {**state.get("canonical_invocations", {}), "M6": "ResearchB4Orchestrator.run_m6"}
         state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5", "M6"]
         self.store.save(state)
-        handoff = self._validate_consumer(state, manifest, baseline, m5)
+        handoff = self._validate_consumer(state, manifest, baseline, m4, m5)
         handoff_path = execution_root / "b5_i3_handoff.json"
         _write_json_atomic(handoff_path, handoff)
         self._store_coord(state, "B5_I3_HANDOFF", {"artifact_id": f"{manifest['manifest_id']}:B5_I3", "artifact_kind": "ResearchV2B5I3Handoff", "artifact_version": M7_VERSION, "path": str(handoff_path), "checksum": hashlib.sha256(handoff_path.read_bytes()).hexdigest()}, kind="ResearchV2B5I3Handoff")
@@ -552,7 +866,7 @@ class ResearchM7SyntheticRunner:
         b2 = self._b2_result_from_state(state)
         baseline = self._baseline(b2)
         plan = _read(b2["research_plan"]["path"])
-        m4 = self._m4_result(next(item for item in state["artifacts"] if item["stage"] == "M4"))
+        m4 = self._m4_result(next(item for item in state["artifacts"] if item["stage"] == "M4")) if start_stage != "M4" else None
         if start_stage == "M4":
             selected = list(inp["selected_work_ids"])
             if self.selection_mode == "DELEGATED" and inp.get("replace_work_id") and inp.get("substitute_work_id"):
@@ -588,7 +902,7 @@ class ResearchM7SyntheticRunner:
         state["canonical_refs"]["M6Gate"] = [m6["research_ready_gate"]]
         state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5", "M6"]
         self.store.save(state)
-        handoff = self._validate_consumer(state, manifest, baseline, m5)
+        handoff = self._validate_consumer(state, manifest, baseline, m4, m5)
         handoff_path = execution_root / "b5_i3_handoff.json"
         _write_json_atomic(handoff_path, handoff)
         self._store_coord(state, "B5_I3_HANDOFF", {"artifact_id": f"{manifest['manifest_id']}:B5_I3", "artifact_kind": "ResearchV2B5I3Handoff", "artifact_version": M7_VERSION, "path": str(handoff_path), "checksum": hashlib.sha256(handoff_path.read_bytes()).hexdigest()}, kind="ResearchV2B5I3Handoff")
@@ -692,7 +1006,7 @@ class ResearchM7SyntheticRunner:
         state["canonical_refs"]["M6Gate"] = [m6["research_ready_gate"]]
         state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5", "M6"]
         self.store.save(state)
-        handoff = self._validate_consumer(state, manifest, baseline, m5)
+        handoff = self._validate_consumer(state, manifest, baseline, m4, m5)
         handoff_path = execution_root / "b5_i3_handoff.json"
         _write_json_atomic(handoff_path, handoff)
         self._store_coord(state, "B5_I3_HANDOFF", {"artifact_id": f"{manifest['manifest_id']}:B5_I3", "artifact_kind": "ResearchV2B5I3Handoff", "artifact_version": M7_VERSION, "path": str(handoff_path), "checksum": hashlib.sha256(handoff_path.read_bytes()).hexdigest()}, kind="ResearchV2B5I3Handoff")
@@ -703,6 +1017,8 @@ class ResearchM7SyntheticRunner:
         return state
 
     def run(self, human_input: Mapping[str, Any] | None = None, *, resume: bool = False, stop_after_stage: str | None = None, simulate_no_progress: bool = False) -> dict[str, Any]:
+        if resume:
+            return self.resume(human_input=human_input)
         state = self._state(human_input, resume)
         if state.get("status") == "COMPLETED":
             return state
@@ -712,12 +1028,17 @@ class ResearchM7SyntheticRunner:
             raise ResearchM7Error("M7_STOP_STAGE_NOT_IMPLEMENTED_AT_CANONICAL_BOUNDARY")
         return self._execute(state, stop_after_stage=stop_after_stage, simulate_no_progress=simulate_no_progress)
 
-    def resume(self) -> dict[str, Any]:
-        state = self._state(None, True)
+    def resume(self, human_input: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        state = self._state(human_input, True)
         if state.get("status") == "COMPLETED":
             return state
+        self._reconcile_persisted_stages(state)
         if state.get("completed_stages", [])[-1:] == ["M5"]:
             return self._resume_m6_and_handoff(state)
+        if state.get("completed_stages", [])[-1:] == ["M4"]:
+            return self._execute_from_stage(state, "M5")
+        if state.get("completed_stages", [])[-1:] == ["B2"]:
+            return self._execute_from_stage(state, "M4")
         if state.get("invalidated_stages"):
             start_stage = next((stage for stage in STAGES if stage in set(state["invalidated_stages"])), None)
             if start_stage == "B2":
@@ -749,9 +1070,28 @@ class ResearchM7SyntheticRunner:
             raise ResearchM7Error("M7_REOPEN_DEPENDENCY_UNKNOWN")
         result = self.invalidate(stages[dependency_artifact_id])
         if result.get("human_input", {}).get("deep_stop_status") == "MORE_RESEARCH_REQUIRED":
-            result["human_input"]["deep_stop_status"] = "SUFFICIENT_FOR_INTENDED_USE"
-            result["human_input"]["_research_stop_reopened"] = True
-            result["research_stop_route"] = "REOPENED_AND_RESOLVED"
+            recovery_dir = self.root / f"recovery_g{result.get('generation', 1)}"
+            recovery_dir.mkdir(parents=True, exist_ok=True)
+            evidence_path = recovery_dir / "focal_research_evidence.json"
+            evidence = {
+                "evidence_id": f"{result['run_id']}:FOCAL:NEW-EVIDENCE",
+                "episode_id": result["human_input"]["episode_id"],
+                "source_id": "S1",
+                "content": "Fixture adicional materializado para reabrir ResearchStop.",
+                "synthetic": True,
+                "materialization": "SOFTWARE_CONTROLLED_RECOVERY",
+            }
+            _write_json_atomic(evidence_path, evidence)
+            evidence_ref = {
+                "artifact_id": f"recovery:{evidence['evidence_id']}",
+                "artifact_kind": "RecoveredFocalResearchEvidence",
+                "artifact_version": "1.0.0",
+                "path": str(evidence_path),
+                "checksum": hashlib.sha256(evidence_path.read_bytes()).hexdigest(),
+            }
+            result.setdefault("recovery_artifacts", []).append(evidence_ref)
+            result["human_input"]["_research_stop_new_evidence_ref"] = evidence_ref
+            result["research_stop_route"] = "REOPENED_PENDING_NEW_COGNITION"
             self.store.save(result)
         return result
 

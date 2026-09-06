@@ -284,9 +284,9 @@ def research_plan(human_input: Mapping[str, Any]) -> dict[str, Any]:
         "scope": {"included": [str(human_input["topic"]), "obras declaradas por el input"], "excluded": ["Arquitectura narrativa"]},
         "dimensions": [{"dimension_id": "D-PHENOMENON", "label": "Fenómeno", "research_question": "¿Qué evidencia lo describe?"}],
         "subquestions": [{"subquestion_id": "SQ-1", "dimension_id": "D-PHENOMENON", "question": "¿Qué evidencia lo describe?"}],
-        "evidence_requirements": [{"evidence_requirement_id": "ER-1", "subquestion_refs": ["SQ-1"], "evidence_kind": "EXTERNAL_REALITY_EVIDENCE", "minimum_strength": "PRIMARY_OR_SPECIALIST", "preferred_source_types": ["PRIMARY_SOURCE"], "failure_condition": "No se puede sostener el claim."}],
+        "evidence_requirements": [{"evidence_requirement_id": "ER-1", "subquestion_refs": ["SQ-1"], "evidence_kind": "EXTERNAL_REALITY_EVIDENCE", "minimum_strength": "Fuente primaria o especialista adecuada al claim concreto.", "preferred_source_types": ["PRIMARY_SOURCE"], "failure_condition": "No se puede sostener el claim.", "claim_specific_basis": "Identidad de fuente, localizador reproducible y correspondencia con la afirmación.", "required_evidence_properties": ["identity", "locator", "claim_alignment"], "disqualifying_conditions": ["fuente no verificable"]}],
         "source_strategy": [{"strategy_id": "SS-1", "source_types": ["PRIMARY_SOURCE"], "purpose": "Contrastar el fenómeno.", "limitations": ["Acceso controlado."]}],
-        "critical_claims": [{"claim_id": "CL-1", "statement": "El fenómeno presenta una característica observable.", "intended_use": "CENTRAL_CLAIM_SUPPORT", "strength": "DESCRIPTIVE", "evidence_requirement_refs": ["ER-1"], "material_if_false": True}],
+        "critical_claims": [{"claim_id": "CL-1", "statement": "El fenómeno presenta una característica observable.", "intended_use": "CENTRAL_CLAIM_SUPPORT", "strength": "Afirmación descriptiva dentro del alcance declarado.", "evidence_requirement_refs": ["ER-1"], "material_if_false": True, "claim_dimensions": {"nature": "descriptive observation", "scope": "fixture and declared phenomenon only", "contestation": "open to rival explanation", "conditions": ["no causal generalization"]}}],
         "rival_refutation": [{"rival_id": "RV-1", "explanation": "Explicación alternativa.", "refutation_signals": ["Evidencia incompatible."], "evidence_requirement_refs": ["ER-1"]}],
         "gaps_risks": [{"gap_id": "G-1", "kind": "EVIDENCE", "description": "Falta transferencia externa.", "material_impact": "Limita el claim.", "mitigation": "Mantener alcance limitado."}],
         "potential_specialists": [],
@@ -422,7 +422,8 @@ class SyntheticResearchExecutor:
             selected = list(self.input.get("_effective_selected_work_ids", self.work_ids))
             return {"selected_work_ids": selected, "set_rationale": "Conjunto delegado dentro del alcance autorizado.", "evidence_refs": [f"D-{work_id}" for work_id in selected], "criteria_used": ["evidencia", "fidelidad", "complementariedad"], "limitations": ["No es decisión narrativa final."]}
         if stage == "DEEP_PHENOMENON_SUFFICIENCY":
-            return sufficiency(self.research_id, "PHENOMENON", self.research_id, "DEEP_PHENOMENON_RESEARCH", self.stop_status)
+            status = "SUFFICIENT_FOR_INTENDED_USE" if self.input.get("_research_stop_new_evidence_ref") else self.stop_status
+            return sufficiency(self.research_id, "PHENOMENON", self.research_id, "DEEP_PHENOMENON_RESEARCH", status)
         if stage in {"DEEP_WORK_RESEARCH", "DEEP_FIDELITY"}:
             work_id = request.prepared_contract["input_payload"].get("work_id")
             value = deep_research(self.episode_id, self.research_id, str(work_id))

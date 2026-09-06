@@ -9,7 +9,9 @@ import pytest
 
 from src.ai.contracts import InputArtifact
 from src.ai.execution import M3_REQUIRED_INPUT_KINDS
+from src.application.research_b2 import SoftwareAcquisitionAdapter
 from src.application.research_m7 import ResearchM7Error, ResearchM7SyntheticRunner, ResearchV2B5I3Adapter
+from src.application.research_m7_fixture import phenomenon
 from src.cli import main
 
 
@@ -125,7 +127,6 @@ def test_b5_i3_producer_run_ids_are_pure_provenance(tmp_path):
     state = ResearchM7SyntheticRunner(tmp_path).run(_input())
     handoff = _read_stage(state, "B5_I3_HANDOFF")
     manifest_ref = next(item for item in state["artifacts"] if item["stage"] == "M6")
-    manifest_token = f"{manifest_ref['artifact_id']}@{manifest_ref['checksum']}"
     producer_ids = {
         item["artifact_kind"]: item["producer_run_id"]
         for item in handoff["b5_i3_input_bindings"]
@@ -134,7 +135,7 @@ def test_b5_i3_producer_run_ids_are_pure_provenance(tmp_path):
         "human_input": "M7-TRANSVERSAL-FIXTURE",
         "active_editorial_profile_reference": "M7-PROFILE",
         "episode_brief": "M7-TRANSVERSAL-FIXTURE",
-        "research_pack": "M7-B2",
+        "research_pack": "M7-M4",
         "claims_ledger": "M7-M5",
         "source_access_and_evidence_report": "M7-SOURCE",
         "narrative_human_analysis": "M7-TRANSVERSAL-FIXTURE",
@@ -146,7 +147,6 @@ def test_b5_i3_producer_run_ids_are_pure_provenance(tmp_path):
         "youtube_adaptation_review": "M7-TRANSVERSAL-FIXTURE",
     }
     assert all("|" not in producer_id for producer_id in producer_ids.values())
-    assert all(manifest_token not in producer_id for producer_id in producer_ids.values())
     assert handoff["research_ready_manifest_ref"]["checksum"] == manifest_ref["checksum"]
     assert handoff["b5_i3_input_set_checksum"]
     assert handoff["downstream_restriction_binding"]["manifest_checksum"] == manifest_ref["checksum"]
@@ -231,6 +231,193 @@ def test_resume_reuses_canonical_artifacts_after_m5(tmp_path):
     assert ResearchM7SyntheticRunner(tmp_path).resume()["status"] == "COMPLETED"
 
 
+def test_resume_reconciles_persisted_m6_manifest_before_handoff(tmp_path):
+    runner = ResearchM7SyntheticRunner(tmp_path)
+    completed = runner.run(_input())
+    checkpoint = runner.store.load()
+    checkpoint["artifacts"] = [item for item in checkpoint["artifacts"] if item["stage"] != "B5_I3_HANDOFF"]
+    checkpoint["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5"]
+    checkpoint.update({"status": "INTERRUPTED", "next_stage": "M6"})
+    runner.store.save(checkpoint)
+    resumed = runner.resume()
+    assert resumed["status"] == "COMPLETED"
+    assert next(item for item in resumed["artifacts"] if item["stage"] == "M6")["path"] == next(item for item in completed["artifacts"] if item["stage"] == "M6")["path"]
+
+
+@pytest.mark.parametrize("stop_stage", ["B2", "M4"])
+def test_resume_cli_path_reuses_completed_b2_or_m4_artifact(tmp_path, stop_stage):
+    runner = ResearchM7SyntheticRunner(tmp_path)
+    interrupted = runner.run(_input(), stop_after_stage=stop_stage)
+    preserved = {item["stage"]: dict(item) for item in interrupted["artifacts"]}
+    resumed = runner.run(resume=True)
+    assert resumed["status"] == "COMPLETED"
+    stages = ("B2", "M4") if stop_stage == "M4" else ("B2",)
+    for stage in stages:
+        current = next(item for item in resumed["artifacts"] if item["stage"] == stage)
+        assert current["path"] == preserved[stage]["path"]
+        assert current["checksum"] == preserved[stage]["checksum"]
+
+
+def test_research_v2_projection_resolves_all_selected_work_without_narrative_decisions(tmp_path):
+    state = ResearchM7SyntheticRunner(tmp_path).run(_input())
+    handoff = _read_stage(state, "B5_I3_HANDOFF")
+    projection = handoff["research_v2_projection"]
+    semantic = handoff["research_v2_semantic_context"]
+    assert semantic == projection
+    assert handoff["legacy_b5_i3_preflight"] == {
+        "classification": "LEGACY_TRANSVERSAL_FIXTURE",
+        "status": "COMPATIBILITY_ONLY",
+        "non_authoritative": True,
+        "input_kinds": ["narrative_human_analysis", "material_curation"],
+        "not_included_in_research_v2_semantic_context": True,
+    }
+    assert projection["authority"] == "RESEARCH_V2"
+    assert set(projection["selected_work_ids"]) == {"REAL-A", "REAL-B", "REAL-C"}
+    assert projection["selected_work_ids"] == projection["resolved_work_ids"]
+    assert projection["refined_thesis_material_work_ids"] == sorted(projection["selected_work_ids"])
+    for label in ("deep_phenomenon_research", "deep_work_research", "deep_fidelity", "claims_ledger", "claim_sufficiency", "post_deep_comparison", "refined_thesis"):
+        ref = projection["research_refs"][label]
+        assert Path(ref["path"]).is_file()
+    serialized = json.dumps(projection).lower()
+    assert all(token not in serialized for token in ("function", "expected_order", "sequence_rationale", "viewer_journey"))
+    assert all(token not in json.dumps(semantic).lower() for token in ("function", "narrative_use", "expected_order", "sequence_rationale", "progression_map", "viewer_journey"))
+
+
+def test_r1_authority_catalog_and_legacy_curation_are_explicit():
+    catalog = json.loads(Path("config/skill_catalog.json").read_text(encoding="utf-8"))
+    thesis_skill = next(item for item in catalog["skills"] if item["skill_id"] == "skill_sintesis_tesis")
+    assert thesis_skill["canonical_owner"] == "RESEARCH_AND_CURATION"
+    assert thesis_skill["target_or_merge_destination"] == "RESEARCH_AND_CURATION"
+    assert "legacy_compatibility" not in thesis_skill
+    assert "non-authoritative" in thesis_skill["rationale"]
+    curation = Path(".agent/skills/skill_curation_obras.md").read_text(encoding="utf-8")
+    assert "Modo RESEARCH_V2" in curation
+    assert "Modo LEGACY_B5_I2" in curation
+
+
+def test_resume_reconciles_lagging_b2_checkpoint_without_rerunning_b2(tmp_path):
+    runner = ResearchM7SyntheticRunner(tmp_path)
+    interrupted = runner.run(_input(), stop_after_stage="B2")
+    b2_before = next(item for item in interrupted["artifacts"] if item["stage"] == "B2")
+    checkpoint = runner.store.load()
+    checkpoint["artifacts"] = [item for item in checkpoint["artifacts"] if item["stage"] not in {"RESEARCH_PLAN", "B2"}]
+    checkpoint["completed_stages"] = ["INTAKE"]
+    checkpoint.update({"status": "INTERRUPTED", "next_stage": "M4"})
+    runner.store.save(checkpoint)
+    resumed = runner.resume()
+    b2_after = next(item for item in resumed["artifacts"] if item["stage"] == "B2")
+    assert b2_after["path"] == b2_before["path"]
+    assert b2_after["checksum"] == b2_before["checksum"]
+    assert resumed["status"] == "COMPLETED"
+
+
+def test_resume_reconciles_lagging_m4_checkpoint_without_rerunning_m4(tmp_path):
+    runner = ResearchM7SyntheticRunner(tmp_path)
+    interrupted = runner.run(_input(), stop_after_stage="M4")
+    m4_before = next(item for item in interrupted["artifacts"] if item["stage"] == "M4")
+    checkpoint = runner.store.load()
+    checkpoint["artifacts"] = [item for item in checkpoint["artifacts"] if item["stage"] != "M4"]
+    checkpoint["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2"]
+    checkpoint.update({"status": "INTERRUPTED", "next_stage": "M4"})
+    runner.store.save(checkpoint)
+    resumed = runner.resume()
+    m4_after = next(item for item in resumed["artifacts"] if item["stage"] == "M4")
+    assert m4_after["path"] == m4_before["path"]
+    assert m4_after["checksum"] == m4_before["checksum"]
+    assert resumed["status"] == "COMPLETED"
+
+
+@pytest.mark.parametrize("missing", ["manifest", "gate"])
+def test_resume_reuses_m6_audit_and_materializes_only_missing_downstream_artifact(tmp_path, missing):
+    runner = ResearchM7SyntheticRunner(tmp_path)
+    completed = runner.run(_input())
+    checkpoint = runner.store.load()
+    m6_ref = next(item for item in checkpoint["artifacts"] if item["stage"] == "M6")
+    audit_path = tmp_path / "canonical_g1" / "b3" / "independent_research_audit_m6.json"
+    manifest_path = Path(m6_ref["path"])
+    gate_path = tmp_path / "canonical_g1" / "b3" / "research_ready_gate.json"
+    assert audit_path.is_file()
+    if missing == "manifest":
+        manifest_path.unlink()
+    else:
+        gate_path.unlink()
+    checkpoint["artifacts"] = [item for item in checkpoint["artifacts"] if item["stage"] not in {"M6", "B5_I3_HANDOFF"}]
+    checkpoint["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5"]
+    checkpoint.update({"status": "INTERRUPTED", "next_stage": "M6"})
+    runner.store.save(checkpoint)
+    resumed = runner.resume()
+    assert resumed["status"] == "COMPLETED"
+    assert audit_path.is_file()
+    assert manifest_path.is_file()
+    assert gate_path.is_file()
+    assert next(item for item in resumed["artifacts"] if item["stage"] == "B5_I3_HANDOFF")["path"]
+
+
+def _execution_registry_for_recovery(tmp_path, ref, execution_ref, *, status="SUCCEEDED"):
+    registry_path = Path(__file__).resolve().parents[2] / "output" / "execution_provenance_registry.json"
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    run = copy.deepcopy(registry["runs"][0])
+    run.update({
+        "run_id": execution_ref,
+        "status": status,
+        "outputs": [{
+            "artifact_kind": "research",
+            "artifact_id": ref["artifact_id"],
+            "artifact_ref": f"research:{ref['artifact_id']}",
+            "checksum": ref["checksum"],
+        }],
+        "output_artifact_ids": [f"research:{ref['artifact_id']}"],
+        "output_versions": ["fixture-1"],
+        "output_checksums": [ref["checksum"]],
+    })
+    registry["runs"] = [run]
+    path = tmp_path / "execution_provenance_registry.json"
+    path.write_text(json.dumps(registry), encoding="utf-8")
+    return path
+
+
+def test_strict_acquisition_requires_physical_recovery_identity_and_checksum(tmp_path):
+    pack = phenomenon("EP-ACQ", "RP-ACQ", "Tema")
+    recovery = tmp_path / "S1.json"
+    recovery.write_text(json.dumps({"source_id": "S1", "content": "fixture"}), encoding="utf-8")
+    ref = {"artifact_id": "recovery:S1", "path": str(recovery), "checksum": hashlib.sha256(recovery.read_bytes()).hexdigest()}
+    binding = {"request_ref": "request:S1", "execution_ref": "RUN-RECOVERY-S1", "recovery_artifact_ref": "recovery:S1", "retrieval_status": "RECOVERED", "evidence_status": "VERIFIED", "software_controlled": True}
+    registry_path = _execution_registry_for_recovery(tmp_path, ref, binding["execution_ref"])
+    adapter = SoftwareAcquisitionAdapter({"S1": binding}, recovery_artifacts={"recovery:S1": ref}, execution_registry_path=registry_path)
+    assert adapter.materialize(pack)["acquisition_bindings"][0]["recovery_artifact_ref"] == "recovery:S1"
+    with pytest.raises(ValueError, match="UNRESOLVED"):
+        unresolved = dict(binding, execution_ref="RUN-FABRICATED")
+        SoftwareAcquisitionAdapter({"S1": unresolved}, recovery_artifacts={"recovery:S1": ref}, execution_registry_path=registry_path).materialize(pack)
+    failed_registry = _execution_registry_for_recovery(tmp_path, ref, binding["execution_ref"], status="FAILED")
+    with pytest.raises(ValueError, match="NOT_SUCCEEDED"):
+        SoftwareAcquisitionAdapter({"S1": binding}, recovery_artifacts={"recovery:S1": ref}, execution_registry_path=failed_registry).materialize(pack)
+    with pytest.raises(ValueError, match="UNRESOLVED"):
+        SoftwareAcquisitionAdapter({"S1": binding}, recovery_artifacts={}, execution_registry_path=registry_path).materialize(pack)
+    bad = dict(ref, checksum="0" * 64)
+    with pytest.raises(ValueError, match="CHECKSUM_MISMATCH"):
+        SoftwareAcquisitionAdapter({"S1": binding}, recovery_artifacts={"recovery:S1": bad}, execution_registry_path=registry_path).materialize(pack)
+    wrong = tmp_path / "wrong.json"
+    wrong.write_text(json.dumps({"source_id": "OTHER", "content": "fixture"}), encoding="utf-8")
+    wrong_ref = {"artifact_id": "recovery:S1", "path": str(wrong), "checksum": hashlib.sha256(wrong.read_bytes()).hexdigest()}
+    with pytest.raises(ValueError, match="SOURCE_MISMATCH"):
+        wrong_registry = _execution_registry_for_recovery(tmp_path, wrong_ref, binding["execution_ref"])
+        SoftwareAcquisitionAdapter({"S1": binding}, recovery_artifacts={"recovery:S1": wrong_ref}, execution_registry_path=wrong_registry).materialize(pack)
+
+
+def test_default_acquisition_is_fail_closed_for_positive_unresolved_binding():
+    pack = phenomenon("EP-ACQ-DEFAULT", "RP-ACQ-DEFAULT", "Tema")
+    binding = {
+        "request_ref": "request:S1",
+        "execution_ref": "execution:S1",
+        "recovery_artifact_ref": "recovery:S1",
+        "retrieval_status": "RECOVERED",
+        "evidence_status": "CONSULTED",
+        "software_controlled": True,
+    }
+    with pytest.raises(ValueError, match="UNRESOLVED"):
+        SoftwareAcquisitionAdapter({"S1": binding}).materialize(pack)
+
+
 def test_upstream_invalidation_stales_and_regenerates_handoff(tmp_path):
     runner = ResearchM7SyntheticRunner(tmp_path)
     initial = runner.run(_input())
@@ -284,7 +471,11 @@ def test_research_stop_more_required_reopens_focally_and_resolves(tmp_path):
     assert interrupted["research_stop_route"] == "REOPEN_FOCAL"
     m4_ref = next(item for item in interrupted["artifacts"] if item["stage"] == "M4")
     reopened = ResearchM7SyntheticRunner(tmp_path).reopen_focal(m4_ref["artifact_id"])
-    assert reopened["research_stop_route"] == "REOPENED_AND_RESOLVED"
+    assert reopened["research_stop_route"] == "REOPENED_PENDING_NEW_COGNITION"
+    assert reopened["human_input"]["deep_stop_status"] == "MORE_RESEARCH_REQUIRED"
+    evidence_ref = reopened["human_input"]["_research_stop_new_evidence_ref"]
+    assert Path(evidence_ref["path"]).is_file()
+    assert evidence_ref in reopened["recovery_artifacts"]
     final = ResearchM7SyntheticRunner(tmp_path).resume()
     assert final["status"] == "COMPLETED"
 

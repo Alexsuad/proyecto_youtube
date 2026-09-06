@@ -104,6 +104,30 @@ class ResearchB2Persistence:
         self._persisted[stage] = ref
         return ref
 
+    def load_existing(
+        self, stage: str, *, artifact_id: str, artifact_kind: str,
+    ) -> tuple[dict[str, str], Any] | None:
+        """Recover a persisted B2 artifact without reopening its write slot."""
+        filename = self._FILENAMES.get(stage)
+        if filename is None:
+            raise ResearchB2Error(f"B2_UNKNOWN_PERSISTENCE_STAGE: {stage}")
+        path = self.root / filename
+        if not path.is_file():
+            return None
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ResearchB2Error(f"{stage}_RECOVERY_UNREADABLE") from exc
+        ref = {
+            "artifact_id": artifact_id,
+            "artifact_kind": artifact_kind,
+            "artifact_version": CONTRACT_VERSION,
+            "path": str(path),
+            "checksum": _checksum(payload),
+        }
+        self._persisted[stage] = ref
+        return ref, payload
+
 
 class SoftwareAcquisitionAdapter:
     """Materialize technical source bindings from Software-owned records."""
@@ -121,6 +145,8 @@ class SoftwareAcquisitionAdapter:
         *,
         work_bindings: Mapping[str, Mapping[str, Any]] | None = None,
         work_representation_bindings: Mapping[Any, Mapping[str, Any]] | None = None,
+        recovery_artifacts: Mapping[str, Mapping[str, Any]] | None = None,
+        execution_registry_path: str | Path | None = None,
     ):
         self.bindings = {str(key): dict(value) for key, value in (bindings or {}).items()}
         self.work_bindings = {str(key): dict(value) for key, value in (work_bindings or {}).items()}
@@ -128,6 +154,12 @@ class SoftwareAcquisitionAdapter:
             self._representation_key_from_mapping_key(key, value): dict(value)
             for key, value in (work_representation_bindings or {}).items()
         }
+        self.recovery_artifacts = {
+            str(key): dict(value) for key, value in (recovery_artifacts or {}).items()
+        }
+        self.execution_registry_path = (
+            Path(execution_registry_path) if execution_registry_path is not None else None
+        )
         self.materialized_work_bindings: dict[str, dict[str, Any]] = {}
 
     @staticmethod
@@ -164,6 +196,56 @@ class SoftwareAcquisitionAdapter:
         ):
             raise ResearchB2Error(f"WORK_ACQUISITION_BINDING_INVALID: {work_id}")
 
+    def _resolve_recovery_artifact(
+        self, binding: Mapping[str, Any], *, expected_id: str, label: str,
+    ) -> None:
+        """Resolve a positive binding against a physical Software artifact."""
+        ref = str(binding.get("recovery_artifact_ref") or "")
+        record = self.recovery_artifacts.get(ref)
+        if not record:
+            raise ResearchB2Error(f"{label}_RECOVERY_ARTIFACT_UNRESOLVED:{ref}")
+        path = Path(str(record.get("path") or ""))
+        if not path.is_file():
+            raise ResearchB2Error(f"{label}_RECOVERY_ARTIFACT_MISSING:{ref}")
+        raw_checksum = hashlib.sha256(path.read_bytes()).hexdigest()
+        if raw_checksum != str(record.get("checksum") or ""):
+            raise ResearchB2Error(f"{label}_RECOVERY_ARTIFACT_CHECKSUM_MISMATCH:{ref}")
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ResearchB2Error(f"{label}_RECOVERY_ARTIFACT_INVALID:{ref}") from exc
+        observed = str(payload.get("source_id") or payload.get("work_id") or "")
+        if observed != expected_id:
+            raise ResearchB2Error(f"{label}_RECOVERY_ARTIFACT_SOURCE_MISMATCH:{ref}")
+        execution_ref = str(binding.get("execution_ref") or "")
+        if not execution_ref or self.execution_registry_path is None:
+            raise ResearchB2Error(f"{label}_RECOVERY_EXECUTION_UNRESOLVED:{expected_id}")
+        try:
+            registry = json.loads(self.execution_registry_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ResearchB2Error(f"{label}_RECOVERY_EXECUTION_REGISTRY_UNRESOLVED:{execution_ref}") from exc
+        violations = validate_against_schema(registry, "execution_provenance_registry")
+        if violations:
+            raise ResearchB2Error(f"{label}_RECOVERY_EXECUTION_REGISTRY_INVALID:{execution_ref}")
+        run = next(
+            (
+                item for item in registry.get("runs", [])
+                if isinstance(item, Mapping) and item.get("run_id") == execution_ref
+            ),
+            None,
+        )
+        if run is None:
+            raise ResearchB2Error(f"{label}_RECOVERY_EXECUTION_UNRESOLVED:{execution_ref}")
+        if run.get("status") != "SUCCEEDED":
+            raise ResearchB2Error(f"{label}_RECOVERY_EXECUTION_NOT_SUCCEEDED:{execution_ref}")
+        if not any(
+            isinstance(output, Mapping)
+            and output.get("artifact_id") == ref
+            and output.get("checksum") == raw_checksum
+            for output in run.get("outputs", [])
+        ):
+            raise ResearchB2Error(f"{label}_RECOVERY_EXECUTION_OUTPUT_UNRESOLVED:{execution_ref}")
+
     def materialize(self, research_pack: Mapping[str, Any]) -> dict[str, Any]:
         if not isinstance(research_pack, Mapping):
             raise ResearchB2Error("ResearchPack debe ser un objeto")
@@ -195,6 +277,8 @@ class SoftwareAcquisitionAdapter:
             )
             provenance = dict(source.get("provenance") or {})
             positive = binding["evidence_status"] in {"CONSULTED", "VERIFIED", "EVIDENCE"}
+            if positive:
+                self._resolve_recovery_artifact(binding, expected_id=source_id, label="SOURCE")
             provenance.update(
                 {
                     "verification_status": "REVIEWED" if positive else "NOT_REVIEWED",
@@ -235,6 +319,7 @@ class SoftwareAcquisitionAdapter:
                 if not binding:
                     raise ResearchB2Error(f"WORK_LOCATOR_BINDING_MISMATCH: {work_id}:consulted_representation")
                 self._validate_work_binding(binding, work_id)
+                self._resolve_recovery_artifact(binding, expected_id=work_id, label="WORK")
                 binding_ref = f"software:work-acquisition:{work_id}" if representation_index == 1 else f"software:work-acquisition:{work_id}:{representation_index}"
                 record = {
                     "request_ref": binding["request_ref"],

@@ -1,4 +1,5 @@
 from copy import deepcopy
+import hashlib
 import json
 from pathlib import Path
 
@@ -118,6 +119,77 @@ def _work_binding(work_id: str) -> dict:
         "edition_or_version": "edición de prueba",
         "consulted_locator": f"work:{work_id}",
     }
+
+
+def _acquisition_adapter(
+    tmp_path,
+    *,
+    source_binding=None,
+    work_bindings=None,
+    work_representation_bindings=None,
+):
+    """Build material recovery and its canonical execution provenance for fixtures."""
+    source_binding = source_binding or _software_binding()
+    work_bindings = work_bindings or {}
+    recovery_dir = Path(tmp_path) / "acquisition_recovery"
+    recovery_dir.mkdir(parents=True, exist_ok=True)
+    records = [("S1", source_binding)]
+    records.extend((str(work_id), binding) for work_id, binding in work_bindings.items())
+    for key, binding in (work_representation_bindings or {}).items():
+        work_id = str(key[0]) if isinstance(key, tuple) else str(key).split("|", 1)[0]
+        records.append((work_id, binding))
+    recovery_artifacts = {}
+    registry_runs = {}
+    base_registry = json.loads(
+        (Path(__file__).resolve().parents[2] / "output" / "execution_provenance_registry.json").read_text(encoding="utf-8")
+    )
+    template = base_registry["runs"][0]
+    for expected_id, binding in records:
+        recovery_ref = binding.get("recovery_artifact_ref")
+        execution_ref = binding.get("execution_ref")
+        if not recovery_ref or not execution_ref:
+            continue
+        if recovery_ref not in recovery_artifacts:
+            payload = {"source_id": expected_id} if expected_id == "S1" else {"work_id": expected_id}
+            path = recovery_dir / f"{str(recovery_ref).replace(':', '_')}.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            recovery_artifacts[recovery_ref] = {
+                "artifact_id": recovery_ref,
+                "path": str(path),
+                "checksum": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+        artifact = recovery_artifacts[recovery_ref]
+        run = registry_runs.get(execution_ref)
+        if run is None:
+            run = deepcopy(template)
+            run.update({
+                "run_id": execution_ref,
+                "status": "SUCCEEDED",
+                "outputs": [],
+                "output_artifact_ids": [],
+                "output_versions": [],
+                "output_checksums": [],
+            })
+            registry_runs[execution_ref] = run
+        run["outputs"].append({
+            "artifact_kind": "research",
+            "artifact_id": recovery_ref,
+            "artifact_ref": f"research:{recovery_ref}",
+            "checksum": artifact["checksum"],
+        })
+        run["output_artifact_ids"].append(f"research:{recovery_ref}")
+        run["output_versions"].append("fixture-1")
+        run["output_checksums"].append(artifact["checksum"])
+    registry = {**base_registry, "runs": list(registry_runs.values())}
+    registry_path = Path(tmp_path) / "execution_provenance_registry.json"
+    registry_path.write_text(json.dumps(registry), encoding="utf-8")
+    return SoftwareAcquisitionAdapter(
+        {"S1": source_binding},
+        work_bindings=work_bindings,
+        work_representation_bindings=work_representation_bindings,
+        recovery_artifacts=recovery_artifacts,
+        execution_registry_path=registry_path,
+    )
 
 
 def _comparison(work_ids: list[str], deepening_targets=None) -> dict:
@@ -250,8 +322,9 @@ def _run(tmp_path, *, work_ids=("W1",), pool_ids=None, phenomenon=None, fidelity
         seen.append(request)
         return deepcopy(outputs[request.stage])
 
-    adapter = SoftwareAcquisitionAdapter(
-        {"S1": acquisition_bindings or _software_binding()},
+    adapter = _acquisition_adapter(
+        tmp_path,
+        source_binding=acquisition_bindings or _software_binding(),
         work_bindings=(
             {work_id: _work_binding(work_id) for work_id in selected_pool_ids}
             if work_bindings is None

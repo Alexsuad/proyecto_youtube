@@ -4,12 +4,12 @@ import json
 import pytest
 
 from src.application.interaction import HumanDecision
-from src.application.research_b2 import SoftwareAcquisitionAdapter
 from src.application.research_b3 import ResearchB3Error, ResearchB3Orchestrator, ResearchB3Persistence
 from src.core.contract_validation import validate_work_research_dossier
 from src.core.mission_completion_gate import MissionContract
 from tests.core.test_plan012_m3_b2_base_research import (
     _context,
+    _acquisition_adapter,
     _dossier,
     _phenomenon,
     _run,
@@ -114,8 +114,8 @@ def _run_m4(
             return deep_fidelity[_request_work_id(request)]
         return dict(_sufficiency(), intended_use="DEEP_WORK_RESEARCH")
 
-    adapter = SoftwareAcquisitionAdapter(
-        {"S1": _software_binding()},
+    adapter = _acquisition_adapter(
+        tmp_path,
         work_bindings=(
             {work_id: _work_binding(work_id) for work_id in selected_work_ids}
             if work_bindings is None
@@ -254,8 +254,8 @@ def test_m4_rejects_human_substitution_outside_candidate_set(tmp_path):
         ResearchB3Orchestrator(
             lambda request: _phenomenon(),
             ResearchB3Persistence(tmp_path / "m4"),
-            acquisition_adapter=SoftwareAcquisitionAdapter(
-                {"S1": _software_binding()}, work_bindings={"W1": _work_binding("W1")}
+            acquisition_adapter=_acquisition_adapter(
+                tmp_path, work_bindings={"W1": _work_binding("W1")},
             ),
         ).run(baseline, context=_m4_context(), human_decision=decision)
 
@@ -367,8 +367,8 @@ def test_m4_recommended_target_requires_explicit_acceptance_before_selection(tmp
         ResearchB3Orchestrator(
             lambda request: pytest.fail("No debe haber cognición antes de la aceptación"),
             ResearchB3Persistence(tmp_path / "m4"),
-            acquisition_adapter=SoftwareAcquisitionAdapter(
-                {"S1": _software_binding()}, work_bindings={"W1": _work_binding("W1")}
+            acquisition_adapter=_acquisition_adapter(
+                tmp_path, work_bindings={"W1": _work_binding("W1")},
             ),
         ).run(baseline, context=_m4_context(), human_decision=None)
 
@@ -639,8 +639,8 @@ def test_m4_delegated_selection_is_cognitive_and_not_first_option(tmp_path):
     result = ResearchB3Orchestrator(
         cognitive,
         ResearchB3Persistence(tmp_path / "m4"),
-        acquisition_adapter=SoftwareAcquisitionAdapter(
-            {"S1": _software_binding()},
+        acquisition_adapter=_acquisition_adapter(
+            tmp_path,
             work_bindings={work_id: _work_binding(work_id) for work_id in ("W1", "W2", "W3")},
         ),
     ).run(

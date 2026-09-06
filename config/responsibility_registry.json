@@ -54,7 +54,9 @@
       ],
       "outputs": [
         "research_pack",
-        "curation_decision"
+        "research_comparison",
+        "claims_ledger",
+        "refined_thesis"
       ],
       "read_permissions": [
         "source material",
@@ -65,7 +67,9 @@
       ],
       "forbidden_actions": [
         "inventar fuentes",
-        "redactar el guion final"
+        "redactar el guion final",
+        "decidir función narrativa, orden o progresión del guion",
+        "tratar NarrativeHumanAnalysis o MaterialCuration legacy como autoridad de Research V2"
       ],
       "veto_conditions": [
         "evidencia insuficiente",
@@ -178,7 +182,7 @@
       "handoff": [
         "research audit to next authorized phase"
       ],
-      "prompt_version": "1.0.0"
+      "prompt_version": "1.1.0"
     },
     {
       "role_id": "WRITING",

@@ -997,32 +997,70 @@ class ResearchB4Orchestrator:
                 "_synthetic_output_binder": bind_audit,
             },
         )
-        execution_result = execute(execution_request)
-        if execution_result.status is not ExecutionStatus.SUCCEEDED:
-            raise ResearchB4Error(
-                "M6_AUDITOR_EXECUTION_FAILED:"
-                + str(execution_result.error or execution_result.status.value)
-            )
-        if not isinstance(execution_result.output, Mapping):
-            raise ResearchB4Error("M6_AUDITOR_EXECUTION_OUTPUT_INVALID")
-        audit = copy.deepcopy(dict(execution_result.output))
-        auditor = {
-            "actor_id": str(execution_request.role),
-            "run_id": str(execution_result.run_id),
-            "executor_id": str(execution_result.usage.get("actual_executor") or ""),
-            "role": str(execution_request.role),
-            "provenance_ref": registry_ref,
-        }
-        self._validate_declared_auditor(declared_auditor, auditor, producer_run=producer_run)
-        if execution_result.output_checksum != _checksum(audit):
-            raise ResearchB4Error("M6_AUDITOR_EXECUTION_OUTPUT_CHECKSUM_INVALID")
-        audit_ref = self.persistence.persist(
+        existing_audit = self.persistence.load_existing(
             "M6_INDEPENDENT_RESEARCH_AUDIT",
-            audit,
-            artifact_id=audit["audit_id"],
+            artifact_id=audit_id,
             artifact_kind="IndependentResearchAudit",
         )
-        self._persist_auditor_execution_result(registry_path, execution_result, execution_request)
+        if existing_audit is not None:
+            audit_ref, audit = existing_audit
+            audit_schema_errors = validate_against_schema(audit, M6_AUDIT_SCHEMA)
+            if audit_schema_errors:
+                raise ResearchB4Error("M6_INDEPENDENT_RESEARCH_AUDIT_SCHEMA_INVALID:" + " | ".join(audit_schema_errors))
+            audit_contract_errors = validate_independent_research_audit(audit)
+            if audit_contract_errors:
+                raise ResearchB4Error("M6_INDEPENDENT_RESEARCH_AUDIT_INVALID:" + " | ".join(audit_contract_errors))
+            self._validate_audit_evidence(audit, known_refs)
+            self._validate_audit_coverage(audit)
+            recovered_auditor = audit.get("auditor") if isinstance(audit, Mapping) else None
+            if not isinstance(recovered_auditor, Mapping):
+                raise ResearchB4Error("M6_AUDITOR_RECOVERY_PROVENANCE_MISSING")
+            try:
+                registry = load_registry(registry_path)
+            except (OSError, ValueError) as exc:
+                raise ResearchB4Error("M6_EXECUTION_PROVENANCE_REGISTRY_INVALID") from exc
+            recovered_run = next(
+                (item for item in registry.get("runs", [])
+                 if isinstance(item, Mapping) and item.get("run_id") == recovered_auditor.get("run_id")),
+                None,
+            )
+            if recovered_run is None:
+                raise ResearchB4Error("M6_AUDITOR_RUN_NOT_REGISTERED")
+            auditor = {
+                "actor_id": str(recovered_run.get("agent_id") or recovered_auditor.get("actor_id") or ""),
+                "run_id": str(recovered_run.get("run_id") or ""),
+                "executor_id": str(recovered_run.get("actual_executor") or ""),
+                "role": str(recovered_run.get("role") or M6_AUDITOR_ROLE),
+                "provenance_ref": registry_ref,
+            }
+            self._validate_declared_auditor(declared_auditor, auditor, producer_run=producer_run)
+        else:
+            execution_result = execute(execution_request)
+            if execution_result.status is not ExecutionStatus.SUCCEEDED:
+                raise ResearchB4Error(
+                    "M6_AUDITOR_EXECUTION_FAILED:"
+                    + str(execution_result.error or execution_result.status.value)
+                )
+            if not isinstance(execution_result.output, Mapping):
+                raise ResearchB4Error("M6_AUDITOR_EXECUTION_OUTPUT_INVALID")
+            audit = copy.deepcopy(dict(execution_result.output))
+            auditor = {
+                "actor_id": str(execution_request.role),
+                "run_id": str(execution_result.run_id),
+                "executor_id": str(execution_result.usage.get("actual_executor") or ""),
+                "role": str(execution_request.role),
+                "provenance_ref": registry_ref,
+            }
+            self._validate_declared_auditor(declared_auditor, auditor, producer_run=producer_run)
+            if execution_result.output_checksum != _checksum(audit):
+                raise ResearchB4Error("M6_AUDITOR_EXECUTION_OUTPUT_CHECKSUM_INVALID")
+            audit_ref = self.persistence.persist(
+                "M6_INDEPENDENT_RESEARCH_AUDIT",
+                audit,
+                artifact_id=audit["audit_id"],
+                artifact_kind="IndependentResearchAudit",
+            )
+            self._persist_auditor_execution_result(registry_path, execution_result, execution_request)
         self._validate_auditor_output(
             registry_path,
             audit=audit,
@@ -1030,31 +1068,43 @@ class ResearchB4Orchestrator:
             auditor=auditor,
             episode_id=str(m5_manifest["episode_id"]),
         )
-        manifest, blockers = self._build_manifest(
-            audit,
-            m5_manifest=m5_manifest,
-            m5_manifest_ref=m5_manifest_ref,
-            canonical_by_kind=canonical_by_kind,
-            chain_refs=chain_refs,
-            chain_payloads=chain_payloads,
-        )
-        manifest["research_artifacts"][-1] = {
-            "artifact_id": audit_ref["artifact_id"],
-            "artifact_kind": audit_ref["artifact_kind"],
-            "artifact_version": audit_ref["artifact_version"],
-            "checksum": audit_ref["checksum"],
-        }
-        manifest_errors = validate_research_ready_manifest(manifest)
-        if manifest_errors:
-            raise ResearchB4Error("M6_RESEARCH_READY_MANIFEST_INVALID:" + " | ".join(manifest_errors))
-        manifest_ref = self.persistence.persist(
+        existing_manifest = self.persistence.load_existing(
             "M6_RESEARCH_READY_MANIFEST",
-            manifest,
-            artifact_id=manifest["manifest_id"],
+            artifact_id=f"{m5_manifest['research_id']}:RESEARCH_READY_MANIFEST",
             artifact_kind="ResearchReadyManifest",
         )
-        if manifest_ref["checksum"] != _checksum(manifest):
-            raise ResearchB4Error("M6_RESEARCH_READY_MANIFEST_CHECKSUM_INVALID")
+        if existing_manifest is not None:
+            manifest_ref, manifest = existing_manifest
+            manifest_errors = validate_research_ready_manifest(manifest)
+            if manifest_errors:
+                raise ResearchB4Error("M6_RESEARCH_READY_MANIFEST_INVALID:" + " | ".join(manifest_errors))
+            blockers = []
+        else:
+            manifest, blockers = self._build_manifest(
+                audit,
+                m5_manifest=m5_manifest,
+                m5_manifest_ref=m5_manifest_ref,
+                canonical_by_kind=canonical_by_kind,
+                chain_refs=chain_refs,
+                chain_payloads=chain_payloads,
+            )
+            manifest["research_artifacts"][-1] = {
+                "artifact_id": audit_ref["artifact_id"],
+                "artifact_kind": audit_ref["artifact_kind"],
+                "artifact_version": audit_ref["artifact_version"],
+                "checksum": audit_ref["checksum"],
+            }
+            manifest_errors = validate_research_ready_manifest(manifest)
+            if manifest_errors:
+                raise ResearchB4Error("M6_RESEARCH_READY_MANIFEST_INVALID:" + " | ".join(manifest_errors))
+            manifest_ref = self.persistence.persist(
+                "M6_RESEARCH_READY_MANIFEST",
+                manifest,
+                artifact_id=manifest["manifest_id"],
+                artifact_kind="ResearchReadyManifest",
+            )
+            if manifest_ref["checksum"] != _checksum(manifest):
+                raise ResearchB4Error("M6_RESEARCH_READY_MANIFEST_CHECKSUM_INVALID")
 
         state = manifest["research_ready_state"]
         status = {
@@ -1082,12 +1132,24 @@ class ResearchB4Orchestrator:
         # in the manifest and expose concise warning IDs in the gate.
         gate.warnings = [item["restriction_id"] for item in manifest.get("downstream_restrictions", [])] if status == GateStatus.WARN else []
         validate_gate_result(gate)
-        gate_ref = self.persistence.persist(
+        existing_gate = self.persistence.load_existing(
             "M6_RESEARCH_READY_GATE",
-            gate.to_dict(),
             artifact_id=f"{m5_manifest['research_id']}:M6:RESEARCH_READY_GATE",
             artifact_kind="GateResult",
         )
+        if existing_gate is not None:
+            gate_ref, existing_gate_payload = existing_gate
+            try:
+                validate_gate_result(GateResult.from_dict(existing_gate_payload))
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ResearchB4Error("M6_RESEARCH_READY_GATE_RECOVERY_INVALID") from exc
+        else:
+            gate_ref = self.persistence.persist(
+                "M6_RESEARCH_READY_GATE",
+                gate.to_dict(),
+                artifact_id=f"{m5_manifest['research_id']}:M6:RESEARCH_READY_GATE",
+                artifact_kind="GateResult",
+            )
         return {
             "status": state,
             "independent_research_audit": audit_ref,

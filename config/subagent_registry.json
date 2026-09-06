@@ -6,7 +6,7 @@
       "version": "1.0.0",
       "execution_role": "subagent",
       "functional_role": "producer",
-      "purpose": "Preparar artefactos de Script Product sin aprobación automática ni ejecución real aún autorizada.",
+      "purpose": "Preparar artefactos Research V2 de Script Product sin aprobación automática ni ejecución real aún autorizada; analysis y curation quedan identificados como compatibilidad LEGACY_B5_I2 no autoritativa para Research V2.",
       "maturity_status": "AGENT_IMPLEMENTED",
       "inputs": [
         "episode_brief",
@@ -15,8 +15,9 @@
         "active_editorial_profile"
       ],
       "outputs": [
-        "analysis",
-        "curation",
+        "research_pack",
+        "research_comparison",
+        "claims_ledger",
         "refined_thesis",
         "script_promise"
       ],
@@ -68,8 +69,9 @@
           "active_editorial_profile"
         ],
         "emits": [
-          "analysis",
-          "curation",
+          "research_pack",
+          "research_comparison",
+          "claims_ledger",
           "refined_thesis",
           "script_promise"
         ],
