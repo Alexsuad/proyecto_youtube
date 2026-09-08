@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from src.ai.contracts import InputArtifact
-from src.ai.execution import M3_REQUIRED_INPUT_KINDS
+from src.ai.contracts import ExecutionResult, ExecutionStatus, InputArtifact
+from src.ai.execution import M3_REQUIRED_INPUT_KINDS, execute
 from src.application.research_b2 import SoftwareAcquisitionAdapter
-from src.application.research_m7 import ResearchM7Error, ResearchM7SyntheticRunner, ResearchV2B5I3Adapter
+from src.application.research_m7 import RealResearchRoutePreparation, ResearchM7Error, ResearchM7SyntheticRunner, ResearchV2B5I3Adapter
 from src.application.research_m7_fixture import phenomenon
 from src.cli import main
 
@@ -497,3 +497,132 @@ def test_cli_requires_explicit_works_and_reports_non_productive_pass(tmp_path, c
     assert "PLAN_012_REAL_AI_EXECUTION: NO" in output
     assert "PLAN_012_PRODUCT_USE_AUTHORIZED: NO" in output
     assert "PLAN_012_P2_REAL_EXECUTION: NO" in output
+
+
+def _real_route_config(**overrides):
+    config = {
+        "episode_id": "EP-REAL-M1",
+        "topic": "Tema real preparado",
+        "question": "¿Qué puede afirmarse?",
+        "provider": "provider-a",
+        "model": "model-a",
+        "runtime": "native-provider-runtime",
+        "execution_profile": "profile-a",
+        "execution_route": "native_route",
+        "execution_family": "NATIVE_PROVIDER",
+        "budget_limit": 25,
+        "max_iterations": 2,
+        "max_retries": 1,
+        "timeout_seconds": 30,
+    }
+    config.update(overrides)
+    return config
+
+
+def test_extend01_real_without_authorization_blocks_before_provider():
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
+    result = execute(preparation.build_request())
+    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert "MISSION_AUTHORIZATION_REQUIRED" in str(result.error)
+
+
+def test_extend01_mock_and_failed_real_do_not_claim_real_execution():
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
+    assert preparation.claims_from_result(None) == {
+        "real_ai_execution": False,
+        "real_ai_calls": 0,
+        "real_research": False,
+        "real_research_quality": "NOT_DEMONSTRATED",
+        "authorized_for_product_use": False,
+    }
+    failed = ExecutionResult(
+        run_id="RUN-FAILED",
+        status=ExecutionStatus.BLOCKED_BY_RUNTIME_PROVIDER,
+        executor_type="native-provider",
+        provider="provider-a",
+        model="model-a",
+        input_manifest_checksum="input",
+        output=None,
+        output_checksum=None,
+        started_at="2026-09-07T00:00:00Z",
+        completed_at="2026-09-07T00:00:00Z",
+        error="provider unavailable",
+        is_real_editorial_execution=False,
+    )
+    assert preparation.claims_from_result(failed)["real_ai_execution"] is False
+
+
+def test_extend01_real_provenance_rejects_synthetic_fixture():
+    with pytest.raises(ResearchM7Error, match="REAL_PROVENANCE_SYNTHETIC_OR_MISSING"):
+        RealResearchRoutePreparation.assert_real_provenance({"run_id": "M7-M5-PRODUCER", "executor_id": "synthetic-fixture"})
+
+
+def test_extend01_real_acquisition_guard_blocks_before_vertical_dispatch():
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
+    calls = []
+
+    stage_runners = {
+        stage: (lambda _context, stage=stage: calls.append(stage) or {"stage": stage})
+        for stage in ("B2", "M4", "M5", "M6")
+    }
+
+    result = preparation.run_canonical_vertical(stage_runners)
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "BLOCKED_PENDING_OWNER_OR_FUNCTIONAL_SELECTION"
+    assert result["real_ai_calls"] == 0
+    assert result["external_search_calls"] == 0
+    assert result["completed_stages"] == []
+    assert calls == []
+
+
+def test_extend01_real_route_binds_canonical_vertical_and_stops_at_m6():
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config(acquisition_status="PREMATERIALIZED_EVIDENCE"))
+    calls = []
+
+    def stage_runner(stage):
+        def run(context):
+            calls.append(stage)
+            assert context["request"].capability_id == "EXTEND_01_RESEARCH_V2_REAL_E2E"
+            return {"stage": stage}
+        return run
+
+    result = preparation.run_canonical_vertical({stage: stage_runner(stage) for stage in ("B2", "M4", "M5", "M6")})
+    assert calls == ["B2", "M4", "M5", "M6"]
+    assert result["stage_results"]["M6"] == {"stage": "M6"}
+    route = result["canonical_route"]
+    assert route["stages"] == ["B2", "M4", "M5", "M6"]
+    assert route["sequence_owner"] == "RealResearchRoutePreparation.run_canonical_vertical"
+    assert route["stop_after"] == "M6"
+    assert route["invocations"] == {
+        "B2": "ResearchB2Orchestrator.run",
+        "M4": "ResearchB3Orchestrator.run",
+        "M5": "ResearchB3Orchestrator.run_m5",
+        "M6": "ResearchB4Orchestrator.run_m6",
+    }
+    assert result["terminal_stage"] == "RESEARCH_READY"
+    assert result["post_terminal_execution"] is False
+
+
+def test_extend01_real_route_rejects_post_m6_continuation():
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config(acquisition_status="PREMATERIALIZED_EVIDENCE"))
+    post_m6_calls = []
+    stage_runners = {
+        stage: (lambda _context, stage=stage: {"stage": stage})
+        for stage in ("B2", "M4", "M5", "M6")
+    }
+    result = preparation.run_canonical_vertical(stage_runners)
+    assert result["terminal_stage"] == "RESEARCH_READY"
+    assert result["completed_stages"] == ["B2", "M4", "M5", "M6"]
+    assert post_m6_calls == []
+
+
+def test_extend01_max_iterations_is_bound_to_existing_guard_and_stops_before_editorial(tmp_path):
+    runner = ResearchM7SyntheticRunner(tmp_path, max_iterations=2)
+    with pytest.raises(ResearchM7Error, match="NO_PROGRESS / ITERATION_GUARD"):
+        runner.run(_input(), simulate_no_progress=True)
+    state = runner.store.load()
+    assert state["iteration_guard"]["max_iterations"] == 2
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
+    prepared = preparation.to_dict()
+    assert prepared["terminal_stage"] == "RESEARCH_READY"
+    assert "B5_I3_HANDOFF" not in prepared

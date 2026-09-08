@@ -12,12 +12,12 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
-from src.ai.contracts import ExecutionRequest, InputArtifact
+from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
 from src.ai.execution import M3_REQUIRED_INPUT_KINDS, _validate_m3_input_artifacts
 from src.application.interaction import HumanDecision
-from src.application.research_b2 import ResearchB2Orchestrator, ResearchB2Persistence, SoftwareAcquisitionAdapter, _checksum
+from src.application.research_b2 import ResearchB2NoProgressGuard, ResearchB2Orchestrator, ResearchB2Persistence, SoftwareAcquisitionAdapter, _checksum
 from src.application.research_b3 import ResearchB3Orchestrator, ResearchB3Persistence
 from src.application.research_b4 import ResearchB4Orchestrator, ResearchB4Persistence
 from src.application.research_m7_fixture import SyntheticResearchExecutor, b5_i3_transversal_fixtures, research_plan, source_report
@@ -30,10 +30,256 @@ from src.core.invalidation import InvalidationEngine
 M7_VERSION = "2.0.0"
 STAGES = ("INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5", "M6", "B5_I3_HANDOFF")
 NARRATIVE_FIELDS = {"viewer_journey", "narrative_plan", "opening_design", "closing_design", "hook", "climax", "cta", "pacing", "title", "thumbnail"}
+REAL_RESEARCH_CAPABILITY = "EXTEND_01_RESEARCH_V2_REAL_E2E"
+REAL_RESEARCH_TERMINAL_STAGE = "RESEARCH_READY"
+REAL_RESEARCH_ACQUISITION_BLOCKED = "BLOCKED_PENDING_OWNER_OR_FUNCTIONAL_SELECTION"
+REAL_RESEARCH_CANONICAL_STAGES = ("B2", "M4", "M5", "M6")
+REAL_RESEARCH_FORBIDDEN_POST_TERMINAL_STAGES = (
+    "B5_I3_HANDOFF",
+    "NARRATIVE",
+    "SCRIPT_PRODUCT",
+    "YOUTUBE_ADAPTATION",
+)
 
 
 class ResearchM7Error(RuntimeError):
     """Fail-closed M7 coordination error."""
+
+
+@dataclass(frozen=True)
+class RealResearchRoutePreparation:
+    """Explicit M1 preparation for a future REAL Research V2 execution.
+
+    This object only compiles a canonical request and its safety claims.  It
+    never invokes the execution runtime, a provider, search, or fetch.
+    """
+
+    episode_id: str
+    topic: str
+    question: str
+    provider: str
+    model: str
+    runtime: str
+    execution_profile: str
+    execution_route: str
+    execution_family: str
+    budget_limit: float
+    max_iterations: int
+    max_retries: int
+    timeout_seconds: int
+    mission_authorization_path: str | None = None
+    acquisition_status: str = REAL_RESEARCH_ACQUISITION_BLOCKED
+
+    @classmethod
+    def from_mapping(cls, values: Mapping[str, Any]) -> "RealResearchRoutePreparation":
+        if not isinstance(values, Mapping):
+            raise ResearchM7Error("REAL_ROUTE_CONFIGURATION_INVALID")
+        required = (
+            "episode_id", "topic", "question", "provider", "model", "runtime",
+            "execution_profile", "execution_route", "execution_family", "budget_limit",
+            "max_iterations", "max_retries", "timeout_seconds",
+        )
+        missing = [key for key in required if values.get(key) in (None, "")]
+        if missing:
+            raise ResearchM7Error("REAL_ROUTE_CONFIGURATION_MISSING:" + ",".join(missing))
+        try:
+            budget = float(values["budget_limit"])
+            iterations = int(values["max_iterations"])
+            retries = int(values["max_retries"])
+            timeout = int(values["timeout_seconds"])
+        except (TypeError, ValueError) as exc:
+            raise ResearchM7Error("REAL_ROUTE_CONFIGURATION_LIMITS_INVALID") from exc
+        if budget <= 0 or iterations < 1 or retries < 0 or timeout <= 0:
+            raise ResearchM7Error("REAL_ROUTE_CONFIGURATION_LIMITS_INVALID")
+        acquisition_status = str(values.get("acquisition_status") or REAL_RESEARCH_ACQUISITION_BLOCKED)
+        if acquisition_status not in {REAL_RESEARCH_ACQUISITION_BLOCKED, "PREMATERIALIZED_EVIDENCE"}:
+            raise ResearchM7Error("REAL_ROUTE_ACQUISITION_STATUS_INVALID")
+        return cls(
+            episode_id=str(values["episode_id"]), topic=str(values["topic"]), question=str(values["question"]),
+            provider=str(values["provider"]), model=str(values["model"]), runtime=str(values["runtime"]),
+            execution_profile=str(values["execution_profile"]), execution_route=str(values["execution_route"]),
+            execution_family=str(values["execution_family"]), budget_limit=budget,
+            max_iterations=iterations, max_retries=retries, timeout_seconds=timeout,
+            mission_authorization_path=(str(values["mission_authorization_path"]) if values.get("mission_authorization_path") else None),
+            acquisition_status=acquisition_status,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "capability_id": REAL_RESEARCH_CAPABILITY,
+            "execution_mode": "REAL",
+            "episode_id": self.episode_id,
+            "topic": self.topic,
+            "question": self.question,
+            "provider": self.provider,
+            "model": self.model,
+            "runtime": self.runtime,
+            "execution_profile": self.execution_profile,
+            "execution_route": self.execution_route,
+            "execution_family": self.execution_family,
+            "budget_limit": self.budget_limit,
+            "max_iterations": self.max_iterations,
+            "max_retries": self.max_retries,
+            "timeout_seconds": self.timeout_seconds,
+            "mission_authorization_path": self.mission_authorization_path,
+            "acquisition_status": self.acquisition_status,
+            "terminal_stage": REAL_RESEARCH_TERMINAL_STAGE,
+            "canonical_route": self.canonical_route_descriptor(),
+            "real_ai_execution": False,
+            "real_ai_calls": 0,
+            "real_research_quality": "NOT_DEMONSTRATED",
+            "authorized_for_product_use": False,
+        }
+
+    @staticmethod
+    def canonical_stage_handlers() -> dict[str, Callable[..., Any]]:
+        """Return the existing Research V2 stage authorities.
+
+        M1 does not implement another runner.  It binds the prepared route to
+        the canonical B2/M4/M5/M6 orchestrator methods so M2 can provide the
+        execution adapter without creating a parallel vertical.
+        """
+        return {
+            "B2": ResearchB2Orchestrator.run,
+            "M4": ResearchB3Orchestrator.run,
+            "M5": ResearchB3Orchestrator.run_m5,
+            "M6": ResearchB4Orchestrator.run_m6,
+        }
+
+    @classmethod
+    def canonical_route_descriptor(cls) -> dict[str, Any]:
+        handlers = cls.canonical_stage_handlers()
+        return {
+            "vertical": "RESEARCH_V2",
+            "stages": list(REAL_RESEARCH_CANONICAL_STAGES),
+            "invocations": {stage: handlers[stage].__qualname__ for stage in REAL_RESEARCH_CANONICAL_STAGES},
+            "sequence_owner": "RealResearchRoutePreparation.run_canonical_vertical",
+            "terminal_stage": REAL_RESEARCH_TERMINAL_STAGE,
+            "stop_after": "M6",
+            "forbidden_post_terminal_stages": list(REAL_RESEARCH_FORBIDDEN_POST_TERMINAL_STAGES),
+        }
+
+    def acquisition_gate(self) -> dict[str, Any]:
+        """Fail closed before any cognitive, external or vertical dispatch."""
+        if self.acquisition_status != "PREMATERIALIZED_EVIDENCE":
+            return {
+                "status": "BLOCKED",
+                "reason": self.acquisition_status,
+                "real_ai_calls": 0,
+                "external_search_calls": 0,
+                "completed_stages": [],
+            }
+        return {
+            "status": "PASS",
+            "reason": "PREMATERIALIZED_EVIDENCE",
+            "real_ai_calls": 0,
+            "external_search_calls": 0,
+            "completed_stages": [],
+        }
+
+    def run_canonical_vertical(
+        self,
+        stage_runners: Mapping[str, Callable[[Mapping[str, Any]], Mapping[str, Any]]],
+    ) -> dict[str, Any]:
+        """Own the B2 -> M4 -> M5 -> M6 control flow.
+
+        Each value is a per-stage adapter for the existing canonical
+        orchestrator.  A single opaque runner is deliberately not accepted.
+        M1 never supplies provider execution; M2 can inject controlled
+        dependencies for the four canonical stage authorities.
+        """
+        gate = self.acquisition_gate()
+        if gate["status"] != "PASS":
+            return {
+                **gate,
+                "terminal_stage": None,
+                "canonical_route": self.canonical_route_descriptor(),
+            }
+        if not isinstance(stage_runners, Mapping) or set(stage_runners) != set(REAL_RESEARCH_CANONICAL_STAGES):
+            raise ResearchM7Error("REAL_ROUTE_CANONICAL_STAGE_RUNNERS_REQUIRED")
+        if any(not callable(stage_runners[stage]) for stage in REAL_RESEARCH_CANONICAL_STAGES):
+            raise ResearchM7Error("REAL_ROUTE_CANONICAL_STAGE_RUNNER_INVALID")
+
+        context: dict[str, Any] = {
+            "request": self.build_request(),
+            "completed_stages": [],
+            "stage_results": {},
+        }
+        for stage in REAL_RESEARCH_CANONICAL_STAGES:
+            stage_result = stage_runners[stage](context)
+            if not isinstance(stage_result, Mapping):
+                raise ResearchM7Error(f"REAL_ROUTE_{stage}_RESULT_INVALID")
+            context["stage_results"][stage] = copy.deepcopy(dict(stage_result))
+            context["completed_stages"].append(stage)
+
+        # The loop ends at M6 by construction.  No downstream callable is
+        # accepted or invoked by this route.
+        return {
+            "status": "RESEARCH_READY",
+            "terminal_stage": REAL_RESEARCH_TERMINAL_STAGE,
+            "completed_stages": list(context["completed_stages"]),
+            "stage_results": context["stage_results"],
+            "canonical_route": self.canonical_route_descriptor(),
+            "post_terminal_execution": False,
+        }
+
+    def build_request(self, *, input_artifacts: list[InputArtifact] | None = None, output_schema: str = "research_pack", role: str = "RESEARCH_AND_CURATION") -> ExecutionRequest:
+        """Build, but deliberately do not execute, the canonical REAL request."""
+        return ExecutionRequest(
+            capability_id=REAL_RESEARCH_CAPABILITY,
+            skill_id="extend_01_research_v2_real_e2e",
+            skill_version=M7_VERSION,
+            input_artifacts=list(input_artifacts or []),
+            output_schema=output_schema,
+            execution_mode="REAL",
+            provider=self.provider,
+            model=self.model,
+            execution_route=self.execution_route,
+            execution_profile=self.execution_profile,
+            execution_family=self.execution_family,
+            timeout=float(self.timeout_seconds),
+            episode_id=self.episode_id,
+            role=role,
+            config={
+                "repository_root": str(Path(__file__).resolve().parents[2]),
+                "mission_authorization_path": self.mission_authorization_path,
+                "runtime": self.runtime,
+                "budget_limit": self.budget_limit,
+                "max_iterations": self.max_iterations,
+                "max_retries": self.max_retries,
+                "timeout_seconds": self.timeout_seconds,
+                "real_ai_execution": False,
+                "real_research": False,
+                "real_ai_calls": 0,
+                "terminal_stage": REAL_RESEARCH_TERMINAL_STAGE,
+                "acquisition_status": self.acquisition_status,
+                "canonical_route": self.canonical_route_descriptor(),
+            },
+        )
+
+    @staticmethod
+    def claims_from_result(result: ExecutionResult | None, *, research_ready: bool = False, provenance_verified: bool = False) -> dict[str, Any]:
+        real_success = bool(
+            result is not None
+            and result.status is ExecutionStatus.SUCCEEDED
+            and result.is_real_editorial_execution is True
+        )
+        return {
+            "real_ai_execution": real_success,
+            "real_ai_calls": 1 if real_success else 0,
+            "real_research": bool(real_success and research_ready and provenance_verified),
+            "real_research_quality": "NOT_DEMONSTRATED",
+            "authorized_for_product_use": False,
+        }
+
+    @staticmethod
+    def assert_real_provenance(provenance: Mapping[str, Any]) -> None:
+        if not isinstance(provenance, Mapping):
+            raise ResearchM7Error("REAL_PROVENANCE_REQUIRED")
+        executor_id = str(provenance.get("executor_id") or "")
+        run_id = str(provenance.get("run_id") or "")
+        if not run_id or not executor_id or executor_id == "synthetic-fixture" or run_id.startswith("M7-"):
+            raise ResearchM7Error("REAL_PROVENANCE_SYNTHETIC_OR_MISSING")
 
 
 @dataclass(frozen=True)
@@ -352,13 +598,16 @@ class ResearchV2B5I3Adapter:
 class ResearchM7SyntheticRunner:
     """Coordinate a canonical B2→M4→M5→M6 run with synthetic cognition."""
 
-    def __init__(self, root: str | Path, *, selection_mode: str = "MANUAL", delegated_scope: list[str] | None = None):
+    def __init__(self, root: str | Path, *, selection_mode: str = "MANUAL", delegated_scope: list[str] | None = None, max_iterations: int = 3):
         if selection_mode not in {"MANUAL", "DELEGATED"}:
             raise ResearchM7Error("M7_SELECTION_MODE_INVALID")
+        if int(max_iterations) < 1:
+            raise ResearchM7Error("M7_MAX_ITERATIONS_INVALID")
         self.root = Path(root)
         self.store = M7CheckpointStore(self.root)
         self.selection_mode = selection_mode
         self.delegated_scope = sorted(set(str(item) for item in (delegated_scope or [])))
+        self.max_iterations = int(max_iterations)
         self.invalidation = InvalidationEngine()
 
     def _new_state(self, human_input: Mapping[str, Any]) -> dict[str, Any]:
@@ -511,7 +760,21 @@ class ResearchM7SyntheticRunner:
                 result["deep_fidelity" if payload.get("dossiers", [{}])[0].get("research_stage") == "DEEP_FIDELITY" else "deep_work_research"] = item
         return result
 
-    def _provenance(self, state: Mapping[str, Any], b2: Mapping[str, Any], m4: Mapping[str, Any], m5: Mapping[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    def _provenance(
+        self,
+        state: Mapping[str, Any],
+        b2: Mapping[str, Any],
+        m4: Mapping[str, Any],
+        m5: Mapping[str, Any],
+        *,
+        execution_mode: str = "SYNTHETIC_TEST",
+        real_provenance: Mapping[str, Any] | None = None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        if str(execution_mode).upper() == "REAL":
+            if not isinstance(real_provenance, Mapping):
+                raise ResearchM7Error("REAL_PROVENANCE_REQUIRED")
+            RealResearchRoutePreparation.assert_real_provenance(real_provenance.get("producer_provenance", real_provenance))
+            return {"artifact_refs": []}, copy.deepcopy(dict(real_provenance))
         repo_root = self.root / "canonical_repo"
         local_registry_path = repo_root / "output" / "execution_provenance_registry.json"
         registry_source = local_registry_path if local_registry_path.is_file() else Path(__file__).resolve().parents[2] / "output" / "execution_provenance_registry.json"
@@ -878,7 +1141,7 @@ class ResearchM7SyntheticRunner:
             selection_mode = "DELEGATED_SELECTION" if self.selection_mode == "DELEGATED" else "USER_SELECTION"
             human = HumanDecision(request_id=f"{plan['research_plan_id']}:M4:SELECTION_REQUEST", action="APPROVE", actor_ref="OWNER", channel="TERMINAL") if selection_mode == "USER_SELECTION" else None
             delegation = {"decision": "DELEGATE", "reasons": ["scope explícito"], "policy_version": "1.0.0", "evidence_refs": [f"D-{work_id}" for work_id in selected], "authorized_candidate_set": selected} if selection_mode == "DELEGATED_SELECTION" else None
-            m4 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter).run(baseline, context=context, selection_mode=selection_mode, human_decision=human, delegation_decision=delegation, selection_options=[selected])
+            m4 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter, no_progress_guard=ResearchB2NoProgressGuard(max_iterations=self.max_iterations)).run(baseline, context=context, selection_mode=selection_mode, human_decision=human, delegation_decision=delegation, selection_options=[selected])
             state.setdefault("canonical_invocations", {}).update({"M4": "ResearchB3Orchestrator.run"})
             self._store_coord(state, "M4", m4["execution_manifest"], kind="ResearchM4ExecutionManifest")
             state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4"]
@@ -887,7 +1150,7 @@ class ResearchM7SyntheticRunner:
         if start_stage in {"M4", "M5"}:
             executor.input["_effective_selected_work_ids"] = list(_read(m4["execution_manifest"]["path"])["selection"]["selected_work_ids"])
             executor.input["selection_mode"] = self.selection_mode
-            m5 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter).run_m5(baseline, m4, context=context)
+            m5 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter, no_progress_guard=ResearchB2NoProgressGuard(max_iterations=self.max_iterations)).run_m5(baseline, m4, context=context)
             state.setdefault("canonical_invocations", {}).update({"M5": "ResearchB3Orchestrator.run_m5"})
             self._store_coord(state, "M5", m5["execution_manifest"], kind="ResearchM5ExecutionManifest")
             state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5"]
@@ -920,8 +1183,7 @@ class ResearchM7SyntheticRunner:
         adapter = self._adapter(state)
         context = self._context(state)
         if simulate_no_progress:
-            from src.application.research_b2 import ResearchB2NoProgressGuard
-            guard = ResearchB2NoProgressGuard(max_iterations=2)
+            guard = ResearchB2NoProgressGuard(max_iterations=self.max_iterations)
             guard.observe(gap="M7:synthetic-iteration", evidence_refs=["recovery:S1"], state="OPEN", result={"status": "UNCHANGED"})
             observation = guard.observe(gap="M7:synthetic-iteration", evidence_refs=["recovery:S1"], state="OPEN", result={"status": "UNCHANGED"})
             state["iteration_guard"] = guard.to_dict()
@@ -948,7 +1210,7 @@ class ResearchM7SyntheticRunner:
         plan = research_plan(inp)
         if validate_research_plan(plan):
             raise ResearchM7Error("M7_RESEARCH_PLAN_INVALID")
-        b2 = ResearchB2Orchestrator(executor, ResearchB2Persistence(execution_root / "b2"), acquisition_adapter=adapter).run(plan, context=context)
+        b2 = ResearchB2Orchestrator(executor, ResearchB2Persistence(execution_root / "b2"), acquisition_adapter=adapter, no_progress_guard=ResearchB2NoProgressGuard(max_iterations=self.max_iterations)).run(plan, context=context)
         state["canonical_invocations"] = {"B2": "ResearchB2Orchestrator.run"}
         source_path = execution_root / "source_access_and_evidence_report.json"
         _write_json_atomic(source_path, context["source_access"])
@@ -975,7 +1237,7 @@ class ResearchM7SyntheticRunner:
         human = HumanDecision(request_id=f"{plan['research_plan_id']}:M4:SELECTION_REQUEST", action="APPROVE", actor_ref="OWNER", channel="TERMINAL") if selection_mode == "USER_SELECTION" else None
         delegation = {"decision": "DELEGATE", "reasons": ["scope explícito"], "policy_version": "1.0.0", "evidence_refs": [f"D-{work_id}" for work_id in selected], "authorized_candidate_set": selected} if selection_mode == "DELEGATED_SELECTION" else None
         baseline = self._baseline(b2)
-        m4 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter).run(baseline, context=context, selection_mode=selection_mode, human_decision=human, delegation_decision=delegation, selection_options=[selected])
+        m4 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter, no_progress_guard=ResearchB2NoProgressGuard(max_iterations=self.max_iterations)).run(baseline, context=context, selection_mode=selection_mode, human_decision=human, delegation_decision=delegation, selection_options=[selected])
         state.setdefault("canonical_invocations", {}).update({"M4": "ResearchB3Orchestrator.run"})
         self._store_coord(state, "M4", m4["execution_manifest"], kind="ResearchM4ExecutionManifest")
         state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4"]
@@ -988,7 +1250,7 @@ class ResearchM7SyntheticRunner:
             state.update({"status": "INTERRUPTED", "next_stage": "M4", "research_stop_route": "REOPEN_FOCAL", "updated_at": _now()})
             self.store.save(state)
             return state
-        m5 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter).run_m5(baseline, m4, context=context)
+        m5 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter, no_progress_guard=ResearchB2NoProgressGuard(max_iterations=self.max_iterations)).run_m5(baseline, m4, context=context)
         state.setdefault("canonical_invocations", {}).update({"M5": "ResearchB3Orchestrator.run_m5"})
         self._store_coord(state, "M5", m5["execution_manifest"], kind="ResearchM5ExecutionManifest")
         state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5"]
