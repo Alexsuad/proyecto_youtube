@@ -55,6 +55,21 @@ def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
         raise StorageError(f"No se pudo persistir {path.name}: {exc}") from exc
 
 
+def _write_bytes_atomic(path: Path, payload: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(payload)
+        os.replace(temp_name, path)
+    except OSError as exc:
+        try:
+            os.unlink(temp_name)
+        except OSError:
+            pass
+        raise StorageError(f"No se pudo persistir {path.name}: {exc}") from exc
+
+
 def _read_json(path: Path, default: dict[str, Any] | None = None) -> dict[str, Any]:
     if not path.exists():
         return dict(default or {})
@@ -77,6 +92,8 @@ class VaultEpisodeStore:
     ADMINISTRATIVE_CLOSED_STATE = "ADMINISTRATIVELY_CLOSED"
     ADMINISTRATIVE_CLOSED_INDEX_STATUS = "administratively_cerrado"
     ADMINISTRATIVE_CLOSURE_FILENAME = "administrative_recovery.json"
+    RESEARCH_MATERIAL_MAX_BYTES = 5 * 1024 * 1024
+    RESEARCH_MATERIAL_SUFFIXES = {".txt": "TEXT", ".md": "MARKDOWN", ".json": "JSON"}
 
     def __init__(self, vault_root: str | Path, channel_id: str):
         if not str(vault_root).strip():
@@ -363,6 +380,119 @@ class VaultEpisodeStore:
                     except OSError:
                         pass
                 raise
+
+    def record_research_preparation(
+        self,
+        handle: EpisodeHandle,
+        *,
+        brief: dict[str, Any],
+        channel_context: dict[str, Any],
+        source_access: dict[str, Any],
+    ) -> None:
+        """Persist the PRE_RESEARCH handoff without mixing in evidence outputs."""
+        artifacts = {
+            "research_episode_brief.json": brief,
+            "research_channel_context.json": channel_context,
+            "research_source_access.json": source_access,
+        }
+        with self._index_lock():
+            paths = [handle.folder / name for name in artifacts]
+            if any(path.exists() for path in paths):
+                raise StorageError("La preparación Research ya tiene artefactos persistidos.")
+            written: list[Path] = []
+            try:
+                for path in paths:
+                    _write_json_atomic(path, artifacts[path.name])
+                    written.append(path)
+            except Exception:
+                for path in written:
+                    try:
+                        path.unlink(missing_ok=True)
+                    except OSError:
+                        pass
+                raise
+
+    def materialize_owner_materials(
+        self,
+        handle: EpisodeHandle,
+        *,
+        source_paths: list[str | Path] | tuple[str | Path, ...],
+    ) -> list[dict[str, Any]]:
+        """Validate and snapshot owner-provided local research material."""
+        candidates: list[tuple[Path, bytes, str, str]] = []
+        for raw in source_paths:
+            source = Path(raw)
+            if source.is_symlink() or not source.is_file():
+                raise StorageError("OWNER_MATERIAL_NOT_REGULAR_FILE")
+            kind = self.RESEARCH_MATERIAL_SUFFIXES.get(source.suffix.lower())
+            if kind is None:
+                raise StorageError("OWNER_MATERIAL_FORMAT_UNSUPPORTED")
+            try:
+                payload = source.read_bytes()
+                if len(payload) > self.RESEARCH_MATERIAL_MAX_BYTES:
+                    raise StorageError("OWNER_MATERIAL_TOO_LARGE")
+                if kind == "JSON":
+                    json.loads(payload.decode("utf-8"))
+                else:
+                    payload.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise StorageError("OWNER_MATERIAL_ENCODING_INVALID") from exc
+            except json.JSONDecodeError as exc:
+                raise StorageError("OWNER_MATERIAL_JSON_INVALID") from exc
+            checksum = hashlib.sha256(payload).hexdigest()
+            candidates.append((source, payload, kind, checksum))
+        if not candidates:
+            return []
+        material_dir = handle.folder / "research_materials"
+        provenance_path = handle.folder / "research_material_provenance.json"
+        records: list[dict[str, Any]] = []
+        provenance_records: list[dict[str, Any]] = []
+        for source, payload, kind, checksum in candidates:
+            filename = f"{checksum}{source.suffix.lower()}"
+            relative = Path("research_materials") / filename
+            records.append({
+                "material_ref": f"owner:{source.name}:{checksum[:16]}",
+                "material_kind": kind,
+                "availability": "AVAILABLE_LOCAL",
+                "access_mode": "DIRECT",
+                "artifact_ref": relative.as_posix(),
+                "checksum": checksum,
+                "limitations": ["Snapshot local; no búsqueda web ni fetch HTTP."],
+                "provenance_ref": f"{provenance_path.name}#{checksum}",
+            })
+            provenance_records.append({
+                "material_ref": records[-1]["material_ref"],
+                "source_name": source.name,
+                "source_path": str(source),
+                "snapshot_path": relative.as_posix(),
+                "checksum": checksum,
+                "material_kind": kind,
+            })
+        with self._index_lock():
+            if provenance_path.exists() or any((handle.folder / item["artifact_ref"]).exists() for item in records):
+                raise StorageError("OWNER_MATERIAL_SNAPSHOT_ALREADY_EXISTS")
+            written: list[Path] = []
+            try:
+                for (_, payload, _, _), record in zip(candidates, records):
+                    target = handle.folder / record["artifact_ref"]
+                    _write_bytes_atomic(target, payload)
+                    written.append(target)
+                _write_json_atomic(provenance_path, {
+                    "contract": "research_owner_material_provenance",
+                    "contract_version": "1.0.0",
+                    "episode_id": handle.episode_id,
+                    "records": provenance_records,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                })
+                written.append(provenance_path)
+            except Exception:
+                for path in written:
+                    try:
+                        path.unlink(missing_ok=True)
+                    except OSError:
+                        pass
+                raise
+        return records
 
     B5_I3_ARTIFACT_FILES = {
         "viewer_journey": "06_viewer_journey.json",

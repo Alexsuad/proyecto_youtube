@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/research_source_access.json",
+  "title": "ResearchSourceAccess",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "access_id", "episode_id", "brief_version", "capabilities", "materials", "unavailable_source_types", "limitations", "origin_artifact_refs", "created_at"],
+  "properties": {
+    "contract": {"const": "research_source_access"},
+    "contract_version": {"const": "1.0.0"},
+    "access_id": {"type": "string", "minLength": 1},
+    "episode_id": {"type": "string", "minLength": 1},
+    "brief_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "capabilities": {"type": "object", "additionalProperties": false, "required": ["owner_material_ingestion", "web_search", "http_fetch"], "properties": {"owner_material_ingestion": {"enum": ["AVAILABLE", "UNAVAILABLE", "UNKNOWN"]}, "web_search": {"enum": ["AVAILABLE", "UNAVAILABLE", "UNKNOWN"]}, "http_fetch": {"enum": ["AVAILABLE", "UNAVAILABLE", "UNKNOWN"]}}},
+    "materials": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["material_ref", "material_kind", "availability", "access_mode", "artifact_ref", "checksum", "limitations", "provenance_ref"],
+        "properties": {
+          "material_ref": {"type": "string", "minLength": 1},
+          "material_kind": {"enum": ["TEXT", "MARKDOWN", "JSON", "TRANSCRIPT", "OTHER"]},
+          "availability": {"enum": ["AVAILABLE_LOCAL", "REFERENCED_NOT_ACQUIRED", "UNAVAILABLE", "UNKNOWN"]},
+          "access_mode": {"enum": ["DIRECT", "INDIRECT", "NONE", "UNKNOWN"]},
+          "artifact_ref": {"type": ["string", "null"]},
+          "checksum": {"type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$"},
+          "limitations": {"type": "array", "items": {"type": "string"}},
+          "provenance_ref": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "unavailable_source_types": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "origin_artifact_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

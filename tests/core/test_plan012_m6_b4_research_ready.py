@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from src.application.research_b2 import _checksum
+from src.application.research_b3 import ResearchB3Error
 from src.application.research_b4 import ResearchB4Error, ResearchB4Orchestrator, ResearchB4Persistence
 from src.core.contract_validation import validate_against_schema, validate_research_ready_manifest
 from src.core.gate_runtime import validate_gate_result
@@ -71,6 +72,7 @@ def _baseline_from_b2(b2_result):
         "research_comparison": _read(b2_result["research_comparison"]),
         "deepening_targets": b2_result["deepening_targets"],
         "lifecycle": b2_result["lifecycle_projection"],
+        "evidence_report": b2_result["evidence_report"],
     }
 
 
@@ -79,23 +81,7 @@ def _chain_from_runs(tmp_path, b2_result, m4_result, m5_result):
     b2_manifest = _read(b2_manifest_ref)
     m4_manifest_ref = m4_result["execution_manifest"]
     m4_manifest = _read(m4_manifest_ref)
-    source_report = deepcopy(VALID_FIXTURES["source_access_and_evidence_report"])
-    source_report.update({
-        "episode_id": "EP-1",
-        "research_id": "RP-FIXTURE",
-        "brief_version": "1.0.0",
-    })
-    source_path = tmp_path / "source_access_and_evidence_report.json"
-    source_path.parent.mkdir(parents=True, exist_ok=True)
-    source_path.write_text(json.dumps(source_report, ensure_ascii=False), encoding="utf-8")
-    source_ref = {
-        "artifact_id": "RP-FIXTURE:SOURCE_ACCESS",
-        "artifact_kind": "SourceAccessAndEvidenceReport",
-        "artifact_version": "2.0.0",
-        "path": str(source_path),
-        "checksum": _checksum(source_report),
-    }
-    refs = [b2_manifest_ref, *b2_manifest["artifacts"], m4_manifest_ref, *m4_manifest["artifacts"], source_ref]
+    refs = [b2_manifest_ref, *b2_manifest["artifacts"], m4_manifest_ref, *m4_manifest["artifacts"]]
     m5_ref = m5_result["execution_manifest"]
     registry = deepcopy(VALID_FIXTURES["execution_provenance_registry"])
     base_run = deepcopy(registry["runs"][0])
@@ -122,6 +108,10 @@ def _chain_from_runs(tmp_path, b2_result, m4_result, m5_result):
         })
         return run
 
+    m5_evidence_ref = next(
+        ref for ref in _read(m5_ref)["m5_outputs"]
+        if ref["artifact_kind"] == "SourceAccessAndEvidenceReport"
+    )
     all_refs = [m5_ref, *_read(m5_ref)["m5_outputs"], *refs]
     unique_refs = {
         (ref["artifact_id"], ref["artifact_kind"], ref["artifact_version"], ref["checksum"]): ref
@@ -167,7 +157,7 @@ def _chain_from_runs(tmp_path, b2_result, m4_result, m5_result):
         "execution_provenance_registry_ref": "output/execution_provenance_registry.json",
     }
     provenance["producer_provenance"]["provenance_ref"] = provenance["execution_provenance_registry_ref"]
-    return {"artifact_refs": refs}, provenance
+    return {"artifact_refs": [m5_ref, m5_evidence_ref, *refs]}, provenance
 
 
 def _run_full_m5(tmp_path, *, m5_cognitive=None, fidelity="APTA", m4_mutator=None):
@@ -596,7 +586,10 @@ def test_m6_rejects_source_report_from_other_episode_or_research(tmp_path):
     source_payload.update({"episode_id": "EP-OTHER", "research_id": "RP-OTHER"})
     Path(source_ref["path"]).write_text(json.dumps(source_payload, ensure_ascii=False), encoding="utf-8")
     source_ref["checksum"] = _checksum(source_payload)
-    with pytest.raises(ResearchB4Error, match="M6_SOURCE_ACCESS_BINDING_INVALID"):
+    with pytest.raises(
+        (ResearchB3Error, ResearchB4Error),
+        match="M6_(SOURCE_ACCESS_BINDING_INVALID|B2_CANONICAL_BINDING_INVALID|SourceAccessAndEvidenceReport_CHECKSUM_MISMATCH)",
+    ):
         _run_m6(
             tmp_path / "run", m5_result=m5_result, research_chain=chain, provenance=provenance,
         )

@@ -26,7 +26,8 @@
       "type": "string",
       "enum": [
         "1.0.0",
-        "2.0.0"
+        "2.0.0",
+        "3.0.0"
       ]
     },
     "interaction_id": {
@@ -120,8 +121,43 @@
         "PREFERIDA",
         "REQUERIDA"
       ]
+    },
+    "work_intents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["work_ref", "editorial_intent"],
+        "properties": {
+          "work_ref": {"type": "string", "minLength": 1},
+          "editorial_intent": {"enum": ["NO_DECLARADA", "PREFERIDA", "REQUERIDA"]}
+        }
+      }
+    },
+    "selection_authority": {
+      "enum": ["NOT_DECLARED", "OWNER_DECIDES", "DELEGATED_TO_RESEARCH"]
+    },
+    "material_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["material_ref", "material_kind", "source_ref"],
+        "properties": {
+          "material_ref": {"type": "string", "minLength": 1},
+          "material_kind": {"enum": ["TEXT", "MARKDOWN", "JSON", "TRANSCRIPT", "OTHER"]},
+          "source_ref": {"type": "string", "minLength": 1}
+        }
+      }
     }
   },
+  "allOf": [
+    {
+      "if": {"properties": {"contract_version": {"const": "3.0.0"}}, "required": ["contract_version"]},
+      "then": {"required": ["work_intents", "selection_authority", "material_refs"]}
+    }
+  ],
   "$defs": {
     "user_instruction": {
       "type": "object",

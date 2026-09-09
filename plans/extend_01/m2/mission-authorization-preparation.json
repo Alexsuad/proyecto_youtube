@@ -1,0 +1,22 @@
+{
+  "mission_id": "EXTEND_01_M2_REAL_E2E",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "2171bb1f9877cfabf7e517eb215f203baacc3a6f150b05f7e3942205933ca760",
+    "capability_ids": ["EXTEND_01_RESEARCH_V2_REAL_E2E"],
+    "role_ids": ["RESEARCH_AND_CURATION", "INDEPENDENT_RESEARCH_AUDITOR"],
+    "execution_family_ids": ["AGENT_HARNESS"],
+    "execution_interface": "EXTEND_01_M2_PREPARATION_SYNTHETIC",
+    "allowed_operations": ["EXECUTE_CAPABILITY"],
+    "allowed_paths": ["plans/001_CONTROL_OPERATIVO.md", "plans/extend_01/m2/", "config/capability_registry.json", "config/capability_routing.yaml", "config/responsibility_registry.json", "config/agent_prompt_registry.json", "schemas/human_episode_input.json", "schemas/episode_brief.json", "schemas/research_channel_context.json", "schemas/research_source_access.json", "schemas/research_plan_proposal.json", "src/cli.py", "src/application/interaction.py", "src/application/contracts.py", "src/application/storage.py", "src/application/research_planning.py", "src/application/research_b2.py", "src/application/research_b3.py", "src/application/research_b4.py", "src/application/research_m7.py", "src/application/research_m7_fixture.py", "src/ai/role_execution.py", "prompts/roles/RESEARCH_AND_CURATION/1.1.0.md", ".agent/skills/skill_research_tema_y_obras.md", "tests/ai/test_role_execution_contract.py", "tests/ai/test_hybrid_runtime.py", "tests/core/test_plan_005_authority_reconciliation.py", "tests/core/test_application_intake.py", "tests/core/test_plan012_m2_contracts.py", "tests/core/test_plan012_m3_b2_base_research.py", "tests/core/test_plan012_m4_b3_deep_research.py", "tests/core/test_plan012_m5_b3_post_deep.py", "tests/core/test_plan012_m6_b4_research_ready.py", "tests/core/test_all_schemas.py", "tests/core/test_execution_preflight_context_lineage.py", "tests/harness/test_plan012_m7_b5.py"],
+    "allowed_routes": ["synthetic"],
+    "execution_mode": "SYNTHETIC_TEST",
+    "single_use": false,
+    "authority_ref": "plans/extend_01/m2/authority_preparation.json",
+    "authority_sha256": "0869f47eeb6ef4d226d19088b9bf65960f3271ea61f16da63f351830989c6bba",
+    "authorized_scope_sha256": "d93064e263424acc8d39f76aaa50e6c4e0c9aacd8d9ce44eded8b5ec4fcb4670",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": true,
+    "repair_integrity_evidence_path": "plans/extend_01/m2/repair_integrity_evidence.json"
+  }
+}

@@ -300,6 +300,38 @@ def research_plan(human_input: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def research_plan_proposal(human_input: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the synthetic cognitive proposal consumed by the real binder."""
+    topic = str(human_input["topic"])
+    question = str(human_input["initial_question"])
+    works = [str(item) for item in human_input["works"]]
+    return {
+        "contract": "research_plan_proposal",
+        "contract_version": "1.0.0",
+        "central_question": question,
+        "intended_use": "RESEARCH_AND_THESIS",
+        "scope": f"Cobertura controlada de {topic}.",
+        "dimensions": ["Fenómeno", "Obras declaradas"],
+        "subquestions": ["¿Qué evidencia describe el fenómeno?", "¿Qué aportan las obras declaradas?"],
+        "evidence_requirements": ["Evidencia verificable para el fenómeno y las obras."],
+        "source_strategy": "Material local controlado; sin búsqueda web.",
+        "critical_claims": ["No exceder la evidencia disponible."],
+        "rival_refutation": ["Considerar explicaciones alternativas."],
+        "gaps_risks": ["El fixture no representa investigación real."],
+        "potential_specialists": [],
+        "sufficiency_criteria": ["Evidencia suficiente para el uso declarado."],
+        "target_final_works_decision": {
+            "status": "CONFIRMED",
+            "requested_count": int(human_input["target_final_works"]),
+            "decision_basis": "Decisión explícita del input sintético controlado.",
+            "decision_ref": "human-input:target-final-works",
+        },
+        "supplied_works": [{"work_ref": work_id} for work_id in works],
+        "selection_policy": {"mode": "OWNER_OR_DELEGATED", "decision_rule": "Decisión explícita"},
+        "planned_stages": ["PLANNING", "BASE_RESEARCH", "SYNTHESIS"],
+    }
+
+
 def phenomenon(episode_id: str, research_id: str, topic: str) -> dict[str, Any]:
     report = source_report(episode_id, research_id)
     return {
@@ -402,6 +434,8 @@ class SyntheticResearchExecutor:
     def __call__(self, request: Any) -> Any:
         stage = request.stage
         topic = str(self.input["topic"])
+        if stage == "RESEARCH_PLANNING":
+            return research_plan_proposal(self.input)
         if stage == "PHENOMENON_BASE_RESEARCH":
             return phenomenon(self.episode_id, self.research_id, topic)
         if stage == "WORK_DISCOVERY":

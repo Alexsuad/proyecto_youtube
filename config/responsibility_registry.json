@@ -50,9 +50,12 @@
       "when_used": "Durante investigación y curación.",
       "inputs": [
         "topic",
-        "source_access"
+        "source_access",
+        "brief",
+        "channel_context"
       ],
       "outputs": [
+        "ResearchPlanProposal",
         "research_pack",
         "research_comparison",
         "claims_ledger",
@@ -82,7 +85,7 @@
       "handoff": [
         "research to narrative"
       ],
-      "prompt_version": "1.0.0"
+      "prompt_version": "1.1.0"
     },
     {
       "role_id": "NARRATIVE_ARCHITECTURE",

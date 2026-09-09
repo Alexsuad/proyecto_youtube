@@ -137,6 +137,9 @@ class HumanInput:
     target_language: str | None = None
     research_role: str | None = None
     editorial_intent: str | None = None
+    work_intents: tuple[dict[str, str], ...] = ()
+    selection_authority: str = "NOT_DECLARED"
+    material_refs: tuple[dict[str, str], ...] = ()
     actor_ref: str = "local-user"
     provenance: dict[str, Any] = field(default_factory=dict)
     processing_status: str = "RECEIVED"
@@ -148,6 +151,13 @@ class HumanInput:
             raise InputValidationError("research_role debe ser ANCLA o NORMAL.")
         if self.editorial_intent is not None and self.editorial_intent not in EDITORIAL_INTENTS:
             raise InputValidationError("editorial_intent no pertenece al vocabulario contractual.")
+        if self.selection_authority not in {"NOT_DECLARED", "OWNER_DECIDES", "DELEGATED_TO_RESEARCH"}:
+            raise InputValidationError("selection_authority no pertenece al vocabulario contractual.")
+        refs = [item.get("material_ref") if isinstance(item, dict) else None for item in self.material_refs]
+        if any(not isinstance(item, dict) or not item.get("material_ref") or not item.get("material_kind") or not item.get("source_ref") for item in self.material_refs):
+            raise InputValidationError("material_refs debe contener referencias completas.")
+        if len(refs) != len(set(refs)):
+            raise InputValidationError("material_ref debe ser único.")
 
     @classmethod
     def create(
@@ -164,6 +174,9 @@ class HumanInput:
         target_language: str | None = None,
         research_role: str | None = None,
         editorial_intent: str | None = None,
+        work_intents: list[dict[str, str]] | tuple[dict[str, str], ...] | None = None,
+        selection_authority: str = "NOT_DECLARED",
+        material_refs: list[dict[str, str]] | tuple[dict[str, str], ...] | None = None,
         channel: str = "TERMINAL",
         actor_ref: str = "local-user",
         interaction_id: str | None = None,
@@ -188,6 +201,9 @@ class HumanInput:
         clean_language = normalize_target_language(target_language)
         clean_research_role = str(research_role).strip().upper() if research_role is not None else None
         clean_editorial_intent = str(editorial_intent).strip().upper() if editorial_intent is not None else None
+        clean_selection_authority = str(selection_authority or "NOT_DECLARED").strip().upper()
+        clean_work_intents = tuple(dict(item) for item in (work_intents or ()))
+        clean_material_refs = tuple(dict(item) for item in (material_refs or ()))
         if clean_research_role is not None and clean_research_role not in RESEARCH_ROLES:
             raise InputValidationError("research_role debe ser ANCLA o NORMAL.")
         if clean_editorial_intent is not None and clean_editorial_intent not in EDITORIAL_INTENTS:
@@ -201,6 +217,13 @@ class HumanInput:
         clean_works = tuple(item.strip() for item in (works or ()) if item.strip())
         if len(clean_works) != len(set(clean_works)):
             raise InputValidationError("El corpus no puede repetir obras.")
+        if clean_work_intents:
+            intent_refs = [item.get("work_ref") for item in clean_work_intents]
+            if any(not item.get("work_ref") or item.get("editorial_intent") not in EDITORIAL_INTENTS for item in clean_work_intents):
+                raise InputValidationError("work_intents debe contener referencias e intenciones editoriales válidas.")
+            expected_refs = set(clean_works or ((clean_content,) if clean_content else ()))
+            if set(intent_refs) != expected_refs or len(intent_refs) != len(expected_refs):
+                raise InputValidationError("Debe existir exactamente un work_intent para cada obra suministrada.")
         if selected_mode in (EntryMode.TOPIC_FIRST, EntryMode.ANCHOR_WORK_FIRST) and not clean_content:
             raise InputValidationError("El contenido principal no puede estar vacío.")
         if selected_mode is EntryMode.CORPUS_FIRST and not clean_works:
@@ -227,6 +250,9 @@ class HumanInput:
             target_language=clean_language,
             research_role=clean_research_role,
             editorial_intent=clean_editorial_intent,
+            work_intents=clean_work_intents,
+            selection_authority=clean_selection_authority,
+            material_refs=clean_material_refs,
             actor_ref=str(actor_ref).strip(),
             provenance=dict(provenance or {"capture_method": "TEXT", "source": "USER"}),
             processing_status=processing_status,
@@ -245,6 +271,9 @@ class HumanInput:
             target_language=data.get("target_language"),
             research_role=data.get("research_role"),
             editorial_intent=data.get("editorial_intent"),
+            work_intents=data.get("work_intents", []),
+            selection_authority=data.get("selection_authority", "NOT_DECLARED"),
+            material_refs=data.get("material_refs", []),
             channel=data.get("channel", ""),
             actor_ref=data.get("actor_ref", ""),
             interaction_id=data.get("interaction_id"),
@@ -256,7 +285,7 @@ class HumanInput:
     def to_dict(self) -> dict[str, Any]:
         payload = {
             "contract": "human_episode_input",
-            "contract_version": "2.0.0" if self.research_role is not None or self.editorial_intent is not None else "1.0.0",
+            "contract_version": "3.0.0" if self.work_intents or self.material_refs or self.selection_authority != "NOT_DECLARED" else ("2.0.0" if self.research_role is not None or self.editorial_intent is not None else "1.0.0"),
             "interaction_id": self.interaction_id,
             "occurred_at": self.occurred_at,
             "channel": self.channel,
@@ -272,6 +301,10 @@ class HumanInput:
             "provenance": self.provenance,
             "processing_status": self.processing_status,
         }
+        if self.work_intents or self.material_refs or self.selection_authority != "NOT_DECLARED":
+            payload["work_intents"] = [dict(item) for item in self.work_intents]
+            payload["selection_authority"] = self.selection_authority
+            payload["material_refs"] = [dict(item) for item in self.material_refs]
         if self.research_role is not None:
             payload["research_role"] = self.research_role
         if self.editorial_intent is not None:

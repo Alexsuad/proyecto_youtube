@@ -12,7 +12,7 @@ from src.application.research_b2 import (
     ResearchB2Persistence,
     SoftwareAcquisitionAdapter,
 )
-from src.core.contract_validation import validate_work_research_dossier
+from src.core.contract_validation import validate_against_schema, validate_source_access_and_evidence_report, validate_work_research_dossier
 from tests.core.test_all_schemas import VALID_FIXTURES
 
 
@@ -273,7 +273,7 @@ def test_b2_accepts_targets_only_for_eligible_researched_works(tmp_path):
 def _context() -> dict:
     return {
         "topic": "Fenómeno de prueba",
-        "source_access": deepcopy(VALID_FIXTURES["source_access_and_evidence_report"]),
+        "source_access": deepcopy(VALID_FIXTURES["research_source_access"]),
         "brief": {"brief_id": "BRIEF-1"},
         "channel_context": {"channel_id": "CHANNEL-1"},
     }
@@ -517,6 +517,21 @@ def test_software_ai_software_boundary_and_persistence_order(tmp_path):
         assert events[offset + 4]["boundary"] == "SOFTWARE_PERSIST"
     assert (tmp_path / "research_plan.json").exists()
     assert (tmp_path / "preliminary_fidelity.json").exists()
+    evidence_ref = result["evidence_report"]
+    assert evidence_ref["artifact_kind"] == "SourceAccessAndEvidenceReport"
+    evidence_report = json.loads(Path(evidence_ref["path"]).read_text(encoding="utf-8"))
+    assert evidence_report["research_stage"] == "BASE_RESEARCH"
+    assert validate_source_access_and_evidence_report(evidence_report) == []
+    assert validate_against_schema(_context()["source_access"], "research_source_access") == []
+
+
+def test_b2_rejects_preinjected_evidence_report(tmp_path):
+    context = _context()
+    context["evidence_report"] = deepcopy(VALID_FIXTURES["source_access_and_evidence_report"])
+    with pytest.raises(ResearchB2Error, match="PREINJECTION_FORBIDDEN"):
+        ResearchB2Orchestrator(
+            lambda request: _phenomenon(), ResearchB2Persistence(tmp_path),
+        ).run(_plan(), context=context)
 
 
 def test_research_outputs_do_not_make_narrative_decisions(tmp_path):

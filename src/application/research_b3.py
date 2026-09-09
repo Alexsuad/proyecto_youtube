@@ -26,6 +26,7 @@ from src.application.research_b2 import (
     ResearchB2NoProgressGuard,
     ResearchB2Persistence,
     SoftwareAcquisitionAdapter,
+    ResearchB2Orchestrator,
     _checksum,
     _write_json_atomic,
     utc_now,
@@ -125,6 +126,7 @@ class ResearchB3Persistence(ResearchB2Persistence):
         "DEEP_WORK_RESEARCH": "deep_work_research.json",
         "DEEP_FIDELITY": "deep_fidelity.json",
         "DEEP_WORK_SUFFICIENCY": "deep_work_sufficiency.json",
+        "M4_EVIDENCE_REPORT": "source_access_and_evidence_report_m4_deep.json",
         "M4_EXECUTION_MANIFEST": "research_m4_execution.json",
         "M5_CLAIMS_LEDGER": "claims_ledger_m5.json",
         "M5_CLAIM_SUFFICIENCY": "research_stop_m5_claims.json",
@@ -135,6 +137,7 @@ class ResearchB3Persistence(ResearchB2Persistence):
         "M5_SELECTION_CHANGE_DECISION": "m5_selection_change_decision.json",
         "M5_DELEGATED_POST_DEEP_DECISION": "m5_delegated_post_deep_decision.json",
         "M5_APPROVED_CHANGE_RESEARCH": "research_stop_m5_approved_change.json",
+        "M5_EVIDENCE_REPORT": "source_access_and_evidence_report_m5_refined.json",
         "M5_EXECUTION_MANIFEST": "research_m5_execution.json",
     }
 
@@ -334,6 +337,149 @@ class ResearchB3Orchestrator:
         self.acquisition_adapter = acquisition_adapter or SoftwareAcquisitionAdapter()
         self.no_progress_guard = no_progress_guard or ResearchB2NoProgressGuard()
 
+    @staticmethod
+    def _evidence_snapshot_from_m4(
+        deep_phenomenon: Mapping[str, Any], phenomenon_stop: Mapping[str, Any],
+        deep_research: Sequence[Mapping[str, Any]], deep_fidelity: Sequence[Mapping[str, Any]],
+        work_stops: Sequence[Mapping[str, Any]],
+    ) -> dict[str, Any]:
+        """Collect the complete, already validated M4 evidence boundary."""
+        payloads: list[Mapping[str, Any]] = [deep_phenomenon, *deep_research, *deep_fidelity]
+        claims: list[Mapping[str, Any]] = []
+        scenes: list[Mapping[str, Any]] = []
+        limitations: list[str] = []
+        observations: list[str] = []
+        restrictions: list[str] = []
+        pending: list[Mapping[str, Any]] = []
+        critical_assessments: list[Mapping[str, Any]] = []
+        coverage_gaps: list[Mapping[str, Any]] = []
+        reopening_conditions: list[Mapping[str, Any]] = []
+        work_refs: set[str] = set()
+        external_refs: set[str] = set()
+
+        def collect_payload(payload: Mapping[str, Any]) -> None:
+            if any(key in payload for key in ("deep_fidelity", "research_sufficiency", "selection_state")):
+                observations.append("M4_WORK_STATE:" + json.dumps({
+                    key: payload.get(key) for key in ("work", "deep_fidelity", "research_sufficiency", "selection_state", "downstream_restrictions")
+                    if key in payload
+                }, sort_keys=True, ensure_ascii=False, default=str))
+            for item in payload.get("claims_candidates", []) if isinstance(payload.get("claims_candidates"), list) else []:
+                if isinstance(item, Mapping):
+                    claims.append(item)
+            for item in payload.get("narrative_evidence", []) if isinstance(payload.get("narrative_evidence"), list) else []:
+                if isinstance(item, Mapping):
+                    scenes.append(item)
+            separation = payload.get("evidence_type_separation")
+            if isinstance(separation, Mapping):
+                work_refs.update(str(ref) for ref in separation.get("work_evidence_refs", []) if str(ref).strip())
+                external_refs.update(str(ref) for ref in separation.get("external_reality_evidence_refs", []) if str(ref).strip())
+            for value in payload.get("limitations", []) if isinstance(payload.get("limitations"), list) else []:
+                if str(value).strip():
+                    limitations.append(str(value))
+            for value in payload.get("downstream_restrictions", []) if isinstance(payload.get("downstream_restrictions"), list) else []:
+                if isinstance(value, Mapping):
+                    statement = str(value.get("statement") or value.get("restriction") or "").strip()
+                else:
+                    statement = str(value).strip()
+                if statement:
+                    restrictions.append(statement)
+            for field, target in (("critical_claim_assessments", critical_assessments), ("coverage_gaps", coverage_gaps), ("reopening_conditions", reopening_conditions)):
+                values = payload.get(field)
+                if isinstance(values, list):
+                    target.extend(item for item in values if isinstance(item, Mapping))
+            deep = payload.get("deep_research")
+            if isinstance(deep, Mapping):
+                collect_payload(deep)
+                observations.append("DEEP_WORK_RESEARCH:" + json.dumps(deep, sort_keys=True, ensure_ascii=False, default=str))
+                for value in deep.get("pending_questions", []) if isinstance(deep.get("pending_questions"), list) else []:
+                    text = str(value).strip()
+                    if text:
+                        pending.append({"claim_id": f"M4-PENDING-{len(pending)+1}", "claim_text": text, "reason": "Pregunta pendiente declarada por DEEP_WORK_RESEARCH"})
+
+        for payload in payloads:
+            collect_payload(payload)
+        for stop in [phenomenon_stop, *work_stops]:
+            if not isinstance(stop, Mapping):
+                continue
+            status = stop.get("sufficiency_status")
+            if status:
+                observations.append(f"M4_STOP:{status}")
+            for value in stop.get("limitations", []) if isinstance(stop.get("limitations"), list) else []:
+                if str(value).strip():
+                    limitations.append(str(value))
+            for value in stop.get("pending_matters", []) if isinstance(stop.get("pending_matters"), list) else []:
+                text = str(value).strip()
+                if text:
+                    pending.append({"claim_id": f"M4-PENDING-{len(pending)+1}", "claim_text": text, "reason": "Asunto pendiente declarado por suficiencia M4"})
+        return {
+            "claims_candidates": claims,
+            "narrative_evidence": scenes,
+            "limitations": list(dict.fromkeys(limitations)),
+            "downstream_restrictions": list(dict.fromkeys(restrictions)),
+            "pending_claims": pending,
+            "evidence_type_separation": {"work_evidence_refs": sorted(work_refs), "external_reality_evidence_refs": sorted(external_refs)},
+            "sufficiency_states": [stop.get("sufficiency_status") for stop in [phenomenon_stop, *work_stops] if isinstance(stop, Mapping) and stop.get("sufficiency_status")],
+            "critical_claim_assessments": critical_assessments,
+            "coverage_gaps": coverage_gaps,
+            "reopening_conditions": reopening_conditions,
+            "stage_observations": observations,
+        }
+
+    @staticmethod
+    def _evidence_snapshot_from_m5(
+        claims: Mapping[str, Any], claim_stops: Mapping[str, Any] | Sequence[Mapping[str, Any]],
+        comparison: Mapping[str, Any], thesis: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Collect semantic inputs that M5 adds to the evidence boundary."""
+        candidates = [dict(item) for item in claims.get("claims", []) if isinstance(item, Mapping)]
+        pending: list[dict[str, Any]] = []
+        for gap in claims.get("gaps", []) if isinstance(claims.get("gaps"), list) else []:
+            if isinstance(gap, Mapping) and gap.get("status") not in {"CLOSED", "RESOLVED"}:
+                pending.append({"claim_id": str(gap.get("gap_id") or f"M5-GAP-{len(pending)+1}"), "claim_text": str(gap.get("statement") or "Gap de evidencia"), "reason": str(gap.get("return_route") or "Gap abierto en comparación post-deep"), "attempted_source_refs": [str(ref) for ref in gap.get("evidence_refs", []) if str(ref).strip()]})
+        decisions = claim_stops if isinstance(claim_stops, list) else claim_stops.get("decisions", [])
+        for decision in decisions if isinstance(decisions, list) else []:
+            if isinstance(decision, Mapping):
+                for value in decision.get("pending_matters", []) if isinstance(decision.get("pending_matters"), list) else []:
+                    pending.append({"claim_id": str(decision.get("decision_id") or f"M5-PENDING-{len(pending)+1}"), "claim_text": str(value), "reason": "Asunto pendiente de claim sufficiency"})
+        limitations: list[str] = []
+        observations: list[str] = []
+        restrictions: list[str] = []
+        for item in candidates:
+            if item.get("limitations"):
+                limitations.append(str(item["limitations"]))
+        for entry in comparison.get("entries", []) if isinstance(comparison.get("entries"), list) else []:
+            if isinstance(entry, Mapping):
+                limitations.extend(str(value) for value in entry.get("limitations", []) if str(value).strip())
+        for recommendation in comparison.get("set_recommendations", []) if isinstance(comparison.get("set_recommendations"), list) else []:
+            if isinstance(recommendation, Mapping) and (recommendation.get("material_change") or recommendation.get("action") not in {None, "MAINTAIN"}):
+                restrictions.append("Post-deep recommendation: " + json.dumps(dict(recommendation), sort_keys=True, ensure_ascii=False, default=str))
+        limitations.extend(str(value) for value in thesis.get("limits", []) if str(value).strip())
+        limitations.extend(str(value) for value in thesis.get("remaining_uncertainties", []) if str(value).strip())
+        restrictions.extend(str(value) for value in thesis.get("what_was_limited", []) if str(value).strip())
+        for field in ("refinement_rationale", "changes_from_provisional", "strongest_objection", "alternative_explanation"):
+            value = thesis.get(field)
+            if isinstance(value, list):
+                limitations.extend(str(item) for item in value if str(item).strip())
+            elif value:
+                limitations.append(str(value))
+        observations.append("M5_CLAIMS:" + json.dumps(claims, sort_keys=True, ensure_ascii=False, default=str))
+        observations.append("M5_COMPARISON:" + json.dumps(comparison, sort_keys=True, ensure_ascii=False, default=str))
+        observations.append("M5_THESIS:" + json.dumps(thesis, sort_keys=True, ensure_ascii=False, default=str))
+        separation = claims.get("evidence_type_separation") if isinstance(claims.get("evidence_type_separation"), Mapping) else {}
+        statuses = [item.get("sufficiency_status") for item in decisions if isinstance(item, Mapping) and item.get("sufficiency_status")]
+        return {
+            "claims_candidates": candidates,
+            "pending_claims": pending,
+            "limitations": list(dict.fromkeys(limitations)),
+            "downstream_restrictions": list(dict.fromkeys(restrictions)),
+            "evidence_type_separation": {"work_evidence_refs": [str(ref) for ref in separation.get("work_evidence_refs", [])], "external_reality_evidence_refs": [str(ref) for ref in separation.get("external_reality_evidence_refs", [])]},
+            "sufficiency_states": statuses,
+            "critical_claim_assessments": [dict(item) for item in claims.get("critical_claim_assessments", []) if isinstance(item, Mapping)],
+            "coverage_gaps": [dict(item) for item in claims.get("coverage_gaps", []) if isinstance(item, Mapping)],
+            "reopening_conditions": [dict(item) for item in comparison.get("reopening_conditions", []) if isinstance(item, Mapping)],
+            "stage_observations": observations,
+        }
+
     def run(
         self,
         baseline: Mapping[str, Any],
@@ -361,6 +507,17 @@ class ResearchB3Orchestrator:
         if data.get("provisional_thesis") is None:
             raise ResearchB3Error("PROVISIONAL_THESIS_REQUIRED")
         provisional_thesis = _as_dict(data.get("provisional_thesis"), "PROVISIONAL_THESIS")
+        previous_evidence = ctx.get("evidence_report")
+        previous_evidence_ref = ctx.get("_evidence_report_ref") or data.get("evidence_report")
+        if previous_evidence is None and isinstance(previous_evidence_ref, Mapping):
+            previous_evidence = self._load_persisted_json(previous_evidence_ref, "M4_BASE_EVIDENCE_REPORT")
+        if isinstance(previous_evidence, Mapping) and isinstance(previous_evidence_ref, Mapping):
+            ctx["evidence_report"] = copy.deepcopy(dict(previous_evidence))
+            ctx["_evidence_report_ref"] = copy.deepcopy(dict(previous_evidence_ref))
+        if not isinstance(previous_evidence, Mapping) or previous_evidence.get("research_stage") != "BASE_RESEARCH":
+            raise ResearchB3Error("M4_BASE_EVIDENCE_REPORT_REQUIRED")
+        if not isinstance(previous_evidence_ref, Mapping) or previous_evidence_ref.get("artifact_kind") != "SourceAccessAndEvidenceReport":
+            raise ResearchB3Error("M4_BASE_EVIDENCE_REPORT_BINDING_REQUIRED")
         research_comparison = _as_dict(data.get("research_comparison"), "RESEARCH_COMPARISON")
         deepening_targets = data.get("deepening_targets")
         if deepening_targets is None and isinstance(data.get("b2_execution_manifest"), Mapping):
@@ -581,6 +738,19 @@ class ResearchB3Orchestrator:
             artifact_id=f"{plan['research_plan_id']}:M4:RSD:WORKS",
             artifact_kind="ResearchStopDecisionCollection",
         )
+        deep_evidence_inputs = self._evidence_snapshot_from_m4(
+            deep_phenomenon, phenomenon_stop, deep_research, deep_fidelity, work_stops,
+        )
+        deep_evidence = ResearchB2Orchestrator.advance_evidence_report(
+            previous_evidence, research_stage="DEEP_RESEARCH",
+            stage_evidence=deep_evidence_inputs,
+        )
+        deep_evidence_ref = self.persistence.persist(
+            "M4_EVIDENCE_REPORT", deep_evidence,
+            artifact_id=str(deep_evidence["report_id"]),
+            artifact_kind="SourceAccessAndEvidenceReport",
+        )
+        events.append({"stage": "M4_EVIDENCE_REPORT", "boundary": "SOFTWARE_PERSIST", "artifact_id": deep_evidence_ref["artifact_id"]})
 
         manifest = {
             "manifest_type": "RESEARCH_M4_EXECUTION",
@@ -612,6 +782,7 @@ class ResearchB3Orchestrator:
                 deep_research_ref,
                 deep_fidelity_ref,
                 work_stops_ref,
+                deep_evidence_ref,
             ],
             "events": events,
             "iteration_guard": self.no_progress_guard.to_dict(),
@@ -620,6 +791,10 @@ class ResearchB3Orchestrator:
                 "provisional_thesis_ref": self._artifact_ref(provisional_thesis, "ThesisArtifact"),
                 "research_comparison_ref": self._artifact_ref(research_comparison, "ResearchComparison"),
                 "deepening_targets": copy.deepcopy(deepening_targets),
+                "evidence_report_lineage": {
+                    "input_ref": copy.deepcopy(dict(previous_evidence_ref)),
+                    "output_ref": copy.deepcopy(dict(deep_evidence_ref)),
+                },
             },
             "scope_outcomes": [
                 self._scope_outcome("PHENOMENON", deep_phenomenon["research_id"], phenomenon_stop),
@@ -656,6 +831,7 @@ class ResearchB3Orchestrator:
             "deep_work_research": deep_research_ref,
             "deep_fidelity": deep_fidelity_ref,
             "deep_work_sufficiency": work_stops_ref,
+            "evidence_report": deep_evidence_ref,
             "execution_manifest": manifest_ref,
             "events": events,
         }
@@ -688,6 +864,17 @@ class ResearchB3Orchestrator:
             raise ResearchB3Error("M5_PROVISIONAL_THESIS_INVALID")
         if not ctx.get("topic") or not ctx.get("source_access") or not ctx.get("brief") or not ctx.get("channel_context"):
             raise ResearchB3Error("M5_CONTEXT_INVALID")
+        previous_evidence = ctx.get("evidence_report")
+        previous_evidence_ref = ctx.get("_evidence_report_ref") or result.get("evidence_report")
+        if previous_evidence is None and isinstance(previous_evidence_ref, Mapping):
+            previous_evidence = self._load_persisted_json(previous_evidence_ref, "M5_DEEP_EVIDENCE_REPORT")
+        if isinstance(previous_evidence, Mapping) and isinstance(previous_evidence_ref, Mapping):
+            ctx["evidence_report"] = copy.deepcopy(dict(previous_evidence))
+            ctx["_evidence_report_ref"] = copy.deepcopy(dict(previous_evidence_ref))
+        if not isinstance(previous_evidence, Mapping) or previous_evidence.get("research_stage") != "DEEP_RESEARCH":
+            raise ResearchB3Error("M5_DEEP_EVIDENCE_REPORT_REQUIRED")
+        if not isinstance(previous_evidence_ref, Mapping) or previous_evidence_ref.get("artifact_kind") != "SourceAccessAndEvidenceReport":
+            raise ResearchB3Error("M5_DEEP_EVIDENCE_REPORT_BINDING_REQUIRED")
 
         m4_manifest_ref = result.get("execution_manifest")
         self._validate_artifact_ref_metadata(
@@ -695,6 +882,11 @@ class ResearchB3Orchestrator:
         )
         m4_manifest = self._load_persisted_json(m4_manifest_ref, "M4_EXECUTION_MANIFEST")
         self._validate_m4_handoff(m4_manifest)
+        m4_evidence_lineage = (m4_manifest.get("b2_inputs") or {}).get("evidence_report_lineage")
+        if not isinstance(m4_evidence_lineage, Mapping) or not isinstance(m4_evidence_lineage.get("output_ref"), Mapping):
+            raise ResearchB3Error("M5_M4_EVIDENCE_LINEAGE_REQUIRED")
+        if str(m4_evidence_lineage["output_ref"].get("artifact_id")) != str(previous_evidence_ref.get("artifact_id")):
+            raise ResearchB3Error("M5_M4_EVIDENCE_BINDING_INVALID")
         m4_thesis_ref = (m4_manifest.get("b2_inputs") or {}).get("provisional_thesis_ref")
         expected_thesis_ref = self._artifact_ref(provisional_thesis, "ThesisArtifact")
         if (
@@ -798,7 +990,7 @@ class ResearchB3Orchestrator:
                 selection_change_delegation=selection_change_delegation,
             )
 
-        m4_input_refs = [m4_manifest_ref, *[ref for ref in m4_refs.values()]]
+        m4_input_refs = [m4_manifest_ref, previous_evidence_ref, *[ref for ref in m4_refs.values()]]
         claims = self._m5_step(
             "M5_CLAIMS_EVIDENCE_CONSOLIDATION",
             "claims_ledger",
@@ -1565,14 +1757,26 @@ class ResearchB3Orchestrator:
             artifact_id=f"{plan['research_plan_id']}:THESIS:REFINED",
             artifact_kind="RefinedThesis",
         )
+        refined_evidence = ResearchB2Orchestrator.advance_evidence_report(
+            context["evidence_report"], research_stage="REFINED",
+            stage_evidence=self._evidence_snapshot_from_m5(claims, claim_stops, comparison, thesis),
+        )
+        refined_evidence_ref = self.persistence.persist(
+            "M5_EVIDENCE_REPORT", refined_evidence,
+            artifact_id=str(refined_evidence["report_id"]),
+            artifact_kind="SourceAccessAndEvidenceReport",
+        )
         manifest = self._m5_manifest_for_completion(
             plan, m4_manifest_ref, m4_manifest, context,
-            [claims_ref, claim_stops_ref, comparison_ref, thesis_ref],
+            [claims_ref, claim_stops_ref, comparison_ref, thesis_ref, refined_evidence_ref],
             selection_change_request_ref, selection_change_pending_ref,
             selection_change_decision_ref, selection_change_delegation_ref,
             status="READY_FOR_OWNER_REVIEW",
             refined_thesis_not_produced=False,
-            extra_events=[{"stage": "M5_REFINED_THESIS", "boundary": "SOFTWARE_PERSIST", "artifact_id": thesis_ref["artifact_id"]}],
+            extra_events=[
+                {"stage": "M5_REFINED_THESIS", "boundary": "SOFTWARE_PERSIST", "artifact_id": thesis_ref["artifact_id"]},
+                {"stage": "M5_EVIDENCE_REPORT", "boundary": "SOFTWARE_PERSIST", "artifact_id": refined_evidence_ref["artifact_id"]},
+            ],
         )
         manifest_ref = self._persist_or_update_m5_manifest(manifest, existing_manifest_ref)
         result = {
@@ -1581,6 +1785,7 @@ class ResearchB3Orchestrator:
             "claim_sufficiency": claim_stops_ref,
             "post_deep_comparison": comparison_ref,
             "refined_thesis": thesis_ref,
+            "evidence_report": refined_evidence_ref,
             "execution_manifest": manifest_ref,
             "events": manifest["events"],
         }
@@ -1613,6 +1818,9 @@ class ResearchB3Orchestrator:
         extra_events: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         refs = [copy.deepcopy(dict(ref)) for ref in output_refs]
+        evidence_output_ref = next(
+            (ref for ref in refs if ref.get("artifact_kind") == "SourceAccessAndEvidenceReport"), None
+        )
         events = copy.deepcopy(list(context.get("_m5_events", [])))
         for ref in (request_ref, pending_ref, decision_ref, delegation_ref, *(extra_refs or [])):
             if ref is not None:
@@ -1628,6 +1836,10 @@ class ResearchB3Orchestrator:
             "product_use": False,
             "m4_inputs_verified": True,
             "m4_manifest_ref": m4_manifest_ref["artifact_id"],
+            "evidence_report_lineage": {
+                "input_ref": copy.deepcopy(context.get("_evidence_report_ref")),
+                "output_ref": copy.deepcopy(evidence_output_ref),
+            },
             "m5_outputs": refs,
             "refined_thesis_not_produced": refined_thesis_not_produced,
             "research_ready_manifest_not_produced": True,
@@ -2907,9 +3119,9 @@ class ResearchB3Orchestrator:
 
     @staticmethod
     def _source_report_id(context: Mapping[str, Any], plan: Mapping[str, Any]) -> str:
-        source_access = context.get("source_access")
-        if isinstance(source_access, Mapping) and source_access.get("report_id"):
-            return str(source_access["report_id"])
+        evidence_report = context.get("evidence_report")
+        if isinstance(evidence_report, Mapping) and evidence_report.get("report_id"):
+            return str(evidence_report["report_id"])
         return f"{plan['research_plan_id']}:SOURCE_ACCESS"
 
     @staticmethod

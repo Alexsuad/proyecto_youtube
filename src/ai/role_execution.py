@@ -150,6 +150,7 @@ ROLE_ALLOWED_OUTPUT_SCHEMAS = {
         "thesis_artifact",
         "refined_thesis",
         "research_comparison",
+        "research_plan_proposal",
         "curation_decision",
         "claims_ledger",
         "source_access_and_evidence_report",
@@ -229,6 +230,7 @@ def _validate_role_payload(
         "thesis_artifact",
         "refined_thesis",
         "research_comparison",
+        "research_plan_proposal",
     }:
         # Preserve the historical smoke/legacy route. B2 opts into the
         # explicit research input contract for its structured outputs.

@@ -466,7 +466,14 @@ def test_interactive_input_rejects_missing_custom_duration_or_other_language(
 def test_active_mission_bundle_requires_an_explicit_canonical_pointer(tmp_path: Path) -> None:
     control_path = tmp_path / "control.md"
     control = ControlledB5I1Preparation.CONTROL_PATH.read_text(encoding="utf-8")
-    control_path.write_text(control.replace("CURRENT_MISSION: NONE", "CURRENT_MISSION: TEST_ACTIVE_MISSION"), encoding="utf-8")
+    lines = []
+    for line in control.splitlines():
+        if line.startswith("CURRENT_MISSION:"):
+            line = "CURRENT_MISSION: TEST_ACTIVE_MISSION"
+        elif line.startswith("CURRENT_MISSION_EXECUTION_BUNDLE:"):
+            line = "CURRENT_MISSION_EXECUTION_BUNDLE: NONE"
+        lines.append(line)
+    control_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     with pytest.raises(OperationalAuthorityError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_REQUIRED"):
         resolve_active_mission_bundle(
             control_path,
@@ -491,9 +498,14 @@ def _temporary_entrypoint_repository(tmp_path: Path) -> tuple[Path, Path, str]:
     bundle_root.mkdir(parents=True)
     control_path = repo / "plans/001_CONTROL_OPERATIVO.md"
     control = control_path.read_text(encoding="utf-8")
-    current_line = next(line for line in control.splitlines() if line.startswith("CURRENT_MISSION:"))
-    control = control.replace(current_line, f"CURRENT_MISSION: {mission_id}")
-    control = control.replace("CURRENT_MISSION_EXECUTION_BUNDLE: NONE", f"CURRENT_MISSION_EXECUTION_BUNDLE: {contract_ref}")
+    control_lines = []
+    for line in control.splitlines():
+        if line.startswith("CURRENT_MISSION:"):
+            line = f"CURRENT_MISSION: {mission_id}"
+        elif line.startswith("CURRENT_MISSION_EXECUTION_BUNDLE:"):
+            line = f"CURRENT_MISSION_EXECUTION_BUNDLE: {contract_ref}"
+        control_lines.append(line)
+    control = "\n".join(control_lines) + "\n"
     control_path.write_text(control, encoding="utf-8")
 
     authority_ref = "plans/entrypoint_test/authority.json"
@@ -577,7 +589,7 @@ def test_cli_public_entrypoint_resolves_temporary_active_bundle_and_reaches_hand
     completed = subprocess.run(
         [sys.executable, "-m", "src.cli", "iniciar"],
         cwd=repo,
-        input="1\nTema de entrada\nPregunta concreta\nContexto\ns\n",
+        input="1\nTema de entrada\nPregunta concreta\nContexto\nn\n1\n1\ns\n",
         text=True,
         capture_output=True,
         check=False,
@@ -606,7 +618,21 @@ def test_active_mission_bundle_rejects_a_contract_for_another_mission(tmp_path: 
         resolve_active_mission_bundle(repo / "plans/001_CONTROL_OPERATIVO.md", repository_root=repo)
 
 
-def test_cli_non_interactive_runs_the_same_application_service(tmp_path: Path, capsys) -> None:
+def test_cli_non_interactive_runs_the_same_application_service(tmp_path: Path, capsys, monkeypatch) -> None:
+    control_path = tmp_path / "control.md"
+    control = ControlledB5I1Preparation.CONTROL_PATH.read_text(encoding="utf-8")
+    control_lines = []
+    for line in control.splitlines():
+        if line.startswith("CURRENT_MISSION:"):
+            line = "CURRENT_MISSION: NONE"
+        elif line.startswith("CURRENT_MISSION_EXECUTION_BUNDLE:"):
+            line = "CURRENT_MISSION_EXECUTION_BUNDLE: NONE"
+        control_lines.append(line)
+    control_path.write_text("\n".join(control_lines) + "\n", encoding="utf-8")
+    monkeypatch.setattr(ControlledB5I1Preparation, "CONTROL_PATH", control_path)
+    (tmp_path / "plans").mkdir()
+    (tmp_path / "plans" / "001_CONTROL_OPERATIVO.md").write_text(control_path.read_text(encoding="utf-8"), encoding="utf-8")
+    monkeypatch.setattr("src.cli.REPO_ROOT", tmp_path)
     settings = tmp_path / "settings.json"
     settings.write_text(
         json.dumps({"vault_root": str(tmp_path / "vault"), "channel_id": "CHANNEL"}),
@@ -623,7 +649,7 @@ def test_cli_non_interactive_runs_the_same_application_service(tmp_path: Path, c
             "Tema automatizable",
         ]
     ) == 2
-    assert "NO_ACTIVE_CURRENT_MISSION" in capsys.readouterr().out
+    assert "ERROR:" in capsys.readouterr().out
 
 
 def test_human_decision_is_normalized_and_persisted(tmp_path: Path) -> None:

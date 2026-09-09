@@ -4,6 +4,7 @@ import json
 import pytest
 
 from src.application.interaction import HumanDecision
+from src.application.research_b2 import ResearchB2Orchestrator
 from src.application.research_b3 import ResearchB3Error, ResearchB3Orchestrator, ResearchB3Persistence
 from src.core.contract_validation import validate_work_research_dossier
 from src.core.mission_completion_gate import MissionContract
@@ -46,11 +47,18 @@ def _baseline(tmp_path, *, fidelity="APTA", work_ids=("W1", "W2", "W3")):
         "research_comparison": _json(result["research_comparison"]),
         "deepening_targets": result["deepening_targets"],
         "lifecycle": result["lifecycle_projection"],
+        "evidence_report": result["evidence_report"],
     }
 
 
-def _m4_context():
-    return _context()
+def _m4_context(baseline=None):
+    context = _context()
+    if baseline is None:
+        return context
+    evidence_ref = baseline["evidence_report"]
+    context["evidence_report"] = _json(evidence_ref)
+    context["_evidence_report_ref"] = evidence_ref
+    return context
 
 
 def _replace_text(value, old, new):
@@ -144,7 +152,7 @@ def _run_m4(
         acquisition_adapter=adapter,
     ).run(
         baseline,
-        context=_m4_context(),
+        context=_m4_context(baseline),
         human_decision=decision,
         selection_mode=selection_mode,
         delegation_decision=delegation_decision,
@@ -199,6 +207,13 @@ def test_m4_runs_selection_deep_research_and_fidelity_without_m5(tmp_path):
     assert manifest["b2_inputs"]["deepening_targets"]["source_artifact_ref"] == "RP-FIXTURE:COMPARISON:INITIAL"
     assert manifest["selection"]["final_narrative_selection"] is False
     assert manifest["m5_outputs_not_produced"] is True
+    evidence = _json(result["evidence_report"])
+    assert evidence["research_stage"] == "DEEP_RESEARCH"
+    assert any(item["claim_id"] == "CLAIM-X" for item in evidence["claims_sostenibles"])
+    assert evidence["sufficiency_basis"]["research_coverage"].startswith("Acumulado:")
+    assert "aportación DEEP_RESEARCH:" in evidence["sufficiency_basis"]["research_coverage"]
+    assert manifest["b2_inputs"]["evidence_report_lineage"]["input_ref"]["artifact_id"].endswith("SOURCE_ACCESS_EVIDENCE_REPORT")
+    assert manifest["b2_inputs"]["evidence_report_lineage"]["output_ref"]["artifact_id"] == result["evidence_report"]["artifact_id"]
     assert [request.stage for request in seen] == [
         "DEEP_PHENOMENON_RESEARCH",
         "DEEP_PHENOMENON_SUFFICIENCY",
@@ -230,6 +245,38 @@ def test_m4_mission_contract_is_loadable_by_runtime_model():
     assert loaded.contains_material_repair is True
     assert "src/application/research_b2.py" in loaded.reduced_fields["allowed_files"]
     assert "src/core/contract_validation.py" in loaded.reduced_fields["allowed_files"]
+
+
+def test_m4_evidence_report_changes_when_deep_work_or_fidelity_changes(tmp_path):
+    baseline = _baseline(tmp_path / "fixture")
+    previous = _json(baseline["evidence_report"])
+    common = {
+        "claims_candidates": [],
+        "narrative_evidence": [],
+        "evidence_type_separation": {"work_evidence_refs": ["D-W1"], "external_reality_evidence_refs": ["S1"]},
+        "deep_research": {"facts": ["hecho-A"], "actions": [], "decisions": [], "pending_questions": []},
+        "deep_fidelity": "APROBADA",
+        "research_sufficiency": "LIMITED_BUT_USABLE",
+    }
+    changed = deepcopy(common)
+    changed["deep_research"]["facts"] = ["hecho-B"]
+    changed["deep_fidelity"] = "APROBADA_CON_LIMITES"
+    changed["research_sufficiency"] = "MORE_RESEARCH_REQUIRED"
+    stop = {"sufficiency_status": "LIMITED_BUT_USABLE", "limitations": [], "pending_matters": []}
+    first = ResearchB3Orchestrator._evidence_snapshot_from_m4(common, stop, [], [], [])
+    second = ResearchB3Orchestrator._evidence_snapshot_from_m4(changed, stop, [], [], [])
+    report_a = ResearchB2Orchestrator.advance_evidence_report(previous, research_stage="DEEP_RESEARCH", stage_evidence=first)
+    report_b = ResearchB2Orchestrator.advance_evidence_report(previous, research_stage="DEEP_RESEARCH", stage_evidence=second)
+    assert report_a["sufficiency_basis"]["research_coverage"] != report_b["sufficiency_basis"]["research_coverage"]
+
+
+def test_m4_stop_status_changes_deep_evidence_sufficiency(tmp_path):
+    baseline = _baseline(tmp_path / "fixture")
+    previous = _json(baseline["evidence_report"])
+    payload = {"deep_research": {"facts": ["hecho"], "pending_questions": []}}
+    sufficient = ResearchB3Orchestrator._evidence_snapshot_from_m4(payload, {"sufficiency_status": "SUFFICIENT_FOR_INTENDED_USE"}, [], [], [])
+    blocked = ResearchB3Orchestrator._evidence_snapshot_from_m4(payload, {"sufficiency_status": "MORE_RESEARCH_REQUIRED", "pending_matters": ["falta"]}, [], [], [])
+    assert ResearchB2Orchestrator.advance_evidence_report(previous, research_stage="DEEP_RESEARCH", stage_evidence=sufficient)["research_sufficiency"] != ResearchB2Orchestrator.advance_evidence_report(previous, research_stage="DEEP_RESEARCH", stage_evidence=blocked)["research_sufficiency"]
 
 
 def test_m4_preserves_explicit_risks_and_deep_limitations(tmp_path):

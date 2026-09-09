@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/research_plan_proposal.json",
+  "title": "ResearchPlanProposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "central_question", "intended_use", "scope", "dimensions", "subquestions", "evidence_requirements", "source_strategy", "critical_claims", "rival_refutation", "gaps_risks", "potential_specialists", "sufficiency_criteria", "target_final_works_decision", "supplied_works", "selection_policy", "planned_stages"],
+  "properties": {
+    "contract": {"const": "research_plan_proposal"},
+    "contract_version": {"const": "1.0.0"},
+    "central_question": {"type": "string", "minLength": 1},
+    "intended_use": {"type": "string", "minLength": 1},
+    "scope": {"type": "string", "minLength": 1},
+    "dimensions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "subquestions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "evidence_requirements": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "source_strategy": {"type": "string", "minLength": 1},
+    "critical_claims": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "rival_refutation": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "gaps_risks": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "potential_specialists": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "sufficiency_criteria": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "target_final_works_decision": {"type": "object"},
+    "supplied_works": {"type": "array", "items": {"type": "object"}},
+    "selection_policy": {"type": "object"},
+    "planned_stages": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  }
+}

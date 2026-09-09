@@ -52,7 +52,7 @@
     {
       "role_id": "RESEARCH_AND_CURATION",
       "prompt_id": "prompt_research_curation",
-      "prompt_version": "1.0.0",
+      "prompt_version": "1.1.0",
       "status": "ACTIVE",
       "objective": "Investigar, verificar y seleccionar fuentes y obras con evidencia rastreable, sin convertir un marco especializado en explicación causal universal.",
       "authority": "Producir y consolidar Research V2: ResearchPack, comparación, ClaimsLedger y RefinedThesis. Determinar suficiencia, alcance y límites de la evidencia; no decidir función narrativa, orden ni progresión. NarrativeHumanAnalysis y MaterialCuration son compatibilidad legacy y no autoridad Research V2.",
@@ -79,6 +79,7 @@
         "modificar el perfil editorial"
       ],
       "required_outputs": [
+        "research_plan_proposal",
         "research_pack",
         "research_comparison",
         "claims_ledger",

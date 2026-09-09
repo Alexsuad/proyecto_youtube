@@ -832,6 +832,31 @@ VALID_FIXTURES["execution_family_selection"] = {
     "families": {"AGENT_HARNESS": True, "API_PROVIDER": False, "LOCAL_MODEL": False},
 }
 VALID_FIXTURES["research_stop_decision"] = {"decision_id": "RSD-1", "decision_version": "1.0.0", "subject_kind": "MATERIAL_CLAIM", "subject_ref": "CLAIM-001", "intended_use": "CENTRAL_CLAIM_SUPPORT", "evidence_refs": ["S-1"], "claim_decision": "CLAIM_ALLOWED", "sufficiency_status": "SUFFICIENT_FOR_INTENDED_USE", "limitations": [], "pending_matters": [], "unresolved_material_contradiction_refs": [], "invalidators": ["CLAIM_OR_USE_CHANGED"], "invalidator_codes": ["CLAIM_OR_SCOPE_CHANGED"], "return_route": "Revalidar si cambia el uso.", "return_route_code": "AUTHORIZE_INTENDED_USE_ONLY", "decision_basis": "Evidencia primaria suficiente para el uso evaluado."}
+VALID_FIXTURES["research_channel_context"] = {
+    "contract": "research_channel_context", "contract_version": "1.0.0", "context_id": "EP-1:CHANNEL_CONTEXT",
+    "episode_id": "EP-1", "profile_id": "PROFILE-1", "profile_version": "1.0.0", "profile_checksum": "a" * 64,
+    "editorial_identity": "Identidad editorial", "editorial_purpose": "Comprender historias", "primary_promise": "Una promesa editorial",
+    "audience_context": "Audiencia inicial", "territories": ["Cultura"], "research_relevant_limits": ["No inventar"],
+    "origin_ref": "profile:PROFILE-1", "created_at": "2026-08-01T10:00:00Z",
+}
+VALID_FIXTURES["research_source_access"] = {
+    "contract": "research_source_access", "contract_version": "1.0.0", "access_id": "EP-1:SOURCE_ACCESS",
+    "episode_id": "EP-1", "brief_version": "1.0.0",
+    "capabilities": {"owner_material_ingestion": "AVAILABLE", "web_search": "UNAVAILABLE", "http_fetch": "UNAVAILABLE"},
+    "materials": [{"material_ref": "material:M-1", "material_kind": "TEXT", "availability": "AVAILABLE_LOCAL", "access_mode": "DIRECT", "artifact_ref": "vault:M-1", "checksum": "a" * 64, "limitations": [], "provenance_ref": "provenance:M-1"}],
+    "unavailable_source_types": ["WEB_SEARCH", "HTTP_FETCH"], "limitations": ["Solo material local"],
+    "origin_artifact_refs": ["human-input:EP-1"], "created_at": "2026-08-01T10:00:00Z",
+}
+VALID_FIXTURES["research_plan_proposal"] = {
+    "contract": "research_plan_proposal", "contract_version": "1.0.0", "central_question": "¿Qué revela el tema?",
+    "intended_use": "Diseñar investigación", "scope": "Obras y contexto relevante", "dimensions": ["dimensión principal"],
+    "subquestions": ["¿Qué cambia?"], "evidence_requirements": ["Evidencia primaria"], "source_strategy": "Material local verificado",
+    "critical_claims": ["No afirmar más de la evidencia"], "rival_refutation": ["Considerar alternativa"], "gaps_risks": [],
+    "potential_specialists": [], "sufficiency_criteria": ["Criterio de suficiencia"],
+    "target_final_works_decision": {"status": "NOT_DECLARED"}, "supplied_works": [],
+    "selection_policy": {"mode": "OWNER_OR_DELEGATED", "decision_rule": "Revisar con autoridad", "reconsideration_rule": "Reabrir si cambia el alcance"},
+    "planned_stages": ["PLANNING", "DISCOVERY"],
+}
 VALID_FIXTURES["source_grounded_research_adapter"] = {"adapter_id": "ADAPTER-FIXTURE-1", "contract_version": "1.0.0", "provider": "fixture-provider", "availability": "AVAILABLE", "source_refs": ["S-1"], "findings": [{"finding_id": "AF-1", "statement": "Contexto recuperado.", "evidence_refs": ["S-1"], "status": "LIMITED"}], "limitations": ["No es memoria canónica."], "canonicality": "NOT_CANONICAL_MEMORY", "veracity_authority": "NOT_VERACITY_AUTHORITY", "gate_behavior": "NOT_REQUIRED_GATE", "decision_authority": "SCRIPT_PRODUCT"}
 VALID_FIXTURES["delegation_decision"] = {"decision": "INLINE", "reasons": ["fixture"], "policy_version": "1.0.0", "evidence_refs": []}
 VALID_FIXTURES["review_workload_decision"] = {"review_level": "SELF_ONLY", "review_origin": "NOT_APPLICABLE", "reasons": ["fixture"], "evidence_refs": []}

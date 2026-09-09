@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from src.application.research_b3 import ResearchB3Error, ResearchB3Orchestrator, ResearchB3Persistence
-from src.application.research_b2 import SoftwareAcquisitionAdapter
+from src.application.research_b2 import ResearchB2Orchestrator, SoftwareAcquisitionAdapter
 from src.application.interaction import HumanDecision, HumanDecisionRequest
 from tests.core.test_plan012_m4_b3_deep_research import _baseline, _m4_context, _run_m4
 
@@ -278,6 +278,41 @@ def test_m5_consumes_real_m4_outputs_and_keeps_m6_boundary(tmp_path):
     assert manifest["research_ready_manifest_not_produced"] is True
     assert manifest["b5_i3_outputs_not_produced"] is True
     assert manifest["narrative_decisions_not_made"] is True
+    evidence = _read(result["evidence_report"])
+    assert evidence["research_stage"] == "REFINED"
+    deep_evidence = _read(m4_result["evidence_report"])
+    assert {item["claim_id"] for item in deep_evidence["claims_sostenibles"]}.issubset({item["claim_id"] for item in evidence["claims_sostenibles"]})
+    assert any(item["claim_id"] == "C-EXT" for item in evidence["claims_sostenibles"])
+    assert evidence["sufficiency_basis"]["research_coverage"].startswith("Acumulado:")
+    assert "aportación REFINED:" in evidence["sufficiency_basis"]["research_coverage"]
+    assert manifest["evidence_report_lineage"]["input_ref"]["artifact_id"] == m4_result["evidence_report"]["artifact_id"]
+    assert manifest["evidence_report_lineage"]["output_ref"]["artifact_id"] == result["evidence_report"]["artifact_id"]
+
+
+def test_m5_evidence_report_derives_claim_sufficiency_comparison_and_thesis(tmp_path):
+    baseline = _baseline(tmp_path / "fixture")
+    previous = _read(baseline["evidence_report"])
+    claims = _claims()
+    comparison = _comparison(["W1", "W2", "W3"])
+    thesis = _thesis(baseline["provisional_thesis"]["thesis_id"])
+    decisions_limited = [{"decision_id": "M5-LIMITED", "sufficiency_status": "LIMITED_BUT_USABLE", "pending_matters": []}]
+    decisions_required = [{"decision_id": "M5-REQUIRED", "sufficiency_status": "MORE_RESEARCH_REQUIRED", "pending_matters": ["claim pendiente"]}]
+    limited = ResearchB3Orchestrator._evidence_snapshot_from_m5(claims, decisions_limited, comparison, thesis)
+    required = ResearchB3Orchestrator._evidence_snapshot_from_m5(claims, decisions_required, comparison, thesis)
+    report_limited = ResearchB2Orchestrator.advance_evidence_report(previous, research_stage="REFINED", stage_evidence=limited)
+    report_required = ResearchB2Orchestrator.advance_evidence_report(previous, research_stage="REFINED", stage_evidence=required)
+    assert report_limited["research_sufficiency"] == "LIMITED_BUT_USABLE"
+    assert report_required["research_sufficiency"] == "MORE_RESEARCH_REQUIRED"
+    assert any(item["claim_id"] == "C-EXT" for item in report_limited["claims_sostenibles"])
+    assert report_limited["sufficiency_basis"]["research_coverage"] != report_required["sufficiency_basis"]["research_coverage"]
+    assert "No confundir evidencia de obra" in " ".join(report_limited["limitaciones"])
+    changed_comparison = deepcopy(comparison)
+    changed_comparison["set_recommendations"][0].update(action="REPLACE", material_change=True, rationale="Cambio material")
+    changed_thesis = deepcopy(thesis)
+    changed_thesis["refinement_rationale"] = "Refinamiento material adicional"
+    changed_snapshot = ResearchB3Orchestrator._evidence_snapshot_from_m5(claims, decisions_limited, changed_comparison, changed_thesis)
+    report_changed = ResearchB2Orchestrator.advance_evidence_report(previous, research_stage="REFINED", stage_evidence=changed_snapshot)
+    assert report_limited["sufficiency_basis"]["research_coverage"] != report_changed["sufficiency_basis"]["research_coverage"]
 
 
 def test_m5_consolidates_domains_rivals_and_open_gap(tmp_path):

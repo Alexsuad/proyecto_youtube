@@ -67,7 +67,9 @@ class ResearchB2Persistence:
     """Small B2 adapter that reuses the repository's atomic JSON writer."""
 
     _FILENAMES = {
+        "RESEARCH_PLAN_PROPOSAL": "research_plan_proposal.json",
         "RESEARCH_PLAN": "research_plan.json",
+        "SOURCE_ACCESS_EVIDENCE_REPORT": "source_access_and_evidence_report.json",
         "PHENOMENON_BASE_RESEARCH": "phenomenon_base_research.json",
         "WORK_DISCOVERY": "work_discovery.json",
         "BASE_RESEARCH_POOL": "base_research_pool.json",
@@ -436,6 +438,11 @@ class ResearchB2Orchestrator:
         missing = sorted(required_context - set(context))
         if missing:
             raise ResearchB2Error("B2_CONTEXT_INVALID: faltan " + ", ".join(missing))
+        source_access_errors = validate_against_schema(context["source_access"], "research_source_access")
+        if source_access_errors:
+            raise ResearchB2Error("B2_SOURCE_ACCESS_INVALID: " + " | ".join(source_access_errors))
+        if "evidence_report" in context:
+            raise ResearchB2Error("B2_EVIDENCE_REPORT_PREINJECTION_FORBIDDEN")
 
         events: list[dict[str, Any]] = []
         plan_ref = self.persistence.persist(
@@ -461,11 +468,31 @@ class ResearchB2Orchestrator:
         events.append({"stage": "PHENOMENON_BASE_RESEARCH", "boundary": "SOFTWARE_PERSIST", "artifact_id": phenomenon_ref["artifact_id"]})
         artifacts.append(phenomenon_ref)
 
+        # Source access is PRE_RESEARCH input.  Once the base phenomenon has
+        # actually been produced, Software creates the separate evidence
+        # report consumed by evidence-dependent stages.  It is never stored
+        # back under context["source_access"].
+        evidence_report = self._build_evidence_report(
+            plan=plan, context=context, phenomenon=phenomenon,
+        )
+        report_errors = validate_source_access_and_evidence_report(dict(evidence_report)) if isinstance(evidence_report, Mapping) else ["evidence_report debe ser un objeto"]
+        if report_errors:
+            raise ResearchB2Error("B2_EVIDENCE_REPORT_INVALID: " + " | ".join(report_errors))
+        evidence_report_ref = self.persistence.persist(
+            "SOURCE_ACCESS_EVIDENCE_REPORT",
+            dict(evidence_report),
+            artifact_id=str(evidence_report["report_id"]),
+            artifact_kind="SourceAccessAndEvidenceReport",
+        )
+        artifacts.append(evidence_report_ref)
+        evidence_context = dict(context)
+        evidence_context["evidence_report"] = dict(evidence_report)
+
         discovery = self._step(
             "WORK_DISCOVERY",
             "work_lifecycle",
             plan,
-            context,
+            evidence_context,
             artifacts,
             events,
             self._validate_discovery,
@@ -483,7 +510,7 @@ class ResearchB2Orchestrator:
             "BASE_RESEARCH_POOL",
             "work_research_dossier",
             plan,
-            context,
+            evidence_context,
             artifacts,
             events,
             lambda value: self._validate_pool(value, discovery),
@@ -501,7 +528,7 @@ class ResearchB2Orchestrator:
             "PRELIMINARY_FIDELITY",
             "work_research_dossier",
             plan,
-            context,
+            evidence_context,
             artifacts,
             events,
             lambda value: self._validate_fidelity(value, pool),
@@ -519,7 +546,7 @@ class ResearchB2Orchestrator:
             "INITIAL_SUFFICIENCY",
             "research_stop_decision",
             plan,
-            context,
+            evidence_context,
             artifacts,
             events,
             lambda value: self._validate_sufficiency(value, phenomenon, pool),
@@ -539,10 +566,10 @@ class ResearchB2Orchestrator:
             "PROVISIONAL_THESIS",
             "thesis_artifact",
             plan,
-            context,
+            evidence_context,
             artifacts,
             events,
-            lambda value: self._validate_provisional_thesis(value, phenomenon, context["source_access"]),
+            lambda value: self._validate_provisional_thesis(value, phenomenon, evidence_context["evidence_report"]),
         )
         thesis_ref = self.persistence.persist(
             "PROVISIONAL_THESIS",
@@ -557,7 +584,7 @@ class ResearchB2Orchestrator:
             "RESEARCH_COMPARISON",
             "research_comparison",
             plan,
-            context,
+            evidence_context,
             artifacts,
             events,
             lambda value: self._validate_comparison(value, fidelity, sufficiency),
@@ -599,6 +626,7 @@ class ResearchB2Orchestrator:
                 "events": events,
                 "iteration_guard": self.no_progress_guard.to_dict(),
                 "work_acquisition_bindings": self.acquisition_adapter.work_binding_manifest(),
+                "evidence_report": evidence_report_ref,
                 "deepening_targets": deepening_targets,
                 "lifecycle_projection": lifecycle,
             },
@@ -608,6 +636,7 @@ class ResearchB2Orchestrator:
         return {
             "research_plan": plan_ref,
             "phenomenon_base_research": phenomenon_ref,
+            "evidence_report": evidence_report_ref,
             "work_discovery": discovery_ref,
             "base_research_pool": pool_ref,
             "preliminary_fidelity": fidelity_ref,
@@ -662,6 +691,247 @@ class ResearchB2Orchestrator:
             "works": works,
         }
 
+    @staticmethod
+    def _build_evidence_report(
+        *, plan: Mapping[str, Any], context: Mapping[str, Any], phenomenon: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Project the base-research evidence boundary from verified inputs.
+
+        The report is deliberately software-owned: source identity and
+        provenance come from the ResearchPack output and the PRE_RESEARCH
+        ResearchSourceAccess.  No evidence or source is invented here.
+        """
+        source_access = context["source_access"]
+        source_entries: list[dict[str, Any]] = []
+        for raw in phenomenon.get("source_registry", []):
+            if not isinstance(raw, Mapping) or not raw.get("source_id"):
+                continue
+            provenance = raw.get("provenance")
+            if not isinstance(provenance, Mapping):
+                continue
+            entry = {
+                "source_id": str(raw["source_id"]),
+                "title": str(raw.get("title") or raw.get("source_id")),
+                "source_type": str(raw.get("source_type") or "RESEARCH_SOURCE"),
+                "url": raw.get("url"),
+                "access_type": str(raw.get("access_type") or "DIRECT"),
+                "locator": str(raw.get("locator") or provenance.get("locator") or "source registry"),
+                "confidence": str(raw.get("confidence") or "MEDIUM"),
+                "provenance": copy.deepcopy(dict(provenance)),
+            }
+            for field in ("evidence_domain", "retrieval_status", "evidence_status", "recovery_artifact_ref", "retrieval_request_ref"):
+                if field in raw:
+                    entry[field] = copy.deepcopy(raw[field])
+            source_entries.append(entry)
+        materials = source_access.get("materials", []) if isinstance(source_access, Mapping) else []
+        limitations = [str(item) for item in source_access.get("limitations", [])] if isinstance(source_access, Mapping) else []
+        if not source_entries:
+            limitations.append("La investigación base no ha producido fuentes verificables.")
+        limitations = list(dict.fromkeys(limitations))
+        central_question = plan.get("central_question", {})
+        central_question_text = str(central_question.get("question") if isinstance(central_question, Mapping) else central_question)
+        report = {
+            "report_id": f"{plan['research_plan_id']}:SOURCE_ACCESS_EVIDENCE_REPORT",
+            "episode_id": str(plan["episode_id"]),
+            "research_id": str(plan["research_plan_id"]),
+            "brief_version": str(plan["brief_version"]),
+            "material_principal_disponible": bool(materials or source_entries),
+            "tipo_de_acceso": "DIRECT" if source_entries else "UNAVAILABLE",
+            "fuentes_primarias": source_entries,
+            "fuentes_secundarias": [],
+            "escenas_verificadas": [],
+            "escenas_descritas_indirectamente": [],
+            "claims_sostenibles": [],
+            "claims_pendientes": [],
+            "limitaciones": limitations,
+            "nivel_de_confianza": "MEDIUM" if source_entries else "LOW",
+            "can_proceed": bool(source_entries),
+            "allowed_analyses": ["CONTEXTUAL_ANALYSIS"] if source_entries else [],
+            "limited_analyses": [],
+            "prohibited_analyses": [],
+            "excluded_claims": [],
+            "required_disclosures": [],
+            "propagated_constraints": limitations,
+            "critical_claim_assessments": [],
+            "critical_claims_propagation": {
+                "status": "NONE_JUSTIFIED", "claim_ids": [], "justification": "No se han materializado claims críticos en este límite de evidencia.",
+                "editorial_impact": "LIMITED", "scope_decision": "RESEARCH_ONLY",
+            },
+            "sufficiency_basis": {
+                "central_question": central_question_text or "Pregunta de investigación declarada.",
+                "critical_claims": [str(item.get("statement")) for item in plan.get("critical_claims", []) if isinstance(item, Mapping) and item.get("statement")],
+                "analysis_type": "CONTEXTUAL_ANALYSIS",
+                "material_roles": ["PHENOMENON"],
+                "requested_depth": "BASE_RESEARCH",
+                "research_coverage": "Cobertura limitada al fenómeno y fuentes producidas en BASE_RESEARCH.",
+            },
+            "multilingual_research": {
+                "activation_status": "NOT_ACTIVATED", "triggers": [], "non_trigger_examples": ["NO_LINGUISTIC_DIFFERENCE_REQUIRED"],
+                "affected_source_ids": [], "affected_claim_ids": [], "required_language": None, "material_risk": [],
+                "consultation_result": "NOT_APPLICABLE", "limitations": [], "invalidators": [], "return_route": "NOT_APPLICABLE",
+                "decision_basis": "No se ha activado una diferencia lingüística material.",
+            },
+            "research_stage": "BASE_RESEARCH",
+            "research_contract_version": CONTRACT_VERSION,
+            "artifact_validity": "VALID",
+            "evidence_type_separation": copy.deepcopy(phenomenon.get("evidence_type_separation", {
+                "work_evidence_refs": [], "external_reality_evidence_refs": [entry["source_id"] for entry in source_entries],
+            })),
+            "acquisition_bindings": copy.deepcopy(phenomenon.get("acquisition_bindings", [])),
+            "created_at": utc_now(),
+        }
+        return report
+
+    @staticmethod
+    def advance_evidence_report(
+        previous_report: Mapping[str, Any], *, research_stage: str,
+        stage_evidence: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Create the next immutable evidence boundary from accepted evidence.
+
+        The evidence schema does not permit synthetic lineage fields.  The
+        predecessor/output relationship is therefore persisted by the stage
+        manifests; this payload remains only the current schema-valid report.
+        """
+        report = copy.deepcopy(dict(previous_report)) if isinstance(previous_report, Mapping) else None
+        if not isinstance(report, dict):
+            raise ResearchB2Error("EVIDENCE_REPORT_PREDECESSOR_REQUIRED")
+        errors = validate_source_access_and_evidence_report(report)
+        if errors:
+            raise ResearchB2Error("EVIDENCE_REPORT_PREDECESSOR_INVALID: " + " | ".join(errors))
+        if research_stage not in {"DEEP_RESEARCH", "REFINED"}:
+            raise ResearchB2Error("EVIDENCE_REPORT_STAGE_INVALID")
+        report["report_id"] = f"{report['research_id']}:SOURCE_ACCESS_EVIDENCE_REPORT:{research_stage}"
+        report["research_stage"] = research_stage
+        report["created_at"] = utc_now()
+        basis = copy.deepcopy(dict(report.get("sufficiency_basis") or {}))
+        basis["requested_depth"] = research_stage
+        before_claims = {str(item.get("claim_id")): copy.deepcopy(item) for item in report.get("claims_sostenibles", []) if isinstance(item, Mapping) and item.get("claim_id")}
+        before_scenes = {str(item.get("scene_id")): copy.deepcopy(item) for item in report.get("escenas_verificadas", []) if isinstance(item, Mapping) and item.get("scene_id")}
+        before_pending = {str(item.get("claim_id")): copy.deepcopy(item) for item in report.get("claims_pendientes", []) if isinstance(item, Mapping) and item.get("claim_id")}
+        if isinstance(stage_evidence, Mapping):
+            # Carry forward only evidence explicitly emitted by the stage.
+            # Identifiers are bound to the already validated source report;
+            # no synthetic sources or claims are manufactured here.
+            limitations = list(report.get("limitaciones") or [])
+            for value in stage_evidence.get("limitations", []) if isinstance(stage_evidence.get("limitations"), list) else []:
+                text = str(value).strip()
+                if text and text not in limitations:
+                    limitations.append(text)
+            report["limitaciones"] = limitations
+            separation = stage_evidence.get("evidence_type_separation")
+            if isinstance(separation, Mapping):
+                current = report.get("evidence_type_separation") if isinstance(report.get("evidence_type_separation"), Mapping) else {}
+                report["evidence_type_separation"] = {
+                    "work_evidence_refs": sorted(set(current.get("work_evidence_refs", [])) | set(separation.get("work_evidence_refs", []))),
+                    "external_reality_evidence_refs": sorted(set(current.get("external_reality_evidence_refs", [])) | set(separation.get("external_reality_evidence_refs", []))),
+                }
+            candidates = stage_evidence.get("claims_candidates")
+            if isinstance(candidates, list):
+                claims = list(report.get("claims_sostenibles") or [])
+                by_id = {str(item.get("claim_id")): item for item in claims if isinstance(item, Mapping) and item.get("claim_id")}
+                known_sources = {
+                    str(item.get("source_id")) for field in ("fuentes_primarias", "fuentes_secundarias")
+                    for item in report.get(field, []) if isinstance(item, Mapping) and item.get("source_id")
+                }
+                for candidate in candidates:
+                    if not isinstance(candidate, Mapping) or not candidate.get("source_refs"):
+                        continue
+                    claim_id = str(candidate.get("claim_id") or candidate.get("item_id") or "")
+                    claim_text = str(candidate.get("claim_text") or candidate.get("statement") or "").strip()
+                    locator = str(candidate.get("locator") or "stage output")
+                    if not claim_id or not claim_text:
+                        continue
+                    source_refs = sorted({str(ref) for ref in candidate.get("source_refs", []) if str(ref).strip() and str(ref) in known_sources})
+                    if not source_refs:
+                        continue
+                    raw_confidence = candidate.get("confidence")
+                    if isinstance(raw_confidence, (int, float)):
+                        confidence = "HIGH" if float(raw_confidence) >= 0.8 else "MEDIUM"
+                    else:
+                        confidence = str(raw_confidence or "MEDIUM").upper()
+                        if confidence not in {"LOW", "MEDIUM", "HIGH"}:
+                            confidence = "MEDIUM"
+                    by_id[claim_id] = {
+                        "claim_id": claim_id,
+                        "claim_text": claim_text,
+                        "source_refs": source_refs,
+                        "locator": locator,
+                        "confidence": confidence,
+                    }
+                report["claims_sostenibles"] = list(by_id.values())
+            evidence_items = stage_evidence.get("narrative_evidence")
+            if isinstance(evidence_items, list):
+                scenes = list(report.get("escenas_verificadas") or [])
+                by_scene = {str(item.get("scene_id")): item for item in scenes if isinstance(item, Mapping) and item.get("scene_id")}
+                for item in evidence_items:
+                    if not isinstance(item, Mapping) or not item.get("source_refs"):
+                        continue
+                    source_ref = str(item["source_refs"][0])
+                    scene_id = str(item.get("scene_id") or item.get("item_id") or "")
+                    description = str(item.get("description") or item.get("statement") or "").strip()
+                    if scene_id and description:
+                        by_scene[scene_id] = {"scene_id": scene_id, "description": description, "source_id": source_ref, "locator": str(item.get("locator") or "stage output"), "verification_mode": "DIRECT"}
+                report["escenas_verificadas"] = list(by_scene.values())
+            pending_items = stage_evidence.get("pending_claims")
+            if isinstance(pending_items, list):
+                pending = list(report.get("claims_pendientes") or [])
+                by_id = {str(item.get("claim_id")): item for item in pending if isinstance(item, Mapping) and item.get("claim_id")}
+                for item in pending_items:
+                    if not isinstance(item, Mapping) or not item.get("claim_id") or not item.get("claim_text") or not item.get("reason"):
+                        continue
+                    candidate = {"claim_id": str(item["claim_id"]), "claim_text": str(item["claim_text"]), "reason": str(item["reason"])}
+                    if isinstance(item.get("attempted_source_refs"), list):
+                        candidate["attempted_source_refs"] = [str(ref) for ref in item["attempted_source_refs"] if str(ref).strip()]
+                    if item.get("locator") is not None:
+                        candidate["locator"] = str(item["locator"])
+                    if str(item.get("confidence") or "").upper() in {"LOW", "MEDIUM", "HIGH"}:
+                        candidate["confidence"] = str(item["confidence"]).upper()
+                    by_id[candidate["claim_id"]] = candidate
+                report["claims_pendientes"] = list(by_id.values())
+            for field in ("propagated_constraints", "required_disclosures", "limited_analyses", "prohibited_analyses"):
+                values = list(report.get(field) or [])
+                additions = stage_evidence.get(field)
+                if field == "propagated_constraints":
+                    additions = list(additions or []) + list(stage_evidence.get("downstream_restrictions") or [])
+                if isinstance(additions, list):
+                    values.extend(str(value) for value in additions if str(value).strip())
+                report[field] = list(dict.fromkeys(values))
+            for field, identity in (("critical_claim_assessments", "claim_id"), ("coverage_gaps", "dimension"), ("reopening_conditions", "condition_id")):
+                additions = stage_evidence.get(field)
+                if not isinstance(additions, list):
+                    continue
+                existing = list(report.get(field) or [])
+                by_key = {str(item.get(identity)): item for item in existing if isinstance(item, Mapping) and item.get(identity)}
+                for item in additions:
+                    if isinstance(item, Mapping) and item.get(identity):
+                        by_key[str(item[identity])] = copy.deepcopy(dict(item))
+                report[field] = list(by_key.values())
+            states = [str(value) for value in stage_evidence.get("sufficiency_states", []) if str(value) in {"SUFFICIENT_FOR_INTENDED_USE", "LIMITED_BUT_USABLE", "MORE_RESEARCH_REQUIRED", "BLOCKED_BY_EVIDENCE"}]
+            if states:
+                priority = {"BLOCKED_BY_EVIDENCE": 4, "MORE_RESEARCH_REQUIRED": 3, "LIMITED_BUT_USABLE": 2, "SUFFICIENT_FOR_INTENDED_USE": 1}
+                report["research_sufficiency"] = max(states, key=lambda value: priority[value])
+            updated_claims = sum(before_claims.get(key) != item for key, item in {str(item.get("claim_id")): item for item in report.get("claims_sostenibles", []) if isinstance(item, Mapping) and item.get("claim_id")}.items())
+            updated_scenes = sum(before_scenes.get(key) != item for key, item in {str(item.get("scene_id")): item for item in report.get("escenas_verificadas", []) if isinstance(item, Mapping) and item.get("scene_id")}.items())
+            updated_pending = sum(before_pending.get(key) != item for key, item in {str(item.get("claim_id")): item for item in report.get("claims_pendientes", []) if isinstance(item, Mapping) and item.get("claim_id")}.items())
+            total = len(report.get("claims_sostenibles") or []) + len(report.get("escenas_verificadas") or []) + len(report.get("claims_pendientes") or [])
+            contribution = updated_claims + updated_scenes + updated_pending
+            observations = stage_evidence.get("stage_observations")
+            if isinstance(observations, list):
+                observation_payload = [str(value) for value in observations if str(value).strip()]
+                observation_digest = hashlib.sha256(
+                    json.dumps(observation_payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+                ).hexdigest()[:12]
+                observation_suffix = f"; huella semántica {observation_digest}"
+            else:
+                observation_suffix = ""
+            basis["research_coverage"] = f"Acumulado: {total}; aportación {research_stage}: {contribution} elementos nuevos o actualizados{observation_suffix}."
+        report["sufficiency_basis"] = basis
+        errors = validate_source_access_and_evidence_report(report)
+        if errors:
+            raise ResearchB2Error("EVIDENCE_REPORT_ADVANCE_INVALID: " + " | ".join(errors))
+        return report
+
     def _step(
         self,
         stage: str,
@@ -682,6 +952,8 @@ class ResearchB2Orchestrator:
             "stage": stage,
             "input_artifacts": copy.deepcopy(input_artifacts),
         }
+        if "evidence_report" in context:
+            input_payload["evidence_report"] = copy.deepcopy(context["evidence_report"])
         prepared = resolve_role_execution_contract(
             ROLE_ID,
             output_schema,
@@ -828,6 +1100,12 @@ class ResearchB2Orchestrator:
                 raise ResearchB2Error("ThesisArtifact debe ser un objeto")
             for field in ("packaging_alignment", "viewer_transformation"):
                 value.pop(field, None)
+            report = context.get("evidence_report")
+            if isinstance(report, Mapping):
+                inherited = set(value.get("inherited_constraints", []))
+                for field in ("limitaciones", "excluded_claims", "required_disclosures", "prohibited_analyses", "propagated_constraints"):
+                    inherited.update(str(item) for item in report.get(field, []) if item)
+                value["inherited_constraints"] = sorted(inherited)
             value.update(
                 {
                     "thesis_id": f"{plan['research_plan_id']}:THESIS:PROVISIONAL",
@@ -872,9 +1150,9 @@ class ResearchB2Orchestrator:
 
     @staticmethod
     def _source_report_id(context: Mapping[str, Any], plan: Mapping[str, Any]) -> str:
-        source_access = context.get("source_access")
-        if isinstance(source_access, Mapping) and source_access.get("report_id"):
-            return str(source_access["report_id"])
+        evidence_report = context.get("evidence_report")
+        if isinstance(evidence_report, Mapping) and evidence_report.get("report_id"):
+            return str(evidence_report["report_id"])
         return f"{plan['research_plan_id']}:SOURCE_ACCESS"
 
     @staticmethod

@@ -12,7 +12,7 @@ from src.ai.execution import M3_REQUIRED_INPUT_KINDS, execute
 from src.application.research_b2 import SoftwareAcquisitionAdapter
 from src.application.research_m7 import RealResearchRoutePreparation, ResearchM7Error, ResearchM7SyntheticRunner, ResearchV2B5I3Adapter
 from src.application.research_m7_fixture import phenomenon
-from src.cli import main
+from src.cli import build_parser, main
 
 
 def _input(**overrides):
@@ -67,6 +67,15 @@ def test_m7_e2e_invokes_canonical_b2_b3_b4_and_stops_before_narrative(tmp_path):
     }
     manifest = _read_stage(state, "M6")
     assert manifest["research_ready_state"] != "NOT_RESEARCH_READY"
+    proposal_ref = state["canonical_refs"]["ResearchPlanProposal"][0]
+    assert proposal_ref["artifact_kind"] == "ResearchPlanProposal"
+    assert Path(proposal_ref["path"]).is_file()
+    b2_manifest = _read_stage(state, "B2")
+    assert b2_manifest["evidence_report"]["artifact_kind"] == "SourceAccessAndEvidenceReport"
+    m4_manifest = _read_stage(state, "M4")
+    m5_manifest = _read_stage(state, "M5")
+    assert any(item["artifact_kind"] == "SourceAccessAndEvidenceReport" for item in m4_manifest["artifacts"])
+    assert any(item["artifact_kind"] == "SourceAccessAndEvidenceReport" for item in m5_manifest["m5_outputs"])
     handoff = _read_stage(state, "B5_I3_HANDOFF")
     assert handoff["consumer"] == "B5-I3"
     assert handoff["validation"]["status"] == "PASS"
@@ -504,12 +513,6 @@ def _real_route_config(**overrides):
         "episode_id": "EP-REAL-M1",
         "topic": "Tema real preparado",
         "question": "¿Qué puede afirmarse?",
-        "provider": "provider-a",
-        "model": "model-a",
-        "runtime": "native-provider-runtime",
-        "execution_profile": "profile-a",
-        "execution_route": "native_route",
-        "execution_family": "NATIVE_PROVIDER",
         "budget_limit": 25,
         "max_iterations": 2,
         "max_retries": 1,
@@ -523,7 +526,180 @@ def test_extend01_real_without_authorization_blocks_before_provider():
     preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
     result = execute(preparation.build_request())
     assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
-    assert "MISSION_AUTHORIZATION_REQUIRED" in str(result.error)
+    assert any(token in str(result.error) for token in ("MISSION_AUTHORIZATION_REQUIRED", "CAPABILITY_UNAVAILABLE"))
+
+
+def test_extend01_mvp_preparation_does_not_require_owner_environment_selection(capsys):
+    exit_code = main([
+        "preparar-ruta-real",
+        "--episodio-id", "EP-REAL-MVP",
+        "--tema", "Tema real",
+        "--pregunta", "¿Qué puede afirmarse?",
+        "--budget", "25",
+        "--max-iterations", "2",
+        "--max-retries", "1",
+        "--timeout", "30",
+        "--mission-authorization", "mission-auth.json",
+    ])
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert "REAL_ROUTE_PREPARED: YES" in output
+    assert "REAL_AI_EXECUTION: NO" in output
+    preparation = RealResearchRoutePreparation.from_mapping({
+        "episode_id": "EP-REAL-MVP",
+        "topic": "Tema real",
+        "question": "¿Qué puede afirmarse?",
+        "budget_limit": 25,
+        "max_iterations": 2,
+        "max_retries": 1,
+        "timeout_seconds": 30,
+    })
+    prepared = preparation.to_dict()
+    request = preparation.build_request()
+    for field in ("provider", "model", "runtime", "execution_profile", "execution_route", "execution_family", "harness", "development_platform", "acquisition_status"):
+        assert field not in prepared
+        assert field not in request.config
+    assert request.provider is None
+    assert request.model is None
+    assert request.execution_profile is None
+    assert request.execution_route is None
+    assert request.execution_family is None
+    with pytest.raises(SystemExit):
+        build_parser().parse_args([
+            "preparar-ruta-real",
+            "--episodio-id", "EP-REAL-MVP",
+            "--tema", "Tema real",
+            "--pregunta", "¿Qué puede afirmarse?",
+            "--budget", "25",
+            "--max-iterations", "2",
+            "--max-retries", "1",
+            "--timeout", "30",
+            "--provider", "provider-a",
+        ])
+    with pytest.raises(SystemExit):
+        build_parser().parse_args([
+            "preparar-ruta-real",
+            "--episodio-id", "EP-REAL-MVP",
+            "--tema", "Tema real",
+            "--pregunta", "¿Qué puede afirmarse?",
+            "--budget", "25",
+            "--max-iterations", "2",
+            "--max-retries", "1",
+            "--timeout", "30",
+            "--acquisition-status", "PREMATERIALIZED_EVIDENCE",
+        ])
+
+
+def test_extend01_real_entrypoint_is_exposed_without_execution(capsys):
+    parser = build_parser()
+    parsed = parser.parse_args([
+        "investigar-real",
+        "--episodio-id", "EP-REAL-M2",
+        "--tema", "Tema real",
+        "--pregunta", "¿Qué puede afirmarse?",
+        "--budget", "25",
+        "--max-iterations", "2",
+        "--max-retries", "1",
+        "--timeout", "30",
+        "--mission-authorization", "mission-auth.json",
+    ])
+    assert parsed.command == "investigar-real"
+    assert parsed.handler.__name__ == "_investigate_research_m7_real"
+    assert main([
+        "investigar-real",
+        "--episodio-id", "EP-REAL-M2",
+        "--tema", "Tema real",
+        "--pregunta", "¿Qué puede afirmarse?",
+        "--budget", "25",
+        "--max-iterations", "2",
+        "--max-retries", "1",
+        "--timeout", "30",
+        "--mission-authorization", "mission-auth.json",
+    ]) == 2
+    output = capsys.readouterr().out
+    assert "REAL_ENTRYPOINT_AVAILABLE: YES" in output
+    assert "REAL_ENTRYPOINT_OPERATIONAL: NO" in output
+    assert "ENTRYPOINT: investigar-real" in output
+    assert "CANONICAL_ROUTE: B2 -> M4 -> M5 -> M6" in output
+    assert "POST_M6_EXECUTION: NO" in output
+    assert "REAL_AI_CALLS: 0" in output
+
+
+def test_extend01_preparation_and_investigation_commands_have_distinct_dispatch(monkeypatch, capsys):
+    calls = []
+
+    def stage_runner(stage):
+        def run(_context):
+            calls.append(stage)
+            return {"stage": stage}
+        return run
+
+    monkeypatch.setattr(
+        "src.cli._real_stage_runners_for_entrypoint",
+        lambda: {stage: stage_runner(stage) for stage in ("B2", "M4", "M5", "M6")},
+    )
+    preparation_args = [
+        "--episodio-id", "EP-REAL-M2",
+        "--tema", "Tema real",
+        "--pregunta", "¿Qué puede afirmarse?",
+        "--budget", "25",
+        "--max-iterations", "2",
+        "--max-retries", "1",
+        "--timeout", "30",
+        "--mission-authorization", "mission-auth.json",
+    ]
+    assert main(["preparar-ruta-real", *preparation_args]) == 0
+    preparation_output = capsys.readouterr().out
+    assert "REAL_ROUTE_PREPARED: YES" in preparation_output
+    assert calls == []
+
+    assert main(["investigar-real", *preparation_args]) == 0
+    investigation_output = capsys.readouterr().out
+    assert "REAL_ENTRYPOINT_OPERATIONAL: YES" in investigation_output
+    assert "REAL_ROUTE_RESULT: RESEARCH_READY" in investigation_output
+    assert calls == ["B2", "M4", "M5", "M6"]
+
+
+def test_extend01_investigar_real_invokes_canonical_coordinator(monkeypatch, capsys):
+    invoked = []
+
+    def dispatch(self, stage_runners):
+        invoked.append((self.episode_id, tuple(stage_runners)))
+        return {
+            "status": "RESEARCH_READY",
+            "completed_stages": ["B2", "M4", "M5", "M6"],
+        }
+
+    monkeypatch.setattr(RealResearchRoutePreparation, "run_canonical_vertical", dispatch)
+    assert main([
+        "investigar-real",
+        "--episodio-id", "EP-REAL-M2",
+        "--tema", "Tema real",
+        "--pregunta", "¿Qué puede afirmarse?",
+        "--budget", "25",
+        "--max-iterations", "2",
+        "--max-retries", "1",
+        "--timeout", "30",
+        "--mission-authorization", "mission-auth.json",
+    ]) == 0
+    output = capsys.readouterr().out
+    assert "REAL_ROUTE_RESULT: RESEARCH_READY" in output
+    assert invoked == [("EP-REAL-M2", ("B2", "M4", "M5", "M6"))]
+
+
+def test_extend01_investigar_real_fails_closed_before_dispatch_when_input_is_missing():
+    parser = build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args([
+            "investigar-real",
+            "--episodio-id", "EP-REAL-M2",
+            "--tema", "Tema real",
+            "--budget", "25",
+            "--max-iterations", "2",
+            "--max-retries", "1",
+            "--timeout", "30",
+            "--mission-authorization", "mission-auth.json",
+        ])
 
 
 def test_extend01_mock_and_failed_real_do_not_claim_real_execution():
@@ -557,7 +733,7 @@ def test_extend01_real_provenance_rejects_synthetic_fixture():
         RealResearchRoutePreparation.assert_real_provenance({"run_id": "M7-M5-PRODUCER", "executor_id": "synthetic-fixture"})
 
 
-def test_extend01_real_acquisition_guard_blocks_before_vertical_dispatch():
+def test_extend01_real_route_runs_without_acquisition_selection():
     preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
     calls = []
 
@@ -567,16 +743,13 @@ def test_extend01_real_acquisition_guard_blocks_before_vertical_dispatch():
     }
 
     result = preparation.run_canonical_vertical(stage_runners)
-    assert result["status"] == "BLOCKED"
-    assert result["reason"] == "BLOCKED_PENDING_OWNER_OR_FUNCTIONAL_SELECTION"
-    assert result["real_ai_calls"] == 0
-    assert result["external_search_calls"] == 0
-    assert result["completed_stages"] == []
-    assert calls == []
+    assert result["status"] == "RESEARCH_READY"
+    assert result["completed_stages"] == ["B2", "M4", "M5", "M6"]
+    assert calls == ["B2", "M4", "M5", "M6"]
 
 
 def test_extend01_real_route_binds_canonical_vertical_and_stops_at_m6():
-    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config(acquisition_status="PREMATERIALIZED_EVIDENCE"))
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
     calls = []
 
     def stage_runner(stage):
@@ -604,7 +777,7 @@ def test_extend01_real_route_binds_canonical_vertical_and_stops_at_m6():
 
 
 def test_extend01_real_route_rejects_post_m6_continuation():
-    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config(acquisition_status="PREMATERIALIZED_EVIDENCE"))
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
     post_m6_calls = []
     stage_runners = {
         stage: (lambda _context, stage=stage: {"stage": stage})

@@ -492,6 +492,19 @@ class ResearchB4Orchestrator:
                 plan_value = plan_research_id if field == "research_id" else plan_payload.get(field)
                 if m5_manifest.get(field) != plan_value:
                     raise ResearchB4Error(f"M6_RESEARCH_PLAN_BINDING_INVALID:{field}")
+        refined_refs = [
+            ref for ref in source_refs
+            if payloads[_ref_key(ref)].get("research_stage") == "REFINED"
+        ]
+        if len(refined_refs) != 1:
+            raise ResearchB4Error("M6_REFINED_EVIDENCE_REPORT_REQUIRED")
+        evidence_lineage = m5_manifest.get("evidence_report_lineage")
+        if (
+            not isinstance(evidence_lineage, Mapping)
+            or not isinstance(evidence_lineage.get("output_ref"), Mapping)
+            or str(evidence_lineage["output_ref"].get("artifact_id")) != str(refined_refs[0]["artifact_id"])
+        ):
+            raise ResearchB4Error("M6_REFINED_EVIDENCE_LINEAGE_INVALID")
 
         if invalidation_engine is not None:
             invalidated = {str(record.target_artifact_id) for record in invalidation_engine.invalidation_log}

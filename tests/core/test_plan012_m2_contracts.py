@@ -3,6 +3,11 @@ from copy import deepcopy
 import pytest
 
 from src.application.contracts import HumanInput
+from src.application.research_planning import ResearchPlanningService
+from src.application.research_b2 import ResearchB2Persistence
+from src.application.storage import VaultEpisodeStore
+from src.core.editorial_profile_registry import load_active_profile_authority
+from src.ai.role_execution import RoleExecutionContractError, resolve_role_execution_contract
 from src.core.contract_validation import (
     validate_against_schema,
     validate_claims_ledger,
@@ -67,6 +72,186 @@ def test_intake_keeps_research_role_and_editorial_intent_separate() -> None:
     assert explicit["research_role"] == "ANCLA"
     assert explicit["editorial_intent"] == "PREFERIDA"
     assert validate_against_schema(explicit, "human_episode_input") == []
+
+
+def test_pre_research_planning_builds_separate_context_and_source_access() -> None:
+    profile = load_active_profile_authority()
+    service = ResearchPlanningService()
+    brief = service.build_episode_brief(episode_id="EP-PLAN", topic="Tema", question="Pregunta", intended_use="Uso de prueba explícito", profile=profile)
+    context = service.build_channel_context(episode_id="EP-PLAN", profile=profile, origin_ref="profile:EP-PLAN")
+    source_access = service.build_source_access(episode_id="EP-PLAN", brief_version=brief["brief_version"], materials=[], origin_refs=["human:EP-PLAN"])
+    assert brief["brief_stage"] == "PRE_RESEARCH"
+    assert context["episode_id"] == "EP-PLAN"
+    assert source_access["contract"] == "research_source_access"
+    assert source_access["capabilities"]["web_search"] == "UNAVAILABLE"
+
+
+@pytest.mark.parametrize("selection_authority", ["OWNER_DECIDES", "DELEGATED_TO_RESEARCH"])
+def test_pre_research_topic_only_preserves_owner_authority_without_inventing_work(selection_authority: str) -> None:
+    profile = load_active_profile_authority()
+    brief = ResearchPlanningService().build_episode_brief(
+        episode_id="EP-TOPIC-ONLY",
+        topic="Fenómeno sin obra suministrada",
+        question="¿Qué debemos investigar?",
+        intended_use="Delimitar el alcance solicitado por el OWNER.",
+        profile=profile,
+        selection_authority=selection_authority,
+        material_refs=["owner:doc"],
+        owner_restrictions=["No inferir una obra no suministrada"],
+    )
+    assert brief["narrative_materials"] == []
+    assert brief["work_intents"] == []
+    assert brief["selection_authority"] == selection_authority
+    assert brief["owner_material_refs"] == ["owner:doc"]
+    assert brief["owner_restrictions"] == ["No inferir una obra no suministrada"]
+    assert brief["initial_question"] == "¿Qué debemos investigar?"
+    assert brief["objetivo"] == "Delimitar el alcance solicitado por el OWNER."
+
+
+def test_pre_research_channel_context_projects_canonical_audience_hypotheses() -> None:
+    profile = load_active_profile_authority()
+    context = ResearchPlanningService().build_channel_context(
+        episode_id="EP-AUDIENCE",
+        profile=profile,
+        origin_ref="human:EP-AUDIENCE",
+    )
+    assert "AUDIENCE_HYPOTHESIS_INITIAL" in context["audience_context"]
+    assert "Utilizar historias" in context["editorial_purpose"]
+    assert context["profile_checksum"] == profile["profile_checksum"]
+
+
+def test_owner_material_is_snapshotted_checksum_bound_and_exposed_in_source_access(tmp_path) -> None:
+    import shutil
+    from uuid import uuid4
+    from pathlib import Path
+
+    profile = load_active_profile_authority()
+    # Keep the path short enough for Windows when the snapshot filename
+    # includes its full SHA-256 digest.
+    isolated_root = Path.cwd() / f"m2b1-{uuid4().hex[:8]}"
+    isolated_root.mkdir(parents=True, exist_ok=False)
+    try:
+        store = VaultEpisodeStore(isolated_root / "vault", "MAS_ALLA_DEL_GUION")
+        handle = store.create_episode(
+            HumanInput.create(mode="tema", content="Tema con material"),
+            handoff={},
+            profile=profile,
+            run_id="RUN-PRE-RESEARCH",
+        )
+        source = isolated_root / "owner.md"
+        source.write_text("# Evidencia local\n", encoding="utf-8")
+        (handle.folder / "research_materials").mkdir(parents=True, exist_ok=True)
+        records = store.materialize_owner_materials(handle, source_paths=[source])
+        assert len(records) == 1
+        record = records[0]
+        snapshot = handle.folder / record["artifact_ref"]
+        assert snapshot.is_file()
+        assert record["checksum"] == __import__("hashlib").sha256(snapshot.read_bytes()).hexdigest()
+        provenance = handle.folder / "research_material_provenance.json"
+        assert provenance.is_file()
+        access = ResearchPlanningService().build_source_access(
+            episode_id=handle.episode_id,
+            brief_version="2.0.0",
+            materials=records,
+            origin_refs=["human:EP-MATERIAL"],
+        )
+        assert access["capabilities"]["owner_material_ingestion"] == "AVAILABLE"
+        assert access["materials"][0]["availability"] == "AVAILABLE_LOCAL"
+    finally:
+        shutil.rmtree(isolated_root, ignore_errors=True)
+
+
+def test_b1_registry_and_prompt_remain_non_executable_and_pre_b2() -> None:
+    import json
+    from pathlib import Path
+
+    registry = json.loads(Path("config/capability_registry.json").read_text(encoding="utf-8"))
+    capability = next(item for item in registry["capabilities"] if item["capability_id"] == "EXTEND_01_RESEARCH_V2_REAL_E2E")
+    assert capability["availability_status"] == "NON_EXECUTABLE_CURRENT"
+    assert capability["executability_evidence"]["context_resolvable"] is True
+    assert capability["executability_evidence"]["real_b2_input_binding_available"] is True
+    prompt_registry = json.loads(Path("config/agent_prompt_registry.json").read_text(encoding="utf-8"))
+    prompt = next(item for item in prompt_registry["prompts"] if item["role_id"] == "RESEARCH_AND_CURATION")
+    assert prompt["prompt_version"] == "1.1.0"
+    assert "Research V2" in prompt["authority"]
+
+
+def test_research_planning_role_requires_all_pre_research_inputs() -> None:
+    payload = {
+        "topic": "Fenómeno de prueba",
+        "source_access": {"contract": "research_source_access"},
+        "brief": {"brief_id": "BRIEF-1"},
+        "channel_context": {"channel_id": "CHANNEL-1"},
+    }
+    contract = resolve_role_execution_contract(
+        "RESEARCH_AND_CURATION", "research_plan_proposal", payload, {"stage": "RESEARCH_PLANNING"}
+    )
+    assert contract["output_schema_name"] == "research_plan_proposal"
+    for missing in payload:
+        incomplete = dict(payload)
+        incomplete.pop(missing)
+        with pytest.raises(RoleExecutionContractError, match="INPUT_CONTRACT_INVALID"):
+            resolve_role_execution_contract(
+                "RESEARCH_AND_CURATION", "research_plan_proposal", incomplete, {"stage": "RESEARCH_PLANNING"}
+            )
+
+
+def test_research_prompt_1_1_is_a_superset_of_1_0() -> None:
+    from pathlib import Path
+
+    legacy = Path("prompts/roles/RESEARCH_AND_CURATION/1.0.0.md").read_text(encoding="utf-8")
+    current = Path("prompts/roles/RESEARCH_AND_CURATION/1.1.0.md").read_text(encoding="utf-8")
+    assert "RESEARCH_PLANNING" in current
+    for line in legacy.splitlines():
+        if line.strip() and not line.startswith("# RESEARCH_AND_CURATION"):
+            assert line in current
+
+
+def test_research_planning_binds_lightweight_proposal_to_canonical_plan() -> None:
+    proposal = deepcopy(VALID_FIXTURES["research_plan_proposal"])
+    plan = ResearchPlanningService().bind_research_plan(
+        proposal, episode_id="EP-PLAN", brief_version="2.0.0", research_role="NORMAL", editorial_intent="NO_DECLARADA", origin_ref="brief:EP-PLAN"
+    )
+    assert validate_research_plan(plan) == []
+    assert plan["contract"] == "research_plan"
+    assert plan["origin"]["source_kind"] == "EPISODE_BRIEF"
+
+
+def test_research_planning_productive_producer_binds_and_persists_with_injected_executor(tmp_path) -> None:
+    profile = load_active_profile_authority()
+    service = ResearchPlanningService()
+    brief = service.build_episode_brief(
+        episode_id="EP-PLAN-PRODUCER", topic="Tema", question="Pregunta",
+        intended_use="Uso explícito", profile=profile,
+    )
+    channel_context = service.build_channel_context(
+        episode_id=brief["episode_id"], profile=profile, origin_ref="profile:EP-PLAN-PRODUCER",
+    )
+    source_access = service.build_source_access(
+        episode_id=brief["episode_id"], brief_version=brief["brief_version"],
+        materials=[], origin_refs=["human:EP-PLAN-PRODUCER"],
+    )
+    seen = []
+
+    def cognitive(request):
+        seen.append(request)
+        return deepcopy(VALID_FIXTURES["research_plan_proposal"])
+
+    result = service.produce_research_plan(
+        episode_brief=brief,
+        channel_context=channel_context,
+        source_access=source_access,
+        cognitive_executor=cognitive,
+        persistence=ResearchB2Persistence(tmp_path),
+        research_role="NORMAL",
+        editorial_intent="NO_DECLARADA",
+    )
+    assert [request.stage for request in seen] == ["RESEARCH_PLANNING"]
+    assert seen[0].prepared_contract["output_schema_name"] == "research_plan_proposal"
+    assert result["research_plan_proposal"]["artifact_kind"] == "ResearchPlanProposal"
+    assert result["research_plan"]["artifact_kind"] == "ResearchPlan"
+    assert validate_research_plan(result["research_plan_payload"]) == []
+    assert result["research_plan_payload"]["origin_artifact_refs"][0]["checksum"] == result["research_plan_proposal"]["checksum"]
 
 
 def test_claims_ledger_can_exist_before_script() -> None:

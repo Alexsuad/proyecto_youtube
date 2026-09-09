@@ -20,7 +20,8 @@ from src.application.interaction import HumanDecision
 from src.application.research_b2 import ResearchB2NoProgressGuard, ResearchB2Orchestrator, ResearchB2Persistence, SoftwareAcquisitionAdapter, _checksum
 from src.application.research_b3 import ResearchB3Orchestrator, ResearchB3Persistence
 from src.application.research_b4 import ResearchB4Orchestrator, ResearchB4Persistence
-from src.application.research_m7_fixture import SyntheticResearchExecutor, b5_i3_transversal_fixtures, research_plan, source_report
+from src.application.research_m7_fixture import SyntheticResearchExecutor, b5_i3_transversal_fixtures, source_report
+from src.application.research_planning import ResearchPlanningService
 from src.application.storage import _write_json_atomic
 from src.core.contract_validation import validate_against_schema, validate_research_plan, validate_research_ready_manifest
 from src.core.gate_result import GateResult
@@ -732,7 +733,36 @@ class ResearchM7SyntheticRunner:
 
     def _context(self, state: Mapping[str, Any]) -> dict[str, Any]:
         inp = state["human_input"]
-        return {"topic": str(inp["topic"]), "source_access": source_report(str(inp["episode_id"]), f"RP-M7-{inp['episode_id']}"), "brief": {"brief_id": f"BRIEF-{inp['episode_id']}"}, "channel_context": {"channel_id": "CHANNEL-M7"}}
+        report = source_report(str(inp["episode_id"]), f"RP-M7-{inp['episode_id']}")
+        materials = []
+        for source in report.get("fuentes_primarias", []) + report.get("fuentes_secundarias", []):
+            if not isinstance(source, Mapping) or not source.get("source_id"):
+                continue
+            source_id = str(source["source_id"])
+            materials.append({
+                "material_ref": source_id,
+                "material_kind": "TEXT",
+                "availability": "AVAILABLE_LOCAL",
+                "access_mode": "DIRECT",
+                "artifact_ref": f"recovery:{source_id}",
+                "checksum": None,
+                "limitations": [],
+                "provenance_ref": f"provenance:{source_id}",
+            })
+        source_access = {
+            "contract": "research_source_access",
+            "contract_version": "1.0.0",
+            "access_id": f"{inp['episode_id']}:SOURCE_ACCESS",
+            "episode_id": str(inp["episode_id"]),
+            "brief_version": "1.0.0",
+            "capabilities": {"owner_material_ingestion": "AVAILABLE", "web_search": "UNAVAILABLE", "http_fetch": "UNAVAILABLE"},
+            "materials": materials,
+            "unavailable_source_types": ["WEB_SEARCH", "HTTP_FETCH"],
+            "limitations": ["Fixture sintético exclusivamente para pruebas estructurales."],
+            "origin_artifact_refs": [f"synthetic-input:{inp['episode_id']}"],
+            "created_at": _now(),
+        }
+        return {"topic": str(inp["topic"]), "source_access": source_access, "brief": {"brief_id": f"BRIEF-{inp['episode_id']}"}, "channel_context": {"channel_id": "CHANNEL-M7"}}
 
     def _store_coord(self, state: dict[str, Any], stage: str, ref: Mapping[str, Any], *, kind: str | None = None) -> None:
         item = {"stage": stage, **_ref_payload(ref)}
@@ -741,12 +771,21 @@ class ResearchM7SyntheticRunner:
         if kind:
             state.setdefault("canonical_refs", {}).setdefault(kind, []).append(_ref_payload(ref))
 
+    @staticmethod
+    def _record_evidence(state: dict[str, Any], ref: Mapping[str, Any]) -> None:
+        exact = dict(ref)
+        state["source_ref"] = exact
+        refs = [item for item in state.get("evidence_refs", []) if item.get("artifact_id") != exact.get("artifact_id")]
+        refs.append(exact)
+        state["evidence_refs"] = refs
+        state.setdefault("canonical_refs", {})["SourceAccessAndEvidenceReport"] = [dict(item) for item in refs]
+
     def _baseline(self, b2_result: Mapping[str, Any]) -> dict[str, Any]:
         manifest = _read(b2_result["execution_manifest"]["path"])
         by_kind = {str(ref["artifact_kind"]): ref for ref in manifest["artifacts"]}
         def payload(kind: str) -> Any:
             return _read(by_kind[kind]["path"])
-        return {"research_plan": _read(b2_result["research_plan"]["path"]), "phenomenon_base_research": payload("ResearchPack"), "work_discovery": payload("WorkLifecycle"), "base_research_pool": payload("WorkResearchDossierCollection")["dossiers"], "preliminary_fidelity": _read(b2_result["preliminary_fidelity"]["path"])["dossiers"], "initial_sufficiency": _read(b2_result["initial_sufficiency"]["path"])["dossiers"], "provisional_thesis": payload("ThesisArtifact"), "research_comparison": payload("ResearchComparison"), "deepening_targets": b2_result["deepening_targets"], "lifecycle": b2_result["lifecycle_projection"]}
+        return {"research_plan": _read(b2_result["research_plan"]["path"]), "phenomenon_base_research": payload("ResearchPack"), "work_discovery": payload("WorkLifecycle"), "base_research_pool": payload("WorkResearchDossierCollection")["dossiers"], "preliminary_fidelity": _read(b2_result["preliminary_fidelity"]["path"])["dossiers"], "initial_sufficiency": _read(b2_result["initial_sufficiency"]["path"])["dossiers"], "provisional_thesis": payload("ThesisArtifact"), "research_comparison": payload("ResearchComparison"), "deepening_targets": b2_result["deepening_targets"], "lifecycle": b2_result["lifecycle_projection"], "evidence_report": b2_result["evidence_report"]}
 
     def _m4_result(self, ref: Mapping[str, Any]) -> dict[str, Any]:
         manifest = _read(ref["path"])
@@ -758,6 +797,7 @@ class ResearchM7SyntheticRunner:
             elif kind == "WorkResearchDossierCollection":
                 payload = _read(item["path"])
                 result["deep_fidelity" if payload.get("dossiers", [{}])[0].get("research_stage") == "DEEP_FIDELITY" else "deep_work_research"] = item
+            elif kind == "SourceAccessAndEvidenceReport": result["evidence_report"] = item
         return result
 
     def _provenance(
@@ -784,7 +824,8 @@ class ResearchM7SyntheticRunner:
         b2_manifest = _read(b2["execution_manifest"]["path"])
         m4_manifest = _read(m4["execution_manifest"]["path"])
         m5_manifest = _read(m5["execution_manifest"]["path"])
-        refs = [b2["execution_manifest"], *b2_manifest["artifacts"], m4["execution_manifest"], *m4_manifest["artifacts"], m5["execution_manifest"], *m5_manifest["m5_outputs"], state["source_ref"]]
+        evidence_refs = list(state.get("evidence_refs", [state["source_ref"]]))
+        refs = [b2["execution_manifest"], *b2_manifest["artifacts"], m4["execution_manifest"], *m4_manifest["artifacts"], m5["execution_manifest"], *m5_manifest["m5_outputs"], *evidence_refs]
         unique = {(r["artifact_id"], r["artifact_kind"], r["checksum"]): r for r in refs}
         producer = self._synthetic_run_for(state, base, m5["execution_manifest"], "M7-M5-PRODUCER")
         upstream = [self._synthetic_run_for(state, base, ref, f"M7-UPSTREAM-{index:03d}") for index, ref in enumerate(unique.values(), start=1) if ref is not m5["execution_manifest"]]
@@ -797,7 +838,7 @@ class ResearchM7SyntheticRunner:
         _write_json_atomic(repo_root / "config" / "execution_provenance_policy.json", {"schema_version": "1.0.0", "canonical_registry_path": "output/execution_provenance_registry.json"})
         _write_json_atomic(repo_root / "output" / "execution_provenance_registry.json", registry)
         provenance = {"producer_provenance": {"actor_id": "M7-M5-PRODUCER", "run_id": "M7-M5-PRODUCER", "executor_id": "synthetic-fixture", "role": "RESEARCH_AND_CURATION", "provenance_ref": "output/execution_provenance_registry.json", "artifact_ref": {key: m5["execution_manifest"][key] for key in ("artifact_id", "artifact_kind", "artifact_version", "checksum")}}, "repository_root": str(repo_root), "execution_provenance_registry_ref": "output/execution_provenance_registry.json"}
-        return {"artifact_refs": [b2["execution_manifest"], *b2_manifest["artifacts"], m4["execution_manifest"], *m4_manifest["artifacts"], state["source_ref"]]}, provenance
+        return {"artifact_refs": [b2["execution_manifest"], *b2_manifest["artifacts"], m4["execution_manifest"], *m4_manifest["artifacts"], *evidence_refs]}, provenance
 
     def _research_v2_projection(self, state: Mapping[str, Any], manifest: Mapping[str, Any], manifest_ref: Mapping[str, Any], m4: Mapping[str, Any], m5: Mapping[str, Any], selected_work_ids: list[str]) -> dict[str, Any]:
         refs = {
@@ -850,7 +891,7 @@ class ResearchM7SyntheticRunner:
         }
 
     def _materialize_b5_i3_inputs(self, state: dict[str, Any], baseline: Mapping[str, Any], m4: Mapping[str, Any], m5: Mapping[str, Any]) -> list[InputArtifact]:
-        source = self._context(state)["source_access"]
+        source = _read(state["source_ref"]["path"])
         claims = _read(m5["claims_ledger"]["path"])
         thesis = _read(m5["refined_thesis"]["path"])
         profile = _read(Path(__file__).resolve().parents[2] / "config" / "active_editorial_profile.json")
@@ -918,14 +959,23 @@ class ResearchM7SyntheticRunner:
         plan_ref = next(item for item in state["artifacts"] if item["stage"] == "RESEARCH_PLAN")
         manifest = _read(manifest_ref["path"])
         by_kind = {str(ref["artifact_kind"]): ref for ref in manifest["artifacts"]}
-        return {"research_plan": plan_ref, "phenomenon_base_research": by_kind["ResearchPack"], "work_discovery": by_kind["WorkLifecycle"], "base_research_pool": next(ref for ref in manifest["artifacts"] if ref["artifact_id"].endswith(":BASE_RESEARCH_POOL")), "preliminary_fidelity": next(ref for ref in manifest["artifacts"] if ref["artifact_id"].endswith(":PRELIMINARY_FIDELITY")), "initial_sufficiency": next(ref for ref in manifest["artifacts"] if ref["artifact_id"].endswith(":INITIAL_SUFFICIENCY")), "provisional_thesis": by_kind["ThesisArtifact"], "research_comparison": by_kind["ResearchComparison"], "deepening_targets": manifest["deepening_targets"], "lifecycle_projection": manifest["lifecycle_projection"], "execution_manifest": manifest_ref}
+        return {"research_plan": plan_ref, "phenomenon_base_research": by_kind["ResearchPack"], "work_discovery": by_kind["WorkLifecycle"], "base_research_pool": next(ref for ref in manifest["artifacts"] if ref["artifact_id"].endswith(":BASE_RESEARCH_POOL")), "preliminary_fidelity": next(ref for ref in manifest["artifacts"] if ref["artifact_id"].endswith(":PRELIMINARY_FIDELITY")), "initial_sufficiency": next(ref for ref in manifest["artifacts"] if ref["artifact_id"].endswith(":INITIAL_SUFFICIENCY")), "provisional_thesis": by_kind["ThesisArtifact"], "research_comparison": by_kind["ResearchComparison"], "evidence_report": by_kind["SourceAccessAndEvidenceReport"], "deepening_targets": manifest["deepening_targets"], "lifecycle_projection": manifest["lifecycle_projection"], "execution_manifest": manifest_ref}
 
     def _m5_result_from_state(self, state: Mapping[str, Any]) -> dict[str, Any]:
         m5_ref = next(item for item in state["artifacts"] if item["stage"] == "M5")
         manifest = _read(m5_ref["path"])
         result = {"execution_manifest": m5_ref}
+        output_names = {
+            "ClaimsLedger": "claims_ledger",
+            "ResearchStopDecisionCollection": "claim_sufficiency",
+            "ResearchComparison": "post_deep_comparison",
+            "RefinedThesis": "refined_thesis",
+            "SourceAccessAndEvidenceReport": "evidence_report",
+        }
         for item in manifest["m5_outputs"]:
-            result[{"ClaimsLedger": "claims_ledger", "ResearchStopDecisionCollection": "claim_sufficiency", "ResearchComparison": "post_deep_comparison", "RefinedThesis": "refined_thesis"}[item["artifact_kind"]]] = item
+            name = output_names.get(item["artifact_kind"])
+            if name:
+                result[name] = item
         return result
 
     @staticmethod
@@ -993,17 +1043,17 @@ class ResearchM7SyntheticRunner:
                 changed = True
             else:
                 self._verify_coord_ref(artifacts["B2"], "B2")
-            source_path = root / "source_access_and_evidence_report.json"
-            if source_path.is_file() and "source_ref" not in state:
-                source = _read(source_path)
-                state["source_ref"] = self._coord_ref(
-                    source_path,
-                    artifact_id=f"{plan_ref['artifact_id']}:SOURCE_ACCESS",
-                    artifact_kind="SourceAccessAndEvidenceReport",
-                    artifact_version=str(source.get("report_version") or "2.0.0"),
-                )
-                state.setdefault("canonical_refs", {})["SourceAccessAndEvidenceReport"] = [state["source_ref"]]
-                changed = True
+            source_ref = next(
+                (dict(item) for item in manifest.get("artifacts", [])
+                 if item.get("artifact_kind") == "SourceAccessAndEvidenceReport"),
+                None,
+            )
+            if source_ref is not None:
+                self._verify_coord_ref(source_ref, "B2_EVIDENCE_REPORT")
+                before = state.get("source_ref")
+                self._record_evidence(state, source_ref)
+                if before != state.get("source_ref"):
+                    changed = True
 
         for stage, filename, kind, suffix in (
             ("M4", "research_m4_execution.json", "ResearchM4ExecutionManifest", ":M4"),
@@ -1029,6 +1079,16 @@ class ResearchM7SyntheticRunner:
                 changed = True
             else:
                 self._verify_coord_ref(artifacts[stage], stage)
+            manifest_refs = manifest.get("artifacts") if isinstance(manifest.get("artifacts"), list) else manifest.get("m5_outputs", [])
+            evidence_ref = next(
+                (dict(item) for item in manifest_refs
+                 if item.get("artifact_kind") == "SourceAccessAndEvidenceReport"),
+                None,
+            )
+            if evidence_ref is not None:
+                self._verify_coord_ref(evidence_ref, f"{stage}_EVIDENCE_REPORT")
+                self._record_evidence(state, evidence_ref)
+                changed = True
 
         if changed:
             completed = list(state.get("completed_stages", []))
@@ -1067,6 +1127,7 @@ class ResearchM7SyntheticRunner:
         m4 = self._m4_result(m4_ref)
         m5 = self._m5_result_from_state(state)
         executor = SyntheticResearchExecutor(state["human_input"])
+        executor.research_id = str(baseline["research_plan"]["research_plan_id"])
         chain, provenance = self._provenance(state, b2, m4, m5)
         context = self._context(state)
         context.update(provenance)
@@ -1127,8 +1188,11 @@ class ResearchM7SyntheticRunner:
         adapter = self._adapter(state)
         context = self._context(state)
         b2 = self._b2_result_from_state(state)
+        context["evidence_report"] = _read(b2["evidence_report"]["path"])
+        context["_evidence_report_ref"] = dict(b2["evidence_report"])
         baseline = self._baseline(b2)
         plan = _read(b2["research_plan"]["path"])
+        executor.research_id = str(plan["research_plan_id"])
         m4 = self._m4_result(next(item for item in state["artifacts"] if item["stage"] == "M4")) if start_stage != "M4" else None
         if start_stage == "M4":
             selected = list(inp["selected_work_ids"])
@@ -1143,16 +1207,25 @@ class ResearchM7SyntheticRunner:
             delegation = {"decision": "DELEGATE", "reasons": ["scope explícito"], "policy_version": "1.0.0", "evidence_refs": [f"D-{work_id}" for work_id in selected], "authorized_candidate_set": selected} if selection_mode == "DELEGATED_SELECTION" else None
             m4 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter, no_progress_guard=ResearchB2NoProgressGuard(max_iterations=self.max_iterations)).run(baseline, context=context, selection_mode=selection_mode, human_decision=human, delegation_decision=delegation, selection_options=[selected])
             state.setdefault("canonical_invocations", {}).update({"M4": "ResearchB3Orchestrator.run"})
+            self._record_evidence(state, m4["evidence_report"])
             self._store_coord(state, "M4", m4["execution_manifest"], kind="ResearchM4ExecutionManifest")
+            context["evidence_report"] = _read(m4["evidence_report"]["path"])
+            context["_evidence_report_ref"] = dict(m4["evidence_report"])
             state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4"]
             self.store.save(state)
         m5 = self._m5_result_from_state(state) if start_stage == "M6" else None
         if start_stage in {"M4", "M5"}:
+            if start_stage == "M5":
+                context["evidence_report"] = _read(m4["evidence_report"]["path"])
+                context["_evidence_report_ref"] = dict(m4["evidence_report"])
             executor.input["_effective_selected_work_ids"] = list(_read(m4["execution_manifest"]["path"])["selection"]["selected_work_ids"])
             executor.input["selection_mode"] = self.selection_mode
             m5 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter, no_progress_guard=ResearchB2NoProgressGuard(max_iterations=self.max_iterations)).run_m5(baseline, m4, context=context)
             state.setdefault("canonical_invocations", {}).update({"M5": "ResearchB3Orchestrator.run_m5"})
+            self._record_evidence(state, m5["evidence_report"])
             self._store_coord(state, "M5", m5["execution_manifest"], kind="ResearchM5ExecutionManifest")
+            context["evidence_report"] = _read(m5["evidence_report"]["path"])
+            context["_evidence_report_ref"] = dict(m5["evidence_report"])
             state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5"]
             self.store.save(state)
         assert m5 is not None
@@ -1207,14 +1280,40 @@ class ResearchM7SyntheticRunner:
         self._store_coord(state, "INTAKE", {"artifact_id": f"intake:{inp['episode_id']}", "artifact_kind": "EditorialIntakeHandoff", "artifact_version": "1.0.0", "path": str(intake_path), "checksum": hashlib.sha256(intake_path.read_bytes()).hexdigest()}, kind="EditorialIntakeHandoff")
         state["completed_stages"] = ["INTAKE"]
         self.store.save(state)
-        plan = research_plan(inp)
+        planning = ResearchPlanningService()
+        profile = _read(Path(__file__).resolve().parents[2] / "config" / "active_editorial_profile.json")
+        work_intents = [{"work_ref": str(work_id), "editorial_intent": "NO_DECLARADA"} for work_id in inp["works"]]
+        brief = planning.build_episode_brief(
+            episode_id=str(inp["episode_id"]), topic=str(inp["topic"]),
+            question=str(inp["initial_question"]), intended_use="RESEARCH_AND_THESIS",
+            profile=profile, work_intents=work_intents,
+            selection_authority="OWNER_DECIDES" if self.selection_mode == "MANUAL" else "DELEGATED_TO_RESEARCH",
+            brief_version="1.0.0", origin_ref=f"human-input:{inp['episode_id']}",
+        )
+        channel_context = planning.build_channel_context(
+            episode_id=str(inp["episode_id"]), profile=profile,
+            origin_ref=f"human-input:{inp['episode_id']}",
+        )
+        plan_result = planning.produce_research_plan(
+            episode_brief=brief, channel_context=channel_context,
+            source_access=context["source_access"], cognitive_executor=executor,
+            persistence=ResearchB2Persistence(execution_root / "b2"),
+            research_role="NORMAL", editorial_intent="NO_DECLARADA",
+            persist_plan=False,
+        )
+        plan = plan_result["research_plan_payload"]
+        executor.research_id = str(plan["research_plan_id"])
+        state.setdefault("canonical_refs", {})["ResearchPlanProposal"] = [plan_result["research_plan_proposal"]]
         if validate_research_plan(plan):
             raise ResearchM7Error("M7_RESEARCH_PLAN_INVALID")
+        context["brief"] = brief
+        context["channel_context"] = channel_context
         b2 = ResearchB2Orchestrator(executor, ResearchB2Persistence(execution_root / "b2"), acquisition_adapter=adapter, no_progress_guard=ResearchB2NoProgressGuard(max_iterations=self.max_iterations)).run(plan, context=context)
         state["canonical_invocations"] = {"B2": "ResearchB2Orchestrator.run"}
-        source_path = execution_root / "source_access_and_evidence_report.json"
-        _write_json_atomic(source_path, context["source_access"])
-        state["source_ref"] = {"artifact_id": f"{plan['research_plan_id']}:SOURCE_ACCESS", "artifact_kind": "SourceAccessAndEvidenceReport", "artifact_version": "2.0.0", "path": str(source_path), "checksum": _checksum(context["source_access"])}
+        state["source_ref"] = dict(b2["evidence_report"])
+        state["evidence_refs"] = [dict(b2["evidence_report"])]
+        context["evidence_report"] = _read(b2["evidence_report"]["path"])
+        context["_evidence_report_ref"] = dict(b2["evidence_report"])
         b2_manifest = _read(b2["execution_manifest"]["path"])
         self._store_coord(state, "RESEARCH_PLAN", b2["research_plan"], kind="ResearchPlan")
         self._store_coord(state, "B2", b2["execution_manifest"], kind="ResearchB2ExecutionManifest")
@@ -1239,6 +1338,10 @@ class ResearchM7SyntheticRunner:
         baseline = self._baseline(b2)
         m4 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter, no_progress_guard=ResearchB2NoProgressGuard(max_iterations=self.max_iterations)).run(baseline, context=context, selection_mode=selection_mode, human_decision=human, delegation_decision=delegation, selection_options=[selected])
         state.setdefault("canonical_invocations", {}).update({"M4": "ResearchB3Orchestrator.run"})
+        state["source_ref"] = dict(m4["evidence_report"])
+        state["evidence_refs"].append(dict(m4["evidence_report"]))
+        context["evidence_report"] = _read(m4["evidence_report"]["path"])
+        context["_evidence_report_ref"] = dict(m4["evidence_report"])
         self._store_coord(state, "M4", m4["execution_manifest"], kind="ResearchM4ExecutionManifest")
         state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4"]
         self.store.save(state)
@@ -1252,6 +1355,10 @@ class ResearchM7SyntheticRunner:
             return state
         m5 = ResearchB3Orchestrator(executor, ResearchB3Persistence(execution_root / "b3"), acquisition_adapter=adapter, no_progress_guard=ResearchB2NoProgressGuard(max_iterations=self.max_iterations)).run_m5(baseline, m4, context=context)
         state.setdefault("canonical_invocations", {}).update({"M5": "ResearchB3Orchestrator.run_m5"})
+        state["source_ref"] = dict(m5["evidence_report"])
+        state["evidence_refs"].append(dict(m5["evidence_report"]))
+        context["evidence_report"] = _read(m5["evidence_report"]["path"])
+        context["_evidence_report_ref"] = dict(m5["evidence_report"])
         self._store_coord(state, "M5", m5["execution_manifest"], kind="ResearchM5ExecutionManifest")
         state["completed_stages"] = ["INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5"]
         self.store.save(state)
