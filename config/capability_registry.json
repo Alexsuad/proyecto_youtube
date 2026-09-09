@@ -41,7 +41,7 @@
         "execution_profiles_resolvable": true,
         "routing_resolvable": true,
         "real_b2_input_binding_available": true,
-        "real_stage_adapters_bound": false,
+        "real_stage_adapters_bound": true,
         "real_entrypoint_operational": false
       }
     },

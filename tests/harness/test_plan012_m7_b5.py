@@ -4,14 +4,21 @@ import copy
 import hashlib
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
 from src.ai.contracts import ExecutionResult, ExecutionStatus, InputArtifact
 from src.ai.execution import M3_REQUIRED_INPUT_KINDS, execute
-from src.application.research_b2 import SoftwareAcquisitionAdapter
-from src.application.research_m7 import RealResearchRoutePreparation, ResearchM7Error, ResearchM7SyntheticRunner, ResearchV2B5I3Adapter
+from src.application.research_b2 import ResearchB2Orchestrator, SoftwareAcquisitionAdapter
+from src.application.research_b3 import ResearchB3Orchestrator
+from src.application.research_b4 import ResearchB4Orchestrator
+from src.application.contracts import HumanInput
+from src.application.research_m7 import PersistedResearchEpisode, ProductiveResearchStageAdapters, RealResearchRoutePreparation, ResearchM7Error, ResearchM7SyntheticRunner, ResearchV2B5I3Adapter
+from src.application.research_planning import ResearchPlanningService
+from src.application.storage import VaultEpisodeStore
 from src.application.research_m7_fixture import phenomenon
+from src.core.editorial_profile_registry import load_active_profile_authority
 from src.cli import build_parser, main
 
 
@@ -522,6 +529,79 @@ def _real_route_config(**overrides):
     return config
 
 
+def _persisted_real_episode(tmp_path):
+    store = VaultEpisodeStore(tmp_path / "vault", "MAS_ALLA_DEL_GUION")
+    profile = load_active_profile_authority()
+    human = HumanInput.create(
+        mode="tema",
+        content="Tema persistido de Research V2",
+        initial_question="¿Qué puede sostenerse?",
+        works=["Obra A", "Obra B", "Obra C"],
+        research_role="ANCLA",
+        editorial_intent="PREFERIDA",
+        user_instructions=[{
+            "category": "MUST_INCLUDE",
+            "text": "Conservar la restricción del OWNER.",
+        }],
+        work_intents=[
+            {"work_ref": "Obra A", "editorial_intent": "PREFERIDA"},
+            {"work_ref": "Obra B", "editorial_intent": "REQUERIDA"},
+            {"work_ref": "Obra C", "editorial_intent": "NO_DECLARADA"},
+        ],
+        selection_authority="OWNER_DECIDES",
+    )
+    handle = store.create_episode(
+        human,
+        handoff={}, profile=profile, run_id="RUN-REAL-ROUTE",
+    )
+    planning = ResearchPlanningService()
+    brief = planning.build_episode_brief(
+        episode_id=handle.episode_id,
+        topic=human.content,
+        question=human.initial_question,
+        intended_use="OWNER_DECLARED_RESEARCH",
+        profile=profile,
+        work_intents=[dict(item) for item in human.work_intents],
+        selection_authority=human.selection_authority,
+        material_refs=[],
+        owner_restrictions=["MUST_INCLUDE: Conservar la restricción del OWNER."],
+        brief_version="2.0.0",
+        origin_ref=f"human-input:{handle.episode_id}",
+    )
+    channel_context = planning.build_channel_context(
+        episode_id=handle.episode_id, profile=profile, origin_ref=f"human-input:{handle.episode_id}",
+    )
+    source_access = planning.build_source_access(
+        episode_id=handle.episode_id,
+        brief_version=brief["brief_version"],
+        materials=[],
+        origin_refs=[f"human-input:{handle.episode_id}"],
+    )
+    store.record_research_preparation(
+        handle, brief=brief, channel_context=channel_context, source_access=source_access,
+    )
+    settings = tmp_path / "settings.json"
+    settings.write_text(json.dumps({"vault_root": str(tmp_path / "vault"), "channel_id": "MAS_ALLA_DEL_GUION"}), encoding="utf-8")
+    return handle, settings
+
+
+def _real_cli_args(handle, settings):
+    return [
+        "--episodio-id", handle.episode_id,
+        "--config", str(settings),
+        "--budget", "25",
+        "--max-iterations", "2",
+        "--max-retries", "1",
+        "--timeout", "30",
+    ]
+
+
+@pytest.fixture
+def persisted_real_episode():
+    with TemporaryDirectory(prefix="m2b3-", dir=Path.cwd()) as root:
+        yield _persisted_real_episode(Path(root))
+
+
 def test_extend01_real_without_authorization_blocks_before_provider():
     preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
     result = execute(preparation.build_request())
@@ -529,16 +609,11 @@ def test_extend01_real_without_authorization_blocks_before_provider():
     assert any(token in str(result.error) for token in ("MISSION_AUTHORIZATION_REQUIRED", "CAPABILITY_UNAVAILABLE"))
 
 
-def test_extend01_mvp_preparation_does_not_require_owner_environment_selection(capsys):
+def test_extend01_mvp_preparation_loads_only_the_persisted_episode(persisted_real_episode, capsys):
+    handle, settings = persisted_real_episode
     exit_code = main([
         "preparar-ruta-real",
-        "--episodio-id", "EP-REAL-MVP",
-        "--tema", "Tema real",
-        "--pregunta", "¿Qué puede afirmarse?",
-        "--budget", "25",
-        "--max-iterations", "2",
-        "--max-retries", "1",
-        "--timeout", "30",
+        *_real_cli_args(handle, settings),
         "--mission-authorization", "mission-auth.json",
     ])
     output = capsys.readouterr().out
@@ -546,9 +621,9 @@ def test_extend01_mvp_preparation_does_not_require_owner_environment_selection(c
     assert "REAL_ROUTE_PREPARED: YES" in output
     assert "REAL_AI_EXECUTION: NO" in output
     preparation = RealResearchRoutePreparation.from_mapping({
-        "episode_id": "EP-REAL-MVP",
-        "topic": "Tema real",
-        "question": "¿Qué puede afirmarse?",
+        "episode_id": handle.episode_id,
+        "topic": "Tema persistido de Research V2",
+        "question": "¿Qué puede sostenerse?",
         "budget_limit": 25,
         "max_iterations": 2,
         "max_retries": 1,
@@ -567,54 +642,29 @@ def test_extend01_mvp_preparation_does_not_require_owner_environment_selection(c
     with pytest.raises(SystemExit):
         build_parser().parse_args([
             "preparar-ruta-real",
-            "--episodio-id", "EP-REAL-MVP",
-            "--tema", "Tema real",
-            "--pregunta", "¿Qué puede afirmarse?",
-            "--budget", "25",
-            "--max-iterations", "2",
-            "--max-retries", "1",
-            "--timeout", "30",
+            *_real_cli_args(handle, settings),
             "--provider", "provider-a",
         ])
     with pytest.raises(SystemExit):
         build_parser().parse_args([
             "preparar-ruta-real",
-            "--episodio-id", "EP-REAL-MVP",
-            "--tema", "Tema real",
-            "--pregunta", "¿Qué puede afirmarse?",
-            "--budget", "25",
-            "--max-iterations", "2",
-            "--max-retries", "1",
-            "--timeout", "30",
-            "--acquisition-status", "PREMATERIALIZED_EVIDENCE",
+            *_real_cli_args(handle, settings),
+            "--tema", "Autoridad duplicada",
         ])
 
 
-def test_extend01_real_entrypoint_is_exposed_without_execution(capsys):
+def test_extend01_real_entrypoint_is_episode_bound_and_fails_closed_before_b4(persisted_real_episode, capsys):
+    handle, settings = persisted_real_episode
     parser = build_parser()
     parsed = parser.parse_args([
         "investigar-real",
-        "--episodio-id", "EP-REAL-M2",
-        "--tema", "Tema real",
-        "--pregunta", "¿Qué puede afirmarse?",
-        "--budget", "25",
-        "--max-iterations", "2",
-        "--max-retries", "1",
-        "--timeout", "30",
-        "--mission-authorization", "mission-auth.json",
+        *_real_cli_args(handle, settings),
     ])
     assert parsed.command == "investigar-real"
     assert parsed.handler.__name__ == "_investigate_research_m7_real"
     assert main([
         "investigar-real",
-        "--episodio-id", "EP-REAL-M2",
-        "--tema", "Tema real",
-        "--pregunta", "¿Qué puede afirmarse?",
-        "--budget", "25",
-        "--max-iterations", "2",
-        "--max-retries", "1",
-        "--timeout", "30",
-        "--mission-authorization", "mission-auth.json",
+        *_real_cli_args(handle, settings),
     ]) == 2
     output = capsys.readouterr().out
     assert "REAL_ENTRYPOINT_AVAILABLE: YES" in output
@@ -622,10 +672,13 @@ def test_extend01_real_entrypoint_is_exposed_without_execution(capsys):
     assert "ENTRYPOINT: investigar-real" in output
     assert "CANONICAL_ROUTE: B2 -> M4 -> M5 -> M6" in output
     assert "POST_M6_EXECUTION: NO" in output
+    assert "M2_READY_FOR_REAL_INPUT: YES" in output
+    assert "REAL_AI_ROUTE_SELECTION_REQUIRED_FOR_B4" in output
     assert "REAL_AI_CALLS: 0" in output
 
 
-def test_extend01_preparation_and_investigation_commands_have_distinct_dispatch(monkeypatch, capsys):
+def test_extend01_preparation_and_investigation_commands_have_distinct_dispatch(persisted_real_episode, monkeypatch, capsys):
+    handle, settings = persisted_real_episode
     calls = []
 
     def stage_runner(stage):
@@ -636,18 +689,9 @@ def test_extend01_preparation_and_investigation_commands_have_distinct_dispatch(
 
     monkeypatch.setattr(
         "src.cli._real_stage_runners_for_entrypoint",
-        lambda: {stage: stage_runner(stage) for stage in ("B2", "M4", "M5", "M6")},
+        lambda _episode: {stage: stage_runner(stage) for stage in ("B2", "M4", "M5", "M6")},
     )
-    preparation_args = [
-        "--episodio-id", "EP-REAL-M2",
-        "--tema", "Tema real",
-        "--pregunta", "¿Qué puede afirmarse?",
-        "--budget", "25",
-        "--max-iterations", "2",
-        "--max-retries", "1",
-        "--timeout", "30",
-        "--mission-authorization", "mission-auth.json",
-    ]
+    preparation_args = _real_cli_args(handle, settings)
     assert main(["preparar-ruta-real", *preparation_args]) == 0
     preparation_output = capsys.readouterr().out
     assert "REAL_ROUTE_PREPARED: YES" in preparation_output
@@ -655,12 +699,13 @@ def test_extend01_preparation_and_investigation_commands_have_distinct_dispatch(
 
     assert main(["investigar-real", *preparation_args]) == 0
     investigation_output = capsys.readouterr().out
-    assert "REAL_ENTRYPOINT_OPERATIONAL: YES" in investigation_output
+    assert "REAL_ENTRYPOINT_OPERATIONAL: NO" in investigation_output
     assert "REAL_ROUTE_RESULT: RESEARCH_READY" in investigation_output
     assert calls == ["B2", "M4", "M5", "M6"]
 
 
-def test_extend01_investigar_real_invokes_canonical_coordinator(monkeypatch, capsys):
+def test_extend01_investigar_real_invokes_canonical_coordinator(persisted_real_episode, monkeypatch, capsys):
+    handle, settings = persisted_real_episode
     invoked = []
 
     def dispatch(self, stage_runners):
@@ -673,33 +718,173 @@ def test_extend01_investigar_real_invokes_canonical_coordinator(monkeypatch, cap
     monkeypatch.setattr(RealResearchRoutePreparation, "run_canonical_vertical", dispatch)
     assert main([
         "investigar-real",
-        "--episodio-id", "EP-REAL-M2",
-        "--tema", "Tema real",
-        "--pregunta", "¿Qué puede afirmarse?",
-        "--budget", "25",
-        "--max-iterations", "2",
-        "--max-retries", "1",
-        "--timeout", "30",
-        "--mission-authorization", "mission-auth.json",
+        *_real_cli_args(handle, settings),
     ]) == 0
     output = capsys.readouterr().out
     assert "REAL_ROUTE_RESULT: RESEARCH_READY" in output
-    assert invoked == [("EP-REAL-M2", ("B2", "M4", "M5", "M6"))]
+    assert invoked == [(handle.episode_id, ("B2", "M4", "M5", "M6"))]
 
 
-def test_extend01_investigar_real_fails_closed_before_dispatch_when_input_is_missing():
+def test_extend01_investigar_real_requires_operational_limits_but_not_topic_or_question(persisted_real_episode):
+    handle, settings = persisted_real_episode
     parser = build_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([
             "investigar-real",
-            "--episodio-id", "EP-REAL-M2",
-            "--tema", "Tema real",
-            "--budget", "25",
+            "--episodio-id", handle.episode_id,
+            "--config", str(settings),
             "--max-iterations", "2",
             "--max-retries", "1",
             "--timeout", "30",
-            "--mission-authorization", "mission-auth.json",
         ])
+
+
+def test_extend01_productive_adapters_bind_each_canonical_stage(persisted_real_episode):
+    handle, settings = persisted_real_episode
+    episode = PersistedResearchEpisode.load(VaultEpisodeStore.from_settings(settings), handle.episode_id)
+    adapters = ProductiveResearchStageAdapters(episode, cognitive_executor=lambda _request: None)
+    assert {stage: authority.__qualname__ for stage, authority in adapters.canonical_authorities().items()} == {
+        "B2": "ResearchB2Orchestrator.run",
+        "M4": "ResearchB3Orchestrator.run",
+        "M5": "ResearchB3Orchestrator.run_m5",
+        "M6": "ResearchB4Orchestrator.run_m6",
+    }
+    assert all(callable(runner) for runner in adapters.stage_runners().values())
+
+
+def test_extend01_persisted_episode_preserves_owner_research_bindings(persisted_real_episode):
+    handle, settings = persisted_real_episode
+    episode = PersistedResearchEpisode.load(VaultEpisodeStore.from_settings(settings), handle.episode_id)
+    assert episode.human_input["initial_question"] == "¿Qué puede sostenerse?"
+    assert episode.human_input["research_role"] == "ANCLA"
+    assert episode.human_input["editorial_intent"] == "PREFERIDA"
+    assert episode.brief["selection_authority"] == "OWNER_DECIDES"
+    assert episode.brief["work_intents"] == [
+        {"work_ref": "Obra A", "editorial_intent": "PREFERIDA"},
+        {"work_ref": "Obra B", "editorial_intent": "REQUERIDA"},
+        {"work_ref": "Obra C", "editorial_intent": "NO_DECLARADA"},
+    ]
+    assert episode.brief["owner_restrictions"] == ["MUST_INCLUDE: Conservar la restricción del OWNER."]
+    assert episode.brief["objetivo"] == "OWNER_DECLARED_RESEARCH"
+
+
+def test_extend01_persisted_episode_without_canonical_objective_fails_closed(persisted_real_episode):
+    handle, settings = persisted_real_episode
+    for name in ("research_episode_brief.json", "research_channel_context.json", "research_source_access.json"):
+        (handle.folder / name).unlink()
+    store = VaultEpisodeStore.from_settings(settings)
+    with pytest.raises(ResearchM7Error, match="REAL_ROUTE_PRE_RESEARCH_INTENDED_USE_REQUIRED"):
+        PersistedResearchEpisode.load(store, handle.episode_id)
+    assert not (handle.folder / "research_episode_brief.json").exists()
+
+
+def test_extend01_real_adapters_transport_selection_chain_and_provenance(
+    persisted_real_episode, monkeypatch,
+):
+    handle, settings = persisted_real_episode
+    episode = PersistedResearchEpisode.load(VaultEpisodeStore.from_settings(settings), handle.episode_id)
+    executor_calls = []
+
+    def executor(request):
+        executor_calls.append(request)
+        return {"dimensions": ["controlled"]}
+
+    adapters = ProductiveResearchStageAdapters(episode, cognitive_executor=executor)
+    root = adapters.root
+    root.mkdir(parents=True, exist_ok=True)
+
+    def write_payload(name, payload):
+        path = root / name
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return path
+
+    def ref(stage, kind, name, payload):
+        path = write_payload(name, payload)
+        return {
+            "artifact_id": f"{handle.episode_id}:{stage}:{kind}",
+            "artifact_kind": kind,
+            "artifact_version": "1.0.0",
+            "path": str(path),
+            "checksum": hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
+        }
+
+    b2_artifacts = [
+        ref("B2", "ResearchPack", "b2_research_pack.json", {}),
+        ref("B2", "WorkLifecycle", "b2_work_lifecycle.json", {}),
+        ref("B2", "BASE_RESEARCH_POOL", "b2_pool.json", {"dossiers": []}),
+        ref("B2", "ThesisArtifact", "b2_thesis.json", {}),
+        ref("B2", "ResearchComparison", "b2_comparison.json", {}),
+    ]
+    b2_manifest = ref("B2", "ExecutionManifest", "b2_manifest.json", {"artifacts": b2_artifacts})
+    plan_ref = ref("B2", "ResearchPlan", "b2_plan.json", {})
+    evidence_ref = ref("B2", "SourceAccessAndEvidenceReport", "b2_evidence.json", {})
+    b2_result = {
+        "execution_manifest": b2_manifest,
+        "research_plan": plan_ref,
+        "preliminary_fidelity": ref("B2", "PreliminaryFidelity", "b2_fidelity.json", {"dossiers": []}),
+        "initial_sufficiency": ref("B2", "InitialSufficiency", "b2_sufficiency.json", {"dossiers": []}),
+        "deepening_targets": [],
+        "lifecycle_projection": {},
+        "evidence_report": evidence_ref,
+    }
+    m4_artifact = ref("M4", "M4Artifact", "m4_artifact.json", {})
+    m4_manifest = ref("M4", "ExecutionManifest", "m4_manifest.json", {"artifacts": [m4_artifact], "selection": {"mode": "USER_SELECTION"}})
+    m4_result = {"execution_manifest": m4_manifest, "evidence_report": ref("M4", "SourceAccessAndEvidenceReport", "m4_evidence.json", {})}
+    m5_output = ref("M5", "M5Artifact", "m5_artifact.json", {})
+    m5_manifest = ref("M5", "ExecutionManifest", "m5_manifest.json", {"m5_outputs": [m5_output]})
+    m5_result = {"execution_manifest": m5_manifest, "evidence_report": ref("M5", "SourceAccessAndEvidenceReport", "m5_evidence.json", {})}
+    adapters._plan_for_b2 = lambda: {}
+    calls = []
+
+    def fake_b2(self, plan, *, context):
+        calls.append(("B2", context))
+        self.cognitive_executor({"stage": "B2"})
+        return b2_result
+
+    def fake_m4(self, baseline, *, context, selection_mode, human_decision, delegation_decision, selection_options):
+        calls.append(("M4", context, selection_mode))
+        return m4_result
+
+    def fake_m5(self, baseline, m4, *, context, selection_change_decision=None, selection_change_delegation=None):
+        calls.append(("M5", context))
+        return m5_result
+
+    def fake_m6(self, m5, *, context, research_chain=None, invalidation_engine=None):
+        calls.append(("M6", context, research_chain))
+        return {"stage": "M6", "research_chain": research_chain}
+
+    monkeypatch.setattr(ResearchB2Orchestrator, "run", fake_b2)
+    monkeypatch.setattr(ResearchB3Orchestrator, "run", fake_m4)
+    monkeypatch.setattr(ResearchB3Orchestrator, "run_m5", fake_m5)
+    monkeypatch.setattr(ResearchB4Orchestrator, "run_m6", fake_m6)
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config(episode_id=handle.episode_id))
+    result = preparation.run_canonical_vertical(
+        adapters.stage_runners(),
+        initial_context={
+            "selection": {"mode": "USER_SELECTION"},
+            "real_provenance": {"run_id": "REAL-RUN-1", "executor_id": "controlled-executor"},
+        },
+    )
+    assert result["completed_stages"] == ["B2", "M4", "M5", "M6"]
+    assert [item[0] for item in calls] == ["B2", "M4", "M5", "M6"]
+    assert calls[1][2] == "USER_SELECTION"
+    assert calls[3][1]["executor_id"] == "controlled-executor"
+    assert {ref["artifact_id"] for ref in calls[3][2]["artifact_refs"]} >= {
+        b2_manifest["artifact_id"], m4_manifest["artifact_id"], m5_manifest["artifact_id"],
+    }
+    assert executor_calls == [{"stage": "B2"}]
+
+
+def test_extend01_adapters_keep_functional_blockers_distinct(persisted_real_episode):
+    handle, settings = persisted_real_episode
+    episode = PersistedResearchEpisode.load(VaultEpisodeStore.from_settings(settings), handle.episode_id)
+    adapters = ProductiveResearchStageAdapters(episode, cognitive_executor=lambda _request: None)
+    with pytest.raises(ResearchM7Error, match="REAL_ROUTE_OWNER_SELECTION_REQUIRED"):
+        adapters.run_m4({"b2_result": {}})
+    with pytest.raises(ResearchM7Error, match="REAL_ROUTE_RESEARCH_CHAIN_REQUIRED"):
+        adapters.run_m6({"m5_result": {}})
+    with pytest.raises(ResearchM7Error, match="REAL_ROUTE_REAL_PROVENANCE_REQUIRED"):
+        adapters.run_m6({"m5_result": {}, "research_chain": {}})
 
 
 def test_extend01_mock_and_failed_real_do_not_claim_real_execution():

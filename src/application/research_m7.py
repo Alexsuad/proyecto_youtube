@@ -16,14 +16,16 @@ from typing import Any, Callable, Mapping
 
 from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
 from src.ai.execution import M3_REQUIRED_INPUT_KINDS, _validate_m3_input_artifacts
+from src.application.contracts import HumanInput, InputValidationError
 from src.application.interaction import HumanDecision
 from src.application.research_b2 import ResearchB2NoProgressGuard, ResearchB2Orchestrator, ResearchB2Persistence, SoftwareAcquisitionAdapter, _checksum
 from src.application.research_b3 import ResearchB3Orchestrator, ResearchB3Persistence
 from src.application.research_b4 import ResearchB4Orchestrator, ResearchB4Persistence
 from src.application.research_m7_fixture import SyntheticResearchExecutor, b5_i3_transversal_fixtures, source_report
-from src.application.research_planning import ResearchPlanningService
-from src.application.storage import _write_json_atomic
+from src.application.research_planning import ResearchPlanningError, ResearchPlanningService
+from src.application.storage import EpisodeHandle, StorageError, VaultEpisodeStore, _write_json_atomic
 from src.core.contract_validation import validate_against_schema, validate_research_plan, validate_research_ready_manifest
+from src.core.editorial_profile_registry import load_active_profile_authority
 from src.core.gate_result import GateResult
 from src.core.gate_runtime import validate_gate_result
 from src.core.invalidation import InvalidationEngine
@@ -33,7 +35,6 @@ STAGES = ("INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5", "M6", "B5_I3_HANDOFF")
 NARRATIVE_FIELDS = {"viewer_journey", "narrative_plan", "opening_design", "closing_design", "hook", "climax", "cta", "pacing", "title", "thumbnail"}
 REAL_RESEARCH_CAPABILITY = "EXTEND_01_RESEARCH_V2_REAL_E2E"
 REAL_RESEARCH_TERMINAL_STAGE = "RESEARCH_READY"
-REAL_RESEARCH_ACQUISITION_BLOCKED = "BLOCKED_PENDING_OWNER_OR_FUNCTIONAL_SELECTION"
 REAL_RESEARCH_CANONICAL_STAGES = ("B2", "M4", "M5", "M6")
 REAL_RESEARCH_FORBIDDEN_POST_TERMINAL_STAGES = (
     "B5_I3_HANDOFF",
@@ -48,6 +49,413 @@ class ResearchM7Error(RuntimeError):
 
 
 @dataclass(frozen=True)
+class PersistedResearchEpisode:
+    """Canonical Research V2 inputs loaded from one persisted episode only."""
+
+    store: VaultEpisodeStore
+    handle: EpisodeHandle
+    human_input: dict[str, Any]
+    brief: dict[str, Any]
+    channel_context: dict[str, Any]
+    source_access: dict[str, Any]
+
+    @classmethod
+    def load(cls, store: VaultEpisodeStore, episode_id: str) -> "PersistedResearchEpisode":
+        try:
+            resumed = store.resume(episode_id)
+            folder = Path(resumed["folder"])
+            state = dict(resumed["state"])
+            entry = dict(resumed["entry"])
+        except (StorageError, KeyError, TypeError) as exc:
+            raise ResearchM7Error("REAL_ROUTE_EPISODE_NOT_AVAILABLE") from exc
+        if state.get("episode_id") != episode_id:
+            raise ResearchM7Error("REAL_ROUTE_EPISODE_IDENTITY_MISMATCH")
+        human_payload = _read(folder / "00_human_input.json")
+        if not isinstance(human_payload, Mapping):
+            raise ResearchM7Error("REAL_ROUTE_PERSISTED_HUMAN_INPUT_INVALID")
+        try:
+            human_input = HumanInput.from_dict(dict(human_payload))
+        except (InputValidationError, TypeError, ValueError) as exc:
+            raise ResearchM7Error("REAL_ROUTE_PERSISTED_HUMAN_INPUT_INVALID") from exc
+        human = human_input.to_dict()
+        if not str(human.get("content") or "").strip():
+            raise ResearchM7Error("REAL_ROUTE_PERSISTED_TOPIC_REQUIRED")
+        profile = load_active_profile_authority()
+        binding = state.get("profile_binding")
+        if isinstance(binding, Mapping) and any(
+            binding.get(key) != profile.get(source)
+            for key, source in (
+                ("profile_id", "ACTIVE_PROFILE_ID"),
+                ("profile_version", "ACTIVE_PROFILE_VERSION"),
+                ("profile_checksum", "profile_checksum"),
+            )
+        ):
+            raise ResearchM7Error("REAL_ROUTE_EPISODE_PROFILE_BINDING_STALE")
+        paths = {
+            "brief": folder / "research_episode_brief.json",
+            "channel_context": folder / "research_channel_context.json",
+            "source_access": folder / "research_source_access.json",
+        }
+        existing = {name: path.is_file() for name, path in paths.items()}
+        if any(existing.values()) and not all(existing.values()):
+            raise ResearchM7Error("REAL_ROUTE_PRE_RESEARCH_PARTIAL_PERSISTENCE")
+        if not all(existing.values()):
+            planning = ResearchPlanningService()
+            handoff_path = folder / "01_editorial_intake_handoff.json"
+            handoff = _read(handoff_path) if handoff_path.is_file() else {}
+            if not isinstance(handoff, Mapping):
+                raise ResearchM7Error("REAL_ROUTE_PERSISTED_HANDOFF_INVALID")
+            intended_use = cls._persisted_intended_use(human_payload, handoff)
+            material_refs = cls._owner_material_refs(
+                folder, episode_id, declared=human.get("material_refs", []),
+            )
+            brief = planning.build_episode_brief(
+                episode_id=episode_id,
+                topic=str(human["content"]),
+                question=human.get("initial_question"),
+                intended_use=intended_use,
+                profile=profile,
+                work_intents=[dict(item) for item in human.get("work_intents", [])],
+                selection_authority=str(human.get("selection_authority") or "NOT_DECLARED"),
+                material_refs=[str(item["material_ref"]) for item in material_refs],
+                owner_restrictions=cls._owner_restrictions(human),
+                brief_version="2.0.0",
+                origin_ref=f"human-input:{episode_id}",
+            )
+            channel_context = planning.build_channel_context(
+                episode_id=episode_id, profile=profile, origin_ref=f"human-input:{episode_id}",
+            )
+            source_access = planning.build_source_access(
+                episode_id=episode_id,
+                brief_version=brief["brief_version"],
+                materials=material_refs,
+                origin_refs=[f"human-input:{episode_id}"],
+            )
+            handle = EpisodeHandle(episode_id, str(entry.get("slug") or "episodio"), folder, store.index_path)
+            store.record_research_preparation(
+                handle, brief=brief, channel_context=channel_context, source_access=source_access,
+            )
+        payloads = {name: _read(path) for name, path in paths.items()}
+        for name, schema in (
+            ("brief", "episode_brief"),
+            ("channel_context", "research_channel_context"),
+            ("source_access", "research_source_access"),
+        ):
+            if not isinstance(payloads[name], Mapping) or validate_against_schema(dict(payloads[name]), schema):
+                raise ResearchM7Error(f"REAL_ROUTE_PERSISTED_{name.upper()}_INVALID")
+        if not str(payloads["brief"].get("objetivo") or "").strip():
+            raise ResearchM7Error("REAL_ROUTE_PRE_RESEARCH_INTENDED_USE_REQUIRED")
+        return cls(
+            store=store,
+            handle=EpisodeHandle(episode_id, str(entry.get("slug") or "episodio"), folder, store.index_path),
+            human_input=copy.deepcopy(dict(human)),
+            brief=copy.deepcopy(dict(payloads["brief"])),
+            channel_context=copy.deepcopy(dict(payloads["channel_context"])),
+            source_access=copy.deepcopy(dict(payloads["source_access"])),
+        )
+
+    @staticmethod
+    def _persisted_intended_use(human: Mapping[str, Any], handoff: Mapping[str, Any]) -> str:
+        field_bindings = handoff.get("field_bindings") if isinstance(handoff.get("field_bindings"), Mapping) else {}
+        candidates = (
+            human.get("intended_use"),
+            human.get("research_intended_use"),
+            handoff.get("intended_use"),
+            handoff.get("research_intended_use"),
+            field_bindings.get("intended_use"),
+            field_bindings.get("research_intended_use"),
+        )
+        for candidate in candidates:
+            value = str(candidate or "").strip()
+            if value:
+                return value
+        raise ResearchM7Error("REAL_ROUTE_PRE_RESEARCH_INTENDED_USE_REQUIRED")
+
+    @staticmethod
+    def _owner_restrictions(human: Mapping[str, Any]) -> list[str]:
+        restrictions: list[str] = []
+        for item in human.get("user_instructions", []):
+            if not isinstance(item, Mapping):
+                raise ResearchM7Error("REAL_ROUTE_OWNER_INSTRUCTIONS_INVALID")
+            category = str(item.get("category") or "").strip().upper()
+            text = str(item.get("text") or "").strip()
+            if not category or not text:
+                raise ResearchM7Error("REAL_ROUTE_OWNER_INSTRUCTIONS_INVALID")
+            restrictions.append(f"{category}: {text}")
+        return restrictions
+
+    @staticmethod
+    def _owner_material_refs(
+        folder: Path,
+        episode_id: str,
+        *,
+        declared: list[Mapping[str, Any]] | tuple[Mapping[str, Any], ...] | None = None,
+    ) -> list[dict[str, Any]]:
+        provenance_path = folder / "research_material_provenance.json"
+        materials: list[dict[str, Any]] = []
+        by_ref: dict[str, dict[str, Any]] = {}
+        if provenance_path.is_file():
+            provenance = _read(provenance_path)
+            if not isinstance(provenance, Mapping) or provenance.get("episode_id") != episode_id:
+                raise ResearchM7Error("REAL_ROUTE_OWNER_MATERIAL_PROVENANCE_INVALID")
+            for item in provenance.get("records", []):
+                if not isinstance(item, Mapping):
+                    raise ResearchM7Error("REAL_ROUTE_OWNER_MATERIAL_PROVENANCE_INVALID")
+                snapshot = folder / str(item.get("snapshot_path") or "")
+                expected = str(item.get("checksum") or "")
+                if not snapshot.is_file() or hashlib.sha256(snapshot.read_bytes()).hexdigest() != expected:
+                    raise ResearchM7Error("REAL_ROUTE_OWNER_MATERIAL_STALE")
+                ref = str(item.get("material_ref") or "").strip()
+                if not ref:
+                    raise ResearchM7Error("REAL_ROUTE_OWNER_MATERIAL_PROVENANCE_INVALID")
+                by_ref[ref] = {
+                    "material_ref": ref,
+                    "material_kind": str(item.get("material_kind") or "").upper(),
+                    "availability": "AVAILABLE_LOCAL",
+                    "access_mode": "DIRECT",
+                    "artifact_ref": str(item.get("snapshot_path")),
+                    "checksum": expected,
+                    "limitations": ["Snapshot local; no búsqueda web ni fetch HTTP."],
+                    "provenance_ref": f"{provenance_path.name}#{expected}",
+                }
+        for item in declared or []:
+            if not isinstance(item, Mapping):
+                raise ResearchM7Error("REAL_ROUTE_OWNER_MATERIAL_REFERENCE_INVALID")
+            ref = str(item.get("material_ref") or "").strip()
+            kind = str(item.get("material_kind") or "").strip().upper()
+            if not ref or kind not in {"TEXT", "MARKDOWN", "JSON", "TRANSCRIPT", "OTHER"}:
+                raise ResearchM7Error("REAL_ROUTE_OWNER_MATERIAL_REFERENCE_INVALID")
+            by_ref.setdefault(ref, {
+                "material_ref": ref,
+                "material_kind": kind,
+                "availability": "REFERENCED_NOT_ACQUIRED",
+                "access_mode": "NONE",
+                "artifact_ref": None,
+                "checksum": None,
+                "limitations": ["Referencia OWNER sin snapshot local; no búsqueda web ni fetch HTTP."],
+                "provenance_ref": f"human-input:{episode_id}:material:{ref}",
+            })
+        materials.extend(by_ref.values())
+        return materials
+
+    def context(self) -> dict[str, Any]:
+        return {
+            "topic": str(self.brief["tema"]),
+            "brief": copy.deepcopy(self.brief),
+            "channel_context": copy.deepcopy(self.channel_context),
+            "source_access": copy.deepcopy(self.source_access),
+        }
+
+
+class ProductiveResearchStageAdapters:
+    """B3 adapters around the existing B2/M4/M5/M6 authorities.
+
+    This is deliberately coordination only: it neither selects an execution
+    provider nor replaces any stage contract.  The callable passed as
+    ``cognitive_executor`` is the existing generic cognitive boundary; the
+    production entrypoint supplies a fail-closed callable until B4 authorizes
+    an actual route.
+    """
+
+    def __init__(
+        self,
+        episode: PersistedResearchEpisode,
+        *,
+        cognitive_executor: Callable[[Any], Any],
+        acquisition_adapter: SoftwareAcquisitionAdapter | None = None,
+    ):
+        if not callable(cognitive_executor):
+            raise ResearchM7Error("REAL_ROUTE_COGNITIVE_EXECUTOR_REQUIRED")
+        self.episode = episode
+        self.cognitive_executor = cognitive_executor
+        self.acquisition_adapter = acquisition_adapter or SoftwareAcquisitionAdapter()
+        self.root = episode.handle.folder / "research_v2"
+        self.planning = ResearchPlanningService()
+        self.b2_persistence = ResearchB2Persistence(self.root / "b2")
+        self.b3_persistence = ResearchB3Persistence(self.root / "b3")
+        self.b4_persistence = ResearchB4Persistence(self.root / "b3")
+
+    @staticmethod
+    def canonical_authorities() -> dict[str, Callable[..., Any]]:
+        return RealResearchRoutePreparation.canonical_stage_handlers()
+
+    def stage_runners(self) -> dict[str, Callable[[Mapping[str, Any]], Mapping[str, Any]]]:
+        return {"B2": self.run_b2, "M4": self.run_m4, "M5": self.run_m5, "M6": self.run_m6}
+
+    def _plan_for_b2(self) -> dict[str, Any]:
+        path = self.root / "b2" / "research_plan.json"
+        manifest = self.root / "b2" / "research_b2_execution.json"
+        if path.is_file():
+            plan = _read(path)
+            if (
+                not isinstance(plan, Mapping)
+                or validate_research_plan(dict(plan))
+                or plan.get("episode_id") != self.episode.handle.episode_id
+                or plan.get("brief_version") != self.episode.brief.get("brief_version")
+            ):
+                raise ResearchM7Error("REAL_ROUTE_PERSISTED_RESEARCH_PLAN_INVALID")
+            if not manifest.is_file():
+                raise ResearchM7Error("REAL_ROUTE_RESEARCH_PLAN_LINEAGE_INCOMPLETE")
+            return copy.deepcopy(dict(plan))
+        try:
+            produced = self.planning.produce_research_plan(
+                episode_brief=self.episode.brief,
+                channel_context=self.episode.channel_context,
+                source_access=self.episode.source_access,
+                cognitive_executor=self.cognitive_executor,
+                persistence=self.b2_persistence,
+                research_role=str(self.episode.human_input.get("research_role") or "NORMAL"),
+                editorial_intent=str(self.episode.human_input.get("editorial_intent") or "NO_DECLARADA"),
+                persist_plan=False,
+            )
+        except ResearchPlanningError as exc:
+            raise ResearchM7Error(str(exc)) from exc
+        return copy.deepcopy(dict(produced["research_plan_payload"]))
+
+    @staticmethod
+    def _baseline(b2: Mapping[str, Any]) -> dict[str, Any]:
+        manifest = _read(b2["execution_manifest"]["path"])
+        by_kind = {str(ref["artifact_kind"]): ref for ref in manifest["artifacts"]}
+        return {
+            "research_plan": _read(b2["research_plan"]["path"]),
+            "phenomenon_base_research": _read(by_kind["ResearchPack"]["path"]),
+            "work_discovery": _read(by_kind["WorkLifecycle"]["path"]),
+            "base_research_pool": _read(next(ref for ref in manifest["artifacts"] if ref["artifact_id"].endswith(":BASE_RESEARCH_POOL"))["path"])["dossiers"],
+            "preliminary_fidelity": _read(b2["preliminary_fidelity"]["path"])["dossiers"],
+            "initial_sufficiency": _read(b2["initial_sufficiency"]["path"])["dossiers"],
+            "provisional_thesis": _read(by_kind["ThesisArtifact"]["path"]),
+            "research_comparison": _read(by_kind["ResearchComparison"]["path"]),
+            "deepening_targets": b2["deepening_targets"],
+            "lifecycle": b2["lifecycle_projection"],
+            "evidence_report": b2["evidence_report"],
+        }
+
+    @staticmethod
+    def _research_chain(
+        b2: Mapping[str, Any], m4: Mapping[str, Any], m5: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Build the canonical M6 artifact seam from persisted stage outputs.
+
+        This only transports verified artifact references already emitted by
+        B2/M4/M5.  It never creates producer runs or substitutes provenance.
+        """
+        refs: list[Mapping[str, Any]] = []
+        b2_manifest = _read(b2["execution_manifest"]["path"])
+        m4_manifest = _read(m4["execution_manifest"]["path"])
+        m5_manifest = _read(m5["execution_manifest"]["path"])
+        refs.extend([b2["execution_manifest"], *b2_manifest.get("artifacts", [])])
+        refs.extend([m4["execution_manifest"], *m4_manifest.get("artifacts", [])])
+        refs.extend([m5["execution_manifest"], *m5_manifest.get("m5_outputs", [])])
+        unique: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+        for ref in refs:
+            if not isinstance(ref, Mapping):
+                raise ResearchM7Error("REAL_ROUTE_RESEARCH_CHAIN_REFERENCE_INVALID")
+            key = tuple(str(ref.get(field) or "") for field in ("artifact_id", "artifact_kind", "artifact_version", "checksum"))
+            if any(not value for value in key) or not ref.get("path"):
+                raise ResearchM7Error("REAL_ROUTE_RESEARCH_CHAIN_REFERENCE_INVALID")
+            unique[key] = copy.deepcopy(dict(ref))
+        return {"artifact_refs": list(unique.values())}
+
+    def _selection_missing_error(self) -> str:
+        authority = str(self.episode.brief.get("selection_authority") or "NOT_DECLARED").upper()
+        return {
+            "OWNER_DECIDES": "REAL_ROUTE_OWNER_SELECTION_REQUIRED",
+            "DELEGATED_TO_RESEARCH": "REAL_ROUTE_DELEGATED_SELECTION_REQUIRED",
+            "NOT_DECLARED": "REAL_ROUTE_SELECTION_AUTHORITY_REQUIRED",
+        }.get(authority, "REAL_ROUTE_SELECTION_AUTHORITY_INVALID")
+
+    def run_b2(self, context: Mapping[str, Any]) -> Mapping[str, Any]:
+        plan = self._plan_for_b2()
+        stage_context = self.episode.context()
+        result = ResearchB2Orchestrator(
+            self.cognitive_executor,
+            self.b2_persistence,
+            acquisition_adapter=self.acquisition_adapter,
+            no_progress_guard=ResearchB2NoProgressGuard(max_iterations=int(context["request"].config["max_iterations"])),
+        ).run(plan, context=stage_context)
+        mutable = context if isinstance(context, dict) else None
+        if mutable is not None:
+            mutable["b2_result"] = result
+            mutable["research_plan"] = plan
+            mutable["evidence_report"] = result["evidence_report"]
+        return result
+
+    def run_m4(self, context: Mapping[str, Any]) -> Mapping[str, Any]:
+        b2 = context.get("b2_result") if isinstance(context, Mapping) else None
+        selection = context.get("selection") if isinstance(context, Mapping) else None
+        if not isinstance(b2, Mapping):
+            raise ResearchM7Error("REAL_ROUTE_STAGE_CONTEXT_B2_REQUIRED")
+        if not isinstance(selection, Mapping):
+            raise ResearchM7Error(self._selection_missing_error())
+        expected_authority = str(self.episode.brief.get("selection_authority") or "NOT_DECLARED").upper()
+        mode = str(selection.get("mode") or "").upper()
+        if expected_authority == "OWNER_DECIDES" and mode != "USER_SELECTION":
+            raise ResearchM7Error("REAL_ROUTE_OWNER_SELECTION_AUTHORITY_MISMATCH")
+        if expected_authority == "DELEGATED_TO_RESEARCH" and mode != "DELEGATED_SELECTION":
+            raise ResearchM7Error("REAL_ROUTE_DELEGATED_SELECTION_AUTHORITY_MISMATCH")
+        if expected_authority == "NOT_DECLARED":
+            raise ResearchM7Error("REAL_ROUTE_SELECTION_AUTHORITY_REQUIRED")
+        baseline = self._baseline(b2)
+        stage_context = self.episode.context()
+        stage_context.update({"evidence_report": _read(b2["evidence_report"]["path"]), "_evidence_report_ref": dict(b2["evidence_report"])})
+        result = ResearchB3Orchestrator(
+            self.cognitive_executor, self.b3_persistence,
+            acquisition_adapter=self.acquisition_adapter,
+            no_progress_guard=ResearchB2NoProgressGuard(max_iterations=int(context["request"].config["max_iterations"])),
+        ).run(
+            baseline,
+            context=stage_context,
+            selection_mode=str(selection.get("mode") or "USER_SELECTION"),
+            human_decision=selection.get("human_decision"),
+            delegation_decision=selection.get("delegation_decision"),
+            selection_options=selection.get("selection_options"),
+        )
+        if isinstance(context, dict):
+            context["m4_result"] = result
+            context["evidence_report"] = result["evidence_report"]
+            manifest = _read(result["execution_manifest"]["path"])
+            context["selection"] = copy.deepcopy(manifest.get("selection") or dict(selection))
+        return result
+
+    def run_m5(self, context: Mapping[str, Any]) -> Mapping[str, Any]:
+        b2 = context.get("b2_result") if isinstance(context, Mapping) else None
+        m4 = context.get("m4_result") if isinstance(context, Mapping) else None
+        if not isinstance(b2, Mapping):
+            raise ResearchM7Error("REAL_ROUTE_STAGE_CONTEXT_B2_REQUIRED")
+        if not isinstance(m4, Mapping):
+            raise ResearchM7Error("REAL_ROUTE_STAGE_CONTEXT_M4_REQUIRED")
+        baseline = self._baseline(b2)
+        stage_context = self.episode.context()
+        stage_context.update({"evidence_report": _read(m4["evidence_report"]["path"]), "_evidence_report_ref": dict(m4["evidence_report"])})
+        result = ResearchB3Orchestrator(
+            self.cognitive_executor, self.b3_persistence,
+            acquisition_adapter=self.acquisition_adapter,
+            no_progress_guard=ResearchB2NoProgressGuard(max_iterations=int(context["request"].config["max_iterations"])),
+        ).run_m5(baseline, m4, context=stage_context)
+        if isinstance(context, dict):
+            context["m5_result"] = result
+            context["evidence_report"] = result["evidence_report"]
+            context["research_chain"] = self._research_chain(b2, m4, result)
+        return result
+
+    def run_m6(self, context: Mapping[str, Any]) -> Mapping[str, Any]:
+        m5 = context.get("m5_result") if isinstance(context, Mapping) else None
+        chain = context.get("research_chain") if isinstance(context, Mapping) else None
+        provenance = context.get("real_provenance") if isinstance(context, Mapping) else None
+        if not isinstance(m5, Mapping):
+            raise ResearchM7Error("REAL_ROUTE_STAGE_CONTEXT_M5_REQUIRED")
+        if not isinstance(chain, Mapping):
+            raise ResearchM7Error("REAL_ROUTE_RESEARCH_CHAIN_REQUIRED")
+        if not isinstance(provenance, Mapping):
+            raise ResearchM7Error("REAL_ROUTE_REAL_PROVENANCE_REQUIRED")
+        stage_context = self.episode.context()
+        stage_context.update(dict(provenance))
+        return ResearchB4Orchestrator(
+            self.cognitive_executor, self.b4_persistence,
+        ).run_m6(m5, context=stage_context, research_chain=chain)
+
+
+@dataclass(frozen=True)
 class RealResearchRoutePreparation:
     """Explicit M1 preparation for a future REAL Research V2 execution.
 
@@ -57,28 +465,27 @@ class RealResearchRoutePreparation:
 
     episode_id: str
     topic: str
-    question: str
-    provider: str
-    model: str
-    runtime: str
-    execution_profile: str
-    execution_route: str
-    execution_family: str
+    question: str | None
     budget_limit: float
     max_iterations: int
     max_retries: int
     timeout_seconds: int
     mission_authorization_path: str | None = None
-    acquisition_status: str = REAL_RESEARCH_ACQUISITION_BLOCKED
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]) -> "RealResearchRoutePreparation":
         if not isinstance(values, Mapping):
             raise ResearchM7Error("REAL_ROUTE_CONFIGURATION_INVALID")
+        forbidden = {
+            "provider", "model", "runtime", "execution_profile", "execution_route",
+            "execution_family", "harness", "development_platform", "acquisition_status",
+        }
+        unsupported = sorted(key for key in forbidden if key in values)
+        if unsupported:
+            raise ResearchM7Error("REAL_ROUTE_CONFIGURATION_UNSUPPORTED_FIELDS:" + ",".join(unsupported))
         required = (
-            "episode_id", "topic", "question", "provider", "model", "runtime",
-            "execution_profile", "execution_route", "execution_family", "budget_limit",
-            "max_iterations", "max_retries", "timeout_seconds",
+            "episode_id", "topic", "budget_limit", "max_iterations",
+            "max_retries", "timeout_seconds",
         )
         missing = [key for key in required if values.get(key) in (None, "")]
         if missing:
@@ -92,17 +499,12 @@ class RealResearchRoutePreparation:
             raise ResearchM7Error("REAL_ROUTE_CONFIGURATION_LIMITS_INVALID") from exc
         if budget <= 0 or iterations < 1 or retries < 0 or timeout <= 0:
             raise ResearchM7Error("REAL_ROUTE_CONFIGURATION_LIMITS_INVALID")
-        acquisition_status = str(values.get("acquisition_status") or REAL_RESEARCH_ACQUISITION_BLOCKED)
-        if acquisition_status not in {REAL_RESEARCH_ACQUISITION_BLOCKED, "PREMATERIALIZED_EVIDENCE"}:
-            raise ResearchM7Error("REAL_ROUTE_ACQUISITION_STATUS_INVALID")
         return cls(
-            episode_id=str(values["episode_id"]), topic=str(values["topic"]), question=str(values["question"]),
-            provider=str(values["provider"]), model=str(values["model"]), runtime=str(values["runtime"]),
-            execution_profile=str(values["execution_profile"]), execution_route=str(values["execution_route"]),
-            execution_family=str(values["execution_family"]), budget_limit=budget,
+            episode_id=str(values["episode_id"]), topic=str(values["topic"]),
+            question=(str(values["question"]) if values.get("question") else None),
+            budget_limit=budget,
             max_iterations=iterations, max_retries=retries, timeout_seconds=timeout,
             mission_authorization_path=(str(values["mission_authorization_path"]) if values.get("mission_authorization_path") else None),
-            acquisition_status=acquisition_status,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -112,18 +514,11 @@ class RealResearchRoutePreparation:
             "episode_id": self.episode_id,
             "topic": self.topic,
             "question": self.question,
-            "provider": self.provider,
-            "model": self.model,
-            "runtime": self.runtime,
-            "execution_profile": self.execution_profile,
-            "execution_route": self.execution_route,
-            "execution_family": self.execution_family,
             "budget_limit": self.budget_limit,
             "max_iterations": self.max_iterations,
             "max_retries": self.max_retries,
             "timeout_seconds": self.timeout_seconds,
             "mission_authorization_path": self.mission_authorization_path,
-            "acquisition_status": self.acquisition_status,
             "terminal_stage": REAL_RESEARCH_TERMINAL_STAGE,
             "canonical_route": self.canonical_route_descriptor(),
             "real_ai_execution": False,
@@ -160,27 +555,11 @@ class RealResearchRoutePreparation:
             "forbidden_post_terminal_stages": list(REAL_RESEARCH_FORBIDDEN_POST_TERMINAL_STAGES),
         }
 
-    def acquisition_gate(self) -> dict[str, Any]:
-        """Fail closed before any cognitive, external or vertical dispatch."""
-        if self.acquisition_status != "PREMATERIALIZED_EVIDENCE":
-            return {
-                "status": "BLOCKED",
-                "reason": self.acquisition_status,
-                "real_ai_calls": 0,
-                "external_search_calls": 0,
-                "completed_stages": [],
-            }
-        return {
-            "status": "PASS",
-            "reason": "PREMATERIALIZED_EVIDENCE",
-            "real_ai_calls": 0,
-            "external_search_calls": 0,
-            "completed_stages": [],
-        }
-
     def run_canonical_vertical(
         self,
         stage_runners: Mapping[str, Callable[[Mapping[str, Any]], Mapping[str, Any]]],
+        *,
+        initial_context: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Own the B2 -> M4 -> M5 -> M6 control flow.
 
@@ -189,13 +568,6 @@ class RealResearchRoutePreparation:
         M1 never supplies provider execution; M2 can inject controlled
         dependencies for the four canonical stage authorities.
         """
-        gate = self.acquisition_gate()
-        if gate["status"] != "PASS":
-            return {
-                **gate,
-                "terminal_stage": None,
-                "canonical_route": self.canonical_route_descriptor(),
-            }
         if not isinstance(stage_runners, Mapping) or set(stage_runners) != set(REAL_RESEARCH_CANONICAL_STAGES):
             raise ResearchM7Error("REAL_ROUTE_CANONICAL_STAGE_RUNNERS_REQUIRED")
         if any(not callable(stage_runners[stage]) for stage in REAL_RESEARCH_CANONICAL_STAGES):
@@ -206,6 +578,13 @@ class RealResearchRoutePreparation:
             "completed_stages": [],
             "stage_results": {},
         }
+        if initial_context is not None:
+            if not isinstance(initial_context, Mapping):
+                raise ResearchM7Error("REAL_ROUTE_INITIAL_CONTEXT_INVALID")
+            for key, value in initial_context.items():
+                if key in {"request", "completed_stages", "stage_results"}:
+                    raise ResearchM7Error(f"REAL_ROUTE_INITIAL_CONTEXT_RESERVED:{key}")
+                context[key] = copy.deepcopy(value)
         for stage in REAL_RESEARCH_CANONICAL_STAGES:
             stage_result = stage_runners[stage](context)
             if not isinstance(stage_result, Mapping):
@@ -233,18 +612,12 @@ class RealResearchRoutePreparation:
             input_artifacts=list(input_artifacts or []),
             output_schema=output_schema,
             execution_mode="REAL",
-            provider=self.provider,
-            model=self.model,
-            execution_route=self.execution_route,
-            execution_profile=self.execution_profile,
-            execution_family=self.execution_family,
             timeout=float(self.timeout_seconds),
             episode_id=self.episode_id,
             role=role,
             config={
                 "repository_root": str(Path(__file__).resolve().parents[2]),
                 "mission_authorization_path": self.mission_authorization_path,
-                "runtime": self.runtime,
                 "budget_limit": self.budget_limit,
                 "max_iterations": self.max_iterations,
                 "max_retries": self.max_retries,
@@ -253,7 +626,6 @@ class RealResearchRoutePreparation:
                 "real_research": False,
                 "real_ai_calls": 0,
                 "terminal_stage": REAL_RESEARCH_TERMINAL_STAGE,
-                "acquisition_status": self.acquisition_status,
                 "canonical_route": self.canonical_route_descriptor(),
             },
         )

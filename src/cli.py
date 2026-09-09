@@ -11,7 +11,13 @@ from src.application.contracts import EntryMode, HumanInput, InputValidationErro
 from src.application.interaction import TerminalInteraction, UserCancelled
 from src.application.service import EpisodeApplicationService
 from src.application.storage import StorageError, VaultEpisodeStore
-from src.application.research_m7 import ResearchM7Error, ResearchM7SyntheticRunner
+from src.application.research_m7 import (
+    PersistedResearchEpisode,
+    ProductiveResearchStageAdapters,
+    RealResearchRoutePreparation,
+    ResearchM7Error,
+    ResearchM7SyntheticRunner,
+)
 from src.application.topic_belonging import ExecutionCognitiveBoundary, build_topic_belonging_service
 from src.core.p2_real_reporter import build_p2_report, render_p2_report
 
@@ -350,6 +356,82 @@ def _research_m7_synthetic(args: argparse.Namespace) -> int:
     return 0
 
 
+def _real_preparation_from_args(args: argparse.Namespace) -> tuple[RealResearchRoutePreparation, PersistedResearchEpisode]:
+    episode = PersistedResearchEpisode.load(
+        VaultEpisodeStore.from_settings(args.config), args.episodio_id,
+    )
+    return RealResearchRoutePreparation.from_mapping({
+        "episode_id": args.episodio_id,
+        "topic": episode.brief["tema"],
+        "question": episode.brief.get("initial_question"),
+        "budget_limit": args.budget,
+        "max_iterations": args.max_iterations,
+        "max_retries": args.max_retries,
+        "timeout_seconds": args.timeout,
+        "mission_authorization_path": args.mission_authorization,
+    }), episode
+
+
+def _prepare_research_m7_real(args: argparse.Namespace) -> int:
+    """Validate and display the REAL route without dispatching it."""
+    try:
+        preparation, _episode = _real_preparation_from_args(args)
+    except (ResearchM7Error, ValueError, TypeError) as exc:
+        print(f"ERROR: {exc}")
+        return 2
+    print("REAL_ROUTE_PREPARED: YES")
+    print("REAL_ROUTE_CAPABILITY: EXTEND_01_RESEARCH_V2_REAL_E2E")
+    print(f"MISSION_AUTHORIZATION_PRESENT: {'YES' if preparation.mission_authorization_path else 'NO'}")
+    print("REAL_AI_EXECUTION: NO")
+    print("REAL_AI_CALLS: 0")
+    return 0
+
+
+def _b4_fail_closed_cognitive_executor(_request: Any) -> None:
+    """The generic cognitive seam remains inert until B4 selects a REAL route."""
+    raise ResearchM7Error("REAL_AI_ROUTE_SELECTION_REQUIRED_FOR_B4")
+
+
+def _real_stage_runners_for_entrypoint(episode: PersistedResearchEpisode) -> dict[str, Any]:
+    """Bind the four canonical orchestrators without selecting a REAL runtime."""
+    return ProductiveResearchStageAdapters(
+        episode, cognitive_executor=_b4_fail_closed_cognitive_executor,
+    ).stage_runners()
+
+
+def _investigate_research_m7_real(args: argparse.Namespace) -> int:
+    """Invoke the canonical coordinator, failing closed before M2 execution."""
+    try:
+        preparation, episode = _real_preparation_from_args(args)
+        result = preparation.run_canonical_vertical(_real_stage_runners_for_entrypoint(episode))
+    except (ResearchM7Error, ValueError, TypeError) as exc:
+        if str(exc) == "REAL_AI_ROUTE_SELECTION_REQUIRED_FOR_B4":
+            print("REAL_ENTRYPOINT_AVAILABLE: YES")
+            print("REAL_ENTRYPOINT_OPERATIONAL: NO")
+            print("ENTRYPOINT: investigar-real")
+            print("CANONICAL_ROUTE: B2 -> M4 -> M5 -> M6")
+            print("POST_M6_EXECUTION: NO")
+            print("M2_READY_FOR_REAL_INPUT: YES")
+            print("M2_REAL_EXECUTION: NOT_RUN")
+            print("REAL_AI_CALLS: 0")
+            print(f"ERROR: {exc}")
+            return 2
+        print(f"ERROR: {exc}")
+        return 2
+    # A double can prove the binding, but it never turns this B3 entrypoint
+    # into an operational REAL route.
+    print("REAL_ENTRYPOINT_OPERATIONAL: NO")
+    print("REAL_ENTRYPOINT_AVAILABLE: YES")
+    print("ENTRYPOINT: investigar-real")
+    print("CANONICAL_ROUTE: B2 -> M4 -> M5 -> M6")
+    print(f"REAL_ROUTE_RESULT: {result.get('status', 'UNKNOWN')}")
+    print("POST_M6_EXECUTION: NO")
+    print("M2_READY_FOR_REAL_INPUT: YES")
+    print("M2_REAL_EXECUTION: NOT_RUN")
+    print("REAL_AI_CALLS: 0")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="proyecto-youtube", description="Operar un episodio sin conocer los contratos internos.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -439,6 +521,30 @@ def build_parser() -> argparse.ArgumentParser:
     research_m7.add_argument("--interrumpir-despues", choices=["B2", "M4", "M5"])
     research_m7.add_argument("--no-progress", action="store_true")
     research_m7.set_defaults(handler=_research_m7_synthetic)
+    research_real = subparsers.add_parser(
+        "investigar-real",
+        help="Entrypoint REAL de Research V2 (despacha el coordinador canónico)",
+    )
+    research_real.add_argument("--episodio-id", required=True)
+    research_real.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    research_real.add_argument("--budget", required=True, type=float)
+    research_real.add_argument("--max-iterations", required=True, type=int)
+    research_real.add_argument("--max-retries", required=True, type=int)
+    research_real.add_argument("--timeout", required=True, type=int)
+    research_real.add_argument("--mission-authorization")
+    research_real.set_defaults(handler=_investigate_research_m7_real)
+    research_prepare = subparsers.add_parser(
+        "preparar-ruta-real",
+        help="Preparar la ruta REAL Research V2 sin despacharla",
+    )
+    research_prepare.add_argument("--episodio-id", required=True)
+    research_prepare.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    research_prepare.add_argument("--budget", required=True, type=float)
+    research_prepare.add_argument("--max-iterations", required=True, type=int)
+    research_prepare.add_argument("--max-retries", required=True, type=int)
+    research_prepare.add_argument("--timeout", required=True, type=int)
+    research_prepare.add_argument("--mission-authorization")
+    research_prepare.set_defaults(handler=_prepare_research_m7_real)
     return parser
 
 
