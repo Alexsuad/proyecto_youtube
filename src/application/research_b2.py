@@ -48,6 +48,38 @@ NARRATIVE_FIELDS = {
     "candidate_editorial_function_analysis_ref",
 }
 
+# Cognitive responses may contain proposed content only.  These fields are
+# bound by Software after the response crosses the seam and must never be
+# accepted as external authority.
+SOFTWARE_OWNED_FIELDS = {
+    "artifact_id", "artifact_version", "dossier_id", "dossier_version",
+    "decision_id", "decision_version", "lifecycle_id", "lifecycle_version",
+    "thesis_id", "version", "created_at", "artifact_validity",
+    "research_contract_version",
+    "software_controlled", "recovery_artifact_ref", "retrieval_request_ref",
+    "request_ref", "execution_ref", "checksum", "checksums",
+    "operational_guard_ref", "research_stop_decision_ref", "research_id",
+    "episode_id", "evidence_report_id", "comparison_id", "comparison_version",
+    "ledger_id", "contract_version", "ledger_stage", "semantic_audit_id",
+    "curation_id", "owner_scope", "provisional_thesis_id", "claims_ledger_id",
+    "research_comparison_id", "research_stop_decision_refs", "analysis_ids",
+    "provisional_disposition", "decision_ref", "selection_authority_ref",
+    "authorized_candidate_set",
+}
+
+
+def _strip_cognitive_technical(value: Any, *, top_level_only: bool = False, _depth: int = 0) -> Any:
+    """Remove Software-owned authority before canonical B2 projection."""
+    if isinstance(value, dict):
+        return {
+            key: _strip_cognitive_technical(item, top_level_only=top_level_only, _depth=_depth + 1)
+            for key, item in value.items()
+            if not (key in SOFTWARE_OWNED_FIELDS and (not top_level_only or _depth == 0))
+        }
+    if isinstance(value, list):
+        return [_strip_cognitive_technical(item, top_level_only=top_level_only, _depth=_depth + 1) for item in value]
+    return copy.deepcopy(value)
+
 
 class ResearchB2Error(ValueError):
     """A deterministic B2 contract, routing, or persistence failure."""
@@ -61,6 +93,10 @@ class B2CognitiveRequest:
     output_schema: str
     input_artifacts: tuple[dict[str, str], ...]
     prepared_contract: dict[str, Any]
+    # The producer of the cognitive request is authoritative for the role.
+    # The external boundary only transports this binding; it must not infer
+    # roles from stage names.
+    role_id: str = "RESEARCH_AND_CURATION"
 
 
 class ResearchB2Persistence:
@@ -445,27 +481,63 @@ class ResearchB2Orchestrator:
             raise ResearchB2Error("B2_EVIDENCE_REPORT_PREINJECTION_FORBIDDEN")
 
         events: list[dict[str, Any]] = []
-        plan_ref = self.persistence.persist(
-            "RESEARCH_PLAN", plan, artifact_id=plan["research_plan_id"], artifact_kind="ResearchPlan"
+        persisted_order = (
+            "RESEARCH_PLAN", "PHENOMENON_BASE_RESEARCH", "SOURCE_ACCESS_EVIDENCE_REPORT",
+            "WORK_DISCOVERY", "BASE_RESEARCH_POOL", "PRELIMINARY_FIDELITY",
+            "INITIAL_SUFFICIENCY", "PROVISIONAL_THESIS", "RESEARCH_COMPARISON",
         )
+        existing_flags = [
+            self.persistence.load_existing(stage, artifact_id="_probe", artifact_kind="_probe") is not None
+            for stage in persisted_order
+        ]
+        # A later persisted seam with an absent predecessor is not a valid
+        # resumable checkpoint; never skip that inconsistency silently.
+        first_missing = next((index for index, exists in enumerate(existing_flags) if not exists), len(existing_flags))
+        if any(existing_flags[index] for index in range(first_missing + 1, len(existing_flags))):
+            raise ResearchB2Error("B2_PERSISTED_SEAM_GAP")
+
+        def recover(
+            stage: str,
+            artifact_id: str,
+            artifact_kind: str,
+            validator: Callable[[Any], None] | None = None,
+        ) -> tuple[dict[str, str], Any] | None:
+            loaded = self.persistence.load_existing(stage, artifact_id=artifact_id, artifact_kind=artifact_kind)
+            if loaded is None:
+                return None
+            ref, payload = loaded
+            if validator is not None:
+                try:
+                    validation_payload = (
+                        payload.get("dossiers")
+                        if stage in {"BASE_RESEARCH_POOL", "PRELIMINARY_FIDELITY", "INITIAL_SUFFICIENCY"}
+                        and isinstance(payload, Mapping) and isinstance(payload.get("dossiers"), list)
+                        else payload
+                    )
+                    validator(validation_payload)
+                except (TypeError, KeyError, ValueError) as exc:
+                    raise ResearchB2Error(f"B2_PERSISTED_{stage}_INVALID") from exc
+            events.append({"stage": stage, "boundary": "SOFTWARE_RECOVER", "artifact_id": ref["artifact_id"]})
+            if stage in {"BASE_RESEARCH_POOL", "PRELIMINARY_FIDELITY", "INITIAL_SUFFICIENCY"} and isinstance(payload, Mapping) and isinstance(payload.get("dossiers"), list):
+                return ref, payload["dossiers"]
+            return ref, payload
+
+        plan_loaded = recover("RESEARCH_PLAN", plan["research_plan_id"], "ResearchPlan", lambda value: self._validate_plan_recovery(value, plan))
+        if plan_loaded is None:
+            plan_ref = self.persistence.persist(
+                "RESEARCH_PLAN", plan, artifact_id=plan["research_plan_id"], artifact_kind="ResearchPlan"
+            )
+        else:
+            plan_ref, plan = plan_loaded
         artifacts = [plan_ref]
 
-        phenomenon = self._step(
-            "PHENOMENON_BASE_RESEARCH",
-            "research_pack",
-            plan,
-            context,
-            artifacts,
-            events,
-            self._validate_phenomenon,
-        )
-        phenomenon_ref = self.persistence.persist(
-            "PHENOMENON_BASE_RESEARCH",
-            phenomenon,
-            artifact_id=phenomenon["research_id"],
-            artifact_kind="ResearchPack",
-        )
-        events.append({"stage": "PHENOMENON_BASE_RESEARCH", "boundary": "SOFTWARE_PERSIST", "artifact_id": phenomenon_ref["artifact_id"]})
+        phenomenon_loaded = recover("PHENOMENON_BASE_RESEARCH", plan["research_plan_id"], "ResearchPack", self._validate_phenomenon)
+        if phenomenon_loaded is None:
+            phenomenon = self._step("PHENOMENON_BASE_RESEARCH", "research_pack", plan, context, artifacts, events, self._validate_phenomenon)
+            phenomenon_ref = self.persistence.persist("PHENOMENON_BASE_RESEARCH", phenomenon, artifact_id=phenomenon["research_id"], artifact_kind="ResearchPack")
+            events.append({"stage": "PHENOMENON_BASE_RESEARCH", "boundary": "SOFTWARE_PERSIST", "artifact_id": phenomenon_ref["artifact_id"]})
+        else:
+            phenomenon_ref, phenomenon = phenomenon_loaded
         artifacts.append(phenomenon_ref)
 
         # Source access is PRE_RESEARCH input.  Once the base phenomenon has
@@ -478,124 +550,74 @@ class ResearchB2Orchestrator:
         report_errors = validate_source_access_and_evidence_report(dict(evidence_report)) if isinstance(evidence_report, Mapping) else ["evidence_report debe ser un objeto"]
         if report_errors:
             raise ResearchB2Error("B2_EVIDENCE_REPORT_INVALID: " + " | ".join(report_errors))
-        evidence_report_ref = self.persistence.persist(
-            "SOURCE_ACCESS_EVIDENCE_REPORT",
-            dict(evidence_report),
-            artifact_id=str(evidence_report["report_id"]),
-            artifact_kind="SourceAccessAndEvidenceReport",
-        )
+        evidence_loaded = recover("SOURCE_ACCESS_EVIDENCE_REPORT", f"{plan['research_plan_id']}:SOURCE_ACCESS_EVIDENCE_REPORT", "SourceAccessAndEvidenceReport", lambda value: self._validate_evidence_recovery(value, plan))
+        if evidence_loaded is None:
+            evidence_report_ref = self.persistence.persist("SOURCE_ACCESS_EVIDENCE_REPORT", dict(evidence_report), artifact_id=str(evidence_report["report_id"]), artifact_kind="SourceAccessAndEvidenceReport")
+        else:
+            evidence_report_ref, evidence_report = evidence_loaded
         artifacts.append(evidence_report_ref)
         evidence_context = dict(context)
         evidence_context["evidence_report"] = dict(evidence_report)
 
-        discovery = self._step(
-            "WORK_DISCOVERY",
-            "work_lifecycle",
-            plan,
-            evidence_context,
-            artifacts,
-            events,
-            self._validate_discovery,
-        )
-        discovery_ref = self.persistence.persist(
-            "WORK_DISCOVERY",
-            discovery,
-            artifact_id=discovery["lifecycle_id"],
-            artifact_kind="WorkLifecycle",
-        )
-        events.append({"stage": "WORK_DISCOVERY", "boundary": "SOFTWARE_PERSIST", "artifact_id": discovery_ref["artifact_id"]})
+        discovery_loaded = recover("WORK_DISCOVERY", f"{plan['research_plan_id']}:DISCOVERY", "WorkLifecycle", self._validate_discovery)
+        if discovery_loaded is None:
+            discovery = self._step("WORK_DISCOVERY", "work_lifecycle", plan, evidence_context, artifacts, events, self._validate_discovery)
+            discovery_ref = self.persistence.persist("WORK_DISCOVERY", discovery, artifact_id=discovery["lifecycle_id"], artifact_kind="WorkLifecycle")
+            events.append({"stage": "WORK_DISCOVERY", "boundary": "SOFTWARE_PERSIST", "artifact_id": discovery_ref["artifact_id"]})
+        else:
+            discovery_ref, discovery = discovery_loaded
         artifacts.append(discovery_ref)
 
-        pool = self._step(
-            "BASE_RESEARCH_POOL",
-            "work_research_dossier",
-            plan,
-            evidence_context,
-            artifacts,
-            events,
-            lambda value: self._validate_pool(value, discovery),
-        )
-        pool_ref = self.persistence.persist(
-            "BASE_RESEARCH_POOL",
-            pool,
-            artifact_id=f"{plan['research_plan_id']}:BASE_RESEARCH_POOL",
-            artifact_kind="WorkResearchDossierCollection",
-        )
-        events.append({"stage": "BASE_RESEARCH_POOL", "boundary": "SOFTWARE_PERSIST", "artifact_id": pool_ref["artifact_id"]})
+        pool_validator = lambda value: self._validate_pool(value, discovery)
+        pool_loaded = recover("BASE_RESEARCH_POOL", f"{plan['research_plan_id']}:BASE_RESEARCH_POOL", "WorkResearchDossierCollection", pool_validator)
+        if pool_loaded is None:
+            pool = self._step("BASE_RESEARCH_POOL", "work_research_dossier", plan, evidence_context, artifacts, events, pool_validator)
+            pool_ref = self.persistence.persist("BASE_RESEARCH_POOL", pool, artifact_id=f"{plan['research_plan_id']}:BASE_RESEARCH_POOL", artifact_kind="WorkResearchDossierCollection")
+            events.append({"stage": "BASE_RESEARCH_POOL", "boundary": "SOFTWARE_PERSIST", "artifact_id": pool_ref["artifact_id"]})
+        else:
+            pool_ref, pool = pool_loaded
         artifacts.append(pool_ref)
 
-        fidelity = self._step(
-            "PRELIMINARY_FIDELITY",
-            "work_research_dossier",
-            plan,
-            evidence_context,
-            artifacts,
-            events,
-            lambda value: self._validate_fidelity(value, pool),
-        )
-        fidelity_ref = self.persistence.persist(
-            "PRELIMINARY_FIDELITY",
-            fidelity,
-            artifact_id=f"{plan['research_plan_id']}:PRELIMINARY_FIDELITY",
-            artifact_kind="WorkResearchDossierCollection",
-        )
-        events.append({"stage": "PRELIMINARY_FIDELITY", "boundary": "SOFTWARE_PERSIST", "artifact_id": fidelity_ref["artifact_id"]})
+        fidelity_validator = lambda value: self._validate_fidelity(value, pool)
+        fidelity_loaded = recover("PRELIMINARY_FIDELITY", f"{plan['research_plan_id']}:PRELIMINARY_FIDELITY", "WorkResearchDossierCollection", fidelity_validator)
+        if fidelity_loaded is None:
+            fidelity = self._step("PRELIMINARY_FIDELITY", "work_research_dossier", plan, evidence_context, artifacts, events, fidelity_validator)
+            fidelity_ref = self.persistence.persist("PRELIMINARY_FIDELITY", fidelity, artifact_id=f"{plan['research_plan_id']}:PRELIMINARY_FIDELITY", artifact_kind="WorkResearchDossierCollection")
+            events.append({"stage": "PRELIMINARY_FIDELITY", "boundary": "SOFTWARE_PERSIST", "artifact_id": fidelity_ref["artifact_id"]})
+        else:
+            fidelity_ref, fidelity = fidelity_loaded
         artifacts.append(fidelity_ref)
 
-        sufficiency = self._step(
-            "INITIAL_SUFFICIENCY",
-            "research_stop_decision",
-            plan,
-            evidence_context,
-            artifacts,
-            events,
-            lambda value: self._validate_sufficiency(value, phenomenon, pool),
-        )
-        sufficiency_ref = self.persistence.persist(
-            "INITIAL_SUFFICIENCY",
-            sufficiency,
-            artifact_id=f"{plan['research_plan_id']}:INITIAL_SUFFICIENCY",
-            artifact_kind="ResearchStopDecisionCollection",
-        )
-        events.append({"stage": "INITIAL_SUFFICIENCY", "boundary": "SOFTWARE_PERSIST", "artifact_id": sufficiency_ref["artifact_id"]})
+        sufficiency_validator = lambda value: self._validate_sufficiency(value, phenomenon, pool)
+        sufficiency_loaded = recover("INITIAL_SUFFICIENCY", f"{plan['research_plan_id']}:INITIAL_SUFFICIENCY", "ResearchStopDecisionCollection", sufficiency_validator)
+        if sufficiency_loaded is None:
+            sufficiency = self._step("INITIAL_SUFFICIENCY", "research_stop_decision", plan, evidence_context, artifacts, events, sufficiency_validator)
+            sufficiency_ref = self.persistence.persist("INITIAL_SUFFICIENCY", sufficiency, artifact_id=f"{plan['research_plan_id']}:INITIAL_SUFFICIENCY", artifact_kind="ResearchStopDecisionCollection")
+            events.append({"stage": "INITIAL_SUFFICIENCY", "boundary": "SOFTWARE_PERSIST", "artifact_id": sufficiency_ref["artifact_id"]})
+        else:
+            sufficiency_ref, sufficiency = sufficiency_loaded
         artifacts.append(sufficiency_ref)
         if not self._sufficiency_allows_thesis(sufficiency, phenomenon):
             raise ResearchB2Error("PROVISIONAL_THESIS_BLOCKED_BY_INVALID_SUFFICIENCY")
 
-        thesis = self._step(
-            "PROVISIONAL_THESIS",
-            "thesis_artifact",
-            plan,
-            evidence_context,
-            artifacts,
-            events,
-            lambda value: self._validate_provisional_thesis(value, phenomenon, evidence_context["evidence_report"]),
-        )
-        thesis_ref = self.persistence.persist(
-            "PROVISIONAL_THESIS",
-            thesis,
-            artifact_id=thesis["thesis_id"],
-            artifact_kind="ThesisArtifact",
-        )
-        events.append({"stage": "PROVISIONAL_THESIS", "boundary": "SOFTWARE_PERSIST", "artifact_id": thesis_ref["artifact_id"]})
+        thesis_validator = lambda value: self._validate_provisional_thesis(value, phenomenon, evidence_context["evidence_report"])
+        thesis_loaded = recover("PROVISIONAL_THESIS", f"{plan['research_plan_id']}:THESIS:PROVISIONAL", "ThesisArtifact", thesis_validator)
+        if thesis_loaded is None:
+            thesis = self._step("PROVISIONAL_THESIS", "thesis_artifact", plan, evidence_context, artifacts, events, thesis_validator)
+            thesis_ref = self.persistence.persist("PROVISIONAL_THESIS", thesis, artifact_id=thesis["thesis_id"], artifact_kind="ThesisArtifact")
+            events.append({"stage": "PROVISIONAL_THESIS", "boundary": "SOFTWARE_PERSIST", "artifact_id": thesis_ref["artifact_id"]})
+        else:
+            thesis_ref, thesis = thesis_loaded
         artifacts.append(thesis_ref)
 
-        comparison = self._step(
-            "RESEARCH_COMPARISON",
-            "research_comparison",
-            plan,
-            evidence_context,
-            artifacts,
-            events,
-            lambda value: self._validate_comparison(value, fidelity, sufficiency),
-        )
-        comparison_ref = self.persistence.persist(
-            "RESEARCH_COMPARISON",
-            comparison,
-            artifact_id=comparison["comparison_id"],
-            artifact_kind="ResearchComparison",
-        )
-        events.append({"stage": "RESEARCH_COMPARISON", "boundary": "SOFTWARE_PERSIST", "artifact_id": comparison_ref["artifact_id"]})
+        comparison_validator = lambda value: self._validate_comparison(value, fidelity, sufficiency)
+        comparison_loaded = recover("RESEARCH_COMPARISON", f"{plan['research_plan_id']}:COMPARISON:INITIAL", "ResearchComparison", comparison_validator)
+        if comparison_loaded is None:
+            comparison = self._step("RESEARCH_COMPARISON", "research_comparison", plan, evidence_context, artifacts, events, comparison_validator)
+            comparison_ref = self.persistence.persist("RESEARCH_COMPARISON", comparison, artifact_id=comparison["comparison_id"], artifact_kind="ResearchComparison")
+            events.append({"stage": "RESEARCH_COMPARISON", "boundary": "SOFTWARE_PERSIST", "artifact_id": comparison_ref["artifact_id"]})
+        else:
+            comparison_ref, comparison = comparison_loaded
         artifacts.append(comparison_ref)
 
         deepening_targets = self._build_deepening_targets(
@@ -648,6 +670,18 @@ class ResearchB2Orchestrator:
             "execution_manifest": lifecycle_ref,
             "events": events,
         }
+
+    @staticmethod
+    def _validate_plan_recovery(value: Any, expected: Mapping[str, Any]) -> None:
+        errors = validate_research_plan(value) if isinstance(value, Mapping) else ["ResearchPlan debe ser un objeto"]
+        if errors or dict(value) != dict(expected):
+            raise ResearchB2Error("PERSISTED_RESEARCH_PLAN_MISMATCH")
+
+    @staticmethod
+    def _validate_evidence_recovery(value: Any, plan: Mapping[str, Any]) -> None:
+        errors = validate_source_access_and_evidence_report(value) if isinstance(value, Mapping) else ["evidence_report debe ser un objeto"]
+        if errors or value.get("episode_id") != plan.get("episode_id") or value.get("research_id") != plan.get("research_plan_id"):
+            raise ResearchB2Error("PERSISTED_EVIDENCE_REPORT_MISMATCH")
 
     @staticmethod
     def _build_deepening_targets(
@@ -989,7 +1023,7 @@ class ResearchB2Orchestrator:
         input_artifacts: list[dict[str, str]],
     ) -> Any:
         """Project cognitive content into a Software-owned canonical payload."""
-        value = copy.deepcopy(output)
+        value = _strip_cognitive_technical(output, top_level_only=True)
         if stage == "PHENOMENON_BASE_RESEARCH":
             value = self.acquisition_adapter.materialize(value)
             self._project_common_research(value, plan, context)

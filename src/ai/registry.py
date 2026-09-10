@@ -59,6 +59,222 @@ def _write_registry(path: Path, registry: dict[str, Any]) -> None:
     path.write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def register_software_outputs(
+    path: Path,
+    *,
+    run_id: str,
+    episode_id: str,
+    role: str,
+    outputs: list[dict[str, Any]],
+    actor_id: str = "SOFTWARE_RESEARCH_V2",
+    actual_executor: str = "software:research_v2",
+) -> dict[str, str]:
+    """Bind canonical Software artifacts to the existing provenance registry.
+
+    Research stage orchestrators persist artifacts directly rather than through
+    the generic AI executor.  This helper records that already-persisted
+    Software run in the same registry used by M6; it does not create cognitive
+    provider metadata or substitute an external execution identity.
+    """
+    if not str(run_id).strip() or not str(episode_id).strip() or not outputs:
+        raise ValueError("software provenance requires run_id, episode_id and outputs")
+    registry = load_registry(path)
+    normalized: list[dict[str, Any]] = []
+    for raw in outputs:
+        if not isinstance(raw, dict):
+            raise ValueError("software provenance output must be an object")
+        required = ("artifact_id", "artifact_kind", "artifact_version", "checksum")
+        if any(not str(raw.get(field) or "").strip() for field in required):
+            raise ValueError("software provenance output binding incomplete")
+        normalized.append({
+            "artifact_kind": str(raw["artifact_kind"]),
+            "artifact_id": str(raw["artifact_id"]),
+            "artifact_ref": str(raw["artifact_id"]),
+            "checksum": str(raw["checksum"]),
+        })
+    # A stage manifest can legitimately reuse an artifact id across distinct
+    # persisted artifact kinds.  Preserve each exact id/kind/checksum lineage.
+    by_binding = {
+        (str(item["artifact_id"]), str(item["artifact_kind"]), str(item["checksum"])): item
+        for item in normalized
+    }
+    normalized = list(by_binding.values())
+    incoming_versions = {
+        (str(raw["artifact_id"]), str(raw["artifact_kind"]), str(raw["checksum"])): str(raw["artifact_version"])
+        for raw in outputs
+    }
+    now = _now()
+    existing = next((item for item in registry["runs"] if item.get("run_id") == run_id), None)
+    if existing is not None:
+        if existing.get("episode_id") != episode_id or existing.get("role") != role:
+            raise ValueError("software provenance run binding conflict")
+        current = {
+            (str(item.get("artifact_id")), str(item.get("artifact_kind")), str(item.get("checksum"))): item
+            for item in existing.get("outputs", []) if isinstance(item, dict)
+        }
+        current_versions = {
+            (str(item.get("artifact_id")), str(item.get("artifact_kind")), str(item.get("checksum"))): str(version)
+            for item, version in zip(existing.get("outputs", []), existing.get("output_versions", []))
+            if isinstance(item, dict)
+        }
+        current.update(by_binding)
+        normalized = list(current.values())
+        existing.update({
+            "outputs": normalized,
+            "output_artifact_ids": [str(item["artifact_id"]) for item in normalized],
+            "output_versions": [incoming_versions.get((str(item["artifact_id"]), str(item["artifact_kind"]), str(item["checksum"])), current_versions.get((str(item["artifact_id"]), str(item["artifact_kind"]), str(item["checksum"])), "1.0.0")) for item in normalized],
+            "output_checksums": [str(item["checksum"]) for item in normalized],
+            "completed_at": now,
+            "finished_at": now,
+            "latency": 0,
+        })
+    else:
+        input_checksum = hashlib.sha256(canonical_json(normalized)).hexdigest()
+        registry["runs"].append({
+            "run_id": str(run_id),
+            "episode_id": str(episode_id),
+            "role": str(role),
+            "skill_id": "research_v2_software_orchestration",
+            "skill_version": "1.0.0",
+            "provider_or_adapter": "software",
+            "provider_kind": "SYNTHETIC",
+            "model_or_evaluator": "deterministic-contract-binder",
+            "input_manifest_checksum": input_checksum,
+            "outputs": normalized,
+            "started_at": now,
+            "completed_at": now,
+            "status": "SUCCEEDED",
+            "execution_mode": "SYNTHETIC",
+            "agent_id": str(actor_id),
+            "role_id": str(role),
+            "execution_route": "software:canonical_orchestrator",
+            "execution_profile": "SOFTWARE_CANONICAL",
+            "actual_executor": str(actual_executor),
+            "actual_provider": "software",
+            "actual_model": "deterministic-contract-binder",
+            "provider": "software",
+            "model": "deterministic-contract-binder",
+            "prompt_version": "1.0.0",
+            "input_artifact_ids": [],
+            "input_versions": [],
+            "input_checksums": [],
+            "output_artifact_ids": [str(item["artifact_id"]) for item in normalized],
+            "output_versions": [incoming_versions[(str(item["artifact_id"]), str(item["artifact_kind"]), str(item["checksum"]))] for item in normalized],
+            "output_checksums": [str(item["checksum"]) for item in normalized],
+            "finished_at": now,
+            "latency": 0,
+            "input_tokens": "UNAVAILABLE_FROM_PROVIDER",
+            "output_tokens": "UNAVAILABLE_FROM_PROVIDER",
+            "estimated_cost": "UNAVAILABLE_FROM_PROVIDER",
+            "retry_count": 0,
+            "decision": "SUCCEEDED",
+            "blocking_reason": None,
+            "handoff_target": "SOFTWARE_CANONICAL_ORCHESTRATOR",
+        })
+    violations = validate_against_schema(registry, "execution_provenance_registry")
+    if violations:
+        raise ValueError("ExecutionProvenanceRegistry inválido: " + "; ".join(violations))
+    _write_registry(path, registry)
+    return {
+        "actor_id": str(actor_id),
+        "run_id": str(run_id),
+        "executor_id": str(actual_executor),
+        "role": str(role),
+        "provenance_ref": str(path.name if path.name else path),
+    }
+
+
+def register_external_output(
+    path: Path,
+    *,
+    run_id: str,
+    episode_id: str,
+    role: str,
+    actor_id: str,
+    executor_id: str,
+    artifact_id: str,
+    artifact_version: str,
+    checksum: str,
+    input_manifest_checksum: str,
+    artifact_ref: str,
+) -> None:
+    """Persist verified external provenance in the canonical registry."""
+    if not all(str(value).strip() for value in (run_id, episode_id, role, actor_id, executor_id, artifact_id, artifact_version, checksum, input_manifest_checksum, artifact_ref)):
+        raise ValueError("external provenance binding incomplete")
+    registry = load_registry(path)
+    existing = next((item for item in registry["runs"] if item.get("run_id") == run_id), None)
+    output = {
+        "artifact_kind": "independent_research_audit",
+        "artifact_id": str(artifact_id),
+        "artifact_ref": str(artifact_ref),
+        "checksum": str(checksum),
+    }
+    now = _now()
+    if existing is not None:
+        if existing.get("episode_id") != episode_id or existing.get("role") != role:
+            raise ValueError("external provenance run binding conflict")
+        existing["outputs"] = [output]
+        existing["output_artifact_ids"] = [str(artifact_ref)]
+        existing["output_versions"] = [str(artifact_version)]
+        existing["output_checksums"] = [str(checksum)]
+        existing["completed_at"] = now
+        existing["finished_at"] = now
+        existing["latency"] = 0
+        existing.update({
+            "model_or_evaluator": "UNAVAILABLE_FROM_PROVIDER",
+            "actual_provider": "UNAVAILABLE_FROM_PROVIDER",
+            "actual_model": "UNAVAILABLE_FROM_PROVIDER",
+            "provider": "UNAVAILABLE_FROM_PROVIDER",
+            "model": "UNAVAILABLE_FROM_PROVIDER",
+        })
+    else:
+        registry["runs"].append({
+            "run_id": str(run_id),
+            "episode_id": str(episode_id),
+            "role": str(role),
+            "skill_id": "external_research_v2",
+            "skill_version": "1.0.0",
+            "provider_or_adapter": "external_cognitive",
+            "provider_kind": "REAL",
+            "model_or_evaluator": "UNAVAILABLE_FROM_PROVIDER",
+            "input_manifest_checksum": str(input_manifest_checksum),
+            "outputs": [output],
+            "started_at": now,
+            "completed_at": now,
+            "status": "SUCCEEDED",
+            "execution_mode": "REAL",
+            "agent_id": str(actor_id),
+            "role_id": str(role),
+            "execution_route": "external:agent_handoff",
+            "execution_profile": "EXTERNAL_COGNITIVE",
+            "actual_executor": str(executor_id),
+            "actual_provider": "UNAVAILABLE_FROM_PROVIDER",
+            "actual_model": "UNAVAILABLE_FROM_PROVIDER",
+            "provider": "UNAVAILABLE_FROM_PROVIDER",
+            "model": "UNAVAILABLE_FROM_PROVIDER",
+            "prompt_version": "1.0.0",
+            "input_artifact_ids": [],
+            "input_versions": [],
+            "input_checksums": [],
+            "output_artifact_ids": [str(artifact_ref)],
+            "output_versions": [str(artifact_version)],
+            "output_checksums": [str(checksum)],
+            "finished_at": now,
+            "latency": 0,
+            "input_tokens": "UNAVAILABLE_FROM_PROVIDER",
+            "output_tokens": "UNAVAILABLE_FROM_PROVIDER",
+            "estimated_cost": "UNAVAILABLE_FROM_PROVIDER",
+            "retry_count": 0,
+            "decision": "SUCCEEDED",
+            "blocking_reason": None,
+            "handoff_target": "OWNER_EXTERNAL_COGNITIVE_EXECUTOR",
+        })
+    violations = validate_against_schema(registry, "execution_provenance_registry")
+    if violations:
+        raise ValueError("ExecutionProvenanceRegistry inválido: " + "; ".join(violations))
+    _write_registry(path, registry)
+
+
 def _repository_root(request: Any) -> Path:
     configured = request.config.get("repository_root") if request is not None else None
     if configured:

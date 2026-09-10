@@ -2,7 +2,7 @@
   "mission_id": "EXTEND_01_M2_REAL_E2E",
   "authorization": {
     "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
-    "live_state_sha256": "b98a54922d57b207b328e3ebae026e048cd2a95d5297b7d991d21e2f87a9cb94",
+    "live_state_sha256": "c7607c059ff0b77263ab69791cd94520c8477ddffe628fcb48f6f2d6ccf91e0a",
     "capability_ids": ["EXTEND_01_RESEARCH_V2_REAL_E2E"],
     "role_ids": ["RESEARCH_AND_CURATION", "INDEPENDENT_RESEARCH_AUDITOR"],
     "execution_family_ids": ["AGENT_HARNESS"],
@@ -13,8 +13,8 @@
     "execution_mode": "SYNTHETIC_TEST",
     "single_use": false,
     "authority_ref": "plans/extend_01/m2/authority_preparation.json",
-    "authority_sha256": "379821485ee371206619b14df5c6c4d66f4716cdb9a4a631277b41291f4aa223",
-    "authorized_scope_sha256": "1d50bde59ba8713bd2fd36f01a4a8733c0f936d47d40b08fd9c286c12f559dbf",
+    "authority_sha256": "497a70caa40b85468e0b104329c0feb5a3b3a791189b95373d27ef8700c6c658",
+    "authorized_scope_sha256": "fe81dc6e5abcd5762cd7a50e1142b6d2ed3047d75952893d73a6c559a9892a96",
     "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
     "contains_material_repair": true,
     "repair_integrity_evidence_path": "plans/extend_01/m2/repair_integrity_evidence.json"

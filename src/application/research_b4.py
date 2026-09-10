@@ -13,7 +13,7 @@ from pathlib import Path
 
 from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
 from src.ai.execution import execute, persist_execution_result
-from src.ai.registry import load_registry
+from src.ai.registry import load_registry, register_external_output
 from src.ai.role_execution import resolve_role_execution_contract
 from src.application.research_b2 import B2CognitiveRequest, CONTRACT_VERSION
 from src.application.research_b3 import (
@@ -438,7 +438,15 @@ class ResearchB4Orchestrator:
         payloads: dict[tuple[str, str, str, str], dict[str, Any]] = {}
         for raw_ref in raw_refs:
             self._validate_ref(raw_ref, "M6_RESEARCH_CHAIN_ARTIFACT")
-            ref = _exact_ref(raw_ref) | {"path": str(raw_ref["path"])}
+            ref_payload = dict(raw_ref)
+            persisted_path = Path(str(ref_payload["path"]))
+            if persisted_path.is_file():
+                ref_payload["checksum"] = _checksum(
+                    ResearchB3Orchestrator._load_persisted_json(
+                        ref_payload, "M6_CHAIN_CHECKSUM"
+                    )
+                )
+            ref = _exact_ref(ref_payload) | {"path": str(ref_payload["path"])}
             binding_key = _ref_key(ref)
             if binding_key in refs_by_binding:
                 continue
@@ -958,7 +966,13 @@ class ResearchB4Orchestrator:
                 "product_use": False,
             },
         )
-        request = B2CognitiveRequest(M6_AUDIT_STAGE, M6_AUDIT_SCHEMA, tuple(input_artifacts), prepared)
+        request = B2CognitiveRequest(
+            M6_AUDIT_STAGE,
+            M6_AUDIT_SCHEMA,
+            tuple(input_artifacts),
+            prepared,
+            M6_AUDITOR_ROLE,
+        )
         execution_input_artifacts = [
             InputArtifact(
                 artifact_kind=str(ref["artifact_kind"]),
@@ -981,6 +995,14 @@ class ResearchB4Orchestrator:
                 "role": str(runtime["role"]),
                 "provenance_ref": registry_ref,
             }
+            if str(declared_auditor.get("source") or "") == "EXTERNAL_COGNITIVE_RESULT":
+                runtime_auditor = {
+                    "actor_id": str(declared_auditor.get("actor_id") or ""),
+                    "run_id": str(declared_auditor.get("run_id") or ""),
+                    "executor_id": str(declared_auditor.get("executor_id") or ""),
+                    "role": str(declared_auditor.get("role") or M6_AUDITOR_ROLE),
+                    "provenance_ref": registry_ref,
+                }
             return self._build_audit(
                 raw_output,
                 m5_manifest=m5_manifest,
@@ -1064,7 +1086,32 @@ class ResearchB4Orchestrator:
                 "role": str(execution_request.role),
                 "provenance_ref": registry_ref,
             }
-            self._validate_declared_auditor(declared_auditor, auditor, producer_run=producer_run)
+            if str(declared_auditor.get("source") or "") == "EXTERNAL_COGNITIVE_RESULT":
+                auditor = {
+                    "actor_id": str(declared_auditor.get("actor_id") or ""),
+                    "run_id": str(declared_auditor.get("run_id") or ""),
+                    "executor_id": str(declared_auditor.get("executor_id") or ""),
+                    "role": str(declared_auditor.get("role") or M6_AUDITOR_ROLE),
+                    "provenance_ref": registry_ref,
+                }
+                try:
+                    register_external_output(
+                        registry_path,
+                        run_id=auditor["run_id"],
+                        episode_id=str(m5_manifest["episode_id"]),
+                        role=M6_AUDITOR_ROLE,
+                        actor_id=auditor["actor_id"],
+                        executor_id=auditor["executor_id"],
+                        artifact_id=str(audit["audit_id"]),
+                        artifact_version=str(audit.get("audit_version") or M6_MANIFEST_VERSION),
+                        checksum=_checksum(audit),
+                        input_manifest_checksum=str(m5_manifest_ref["checksum"]),
+                        artifact_ref=f"independent_research_audit:{audit['audit_id']}",
+                    )
+                except (OSError, ValueError) as exc:
+                    raise ResearchB4Error("M6_EXTERNAL_AUDITOR_PROVENANCE_BINDING_FAILED") from exc
+            else:
+                self._validate_declared_auditor(declared_auditor, auditor, producer_run=producer_run)
             if execution_result.output_checksum != _checksum(audit):
                 raise ResearchB4Error("M6_AUDITOR_EXECUTION_OUTPUT_CHECKSUM_INVALID")
             audit_ref = self.persistence.persist(
@@ -1073,7 +1120,8 @@ class ResearchB4Orchestrator:
                 artifact_id=audit["audit_id"],
                 artifact_kind="IndependentResearchAudit",
             )
-            self._persist_auditor_execution_result(registry_path, execution_result, execution_request)
+            if str(declared_auditor.get("source") or "") != "EXTERNAL_COGNITIVE_RESULT":
+                self._persist_auditor_execution_result(registry_path, execution_result, execution_request)
         self._validate_auditor_output(
             registry_path,
             audit=audit,

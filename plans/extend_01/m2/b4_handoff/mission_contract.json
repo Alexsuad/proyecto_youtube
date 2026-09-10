@@ -1,0 +1,38 @@
+{
+  "mission_id": "EXTEND_01_M2_REAL_E2E",
+  "mission_mode": "LEGACY",
+  "artifact_id": "EXTEND_01_M2_B4_EXTERNAL_HANDOFF",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/extend_01/m2/b4_handoff/",
+    "src/ai/providers/agent_handoff.py",
+    "src/application/research_m7.py",
+    "src/cli.py",
+    "tests/harness/test_plan012_m7_b5.py"
+  ],
+  "protected_untracked_paths": ["plans/extend_01/README.md"],
+  "protected_untracked_baseline": [],
+  "required_tests": [
+    {"label": "M2_B4_HANDOFF", "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_plan012_m7_b5.py"], "timeout_seconds": 300}
+  ],
+  "push_allowed": false,
+  "push_guard": {"remote": "LOCAL", "ref": "HEAD", "baseline_remote_commit": "2931e44be3c4038b8335298e2b5703934c05c2a4"},
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/extend_01/m2/b4_handoff/mission-authorization.json",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "EXTEND_01_M2_REAL_E2E",
+      "REAL_AI_EXECUTION": "NO",
+      "M2_REAL_EXECUTION": "NOT_RUN",
+      "REAL_ENTRYPOINT_OPERATIONAL": "NO"
+    },
+    "forbidden": {
+      "AUTHORIZED_FOR_PRODUCT_USE": ["YES", "AUTHORIZED", "ACTIVE"],
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "M2_REAL_EXECUTION": ["PASS", "YES", "DEMONSTRATED"]
+    }
+  },
+  "schema_checks": []
+}

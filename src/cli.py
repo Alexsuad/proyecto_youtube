@@ -12,6 +12,9 @@ from src.application.interaction import TerminalInteraction, UserCancelled
 from src.application.service import EpisodeApplicationService
 from src.application.storage import StorageError, VaultEpisodeStore
 from src.application.research_m7 import (
+    ExternalResearchCognitiveExecutor,
+    import_and_resume_external_research,
+    respond_to_research_human_decision,
     PersistedResearchEpisode,
     ProductiveResearchStageAdapters,
     RealResearchRoutePreparation,
@@ -275,8 +278,28 @@ def _resume(args: argparse.Namespace) -> int:
 
 def _import_result(args: argparse.Namespace) -> int:
     try:
+        payload = json.loads(Path(args.resultado).read_text(encoding="utf-8"))
+        if (
+            isinstance(payload, dict)
+            and payload.get("capability_id") == "EXTEND_01_RESEARCH_V2_REAL_E2E"
+        ):
+            store = VaultEpisodeStore.from_settings(args.config)
+            state = import_and_resume_external_research(store, args.resultado)
+            resume = state.get("resume") if isinstance(state, dict) else {}
+            print(f"Resultado externo importado: {state.get('episode_id', 'desconocido')}")
+            print("Estado: IMPORTED_AND_RESUMED")
+            print(f"RESEARCH_EXTERNAL_STAGE_IMPORTED: {state.get('imported_stage')}")
+            if state.get("imported_stage") == "RESEARCH_PLANNING":
+                print("RESEARCH_PLANNING_IMPORTED: YES")
+            print(f"RESEARCH_RESUMED: {'YES' if resume.get('status') else 'NO'}")
+            if resume.get("status") == "PENDING_EXTERNAL_COGNITIVE_RESULT":
+                print(f"NEXT_HANDOFF_PACKAGE: {resume.get('handoff_package_ref')}")
+            print(f"PROVENANCE: {state.get('provenance_status')}")
+            print("REAL_AI_EXECUTION: NO")
+            print("M2_REAL_EXECUTION: NOT_RUN")
+            return 0
         state = _service_from_args(args).import_external_result(args.resultado)
-    except (StorageError, PermissionError, ValueError) as exc:
+    except (StorageError, PermissionError, ValueError, ResearchM7Error, OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         print(f"ERROR: {exc}")
         return 2
     episode_id = state["state"].get("episode_id", "desconocido")
@@ -369,6 +392,8 @@ def _real_preparation_from_args(args: argparse.Namespace) -> tuple[RealResearchR
         "max_retries": args.max_retries,
         "timeout_seconds": args.timeout,
         "mission_authorization_path": args.mission_authorization,
+        "mission_contract_path": getattr(args, "mission_contract_path", None),
+        "handoff_directory": getattr(args, "handoff_directory", None),
     }), episode
 
 
@@ -387,39 +412,63 @@ def _prepare_research_m7_real(args: argparse.Namespace) -> int:
     return 0
 
 
-def _b4_fail_closed_cognitive_executor(_request: Any) -> None:
-    """The generic cognitive seam remains inert until B4 selects a REAL route."""
-    raise ResearchM7Error("REAL_AI_ROUTE_SELECTION_REQUIRED_FOR_B4")
-
-
-def _real_stage_runners_for_entrypoint(episode: PersistedResearchEpisode) -> dict[str, Any]:
-    """Bind the four canonical orchestrators without selecting a REAL runtime."""
+def _real_stage_runners_for_entrypoint(
+    episode: PersistedResearchEpisode,
+    preparation: RealResearchRoutePreparation | None = None,
+) -> dict[str, Any]:
+    """Bind canonical orchestrators to the neutral B4 external handoff."""
+    if preparation is None:
+        raise ResearchM7Error("REAL_ROUTE_PREPARATION_REQUIRED_FOR_B4_HANDOFF")
     return ProductiveResearchStageAdapters(
-        episode, cognitive_executor=_b4_fail_closed_cognitive_executor,
+        episode,
+        cognitive_executor=ExternalResearchCognitiveExecutor(episode, preparation),
+        _test_provenance_repository_root=REPO_ROOT,
     ).stage_runners()
 
 
 def _investigate_research_m7_real(args: argparse.Namespace) -> int:
-    """Invoke the canonical coordinator, failing closed before M2 execution."""
+    """Invoke the canonical coordinator and stop at the first external handoff."""
     try:
         preparation, episode = _real_preparation_from_args(args)
-        result = preparation.run_canonical_vertical(_real_stage_runners_for_entrypoint(episode))
-    except (ResearchM7Error, ValueError, TypeError) as exc:
-        if str(exc) == "REAL_AI_ROUTE_SELECTION_REQUIRED_FOR_B4":
-            print("REAL_ENTRYPOINT_AVAILABLE: YES")
-            print("REAL_ENTRYPOINT_OPERATIONAL: NO")
-            print("ENTRYPOINT: investigar-real")
-            print("CANONICAL_ROUTE: B2 -> M4 -> M5 -> M6")
-            print("POST_M6_EXECUTION: NO")
-            print("M2_READY_FOR_REAL_INPUT: YES")
-            print("M2_REAL_EXECUTION: NOT_RUN")
+        result = preparation.run_canonical_vertical(_real_stage_runners_for_entrypoint(episode, preparation))
+    except (ResearchM7Error, StorageError, PermissionError, ValueError, TypeError) as exc:
+        if isinstance(exc, ResearchM7Error) and str(exc).startswith("WAITING_FOR_HUMAN_DECISION:"):
+            print("M4_HUMAN_DECISION_REQUIRED: YES")
+            print(f"M4_SELECTION_REQUEST_ID: {str(exc).split(':', 1)[1]}")
+            print("M4_SELECTION_STATUS: WAITING_OWNER")
+            print("REAL_AI_EXECUTION: NO")
             print("REAL_AI_CALLS: 0")
-            print(f"ERROR: {exc}")
-            return 2
+            return 0
         print(f"ERROR: {exc}")
         return 2
-    # A double can prove the binding, but it never turns this B3 entrypoint
-    # into an operational REAL route.
+    if result.get("status") == "PENDING_EXTERNAL_COGNITIVE_RESULT":
+        print("REAL_ENTRYPOINT_AVAILABLE: YES")
+        print("REAL_ENTRYPOINT_OPERATIONAL: NO")
+        print("ENTRYPOINT: investigar-real")
+        print("CANONICAL_ROUTE: B2 -> M4 -> M5 -> M6")
+        print("EXTERNAL_HANDOFF: PREPARED")
+        print("EXTERNAL_HANDOFF_PREPARABLE: YES")
+        print("PENDING_EXTERNAL_COGNITIVE_RESULT: YES")
+        print(f"HANDOFF_PACKAGE: {result.get('handoff_package_ref')}")
+        print(f"PENDING_STAGE: {result.get('pending_stage')}")
+        print("POST_M6_EXECUTION: NO")
+        print("M2_REAL_EXECUTION: NOT_RUN")
+        print("REAL_AI_EXECUTION: NO")
+        print("REAL_AI_CALLS: 0")
+        return 0
+    if result.get("status") == "WAITING_FOR_HUMAN_DECISION":
+        request = result.get("human_decision_request") or {}
+        print("REAL_ENTRYPOINT_AVAILABLE: YES")
+        print("REAL_ENTRYPOINT_OPERATIONAL: NO")
+        print("M4_HUMAN_DECISION_REQUIRED: YES")
+        print(f"M4_SELECTION_REQUEST_ID: {request.get('request_id', 'UNKNOWN')}")
+        print("M4_SELECTION_STATUS: WAITING_OWNER")
+        print("M2_REAL_EXECUTION: NOT_RUN")
+        print("REAL_AI_EXECUTION: NO")
+        print("REAL_AI_CALLS: 0")
+        return 0
+    # A synthetic stage double can prove the binding, but it never turns this
+    # entrypoint into an operational REAL route.
     print("REAL_ENTRYPOINT_OPERATIONAL: NO")
     print("REAL_ENTRYPOINT_AVAILABLE: YES")
     print("ENTRYPOINT: investigar-real")
@@ -428,6 +477,27 @@ def _investigate_research_m7_real(args: argparse.Namespace) -> int:
     print("POST_M6_EXECUTION: NO")
     print("M2_READY_FOR_REAL_INPUT: YES")
     print("M2_REAL_EXECUTION: NOT_RUN")
+    print("REAL_AI_CALLS: 0")
+    return 0
+
+
+def _respond_research_decision(args: argparse.Namespace) -> int:
+    try:
+        store = VaultEpisodeStore.from_settings(args.config)
+        result = respond_to_research_human_decision(
+            store,
+            args.episodio,
+            request_id=args.request_id,
+            action=args.action,
+            selected_option=args.selected_option,
+            correction=args.correction,
+        )
+    except (StorageError, PermissionError, ValueError, ResearchM7Error) as exc:
+        print(f"ERROR: {exc}")
+        return 2
+    print(f"M4_HUMAN_DECISION_RECORDED: {result['request_id']}")
+    print("M4_SELECTION_STATUS: RESPONSE_RECORDED")
+    print("REAL_AI_EXECUTION: NO")
     print("REAL_AI_CALLS: 0")
     return 0
 
@@ -483,6 +553,17 @@ def build_parser() -> argparse.ArgumentParser:
     import_result.add_argument("resultado", type=Path, help="Archivo de resultado entregado por el trabajo externo")
     import_result.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
     import_result.set_defaults(handler=_import_result)
+    research_decision = subparsers.add_parser(
+        "responder-decision-research",
+        help="Registrar la respuesta OWNER de una decisión M4 pendiente",
+    )
+    research_decision.add_argument("episodio")
+    research_decision.add_argument("request_id")
+    research_decision.add_argument("--action", required=True, choices=["APPROVE", "SELECT_ALTERNATIVE", "CORRECT", "REJECT", "CANCEL"])
+    research_decision.add_argument("--selected-option")
+    research_decision.add_argument("--correction")
+    research_decision.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    research_decision.set_defaults(handler=_respond_research_decision)
     report_p2 = subparsers.add_parser(
         "reportar-p2",
         help="Mostrar el progreso determinista de un episodio P2",
@@ -532,6 +613,8 @@ def build_parser() -> argparse.ArgumentParser:
     research_real.add_argument("--max-retries", required=True, type=int)
     research_real.add_argument("--timeout", required=True, type=int)
     research_real.add_argument("--mission-authorization")
+    research_real.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
+    research_real.add_argument("--handoff-directory", type=Path, help=argparse.SUPPRESS)
     research_real.set_defaults(handler=_investigate_research_m7_real)
     research_prepare = subparsers.add_parser(
         "preparar-ruta-real",
@@ -544,6 +627,8 @@ def build_parser() -> argparse.ArgumentParser:
     research_prepare.add_argument("--max-retries", required=True, type=int)
     research_prepare.add_argument("--timeout", required=True, type=int)
     research_prepare.add_argument("--mission-authorization")
+    research_prepare.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
+    research_prepare.add_argument("--handoff-directory", type=Path, help=argparse.SUPPRESS)
     research_prepare.set_defaults(handler=_prepare_research_m7_real)
     return parser
 

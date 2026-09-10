@@ -3,6 +3,9 @@
 import copy
 import hashlib
 import json
+import shutil
+import tempfile
+from types import SimpleNamespace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -10,14 +13,35 @@ import pytest
 
 from src.ai.contracts import ExecutionResult, ExecutionStatus, InputArtifact
 from src.ai.execution import M3_REQUIRED_INPUT_KINDS, execute
+from src.ai.registry import register_software_outputs
 from src.application.research_b2 import ResearchB2Orchestrator, SoftwareAcquisitionAdapter
 from src.application.research_b3 import ResearchB3Orchestrator
-from src.application.research_b4 import ResearchB4Orchestrator
+from src.application.research_b4 import M6_REQUIRED_AUDIT_CRITERIA, ResearchB4Orchestrator
 from src.application.contracts import HumanInput
-from src.application.research_m7 import PersistedResearchEpisode, ProductiveResearchStageAdapters, RealResearchRoutePreparation, ResearchM7Error, ResearchM7SyntheticRunner, ResearchV2B5I3Adapter
+from src.application.interaction import HumanDecision, HumanDecisionRequest
+from src.application.research_m7 import (
+    REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
+    REAL_EXTERNAL_HANDOFF_CONTRACT,
+    ExternalResearchCognitiveExecutor,
+    import_and_resume_external_research,
+    respond_to_research_human_decision,
+    PersistedResearchEpisode,
+    ProductiveResearchStageAdapters,
+    RealResearchRoutePreparation,
+    ResearchM7Error,
+    ResearchM7SyntheticRunner,
+    ResearchV2B5I3Adapter,
+)
 from src.application.research_planning import ResearchPlanningService
 from src.application.storage import VaultEpisodeStore
-from src.application.research_m7_fixture import phenomenon
+from src.application.research_m7_fixture import (
+    SyntheticResearchExecutor,
+    audit,
+    discovery,
+    phenomenon,
+    research_plan_proposal,
+    sufficiency,
+)
 from src.core.editorial_profile_registry import load_active_profile_authority
 from src.cli import build_parser, main
 
@@ -586,6 +610,7 @@ def _persisted_real_episode(tmp_path):
 
 
 def _real_cli_args(handle, settings):
+    handoff_directory = Path("plans/extend_01/m2/b4_handoff/packages") / f".pytest-{Path(settings).stem}"
     return [
         "--episodio-id", handle.episode_id,
         "--config", str(settings),
@@ -593,13 +618,20 @@ def _real_cli_args(handle, settings):
         "--max-iterations", "2",
         "--max-retries", "1",
         "--timeout", "30",
+        "--handoff-directory", str(handoff_directory),
     ]
 
 
 @pytest.fixture
 def persisted_real_episode():
-    with TemporaryDirectory(prefix="m2b3-", dir=Path.cwd()) as root:
-        yield _persisted_real_episode(Path(root))
+    with TemporaryDirectory(prefix="m2b3-") as root:
+        result = _persisted_real_episode(Path(root))
+        try:
+            yield result
+        finally:
+            handoff_directory = Path("plans/extend_01/m2/b4_handoff/packages") / f".pytest-{result[1].stem}"
+            if handoff_directory.is_dir():
+                shutil.rmtree(handoff_directory)
 
 
 def test_extend01_real_without_authorization_blocks_before_provider():
@@ -653,7 +685,7 @@ def test_extend01_mvp_preparation_loads_only_the_persisted_episode(persisted_rea
         ])
 
 
-def test_extend01_real_entrypoint_is_episode_bound_and_fails_closed_before_b4(persisted_real_episode, capsys):
+def test_extend01_real_entrypoint_is_episode_bound_and_blocks_without_b4_authorization(persisted_real_episode, capsys):
     handle, settings = persisted_real_episode
     parser = build_parser()
     parsed = parser.parse_args([
@@ -667,14 +699,298 @@ def test_extend01_real_entrypoint_is_episode_bound_and_fails_closed_before_b4(pe
         *_real_cli_args(handle, settings),
     ]) == 2
     output = capsys.readouterr().out
-    assert "REAL_ENTRYPOINT_AVAILABLE: YES" in output
-    assert "REAL_ENTRYPOINT_OPERATIONAL: NO" in output
-    assert "ENTRYPOINT: investigar-real" in output
-    assert "CANONICAL_ROUTE: B2 -> M4 -> M5 -> M6" in output
-    assert "POST_M6_EXECUTION: NO" in output
-    assert "M2_READY_FOR_REAL_INPUT: YES" in output
-    assert "REAL_AI_ROUTE_SELECTION_REQUIRED_FOR_B4" in output
-    assert "REAL_AI_CALLS: 0" in output
+    assert "MISSION_AUTHORIZATION_REQUIRED" in output
+    assert "REAL_AI_ROUTE_SELECTION_REQUIRED_FOR_B4" not in output
+
+
+def test_extend01_b4_prepares_external_handoff_and_stops_before_b2(persisted_real_episode, capsys):
+    handle, settings = persisted_real_episode
+    package_path = None
+    try:
+        assert main([
+            "investigar-real",
+            *_real_cli_args(handle, settings),
+            "--mission-authorization", REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
+            "--mission-contract", REAL_EXTERNAL_HANDOFF_CONTRACT,
+        ]) == 0
+        output = capsys.readouterr().out
+        assert "EXTERNAL_HANDOFF: PREPARED" in output
+        assert "PENDING_EXTERNAL_COGNITIVE_RESULT: YES" in output
+        assert "REAL_AI_EXECUTION: NO" in output
+        assert "REAL_AI_CALLS: 0" in output
+        assert "REAL_ROUTE_RESULT: RESEARCH_READY" not in output
+        package_path = Path(next(line.split(": ", 1)[1] for line in output.splitlines() if line.startswith("HANDOFF_PACKAGE: ")))
+        package = json.loads(package_path.read_text(encoding="utf-8"))
+        assert package["episode_id"] == handle.episode_id
+        assert package["capability_id"] == "EXTEND_01_RESEARCH_V2_REAL_E2E"
+        assert package["stage"] == "RESEARCH_PLANNING"
+        assert package["output_schema"] == "research_plan_proposal"
+        assert package["execution_family"] == "AGENT_HARNESS"
+        assert package["execution_interface"] == "EXTEND_01_M2_B4_HANDOFF"
+        assert package["model_override"] is None
+        state = json.loads((handle.folder / "research_external_handoff.json").read_text(encoding="utf-8"))
+        assert state["status"] == "PENDING_EXTERNAL_COGNITIVE_RESULT"
+        assert state["real_ai_execution"] is False
+        assert state["real_ai_calls"] == 0
+        assert state["provenance"] is None
+    finally:
+        if package_path is not None:
+            package_path.unlink(missing_ok=True)
+
+
+def _research_plan_proposal():
+    return {
+        "contract": "research_plan_proposal",
+        "contract_version": "1.0.0",
+        "central_question": "¿Qué puede sostenerse?",
+        "intended_use": "OWNER_DECLARED_RESEARCH",
+        "scope": "Tema y materiales suministrados",
+        "dimensions": ["controlled"],
+        "subquestions": ["¿Qué evidencia existe?"],
+        "evidence_requirements": ["Evidencia verificable."],
+        "source_strategy": "Material local",
+        "critical_claims": ["No exceder la evidencia."],
+        "rival_refutation": ["Considerar alternativas."],
+        "gaps_risks": [],
+        "potential_specialists": [],
+        "sufficiency_criteria": ["Evidencia suficiente."],
+        "target_final_works_decision": {},
+        "supplied_works": [],
+        "selection_policy": {},
+        "planned_stages": ["PLANNING"],
+    }
+
+
+def test_extend01_b4_r1_imports_research_planning_and_resumes_without_replanning(persisted_real_episode, capsys):
+    handle, settings = persisted_real_episode
+    assert main([
+        "investigar-real", *_real_cli_args(handle, settings),
+        "--mission-authorization", REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
+        "--mission-contract", REAL_EXTERNAL_HANDOFF_CONTRACT,
+    ]) == 0
+    output = capsys.readouterr().out
+    package_path = Path(next(line.split(": ", 1)[1] for line in output.splitlines() if line.startswith("HANDOFF_PACKAGE: ")))
+    package = json.loads(package_path.read_text(encoding="utf-8"))
+    assert package["stage"] == "RESEARCH_PLANNING"
+    assert package["execution_controls"]["max_iterations"] == 2
+    assert package["execution_controls"]["max_retries"] == 1
+    assert package["execution_controls"]["timeout_seconds"] == 30
+    assert package["execution_controls"]["unbounded_execution"] is False
+    proposal = _research_plan_proposal()
+    result_path = handle.folder / "owner-research-plan-result.json"
+    encoded = json.dumps(proposal, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    result_path.write_text(json.dumps({
+        "handoff_id": package["handoff_id"],
+        "mission_id": package["mission_id"],
+        "episode_id": package["episode_id"],
+        "capability_id": package["capability_id"],
+        "stage": package["stage"],
+        "role": package["role"],
+        "result_run_id": "OWNER-REAL-RUN-1",
+        "package_checksum": package["package_checksum"],
+        "input_manifest_checksum": package["input_manifest_checksum"],
+        "skill_id": package["skill_id"],
+        "skill_version": package["skill_version"],
+        "output": proposal,
+        "output_checksum": hashlib.sha256(encoded).hexdigest(),
+    }), encoding="utf-8")
+    try:
+        assert main(["importar-resultado", str(result_path), "--config", str(settings)]) == 0
+        imported = capsys.readouterr().out
+        assert "RESEARCH_PLANNING_IMPORTED: YES" in imported
+        assert "RESEARCH_RESUMED: YES" in imported
+        state = json.loads((handle.folder / "research_external_handoff.json").read_text(encoding="utf-8"))
+        assert state["status"] == "PENDING_EXTERNAL_COGNITIVE_RESULT"
+        assert state["completed_stages"] == ["RESEARCH_PLANNING"]
+        assert state["provenance_status"] == "NOT_AVAILABLE"
+        assert (handle.folder / "research_external_result.json").is_file()
+        plan_path = handle.folder / "research_v2" / "b2" / "research_plan.json"
+        assert plan_path.is_file()
+        proposal_ref = state["research_plan_proposal"]
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        origin = plan["origin_artifact_refs"][0]
+        assert origin["artifact_ref"] == proposal_ref["artifact_id"]
+        assert origin["artifact_version"] == proposal_ref["artifact_version"]
+        assert origin["checksum"] == proposal_ref["checksum"]
+        assert origin["checksum"]
+        # Reload the persisted episode before inspecting lineage again: the
+        # checksum must survive the restart/resume boundary, not only memory.
+        reloaded = PersistedResearchEpisode.load(VaultEpisodeStore.from_settings(settings), handle.episode_id)
+        reloaded_plan = json.loads((reloaded.handle.folder / "research_v2" / "b2" / "research_plan.json").read_text(encoding="utf-8"))
+        assert reloaded_plan["origin_artifact_refs"][0]["checksum"] == proposal_ref["checksum"]
+        next_package = Path(state["handoff_package_ref"])
+        assert json.loads(next_package.read_text(encoding="utf-8"))["stage"] != "RESEARCH_PLANNING"
+    finally:
+        result_path.unlink(missing_ok=True)
+        package_path.unlink(missing_ok=True)
+
+
+def test_extend01_verified_external_provenance_reenters_resume_context(
+    persisted_real_episode, monkeypatch, capsys,
+):
+    handle, settings = persisted_real_episode
+    assert main([
+        "investigar-real", *_real_cli_args(handle, settings),
+        "--mission-authorization", REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
+        "--mission-contract", REAL_EXTERNAL_HANDOFF_CONTRACT,
+    ]) == 0
+    output = capsys.readouterr().out
+    package_path = Path(next(line.split(": ", 1)[1] for line in output.splitlines() if line.startswith("HANDOFF_PACKAGE: ")))
+    package = json.loads(package_path.read_text(encoding="utf-8"))
+    proposal = _research_plan_proposal()
+    result_path = handle.folder / "owner-research-plan-provenance.json"
+    encoded = json.dumps(proposal, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    provenance = {
+        "mission_id": package["mission_id"],
+        "episode_id": package["episode_id"],
+        "capability_id": package["capability_id"],
+        "stage": package["stage"],
+        "role": package["role"],
+        "handoff_id": package["handoff_id"],
+        "run_id": "OWNER-VERIFIED-PLANNING",
+        "executor_id": "owner-external-cognitive",
+        "producer_provenance": {
+            "actor_id": "OWNER-EXTERNAL",
+            "run_id": "OWNER-VERIFIED-PLANNING",
+            "executor_id": "owner-external-cognitive",
+            "role": package["role"],
+            "provenance_ref": "test-only-provenance",
+        },
+    }
+    result_path.write_text(json.dumps({
+        "handoff_id": package["handoff_id"], "mission_id": package["mission_id"],
+        "episode_id": package["episode_id"], "capability_id": package["capability_id"],
+        "stage": package["stage"], "role": package["role"],
+        "result_run_id": "OWNER-VERIFIED-PLANNING", "package_checksum": package["package_checksum"],
+        "input_manifest_checksum": package["input_manifest_checksum"],
+        "skill_id": package["skill_id"], "skill_version": package["skill_version"],
+        "output": proposal, "output_checksum": hashlib.sha256(encoded).hexdigest(),
+        "provenance": provenance,
+    }), encoding="utf-8")
+    captured = {}
+
+    def fake_resume(self, runners, *, initial_context=None):
+        captured["initial_context"] = initial_context
+        return {"status": "RESEARCH_READY", "completed_stages": ["B2", "M4", "M5", "M6"]}
+
+    monkeypatch.setattr(RealResearchRoutePreparation, "run_canonical_vertical", fake_resume)
+    try:
+        imported = import_and_resume_external_research(VaultEpisodeStore.from_settings(settings), result_path)
+        assert imported["provenance_status"] == "REPORTED_AND_BOUND"
+        assert captured["initial_context"]["real_provenance"]["run_id"] == "OWNER-VERIFIED-PLANNING"
+        state = json.loads((handle.folder / "research_external_handoff.json").read_text(encoding="utf-8"))
+        assert state["provenance_status"] == "REPORTED_AND_BOUND"
+    finally:
+        result_path.unlink(missing_ok=True)
+        package_path.unlink(missing_ok=True)
+
+
+def test_extend01_b4_r3_imports_consecutive_cognitive_seams_without_repeating_b2(
+    persisted_real_episode, capsys,
+):
+    """Planning and the next external seam resume the same B2 persistence."""
+    handle, settings = persisted_real_episode
+    assert main([
+        "investigar-real", *_real_cli_args(handle, settings),
+        "--mission-authorization", REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
+        "--mission-contract", REAL_EXTERNAL_HANDOFF_CONTRACT,
+    ]) == 0
+    output = capsys.readouterr().out
+    planning_package_path = Path(next(line.split(": ", 1)[1] for line in output.splitlines() if line.startswith("HANDOFF_PACKAGE: ")))
+    planning_package = json.loads(planning_package_path.read_text(encoding="utf-8"))
+    result_paths = []
+    try:
+        proposal = _research_plan_proposal()
+        planning_result = handle.folder / "owner-research-plan-r3.json"
+        result_paths.append(planning_result)
+        encoded = json.dumps(proposal, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        planning_result.write_text(json.dumps({
+            "handoff_id": planning_package["handoff_id"], "mission_id": planning_package["mission_id"],
+            "episode_id": planning_package["episode_id"], "capability_id": planning_package["capability_id"],
+            "stage": planning_package["stage"], "role": planning_package["role"],
+            "result_run_id": "OWNER-REAL-R3-PLANNING", "package_checksum": planning_package["package_checksum"],
+            "input_manifest_checksum": planning_package["input_manifest_checksum"],
+            "skill_id": planning_package["skill_id"], "skill_version": planning_package["skill_version"],
+            "output": proposal, "output_checksum": hashlib.sha256(encoded).hexdigest(),
+        }), encoding="utf-8")
+        first = import_and_resume_external_research(VaultEpisodeStore.from_settings(settings), planning_result)
+        assert first["resume"]["status"] == "PENDING_EXTERNAL_COGNITIVE_RESULT"
+        phenomenon_package_path = Path(first["resume"]["handoff_package_ref"])
+        phenomenon_package = json.loads(phenomenon_package_path.read_text(encoding="utf-8"))
+        assert phenomenon_package["stage"] == "PHENOMENON_BASE_RESEARCH"
+
+        plan = json.loads((handle.folder / "research_v2" / "b2" / "research_plan.json").read_text(encoding="utf-8"))
+        cognitive = phenomenon(handle.episode_id, plan["research_plan_id"], str(plan.get("topic") or "Tema sintético"))
+        # Deliberately omit Software-owned identity/runtime fields: the
+        # canonical B2 projection must recreate them before validation.
+        for field in ("research_id", "episode_id", "brief_version", "research_contract_version", "artifact_validity", "created_at"):
+            cognitive.pop(field, None)
+        phenomenon_result = handle.folder / "owner-phenomenon-r3.json"
+        result_paths.append(phenomenon_result)
+        encoded = json.dumps(cognitive, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        phenomenon_result.write_text(json.dumps({
+            "handoff_id": phenomenon_package["handoff_id"], "mission_id": phenomenon_package["mission_id"],
+            "episode_id": phenomenon_package["episode_id"], "capability_id": phenomenon_package["capability_id"],
+            "stage": phenomenon_package["stage"], "role": phenomenon_package["role"],
+            "result_run_id": "OWNER-REAL-R3-PHENOMENON", "package_checksum": phenomenon_package["package_checksum"],
+            "input_manifest_checksum": phenomenon_package["input_manifest_checksum"],
+            "skill_id": phenomenon_package["skill_id"], "skill_version": phenomenon_package["skill_version"],
+            "output": cognitive, "output_checksum": hashlib.sha256(encoded).hexdigest(),
+        }), encoding="utf-8")
+        second = import_and_resume_external_research(VaultEpisodeStore.from_settings(settings), phenomenon_result)
+        assert second["resume"]["status"] == "PENDING_EXTERNAL_COGNITIVE_RESULT"
+        assert second["resume"]["pending_stage"] == "WORK_DISCOVERY"
+        assert (handle.folder / "research_v2" / "b2" / "research_plan.json").is_file()
+        assert (handle.folder / "research_v2" / "b2" / "phenomenon_base_research.json").is_file()
+        assert "ARTIFACT_ALREADY_EXISTS" not in json.dumps(second, ensure_ascii=False)
+        discovery_package_path = Path(second["resume"]["handoff_package_ref"])
+        discovery_package = json.loads(discovery_package_path.read_text(encoding="utf-8"))
+        work_ids = ["EXT-WORK-A", "EXT-WORK-B"]
+        cognitive_discovery = discovery(handle.episode_id, plan["research_plan_id"], work_ids)
+        for field in ("lifecycle_id", "lifecycle_version", "episode_id", "research_id", "created_at", "research_contract_version"):
+            cognitive_discovery.pop(field, None)
+        discovery_result = handle.folder / "owner-discovery-r3.json"
+        result_paths.append(discovery_result)
+        encoded = json.dumps(cognitive_discovery, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        discovery_result.write_text(json.dumps({
+            "handoff_id": discovery_package["handoff_id"], "mission_id": discovery_package["mission_id"],
+            "episode_id": discovery_package["episode_id"], "capability_id": discovery_package["capability_id"],
+            "stage": discovery_package["stage"], "role": discovery_package["role"],
+            "result_run_id": "OWNER-REAL-R3-DISCOVERY", "package_checksum": discovery_package["package_checksum"],
+            "input_manifest_checksum": discovery_package["input_manifest_checksum"],
+            "skill_id": discovery_package["skill_id"], "skill_version": discovery_package["skill_version"],
+            "output": cognitive_discovery, "output_checksum": hashlib.sha256(encoded).hexdigest(),
+        }), encoding="utf-8")
+        third = import_and_resume_external_research(VaultEpisodeStore.from_settings(settings), discovery_result)
+        assert third["resume"]["status"] == "PENDING_EXTERNAL_COGNITIVE_RESULT"
+        assert third["resume"]["pending_stage"] == "BASE_RESEARCH_POOL"
+        assert "ARTIFACT_ALREADY_EXISTS" not in json.dumps(third, ensure_ascii=False)
+    finally:
+        for path in result_paths:
+            path.unlink(missing_ok=True)
+        planning_package_path.unlink(missing_ok=True)
+
+
+def test_extend01_b4_r1_rejects_tampered_execution_controls(persisted_real_episode, capsys):
+    handle, settings = persisted_real_episode
+    assert main([
+        "investigar-real", *_real_cli_args(handle, settings),
+        "--mission-authorization", REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
+        "--mission-contract", REAL_EXTERNAL_HANDOFF_CONTRACT,
+    ]) == 0
+    output = capsys.readouterr().out
+    package_path = Path(next(line.split(": ", 1)[1] for line in output.splitlines() if line.startswith("HANDOFF_PACKAGE: ")))
+    package = json.loads(package_path.read_text(encoding="utf-8"))
+    package["execution_controls"]["max_iterations"] = 999
+    package_path.write_text(json.dumps(package), encoding="utf-8")
+    result_path = handle.folder / "tampered-result.json"
+    result_path.write_text(json.dumps({"episode_id": handle.episode_id}), encoding="utf-8")
+    try:
+        with pytest.raises(ResearchM7Error, match="ROUNDTRIP_RESULT_BLOCKED"):
+            import_and_resume_external_research(VaultEpisodeStore.from_settings(settings), result_path)
+    finally:
+        package_path.unlink(missing_ok=True)
+        result_path.unlink(missing_ok=True)
 
 
 def test_extend01_preparation_and_investigation_commands_have_distinct_dispatch(persisted_real_episode, monkeypatch, capsys):
@@ -689,7 +1005,7 @@ def test_extend01_preparation_and_investigation_commands_have_distinct_dispatch(
 
     monkeypatch.setattr(
         "src.cli._real_stage_runners_for_entrypoint",
-        lambda _episode: {stage: stage_runner(stage) for stage in ("B2", "M4", "M5", "M6")},
+        lambda _episode, _preparation=None: {stage: stage_runner(stage) for stage in ("B2", "M4", "M5", "M6")},
     )
     preparation_args = _real_cli_args(handle, settings)
     assert main(["preparar-ruta-real", *preparation_args]) == 0
@@ -723,6 +1039,50 @@ def test_extend01_investigar_real_invokes_canonical_coordinator(persisted_real_e
     output = capsys.readouterr().out
     assert "REAL_ROUTE_RESULT: RESEARCH_READY" in output
     assert invoked == [(handle.episode_id, ("B2", "M4", "M5", "M6"))]
+
+
+def test_extend01_b4_external_boundary_has_no_internal_runtime_selection():
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
+    request = preparation.build_request()
+    assert request.provider is None
+    assert request.model is None
+    assert request.executor is None
+    assert request.execution_profile is None
+    assert request.execution_family is None
+    assert request.execution_route is None
+    assert "provider" not in preparation.to_dict()
+    assert "model" not in preparation.to_dict()
+    assert "runtime" not in preparation.to_dict()
+    assert "harness" not in preparation.to_dict()
+
+
+def test_extend01_b4_bundle_is_separate_from_b1_b3_preparation():
+    authorization = Path(REAL_EXTERNAL_HANDOFF_AUTHORIZATION)
+    contract = Path(REAL_EXTERNAL_HANDOFF_CONTRACT)
+    assert authorization.is_file()
+    assert contract.is_file()
+    authorization_payload = json.loads(authorization.read_text(encoding="utf-8"))
+    contract_payload = json.loads(contract.read_text(encoding="utf-8"))
+    assert authorization_payload["authorization"]["execution_mode"] == "REAL"
+    assert authorization_payload["authorization"]["execution_family_ids"] == ["AGENT_HARNESS"]
+    assert authorization_payload["authorization"]["execution_interface"] == "EXTEND_01_M2_B4_HANDOFF"
+    assert contract_payload["mission_id"] == "EXTEND_01_M2_REAL_E2E"
+    assert contract_payload["mission_authorization_path"] == REAL_EXTERNAL_HANDOFF_AUTHORIZATION
+    assert json.loads(Path("plans/extend_01/m2/mission-authorization-preparation.json").read_text(encoding="utf-8"))["authorization"]["execution_mode"] == "SYNTHETIC_TEST"
+
+
+def test_extend01_pending_boundary_does_not_claim_real_provenance():
+    preparation = RealResearchRoutePreparation.from_mapping(_real_route_config())
+    pending = {
+        "status": "PENDING_EXTERNAL_COGNITIVE_RESULT",
+        "real_ai_execution": False,
+        "real_ai_calls": 0,
+        "provenance": None,
+    }
+    assert pending["status"] != "RESEARCH_READY"
+    assert pending["real_ai_execution"] is False
+    assert pending["real_ai_calls"] == 0
+    assert pending["provenance"] is None
 
 
 def test_extend01_investigar_real_requires_operational_limits_but_not_topic_or_question(persisted_real_episode):
@@ -779,7 +1139,7 @@ def test_extend01_persisted_episode_without_canonical_objective_fails_closed(per
 
 
 def test_extend01_real_adapters_transport_selection_chain_and_provenance(
-    persisted_real_episode, monkeypatch,
+    persisted_real_episode, monkeypatch, tmp_path,
 ):
     handle, settings = persisted_real_episode
     episode = PersistedResearchEpisode.load(VaultEpisodeStore.from_settings(settings), handle.episode_id)
@@ -789,7 +1149,17 @@ def test_extend01_real_adapters_transport_selection_chain_and_provenance(
         executor_calls.append(request)
         return {"dimensions": ["controlled"]}
 
-    adapters = ProductiveResearchStageAdapters(episode, cognitive_executor=executor)
+    canonical_root = tmp_path / "canonical_repo"
+    (canonical_root / "output").mkdir(parents=True)
+    (canonical_root / "output" / "execution_provenance_registry.json").write_text(
+        json.dumps({"registry_version": "1.0.0", "runs": [], "handoffs": [], "attempts": []}),
+        encoding="utf-8",
+    )
+    adapters = ProductiveResearchStageAdapters(
+        episode,
+        cognitive_executor=executor,
+        _test_provenance_repository_root=canonical_root,
+    )
     root = adapters.root
     root.mkdir(parents=True, exist_ok=True)
 
@@ -798,10 +1168,10 @@ def test_extend01_real_adapters_transport_selection_chain_and_provenance(
         path.write_text(json.dumps(payload), encoding="utf-8")
         return path
 
-    def ref(stage, kind, name, payload):
+    def ref(stage, kind, name, payload, *, id_suffix=None):
         path = write_payload(name, payload)
         return {
-            "artifact_id": f"{handle.episode_id}:{stage}:{kind}",
+            "artifact_id": f"{handle.episode_id}:{stage}:{id_suffix or kind}",
             "artifact_kind": kind,
             "artifact_version": "1.0.0",
             "path": str(path),
@@ -811,27 +1181,27 @@ def test_extend01_real_adapters_transport_selection_chain_and_provenance(
     b2_artifacts = [
         ref("B2", "ResearchPack", "b2_research_pack.json", {}),
         ref("B2", "WorkLifecycle", "b2_work_lifecycle.json", {}),
-        ref("B2", "BASE_RESEARCH_POOL", "b2_pool.json", {"dossiers": []}),
+        ref("B2", "WorkResearchDossierCollection", "b2_pool.json", {"dossiers": []}, id_suffix="BASE_RESEARCH_POOL"),
         ref("B2", "ThesisArtifact", "b2_thesis.json", {}),
         ref("B2", "ResearchComparison", "b2_comparison.json", {}),
     ]
-    b2_manifest = ref("B2", "ExecutionManifest", "b2_manifest.json", {"artifacts": b2_artifacts})
+    b2_manifest = ref("B2", "ResearchB2ExecutionManifest", "b2_manifest.json", {"artifacts": b2_artifacts})
     plan_ref = ref("B2", "ResearchPlan", "b2_plan.json", {})
     evidence_ref = ref("B2", "SourceAccessAndEvidenceReport", "b2_evidence.json", {})
     b2_result = {
         "execution_manifest": b2_manifest,
         "research_plan": plan_ref,
-        "preliminary_fidelity": ref("B2", "PreliminaryFidelity", "b2_fidelity.json", {"dossiers": []}),
-        "initial_sufficiency": ref("B2", "InitialSufficiency", "b2_sufficiency.json", {"dossiers": []}),
+        "preliminary_fidelity": ref("B2", "WorkResearchDossierCollection", "b2_fidelity.json", {"dossiers": []}),
+        "initial_sufficiency": ref("B2", "ResearchStopDecisionCollection", "b2_sufficiency.json", {"dossiers": []}),
         "deepening_targets": [],
         "lifecycle_projection": {},
         "evidence_report": evidence_ref,
     }
-    m4_artifact = ref("M4", "M4Artifact", "m4_artifact.json", {})
-    m4_manifest = ref("M4", "ExecutionManifest", "m4_manifest.json", {"artifacts": [m4_artifact], "selection": {"mode": "USER_SELECTION"}})
+    m4_artifact = ref("M4", "ResearchStopDecision", "m4_artifact.json", {})
+    m4_manifest = ref("M4", "ResearchM4ExecutionManifest", "m4_manifest.json", {"artifacts": [m4_artifact], "selection": {"mode": "USER_SELECTION"}})
     m4_result = {"execution_manifest": m4_manifest, "evidence_report": ref("M4", "SourceAccessAndEvidenceReport", "m4_evidence.json", {})}
-    m5_output = ref("M5", "M5Artifact", "m5_artifact.json", {})
-    m5_manifest = ref("M5", "ExecutionManifest", "m5_manifest.json", {"m5_outputs": [m5_output]})
+    m5_output = ref("M5", "ClaimsLedger", "m5_artifact.json", {})
+    m5_manifest = ref("M5", "ResearchM5ExecutionManifest", "m5_manifest.json", {"m5_outputs": [m5_output]})
     m5_result = {"execution_manifest": m5_manifest, "evidence_report": ref("M5", "SourceAccessAndEvidenceReport", "m5_evidence.json", {})}
     adapters._plan_for_b2 = lambda: {}
     calls = []
@@ -873,6 +1243,12 @@ def test_extend01_real_adapters_transport_selection_chain_and_provenance(
         b2_manifest["artifact_id"], m4_manifest["artifact_id"], m5_manifest["artifact_id"],
     }
     assert executor_calls == [{"stage": "B2"}]
+    registry = json.loads((canonical_root / "output" / "execution_provenance_registry.json").read_text(encoding="utf-8"))
+    outputs = [output for run in registry["runs"] for output in run["outputs"]]
+    by_binding = {(output["artifact_id"], output["artifact_kind"]): output for output in outputs}
+    assert by_binding[(plan_ref["artifact_id"], "ResearchPlan")]["artifact_kind"] == "ResearchPlan"
+    assert by_binding[(m5_manifest["artifact_id"], "ResearchM5ExecutionManifest")]["artifact_kind"] == "ResearchM5ExecutionManifest"
+    assert all(output["artifact_kind"] != "semantic_audit" for output in outputs)
 
 
 def test_extend01_adapters_keep_functional_blockers_distinct(persisted_real_episode):
@@ -885,6 +1261,79 @@ def test_extend01_adapters_keep_functional_blockers_distinct(persisted_real_epis
         adapters.run_m6({"m5_result": {}})
     with pytest.raises(ResearchM7Error, match="REAL_ROUTE_REAL_PROVENANCE_REQUIRED"):
         adapters.run_m6({"m5_result": {}, "research_chain": {}})
+
+
+def test_extend01_m4_missing_selection_fails_closed_after_b2(persisted_real_episode):
+    handle, settings = persisted_real_episode
+    episode = PersistedResearchEpisode.load(VaultEpisodeStore.from_settings(settings), handle.episode_id)
+    adapters = ProductiveResearchStageAdapters(episode, cognitive_executor=lambda _request: None)
+    plan_path = adapters.root / "b2" / "missing-plan.json"
+    plan_path.parent.mkdir(parents=True, exist_ok=True)
+    plan_path.write_text(json.dumps({"research_plan_id": "PLAN-EXTEND01", "episode_id": handle.episode_id}), encoding="utf-8")
+    with pytest.raises(ResearchM7Error, match="MISSING_VALID_SELECTION"):
+        adapters.run_m4({"b2_result": {"research_plan": {"path": str(plan_path)}}})
+
+
+def test_extend01_m4_recovers_valid_persisted_owner_selection(persisted_real_episode, monkeypatch):
+    handle, settings = persisted_real_episode
+    episode = PersistedResearchEpisode.load(VaultEpisodeStore.from_settings(settings), handle.episode_id)
+    adapters = ProductiveResearchStageAdapters(episode, cognitive_executor=lambda _request: None)
+    plan_path = adapters.root / "b2" / "research_plan.json"
+    plan_path.parent.mkdir(parents=True, exist_ok=True)
+    plan_path.write_text(json.dumps({"research_plan_id": "PLAN-EXTEND01", "episode_id": handle.episode_id}), encoding="utf-8")
+    request = HumanDecisionRequest(
+        request_id="PLAN-EXTEND01:M4:REQUEST",
+        prompt="Seleccionar obras",
+        options=({"id": "SELECTION_SET:W1", "label": "W1"},),
+        recommendation="SELECTION_SET:W1",
+        episode_id=handle.episode_id,
+    )
+    decision = HumanDecision(
+        request_id=request.request_id,
+        action="SELECT_ALTERNATIVE",
+        selected_option="SELECTION_SET:W1",
+        actor_ref="OWNER",
+        channel="TERMINAL",
+        episode_id=handle.episode_id,
+        occurred_at="2026-09-10T00:00:00+00:00",
+        request_checksum=request.checksum(),
+    )
+    adapters.b3_persistence.persist(
+        "M4_SELECTION_REQUEST", request.to_dict(),
+        artifact_id="PLAN-EXTEND01:M4:SELECTION_AUTHORITY", artifact_kind="HumanDecisionRequest",
+    )
+    adapters.b3_persistence.persist(
+        "M4_SELECTION_DECISION", decision.to_dict(),
+        artifact_id="PLAN-EXTEND01:M4:HUMAN_DECISION", artifact_kind="HumanDecision",
+    )
+    adapters._baseline = lambda _b2: {
+        "base_research_pool": [], "preliminary_fidelity": [], "initial_sufficiency": [],
+        "research_plan": {}, "phenomenon_base_research": {}, "work_discovery": {},
+        "provisional_thesis": {}, "research_comparison": {}, "deepening_targets": [],
+        "lifecycle": {}, "evidence_report": {},
+    }
+    monkeypatch.setattr(ResearchB3Orchestrator, "_eligible_candidates", staticmethod(lambda *_args: {"W1"}))
+    calls = []
+
+    def fake_m4(self, baseline, *, context, selection_mode, human_decision, delegation_decision, selection_options):
+        calls.append((selection_mode, human_decision, selection_options))
+        return {"execution_manifest": {"path": str(plan_path)}, "evidence_report": {}}
+
+    monkeypatch.setattr(ResearchB3Orchestrator, "run", fake_m4)
+    monkeypatch.setattr(adapters, "_recover_m4_result", lambda _b2: None)
+    evidence_path = adapters.root / "b2" / "evidence.json"
+    evidence_path.write_text(json.dumps({"research_stage": "BASE_RESEARCH"}), encoding="utf-8")
+    request_runtime = RealResearchRoutePreparation.from_mapping(_real_route_config(episode_id=handle.episode_id)).build_request()
+    result = adapters.run_m4({
+        "b2_result": {
+            "research_plan": {"path": str(plan_path)},
+            "evidence_report": {"path": str(evidence_path)},
+        },
+        "request": request_runtime,
+    })
+    assert result["execution_manifest"]["path"] == str(plan_path)
+    assert calls and calls[0][0] == "USER_SELECTION"
+    assert calls[0][1]["selected_option"] == "SELECTION_SET:W1"
 
 
 def test_extend01_mock_and_failed_real_do_not_claim_real_execution():
@@ -971,9 +1420,213 @@ def test_extend01_real_route_rejects_post_m6_continuation():
     result = preparation.run_canonical_vertical(stage_runners)
     assert result["terminal_stage"] == "RESEARCH_READY"
     assert result["completed_stages"] == ["B2", "M4", "M5", "M6"]
-    assert post_m6_calls == []
 
 
+def test_extend01_b4_r5_integrated_external_roundtrip_m4_m6(tmp_path):
+    """Drive the production handoff/import/resume seams through ResearchReady."""
+    test_root = Path(tempfile.mkdtemp(prefix="r5-"))
+    episode_root = test_root / "episode"
+    episode_root.mkdir()
+    handle, settings = _persisted_real_episode(episode_root)
+    handoff_directory = Path("plans/extend_01/m2/b4_handoff/packages") / f".pytest-integrated-{handle.episode_id}"
+    handoff_directory.mkdir(parents=True, exist_ok=True)
+    canonical_root = tmp_path / "canonical_repo"
+    (canonical_root / "config").mkdir(parents=True)
+    (canonical_root / "output").mkdir()
+    (canonical_root / "config" / "execution_provenance_policy.json").write_text(
+        json.dumps({"schema_version": "1.0.0", "canonical_registry_path": "output/execution_provenance_registry.json"}),
+        encoding="utf-8",
+    )
+    (canonical_root / "output" / "execution_provenance_registry.json").write_text(
+        json.dumps({"registry_version": "1.0.0", "runs": [], "handoffs": [], "attempts": []}),
+        encoding="utf-8",
+    )
+    store = VaultEpisodeStore.from_settings(settings)
+    episode = PersistedResearchEpisode.load(store, handle.episode_id)
+    productive_registry = Path(__file__).resolve().parents[2] / "output" / "execution_provenance_registry.json"
+    productive_registry_before = productive_registry.read_bytes()
+    preparation = RealResearchRoutePreparation.from_mapping({
+        "episode_id": handle.episode_id,
+        "topic": "Tema persistido de Research V2",
+        "question": "¿Qué puede sostenerse?",
+        "budget_limit": 25, "max_iterations": 2, "max_retries": 1, "timeout_seconds": 30,
+        "mission_authorization_path": REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
+        "mission_contract_path": REAL_EXTERNAL_HANDOFF_CONTRACT,
+        "handoff_directory": handoff_directory,
+    })
+    completed_packages: list[str] = []
+    result_paths: list[Path] = []
+    works = ["EXT-WORK-A", "EXT-WORK-B"]
+    acquisition_root = tmp_path / "acquisition"
+    acquisition_root.mkdir()
+    work_bindings = {}
+    for work_id in works:
+        recovery = acquisition_root / f"{work_id}.json"
+        recovery.write_text(json.dumps({"work_id": work_id}), encoding="utf-8")
+        recovery_checksum = hashlib.sha256(recovery.read_bytes()).hexdigest()
+        execution_ref = f"R5-ACQ-{work_id}"
+        register_software_outputs(
+            canonical_root / "output" / "execution_provenance_registry.json",
+            run_id=execution_ref,
+            episode_id=handle.episode_id,
+            role="RESEARCH_AND_CURATION",
+            outputs=[{"artifact_id": str(recovery), "artifact_kind": "research", "artifact_version": "1.0.0", "checksum": recovery_checksum}],
+        )
+        work_bindings[work_id] = {
+            "retrieval_status": "RECOVERED", "software_controlled": True,
+            "recovery_artifact_ref": str(recovery), "request_ref": f"software:request:{work_id}",
+            "execution_ref": execution_ref, "evidence_status": "VERIFIED", "source_ref": work_id,
+            "representation_kind": "ORIGINAL_WORK", "edition_or_version": "fixture-1",
+            "consulted_locator": f"fixture://{work_id}",
+        }
+    acquisition_adapter = SoftwareAcquisitionAdapter(
+        work_bindings=work_bindings,
+        recovery_artifacts={str(acquisition_root / f"{work_id}.json"): {"path": str(acquisition_root / f"{work_id}.json"), "checksum": hashlib.sha256((acquisition_root / f"{work_id}.json").read_bytes()).hexdigest()} for work_id in works},
+        execution_registry_path=canonical_root / "output" / "execution_provenance_registry.json",
+    )
+    research_id = None
+    stage_work_cursor = {"DEEP_WORK_RESEARCH": 0, "DEEP_FIDELITY": 0}
+
+    def cognitive_output(package):
+        nonlocal research_id
+        stage = package["stage"]
+        if stage == "RESEARCH_PLANNING":
+            return _research_plan_proposal()
+        plan = json.loads((handle.folder / "research_v2" / "b2" / "research_plan.json").read_text(encoding="utf-8"))
+        research_id = str(plan["research_plan_id"])
+        synthetic = SyntheticResearchExecutor({
+            "episode_id": handle.episode_id, "topic": "Tema persistido de Research V2", "works": works,
+            "_effective_selected_work_ids": works,
+            "selection_mode": "MANUAL",
+            "_selection_authority_ref": f"{research_id}:M4:HUMAN_DECISION",
+        })
+        # The planning fixture is the canonical source of the ResearchPlan
+        # id in this route; keep the deterministic test double bound to it
+        # instead of its historical standalone fixture id.
+        synthetic.research_id = research_id
+        manifest_text = json.dumps(package.get("input_manifest", {}), ensure_ascii=False)
+        work_id = next((item for item in works if item in manifest_text), None)
+        if work_id is None and stage in stage_work_cursor:
+            index = stage_work_cursor[stage]
+            work_id = works[min(index, len(works) - 1)]
+            stage_work_cursor[stage] = index + 1
+        work_id = work_id or works[0]
+        prepared = {
+            "input_payload": {
+                "work_id": work_id,
+                "subject_ref": f"{research_id}:M4:DOSSIER:{work_id}",
+                "audit_scope": {"required_criteria": sorted(M6_REQUIRED_AUDIT_CRITERIA)},
+            }
+        }
+        request = SimpleNamespace(
+            stage=stage,
+            prepared_contract=prepared,
+            input_artifacts=[
+                {"artifact_id": item["artifact_id"]}
+                for item in package.get("input_manifest", {}).get("artifacts", [])
+            ],
+        )
+        if stage == "M6_INDEPENDENT_RESEARCH_AUDIT":
+            return audit(request)
+        if stage == "INITIAL_SUFFICIENCY":
+            pool_payload = json.loads((handle.folder / "research_v2" / "b2" / "base_research_pool.json").read_text(encoding="utf-8"))
+            dossiers = pool_payload["dossiers"] if isinstance(pool_payload, dict) else pool_payload
+            return [
+                sufficiency(research_id, "PHENOMENON", research_id, "FORMULAR_TESIS_PROVISIONAL")
+            ] + [
+                sufficiency(research_id, "WORK_RESEARCH_DOSSIER", item["dossier_id"], "RESEARCH_COMPARISON")
+                for item in dossiers
+            ]
+        return synthetic(request)
+
+    try:
+        preparation_result = preparation.run_canonical_vertical(
+            ProductiveResearchStageAdapters(
+                episode,
+                cognitive_executor=ExternalResearchCognitiveExecutor(episode, preparation),
+                acquisition_adapter=acquisition_adapter,
+                _test_provenance_repository_root=canonical_root,
+            ).stage_runners(),
+        )
+        assert preparation_result["status"] == "PENDING_EXTERNAL_COGNITIVE_RESULT"
+        package_path = Path(preparation_result["handoff_package_ref"])
+        for _ in range(50):
+            package = json.loads(package_path.read_text(encoding="utf-8"))
+            completed_packages.append(package["stage"])
+            output_value = cognitive_output(package)
+            encoded = json.dumps(output_value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+            result_path = handle.folder / f"r5-{len(result_paths)}.json"
+            result_paths.append(result_path)
+            result_run_id = f"R5-EXTERNAL-{len(result_paths)}"
+            provenance = {
+                "mission_id": package["mission_id"], "episode_id": handle.episode_id,
+                "capability_id": package["capability_id"], "stage": package["stage"],
+                "role": package["role"], "handoff_id": package["handoff_id"],
+                "run_id": result_run_id, "executor_id": f"r5-external-{package['stage'].lower()}",
+                "actor_id": f"R5-ACTOR-{package['stage']}",
+                "provenance_ref": "output/execution_provenance_registry.json",
+            }
+            result_path.write_text(json.dumps({
+                "handoff_id": package["handoff_id"], "mission_id": package["mission_id"],
+                "episode_id": handle.episode_id, "capability_id": package["capability_id"],
+                "stage": package["stage"], "role": package["role"],
+                "result_run_id": result_run_id, "package_checksum": package["package_checksum"],
+                "input_manifest_checksum": package["input_manifest_checksum"],
+                "skill_id": package["skill_id"], "skill_version": package["skill_version"],
+                "output": output_value, "output_checksum": hashlib.sha256(encoded).hexdigest(),
+                "provenance": provenance,
+            }), encoding="utf-8")
+            imported = import_and_resume_external_research(
+                store, result_path, _test_provenance_repository_root=canonical_root,
+                _test_acquisition_adapter=acquisition_adapter,
+            )
+            resume = imported["resume"]
+            if resume["status"] == "WAITING_FOR_HUMAN_DECISION":
+                request = resume["human_decision_request"]
+                response = respond_to_research_human_decision(
+                    store, handle.episode_id, request_id=request["request_id"], action="APPROVE",
+                )
+                assert response["status"] == "RESPONSE_RECORDED"
+                episode = PersistedResearchEpisode.load(store, handle.episode_id)
+                runners = ProductiveResearchStageAdapters(
+                    episode,
+                    cognitive_executor=ExternalResearchCognitiveExecutor(episode, preparation),
+                    acquisition_adapter=acquisition_adapter,
+                    _test_provenance_repository_root=canonical_root,
+                ).stage_runners()
+                resume = preparation.run_canonical_vertical(runners)
+            if resume["status"] == "RESEARCH_READY":
+                break
+            assert resume["status"] == "PENDING_EXTERNAL_COGNITIVE_RESULT"
+            package_path = Path(resume["handoff_package_ref"])
+        else:
+            pytest.fail("external roundtrip did not reach ResearchReady")
+        assert completed_packages[0] == "RESEARCH_PLANNING"
+        assert completed_packages.count("RESEARCH_PLANNING") == 1
+        assert completed_packages.count("PHENOMENON_BASE_RESEARCH") == 1
+        assert completed_packages.count("WORK_DISCOVERY") == 1
+        assert ":M4:SELECTION_REQUEST" in json.loads((handle.folder / "human_decision_requests.json").read_text(encoding="utf-8"))["requests"][0]["request_id"]
+        assert completed_packages[-1] == "M6_INDEPENDENT_RESEARCH_AUDIT"
+        assert resume["completed_stages"] == ["B2", "M4", "M5", "M6"]
+        registry = json.loads((canonical_root / "output" / "execution_provenance_registry.json").read_text(encoding="utf-8"))
+        assert any(run["role"] == "RESEARCH_AND_CURATION" and run["episode_id"] == handle.episode_id for run in registry["runs"])
+        auditor_runs = [run for run in registry["runs"] if run["role"] == "INDEPENDENT_RESEARCH_AUDITOR"]
+        assert len(auditor_runs) == 1
+        assert auditor_runs[0]["actual_executor"].startswith("r5-external-m6")
+        assert auditor_runs[0]["provider_kind"] == "REAL"
+        assert auditor_runs[0]["provider"] == "UNAVAILABLE_FROM_PROVIDER"
+        assert auditor_runs[0]["model"] == "UNAVAILABLE_FROM_PROVIDER"
+        assert auditor_runs[0]["actual_provider"] == "UNAVAILABLE_FROM_PROVIDER"
+        assert auditor_runs[0]["actual_model"] == "UNAVAILABLE_FROM_PROVIDER"
+        assert productive_registry.read_bytes() == productive_registry_before
+        json.loads(productive_registry.read_text(encoding="utf-8"))
+    finally:
+        for path in result_paths:
+            path.unlink(missing_ok=True)
+        if handoff_directory.is_dir():
+            shutil.rmtree(handoff_directory, ignore_errors=True)
+        if test_root.is_dir():
+            shutil.rmtree(test_root, ignore_errors=True)
 def test_extend01_max_iterations_is_bound_to_existing_guard_and_stops_before_editorial(tmp_path):
     runner = ResearchM7SyntheticRunner(tmp_path, max_iterations=2)
     with pytest.raises(ResearchM7Error, match="NO_PROGRESS / ITERATION_GUARD"):

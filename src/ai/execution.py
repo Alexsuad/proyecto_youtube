@@ -1096,7 +1096,9 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
         try:
             cognitive_output = synthetic_cognitive_executor(request)
             output = synthetic_output_binder(cognitive_output, runtime)
-        except Exception as exc:  # the application boundary converts this to a failed execution result
+        except Exception as exc:  # the application boundary converts ordinary failures to a result
+            if getattr(exc, "propagate_through_execution_boundary", False):
+                raise
             return _result(
                 request,
                 provider_name,

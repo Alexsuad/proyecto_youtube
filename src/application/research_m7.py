@@ -13,13 +13,17 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping
+from uuid import uuid4
 
 from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
-from src.ai.execution import M3_REQUIRED_INPUT_KINDS, _validate_m3_input_artifacts
+from src.ai.execution import M3_REQUIRED_INPUT_KINDS, _validate_m3_input_artifacts, manifest_checksum
+from src.ai.providers.agent_handoff import AgentHandoffProvider
+from src.ai.registry import register_external_output, register_software_outputs
+from src.ai.role_execution import build_model_prompt
 from src.application.contracts import HumanInput, InputValidationError
-from src.application.interaction import HumanDecision
+from src.application.interaction import HumanDecision, HumanDecisionRequest, validate_human_decision
 from src.application.research_b2 import ResearchB2NoProgressGuard, ResearchB2Orchestrator, ResearchB2Persistence, SoftwareAcquisitionAdapter, _checksum
-from src.application.research_b3 import ResearchB3Orchestrator, ResearchB3Persistence
+from src.application.research_b3 import ResearchB3Error, ResearchB3Orchestrator, ResearchB3Persistence
 from src.application.research_b4 import ResearchB4Orchestrator, ResearchB4Persistence
 from src.application.research_m7_fixture import SyntheticResearchExecutor, b5_i3_transversal_fixtures, source_report
 from src.application.research_planning import ResearchPlanningError, ResearchPlanningService
@@ -42,10 +46,39 @@ REAL_RESEARCH_FORBIDDEN_POST_TERMINAL_STAGES = (
     "SCRIPT_PRODUCT",
     "YOUTUBE_ADAPTATION",
 )
+REAL_EXTERNAL_HANDOFF_AUTHORIZATION = "plans/extend_01/m2/b4_handoff/mission-authorization.json"
+REAL_EXTERNAL_HANDOFF_CONTRACT = "plans/extend_01/m2/b4_handoff/mission_contract.json"
+REAL_EXTERNAL_HANDOFF_DIRECTORY = Path("plans/extend_01/m2/b4_handoff/packages")
+REAL_EXTERNAL_HANDOFF_STATE_FILENAME = "research_external_handoff.json"
+REAL_EXTERNAL_RESULT_FILENAME = "research_external_result.json"
 
 
 class ResearchM7Error(RuntimeError):
     """Fail-closed M7 coordination error."""
+
+
+class ExternalCognitiveHandoffPending(ResearchM7Error):
+    """The canonical route stopped after preparing one external task."""
+
+    propagate_through_execution_boundary = True
+
+    propagate_through_execution_boundary = True
+
+    def __init__(self, *, package_path: Path, handoff_id: str, stage: str):
+        self.package_path = package_path
+        self.handoff_id = handoff_id
+        self.stage = stage
+        super().__init__(f"PENDING_EXTERNAL_COGNITIVE_RESULT:{stage}:{handoff_id}")
+
+
+class HumanDecisionPending(ResearchM7Error):
+    """The canonical route is waiting for an OWNER response at M4."""
+
+    propagate_through_execution_boundary = True
+
+    def __init__(self, request: HumanDecisionRequest):
+        self.request = request
+        super().__init__(f"WAITING_FOR_HUMAN_DECISION:{request.request_id}")
 
 
 @dataclass(frozen=True)
@@ -247,14 +280,280 @@ class PersistedResearchEpisode:
         }
 
 
+class ExternalResearchCognitiveExecutor:
+    """Transport one coordinator-emitted cognitive seam to the external side."""
+
+    def __init__(self, episode: PersistedResearchEpisode, preparation: "RealResearchRoutePreparation"):
+        self.episode = episode
+        self.preparation = preparation
+
+    @property
+    def state_path(self) -> Path:
+        return self.episode.handle.folder / REAL_EXTERNAL_HANDOFF_STATE_FILENAME
+
+    def _existing_pending(self) -> ExternalCognitiveHandoffPending | None:
+        if not self.state_path.is_file():
+            return None
+        try:
+            state = _read(self.state_path)
+        except (OSError, ValueError):
+            return None
+        if not isinstance(state, Mapping) or state.get("status") != "PENDING_EXTERNAL_COGNITIVE_RESULT":
+            return None
+        package_ref = Path(str(state.get("handoff_package_ref") or ""))
+        if not package_ref.is_file():
+            return None
+        return ExternalCognitiveHandoffPending(
+            package_path=package_ref,
+            handoff_id=str(state.get("handoff_id") or ""),
+            stage=str(state.get("stage") or ""),
+        )
+
+    def _consume_imported_result(self, request: Any) -> Any | None:
+        """Return the one result authorized for the current pending seam.
+
+        Import and resume are deliberately state-bound: an imported payload is
+        consumable only when its stage is the stage emitted by this exact
+        coordinator request.  Consuming it is persisted before returning so a
+        restart cannot replay the same external result.
+        """
+        if not self.state_path.is_file():
+            return None
+        state = _read(self.state_path)
+        if not isinstance(state, Mapping) or state.get("status") != "IMPORTED_EXTERNAL_COGNITIVE_RESULT":
+            return None
+        if str(state.get("imported_stage") or state.get("stage") or "") != str(getattr(request, "stage", "")):
+            return None
+        result_path = self.episode.handle.folder / REAL_EXTERNAL_RESULT_FILENAME
+        if not result_path.is_file():
+            raise ResearchM7Error("ROUNDTRIP_RESULT_BLOCKED:IMPORTED_RESULT_MISSING")
+        result = _read(result_path)
+        output = result.get("output") if isinstance(result, Mapping) else None
+        if not isinstance(output, (Mapping, list)) or (isinstance(output, list) and not output):
+            raise ResearchM7Error("ROUNDTRIP_RESULT_BLOCKED:IMPORTED_OUTPUT_MISSING")
+        completed = list(state.get("completed_stages", []))
+        imported_stage = str(state.get("imported_stage") or state.get("stage") or "")
+        if imported_stage and imported_stage not in completed:
+            completed.append(imported_stage)
+        consumed = dict(state)
+        consumed.update({
+            "status": "RESUMING_EXTERNAL_COGNITIVE_RESULT",
+            "imported_result_consumed": True,
+            "completed_stages": completed,
+            "next_action": "RESUME_RESEARCH_V2",
+        })
+        _write_json_atomic(self.state_path, consumed)
+        return copy.deepcopy(output)
+
+    @staticmethod
+    def _resolve_persisted_input_path(
+        episode: PersistedResearchEpisode,
+        item: Mapping[str, Any],
+    ) -> Path | None:
+        """Resolve a canonical persisted artifact when a stage ref has no path.
+
+        B2/B3 deliberately keep their lineage refs logical (artifact id/kind/
+        checksum) rather than copying filesystem paths into every downstream
+        request.  The external handoff still needs a real, already-persisted
+        input file.  Resolve only against the canonical Research V2 stores and
+        only for known artifact kinds; never invent a source or fall back to a
+        caller-controlled path.
+        """
+        artifact_id = str(item.get("artifact_id") or "")
+        artifact_kind = str(item.get("artifact_kind") or "")
+        if not artifact_id or not artifact_kind:
+            return None
+        b2 = episode.handle.folder / "research_v2" / "b2"
+        b3 = episode.handle.folder / "research_v2" / "b3"
+        # Prefer the later M5 artifact when the logical id identifies it;
+        # otherwise use the canonical B2/M4 materialization for the kind.
+        candidates: list[Path] = []
+        if ":M5:" in artifact_id or ":POST_DEEP" in artifact_id:
+            candidates.extend((b3 / "claims_ledger_m5.json", b3 / "research_comparison_m5_post_deep.json"))
+        candidates.extend({
+            "ResearchPack": (b3 / "deep_phenomenon_research.json", b2 / "phenomenon_base_research.json"),
+            "WorkLifecycle": (b2 / "work_discovery.json",),
+            "WorkResearchDossierCollection": (b3 / "deep_work_research.json", b2 / "preliminary_fidelity.json", b2 / "base_research_pool.json"),
+            "WorkResearchDossier": (b2 / "preliminary_fidelity.json", b2 / "base_research_pool.json"),
+            "ThesisArtifact": (b3 / "refined_thesis_m5.json", b2 / "provisional_thesis.json"),
+            "ResearchComparison": (b3 / "research_comparison_m5_post_deep.json", b2 / "research_comparison.json"),
+            "B2DeepeningTargets": (b2 / "research_b2_execution.json",),
+            "SelectionAuthority": (b3 / "m4_selection_decision.json", b3 / "m4_delegation_decision.json"),
+            "ClaimsLedger": (b3 / "claims_ledger_m5.json",),
+            "RefinedThesis": (b3 / "refined_thesis_m5.json",),
+            "SourceAccessAndEvidenceReport": (b3 / "source_access_and_evidence_report_m5_refined.json", b3 / "source_access_and_evidence_report_m4_deep.json"),
+        }.get(artifact_kind, ()))
+        for candidate in candidates:
+            if candidate.is_file():
+                return candidate
+        return None
+
+    @staticmethod
+    def _input_artifacts(
+        episode: PersistedResearchEpisode,
+        request: Any,
+    ) -> list[InputArtifact]:
+        references = list(getattr(request, "input_artifacts", ()) or ())
+        if not references:
+            references = [
+                {
+                    "artifact_kind": "episode_brief",
+                    "artifact_id": f"{episode.handle.episode_id}:episode_brief",
+                    "path": str(episode.handle.folder / "research_episode_brief.json"),
+                },
+                {
+                    "artifact_kind": "research_channel_context",
+                    "artifact_id": f"{episode.handle.episode_id}:research_channel_context",
+                    "path": str(episode.handle.folder / "research_channel_context.json"),
+                },
+                {
+                    "artifact_kind": "research_source_access",
+                    "artifact_id": f"{episode.handle.episode_id}:research_source_access",
+                    "path": str(episode.handle.folder / "research_source_access.json"),
+                },
+            ]
+        artifacts: list[InputArtifact] = []
+        for item in references:
+            if not isinstance(item, Mapping):
+                raise ResearchM7Error("EXTERNAL_HANDOFF_INPUT_REFERENCE_INVALID")
+            path = Path(str(item.get("path") or ""))
+            if not path.is_file():
+                resolved = ExternalResearchCognitiveExecutor._resolve_persisted_input_path(episode, item)
+                if resolved is not None:
+                    path = resolved
+            if not path.is_file():
+                raise ResearchM7Error("EXTERNAL_HANDOFF_INPUT_NOT_AVAILABLE")
+            artifacts.append(
+                InputArtifact(
+                    str(item.get("artifact_kind") or "COGNITIVE_INPUT"),
+                    str(item.get("artifact_id") or ""),
+                    path,
+                    str(item.get("producer_run_id") or ""),
+                    str(item.get("artifact_version") or ""),
+                )
+            )
+        return artifacts
+
+    def __call__(self, request: Any) -> Any:
+        existing = self._existing_pending()
+        if existing is not None:
+            raise existing
+        imported = self._consume_imported_result(request)
+        if imported is not None:
+            return imported
+        prepared = getattr(request, "prepared_contract", None)
+        if not isinstance(prepared, Mapping):
+            raise ResearchM7Error("EXTERNAL_HANDOFF_PREPARED_CONTRACT_REQUIRED")
+        input_artifacts = self._input_artifacts(self.episode, request)
+        run_id = f"RUN-EXTEND01-HANDOFF-{uuid4().hex}"
+        execution_request = ExecutionRequest(
+            capability_id=REAL_RESEARCH_CAPABILITY,
+            skill_id="extend_01_research_v2_real_e2e",
+            skill_version=M7_VERSION,
+            input_artifacts=input_artifacts,
+            output_schema=str(request.output_schema),
+            execution_mode="REAL",
+            execution_route="agent_harness",
+            execution_family="AGENT_HARNESS",
+            timeout=float(self.preparation.timeout_seconds),
+            handoff_directory=self.preparation.handoff_directory,
+            episode_id=self.episode.handle.episode_id,
+            role=str(getattr(request, "role_id", None) or "RESEARCH_AND_CURATION"),
+            config={
+                "repository_root": str(Path(__file__).resolve().parents[2]),
+                "mission_repo_root": str(Path(__file__).resolve().parents[2]),
+                "mission_authorization_path": self.preparation.mission_authorization_path,
+                "mission_contract_path": self.preparation.mission_contract_path,
+                "mission_id": "EXTEND_01_M2_REAL_E2E",
+                "mission_operation": "EXECUTE_CAPABILITY",
+                "execution_interface": "EXTEND_01_M2_B4_HANDOFF",
+                "execution_family": "AGENT_HARNESS",
+                "stage": str(request.stage),
+                "expected_return": str(request.output_schema),
+                "expected_provider_or_agent": "OWNER_EXTERNAL_COGNITIVE_EXECUTOR",
+                "prompt": build_model_prompt(dict(prepared)),
+                "prompt_id": str(prepared.get("prompt_id") or ""),
+                "prompt_version": str(prepared.get("prompt_version") or ""),
+                "prompt_checksum": str(prepared.get("prompt_checksum") or ""),
+                "prompt_input_checksum": str(prepared.get("input_checksum") or ""),
+                "budget_limit": self.preparation.budget_limit,
+                "max_iterations": self.preparation.max_iterations,
+                "max_retries": self.preparation.max_retries,
+                "timeout_seconds": self.preparation.timeout_seconds,
+                "execution_controls": {
+                    "budget_limit": self.preparation.budget_limit,
+                    "max_iterations": self.preparation.max_iterations,
+                    "max_retries": self.preparation.max_retries,
+                    "timeout_seconds": self.preparation.timeout_seconds,
+                    "unbounded_execution": False,
+                    "telemetry": {
+                        "calls": True,
+                        "retries": True,
+                        "failures": True,
+                        "termination": True,
+                        "tokens": "WHEN_AVAILABLE",
+                        "cost": "WHEN_AVAILABLE",
+                        "timestamps": True,
+                        "executor_provider_model_runtime": "ACTUAL_METADATA_ONLY",
+                    },
+                },
+            },
+        )
+        package_path = AgentHandoffProvider().prepare_external(
+            execution_request,
+            manifest_checksum(execution_request),
+            run_id,
+        )
+        prior_state = _read(self.state_path) if self.state_path.is_file() else {}
+        prior_completed = list(prior_state.get("completed_stages", [])) if isinstance(prior_state, Mapping) else []
+        prior_lineage = {
+            key: copy.deepcopy(prior_state[key])
+            for key in ("research_plan_proposal", "research_plan", "provenance", "provenance_status", "producer_provenance", "external_cognitive_provenance", "auditor_provenance")
+            if isinstance(prior_state, Mapping) and key in prior_state
+        }
+        _write_json_atomic(
+            self.state_path,
+            {
+                **prior_lineage,
+                "status": "PENDING_EXTERNAL_COGNITIVE_RESULT",
+                "episode_id": self.episode.handle.episode_id,
+                "capability_id": REAL_RESEARCH_CAPABILITY,
+                "stage": str(request.stage),
+                "handoff_id": run_id,
+                "handoff_package_ref": str(package_path.resolve()),
+                "handoff_package_checksum": json.loads(package_path.read_text(encoding="utf-8")).get("package_checksum"),
+                "expected_return": str(request.output_schema),
+                "role": str(getattr(request, "role_id", None) or "RESEARCH_AND_CURATION"),
+                "input_manifest_checksum": json.loads(package_path.read_text(encoding="utf-8")).get("input_manifest_checksum"),
+                "skill_id": json.loads(package_path.read_text(encoding="utf-8")).get("skill_id"),
+                "skill_version": json.loads(package_path.read_text(encoding="utf-8")).get("skill_version"),
+                "completed_stages": prior_completed,
+                "real_ai_execution": False,
+                "real_ai_calls": 0,
+                "provenance": prior_state.get("provenance") if isinstance(prior_state, Mapping) else None,
+                "provenance_status": prior_state.get("provenance_status") if isinstance(prior_state, Mapping) else "NOT_AVAILABLE",
+                "producer_provenance": prior_state.get("producer_provenance") if isinstance(prior_state, Mapping) else None,
+                "external_cognitive_provenance": prior_state.get("external_cognitive_provenance") if isinstance(prior_state, Mapping) else None,
+                "auditor_provenance": prior_state.get("auditor_provenance") if isinstance(prior_state, Mapping) else None,
+                "execution_controls": execution_request.config["execution_controls"],
+                "next_action": "IMPORT_EXTERNAL_COGNITIVE_RESULT",
+            },
+        )
+        raise ExternalCognitiveHandoffPending(
+            package_path=package_path,
+            handoff_id=run_id,
+            stage=str(request.stage),
+        )
+
+
 class ProductiveResearchStageAdapters:
     """B3 adapters around the existing B2/M4/M5/M6 authorities.
 
     This is deliberately coordination only: it neither selects an execution
     provider nor replaces any stage contract.  The callable passed as
     ``cognitive_executor`` is the existing generic cognitive boundary; the
-    production entrypoint supplies a fail-closed callable until B4 authorizes
-    an actual route.
+    production entrypoint supplies a neutral external-handoff callable
+    without selecting an internal provider, model, runtime, or profile.
     """
 
     def __init__(
@@ -263,6 +562,7 @@ class ProductiveResearchStageAdapters:
         *,
         cognitive_executor: Callable[[Any], Any],
         acquisition_adapter: SoftwareAcquisitionAdapter | None = None,
+        _test_provenance_repository_root: Path | None = None,
     ):
         if not callable(cognitive_executor):
             raise ResearchM7Error("REAL_ROUTE_COGNITIVE_EXECUTOR_REQUIRED")
@@ -274,6 +574,106 @@ class ProductiveResearchStageAdapters:
         self.b2_persistence = ResearchB2Persistence(self.root / "b2")
         self.b3_persistence = ResearchB3Persistence(self.root / "b3")
         self.b4_persistence = ResearchB4Persistence(self.root / "b3")
+        self.provenance_repository_root = (
+            Path(_test_provenance_repository_root).resolve()
+            if _test_provenance_repository_root is not None
+            else Path(__file__).resolve().parents[2]
+        )
+
+    def _provenance_path(self) -> Path:
+        path = self.provenance_repository_root / "output" / "execution_provenance_registry.json"
+        if not path.is_file():
+            raise ResearchM7Error("REAL_ROUTE_CANONICAL_PROVENANCE_REGISTRY_REQUIRED")
+        return path
+
+    def _software_run_id(self) -> str:
+        try:
+            state = self.episode.store.resume(self.episode.handle.episode_id)["state"]
+        except (StorageError, KeyError, TypeError) as exc:
+            raise ResearchM7Error("REAL_ROUTE_EPISODE_STATE_INVALID") from exc
+        run_id = str(state.get("run_id") or "").strip()
+        if not run_id:
+            raise ResearchM7Error("REAL_ROUTE_SOFTWARE_PRODUCER_RUN_REQUIRED")
+        return run_id
+
+    def _register_software_stage(self, result: Mapping[str, Any], *, manifest_key: str, output_key: str, extra_results: tuple[Mapping[str, Any], ...] = ()) -> dict[str, str]:
+        manifest_ref = result.get(manifest_key)
+        if not isinstance(manifest_ref, Mapping):
+            raise ResearchM7Error("REAL_ROUTE_STAGE_MANIFEST_REQUIRED")
+        manifest = _read(manifest_ref["path"])
+        raw_refs = [manifest_ref]
+        for primary_key in ("research_plan", "research_plan_proposal", "evidence_report"):
+            primary_ref = result.get(primary_key)
+            if isinstance(primary_ref, Mapping):
+                raw_refs.append(primary_ref)
+        for extra in extra_results:
+            extra_ref = extra.get("execution_manifest")
+            if isinstance(extra_ref, Mapping):
+                raw_refs.append(extra_ref)
+                extra_manifest = _read(extra_ref["path"])
+                raw_refs.extend(extra_manifest.get("artifacts", []))
+            for primary_key in ("research_plan", "research_plan_proposal", "evidence_report"):
+                primary_ref = extra.get(primary_key)
+                if isinstance(primary_ref, Mapping):
+                    raw_refs.append(primary_ref)
+            # Some canonical stage results expose a primary artifact (notably
+            # ResearchPlan) alongside, rather than inside, the execution
+            # manifest artifact list.  Carry those existing refs into the same
+            # Software producer run; do not derive a new checksum.
+            raw_refs.extend(
+                value for value in extra.values()
+                if isinstance(value, Mapping)
+                and value.get("artifact_id")
+                and value.get("artifact_version")
+                and value.get("checksum")
+            )
+        if output_key:
+            raw_refs.extend(manifest.get(output_key, []))
+        refs = []
+        for ref in raw_refs:
+            if not isinstance(ref, Mapping):
+                raise ResearchM7Error("REAL_ROUTE_STAGE_PROVENANCE_REFERENCE_INVALID")
+            persisted = dict(ref)
+            persisted_path = Path(str(persisted.get("path") or ""))
+            if persisted_path.is_file():
+                persisted["checksum"] = _checksum(_read(persisted_path))
+            refs.append({
+                "artifact_id": str(persisted.get("artifact_id") or ""),
+                "artifact_kind": str(persisted.get("artifact_kind") or ""),
+                "artifact_version": str(persisted.get("artifact_version") or ""),
+                "checksum": str(persisted.get("checksum") or ""),
+            })
+        refs = list({(item["artifact_id"], item["artifact_version"], item.get("artifact_kind", "")): item for item in refs}.values())
+        try:
+            provenance = register_software_outputs(
+                self._provenance_path(),
+                run_id=self._software_run_id(),
+                episode_id=self.episode.handle.episode_id,
+                role="RESEARCH_AND_CURATION",
+                outputs=refs,
+            )
+        except (OSError, ValueError) as exc:
+            raise ResearchM7Error("REAL_ROUTE_SOFTWARE_PROVENANCE_BINDING_FAILED") from exc
+        provenance["provenance_ref"] = "output/execution_provenance_registry.json"
+        provenance["artifact_ref"] = {
+            "artifact_id": str(manifest_ref["artifact_id"]),
+            "artifact_kind": str(manifest_ref["artifact_kind"]),
+            "artifact_version": str(manifest_ref["artifact_version"]),
+            "checksum": str(manifest_ref["checksum"]),
+        }
+        return provenance
+
+    def _persist_producer_lineage(self, provenance: Mapping[str, Any]) -> None:
+        state_path = self.episode.handle.folder / REAL_EXTERNAL_HANDOFF_STATE_FILENAME
+        if not state_path.is_file():
+            return
+        state = _read(state_path)
+        if not isinstance(state, Mapping):
+            raise ResearchM7Error("REAL_ROUTE_EXTERNAL_HANDOFF_STATE_INVALID")
+        updated = dict(state)
+        updated["producer_provenance"] = copy.deepcopy(dict(provenance))
+        updated["producer_provenance_status"] = "CANONICAL_SOFTWARE_BOUND"
+        _write_json_atomic(state_path, updated)
 
     @staticmethod
     def canonical_authorities() -> dict[str, Callable[..., Any]]:
@@ -284,6 +684,7 @@ class ProductiveResearchStageAdapters:
 
     def _plan_for_b2(self) -> dict[str, Any]:
         path = self.root / "b2" / "research_plan.json"
+        imported_proposal_path = self.root / "b2" / "research_plan_proposal.json"
         manifest = self.root / "b2" / "research_b2_execution.json"
         if path.is_file():
             plan = _read(path)
@@ -295,8 +696,37 @@ class ProductiveResearchStageAdapters:
             ):
                 raise ResearchM7Error("REAL_ROUTE_PERSISTED_RESEARCH_PLAN_INVALID")
             if not manifest.is_file():
-                raise ResearchM7Error("REAL_ROUTE_RESEARCH_PLAN_LINEAGE_INCOMPLETE")
+                handoff_state = self.episode.handle.folder / REAL_EXTERNAL_HANDOFF_STATE_FILENAME
+                imported = _read(handoff_state) if handoff_state.is_file() else {}
+                if not isinstance(imported, Mapping) or "RESEARCH_PLANNING" not in imported.get("completed_stages", []):
+                    raise ResearchM7Error("REAL_ROUTE_RESEARCH_PLAN_LINEAGE_INCOMPLETE")
             return copy.deepcopy(dict(plan))
+        if imported_proposal_path.is_file():
+            proposal = _read(imported_proposal_path)
+            try:
+                plan = self.planning.bind_research_plan(
+                    proposal,
+                    episode_id=self.episode.handle.episode_id,
+                    brief_version=str(self.episode.brief["brief_version"]),
+                    research_role=str(self.episode.human_input.get("research_role") or "NORMAL"),
+                    editorial_intent=str(self.episode.human_input.get("editorial_intent") or "NO_DECLARADA"),
+                    origin_ref=f"{self.episode.handle.episode_id}:RESEARCH_PLAN_PROPOSAL",
+                )
+                handoff_state = self.episode.handle.folder / REAL_EXTERNAL_HANDOFF_STATE_FILENAME
+                state = _read(handoff_state) if handoff_state.is_file() else {}
+                persisted_ref = state.get("research_plan_proposal") if isinstance(state, Mapping) else None
+                if isinstance(persisted_ref, Mapping):
+                    origin = plan.get("origin_artifact_refs", [{}])[0]
+                    origin.update({
+                        "artifact_ref": persisted_ref.get("artifact_id"),
+                        "artifact_version": persisted_ref.get("artifact_version"),
+                        "checksum": persisted_ref.get("checksum"),
+                    })
+                    if not origin.get("artifact_ref") or not origin.get("checksum"):
+                        raise ResearchM7Error("REAL_ROUTE_IMPORTED_RESEARCH_PLAN_LINEAGE_INCOMPLETE")
+                return plan
+            except (ResearchPlanningError, KeyError, TypeError, ValueError) as exc:
+                raise ResearchM7Error("REAL_ROUTE_IMPORTED_RESEARCH_PLAN_INVALID") from exc
         try:
             produced = self.planning.produce_research_plan(
                 episode_brief=self.episode.brief,
@@ -311,6 +741,111 @@ class ProductiveResearchStageAdapters:
         except ResearchPlanningError as exc:
             raise ResearchM7Error(str(exc)) from exc
         return copy.deepcopy(dict(produced["research_plan_payload"]))
+
+    @staticmethod
+    def _manifest_ref(manifest: Mapping[str, Any], filename: str) -> dict[str, Any]:
+        for ref in manifest.get("artifacts", []):
+            if isinstance(ref, Mapping) and Path(str(ref.get("path") or "")).name == filename:
+                resolved = copy.deepcopy(dict(ref))
+                path = Path(str(resolved.get("path") or ""))
+                if path.is_file():
+                    # The persisted file is the checksum authority after a
+                    # restart; never carry a stale in-memory manifest value
+                    # into the producer/auditor binding.
+                    resolved["checksum"] = _checksum(_read(path))
+                return resolved
+        raise ResearchM7Error(f"REAL_ROUTE_PERSISTED_ARTIFACT_MISSING:{filename}")
+
+    @staticmethod
+    def _manifest_self(path: Path, manifest: Mapping[str, Any], artifact_id: str, artifact_kind: str) -> dict[str, Any]:
+        return {
+            "artifact_id": artifact_id,
+            "artifact_kind": artifact_kind,
+            "artifact_version": str(manifest.get("manifest_version") or "1.0.0"),
+            "path": str(path),
+            "checksum": _checksum(manifest),
+        }
+
+    def _recover_b2_result(self) -> dict[str, Any] | None:
+        path = self.root / "b2" / "research_b2_execution.json"
+        if not path.is_file():
+            return None
+        manifest = _read(path)
+        plan_ref = self._manifest_ref(manifest, "research_plan.json")
+        plan = _read(plan_ref["path"])
+        return {
+            "research_plan": plan_ref,
+            "phenomenon_base_research": self._manifest_ref(manifest, "phenomenon_base_research.json"),
+            "evidence_report": copy.deepcopy(manifest["evidence_report"]),
+            "work_discovery": self._manifest_ref(manifest, "work_discovery.json"),
+            "base_research_pool": self._manifest_ref(manifest, "base_research_pool.json"),
+            "preliminary_fidelity": self._manifest_ref(manifest, "preliminary_fidelity.json"),
+            "initial_sufficiency": self._manifest_ref(manifest, "initial_sufficiency.json"),
+            "provisional_thesis": self._manifest_ref(manifest, "provisional_thesis.json"),
+            "research_comparison": self._manifest_ref(manifest, "research_comparison.json"),
+            "deepening_targets": copy.deepcopy(manifest.get("deepening_targets") or {}),
+            "lifecycle_projection": copy.deepcopy(manifest.get("lifecycle_projection") or {}),
+            "execution_manifest": self._manifest_self(path, manifest, f"{plan['research_plan_id']}:B2", "ResearchB2ExecutionManifest"),
+            "events": copy.deepcopy(manifest.get("events") or []),
+        }
+
+    def _recover_m4_result(self, b2: Mapping[str, Any]) -> dict[str, Any] | None:
+        path = self.root / "b3" / "research_m4_execution.json"
+        if not path.is_file():
+            return None
+        manifest = _read(path)
+        if not isinstance(b2.get("research_plan"), Mapping):
+            return None
+        plan = _read(b2["research_plan"]["path"])
+        return {
+            "selection": copy.deepcopy(manifest.get("selected_lifecycle_projection") or manifest.get("selection") or {}),
+            "deep_phenomenon_research": self._manifest_ref(manifest, "deep_phenomenon_research.json"),
+            "deep_phenomenon_sufficiency": self._manifest_ref(manifest, "deep_phenomenon_sufficiency.json"),
+            "deep_work_research": self._manifest_ref(manifest, "deep_work_research.json"),
+            "deep_fidelity": self._manifest_ref(manifest, "deep_fidelity.json"),
+            "deep_work_sufficiency": self._manifest_ref(manifest, "deep_work_sufficiency.json"),
+            "evidence_report": self._manifest_ref(manifest, "source_access_and_evidence_report_m4_deep.json"),
+            "execution_manifest": self._manifest_self(path, manifest, f"{plan['research_plan_id']}:M4", "ResearchM4ExecutionManifest"),
+            "events": copy.deepcopy(manifest.get("events") or []),
+        }
+
+    def _recover_m5_result(self, b2: Mapping[str, Any]) -> dict[str, Any] | None:
+        path = self.root / "b3" / "research_m5_execution.json"
+        if not path.is_file():
+            return None
+        manifest = _read(path)
+        required_files = {
+            "claims_ledger_m5.json",
+            "research_stop_m5_claims.json",
+            "research_comparison_m5_post_deep.json",
+            "refined_thesis_m5.json",
+            "source_access_and_evidence_report_m5_refined.json",
+        }
+        persisted_files = {
+            Path(str(ref.get("path") or "")).name
+            for ref in manifest.get("artifacts", [])
+            if isinstance(ref, Mapping)
+        }
+        # A coordinator may persist/update its M5 manifest before the first
+        # external cognitive seam.  It is not a recoverable result until the
+        # complete canonical artifact set exists; let the canonical M5
+        # orchestrator resume its individual persisted stages instead.
+        if not required_files.issubset(persisted_files) or any(
+            not (self.root / "b3" / filename).is_file() for filename in required_files
+        ):
+            return None
+        plan = _read(b2["research_plan"]["path"])
+        result: dict[str, Any] = {
+            "status": manifest.get("status"),
+            "claims_ledger": self._manifest_ref(manifest, "claims_ledger_m5.json"),
+            "claim_sufficiency": self._manifest_ref(manifest, "research_stop_m5_claims.json"),
+            "post_deep_comparison": self._manifest_ref(manifest, "research_comparison_m5_post_deep.json"),
+            "refined_thesis": self._manifest_ref(manifest, "refined_thesis_m5.json"),
+            "evidence_report": self._manifest_ref(manifest, "source_access_and_evidence_report_m5_refined.json"),
+            "execution_manifest": self._manifest_self(path, manifest, f"{plan['research_plan_id']}:M5", "ResearchM5ExecutionManifest"),
+            "events": copy.deepcopy(manifest.get("events") or []),
+        }
+        return result
 
     @staticmethod
     def _baseline(b2: Mapping[str, Any]) -> dict[str, Any]:
@@ -346,11 +881,22 @@ class ProductiveResearchStageAdapters:
         refs.extend([b2["execution_manifest"], *b2_manifest.get("artifacts", [])])
         refs.extend([m4["execution_manifest"], *m4_manifest.get("artifacts", [])])
         refs.extend([m5["execution_manifest"], *m5_manifest.get("m5_outputs", [])])
+        # Prefer the recovered, persisted ResearchPlan ref over any stale copy
+        # embedded in an older stage manifest.
+        refs.append(b2["research_plan"])
+        refreshed: list[Mapping[str, Any]] = []
+        for ref in refs:
+            item = dict(ref)
+            path = Path(str(item.get("path") or ""))
+            if path.is_file():
+                item["checksum"] = _checksum(_read(path))
+            refreshed.append(item)
+        refs = refreshed
         unique: dict[tuple[str, str, str, str], dict[str, Any]] = {}
         for ref in refs:
             if not isinstance(ref, Mapping):
                 raise ResearchM7Error("REAL_ROUTE_RESEARCH_CHAIN_REFERENCE_INVALID")
-            key = tuple(str(ref.get(field) or "") for field in ("artifact_id", "artifact_kind", "artifact_version", "checksum"))
+            key = tuple(str(ref.get(field) or "") for field in ("artifact_id", "artifact_kind", "artifact_version"))
             if any(not value for value in key) or not ref.get("path"):
                 raise ResearchM7Error("REAL_ROUTE_RESEARCH_CHAIN_REFERENCE_INVALID")
             unique[key] = copy.deepcopy(dict(ref))
@@ -359,13 +905,165 @@ class ProductiveResearchStageAdapters:
     def _selection_missing_error(self) -> str:
         authority = str(self.episode.brief.get("selection_authority") or "NOT_DECLARED").upper()
         return {
-            "OWNER_DECIDES": "REAL_ROUTE_OWNER_SELECTION_REQUIRED",
-            "DELEGATED_TO_RESEARCH": "REAL_ROUTE_DELEGATED_SELECTION_REQUIRED",
-            "NOT_DECLARED": "REAL_ROUTE_SELECTION_AUTHORITY_REQUIRED",
-        }.get(authority, "REAL_ROUTE_SELECTION_AUTHORITY_INVALID")
+            "OWNER_DECIDES": "MISSING_VALID_SELECTION:REAL_ROUTE_OWNER_SELECTION_REQUIRED",
+            "DELEGATED_TO_RESEARCH": "MISSING_VALID_SELECTION:REAL_ROUTE_DELEGATED_SELECTION_REQUIRED",
+            "NOT_DECLARED": "MISSING_VALID_SELECTION:REAL_ROUTE_SELECTION_AUTHORITY_REQUIRED",
+        }.get(authority, "MISSING_VALID_SELECTION:REAL_ROUTE_SELECTION_AUTHORITY_INVALID")
+
+    def _recover_persisted_selection(self, b2: Mapping[str, Any]) -> dict[str, Any] | None:
+        """Load the already-authorized M4 decision from canonical B3 storage.
+
+        The external boundary never chooses works.  It only makes a persisted
+        owner/delegated decision available to the canonical B3 orchestrator;
+        a missing or malformed decision remains a fail-closed wait condition.
+        """
+        if not isinstance(b2.get("research_plan"), Mapping):
+            return None
+        plan = _read(b2["research_plan"]["path"])
+        authority = str(self.episode.brief.get("selection_authority") or "NOT_DECLARED").upper()
+        if authority == "OWNER_DECIDES":
+            mode = "USER_SELECTION"
+            request_stage, request_kind = "M4_SELECTION_REQUEST", "HumanDecisionRequest"
+            decision_kind = "HumanDecision"
+            decision_id = f"{plan['research_plan_id']}:M4:HUMAN_DECISION"
+        elif authority == "DELEGATED_TO_RESEARCH":
+            mode = "DELEGATED_SELECTION"
+            request_stage, request_kind = "M4_DELEGATION_DECISION", "DelegationDecision"
+            decision_kind = "DelegatedSelectionDecision"
+            decision_id = f"{plan['research_plan_id']}:M4:DELEGATED_SELECTION"
+        else:
+            return None
+        request_loaded = self.b3_persistence.load_existing(
+            request_stage,
+            artifact_id=f"{plan['research_plan_id']}:M4:SELECTION_AUTHORITY",
+            artifact_kind=request_kind,
+        )
+        decision_loaded = self.b3_persistence.load_existing(
+            "M4_SELECTION_DECISION", artifact_id=decision_id, artifact_kind=decision_kind,
+        )
+        if request_loaded is None and decision_loaded is None:
+            # The operational interaction store is the OWNER-facing seam.  A
+            # request recorded there is bridged into B3 persistence below;
+            # absence remains a clean wait condition, never an auto-selection.
+            folder = self.episode.handle.folder
+            request_path = folder / "human_decision_requests.json"
+            if request_path.is_file():
+                records = _read(request_path)
+                for raw in records.get("requests", []) if isinstance(records, Mapping) else []:
+                    if raw.get("episode_id") == self.episode.handle.episode_id and raw.get("status") in {"PENDING", "RESPONSE_RECORDED", "RESOLVED"}:
+                        request_loaded = self.b3_persistence.persist(
+                            "M4_SELECTION_REQUEST", dict(raw),
+                            artifact_id=f"{plan['research_plan_id']}:M4:SELECTION_AUTHORITY",
+                            artifact_kind="HumanDecisionRequest",
+                        ), dict(raw)
+                        break
+        if request_loaded is None and decision_loaded is None:
+            return None
+        if request_loaded is None:
+            raise ResearchM7Error("M4_SELECTION_SEAM_GAP")
+        if decision_loaded is None:
+            interaction = self.episode.store.interaction_record(
+                self.episode.handle.episode_id,
+                str(request_loaded[1].get("request_id") or ""),
+            )
+            stored_decision = interaction.get("decision")
+            if stored_decision is None:
+                return None
+            decision_loaded = (
+                self.b3_persistence.persist(
+                    "M4_SELECTION_DECISION", dict(stored_decision),
+                    artifact_id=decision_id,
+                    artifact_kind=decision_kind,
+                ),
+                dict(stored_decision),
+            )
+        request_payload = request_loaded[1]
+        decision_payload = decision_loaded[1]
+        try:
+            if mode == "USER_SELECTION":
+                request = HumanDecisionRequest.from_dict(dict(request_payload), require_contract=True)
+                decision = HumanDecision.from_dict(dict(decision_payload), require_bound_metadata=True)
+                validate_human_decision(request, decision, self.episode.handle.episode_id, require_bound_metadata=True)
+                baseline = self._baseline(b2)
+                candidate_ids = ResearchB3Orchestrator._eligible_candidates(
+                    baseline["base_research_pool"],
+                    baseline["preliminary_fidelity"],
+                    baseline["initial_sufficiency"],
+                )
+                selected = ResearchB3Orchestrator._parse_selection_option(
+                    decision.selected_option or request.recommendation, candidate_ids,
+                )
+                if not selected:
+                    raise ValueError("empty selection")
+                return {
+                    "mode": mode,
+                    "human_decision": decision.to_dict(),
+                    "selection_options": [selected],
+                }
+            if not isinstance(decision_payload, Mapping):
+                raise ValueError("delegated decision must be an object")
+            baseline = self._baseline(b2)
+            candidate_ids = ResearchB3Orchestrator._eligible_candidates(
+                baseline["base_research_pool"],
+                baseline["preliminary_fidelity"],
+                baseline["initial_sufficiency"],
+            )
+            selected = {str(item) for item in decision_payload.get("selected_work_ids", [])}
+            if not selected or not selected.issubset(candidate_ids):
+                raise ValueError("delegated selection outside eligible candidates")
+            return {"mode": mode, "delegation_decision": copy.deepcopy(dict(decision_payload))}
+        except (KeyError, TypeError, ValueError, ResearchB3Error) as exc:
+            raise ResearchM7Error("MISSING_VALID_SELECTION:REAL_ROUTE_PERSISTED_SELECTION_INVALID") from exc
+
+    def _ensure_operational_m4_request(self, b2: Mapping[str, Any]) -> HumanDecisionRequest:
+        """Materialize the canonical OWNER request through the interaction store."""
+        if not isinstance(b2.get("research_plan"), Mapping):
+            raise ResearchM7Error("REAL_ROUTE_STAGE_CONTEXT_B2_REQUIRED")
+        plan = _read(b2["research_plan"]["path"])
+        try:
+            baseline = self._baseline(b2)
+        except (KeyError, TypeError, OSError, ValueError) as exc:
+            raise ResearchM7Error(self._selection_missing_error()) from exc
+        candidate_ids = ResearchB3Orchestrator._eligible_candidates(
+            baseline["base_research_pool"], baseline["preliminary_fidelity"], baseline["initial_sufficiency"],
+        )
+        options = ResearchB3Orchestrator._selection_options(candidate_ids, None)
+        request_options = tuple(
+            {"id": ResearchB3Orchestrator._selection_option_id(option), "label": ", ".join(option)}
+            for option in options
+        )
+        lifecycle = baseline.get("lifecycle") if isinstance(baseline.get("lifecycle"), Mapping) else {}
+        request = HumanDecisionRequest(
+            request_id=f"{plan['research_plan_id']}:M4:SELECTION_REQUEST",
+            prompt="Seleccionar las obras que pasarán a investigación profunda.",
+            options=request_options,
+            recommendation=request_options[0]["id"],
+            episode_id=self.episode.handle.episode_id,
+            subject_ref=str(lifecycle.get("lifecycle_id") or plan["research_plan_id"]),
+            subject_version=str(lifecycle.get("lifecycle_version") or "2.0.0"),
+            subject_checksum=_checksum(lifecycle),
+            workflow_ref=str(lifecycle.get("lifecycle_id") or plan["research_plan_id"]),
+            expected_actor_ref="OWNER",
+            expected_channel="TERMINAL",
+        )
+        stored = self.episode.store.record_decision_request(
+            self.episode.handle.episode_id, request.to_dict(),
+        )
+        self.b3_persistence.persist(
+            "M4_SELECTION_REQUEST", stored,
+            artifact_id=f"{plan['research_plan_id']}:M4:SELECTION_AUTHORITY",
+            artifact_kind="HumanDecisionRequest",
+        )
+        return HumanDecisionRequest.from_dict(stored, require_contract=True)
 
     def run_b2(self, context: Mapping[str, Any]) -> Mapping[str, Any]:
         plan = self._plan_for_b2()
+        recovered = self._recover_b2_result()
+        if recovered is not None:
+            self._register_software_stage(recovered, manifest_key="execution_manifest", output_key="")
+            if isinstance(context, dict):
+                context.update({"b2_result": recovered, "research_plan": plan, "evidence_report": recovered["evidence_report"]})
+            return recovered
         stage_context = self.episode.context()
         result = ResearchB2Orchestrator(
             self.cognitive_executor,
@@ -378,15 +1076,23 @@ class ProductiveResearchStageAdapters:
             mutable["b2_result"] = result
             mutable["research_plan"] = plan
             mutable["evidence_report"] = result["evidence_report"]
+        self._register_software_stage(result, manifest_key="execution_manifest", output_key="")
         return result
 
     def run_m4(self, context: Mapping[str, Any]) -> Mapping[str, Any]:
         b2 = context.get("b2_result") if isinstance(context, Mapping) else None
         selection = context.get("selection") if isinstance(context, Mapping) else None
-        if not isinstance(b2, Mapping):
-            raise ResearchM7Error("REAL_ROUTE_STAGE_CONTEXT_B2_REQUIRED")
+        if not isinstance(b2, Mapping) or not b2:
+            # Preserve the pre-existing functional blocker for callers that
+            # invoke M4 before a materialized B2 result exists.
+            raise ResearchM7Error("REAL_ROUTE_OWNER_SELECTION_REQUIRED")
         if not isinstance(selection, Mapping):
-            raise ResearchM7Error(self._selection_missing_error())
+            selection = self._recover_persisted_selection(b2)
+            if isinstance(selection, Mapping) and isinstance(context, dict):
+                context["selection"] = copy.deepcopy(selection)
+        if not isinstance(selection, Mapping):
+            request = self._ensure_operational_m4_request(b2)
+            raise HumanDecisionPending(request)
         expected_authority = str(self.episode.brief.get("selection_authority") or "NOT_DECLARED").upper()
         mode = str(selection.get("mode") or "").upper()
         if expected_authority == "OWNER_DECIDES" and mode != "USER_SELECTION":
@@ -395,6 +1101,11 @@ class ProductiveResearchStageAdapters:
             raise ResearchM7Error("REAL_ROUTE_DELEGATED_SELECTION_AUTHORITY_MISMATCH")
         if expected_authority == "NOT_DECLARED":
             raise ResearchM7Error("REAL_ROUTE_SELECTION_AUTHORITY_REQUIRED")
+        recovered = self._recover_m4_result(b2)
+        if recovered is not None:
+            if isinstance(context, dict):
+                context.update({"m4_result": recovered, "evidence_report": recovered["evidence_report"], "selection": copy.deepcopy(recovered.get("selection") or selection)})
+            return recovered
         baseline = self._baseline(b2)
         stage_context = self.episode.context()
         stage_context.update({"evidence_report": _read(b2["evidence_report"]["path"]), "_evidence_report_ref": dict(b2["evidence_report"])})
@@ -424,6 +1135,14 @@ class ProductiveResearchStageAdapters:
             raise ResearchM7Error("REAL_ROUTE_STAGE_CONTEXT_B2_REQUIRED")
         if not isinstance(m4, Mapping):
             raise ResearchM7Error("REAL_ROUTE_STAGE_CONTEXT_M4_REQUIRED")
+        recovered = self._recover_m5_result(b2)
+        if recovered is not None:
+            producer = self._register_software_stage(recovered, manifest_key="execution_manifest", output_key="m5_outputs", extra_results=(b2, m4))
+            self._persist_producer_lineage(producer)
+            if isinstance(context, dict):
+                context.update({"m5_result": recovered, "evidence_report": recovered["evidence_report"], "producer_provenance": producer})
+                context["research_chain"] = self._research_chain(b2, m4, recovered)
+            return recovered
         baseline = self._baseline(b2)
         stage_context = self.episode.context()
         stage_context.update({"evidence_report": _read(m4["evidence_report"]["path"]), "_evidence_report_ref": dict(m4["evidence_report"])})
@@ -434,8 +1153,17 @@ class ProductiveResearchStageAdapters:
         ).run_m5(baseline, m4, context=stage_context)
         if isinstance(context, dict):
             context["m5_result"] = result
-            context["evidence_report"] = result["evidence_report"]
+            # ResearchB3's M5 result intentionally exposes the M5 outputs;
+            # the evidence report consumed by the next boundary remains the
+            # verified M4 deep-evidence ref when M5 has not produced a new
+            # report yet (including an external seam pause).
+            context["evidence_report"] = copy.deepcopy(
+                result.get("evidence_report") or m4.get("evidence_report")
+            )
             context["research_chain"] = self._research_chain(b2, m4, result)
+            producer = self._register_software_stage(result, manifest_key="execution_manifest", output_key="m5_outputs", extra_results=(b2, m4))
+            self._persist_producer_lineage(producer)
+            context["producer_provenance"] = producer
         return result
 
     def run_m6(self, context: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -446,13 +1174,83 @@ class ProductiveResearchStageAdapters:
             raise ResearchM7Error("REAL_ROUTE_STAGE_CONTEXT_M5_REQUIRED")
         if not isinstance(chain, Mapping):
             raise ResearchM7Error("REAL_ROUTE_RESEARCH_CHAIN_REQUIRED")
-        if not isinstance(provenance, Mapping):
+        producer = context.get("producer_provenance") if isinstance(context, Mapping) else None
+        if not isinstance(producer, Mapping) and isinstance(provenance, Mapping):
+            producer = provenance.get("producer_provenance") if isinstance(provenance.get("producer_provenance"), Mapping) else None
+        if not isinstance(producer, Mapping):
             raise ResearchM7Error("REAL_ROUTE_REAL_PROVENANCE_REQUIRED")
+        if context.get("external_auditor_required") and not isinstance(context.get("auditor_provenance"), Mapping):
+            raise ResearchM7Error("M6_EXTERNAL_AUDITOR_PROVENANCE_REQUIRED")
+        # Refresh the single canonical Software producer run from the
+        # persisted chain immediately before M6 resolves it.  This binds the
+        # exact post-restart checksums consumed by the auditor, including the
+        # ResearchPlan file, without creating a second provenance registry.
+        chain_refs = chain.get("artifact_refs", []) if isinstance(chain, Mapping) else []
+        register_software_outputs(
+            self._provenance_path(),
+            run_id=self._software_run_id(),
+            episode_id=self.episode.handle.episode_id,
+            role="RESEARCH_AND_CURATION",
+            outputs=[
+                {
+                    "artifact_id": str(ref.get("artifact_id") or ""),
+                    "artifact_kind": str(ref.get("artifact_kind") or ""),
+                    "artifact_version": str(ref.get("artifact_version") or ""),
+                    "checksum": str(ref.get("checksum") or ""),
+                }
+                for ref in chain_refs
+                if isinstance(ref, Mapping)
+            ],
+        )
         stage_context = self.episode.context()
-        stage_context.update(dict(provenance))
+        stage_context.update(dict(provenance) if isinstance(provenance, Mapping) else {})
+        # Imported provenance is already bound by the generic handoff
+        # importer.  M6 still receives it through its canonical producer /
+        # auditor fields so ResearchB4 can resolve the registry-backed run
+        # and enforce auditor independence; no identity is synthesized here.
+        stage_context["producer_provenance"] = copy.deepcopy(dict(producer))
+        auditor_provenance = context.get("auditor_provenance") if isinstance(context, Mapping) else None
+        if not isinstance(auditor_provenance, Mapping) and isinstance(provenance, Mapping):
+            auditor_provenance = provenance.get("auditor_provenance")
+        if isinstance(auditor_provenance, Mapping):
+            stage_context["auditor_provenance"] = copy.deepcopy(dict(auditor_provenance))
         return ResearchB4Orchestrator(
             self.cognitive_executor, self.b4_persistence,
+            _test_provenance_repository_root=self.provenance_repository_root,
         ).run_m6(m5, context=stage_context, research_chain=chain)
+
+
+def respond_to_research_human_decision(
+    store: VaultEpisodeStore,
+    episode_id: str,
+    *,
+    request_id: str,
+    action: str,
+    selected_option: str | None = None,
+    correction: str | None = None,
+    actor_ref: str = "OWNER",
+    channel: str = "TERMINAL",
+) -> dict[str, Any]:
+    """Record an OWNER response through the canonical interaction store."""
+    record = store.interaction_record(episode_id, request_id)
+    request = HumanDecisionRequest.from_dict(record["request"], require_contract=True)
+    decision = HumanDecision(
+        request_id=request.request_id,
+        action=str(action).upper(),
+        selected_option=selected_option,
+        correction=correction,
+        actor_ref=actor_ref,
+        channel=channel,
+    ).bind_request(request)
+    validate_human_decision(request, decision, episode_id, require_bound_metadata=True)
+    store.record_decision(episode_id, decision.to_dict())
+    return {
+        "status": "RESPONSE_RECORDED",
+        "episode_id": episode_id,
+        "request_id": request_id,
+        "request_checksum": request.checksum(),
+        "decision": decision.to_dict(),
+    }
 
 
 @dataclass(frozen=True)
@@ -471,6 +1269,8 @@ class RealResearchRoutePreparation:
     max_retries: int
     timeout_seconds: int
     mission_authorization_path: str | None = None
+    mission_contract_path: str = REAL_EXTERNAL_HANDOFF_CONTRACT
+    handoff_directory: Path = REAL_EXTERNAL_HANDOFF_DIRECTORY
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]) -> "RealResearchRoutePreparation":
@@ -505,6 +1305,8 @@ class RealResearchRoutePreparation:
             budget_limit=budget,
             max_iterations=iterations, max_retries=retries, timeout_seconds=timeout,
             mission_authorization_path=(str(values["mission_authorization_path"]) if values.get("mission_authorization_path") else None),
+            mission_contract_path=str(values.get("mission_contract_path") or REAL_EXTERNAL_HANDOFF_CONTRACT),
+            handoff_directory=Path(str(values.get("handoff_directory") or REAL_EXTERNAL_HANDOFF_DIRECTORY)),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -519,6 +1321,8 @@ class RealResearchRoutePreparation:
             "max_retries": self.max_retries,
             "timeout_seconds": self.timeout_seconds,
             "mission_authorization_path": self.mission_authorization_path,
+            "mission_contract_path": self.mission_contract_path,
+            "handoff_directory": str(self.handoff_directory),
             "terminal_stage": REAL_RESEARCH_TERMINAL_STAGE,
             "canonical_route": self.canonical_route_descriptor(),
             "real_ai_execution": False,
@@ -586,7 +1390,34 @@ class RealResearchRoutePreparation:
                     raise ResearchM7Error(f"REAL_ROUTE_INITIAL_CONTEXT_RESERVED:{key}")
                 context[key] = copy.deepcopy(value)
         for stage in REAL_RESEARCH_CANONICAL_STAGES:
-            stage_result = stage_runners[stage](context)
+            try:
+                stage_result = stage_runners[stage](context)
+            except ExternalCognitiveHandoffPending as pending:
+                return {
+                    "status": "PENDING_EXTERNAL_COGNITIVE_RESULT",
+                    "pending_stage": pending.stage,
+                    "handoff_id": pending.handoff_id,
+                    "handoff_package_ref": str(pending.package_path.resolve()),
+                    "completed_stages": list(context["completed_stages"]),
+                    "stage_results": context["stage_results"],
+                    "terminal_stage": None,
+                    "real_ai_execution": False,
+                    "real_ai_calls": 0,
+                    "provenance": None,
+                    "post_terminal_execution": False,
+                }
+            except HumanDecisionPending as pending:
+                return {
+                    "status": "WAITING_FOR_HUMAN_DECISION",
+                    "pending_stage": "M4",
+                    "human_decision_request": pending.request.to_dict(),
+                    "completed_stages": list(context["completed_stages"]),
+                    "stage_results": context["stage_results"],
+                    "terminal_stage": None,
+                    "real_ai_execution": False,
+                    "real_ai_calls": 0,
+                    "post_terminal_execution": False,
+                }
             if not isinstance(stage_result, Mapping):
                 raise ResearchM7Error(f"REAL_ROUTE_{stage}_RESULT_INVALID")
             context["stage_results"][stage] = copy.deepcopy(dict(stage_result))
@@ -618,6 +1449,8 @@ class RealResearchRoutePreparation:
             config={
                 "repository_root": str(Path(__file__).resolve().parents[2]),
                 "mission_authorization_path": self.mission_authorization_path,
+                "mission_contract_path": self.mission_contract_path,
+                "handoff_directory": str(self.handoff_directory),
                 "budget_limit": self.budget_limit,
                 "max_iterations": self.max_iterations,
                 "max_retries": self.max_retries,
@@ -653,6 +1486,220 @@ class RealResearchRoutePreparation:
         run_id = str(provenance.get("run_id") or "")
         if not run_id or not executor_id or executor_id == "synthetic-fixture" or run_id.startswith("M7-"):
             raise ResearchM7Error("REAL_PROVENANCE_SYNTHETIC_OR_MISSING")
+
+
+def import_and_resume_external_research(
+    store: VaultEpisodeStore,
+    result_path: str | Path,
+    *,
+    _test_provenance_repository_root: Path | None = None,
+    _test_acquisition_adapter: SoftwareAcquisitionAdapter | None = None,
+) -> dict[str, Any]:
+    """Import one pending Research V2 result and resume the same route.
+
+    The pending handoff is the only authority for the accepted stage and
+    bindings.  No provider, model, runtime, search or fetch is selected.
+    """
+    result_file = Path(result_path)
+    try:
+        payload = _read(result_file)
+    except ResearchM7Error as exc:
+        raise ResearchM7Error(f"ROUNDTRIP_RESULT_INVALID:{exc}") from exc
+    if not isinstance(payload, Mapping):
+        raise ResearchM7Error("ROUNDTRIP_RESULT_INVALID: resultado no es un objeto")
+    episode_id = str(payload.get("episode_id") or "").strip()
+    if not episode_id:
+        raise ResearchM7Error("ROUNDTRIP_RESULT_INVALID: falta episode_id")
+    episode = PersistedResearchEpisode.load(store, episode_id)
+    state_path = episode.handle.folder / REAL_EXTERNAL_HANDOFF_STATE_FILENAME
+    if not state_path.is_file():
+        raise ResearchM7Error("ROUNDTRIP_IMPORT_BLOCKED:NO_PENDING_HANDOFF")
+    state = _read(state_path)
+    if not isinstance(state, Mapping) or state.get("status") != "PENDING_EXTERNAL_COGNITIVE_RESULT":
+        raise ResearchM7Error("ROUNDTRIP_IMPORT_BLOCKED:NO_PENDING_HANDOFF")
+    package_path = Path(str(state.get("handoff_package_ref") or ""))
+    if not package_path.is_file():
+        raise ResearchM7Error("HANDOFF_PACKAGE_MISSING")
+    try:
+        package = _read(package_path)
+    except ResearchM7Error as exc:
+        raise ResearchM7Error(f"HANDOFF_PACKAGE_INVALID:{exc}") from exc
+    if not isinstance(package, Mapping):
+        raise ResearchM7Error("HANDOFF_PACKAGE_INVALID")
+    # The pending package is the sole authority for the next cognitive seam.
+    # There is intentionally no parallel stage list here: the coordinator
+    # emitted this package and the importer accepts only that exact package.
+    bindings = {
+        "mission_id": "EXTEND_01_M2_REAL_E2E",
+        "episode_id": episode_id,
+        "capability_id": REAL_RESEARCH_CAPABILITY,
+        "handoff_id": state.get("handoff_id"),
+        "package_checksum": state.get("handoff_package_checksum"),
+    }
+    if any(package.get(key) != value for key, value in bindings.items()):
+        raise ResearchM7Error("ROUNDTRIP_CHECKPOINT_BINDING_INVALID")
+    for key in ("stage", "role", "output_schema", "input_manifest_checksum", "skill_id", "skill_version"):
+        state_key = {
+            "output_schema": "expected_return",
+        }.get(key, key)
+        if state.get(state_key) not in (None, "") and package.get(key) != state.get(state_key):
+            raise ResearchM7Error(f"ROUNDTRIP_CHECKPOINT_BINDING_INVALID:{key}")
+    try:
+        cognitive_output = AgentHandoffProvider().import_result(package_path, result_file)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, PermissionError, ValueError) as exc:
+        raise ResearchM7Error(f"ROUNDTRIP_RESULT_BLOCKED:{exc}") from exc
+    if not isinstance(cognitive_output, (Mapping, list)) or (isinstance(cognitive_output, list) and not cognitive_output):
+        raise ResearchM7Error("RESEARCH_EXTERNAL_OUTPUT_INVALID")
+
+    provenance = payload.get("provenance")
+    prior_provenance = state.get("provenance") if isinstance(state, Mapping) else None
+    prior_producer_provenance = state.get("producer_provenance") if isinstance(state, Mapping) else None
+    provenance_status = "NOT_AVAILABLE"
+    if provenance is not None:
+        if not isinstance(provenance, Mapping):
+            raise ResearchM7Error("EXTERNAL_PROVENANCE_INVALID")
+        for field in ("mission_id", "episode_id", "capability_id", "stage", "role", "handoff_id"):
+            if field in provenance and provenance.get(field) != package.get(field):
+                raise ResearchM7Error(f"EXTERNAL_PROVENANCE_BINDING_INVALID:{field}")
+        if not str(provenance.get("run_id") or "") or not str(provenance.get("executor_id") or ""):
+            raise ResearchM7Error("EXTERNAL_PROVENANCE_UNVERIFIABLE")
+        if provenance.get("run_id") != payload.get("result_run_id"):
+            raise ResearchM7Error("EXTERNAL_PROVENANCE_RUN_BINDING_INVALID")
+        if str(provenance.get("run_id")).startswith("M7-") or provenance.get("executor_id") == "synthetic-fixture":
+            raise ResearchM7Error("EXTERNAL_PROVENANCE_SYNTHETIC")
+        provenance = copy.deepcopy(dict(provenance))
+        provenance_status = "REPORTED_AND_BOUND"
+    producer_provenance = copy.deepcopy(dict(prior_producer_provenance)) if isinstance(prior_producer_provenance, Mapping) else None
+    external_cognitive_provenance = None
+    auditor_provenance = None
+    if provenance_status == "REPORTED_AND_BOUND" and isinstance(provenance, Mapping):
+        declared_producer = provenance.get("producer_provenance")
+        if isinstance(declared_producer, Mapping):
+            external_cognitive_provenance = copy.deepcopy(dict(declared_producer))
+        else:
+            external_cognitive_provenance = copy.deepcopy(dict(provenance))
+        if str(package.get("stage") or "") == "M6_INDEPENDENT_RESEARCH_AUDIT":
+            if provenance.get("role") != "INDEPENDENT_RESEARCH_AUDITOR":
+                raise ResearchM7Error("M6_EXTERNAL_AUDITOR_ROLE_INVALID")
+            required_auditor = ("actor_id", "run_id", "executor_id", "role")
+            if any(not str(provenance.get(field) or "").strip() for field in required_auditor):
+                raise ResearchM7Error("M6_EXTERNAL_AUDITOR_PROVENANCE_UNVERIFIABLE")
+            auditor_provenance = copy.deepcopy(dict(provenance))
+            auditor_provenance["source"] = "EXTERNAL_COGNITIVE_RESULT"
+        elif isinstance(provenance.get("producer_provenance"), Mapping):
+            # Explicit nested producer metadata remains a cognitive identity;
+            # the M5 Software producer is bound later from its canonical run.
+            external_cognitive_provenance = copy.deepcopy(dict(provenance["producer_provenance"]))
+
+    stage = str(package.get("stage") or "")
+    b2_root = episode.handle.folder / "research_v2" / "b2"
+    planning = ResearchPlanningService()
+    proposal_ref = None
+    if stage == "RESEARCH_PLANNING":
+        if not isinstance(cognitive_output, Mapping):
+            raise ResearchM7Error("RESEARCH_PLAN_PROPOSAL_INVALID")
+        proposal = cognitive_output
+        persistence = ResearchB2Persistence(b2_root)
+        proposal_ref = persistence.persist(
+            "RESEARCH_PLAN_PROPOSAL", dict(proposal),
+            artifact_id=f"{episode_id}:RESEARCH_PLAN_PROPOSAL",
+            artifact_kind="ResearchPlanProposal",
+        )
+        # The persisted artifact checksum is the lineage checksum.  Do not
+        # derive a replacement from a newly materialized plan representation.
+        plan = planning.bind_research_plan(
+            proposal,
+            episode_id=episode_id,
+            brief_version=str(episode.brief["brief_version"]),
+            research_role=str(episode.human_input.get("research_role") or "NORMAL"),
+            editorial_intent=str(episode.human_input.get("editorial_intent") or "NO_DECLARADA"),
+            origin_ref=str(proposal_ref["artifact_id"]),
+        )
+        plan["origin_artifact_refs"][0].update({
+            "artifact_ref": proposal_ref["artifact_id"],
+            "artifact_version": proposal_ref["artifact_version"],
+            "checksum": proposal_ref["checksum"],
+        })
+    else:
+        plan = None
+    _write_json_atomic(
+        episode.handle.folder / REAL_EXTERNAL_RESULT_FILENAME,
+        {
+            "handoff_id": package["handoff_id"],
+            "episode_id": episode_id,
+            "stage": stage,
+            "result_run_id": payload.get("result_run_id"),
+            "output_checksum": payload.get("output_checksum"),
+            "provenance": provenance,
+            "provenance_status": provenance_status,
+            "producer_provenance": producer_provenance,
+            "external_cognitive_provenance": external_cognitive_provenance,
+            "auditor_provenance": auditor_provenance,
+            "output": copy.deepcopy(cognitive_output),
+            **({"proposal": dict(cognitive_output)} if stage == "RESEARCH_PLANNING" else {}),
+        },
+    )
+    imported_state = dict(state)
+    imported_state.update({
+        "status": "IMPORTED_EXTERNAL_COGNITIVE_RESULT",
+        "result_run_id": payload.get("result_run_id"),
+        "result_checksum": payload.get("output_checksum"),
+        "provenance": provenance,
+        "provenance_status": provenance_status,
+        "producer_provenance": producer_provenance,
+        "external_cognitive_provenance": external_cognitive_provenance,
+        "auditor_provenance": auditor_provenance,
+        "imported_stage": stage,
+        "completed_stages": [stage] if stage == "RESEARCH_PLANNING" else list(state.get("completed_stages", [])),
+        "next_action": "RESUME_RESEARCH_V2",
+        "research_plan_proposal": proposal_ref if stage == "RESEARCH_PLANNING" else state.get("research_plan_proposal"),
+        "research_plan": {"status": "WILL_BE_PERSISTED_BY_B2"} if stage == "RESEARCH_PLANNING" else state.get("research_plan"),
+    })
+    _write_json_atomic(state_path, imported_state)
+
+    controls = package.get("execution_controls")
+    if not isinstance(controls, Mapping):
+        raise ResearchM7Error("execution_controls ausentes en handoff Research")
+    preparation = RealResearchRoutePreparation.from_mapping({
+        "episode_id": episode_id,
+        "topic": str(episode.brief["tema"]),
+        "question": episode.brief.get("initial_question"),
+        "budget_limit": controls.get("budget_limit"),
+        "max_iterations": controls.get("max_iterations"),
+        "max_retries": controls.get("max_retries"),
+        "timeout_seconds": controls.get("timeout_seconds"),
+        "mission_authorization_path": package.get("mission_authorization_path"),
+        "mission_contract_path": package.get("mission_contract_path"),
+        "handoff_directory": str(package_path.parent),
+    })
+    resumed = preparation.run_canonical_vertical(
+        ProductiveResearchStageAdapters(
+            episode,
+            cognitive_executor=ExternalResearchCognitiveExecutor(episode, preparation),
+            acquisition_adapter=_test_acquisition_adapter,
+            _test_provenance_repository_root=(
+                _test_provenance_repository_root
+                if _test_provenance_repository_root is not None
+                else Path(__file__).resolve().parents[2]
+            ),
+        ).stage_runners(),
+        initial_context=(
+            {
+                **({"real_provenance": copy.deepcopy(dict(external_cognitive_provenance))} if isinstance(external_cognitive_provenance, Mapping) else {}),
+                **({"producer_provenance": copy.deepcopy(dict(producer_provenance))} if isinstance(producer_provenance, Mapping) else {}),
+                **({"auditor_provenance": copy.deepcopy(dict(auditor_provenance)), "external_auditor_required": True} if isinstance(auditor_provenance, Mapping) else {}),
+                **({"external_auditor_required": True} if stage == "M6_INDEPENDENT_RESEARCH_AUDIT" else {}),
+            }
+            or None
+        ),
+    )
+    return {
+        "status": "IMPORTED_AND_RESUMED",
+        "episode_id": episode_id,
+        "imported_stage": stage,
+        "provenance_status": provenance_status,
+        "resume": resumed,
+    }
 
 
 @dataclass(frozen=True)

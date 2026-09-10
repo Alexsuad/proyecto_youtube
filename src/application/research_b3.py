@@ -27,6 +27,8 @@ from src.application.research_b2 import (
     ResearchB2Persistence,
     SoftwareAcquisitionAdapter,
     ResearchB2Orchestrator,
+    SOFTWARE_OWNED_FIELDS,
+    _strip_cognitive_technical,
     _checksum,
     _write_json_atomic,
     utc_now,
@@ -57,57 +59,6 @@ DEEP_WORK_USE = "DEEP_WORK_RESEARCH"
 M5_CLAIMS_USE = "M5_POST_DEEP_CLAIMS_CONSOLIDATION"
 M5_COMPARISON_STAGE = "POST_DEEP_REEVALUATION"
 M5_PROVISIONAL_DISPOSITIONS = {"CONFIRMED", "MODIFIED", "REJECTED", "LIMITED"}
-
-# These values belong to Software.  Cognitive text can propose content, but
-# it cannot bring identity, lifecycle, acquisition or provenance authority.
-SOFTWARE_OWNED_FIELDS = {
-    "artifact_id",
-    "artifact_version",
-    "dossier_id",
-    "dossier_version",
-    "decision_id",
-    "decision_version",
-    "lifecycle_id",
-    "lifecycle_version",
-    "thesis_id",
-    "version",
-    "created_at",
-    "artifact_validity",
-    "research_contract_version",
-    "lineage",
-    "acquisition_bindings",
-    "software_controlled",
-    "recovery_artifact_ref",
-    "retrieval_request_ref",
-    "request_ref",
-    "execution_ref",
-    "checksum",
-    "checksums",
-    "provenance",
-    "operational_guard_ref",
-    "research_stop_decision_ref",
-    "research_id",
-    "episode_id",
-    "evidence_report_id",
-    "comparison_id",
-    "comparison_version",
-    "ledger_id",
-    "contract_version",
-    "ledger_stage",
-    "semantic_audit_id",
-    "curation_id",
-    "owner_scope",
-    "provisional_thesis_id",
-    "claims_ledger_id",
-    "research_comparison_id",
-    "research_stop_decision_refs",
-    "analysis_ids",
-    "provisional_disposition",
-    "decision_ref",
-    "selection_authority_ref",
-    "authorized_candidate_set",
-}
-
 
 class ResearchB3Error(ResearchB2Error):
     """A deterministic M4 contract, routing or boundary failure."""
@@ -200,19 +151,6 @@ class M4Selection:
     selected_work_ids: tuple[str, ...]
     mode: str
     authority_ref: str
-
-
-def _strip_cognitive_technical(value: Any) -> Any:
-    """Remove technical authority from an injected cognitive projection."""
-    if isinstance(value, dict):
-        return {
-            key: _strip_cognitive_technical(item)
-            for key, item in value.items()
-            if key not in SOFTWARE_OWNED_FIELDS
-        }
-    if isinstance(value, list):
-        return [_strip_cognitive_technical(item) for item in value]
-    return copy.deepcopy(value)
 
 
 def _as_dict(value: Any, label: str) -> dict[str, Any]:
@@ -535,21 +473,62 @@ class ResearchB3Orchestrator:
 
         candidate_ids = self._eligible_candidates(pool, fidelity, sufficiency)
         events: list[dict[str, Any]] = []
-        selection = self._materialize_selection(
-            plan,
-            lifecycle,
-            candidate_ids,
-            ctx,
-            provisional_thesis,
-            research_comparison,
-            deepening_targets,
-            events,
-            selection_mode=selection_mode,
-            human_decision=human_decision,
-            delegation_decision=delegation_decision,
-            selection_options=selection_options,
-            known_evidence_refs=known_evidence_refs,
+        def recover(stage: str, artifact_id: str, artifact_kind: str) -> tuple[dict[str, str], Any] | None:
+            loaded = self.persistence.load_existing(stage, artifact_id=artifact_id, artifact_kind=artifact_kind)
+            if loaded is not None:
+                events.append({"stage": stage, "boundary": "SOFTWARE_RECOVER", "artifact_id": loaded[0]["artifact_id"]})
+            return loaded
+
+        selection_request_stage = "M4_SELECTION_REQUEST" if str(selection_mode).upper() == "USER_SELECTION" else "M4_DELEGATION_DECISION"
+        selection_request_kind = "HumanDecisionRequest" if str(selection_mode).upper() == "USER_SELECTION" else "DelegationDecision"
+        selection_loaded = recover(
+            selection_request_stage,
+            f"{plan['research_plan_id']}:M4:SELECTION_AUTHORITY",
+            selection_request_kind,
         )
+        selection_decision_loaded = recover(
+            "M4_SELECTION_DECISION",
+            f"{plan['research_plan_id']}:M4:{'HUMAN_DECISION' if str(selection_mode).upper() == 'USER_SELECTION' else 'DELEGATED_SELECTION'}",
+            "HumanDecision" if str(selection_mode).upper() == "USER_SELECTION" else "DelegatedSelectionDecision",
+        )
+        if (selection_loaded is None) != (selection_decision_loaded is None):
+            raise ResearchB3Error("M4_SELECTION_SEAM_GAP")
+        if selection_loaded is not None and selection_decision_loaded is not None:
+            self._selection_artifact = copy.deepcopy(dict(selection_loaded[1]))
+            self._selection_stage = selection_request_stage
+            decision_payload = selection_decision_loaded[1]
+            if str(selection_mode).upper() == "USER_SELECTION":
+                try:
+                    bound = HumanDecision.from_dict(dict(decision_payload))
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise ResearchB3Error("M4_SELECTION_DECISION_RECOVERY_INVALID") from exc
+                selected = self._parse_selection_option(bound.selected_option or self._selection_artifact.get("recommendation"), candidate_ids)
+                selection = M4Selection(tuple(selected), "USER_SELECTION", selection_decision_loaded[0]["artifact_id"])
+                self._decision_artifact = copy.deepcopy(dict(decision_payload))
+            else:
+                if not isinstance(decision_payload, Mapping):
+                    raise ResearchB3Error("M4_DELEGATED_SELECTION_RECOVERY_INVALID")
+                selected = [str(item) for item in decision_payload.get("selected_work_ids", [])]
+                if not selected or not set(selected).issubset(candidate_ids):
+                    raise ResearchB3Error("M4_DELEGATED_SELECTION_RECOVERY_INVALID")
+                selection = M4Selection(tuple(sorted(set(selected))), "DELEGATED_SELECTION", selection_decision_loaded[0]["artifact_id"])
+                self._delegated_selection_artifact = copy.deepcopy(dict(decision_payload))
+        else:
+            selection = self._materialize_selection(
+                plan,
+                lifecycle,
+                candidate_ids,
+                ctx,
+                provisional_thesis,
+                research_comparison,
+                deepening_targets,
+                events,
+                selection_mode=selection_mode,
+                human_decision=human_decision,
+                delegation_decision=delegation_decision,
+                selection_options=selection_options,
+                known_evidence_refs=known_evidence_refs,
+            )
         selected_ids = list(selection.selected_work_ids)
         for work_id in selected_ids:
             if not self._targets_for_work(deepening_targets, work_id):
@@ -557,31 +536,33 @@ class ResearchB3Orchestrator:
         selected_pool = [item for item in fidelity if item["work"]["material_id"] in selected_ids]
         by_work = {item["work"]["material_id"]: item for item in selected_pool}
 
-        selection_ref = self.persistence.persist(
-            "M4_SELECTION_REQUEST" if selection.mode == "USER_SELECTION" else "M4_DELEGATION_DECISION",
-            self._selection_artifact,
-            artifact_id=f"{plan['research_plan_id']}:M4:SELECTION_AUTHORITY",
-            artifact_kind="HumanDecisionRequest" if selection.mode == "USER_SELECTION" else "DelegationDecision",
-        )
-        events.append({"stage": "SELECTION", "boundary": "SOFTWARE_PERSIST", "artifact_id": selection_ref["artifact_id"]})
-        if selection.mode == "USER_SELECTION":
-            decision_ref = self.persistence.persist(
-                "M4_SELECTION_DECISION",
-                self._decision_artifact,
-                artifact_id=f"{plan['research_plan_id']}:M4:HUMAN_DECISION",
-                artifact_kind="HumanDecision",
+        if selection_loaded is None or selection_decision_loaded is None:
+            selection_ref = self.persistence.persist(
+                "M4_SELECTION_REQUEST" if selection.mode == "USER_SELECTION" else "M4_DELEGATION_DECISION",
+                self._selection_artifact,
+                artifact_id=f"{plan['research_plan_id']}:M4:SELECTION_AUTHORITY",
+                artifact_kind="HumanDecisionRequest" if selection.mode == "USER_SELECTION" else "DelegationDecision",
             )
+            events.append({"stage": "SELECTION", "boundary": "SOFTWARE_PERSIST", "artifact_id": selection_ref["artifact_id"]})
+            if selection.mode == "USER_SELECTION":
+                decision_ref = self.persistence.persist(
+                    "M4_SELECTION_DECISION",
+                    self._decision_artifact,
+                    artifact_id=f"{plan['research_plan_id']}:M4:HUMAN_DECISION",
+                    artifact_kind="HumanDecision",
+                )
+            else:
+                decision_ref = self.persistence.persist(
+                    "M4_SELECTION_DECISION",
+                    self._delegated_selection_artifact,
+                    artifact_id=f"{plan['research_plan_id']}:M4:DELEGATED_SELECTION",
+                    artifact_kind="DelegatedSelectionDecision",
+                )
             events.append({"stage": "SELECTION", "boundary": "SOFTWARE_PERSIST", "artifact_id": decision_ref["artifact_id"]})
             selection_authority_ref = decision_ref["artifact_id"]
         else:
-            selection_decision_ref = self.persistence.persist(
-                "M4_SELECTION_DECISION",
-                self._delegated_selection_artifact,
-                artifact_id=f"{plan['research_plan_id']}:M4:DELEGATED_SELECTION",
-                artifact_kind="DelegatedSelectionDecision",
-            )
-            events.append({"stage": "SELECTION", "boundary": "SOFTWARE_PERSIST", "artifact_id": selection_decision_ref["artifact_id"]})
-            selection_authority_ref = selection_decision_ref["artifact_id"]
+            selection_ref = selection_loaded[0]
+            selection_authority_ref = selection_decision_loaded[0]["artifact_id"]
 
         input_artifacts = [
             self._artifact_ref(phenomenon, "ResearchPack"),
@@ -592,55 +573,60 @@ class ResearchB3Orchestrator:
             {"artifact_id": f"{plan['research_plan_id']}:DEEPENING_TARGETS", "artifact_kind": "B2DeepeningTargets"},
             {"artifact_id": selection_authority_ref, "artifact_kind": "SelectionAuthority"},
         ]
-        deep_phenomenon = self._step(
-            "DEEP_PHENOMENON_RESEARCH",
-            "research_pack",
-            plan,
-            ctx,
-            input_artifacts,
-            events,
-            lambda value: self._validate_deep_phenomenon(value, phenomenon, provisional_thesis),
-            base_research=phenomenon,
-            stage_payload={
-                "provisional_thesis": provisional_thesis,
-                "research_comparison": research_comparison,
-                "deepening_targets": deepening_targets,
-                "base_research": phenomenon,
-                "intended_use": plan.get("intended_use"),
-            },
+        deep_phenomenon_loaded = recover(
+            "DEEP_PHENOMENON_RESEARCH", f"{plan['research_plan_id']}:DEEP_PHENOMENON", "ResearchPack"
         )
-        deep_phenomenon_ref = self.persistence.persist(
-            "DEEP_PHENOMENON_RESEARCH",
-            deep_phenomenon,
-            artifact_id=f"{plan['research_plan_id']}:DEEP_PHENOMENON",
-            artifact_kind="ResearchPack",
-        )
-        events.append({"stage": "DEEP_PHENOMENON_RESEARCH", "boundary": "SOFTWARE_PERSIST", "artifact_id": deep_phenomenon_ref["artifact_id"]})
+        if deep_phenomenon_loaded is None:
+            deep_phenomenon = self._step(
+                "DEEP_PHENOMENON_RESEARCH", "research_pack", plan, ctx, input_artifacts, events,
+                lambda value: self._validate_deep_phenomenon(value, phenomenon, provisional_thesis),
+                base_research=phenomenon,
+                stage_payload={"provisional_thesis": provisional_thesis, "research_comparison": research_comparison,
+                               "deepening_targets": deepening_targets, "base_research": phenomenon,
+                               "intended_use": plan.get("intended_use")},
+            )
+            deep_phenomenon_ref = self.persistence.persist(
+                "DEEP_PHENOMENON_RESEARCH", deep_phenomenon,
+                artifact_id=f"{plan['research_plan_id']}:DEEP_PHENOMENON", artifact_kind="ResearchPack",
+            )
+            events.append({"stage": "DEEP_PHENOMENON_RESEARCH", "boundary": "SOFTWARE_PERSIST", "artifact_id": deep_phenomenon_ref["artifact_id"]})
+        else:
+            deep_phenomenon_ref, deep_phenomenon = deep_phenomenon_loaded
+            self._validate_deep_phenomenon(deep_phenomenon, phenomenon, provisional_thesis)
 
-        phenomenon_stop = self._step(
-            "DEEP_PHENOMENON_SUFFICIENCY",
-            "research_stop_decision",
-            plan,
-            ctx,
-            [deep_phenomenon_ref],
-            events,
-            lambda value: self._validate_stop(
-                value, "PHENOMENON", deep_phenomenon["research_id"],
-                expected_intended_use=DEEP_PHENOMENON_USE,
-            ),
-            subject_kind="PHENOMENON",
-            subject_ref=deep_phenomenon["research_id"],
-            expected_intended_use=DEEP_PHENOMENON_USE,
+        phenomenon_stop_loaded = recover(
+            "DEEP_PHENOMENON_SUFFICIENCY", f"{plan['research_plan_id']}:M4:RSD:PHENOMENON", "ResearchStopDecision"
         )
-        phenomenon_stop_ref = self.persistence.persist(
-            "DEEP_PHENOMENON_SUFFICIENCY",
-            phenomenon_stop,
-            artifact_id=f"{plan['research_plan_id']}:M4:RSD:PHENOMENON",
-            artifact_kind="ResearchStopDecision",
-        )
+        if phenomenon_stop_loaded is None:
+            phenomenon_stop = self._step(
+                "DEEP_PHENOMENON_SUFFICIENCY", "research_stop_decision", plan, ctx, [deep_phenomenon_ref], events,
+                lambda value: self._validate_stop(value, "PHENOMENON", deep_phenomenon["research_id"], expected_intended_use=DEEP_PHENOMENON_USE),
+                subject_kind="PHENOMENON", subject_ref=deep_phenomenon["research_id"], expected_intended_use=DEEP_PHENOMENON_USE,
+            )
+            phenomenon_stop_ref = self.persistence.persist(
+                "DEEP_PHENOMENON_SUFFICIENCY", phenomenon_stop,
+                artifact_id=f"{plan['research_plan_id']}:M4:RSD:PHENOMENON", artifact_kind="ResearchStopDecision",
+            )
+        else:
+            phenomenon_stop_ref, phenomenon_stop = phenomenon_stop_loaded
+            self._validate_stop(phenomenon_stop, "PHENOMENON", deep_phenomenon["research_id"], expected_intended_use=DEEP_PHENOMENON_USE)
 
         deep_research: list[dict[str, Any]] = []
+        deep_research_loaded = recover(
+            "DEEP_WORK_RESEARCH", f"{plan['research_plan_id']}:DEEP_WORK_RESEARCH", "WorkResearchDossierCollection"
+        )
+        deep_research_ref = deep_research_loaded[0] if deep_research_loaded else None
+        if deep_research_loaded:
+            deep_research = self._document_list(deep_research_loaded[1], "DEEP_WORK_RESEARCH")
+            for item in deep_research:
+                work_id = str(item.get("work", {}).get("material_id") or "")
+                if work_id not in selected_ids:
+                    raise ResearchB3Error("DEEP_WORK_RESEARCH_RECOVERY_SCOPE_INVALID")
+                self._validate_deep_dossier(item, work_id, known_evidence_refs=known_evidence_refs)
+        recovered_work_ids = {str(item.get("work", {}).get("material_id")) for item in deep_research}
         for work_id in selected_ids:
+            if work_id in recovered_work_ids:
+                continue
             dossier = self._step(
                 "DEEP_WORK_RESEARCH",
                 "work_research_dossier",
@@ -670,16 +656,34 @@ class ResearchB3Orchestrator:
                 expected_intended_use=DEEP_WORK_USE,
             )
             deep_research.append(dossier)
-        deep_research_ref = self.persistence.persist(
-            "DEEP_WORK_RESEARCH",
-            deep_research,
-            artifact_id=f"{plan['research_plan_id']}:DEEP_WORK_RESEARCH",
-            artifact_kind="WorkResearchDossierCollection",
-        )
+            if deep_research_ref is None:
+                deep_research_ref = self.persistence.persist(
+                    "DEEP_WORK_RESEARCH", deep_research,
+                    artifact_id=f"{plan['research_plan_id']}:DEEP_WORK_RESEARCH", artifact_kind="WorkResearchDossierCollection",
+                )
+            else:
+                deep_research_ref = self.persistence.update_existing(
+                    "DEEP_WORK_RESEARCH", deep_research, existing_ref=deep_research_ref,
+                    artifact_kind="WorkResearchDossierCollection",
+                )
 
         deep_fidelity: list[dict[str, Any]] = []
+        deep_fidelity_loaded = recover(
+            "DEEP_FIDELITY", f"{plan['research_plan_id']}:DEEP_FIDELITY", "WorkResearchDossierCollection"
+        )
+        deep_fidelity_ref = deep_fidelity_loaded[0] if deep_fidelity_loaded else None
+        if deep_fidelity_loaded:
+            deep_fidelity = self._document_list(deep_fidelity_loaded[1], "DEEP_FIDELITY")
+            for item in deep_fidelity:
+                work_id = str(item.get("work", {}).get("material_id") or "")
+                if work_id not in selected_ids:
+                    raise ResearchB3Error("DEEP_FIDELITY_RECOVERY_SCOPE_INVALID")
+                self._validate_deep_fidelity(item, work_id, known_evidence_refs=known_evidence_refs)
+        recovered_fidelity_ids = {str(item.get("work", {}).get("material_id")) for item in deep_fidelity}
         for dossier in deep_research:
             work_id = dossier["work"]["material_id"]
+            if work_id in recovered_fidelity_ids:
+                continue
             result = self._step(
                 "DEEP_FIDELITY",
                 "work_research_dossier",
@@ -703,16 +707,37 @@ class ResearchB3Orchestrator:
                 expected_intended_use=DEEP_WORK_USE,
             )
             deep_fidelity.append(result)
-        deep_fidelity_ref = self.persistence.persist(
-            "DEEP_FIDELITY",
-            deep_fidelity,
-            artifact_id=f"{plan['research_plan_id']}:DEEP_FIDELITY",
-            artifact_kind="WorkResearchDossierCollection",
-        )
+            if deep_fidelity_ref is None:
+                deep_fidelity_ref = self.persistence.persist(
+                    "DEEP_FIDELITY", deep_fidelity,
+                    artifact_id=f"{plan['research_plan_id']}:DEEP_FIDELITY", artifact_kind="WorkResearchDossierCollection",
+                )
+            else:
+                deep_fidelity_ref = self.persistence.update_existing(
+                    "DEEP_FIDELITY", deep_fidelity, existing_ref=deep_fidelity_ref,
+                    artifact_kind="WorkResearchDossierCollection",
+                )
 
         work_stops: list[dict[str, Any]] = []
+        work_stops_loaded = recover(
+            "DEEP_WORK_SUFFICIENCY", f"{plan['research_plan_id']}:M4:RSD:WORKS", "ResearchStopDecisionCollection"
+        )
+        work_stops_ref = work_stops_loaded[0] if work_stops_loaded else None
+        if work_stops_loaded:
+            work_stops = self._document_list(work_stops_loaded[1], "DEEP_WORK_SUFFICIENCY")
+            if {str(item.get("subject_ref")) for item in work_stops} - {str(item.get("dossier_id")) for item in deep_fidelity}:
+                raise ResearchB3Error("DEEP_WORK_SUFFICIENCY_RECOVERY_SCOPE_INVALID")
+            dossiers_by_id = {str(item.get("dossier_id")): item for item in deep_fidelity}
+            for stop in work_stops:
+                dossier = dossiers_by_id.get(str(stop.get("subject_ref")))
+                if dossier is None:
+                    raise ResearchB3Error("DEEP_WORK_SUFFICIENCY_RECOVERY_SCOPE_INVALID")
+                self._validate_stop(stop, "WORK_RESEARCH_DOSSIER", dossier["dossier_id"], expected_intended_use=DEEP_WORK_USE, expected_deep_fidelity=dossier.get("deep_fidelity"))
+        recovered_stop_ids = {str(item.get("subject_ref")) for item in work_stops}
         for dossier in deep_fidelity:
             work_id = dossier["work"]["material_id"]
+            if str(dossier["dossier_id"]) in recovered_stop_ids:
+                continue
             stop = self._step(
                 "DEEP_WORK_SUFFICIENCY",
                 "research_stop_decision",
@@ -732,12 +757,16 @@ class ResearchB3Orchestrator:
                 expected_intended_use=DEEP_WORK_USE,
             )
             work_stops.append(stop)
-        work_stops_ref = self.persistence.persist(
-            "DEEP_WORK_SUFFICIENCY",
-            work_stops,
-            artifact_id=f"{plan['research_plan_id']}:M4:RSD:WORKS",
-            artifact_kind="ResearchStopDecisionCollection",
-        )
+            if work_stops_ref is None:
+                work_stops_ref = self.persistence.persist(
+                    "DEEP_WORK_SUFFICIENCY", work_stops,
+                    artifact_id=f"{plan['research_plan_id']}:M4:RSD:WORKS", artifact_kind="ResearchStopDecisionCollection",
+                )
+            else:
+                work_stops_ref = self.persistence.update_existing(
+                    "DEEP_WORK_SUFFICIENCY", work_stops, existing_ref=work_stops_ref,
+                    artifact_kind="ResearchStopDecisionCollection",
+                )
         deep_evidence_inputs = self._evidence_snapshot_from_m4(
             deep_phenomenon, phenomenon_stop, deep_research, deep_fidelity, work_stops,
         )
@@ -991,62 +1020,56 @@ class ResearchB3Orchestrator:
             )
 
         m4_input_refs = [m4_manifest_ref, previous_evidence_ref, *[ref for ref in m4_refs.values()]]
-        claims = self._m5_step(
-            "M5_CLAIMS_EVIDENCE_CONSOLIDATION",
-            "claims_ledger",
-            plan,
-            ctx,
-            m4_input_refs,
-            [
-                {"name": name, "payload": copy.deepcopy(payload)}
-                for name, payload in m4_payloads.items()
-            ] + [{"name": "provisional_thesis", "payload": copy.deepcopy(provisional_thesis)}],
-            lambda value: self._validate_m5_claims(
-                value, known_evidence_refs, plan, ctx["_m5_subject_ids"], ctx["_evidence_domains"]
-            ),
+        claims_loaded = self.persistence.load_existing(
+            "M5_CLAIMS_LEDGER", artifact_id=f"{plan['research_plan_id']}:M5:CLAIMS", artifact_kind="ClaimsLedger"
         )
-        claim_stops = self._materialize_m5_claim_stops(claims, plan, known_evidence_refs)
-        for claim in claims["claims"]:
-            if isinstance(claim.get("materiality"), Mapping) and claim["materiality"].get("is_material"):
-                claim["materiality"]["decision_ref"] = next(
-                    item["decision_id"] for item in claim_stops if item["subject_ref"] == claim["claim_id"]
-                )
-        ledger_errors = validate_claims_ledger(claims)
-        if ledger_errors:
-            raise ResearchB3Error("M5_CLAIMS_LEDGER_INVALID: " + " | ".join(ledger_errors))
-        claims_ref = self.persistence.persist(
-            "M5_CLAIMS_LEDGER", claims,
-            artifact_id=f"{plan['research_plan_id']}:M5:CLAIMS",
-            artifact_kind="ClaimsLedger",
+        claim_stops_loaded = self.persistence.load_existing(
+            "M5_CLAIM_SUFFICIENCY", artifact_id=f"{plan['research_plan_id']}:M5:RSD:CLAIMS", artifact_kind="ResearchStopDecisionCollection"
         )
-        claim_stops_ref = self.persistence.persist(
-            "M5_CLAIM_SUFFICIENCY", {"decisions": claim_stops},
-            artifact_id=f"{plan['research_plan_id']}:M5:RSD:CLAIMS",
-            artifact_kind="ResearchStopDecisionCollection",
-        )
+        if (claims_loaded is None) != (claim_stops_loaded is None):
+            raise ResearchB3Error("M5_CLAIMS_SEAM_GAP")
+        if claims_loaded is None:
+            claims = self._m5_step(
+                "M5_CLAIMS_EVIDENCE_CONSOLIDATION", "claims_ledger", plan, ctx, m4_input_refs,
+                [{"name": name, "payload": copy.deepcopy(payload)} for name, payload in m4_payloads.items()]
+                + [{"name": "provisional_thesis", "payload": copy.deepcopy(provisional_thesis)}],
+                lambda value: self._validate_m5_claims(value, known_evidence_refs, plan, ctx["_m5_subject_ids"], ctx["_evidence_domains"]),
+            )
+            claim_stops = self._materialize_m5_claim_stops(claims, plan, known_evidence_refs)
+            for claim in claims["claims"]:
+                if isinstance(claim.get("materiality"), Mapping) and claim["materiality"].get("is_material"):
+                    claim["materiality"]["decision_ref"] = next(item["decision_id"] for item in claim_stops if item["subject_ref"] == claim["claim_id"])
+            ledger_errors = validate_claims_ledger(claims)
+            if ledger_errors:
+                raise ResearchB3Error("M5_CLAIMS_LEDGER_INVALID: " + " | ".join(ledger_errors))
+            claims_ref = self.persistence.persist("M5_CLAIMS_LEDGER", claims, artifact_id=f"{plan['research_plan_id']}:M5:CLAIMS", artifact_kind="ClaimsLedger")
+            claim_stops_ref = self.persistence.persist("M5_CLAIM_SUFFICIENCY", {"decisions": claim_stops}, artifact_id=f"{plan['research_plan_id']}:M5:RSD:CLAIMS", artifact_kind="ResearchStopDecisionCollection")
+        else:
+            claims_ref, claims = claims_loaded
+            claim_stops_ref, claim_stops_payload = claim_stops_loaded
+            if not isinstance(claims, Mapping) or self._validate_m5_claims(claims, known_evidence_refs, plan, ctx["_m5_subject_ids"], ctx["_evidence_domains"]):
+                raise ResearchB3Error("M5_CLAIMS_RECOVERY_INVALID")
+            if not isinstance(claim_stops_payload, Mapping) or not isinstance(claim_stops_payload.get("decisions"), list):
+                raise ResearchB3Error("M5_CLAIM_SUFFICIENCY_RECOVERY_INVALID")
+            claim_stops = [copy.deepcopy(dict(item)) for item in claim_stops_payload["decisions"] if isinstance(item, Mapping)]
+            if len(claim_stops) != len(claim_stops_payload["decisions"]):
+                raise ResearchB3Error("M5_CLAIM_SUFFICIENCY_RECOVERY_INVALID")
 
-        comparison = self._m5_step(
-            "M5_POST_DEEP_SET_REEVALUATION",
-            "research_comparison",
-            plan,
-            ctx,
-            [claims_ref, m4_manifest_ref, *[ref for ref in m4_refs.values()]],
-            [
-                {"name": "claims_ledger", "payload": copy.deepcopy(claims)},
-                {"name": "m4_manifest", "payload": copy.deepcopy(m4_manifest)},
-            ] + [
-                {"name": name, "payload": copy.deepcopy(payload)}
-                for name, payload in m4_payloads.items()
-            ],
-            lambda value: self._validate_m5_comparison(
-                value, selected_ids, known_evidence_refs, m4_manifest["selection"]["mode"]
-            ),
+        comparison_loaded = self.persistence.load_existing(
+            "M5_POST_DEEP_COMPARISON", artifact_id=f"{plan['research_plan_id']}:COMPARISON:POST_DEEP", artifact_kind="ResearchComparison"
         )
-        comparison_ref = self.persistence.persist(
-            "M5_POST_DEEP_COMPARISON", comparison,
-            artifact_id=f"{plan['research_plan_id']}:COMPARISON:POST_DEEP",
-            artifact_kind="ResearchComparison",
-        )
+        if comparison_loaded is None:
+            comparison = self._m5_step(
+                "M5_POST_DEEP_SET_REEVALUATION", "research_comparison", plan, ctx,
+                [claims_ref, m4_manifest_ref, *[ref for ref in m4_refs.values()]],
+                [{"name": "claims_ledger", "payload": copy.deepcopy(claims)}, {"name": "m4_manifest", "payload": copy.deepcopy(m4_manifest)}]
+                + [{"name": name, "payload": copy.deepcopy(payload)} for name, payload in m4_payloads.items()],
+                lambda value: self._validate_m5_comparison(value, selected_ids, known_evidence_refs, m4_manifest["selection"]["mode"]),
+            )
+            comparison_ref = self.persistence.persist("M5_POST_DEEP_COMPARISON", comparison, artifact_id=f"{plan['research_plan_id']}:COMPARISON:POST_DEEP", artifact_kind="ResearchComparison")
+        else:
+            comparison_ref, comparison = comparison_loaded
+            self._validate_m5_comparison(comparison, selected_ids, known_evidence_refs, m4_manifest["selection"]["mode"])
 
         selection_change_request_ref = None
         selection_change_pending_ref = None
@@ -1735,37 +1758,44 @@ class ResearchB3Orchestrator:
                 result["selection_change_delegation"] = selection_change_delegation_ref
             return result
 
-        thesis = self._m5_step(
-            "M5_REFINED_THESIS", "refined_thesis", plan, context,
-            [claims_ref, claim_stops_ref, comparison_ref, m4_manifest_ref],
-            [
-                {"name": "provisional_thesis", "payload": copy.deepcopy(dict(provisional_thesis))},
-                {"name": "claims_ledger", "payload": copy.deepcopy(dict(claims))},
-                {"name": "claim_stops", "payload": copy.deepcopy(claim_stops)},
-                {"name": "post_deep_comparison", "payload": copy.deepcopy(dict(comparison))},
-            ],
-            lambda value: self._validate_m5_thesis(
-                value, provisional_thesis, claims, comparison, claim_stops, known_evidence_refs, plan,
+        thesis_loaded = self.persistence.load_existing(
+            "M5_REFINED_THESIS", artifact_id=f"{plan['research_plan_id']}:THESIS:REFINED", artifact_kind="RefinedThesis"
+        )
+        if thesis_loaded is None:
+            thesis = self._m5_step(
+                "M5_REFINED_THESIS", "refined_thesis", plan, context,
+                [claims_ref, claim_stops_ref, comparison_ref, m4_manifest_ref],
+                [{"name": "provisional_thesis", "payload": copy.deepcopy(dict(provisional_thesis))},
+                 {"name": "claims_ledger", "payload": copy.deepcopy(dict(claims))},
+                 {"name": "claim_stops", "payload": copy.deepcopy(claim_stops)},
+                 {"name": "post_deep_comparison", "payload": copy.deepcopy(dict(comparison))}],
+                lambda value: self._validate_m5_thesis(
+                    value, provisional_thesis, claims, comparison, claim_stops, known_evidence_refs, plan,
+                    claims_ref, comparison_ref, claim_stops_ref,
+                    set(context.get("effective_selected_work_ids", context.get("selected_work_ids", []))),
+                    set(context.get("_investigated_work_ids", [])), set(context.get("_verified_evidence_refs", known_evidence_refs)),
+                ),
+            )
+            thesis_ref = self.persistence.persist("M5_REFINED_THESIS", thesis, artifact_id=f"{plan['research_plan_id']}:THESIS:REFINED", artifact_kind="RefinedThesis")
+        else:
+            thesis_ref, thesis = thesis_loaded
+            self._validate_m5_thesis(
+                thesis, provisional_thesis, claims, comparison, claim_stops, known_evidence_refs, plan,
                 claims_ref, comparison_ref, claim_stops_ref,
                 set(context.get("effective_selected_work_ids", context.get("selected_work_ids", []))),
-                set(context.get("_investigated_work_ids", [])),
-                set(context.get("_verified_evidence_refs", known_evidence_refs)),
-            ),
+                set(context.get("_investigated_work_ids", [])), set(context.get("_verified_evidence_refs", known_evidence_refs)),
+            )
+        refined_evidence_loaded = self.persistence.load_existing(
+            "M5_EVIDENCE_REPORT", artifact_id=f"{plan['research_plan_id']}:SOURCE_ACCESS_EVIDENCE_REPORT:REFINED", artifact_kind="SourceAccessAndEvidenceReport"
         )
-        thesis_ref = self.persistence.persist(
-            "M5_REFINED_THESIS", thesis,
-            artifact_id=f"{plan['research_plan_id']}:THESIS:REFINED",
-            artifact_kind="RefinedThesis",
-        )
-        refined_evidence = ResearchB2Orchestrator.advance_evidence_report(
-            context["evidence_report"], research_stage="REFINED",
-            stage_evidence=self._evidence_snapshot_from_m5(claims, claim_stops, comparison, thesis),
-        )
-        refined_evidence_ref = self.persistence.persist(
-            "M5_EVIDENCE_REPORT", refined_evidence,
-            artifact_id=str(refined_evidence["report_id"]),
-            artifact_kind="SourceAccessAndEvidenceReport",
-        )
+        if refined_evidence_loaded is None:
+            refined_evidence = ResearchB2Orchestrator.advance_evidence_report(
+                context["evidence_report"], research_stage="REFINED",
+                stage_evidence=self._evidence_snapshot_from_m5(claims, claim_stops, comparison, thesis),
+            )
+            refined_evidence_ref = self.persistence.persist("M5_EVIDENCE_REPORT", refined_evidence, artifact_id=str(refined_evidence["report_id"]), artifact_kind="SourceAccessAndEvidenceReport")
+        else:
+            refined_evidence_ref, refined_evidence = refined_evidence_loaded
         manifest = self._m5_manifest_for_completion(
             plan, m4_manifest_ref, m4_manifest, context,
             [claims_ref, claim_stops_ref, comparison_ref, thesis_ref, refined_evidence_ref],
