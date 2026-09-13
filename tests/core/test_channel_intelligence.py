@@ -118,3 +118,38 @@ def test_policy_and_prompts_reference_active_compiled_profile():
     for role in ('CHANNEL_INTELLIGENCE_PRODUCER','CHANNEL_INTELLIGENCE_REVIEWER'):
         prompt=(ROOT/f'prompts/roles/{role}/1.0.0.md').read_text(encoding='utf-8')
         assert 'topic_belonging_policy.md' in prompt and 'perfil' in prompt
+
+
+def test_excluded_territory_blocks_and_unknown_territory_blocks():
+    # EXCLUDED: Política partidista o propaganda must block APPROVE
+    inp_excluded = topic_input(proposed_territory="Política partidista o propaganda")
+    a_excluded = assessment(inp_excluded, territory_classification="EXCLUDED")
+    d_excluded = decision(a_excluded, decision="APPROVE")
+    violations_excluded = validate_decision(d_excluded, a_excluded)
+    assert "DECISION_EXCLUDED_TERRITORY_BLOCKED" in violations_excluded
+    assert evaluate_topic_belonging_gate(d_excluded, a_excluded, inp_excluded)["status"] == "BLOCKED"
+    # EXCLUDED with conditions also blocked
+    d_excluded_cond = decision(a_excluded, decision="APPROVE_WITH_CONDITIONS", conditions=["cond"])
+    assert "DECISION_EXCLUDED_TERRITORY_BLOCKED" in validate_decision(d_excluded_cond, a_excluded)
+    # Unknown territory must be flagged and blocked
+    inp_unknown = topic_input(proposed_territory="Territorio inexistente XYZ999")
+    a_unknown = assessment(inp_unknown, territory_classification="ACTIVE")
+    assert "ASSESSMENT_PROPOSED_TERRITORY_UNKNOWN" in validate_assessment(a_unknown, inp_unknown)
+    d_unknown = decision(a_unknown, decision="APPROVE")
+    assert "DECISION_TERRITORY_NOT_RESOLVED_AGAINST_ACTIVE_PROFILE" in validate_decision(d_unknown, a_unknown)
+    assert evaluate_topic_belonging_gate(d_unknown, a_unknown, inp_unknown)["status"] == "BLOCKED"
+    # ACTIVE positive control still passes
+    inp_active = topic_input(proposed_territory="Individuo e identidad")
+    a_active = assessment(inp_active, territory_classification="ACTIVE")
+    d_active = decision(a_active, decision="APPROVE")
+    assert validate_decision(d_active, a_active) == []
+    assert evaluate_topic_belonging_gate(d_active, a_active, inp_active)["status"] == "PASS"
+
+
+def test_active_territory_classification_is_deterministic_against_active_profile():
+    assert ci.active_territory_classification("Individuo e identidad") == "ACTIVE"
+    assert ci.active_territory_classification("Educación emocional") == "ACTIVE"
+    assert ci.active_territory_classification("Política partidista o propaganda") == "EXCLUDED"
+    assert ci.active_territory_classification("Territorio inexistente XYZ999") is None
+    assert ci.active_territory_classification("") is None
+    assert ci.active_territory_classification(None) is None

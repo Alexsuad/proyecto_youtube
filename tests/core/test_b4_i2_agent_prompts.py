@@ -104,17 +104,19 @@ def test_every_role_has_corresponding_prompt_file():
 
 
 def test_every_prompt_file_has_corresponding_registry_entry():
-    """Inverse: every .md file under prompts/roles/ has a registry entry."""
+    """Registered prompts exist; retained files must be older than the active version."""
     registry = _read_json(ROOT / "config" / "agent_prompt_registry.json")
     registered = {(p["role_id"], p["prompt_version"]) for p in registry["prompts"]}
+    active_versions = {p["role_id"]: tuple(map(int, p["prompt_version"].split("."))) for p in registry["prompts"]}
     for role_dir in (ROOT / "prompts" / "roles").iterdir():
         if not role_dir.is_dir():
             continue
         for md_file in role_dir.glob("*.md"):
             version = md_file.stem
-            assert (role_dir.name, version) in registered, (
-                f"Prompt file {md_file} no tiene entrada en el registro"
-            )
+            if (role_dir.name, version) not in registered:
+                assert tuple(map(int, version.split("."))) < active_versions[role_dir.name]
+                continue
+            assert md_file.exists(), f"Prompt file no existe: {md_file}"
 
 
 # ─── 2. Neutrality ───

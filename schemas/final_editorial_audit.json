@@ -4,15 +4,37 @@
   "title": "FinalEditorialAudit",
   "type": "object",
   "required": [
+    "episode_id",
+    "artifact_id",
+    "script_version",
+    "script_checksum",
+    "auditor_run_id",
+    "independence_result",
     "profile_compliance",
     "brief_compliance",
     "packaging_promise_compliance",
     "evidence_sufficiency",
     "thesis_quality",
+    "viewer_journey",
+    "opening_quality",
+    "progression",
+    "coherence",
+    "originality",
+    "source_transformation",
+    "voice",
+    "orality",
+    "closing_quality",
+    "factual_traceability",
     "decision",
     "correction_route"
   ],
   "properties": {
+    "episode_id": {"type": "string", "minLength": 1},
+    "artifact_id": {"type": "string", "minLength": 1},
+    "script_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "script_checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "auditor_run_id": {"type": "string", "minLength": 1},
+    "independence_result": {"type": "string", "enum": ["PASS", "FAIL", "BLOCKED"]},
     "profile_compliance": {
       "type": "string"
     },
@@ -29,34 +51,34 @@
       "type": "string"
     },
     "viewer_journey": {
-      "type": "string"
+      "$ref": "#/definitions/dimension_decision"
     },
     "opening_quality": {
-      "type": "string"
+      "$ref": "#/definitions/dimension_decision"
     },
     "progression": {
-      "type": "string"
+      "$ref": "#/definitions/dimension_decision"
     },
     "coherence": {
-      "type": "string"
+      "$ref": "#/definitions/dimension_decision"
     },
     "originality": {
-      "type": "string"
+      "$ref": "#/definitions/dimension_decision"
     },
     "source_transformation": {
-      "type": "string"
+      "$ref": "#/definitions/dimension_decision"
     },
     "voice": {
-      "type": "string"
+      "$ref": "#/definitions/dimension_decision"
     },
     "orality": {
-      "type": "string"
+      "$ref": "#/definitions/dimension_decision"
     },
     "closing_quality": {
-      "type": "string"
+      "$ref": "#/definitions/dimension_decision"
     },
     "factual_traceability": {
-      "type": "string"
+      "$ref": "#/definitions/dimension_decision"
     },
     "platform_risk": {
       "type": "string"
@@ -81,6 +103,12 @@
     },
     "correction_route": {
       "type": "string"
+    }
+  },
+  "definitions": {
+    "dimension_decision": {
+      "type": "string",
+      "enum": ["PASS", "WARN", "REQUEST_CHANGES", "BLOCK", "N/A_JUSTIFIED"]
     }
   }
 }

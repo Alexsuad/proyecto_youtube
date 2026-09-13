@@ -4,9 +4,9 @@
   "profiles": {
     "mas_alla_del_guion@1.2.2": {
       "active": true,
-      "approval_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b",
+      "approval_checksum": "c4175417681eb0bc8626a8ae6933cda8cfb3f3645ce138b0e9cdbd59cf59dff9",
       "approval_path": "profiles/editorial/mas_alla_del_guion/1.2.2/functional_approval.json",
-      "checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b",
+      "checksum": "c4175417681eb0bc8626a8ae6933cda8cfb3f3645ce138b0e9cdbd59cf59dff9",
       "compiled_profile_path": "profiles/editorial/mas_alla_del_guion/1.2.2/editorial_profile.json",
       "profile": {
         "audience_hypotheses": [
@@ -213,7 +213,7 @@
         "profile_id": "mas_alla_del_guion",
         "source_lineage": [
           {
-            "checksum": "73618cbe03da6ab3837f669e431fc7c7b21e7e698a9eb5a8d8b8ce32f0ddc8f1",
+            "checksum": "899478a6b5be428bca3b8038c3878225f26ae6107aef4f911e69cfe45440265d",
             "locator": "docs/specifications/B3_editorial_profile_functional_specification.md",
             "role": "FUNCTIONAL_SPECIFICATION",
             "source_id": "B3-FUNCTIONAL-SPEC-CANONICAL"
@@ -340,7 +340,7 @@
       "profile_id": "mas_alla_del_guion",
       "profile_path": "profiles/editorial/mas_alla_del_guion/1.2.2/profile_payload.json",
       "status": "ACTIVE",
-      "technical_validation_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b",
+      "technical_validation_checksum": "c4175417681eb0bc8626a8ae6933cda8cfb3f3645ce138b0e9cdbd59cf59dff9",
       "technical_validation_path": "profiles/editorial/mas_alla_del_guion/1.2.2/technical_validation.json",
       "version": "1.2.2"
     }

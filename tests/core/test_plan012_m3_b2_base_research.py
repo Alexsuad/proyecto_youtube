@@ -674,3 +674,72 @@ def test_b2_prompt_and_skill_keep_research_out_of_narrative():
     assert "curate by narrative function" not in prompt
     assert "Modo B2 Research V2" in skill
     assert "requisito canónico de B2 V2" in skill
+
+
+def test_research_plan_binding_preserves_ids_relations_gaps_and_specialists():
+    from src.application.research_planning import ResearchPlanningService
+
+    svc = ResearchPlanningService()
+    proposal = {
+        "contract": "research_plan_proposal",
+        "contract_version": "1.0.0",
+        "central_question": "Pregunta central preservada",
+        "intended_use": "Research V2",
+        "scope": "Tema preservado",
+        "dimensions": [{"dimension_id": "D-KEEP", "label": "Dimensión preservada", "research_question": "Q preservada"}],
+        "subquestions": [{"subquestion_id": "SQ-KEEP", "dimension_id": "D-KEEP", "question": "Subpregunta preservada"}],
+        "evidence_requirements": [{"evidence_requirement_id": "E-KEEP", "subquestion_refs": ["SQ-KEEP"], "evidence_kind": "BOTH", "minimum_strength": "Fuerte", "preferred_source_types": ["OWNER_MATERIAL"]}],
+        "source_strategy": "Material local",
+        "critical_claims": [{"claim_id": "C-KEEP", "statement": "Claim preservado", "intended_use": "CENTRAL_CLAIM_SUPPORT", "strength": "LIMITED", "evidence_requirement_refs": ["E-KEEP"], "material_if_false": True}],
+        "rival_refutation": [{"rival_id": "R-KEEP", "explanation": "Rival preservado", "refutation_signals": ["Señal"], "evidence_requirement_refs": ["E-KEEP"]}],
+        "gaps_risks": [{"gap_id": "G-KEEP", "kind": "EVIDENCE", "description": "Brecha preservada", "material_impact": "BLOCKING", "mitigation": "Mitigar preservada"}],
+        "potential_specialists": [{"specialist_id": "SP-KEEP", "field": "HISTORY", "activation_condition": "Cond preservada", "expected_contribution": "Contribución preservada"}],
+        "sufficiency_criteria": ["Criterio preservado"],
+        "target_final_works_decision": {"status": "NOT_DECLARED"},
+        "supplied_works": [],
+        "selection_policy": {"mode": "OWNER_OR_DELEGATED"},
+        "planned_stages": ["PLANNING"],
+    }
+    plan = svc.bind_research_plan(proposal, episode_id="EP-BIND-001", brief_version="2.0.0", research_role="NORMAL", editorial_intent="NO_DECLARADA", origin_ref="human-input:EP-BIND-001")
+    assert plan["dimensions"][0]["dimension_id"] == "D-KEEP"
+    assert plan["subquestions"][0]["subquestion_id"] == "SQ-KEEP"
+    assert plan["evidence_requirements"][0]["evidence_requirement_id"] == "E-KEEP"
+    assert plan["critical_claims"][0]["claim_id"] == "C-KEEP"
+    assert plan["rival_refutation"][0]["rival_id"] == "R-KEEP"
+    assert plan["gaps_risks"][0]["gap_id"] == "G-KEEP"
+    assert plan["gaps_risks"][0]["description"] == "Brecha preservada"
+    assert plan["potential_specialists"][0]["specialist_id"] == "SP-KEEP"
+    assert plan["potential_specialists"][0]["field"] == "HISTORY"
+    # References must remain valid after binding
+    sub_ids = {item["subquestion_id"] for item in plan["subquestions"]}
+    ev_ids = {item["evidence_requirement_id"] for item in plan["evidence_requirements"]}
+    for item in plan["evidence_requirements"]:
+        assert set(item["subquestion_refs"]).issubset(sub_ids)
+    for item in plan["critical_claims"]:
+        assert set(item["evidence_requirement_refs"]).issubset(ev_ids)
+    # Origin reference must be preserved with checksum placeholder
+    assert plan["origin_artifact_refs"][0]["artifact_ref"] == "human-input:EP-BIND-001"
+    # Missing IDs must be generated deterministically (gaps without ID)
+    minimal = {
+        "contract": "research_plan_proposal",
+        "contract_version": "1.0.0",
+        "central_question": "Q",
+        "intended_use": "U",
+        "scope": "S",
+        "dimensions": ["dim-as-string"],
+        "subquestions": ["subq-as-string"],
+        "evidence_requirements": ["ev-as-string"],
+        "source_strategy": "S",
+        "critical_claims": ["claim-as-string"],
+        "rival_refutation": ["rival-as-string"],
+        "gaps_risks": ["gap-as-string"],
+        "potential_specialists": ["spec-as-string"],
+        "sufficiency_criteria": ["crit"],
+        "target_final_works_decision": {},
+        "supplied_works": [],
+        "selection_policy": {},
+        "planned_stages": ["PLANNING"],
+    }
+    plan2 = svc.bind_research_plan(minimal, episode_id="EP-BIND-002", brief_version="2.0.0", research_role="NORMAL", editorial_intent="NO_DECLARADA", origin_ref="human-input:EP-BIND-002")
+    assert plan2["gaps_risks"][0]["gap_id"] == "G-1"
+    assert plan2["potential_specialists"][0]["specialist_id"] == "SP-1"

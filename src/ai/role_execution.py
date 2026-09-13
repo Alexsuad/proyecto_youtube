@@ -91,6 +91,9 @@ RESEARCH_AND_CURATION_REQUIRED_INPUTS = (
     "brief",
     "channel_context",
 )
+WRITING_REQUIRED_INPUTS = ("narrative_plan", "thesis_artifact", "editorial_profile", "research_pack")
+EDITOR_REQUIRED_INPUTS = ("script_draft", "editorial_profile", "brief", "claims_ledger")
+FINAL_EDITORIAL_AUDITOR_REQUIRED_INPUTS = ("edited_script", "EditorialEditReport", "editorial_profile", "brief", "claims_ledger")
 ROLE_REQUIRED_INPUTS = {
     "SCRIPT_PRODUCT_PRODUCER": SCRIPT_PRODUCT_PRODUCER_REQUIRED_INPUTS,
     "SCRIPT_PRODUCT_AUDITOR": SCRIPT_PRODUCT_AUDITOR_REQUIRED_INPUTS,
@@ -101,6 +104,9 @@ ROLE_REQUIRED_INPUTS = {
     "CHANNEL_INTELLIGENCE_REVIEWER": CHANNEL_INTELLIGENCE_REVIEWER_REQUIRED_INPUTS,
     "RESEARCH_AND_CURATION": RESEARCH_AND_CURATION_REQUIRED_INPUTS,
     "INDEPENDENT_RESEARCH_AUDITOR": RESEARCH_AND_CURATION_REQUIRED_INPUTS,
+    "WRITING": WRITING_REQUIRED_INPUTS,
+    "EDITOR": EDITOR_REQUIRED_INPUTS,
+    "FINAL_EDITORIAL_AUDITOR": FINAL_EDITORIAL_AUDITOR_REQUIRED_INPUTS,
 }
 ROLE_ALLOWED_OUTPUT_SCHEMAS = {
     "SCRIPT_PRODUCT_PRODUCER": {
@@ -159,6 +165,10 @@ ROLE_ALLOWED_OUTPUT_SCHEMAS = {
         "execution_smoke_report",
         "independent_research_audit",
     },
+    "WRITING": {"execution_smoke_report", "script_draft", "script_version_manifest"},
+    "EDITOR": {"execution_smoke_report", "edited_script", "editorial_edit_report", "script_version_manifest"},
+    "FINAL_EDITORIAL_AUDITOR": {"execution_smoke_report", "final_editorial_audit"},
+    "YOUTUBE_ADAPTATION_AUDITOR": {"execution_smoke_report", "youtube_adaptation_review", "final_script_review"},
 }
 
 ROLE_PROMPT_ALIASES = {
@@ -221,6 +231,10 @@ def _validate_role_payload(
     runtime_values: dict[str, Any] | None = None,
 ) -> None:
     required = ROLE_REQUIRED_INPUTS.get(role_id, ())
+    if output_schema == "execution_smoke_report":
+        # The smoke contract checks prompt/route assembly only; functional
+        # artifact inputs remain mandatory for the actual role outputs.
+        required = ()
     if role_id == "RESEARCH_AND_CURATION" and output_schema not in {
         "independent_research_audit",
         "research_pack",
@@ -270,18 +284,51 @@ def existing_producer_run_compatibility(path: Path) -> str:
     return "PASS"
 
 
-def _applicable_policies(prompt_contract: dict[str, Any]) -> list[dict[str, str]]:
+def _applicable_policies(
+    prompt_contract: dict[str, Any], runtime_values: dict[str, Any] | None = None
+) -> list[dict[str, str]]:
     policies: list[dict[str, str]] = []
+    runtime_values = runtime_values or {}
+    enforce_symbolic = prompt_contract.get("role_id") in {"WRITING", "EDITOR", "FINAL_EDITORIAL_AUDITOR"}
     for ref in prompt_contract.get("required_context", []):
-        if not isinstance(ref, str) or not ref.endswith((".md", ".json")):
-            continue
-        path = ROOT / ref
-        if not path.is_file():
-            raise RoleExecutionContractError(f"INPUT_CONTRACT_INVALID: required context missing: {ref}")
-        content = path.read_text(encoding="utf-8")
+        if not isinstance(ref, str):
+            raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: required context reference invalid")
+        if ref.endswith((".md", ".json")):
+            path = ROOT / ref
+            if not path.is_file():
+                raise RoleExecutionContractError(f"INPUT_CONTRACT_INVALID: required context missing: {ref}")
+            content = path.read_text(encoding="utf-8")
+            resolved_ref = ref
+        else:
+            symbolic = {
+                "active_profile_identity": "config/active_editorial_profile.json",
+                "profile_identity": "config/active_editorial_profile.json",
+                "editorial_profile": "config/active_editorial_profile.json",
+                "editorial_voice_profile": "config/active_editorial_profile.json",
+                "voice_guidelines": "config/active_editorial_profile.json",
+            }
+            resolved_ref = symbolic.get(ref)
+            if resolved_ref:
+                path = ROOT / resolved_ref
+                if not path.is_file():
+                    raise RoleExecutionContractError(f"INPUT_CONTRACT_INVALID: required context missing: {resolved_ref}")
+                content = path.read_text(encoding="utf-8")
+            elif ref == "clean_session" and runtime_values.get("clean_session") is True:
+                content = "clean_session: true"
+                resolved_ref = "runtime:clean_session"
+            else:
+                supplied = runtime_values.get("required_context", {})
+                content = supplied.get(ref) if isinstance(supplied, dict) else None
+                if not enforce_symbolic:
+                    continue
+                if not isinstance(content, (str, dict, list)) or not content:
+                    raise RoleExecutionContractError(f"INPUT_CONTRACT_INVALID: required context unresolved: {ref}")
+                if not isinstance(content, str):
+                    content = json.dumps(content, ensure_ascii=False, sort_keys=True)
+                resolved_ref = f"runtime:{ref}"
         if not content.strip():
             raise RoleExecutionContractError(f"INPUT_CONTRACT_INVALID: required context empty: {ref}")
-        policies.append({"path": ref, "content": content})
+        policies.append({"path": resolved_ref, "content": content})
     return policies
 
 
@@ -318,6 +365,10 @@ def resolve_role_execution_contract(role_id: str, output_schema: str, input_payl
         "opening_design",
         "closing_design",
         "narrative_plan",
+        "script_draft",
+        "edited_script",
+        "editorial_edit_report",
+        "final_script_review",
     }:
         # Reuse the runtime's canonical projection so the model receives only
         # the cognitive contract.  Software binds the omitted system fields
@@ -334,7 +385,7 @@ def resolve_role_execution_contract(role_id: str, output_schema: str, input_payl
         "input_checksum": _canonical_checksum(input_payload),
         "prompt_content": prompt_content,
         "compiled_profile": profile,
-        "applicable_policies": _applicable_policies(prompt_contract),
+        "applicable_policies": _applicable_policies(prompt_contract, runtime_values),
         "output_schema_name": output_schema,
         "output_schema": schema,
         "runtime_values": runtime_values,

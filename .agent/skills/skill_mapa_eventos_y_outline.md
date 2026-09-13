@@ -12,12 +12,15 @@ Convertir el diseño editorial en ViewerJourney, apertura, cierre y NarrativePla
 - NarrativeHumanAnalysis, MaterialCuration, RefinedThesis, EditorialScriptPromise.
 - B5I2SemanticAudit, YouTubeAdaptationReview y EarlyPackagingHypothesis.
 - Perfil activo, instrucciones, duración y lenguaje resueltos por Software.
+- La identidad del perfil debe conservar `profile_id`, `profile_version` y `profile_checksum`.
 
 ## Procedimiento
 
 1. Software verifica perfil, bindings, checksums y contratos de entrada.
 2. IA propone recorrido, función de apertura y cierre, progresión y bloques.
 3. Software valida schemas, presupuesto, referencias, lineage, persistencia e invalidación.
+
+Si falta el perfil activo, una entrada obligatoria o una identidad verificable, la salida es `BLOCKED`.
 
 ## Salida
 

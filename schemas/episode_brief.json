@@ -81,6 +81,16 @@
       "type": "string",
       "minLength": 1
     },
+    "intended_use_resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "origin"],
+      "properties": {
+        "value": {"type": "string", "minLength": 1},
+        "origin": {"type": "string", "enum": ["OWNER_EXPLICIT", "DERIVED_STANDARD"]},
+        "reference": {"type": ["string", "null"]}
+      }
+    },
     "transformacion_esperada": {
       "type": "string",
       "minLength": 1

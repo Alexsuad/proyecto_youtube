@@ -1,0 +1,23 @@
+{
+  "mission_id": "PLAN013_M6_THESIS_AND_AUDIT_CONTRACTS",
+  "contract_status": "DRAFT",
+  "authorizing": false,
+  "effective_authorization": false,
+  "authorization_artifact": null,
+  "objective": "Preservar identidad de RefinedThesis y reforzar contratos de bloque, edición y auditoría.",
+  "non_objectives": ["Imponer reglas creativas universales", "Modificar perfil/corpus", "Cierre software", "IA REAL", "Uso productivo", "Commit", "Push"],
+  "required_prior_state": ["M5 gate PASS", "OWNER autoriza M6", "schemas y validators existentes localizados"],
+  "allowlist": ["schemas/refined_thesis.json", "schemas/narrative_plan.json", "schemas/script_version_manifest.json", "schemas/", "src/core/", "tests/", "plans/plan_013/mission_contracts/PLAN013_M6_THESIS_AND_AUDIT_CONTRACTS.json"],
+  "denylist": ["config/active_editorial_profile.json", "profiles/editorial/", "profiles/voice/corpus_manifest.json", "providers/", "output/productive/"],
+  "preserve_preexisting_changes": ["AGENTS.md", "config/capability_routing.yaml", "output/execution_provenance_registry.json"],
+  "allowed_operations": ["extend existing schemas/contracts", "require decision dimensions where applicable", "preserve artifact/version/checksum lineage", "add negative and positive tests"],
+  "dependencies": ["M5 runtime contracts", "existing ScriptBlockContract, EditorialEditReport and FinalEditorialAudit"],
+  "focused_tests": ["thesis binding", "required audit dimensions", "N/A justification", "stale dependency invalidation"],
+  "required_regressions": ["empty findings where valid", "existing valid contracts", "no universal word/rehook rule"],
+  "expected_evidence": ["schema diff", "validator output", "same-version lineage examples"],
+  "stop_conditions": ["creative hardening becomes universal gate", "second closure authority", "missing material RCA", "scope expansion"],
+  "commit_policy": "NO_COMMIT_WITHOUT_EXPLICIT_OWNER_AUTHORIZATION",
+  "push_policy": "FORBIDDEN",
+  "review_required": {"independent_review": true, "owner_review": true},
+  "mission_completion_gate": {"gate_id":"PLAN013_B4_GATE","double_rca_required_before_close":true,"jit_escape_cause_allowed_before_close":false}
+}

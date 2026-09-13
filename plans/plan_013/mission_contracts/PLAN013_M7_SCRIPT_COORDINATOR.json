@@ -1,0 +1,23 @@
+{
+  "mission_id": "PLAN013_M7_SCRIPT_COORDINATOR",
+  "contract_status": "DRAFT",
+  "authorizing": false,
+  "effective_authorization": false,
+  "authorization_artifact": null,
+  "objective": "Materializar el coordinador mínimo NarrativeArchitecture→Writing→Editor→FinalEditorialAudit.",
+  "non_objectives": ["Tomar decisiones editoriales por roles", "Crear lifecycle paralelo", "Cierre productivo", "IA REAL", "Commit", "Push"],
+  "required_prior_state": ["M6 gate PASS", "OWNER autoriza M7", "contratos de los cuatro roles completos"],
+  "allowlist": ["src/application/", "src/ai/role_execution.py", "src/application/storage.py", "schemas/", "tests/", "plans/plan_013/mission_contracts/PLAN013_M7_SCRIPT_COORDINATOR.json"],
+  "denylist": ["plans/001_CONTROL_OPERATIVO.md", "config/active_editorial_profile.json", "profiles/editorial/", "profiles/voice/corpus_manifest.json", "providers/", "output/productive/"],
+  "preserve_preexisting_changes": ["AGENTS.md", "config/capability_routing.yaml", "output/execution_provenance_registry.json"],
+  "allowed_operations": ["prepare inputs", "validate outputs", "persist references", "route corrections", "preserve identity/version/checksum"],
+  "dependencies": ["M4-M6 contracts", "existing persistence and invalidation"],
+  "focused_tests": ["synthetic graph traversal", "correction routing", "identity and checksum propagation"],
+  "required_regressions": ["role independence", "stale thesis invalidation", "no editorial decision in coordinator"],
+  "expected_evidence": ["coordinator trace", "persisted references", "negative stale-input tests"],
+  "stop_conditions": ["coordinator becomes editorial authority", "parallel lifecycle", "state-live modification", "scope expansion"],
+  "commit_policy": "NO_COMMIT_WITHOUT_EXPLICIT_OWNER_AUTHORIZATION",
+  "push_policy": "FORBIDDEN",
+  "review_required": {"independent_review": true, "owner_review": true},
+  "mission_completion_gate": {"gate_id":"PLAN013_B4_GATE","double_rca_required_before_close":true,"jit_escape_cause_allowed_before_close":false}
+}

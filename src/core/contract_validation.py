@@ -9,7 +9,7 @@ import hashlib
 import re
 import unicodedata
 from pathlib import Path
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Dict, Any, Iterable, List, Mapping, Tuple, Optional
 from datetime import datetime
 import jsonschema
 from jsonschema import Draft7Validator, RefResolver, draft7_format_checker
@@ -43,6 +43,96 @@ SCHEMAS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."
 REPOSITORY_ROOT = os.path.abspath(os.path.join(SCHEMAS_DIR, ".."))
 RESPONSIBILITY_REGISTRY_PATH = os.path.join(REPOSITORY_ROOT, "config", "responsibility_registry.json")
 RESPONSIBILITY_REGISTRY_REF_PREFIX = "config/responsibility_registry.json#responsibilities/"
+USABLE_EVIDENCE_STATUSES = {"CONSULTED", "VERIFIED", "EVIDENCE"}
+POSITIVE_PROVENANCE_STATUSES = {"PRIMARY_VERIFIED", "CREATOR_VERIFIED", "REVIEWED"}
+
+
+def source_is_usable(source: Mapping[str, Any]) -> bool:
+    """Return whether one registered source can support positive evidence."""
+    retrieval_status = source.get("retrieval_status")
+    evidence_status = source.get("evidence_status")
+    provenance = source.get("provenance") or {}
+    legacy_verified = (
+        retrieval_status is None
+        and evidence_status is None
+        and isinstance(provenance, Mapping)
+        and provenance.get("verification_status") in {"PRIMARY_VERIFIED", "CREATOR_VERIFIED"}
+    )
+    return (
+        retrieval_status == "RECOVERED"
+        and evidence_status in USABLE_EVIDENCE_STATUSES
+    ) or legacy_verified
+
+
+def usable_source_ids(sources: Iterable[Mapping[str, Any]]) -> set[str]:
+    """Return only source IDs whose retrieval and evidence status are usable."""
+    return {
+        str(source.get("source_id"))
+        for source in sources
+        if isinstance(source, Mapping) and source.get("source_id") and source_is_usable(source)
+    }
+
+
+def validate_software_acquisition_pipeline(data: Dict[str, Any]) -> List[str]:
+    """Validate the neutral Search -> Fetch -> Verify -> Registry boundary."""
+    violations = validate_against_schema(data, "software_acquisition_pipeline")
+    if violations:
+        return violations
+
+    stages = data.get("stages", [])
+    expected_stages = ["SEARCH_DISCOVERY", "FETCH_ACQUISITION", "VERIFY", "SOURCE_REGISTRY"]
+    received_stages = [item.get("stage") for item in stages if isinstance(item, Mapping)]
+    if received_stages != expected_stages:
+        violations.append("software_acquisition_pipeline requiere las cuatro etapas en orden canónico.")
+    stage_by_name = {item.get("stage"): item for item in stages if isinstance(item, Mapping)}
+
+    sources = data.get("source_registry", [])
+    source_ids = [item.get("source_id") for item in sources if isinstance(item, Mapping)]
+    if len(source_ids) != len(set(source_ids)):
+        violations.append("software_acquisition_pipeline no puede duplicar source_id en Source Registry.")
+    verified_refs = set()
+    for stage in stages:
+        if stage.get("stage") == "VERIFY":
+            verified_refs = set(stage.get("output_refs", []))
+
+    if data.get("capability_status") == "UNAVAILABLE":
+        if data.get("status") != "UNAVAILABLE" or sources:
+            violations.append("capacidad UNAVAILABLE debe terminar sin fuentes registradas.")
+        if not data.get("error") or data["error"].get("code") != "CAPABILITY_UNAVAILABLE":
+            violations.append("capacidad UNAVAILABLE requiere error CAPABILITY_UNAVAILABLE.")
+        for stage in stages[1:]:
+            if stage.get("status") != "SKIPPED" or stage.get("output_refs"):
+                violations.append("capacidad UNAVAILABLE debe saltar Fetch, Verify y Source Registry.")
+
+    usable = set()
+    for source in sources:
+        positive = source.get("retrieval_status") == "RECOVERED" and source.get("evidence_status") in USABLE_EVIDENCE_STATUSES
+        if positive:
+            usable.add(source["source_id"])
+            if source.get("software_controlled") is not True:
+                violations.append(f"fuente adquirida '{source['source_id']}' requiere software_controlled=true.")
+            if source["source_id"] not in verified_refs:
+                violations.append(f"fuente adquirida '{source['source_id']}' no fue emitida por Verify.")
+            if source.get("provenance", {}).get("verification_status") == "NOT_REVIEWED":
+                violations.append(f"fuente adquirida '{source['source_id']}' no puede permanecer NOT_REVIEWED.")
+            if not source.get("recovery_artifact_ref") or not source.get("checksum"):
+                violations.append(f"fuente adquirida '{source['source_id']}' requiere artefacto y checksum.")
+        elif source.get("evidence_status") in USABLE_EVIDENCE_STATUSES:
+            violations.append(f"fuente no adquirida '{source['source_id']}' no puede declarar evidencia positiva.")
+        elif source.get("error") is None:
+            violations.append(f"fuente no utilizable '{source['source_id']}' requiere error preservado.")
+
+    registry_refs = set(stage_by_name.get("SOURCE_REGISTRY", {}).get("output_refs", []))
+    if registry_refs != set(source_ids):
+        violations.append("Source Registry debe emitir exactamente las fuentes registradas.")
+    if not set(stage_by_name.get("VERIFY", {}).get("output_refs", [])).issubset(registry_refs):
+        violations.append("Verify no puede emitir fuentes ausentes del Source Registry.")
+
+    if data.get("status") == "COMPLETED" and not usable:
+        violations.append("pipeline COMPLETED requiere al menos una fuente adquirida y verificada.")
+    if data.get("status") == "BLOCKED" and usable:
+        violations.append("pipeline BLOCKED no puede contener fuentes utilizables.")
+    return sorted(set(violations))
 
 
 def _load_responsibility_registry() -> Dict[str, Dict[str, Any]]:
@@ -1446,11 +1536,41 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
     if material is False and tipo == "DIRECT":
         violations.append("material_principal_disponible=false es incoherente con tipo_de_acceso=DIRECT.")
 
+    # A registered source is not evidence by itself.  New V2 reports must
+    # prove recovery plus an evidence status; legacy reports remain valid only
+    # when their provenance carries an explicit primary/creator verification.
+    report_sources = [
+        source
+        for field in ("fuentes_primarias", "fuentes_secundarias")
+        for source in data.get(field, [])
+        if isinstance(source, dict)
+    ]
+    usable_sources = usable_source_ids(report_sources)
+    for source in report_sources:
+        if source.get("source_id") in usable_sources:
+            continue
+        provenance = source.get("provenance") or {}
+        if isinstance(provenance, Mapping) and (
+            provenance.get("verification_status") in POSITIVE_PROVENANCE_STATUSES
+            or provenance.get("primary_verification_performed") is True
+        ):
+            violations.append(
+                f"fuente '{source.get('source_id')}' no utilizable no puede declarar autoridad o verificación positiva."
+            )
+    if data.get("can_proceed") is True and not usable_sources:
+        violations.append("can_proceed=true requiere al menos una fuente adquirida y utilizable.")
+    if data.get("material_principal_disponible") != bool(usable_sources):
+        violations.append("material_principal_disponible debe derivarse de fuentes adquiridas y utilizables.")
+
     for index, item in enumerate(data.get("escenas_verificadas", [])):
         if isinstance(item, dict) and item.get("verification_mode") != "DIRECT":
             violations.append(
                 f"escenas_verificadas[{index}] tiene verification_mode='{item.get('verification_mode')}', "
                 f"se esperaba DIRECT."
+            )
+        if isinstance(item, dict) and item.get("source_id") not in usable_sources:
+            violations.append(
+                f"escenas_verificadas[{index}] no puede usar fuente no utilizable: '{item.get('source_id')}'."
             )
 
     for index, item in enumerate(data.get("escenas_descritas_indirectamente", [])):
@@ -1459,6 +1579,31 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
                 f"escenas_descritas_indirectamente[{index}] tiene verification_mode='{item.get('verification_mode')}', "
                 f"se esperaba INDIRECT."
             )
+        if isinstance(item, dict) and item.get("source_id") not in usable_sources:
+            violations.append(
+                f"escenas_descritas_indirectamente[{index}] no puede usar fuente no utilizable: '{item.get('source_id')}'."
+            )
+
+    for index, claim in enumerate(data.get("claims_sostenibles", [])):
+        if not isinstance(claim, dict):
+            continue
+        unusable = set(claim.get("source_refs", [])) - usable_sources
+        if unusable:
+            violations.append(
+                f"claims_sostenibles[{index}] usa fuentes no utilizables: {', '.join(sorted(unusable))}."
+            )
+
+    separation = data.get("evidence_type_separation")
+    if isinstance(separation, Mapping):
+        for field in ("work_evidence_refs", "external_reality_evidence_refs"):
+            unusable = {
+                ref for ref in separation.get(field, [])
+                if ref in known_sources and ref not in usable_sources
+            }
+            if unusable:
+                violations.append(
+                    f"evidence_type_separation.{field} usa fuentes no utilizables: {', '.join(sorted(unusable))}."
+                )
 
     required_scope_fields = ("allowed_analyses", "limited_analyses", "prohibited_analyses", "excluded_claims", "required_disclosures", "propagated_constraints")
     for field in required_scope_fields:
@@ -1467,6 +1612,12 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
     for claim in data.get("critical_claim_assessments", []):
         if not isinstance(claim, dict):
             continue
+        if claim.get("support_status") in {"SUPPORTED", "LIMITED"}:
+            unusable = set(claim.get("evidence_refs", [])) - usable_sources
+            if unusable:
+                violations.append(
+                    f"critical_claim_assessments[{claim.get('claim_id')}] usa evidencia no utilizable: {', '.join(sorted(unusable))}."
+                )
         if claim.get("support_status") in ("SUPPORTED", "LIMITED") and claim.get("confidence") == "LOW":
             violations.append(f"Claim crítico '{claim.get('claim_id')}' con confianza LOW debe excluirse o bloquearse.")
         if claim.get("support_status") in ("EXCLUDED", "INSUFFICIENT") and claim.get("claim_id") not in data.get("excluded_claims", []):
@@ -1504,6 +1655,10 @@ def validate_source_access_and_evidence_report(data: Dict[str, Any]) -> List[str
         if evaluation.get("source_id") not in known_sources:
             violations.append(
                 f"claim_dependent_source_evaluations[{index}] referencia fuente no declarada: '{evaluation.get('source_id')}'."
+            )
+        if evaluation.get("assessment") in {"SUPPORTED", "LIMITED"} and evaluation.get("source_id") not in usable_sources:
+            violations.append(
+                f"claim_dependent_source_evaluations[{index}] usa fuente no utilizable: '{evaluation.get('source_id')}'."
             )
     # IR1-005: independencia entre fuentes declarada.
     for group in data.get("independence_groups", []):

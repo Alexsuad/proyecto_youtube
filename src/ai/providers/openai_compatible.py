@@ -15,7 +15,11 @@ class OpenAICompatibleProvider:
 
     def execute(self, request: ExecutionRequest) -> tuple[dict[str, Any] | None, dict[str, Any]]:
         api_key_env = str(request.config.get("api_key_env") or "AI_API_KEY")
-        base_url_env = str(request.config.get("base_url_env") or "AI_BASE_URL")
+        base_url_env = str(
+            request.config.get("api_base_env")
+            or request.config.get("base_url_env")
+            or "AI_BASE_URL"
+        )
         model_env = str(request.config.get("model_env") or "AI_MODEL")
         api_key = os.getenv(api_key_env, "")
         if not api_key:

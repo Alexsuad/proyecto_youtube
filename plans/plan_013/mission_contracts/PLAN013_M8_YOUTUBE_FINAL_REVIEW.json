@@ -1,0 +1,23 @@
+{
+  "mission_id": "PLAN013_M8_YOUTUBE_FINAL_REVIEW",
+  "contract_status": "DRAFT",
+  "authorizing": false,
+  "effective_authorization": false,
+  "authorization_artifact": null,
+  "objective": "Extender YOUTUBE_ADAPTATION con FINAL_SCRIPT_REVIEW sobre el guion exacto, con política contextual.",
+  "non_objectives": ["Packaging", "SEO", "Miniaturas", "Shorts", "Publicación", "Cierre de episodio", "IA REAL", "Commit", "Push"],
+  "required_prior_state": ["M7 gate PASS", "OWNER autoriza M8", "script/version/checksum y FinalEditorialAudit disponibles"],
+  "allowlist": ["src/", "schemas/", "tests/", "config/", "plans/plan_013/mission_contracts/PLAN013_M8_YOUTUBE_FINAL_REVIEW.json"],
+  "denylist": ["config/active_editorial_profile.json", "profiles/editorial/", "profiles/voice/corpus_manifest.json", "providers/", "output/productive/", "packaging/", "publishing/"],
+  "preserve_preexisting_changes": ["AGENTS.md", "config/capability_routing.yaml", "output/execution_provenance_registry.json"],
+  "allowed_operations": ["reuse YOUTUBE_ADAPTATION authority", "add FINAL_SCRIPT_REVIEW contract", "make lexical scan contextual sensor", "make duration telemetry", "add authenticity/reuse dimensions"],
+  "dependencies": ["FinalEditorialAudit exact version", "existing duration and lexical tools", "rights/provenance contracts"],
+  "focused_tests": ["exact script identity binding", "lexical/context separation", "duration envelope", "authenticity/repetition context"],
+  "required_regressions": ["script-only scope", "no final closure in M8", "existing YouTube adaptation behavior"],
+  "expected_evidence": ["review envelope", "contextual decisions", "same artifact/version/checksum trace"],
+  "stop_conditions": ["new YouTube authority", "lexical-only final FAIL", "universal duration gate", "packaging scope"],
+  "commit_policy": "NO_COMMIT_WITHOUT_EXPLICIT_OWNER_AUTHORIZATION",
+  "push_policy": "FORBIDDEN",
+  "review_required": {"independent_review": true, "owner_review": true},
+  "mission_completion_gate": {"gate_id":"PLAN013_B5_GATE","double_rca_required_before_close":true,"jit_escape_cause_allowed_before_close":false}
+}

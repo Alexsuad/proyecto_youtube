@@ -163,6 +163,6 @@ def test_historical_sources_remain_noncanonical_and_skills_keep_safe_gates():
         assert "## Entrada" in text
         assert "BLOCKED" in text
         assert "active_editorial_profile.json" not in text
-    assert "POLICY_DETECCION_PATRONES_Y_CLICHES_V2" in (
-        ROOT / ".agent/workflows/piloto-outline.md"
-    ).read_text(encoding="utf-8")
+    workflow = (ROOT / ".agent/workflows/piloto-outline.md").read_text(encoding="utf-8")
+    assert "status: AVAILABLE_ONLY_IN_AUTHORIZED_B5_I3_MISSION" in workflow
+    assert "No aplicar fórmulas" in workflow

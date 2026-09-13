@@ -1,15 +1,15 @@
 {
   "ACTIVE_PROFILE_ID": "mas_alla_del_guion",
   "ACTIVE_PROFILE_VERSION": "1.2.2",
-  "profile_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b",
+  "profile_checksum": "c4175417681eb0bc8626a8ae6933cda8cfb3f3645ce138b0e9cdbd59cf59dff9",
   "functional_approval": {
     "decision": "APPROVE",
-    "profile_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b"
+    "profile_checksum": "c4175417681eb0bc8626a8ae6933cda8cfb3f3645ce138b0e9cdbd59cf59dff9"
   },
   "technical_validation": {
     "gate_id": "B3_TECHNICAL_PROFILE_VALIDATION",
     "status": "PASS",
-    "profile_checksum": "2c373b88860a2d17e3f625adfac267a173b5f7f586a6c87bed2c14c0d254cd2b"
+    "profile_checksum": "c4175417681eb0bc8626a8ae6933cda8cfb3f3645ce138b0e9cdbd59cf59dff9"
   },
   "activation": {
     "activated_by": "owner_channel_intelligence",

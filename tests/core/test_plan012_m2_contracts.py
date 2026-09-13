@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 
 from src.application.contracts import HumanInput
-from src.application.research_planning import ResearchPlanningService
+from src.application.research_planning import ResearchPlanningError, ResearchPlanningService
 from src.application.research_b2 import ResearchB2Persistence
 from src.application.storage import VaultEpisodeStore
 from src.core.editorial_profile_registry import load_active_profile_authority
@@ -84,6 +84,44 @@ def test_pre_research_planning_builds_separate_context_and_source_access() -> No
     assert context["episode_id"] == "EP-PLAN"
     assert source_access["contract"] == "research_source_access"
     assert source_access["capabilities"]["web_search"] == "UNAVAILABLE"
+
+
+def test_intended_use_resolution_preserves_precedence_origin_and_ambiguity() -> None:
+    service = ResearchPlanningService()
+    explicit = service.resolve_intended_use(
+        explicit="OWNER_DECLARED_RESEARCH", topic="Tema", question="Pregunta", reference="human:explicit",
+    )
+    assert explicit == {
+        "value": "OWNER_DECLARED_RESEARCH", "origin": "OWNER_EXPLICIT", "reference": "human:explicit",
+    }
+
+    derived = service.resolve_intended_use(
+        topic="Tema suficiente", question=None, reference="human:derived",
+    )
+    assert derived == {
+        "value": "RESEARCH_AND_THESIS", "origin": "DERIVED_STANDARD", "reference": "human:derived",
+    }
+
+    with pytest.raises(ResearchPlanningError, match="RESEARCH_INTENDED_USE_AMBIGUOUS"):
+        service.resolve_intended_use(reference="human:ambiguous")
+
+
+def test_intended_use_resolution_is_persisted_in_pre_research_brief() -> None:
+    profile = load_active_profile_authority()
+    brief = ResearchPlanningService().build_episode_brief(
+        episode_id="EP-INTENDED-USE",
+        topic="Tema suficiente",
+        question=None,
+        intended_use=None,
+        profile=profile,
+        origin_ref="human:EP-INTENDED-USE",
+    )
+    assert brief["objetivo"] == "RESEARCH_AND_THESIS"
+    assert brief["intended_use_resolution"] == {
+        "value": "RESEARCH_AND_THESIS",
+        "origin": "DERIVED_STANDARD",
+        "reference": "human:EP-INTENDED-USE",
+    }
 
 
 @pytest.mark.parametrize("selection_authority", ["OWNER_DECIDES", "DELEGATED_TO_RESEARCH"])

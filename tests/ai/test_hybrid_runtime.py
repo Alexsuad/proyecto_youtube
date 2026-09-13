@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
-from src.ai.execution import execute, manifest_checksum, persist_execution_result
+from src.ai.execution import editorial_only_payload, execute, manifest_checksum, persist_execution_result
 from src.ai.manifest import manifest_checksum as shared_manifest_checksum
 from src.ai.providers.agent_handoff import AgentHandoffProvider
 from src.ai.runtime_profiles import READY, ResolvedExecutionRoute
@@ -54,20 +54,13 @@ def _audit() -> dict:
     critical = {"ANALYSIS_SPECIFICITY", "EVIDENCE_TRACEABILITY", "EPISTEMIC_SEPARATION", "MATERIAL_COVERAGE", "CURATION_FUNCTION", "CURATION_CONTRAST_AND_PROGRESSION", "THESIS_REFINEMENT_SUBSTANCE", "THESIS_ARGUMENTATIVE_QUALITY", "MATERIAL_THESIS_CONTRIBUTION", "INHERITED_RESTRICTIONS", "B5_I3_READINESS"}
     anchored = {"artifact_kind": "analysis", "artifact_id": "A-1", "artifact_field": "summary", "evaluated_excerpt": "texto", "evidence_refs": ["F-1"], "evidence_excerpts": [{"evidence_ref": "F-1", "excerpt": "texto"}], "editorial_comparison": "comparación", "why_specific_or_generic": "es específico", "decision": "SATISFIED"}
     return {
-        "audit_id": "B5I2-SSA-1", "episode_id": "EP-1", "auditor_role": AUDITOR_ROLE,
-        "auditor_run_id": "RUN-AUDIT", "auditor_skill_id": SKILL_ID, "auditor_skill_version": SKILL_VERSION,
-        "provider_or_adapter": "mock", "model_or_evaluator": "test", "execution_timestamp": "2026-07-25T08:00:00Z",
-        "input_manifest_checksum": "a" * 64,
-        "artifact_checksums": [{"artifact_kind": kind, "artifact_id": artifact_id, "checksum": "a" * 64, "producer_run_id": "RUN-P"} for kind, artifact_id in [("research", "R-1"), ("evidence_report", "E-1"), ("provisional_thesis", "TP-1"), ("analysis", "A-1"), ("curation", "C-1"), ("refined_thesis", "T-1"), ("script_promise", "SP-1")]],
-        "audit_method": "AI_SEMANTIC_REVIEW",
-        "audited_artifact_ids": ["analysis:A-1", "curation:C-1", "refined_thesis:T-1", "script_promise:SP-1"],
-        "audited_artifact_versions": [{"artifact_kind": "analysis", "artifact_id": "A-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "curation", "artifact_id": "C-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "refined_thesis", "artifact_id": "T-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "script_promise", "artifact_id": "SP-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}],
         "criteria_results": [{"criterion": criterion, "status": "SATISFIED", "summary": "hallazgo trazable"} for criterion in criteria],
         "findings": [{"criterion": criterion, "status": "SATISFIED", "anchored_findings": [anchored] if criterion in critical else [], "rationale": "hallazgo trazable"} for criterion in criteria],
         "dimension_results": [{"dimension": name, "status": "PASS", "summary": "Dimensión controlada por fixture."} for name in ["TRIVIAL_THESIS", "INTERCHANGEABLE_ANALYSIS", "DECORATIVE_OBJECTION", "FALSE_DEPTH", "REPHRASED_NOT_REFINED_THESIS", "REDUNDANT_CURATION", "NO_ARGUMENTATIVE_PROGRESSION", "UNSUPPORTED_INFERENCE", "SUMMARY_INSTEAD_OF_ANALYSIS", "MISSING_INTERPRETIVE_LIMIT"]],
         "thesis_refinement_finding": {"status": "PASS", "summary": "El fixture sintetiza el estado de refinamiento."},
         "blocking_defects": [], "non_blocking_defects": [], "cited_evidence": ["F-1"], "required_corrections": [], "unresolved_questions": [], "inherited_restrictions_checked": [], "auditor_statement": "Decision PASS emitida sobre artefactos B5-I2 con evidencia citada.",
-        "decision": "PASS", "readiness": "BLOCKED", "created_at": "2026-07-25T08:00:00Z",
+        "required_changes": [], "excluded_claims_detected": [], "unsupported_inferences": [], "redundancy_findings": [], "progression_findings": [], "blocking_reasons": [], "reaudit_requirements": [],
+        "decision": "PASS",
     }
 
 
@@ -147,9 +140,12 @@ def _governed_request(tmp_path: Path, *, allowed_routes: list[str], **overrides)
 
 def _request(tmp_path: Path, **overrides) -> ExecutionRequest:
     _register_synthetic_auditor(tmp_path)
-    source = tmp_path / "analysis.json"
-    source.write_text('{"analysis_id":"A-1"}', encoding="utf-8")
-    kwargs = {"capability_id": CAPABILITY, "skill_id": SKILL_ID, "skill_version": SKILL_VERSION, "input_artifacts": [InputArtifact("analysis", "A-1", source, "RUN-P")], "output_schema": "b5_i2_semantic_sufficiency_audit", "execution_mode": "mock", "provider": "mock", "mock_output": _audit(), "output_artifact_kind": "semantic_audit", "output_artifact_id": "B5I2-SSA-1", "output_artifact_ref": "semantic_audit:B5I2-SSA-1", "episode_id": "EP-1", "role": AUDITOR_ROLE}
+    input_artifacts = []
+    for kind, artifact_id in (("research", "R-1"), ("evidence_report", "E-1"), ("provisional_thesis", "TP-1"), ("analysis", "A-1"), ("curation", "C-1"), ("refined_thesis", "T-1"), ("script_promise", "SP-1")):
+        source = tmp_path / f"{kind}.json"
+        source.write_text(json.dumps({"id": artifact_id}), encoding="utf-8")
+        input_artifacts.append(InputArtifact(kind, artifact_id, source, "RUN-P"))
+    kwargs = {"capability_id": CAPABILITY, "skill_id": SKILL_ID, "skill_version": SKILL_VERSION, "input_artifacts": input_artifacts, "output_schema": "b5_i2_semantic_sufficiency_audit", "execution_mode": "SYNTHETIC_TEST", "provider": "mock", "mock_output": _audit(), "output_artifact_kind": "semantic_audit", "output_artifact_id": "B5I2-SSA-1", "output_artifact_ref": "semantic_audit:B5I2-SSA-1", "episode_id": "EP-1", "role": AUDITOR_ROLE}
     kwargs.update(overrides)
     if kwargs.get("provider") == "agent_handoff" and "config" not in overrides:
         kwargs["config"] = _completion_gate_config(tmp_path)
@@ -408,9 +404,9 @@ def _artifacts_with_optional_early_packaging(tmp_path: Path) -> list[InputArtifa
     return artifacts
 
 
-def _write_artifact(root: Path, name: str, artifact_id: str) -> Path:
+def _write_artifact(root: Path, name: str, artifact_id: str, payload: dict | None = None) -> Path:
     path = root / name
-    path.write_text(json.dumps({"id": artifact_id, "content": "contenido editorial concreto"}), encoding="utf-8")
+    path.write_text(json.dumps(payload or {"id": artifact_id, "content": "contenido editorial concreto"}), encoding="utf-8")
     return path
 
 
@@ -424,7 +420,35 @@ def _producer_output(schema_name: str) -> dict:
         fixture.update({"thesis_id": "T-1", "episode_id": "EP-1", "research_id": "RP-1", "evidence_report_id": "ER-1", "semantic_audit_id": "SSA-1", "provisional_thesis_id": "TP-1", "analysis_ids": ["A-1"], "curation_id": "C-1"})
     elif schema_name == "editorial_script_promise":
         fixture.update({"promise_id": "SP-1", "episode_id": "EP-1", "refined_thesis_id": "T-1"})
+    if schema_name in {"narrative_human_analysis", "material_curation", "refined_thesis", "editorial_script_promise"}:
+        return editorial_only_payload(fixture, schema_name)
     return fixture
+
+
+def _producer_input_artifacts(tmp_path: Path, schema_name: str) -> list[InputArtifact]:
+    rows = [("research", "R-1", {"research_id": "RP-1", "facts": [{"material_id": "M-1"}]})]
+    if schema_name == "narrative_human_analysis":
+        rows.extend([
+            ("evidence_report", "E-1", {"report_id": "ER-1"}),
+            ("semantic_sufficiency_audit", "SSA-1", {"audit_id": "SSA-1"}),
+        ])
+    elif schema_name == "material_curation":
+        rows.append(("analysis", "A-1", {"analysis_id": "A-1"}))
+    elif schema_name == "refined_thesis":
+        rows.extend([
+            ("episode_brief", "B-1", {"brief_version": "1.0.0"}),
+            ("evidence_report", "E-1", {"report_id": "ER-1"}),
+            ("provisional_thesis", "TP-1", {"thesis_id": "TP-1"}),
+            ("semantic_sufficiency_audit", "SSA-1", {"audit_id": "SSA-1"}),
+            ("analysis", "A-1", {"analysis_id": "A-1"}),
+            ("curation", "C-1", {"curation_id": "C-1"}),
+        ])
+    elif schema_name == "editorial_script_promise":
+        rows.append(("refined_thesis", "T-1", {"thesis_id": "T-1"}))
+    return [
+        InputArtifact(kind, artifact_id, _write_artifact(tmp_path, f"producer_{kind}.json", artifact_id, payload), "RUN-R")
+        for kind, artifact_id, payload in rows
+    ]
 
 
 def _output_id(kind: str) -> str:
@@ -461,8 +485,8 @@ def _register_synthetic_producer(root: Path, role: str) -> None:
 def test_mock_produces_structurally_valid_output_but_is_not_real_editorial(tmp_path: Path) -> None:
     result = execute(_request(tmp_path))
     assert result.status is ExecutionStatus.SUCCEEDED
-    assert result.output["audit_id"] == _audit()["audit_id"]
-    assert "auditor_run_id" not in result.output
+    assert result.output["audit_id"] == "B5I2-SSA-1"
+    assert result.output["auditor_run_id"] == result.run_id
     assert not result.is_real_editorial_execution
 
 
@@ -512,7 +536,7 @@ def test_real_run_is_recorded_in_canonical_provenance(tmp_path: Path, monkeypatc
     monkeypatch.setattr(OpenAICompatibleProvider, "execute", lambda self, request: (_audit(), {"provider_test_double": True}))
     policy = tmp_path / "routing.yaml"
     policy.write_text("capabilities:\n  B5_I2_SEMANTIC_AUDITOR:\n    routing:\n      allow_external_api: true\n", encoding="utf-8")
-    governed = _governed_request(tmp_path, allowed_routes=["api_model"], provider="openai_compatible", execution_mode="api", model="semantic-test", config={"routing_policy_path": str(policy)})
+    governed = _governed_request(tmp_path, allowed_routes=["api_model"], provider="openai_compatible", execution_mode="REAL", model="semantic-test", config={"routing_policy_path": str(policy)})
     result = execute(governed)
     assert result.is_real_editorial_execution
     registry = tmp_path / "execution_registry.json"
@@ -528,8 +552,9 @@ def test_mock_b5_i2_flow_remains_blocked_for_editorial_decision(tmp_path: Path) 
         output_path=tmp_path / "audit.json",
         registry_path=tmp_path / "execution_registry.json",
         provider="mock",
-        execution_mode="mock",
+        execution_mode="SYNTHETIC_TEST",
         mock_output=_audit(),
+        episode_id="EP-1",
         config={"repository_root": str(tmp_path)},
     )
     assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
@@ -538,19 +563,20 @@ def test_mock_b5_i2_flow_remains_blocked_for_editorial_decision(tmp_path: Path) 
 def test_runner_rejects_audit_without_original_b5_i1_evidence(tmp_path: Path) -> None:
     request = _request(tmp_path)
     result = execute_b5_i2_audit(
-        artifacts=request.input_artifacts,
+        artifacts=[item for item in request.input_artifacts if item.artifact_kind != "research"],
         output_path=tmp_path / "audit.json",
         registry_path=tmp_path / "execution_registry.json",
         provider="mock",
-        execution_mode="mock",
+        execution_mode="SYNTHETIC_TEST",
         mock_output=_audit(),
+        episode_id="EP-1",
         config={"repository_root": str(tmp_path)},
     )
     assert result.status is ExecutionStatus.FAILED
     assert "research" in (result.error or "")
 
 
-def test_runner_builds_nonempty_editorial_prompt_and_imposes_runtime_provenance(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_runner_rejects_provider_runtime_metadata_after_building_editorial_prompt(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     artifacts = _four_artifacts(tmp_path)
     setup_governed_repo(tmp_path, allowed_routes=["api_model"], role_id=AUDITOR_ROLE)
     policy = tmp_path / "routing.yaml"
@@ -565,12 +591,9 @@ def test_runner_builds_nonempty_editorial_prompt_and_imposes_runtime_provenance(
     result = execute_b5_i2_audit(artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=tmp_path / "registry.json", episode_id="EP-1", provider="openai_compatible", execution_mode="api", model="ignored", config={"routing_policy_path": policy, "repository_root": str(tmp_path), "mission_authorization_path": "mission-authorization.json", "context_policy_path": "config/context_resolution_policy.json"})
     prompt = str(captured["prompt"])
     assert all(token in prompt for token in ("skill_auditar_suficiencia_semantica_b5_i2@1.0.0", "ANALYSIS_SPECIFICITY", "B5_I3_READINESS", "EarlyPackagingHypothesis", "Artefactos reales", "schema estructural"))
-    assert result.status is ExecutionStatus.SUCCEEDED
-    assert result.output["auditor_run_id"] == result.run_id
-    assert result.output["model_or_evaluator"] == "actual-semantic-model"
-    assert result.output["input_manifest_checksum"] == manifest_checksum(ExecutionRequest("x", "x", "x", artifacts, "x", episode_id="EP-1"))
-    saved = json.loads((tmp_path / "registry.json").read_text(encoding="utf-8"))
-    assert saved["runs"][0]["outputs"][0]["checksum"] == _checksum(result.output) or saved["runs"][0]["outputs"][0]["checksum"] == result.output_checksum
+    assert result.status is ExecutionStatus.FAILED
+    assert "metadata técnica de IA no permitida" in (result.error or "")
+    assert not (tmp_path / "registry.json").exists()
 
 
 def test_shared_manifest_matches_gate_representation(tmp_path: Path) -> None:
@@ -583,17 +606,15 @@ def test_shared_manifest_matches_gate_representation(tmp_path: Path) -> None:
 @pytest.mark.parametrize(("role", "artifact_kind", "schema_name"), PRODUCER_CASES)
 def test_runtime_persists_real_producer_provenance(tmp_path: Path, role: str, artifact_kind: str, schema_name: str) -> None:
     _register_synthetic_producer(tmp_path, role)
-    source = tmp_path / "input.json"
-    source.write_text('{"source":"ok"}', encoding="utf-8")
     payload = _producer_output(schema_name)
     output_path = _output_file(tmp_path, artifact_kind, payload)
     request = ExecutionRequest(
         capability_id="PRODUCER",
         skill_id=f"skill_{artifact_kind}",
         skill_version="1.0.0",
-        input_artifacts=[InputArtifact("research", "R-1", source, "RUN-R")],
+        input_artifacts=_producer_input_artifacts(tmp_path, schema_name),
         output_schema=schema_name,
-        execution_mode="mock",
+        execution_mode="SYNTHETIC_TEST",
         provider="mock",
         mock_output=payload,
         episode_id="EP-1",
@@ -806,7 +827,8 @@ def test_recovery_after_interruption_between_replaces_restores_previous_state(tm
     output = tmp_path / "audit.json"
     output.write_text('{"previous":"audit"}\n', encoding="utf-8")
     previous_registry_text = registry.read_text(encoding="utf-8")
-    result = ExecutionResult(run_id="RUN-AI-interrupt", status=ExecutionStatus.SUCCEEDED, executor_type="provider", provider="ollama", model="editorial-local", input_manifest_checksum="a" * 64, output=_audit(), output_checksum="b" * 64, started_at="2026-07-25T08:00:00Z", completed_at="2026-07-25T08:01:00Z", usage={"skill_id": SKILL_ID, "skill_version": SKILL_VERSION}, episode_id="EP-1", output_artifact_id="B5I2-SSA-1", output_artifact_kind="semantic_audit", output_artifact_ref="semantic_audit:B5I2-SSA-1", is_real_editorial_execution=True)
+    persisted_audit = {**_audit(), "audit_id": "B5I2-SSA-1"}
+    result = ExecutionResult(run_id="RUN-AI-interrupt", status=ExecutionStatus.SUCCEEDED, executor_type="provider", provider="ollama", model="editorial-local", input_manifest_checksum="a" * 64, output=persisted_audit, output_checksum="b" * 64, started_at="2026-07-25T08:00:00Z", completed_at="2026-07-25T08:01:00Z", usage={"skill_id": SKILL_ID, "skill_version": SKILL_VERSION}, episode_id="EP-1", output_artifact_id="B5I2-SSA-1", output_artifact_kind="semantic_audit", output_artifact_ref="semantic_audit:B5I2-SSA-1", is_real_editorial_execution=True)
     original_replace = audit_runner.os.replace
     state = {"count": 0}
 
@@ -818,7 +840,7 @@ def test_recovery_after_interruption_between_replaces_restores_previous_state(tm
 
     monkeypatch.setattr(audit_runner.os, "replace", interrupt_after_first_replace)
     with pytest.raises(KeyboardInterrupt, match="simulated interruption"):
-        audit_runner._atomic_persist(output, registry, _audit(), result)
+        audit_runner._atomic_persist(output, registry, persisted_audit, result)
 
     journal = tmp_path / "audit.json.txn.json"
     assert journal.exists()
@@ -856,25 +878,9 @@ def test_provider_may_return_editorial_fields_only(tmp_path: Path, monkeypatch: 
     setup_governed_repo(tmp_path, allowed_routes=["api_model"], role_id=AUDITOR_ROLE)
     policy = tmp_path / "routing.yaml"
     policy.write_text("capabilities:\n  B5_I2_SEMANTIC_AUDITOR:\n    routing:\n      allow_external_api: true\n", encoding="utf-8")
-    editorial = {
-        "audit_id": "B5I2-SSA-1",
-        "audited_artifact_ids": ["analysis:A-1", "curation:C-1", "refined_thesis:T-1", "script_promise:SP-1"],
-        "audited_artifact_versions": [{"artifact_kind": "analysis", "artifact_id": "A-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "curation", "artifact_id": "C-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "refined_thesis", "artifact_id": "T-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}, {"artifact_kind": "script_promise", "artifact_id": "SP-1", "checksum": "a" * 64, "producer_run_id": "RUN-P"}],
-        "criteria_results": _audit()["criteria_results"],
-        "findings": _audit()["findings"],
-        "dimension_results": _audit()["dimension_results"],
-        "thesis_refinement_finding": _audit()["thesis_refinement_finding"],
-        "blocking_defects": [],
-        "non_blocking_defects": [],
-        "cited_evidence": ["F-1"],
-        "required_corrections": [],
-        "unresolved_questions": [],
-        "inherited_restrictions_checked": [],
-        "auditor_statement": "Decision PASS emitida sobre artefactos B5-I2 con evidencia citada.",
-        "decision": "PASS",
-    }
+    editorial = _audit()
     monkeypatch.setattr(OpenAICompatibleProvider, "execute", lambda self, request: (editorial, {"provider_or_adapter": "openai_compatible", "model_or_evaluator": "model-real"}))
-    result = execute_b5_i2_audit(artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=tmp_path / "registry.json", episode_id="EP-1", provider="openai_compatible", execution_mode="api", config={"routing_policy_path": policy, "repository_root": str(tmp_path), "mission_authorization_path": "mission-authorization.json", "context_policy_path": "config/context_resolution_policy.json"})
+    result = execute_b5_i2_audit(artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=tmp_path / "registry.json", episode_id="EP-1", provider="openai_compatible", execution_mode="REAL", model="model-real", config={"routing_policy_path": policy, "repository_root": str(tmp_path), "mission_authorization_path": "mission-authorization.json", "context_policy_path": "config/context_resolution_policy.json"})
     assert result.status is ExecutionStatus.SUCCEEDED
     assert result.output["auditor_run_id"] == result.run_id
 
@@ -885,8 +891,9 @@ def test_runner_accepts_audit_without_optional_early_packaging(tmp_path: Path) -
         output_path=tmp_path / "audit.json",
         registry_path=tmp_path / "execution_registry.json",
         provider="mock",
-        execution_mode="mock",
+        execution_mode="SYNTHETIC_TEST",
         mock_output=_audit(),
+        episode_id="EP-1",
         config={"repository_root": str(tmp_path)},
     )
     assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
@@ -899,8 +906,9 @@ def test_runner_accepts_optional_early_packaging_when_present(tmp_path: Path) ->
         output_path=tmp_path / "audit.json",
         registry_path=tmp_path / "execution_registry.json",
         provider="mock",
-        execution_mode="mock",
+        execution_mode="SYNTHETIC_TEST",
         mock_output=_audit(),
+        episode_id="EP-1",
         config={"repository_root": str(tmp_path)},
     )
     assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR

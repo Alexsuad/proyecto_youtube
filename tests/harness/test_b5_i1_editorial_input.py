@@ -7,6 +7,8 @@ import json
 import socket
 from pathlib import Path
 
+import pytest
+
 from src.core.contract_validation import (
     validate_against_schema,
     validate_source_access_and_evidence_report,
@@ -346,7 +348,7 @@ def test_provisional_thesis_requires_research_and_evidence_lineage() -> None:
 def test_provisional_and_refined_stages_are_not_confused() -> None:
     skill = Path(".agent/skills/skill_sintesis_tesis.md").read_text(encoding="utf-8")
     assert "THESIS_REFINED" in skill
-    assert "bloqueado hasta B5-I2" in skill
+    assert "Solo PASS o WARN permiten continuar a B5-I2." in skill
 
 
 def test_workflow_stops_before_curation_and_outline() -> None:
@@ -385,6 +387,67 @@ def test_unavailable_with_can_proceed_true_blocks(tmp_path: Path) -> None:
     result = evaluate_evidence(path, "EP-001")
     assert result.status is GateStatus.BLOCKED
     assert result.exit_code == 2
+
+
+@pytest.mark.parametrize(
+    ("retrieval_status", "evidence_status"),
+    [("NOT_RECOVERED", "PENDING"), ("RECOVERED", "PENDING"), ("RECOVERED", "NOT_REVIEWED")],
+)
+def test_unusable_source_status_cannot_support_positive_evidence(
+    retrieval_status: str, evidence_status: str,
+) -> None:
+    report = valid_report()
+    report["fuentes_primarias"][0].update({
+        "retrieval_status": retrieval_status,
+        "evidence_status": evidence_status,
+    })
+    violations = validate_source_access_and_evidence_report(report)
+    assert any("no utilizable" in violation for violation in violations)
+
+
+def test_recovered_and_verified_source_can_support_positive_evidence() -> None:
+    report = valid_report()
+    report["fuentes_primarias"][0].update({
+        "retrieval_status": "RECOVERED",
+        "evidence_status": "VERIFIED",
+        "recovery_artifact_ref": "recovery:S1",
+    })
+    assert validate_source_access_and_evidence_report(report) == []
+
+
+def test_unusable_source_cannot_be_referenced_by_positive_evidence_shapes() -> None:
+    report = valid_report()
+    report["fuentes_primarias"][0].update({
+        "retrieval_status": "RECOVERED",
+        "evidence_status": "NOT_REVIEWED",
+    })
+    report["claims_sostenibles"] = [{
+        "claim_id": "C-S1",
+        "claim_text": "Claim positivo no permitido.",
+        "source_refs": ["S1"],
+        "locator": "p. 1",
+        "confidence": "HIGH",
+    }]
+    report["evidence_type_separation"] = {
+        "work_evidence_refs": [],
+        "external_reality_evidence_refs": ["S1"],
+    }
+    report["claim_dependent_source_evaluations"] = [{
+        "claim_id": "C1",
+        "source_id": "S1",
+        "object_relation": "Directa",
+        "claim_authority": "Primaria",
+        "access_level": "DIRECT",
+        "independence": "INDEPENDENT",
+        "currency": "Vigente",
+        "locator": "p. 1",
+        "assessment": "SUPPORTED",
+    }]
+    violations = validate_source_access_and_evidence_report(report)
+    assert any("claims_sostenibles[0] usa fuentes no utilizables" in violation for violation in violations)
+    assert any("evidence_type_separation.external_reality_evidence_refs" in violation for violation in violations)
+    assert any("critical_claim_assessments[C1] usa evidencia no utilizable" in violation for violation in violations)
+    assert any("claim_dependent_source_evaluations[0] usa fuente no utilizable" in violation for violation in violations)
 
 
 def test_global_low_confidence_blocks(tmp_path: Path) -> None:
@@ -732,6 +795,7 @@ def test_partial_coverage_without_impact_fails(tmp_path: Path) -> None:
 def test_inherited_skills_are_marked_non_executable() -> None:
     catalog = json.loads(Path("config/skill_catalog.json").read_text(encoding="utf-8"))
     deferred = {item["skill_id"]: item for item in catalog["skills"] if item.get("non_executable_current")}
-    assert set(deferred) >= {"skill_mapa_eventos_y_outline", "skill_guion_longform", "skill_qa_editorial", "skill_verificacion_veracidad_fuente_externa_historica", "skill_extraer_voice_learnings"}
+    assert set(deferred) >= {"skill_guion_longform", "skill_qa_editorial", "skill_verificacion_veracidad_fuente_externa_historica", "skill_extraer_voice_learnings"}
+    assert "skill_mapa_eventos_y_outline" not in deferred
     assert "skill_analisis_patrones" not in deferred
     assert "skill_curation_obras" not in deferred

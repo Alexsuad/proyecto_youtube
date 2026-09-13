@@ -188,7 +188,7 @@ class PersistedResearchEpisode:
         )
 
     @staticmethod
-    def _persisted_intended_use(human: Mapping[str, Any], handoff: Mapping[str, Any]) -> str:
+    def _persisted_intended_use(human: Mapping[str, Any], handoff: Mapping[str, Any]) -> str | None:
         field_bindings = handoff.get("field_bindings") if isinstance(handoff.get("field_bindings"), Mapping) else {}
         candidates = (
             human.get("intended_use"),
@@ -202,7 +202,9 @@ class PersistedResearchEpisode:
             value = str(candidate or "").strip()
             if value:
                 return value
-        raise ResearchM7Error("REAL_ROUTE_PRE_RESEARCH_INTENDED_USE_REQUIRED")
+        # Leave derivation to ResearchPlanningService so the persisted brief
+        # records DERIVED_STANDARD rather than misclassifying it as explicit.
+        return None
 
     @staticmethod
     def _owner_restrictions(human: Mapping[str, Any]) -> list[str]:

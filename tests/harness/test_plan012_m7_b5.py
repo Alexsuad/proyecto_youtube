@@ -43,7 +43,16 @@ from src.application.research_m7_fixture import (
     sufficiency,
 )
 from src.core.editorial_profile_registry import load_active_profile_authority
+from src.core.mission_authorization import (
+    MissionAuthorizationError,
+    load_mission_authorization,
+    scope_checksum,
+    sha256_file,
+)
 from src.cli import build_parser, main
+
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def _input(**overrides):
@@ -609,8 +618,10 @@ def _persisted_real_episode(tmp_path):
     return handle, settings
 
 
-def _real_cli_args(handle, settings):
-    handoff_directory = Path("plans/extend_01/m2/b4_handoff/packages") / f".pytest-{Path(settings).stem}"
+def _real_cli_args(handle, settings, *, handoff_directory=None):
+    handoff_directory = handoff_directory or (
+        Path("plans/extend_01/m2/b4_handoff/packages") / f".pytest-{Path(settings).stem}"
+    )
     return [
         "--episodio-id", handle.episode_id,
         "--config", str(settings),
@@ -620,6 +631,137 @@ def _real_cli_args(handle, settings):
         "--timeout", "30",
         "--handoff-directory", str(handoff_directory),
     ]
+
+
+def _isolated_external_handoff_bundle(tmp_path):
+    """Build a historical EXTEND bundle without mutating live repository state."""
+    bundle_root = ROOT / ".runtime-tmp" / f"plan012-m7-{hashlib.sha256(str(tmp_path).encode()).hexdigest()[:12]}"
+    bundle_root.mkdir(parents=True, exist_ok=False)
+    live_state = bundle_root / "live-control.md"
+    authority_path = bundle_root / "authority.json"
+    authorization_path = bundle_root / "mission-authorization.json"
+    contract_path = bundle_root / "mission_contract.json"
+    handoff_directory = bundle_root / "packages"
+    provenance_root = bundle_root / "provenance"
+    provenance_registry = provenance_root / "output" / "execution_provenance_registry.json"
+
+    live_control = (ROOT / "plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8")
+    current_line = next(line for line in live_control.splitlines() if line.startswith("CURRENT_MISSION:"))
+    live_state.write_text(
+        live_control.replace(current_line, "CURRENT_MISSION: EXTEND_01_M2_REAL_E2E"),
+        encoding="utf-8",
+    )
+    live_ref = live_state.relative_to(ROOT).as_posix()
+    authority_ref = authority_path.relative_to(ROOT).as_posix()
+    authorization_ref = authorization_path.relative_to(ROOT).as_posix()
+    contract_ref = contract_path.relative_to(ROOT).as_posix()
+    handoff_ref = handoff_directory.relative_to(ROOT).as_posix() + "/"
+
+    authorization = json.loads(
+        (ROOT / REAL_EXTERNAL_HANDOFF_AUTHORIZATION).read_text(encoding="utf-8")
+    )
+    authorization_data = authorization["authorization"]
+    authorization_data.update({
+        "live_state_path": live_ref,
+        "live_state_sha256": sha256_file(live_state),
+        "authority_ref": authority_ref,
+        "allowed_paths": [handoff_ref],
+    })
+    scope = {
+        "mission_id": authorization["mission_id"],
+        "capability_ids": authorization_data["capability_ids"],
+        "role_ids": authorization_data["role_ids"],
+        "execution_profile_ids": authorization_data.get("execution_profile_ids", []),
+        "execution_interface": authorization_data["execution_interface"],
+        "allowed_operations": authorization_data["allowed_operations"],
+        "allowed_paths": authorization_data["allowed_paths"],
+        "allowed_routes": authorization_data["allowed_routes"],
+        "execution_mode": authorization_data["execution_mode"],
+        "live_state_sha256": authorization_data["live_state_sha256"],
+        "contains_material_repair": authorization_data["contains_material_repair"],
+        "repair_integrity_evidence_path": authorization_data["repair_integrity_evidence_path"],
+    }
+    if authorization_data.get("execution_family_ids"):
+        scope["execution_family_ids"] = authorization_data["execution_family_ids"]
+    authorization_data["authorized_scope_sha256"] = scope_checksum(scope)
+    authority = {
+        "mission_id": authorization["mission_id"],
+        "decision": "APPROVE",
+        "artifact_version": "1.0.0",
+        "authorized_scope_sha256": authorization_data["authorized_scope_sha256"],
+    }
+    authority_path.write_text(json.dumps(authority), encoding="utf-8")
+    authorization_data["authority_sha256"] = sha256_file(authority_path)
+    authorization_path.write_text(json.dumps(authorization), encoding="utf-8")
+
+    contract = json.loads((ROOT / REAL_EXTERNAL_HANDOFF_CONTRACT).read_text(encoding="utf-8"))
+    contract.update({
+        "authorized_paths": [handoff_ref],
+        "mission_authorization_path": authorization_ref,
+        "state_requirements": {
+            **contract["state_requirements"],
+            "control_path": live_ref,
+            "required": {
+                **contract["state_requirements"]["required"],
+                "CURRENT_MISSION": "EXTEND_01_M2_REAL_E2E",
+            },
+        },
+    })
+    contract_path.write_text(json.dumps(contract), encoding="utf-8")
+    provenance_registry.parent.mkdir(parents=True, exist_ok=True)
+    provenance_registry.write_text(
+        json.dumps({"registry_version": "1.0.0", "runs": [], "handoffs": [], "attempts": []}),
+        encoding="utf-8",
+    )
+    return SimpleNamespace(
+        root=bundle_root,
+        live_state=live_state,
+        authority=authority_path,
+        authorization=authorization_path,
+        authorization_ref=authorization_ref,
+        contract=contract_path,
+        contract_ref=contract_ref,
+        handoff_directory=handoff_directory,
+        provenance_root=provenance_root,
+    )
+
+
+def _isolated_source_acquisition_adapter(bundle, episode_id):
+    recovery = bundle.root / "recovery-S1.json"
+    recovery.write_text(
+        json.dumps({"source_id": "S1", "content": "Fixture controlado.", "locator": "fixture://S1"}),
+        encoding="utf-8",
+    )
+    recovery_ref = {
+        "artifact_id": "recovery:S1",
+        "path": str(recovery),
+        "checksum": sha256_file(recovery),
+    }
+    registry_path = bundle.provenance_root / "output" / "execution_provenance_registry.json"
+    register_software_outputs(
+        registry_path,
+        run_id=f"PLAN012-TEST-ACQUISITION-{episode_id}",
+        episode_id=episode_id,
+        role="RESEARCH_ACQUISITION",
+        outputs=[{
+            "artifact_id": recovery_ref["artifact_id"],
+            "artifact_kind": "research",
+            "artifact_version": "1.0.0",
+            "checksum": recovery_ref["checksum"],
+        }],
+    )
+    return SoftwareAcquisitionAdapter(
+        {"S1": {
+            "request_ref": "request:S1",
+            "execution_ref": f"PLAN012-TEST-ACQUISITION-{episode_id}",
+            "recovery_artifact_ref": "recovery:S1",
+            "retrieval_status": "RECOVERED",
+            "evidence_status": "VERIFIED",
+            "software_controlled": True,
+        }},
+        recovery_artifacts={"recovery:S1": recovery_ref},
+        execution_registry_path=registry_path,
+    )
 
 
 @pytest.fixture
@@ -632,6 +774,66 @@ def persisted_real_episode():
             handoff_directory = Path("plans/extend_01/m2/b4_handoff/packages") / f".pytest-{result[1].stem}"
             if handoff_directory.is_dir():
                 shutil.rmtree(handoff_directory)
+
+
+@pytest.fixture
+def isolated_real_episode(persisted_real_episode, tmp_path):
+    handle, settings = persisted_real_episode
+    bundle = _isolated_external_handoff_bundle(tmp_path)
+    try:
+        yield SimpleNamespace(handle=handle, settings=settings, **vars(bundle))
+    finally:
+        if bundle.root.is_dir():
+            shutil.rmtree(bundle.root, ignore_errors=True)
+
+
+def test_extend01_isolated_authority_is_valid_but_live_and_tampered_state_fail(tmp_path):
+    bundle = _isolated_external_handoff_bundle(tmp_path)
+    try:
+        isolated = load_mission_authorization(bundle.authorization)
+        isolated.verify(
+            ROOT,
+            capability_id="EXTEND_01_RESEARCH_V2_REAL_E2E",
+            role_id="RESEARCH_AND_CURATION",
+            operation="EXECUTE_CAPABILITY",
+            execution_mode="REAL",
+            execution_route="agent_harness",
+            execution_family="AGENT_HARNESS",
+            execution_interface="EXTEND_01_M2_B4_HANDOFF",
+            path=bundle.handoff_directory.relative_to(ROOT).as_posix() + "/",
+        )
+
+        live = load_mission_authorization(ROOT / REAL_EXTERNAL_HANDOFF_AUTHORIZATION)
+        with pytest.raises(MissionAuthorizationError, match="MISSION_STALE_AGAINST_LIVE_STATE"):
+            live.verify(
+                ROOT,
+                capability_id="EXTEND_01_RESEARCH_V2_REAL_E2E",
+                role_id="RESEARCH_AND_CURATION",
+                operation="EXECUTE_CAPABILITY",
+                execution_mode="REAL",
+                execution_route="agent_harness",
+                execution_family="AGENT_HARNESS",
+                execution_interface="EXTEND_01_M2_B4_HANDOFF",
+            )
+
+        bundle.live_state.write_text(
+            bundle.live_state.read_text(encoding="utf-8") + "\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(MissionAuthorizationError, match="MISSION_STALE_AGAINST_LIVE_STATE"):
+            isolated.verify(
+                ROOT,
+                capability_id="EXTEND_01_RESEARCH_V2_REAL_E2E",
+                role_id="RESEARCH_AND_CURATION",
+                operation="EXECUTE_CAPABILITY",
+                execution_mode="REAL",
+                execution_route="agent_harness",
+                execution_family="AGENT_HARNESS",
+                execution_interface="EXTEND_01_M2_B4_HANDOFF",
+            )
+    finally:
+        if bundle.root.is_dir():
+            shutil.rmtree(bundle.root, ignore_errors=True)
 
 
 def test_extend01_real_without_authorization_blocks_before_provider():
@@ -703,15 +905,15 @@ def test_extend01_real_entrypoint_is_episode_bound_and_blocks_without_b4_authori
     assert "REAL_AI_ROUTE_SELECTION_REQUIRED_FOR_B4" not in output
 
 
-def test_extend01_b4_prepares_external_handoff_and_stops_before_b2(persisted_real_episode, capsys):
-    handle, settings = persisted_real_episode
+def test_extend01_b4_prepares_external_handoff_and_stops_before_b2(isolated_real_episode, capsys):
+    handle, settings = isolated_real_episode.handle, isolated_real_episode.settings
     package_path = None
     try:
         assert main([
             "investigar-real",
-            *_real_cli_args(handle, settings),
-            "--mission-authorization", REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
-            "--mission-contract", REAL_EXTERNAL_HANDOFF_CONTRACT,
+            *_real_cli_args(handle, settings, handoff_directory=isolated_real_episode.handoff_directory),
+            "--mission-authorization", isolated_real_episode.authorization_ref,
+            "--mission-contract", isolated_real_episode.contract_ref,
         ]) == 0
         output = capsys.readouterr().out
         assert "EXTERNAL_HANDOFF: PREPARED" in output
@@ -761,12 +963,12 @@ def _research_plan_proposal():
     }
 
 
-def test_extend01_b4_r1_imports_research_planning_and_resumes_without_replanning(persisted_real_episode, capsys):
-    handle, settings = persisted_real_episode
+def test_extend01_b4_r1_imports_research_planning_and_resumes_without_replanning(isolated_real_episode, capsys):
+    handle, settings = isolated_real_episode.handle, isolated_real_episode.settings
     assert main([
-        "investigar-real", *_real_cli_args(handle, settings),
-        "--mission-authorization", REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
-        "--mission-contract", REAL_EXTERNAL_HANDOFF_CONTRACT,
+        "investigar-real", *_real_cli_args(handle, settings, handoff_directory=isolated_real_episode.handoff_directory),
+        "--mission-authorization", isolated_real_episode.authorization_ref,
+        "--mission-contract", isolated_real_episode.contract_ref,
     ]) == 0
     output = capsys.readouterr().out
     package_path = Path(next(line.split(": ", 1)[1] for line in output.splitlines() if line.startswith("HANDOFF_PACKAGE: ")))
@@ -826,13 +1028,13 @@ def test_extend01_b4_r1_imports_research_planning_and_resumes_without_replanning
 
 
 def test_extend01_verified_external_provenance_reenters_resume_context(
-    persisted_real_episode, monkeypatch, capsys,
+    isolated_real_episode, monkeypatch, capsys,
 ):
-    handle, settings = persisted_real_episode
+    handle, settings = isolated_real_episode.handle, isolated_real_episode.settings
     assert main([
-        "investigar-real", *_real_cli_args(handle, settings),
-        "--mission-authorization", REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
-        "--mission-contract", REAL_EXTERNAL_HANDOFF_CONTRACT,
+        "investigar-real", *_real_cli_args(handle, settings, handoff_directory=isolated_real_episode.handoff_directory),
+        "--mission-authorization", isolated_real_episode.authorization_ref,
+        "--mission-contract", isolated_real_episode.contract_ref,
     ]) == 0
     output = capsys.readouterr().out
     package_path = Path(next(line.split(": ", 1)[1] for line in output.splitlines() if line.startswith("HANDOFF_PACKAGE: ")))
@@ -875,7 +1077,10 @@ def test_extend01_verified_external_provenance_reenters_resume_context(
 
     monkeypatch.setattr(RealResearchRoutePreparation, "run_canonical_vertical", fake_resume)
     try:
-        imported = import_and_resume_external_research(VaultEpisodeStore.from_settings(settings), result_path)
+        imported = import_and_resume_external_research(
+            VaultEpisodeStore.from_settings(settings), result_path,
+            _test_provenance_repository_root=isolated_real_episode.provenance_root,
+        )
         assert imported["provenance_status"] == "REPORTED_AND_BOUND"
         assert captured["initial_context"]["real_provenance"]["run_id"] == "OWNER-VERIFIED-PLANNING"
         state = json.loads((handle.folder / "research_external_handoff.json").read_text(encoding="utf-8"))
@@ -886,14 +1091,15 @@ def test_extend01_verified_external_provenance_reenters_resume_context(
 
 
 def test_extend01_b4_r3_imports_consecutive_cognitive_seams_without_repeating_b2(
-    persisted_real_episode, capsys,
+    isolated_real_episode, capsys,
 ):
     """Planning and the next external seam resume the same B2 persistence."""
-    handle, settings = persisted_real_episode
+    handle, settings = isolated_real_episode.handle, isolated_real_episode.settings
+    acquisition_adapter = _isolated_source_acquisition_adapter(isolated_real_episode, handle.episode_id)
     assert main([
-        "investigar-real", *_real_cli_args(handle, settings),
-        "--mission-authorization", REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
-        "--mission-contract", REAL_EXTERNAL_HANDOFF_CONTRACT,
+        "investigar-real", *_real_cli_args(handle, settings, handoff_directory=isolated_real_episode.handoff_directory),
+        "--mission-authorization", isolated_real_episode.authorization_ref,
+        "--mission-contract", isolated_real_episode.contract_ref,
     ]) == 0
     output = capsys.readouterr().out
     planning_package_path = Path(next(line.split(": ", 1)[1] for line in output.splitlines() if line.startswith("HANDOFF_PACKAGE: ")))
@@ -913,7 +1119,11 @@ def test_extend01_b4_r3_imports_consecutive_cognitive_seams_without_repeating_b2
             "skill_id": planning_package["skill_id"], "skill_version": planning_package["skill_version"],
             "output": proposal, "output_checksum": hashlib.sha256(encoded).hexdigest(),
         }), encoding="utf-8")
-        first = import_and_resume_external_research(VaultEpisodeStore.from_settings(settings), planning_result)
+        first = import_and_resume_external_research(
+            VaultEpisodeStore.from_settings(settings), planning_result,
+            _test_provenance_repository_root=isolated_real_episode.provenance_root,
+            _test_acquisition_adapter=acquisition_adapter,
+        )
         assert first["resume"]["status"] == "PENDING_EXTERNAL_COGNITIVE_RESULT"
         phenomenon_package_path = Path(first["resume"]["handoff_package_ref"])
         phenomenon_package = json.loads(phenomenon_package_path.read_text(encoding="utf-8"))
@@ -937,7 +1147,11 @@ def test_extend01_b4_r3_imports_consecutive_cognitive_seams_without_repeating_b2
             "skill_id": phenomenon_package["skill_id"], "skill_version": phenomenon_package["skill_version"],
             "output": cognitive, "output_checksum": hashlib.sha256(encoded).hexdigest(),
         }), encoding="utf-8")
-        second = import_and_resume_external_research(VaultEpisodeStore.from_settings(settings), phenomenon_result)
+        second = import_and_resume_external_research(
+            VaultEpisodeStore.from_settings(settings), phenomenon_result,
+            _test_provenance_repository_root=isolated_real_episode.provenance_root,
+            _test_acquisition_adapter=acquisition_adapter,
+        )
         assert second["resume"]["status"] == "PENDING_EXTERNAL_COGNITIVE_RESULT"
         assert second["resume"]["pending_stage"] == "WORK_DISCOVERY"
         assert (handle.folder / "research_v2" / "b2" / "research_plan.json").is_file()
@@ -961,7 +1175,11 @@ def test_extend01_b4_r3_imports_consecutive_cognitive_seams_without_repeating_b2
             "skill_id": discovery_package["skill_id"], "skill_version": discovery_package["skill_version"],
             "output": cognitive_discovery, "output_checksum": hashlib.sha256(encoded).hexdigest(),
         }), encoding="utf-8")
-        third = import_and_resume_external_research(VaultEpisodeStore.from_settings(settings), discovery_result)
+        third = import_and_resume_external_research(
+            VaultEpisodeStore.from_settings(settings), discovery_result,
+            _test_provenance_repository_root=isolated_real_episode.provenance_root,
+            _test_acquisition_adapter=acquisition_adapter,
+        )
         assert third["resume"]["status"] == "PENDING_EXTERNAL_COGNITIVE_RESULT"
         assert third["resume"]["pending_stage"] == "BASE_RESEARCH_POOL"
         assert "ARTIFACT_ALREADY_EXISTS" not in json.dumps(third, ensure_ascii=False)
@@ -971,12 +1189,12 @@ def test_extend01_b4_r3_imports_consecutive_cognitive_seams_without_repeating_b2
         planning_package_path.unlink(missing_ok=True)
 
 
-def test_extend01_b4_r1_rejects_tampered_execution_controls(persisted_real_episode, capsys):
-    handle, settings = persisted_real_episode
+def test_extend01_b4_r1_rejects_tampered_execution_controls(isolated_real_episode, capsys):
+    handle, settings = isolated_real_episode.handle, isolated_real_episode.settings
     assert main([
-        "investigar-real", *_real_cli_args(handle, settings),
-        "--mission-authorization", REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
-        "--mission-contract", REAL_EXTERNAL_HANDOFF_CONTRACT,
+        "investigar-real", *_real_cli_args(handle, settings, handoff_directory=isolated_real_episode.handoff_directory),
+        "--mission-authorization", isolated_real_episode.authorization_ref,
+        "--mission-contract", isolated_real_episode.contract_ref,
     ]) == 0
     output = capsys.readouterr().out
     package_path = Path(next(line.split(": ", 1)[1] for line in output.splitlines() if line.startswith("HANDOFF_PACKAGE: ")))
@@ -987,7 +1205,10 @@ def test_extend01_b4_r1_rejects_tampered_execution_controls(persisted_real_episo
     result_path.write_text(json.dumps({"episode_id": handle.episode_id}), encoding="utf-8")
     try:
         with pytest.raises(ResearchM7Error, match="ROUNDTRIP_RESULT_BLOCKED"):
-            import_and_resume_external_research(VaultEpisodeStore.from_settings(settings), result_path)
+            import_and_resume_external_research(
+                VaultEpisodeStore.from_settings(settings), result_path,
+                _test_provenance_repository_root=isolated_real_episode.provenance_root,
+            )
     finally:
         package_path.unlink(missing_ok=True)
         result_path.unlink(missing_ok=True)
@@ -1128,14 +1349,14 @@ def test_extend01_persisted_episode_preserves_owner_research_bindings(persisted_
     assert episode.brief["objetivo"] == "OWNER_DECLARED_RESEARCH"
 
 
-def test_extend01_persisted_episode_without_canonical_objective_fails_closed(persisted_real_episode):
+def test_extend01_persisted_episode_derives_standard_objective_when_unambiguous(persisted_real_episode):
     handle, settings = persisted_real_episode
     for name in ("research_episode_brief.json", "research_channel_context.json", "research_source_access.json"):
         (handle.folder / name).unlink()
     store = VaultEpisodeStore.from_settings(settings)
-    with pytest.raises(ResearchM7Error, match="REAL_ROUTE_PRE_RESEARCH_INTENDED_USE_REQUIRED"):
-        PersistedResearchEpisode.load(store, handle.episode_id)
-    assert not (handle.folder / "research_episode_brief.json").exists()
+    episode = PersistedResearchEpisode.load(store, handle.episode_id)
+    assert episode.brief["objetivo"] == "RESEARCH_AND_THESIS"
+    assert (handle.folder / "research_episode_brief.json").is_file()
 
 
 def test_extend01_real_adapters_transport_selection_chain_and_provenance(
@@ -1425,11 +1646,11 @@ def test_extend01_real_route_rejects_post_m6_continuation():
 def test_extend01_b4_r5_integrated_external_roundtrip_m4_m6(tmp_path):
     """Drive the production handoff/import/resume seams through ResearchReady."""
     test_root = Path(tempfile.mkdtemp(prefix="r5-"))
+    bundle = _isolated_external_handoff_bundle(tmp_path)
     episode_root = test_root / "episode"
     episode_root.mkdir()
     handle, settings = _persisted_real_episode(episode_root)
-    handoff_directory = Path("plans/extend_01/m2/b4_handoff/packages") / f".pytest-integrated-{handle.episode_id}"
-    handoff_directory.mkdir(parents=True, exist_ok=True)
+    handoff_directory = bundle.handoff_directory
     canonical_root = tmp_path / "canonical_repo"
     (canonical_root / "config").mkdir(parents=True)
     (canonical_root / "output").mkdir()
@@ -1450,8 +1671,8 @@ def test_extend01_b4_r5_integrated_external_roundtrip_m4_m6(tmp_path):
         "topic": "Tema persistido de Research V2",
         "question": "¿Qué puede sostenerse?",
         "budget_limit": 25, "max_iterations": 2, "max_retries": 1, "timeout_seconds": 30,
-        "mission_authorization_path": REAL_EXTERNAL_HANDOFF_AUTHORIZATION,
-        "mission_contract_path": REAL_EXTERNAL_HANDOFF_CONTRACT,
+        "mission_authorization_path": bundle.authorization_ref,
+        "mission_contract_path": bundle.contract_ref,
         "handoff_directory": handoff_directory,
     })
     completed_packages: list[str] = []
@@ -1459,6 +1680,20 @@ def test_extend01_b4_r5_integrated_external_roundtrip_m4_m6(tmp_path):
     works = ["EXT-WORK-A", "EXT-WORK-B"]
     acquisition_root = tmp_path / "acquisition"
     acquisition_root.mkdir()
+    source_recovery = acquisition_root / "S1.json"
+    source_recovery.write_text(
+        json.dumps({"source_id": "S1", "content": "Fixture controlado.", "locator": "fixture://S1"}),
+        encoding="utf-8",
+    )
+    source_checksum = hashlib.sha256(source_recovery.read_bytes()).hexdigest()
+    source_execution_ref = "R5-ACQ-S1"
+    register_software_outputs(
+        canonical_root / "output" / "execution_provenance_registry.json",
+        run_id=source_execution_ref,
+        episode_id=handle.episode_id,
+        role="RESEARCH_ACQUISITION",
+        outputs=[{"artifact_id": str(source_recovery), "artifact_kind": "research", "artifact_version": "1.0.0", "checksum": source_checksum}],
+    )
     work_bindings = {}
     for work_id in works:
         recovery = acquisition_root / f"{work_id}.json"
@@ -1480,8 +1715,16 @@ def test_extend01_b4_r5_integrated_external_roundtrip_m4_m6(tmp_path):
             "consulted_locator": f"fixture://{work_id}",
         }
     acquisition_adapter = SoftwareAcquisitionAdapter(
+        bindings={"S1": {
+            "request_ref": "software:request:S1", "execution_ref": source_execution_ref,
+            "recovery_artifact_ref": str(source_recovery), "retrieval_status": "RECOVERED",
+            "evidence_status": "VERIFIED", "software_controlled": True,
+        }},
         work_bindings=work_bindings,
-        recovery_artifacts={str(acquisition_root / f"{work_id}.json"): {"path": str(acquisition_root / f"{work_id}.json"), "checksum": hashlib.sha256((acquisition_root / f"{work_id}.json").read_bytes()).hexdigest()} for work_id in works},
+        recovery_artifacts={
+            str(source_recovery): {"path": str(source_recovery), "checksum": source_checksum},
+            **{str(acquisition_root / f"{work_id}.json"): {"path": str(acquisition_root / f"{work_id}.json"), "checksum": hashlib.sha256((acquisition_root / f"{work_id}.json").read_bytes()).hexdigest()} for work_id in works},
+        },
         execution_registry_path=canonical_root / "output" / "execution_provenance_registry.json",
     )
     research_id = None
@@ -1625,8 +1868,110 @@ def test_extend01_b4_r5_integrated_external_roundtrip_m4_m6(tmp_path):
             path.unlink(missing_ok=True)
         if handoff_directory.is_dir():
             shutil.rmtree(handoff_directory, ignore_errors=True)
+        if bundle.root.is_dir():
+            shutil.rmtree(bundle.root, ignore_errors=True)
         if test_root.is_dir():
             shutil.rmtree(test_root, ignore_errors=True)
+def test_acquisition_is_neutral_and_preserves_provenance_and_status(tmp_path):
+    from src.application.research_b2 import SoftwareAcquisitionAdapter
+    import hashlib, json
+
+    # Minimal phenomenon pack for adapter
+    pack = {
+        "research_id": "RP-ACQ-NEUTRAL",
+        "source_registry": [
+            {"source_id": "S-POSITIVE", "locator": "loc:positive", "role": "EVIDENCE"},
+            {"source_id": "S-NEGATIVE", "locator": "loc:negative", "role": "EVIDENCE"},
+        ],
+        "evidence_type_separation": {"work_evidence_refs": [], "external_reality_evidence_refs": []},
+    }
+    # Positive requires physical recovery and execution provenance
+    recovery = tmp_path / "S-POSITIVE.json"
+    recovery.write_text(json.dumps({"source_id": "S-POSITIVE", "content": "evidencia positiva"}), encoding="utf-8")
+    ref = {"artifact_id": "recovery:S-POSITIVE", "path": str(recovery), "checksum": hashlib.sha256(recovery.read_bytes()).hexdigest()}
+    # Execution registry provenance
+    registry_path = Path(__file__).resolve().parents[2] / "output" / "execution_provenance_registry.json"
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    run = copy.deepcopy(registry["runs"][0])
+    exec_ref = "RUN-POSITIVE-NEUTRAL"
+    run.update({
+        "run_id": exec_ref,
+        "status": "SUCCEEDED",
+        "outputs": [{"artifact_kind": "research", "artifact_id": "recovery:S-POSITIVE", "artifact_ref": "research:recovery:S-POSITIVE", "checksum": ref["checksum"]}],
+        "output_artifact_ids": ["research:recovery:S-POSITIVE"],
+        "output_versions": ["fixture-1"],
+        "output_checksums": [ref["checksum"]],
+    })
+    registry["runs"] = [run]
+    exec_registry = tmp_path / "execution_provenance_registry.json"
+    exec_registry.write_text(json.dumps(registry), encoding="utf-8")
+    binding_positive = {
+        "request_ref": "request:S-POSITIVE",
+        "execution_ref": exec_ref,
+        "recovery_artifact_ref": "recovery:S-POSITIVE",
+        "retrieval_status": "RECOVERED",
+        "evidence_status": "VERIFIED",
+        "software_controlled": True,
+    }
+    # Negative is UNAVAILABLE without recovery artifact
+    adapter = SoftwareAcquisitionAdapter(
+        {"S-POSITIVE": binding_positive},
+        recovery_artifacts={"recovery:S-POSITIVE": ref},
+        execution_registry_path=exec_registry,
+    )
+    result = adapter.materialize(pack)
+    positive_source = next(s for s in result["source_registry"] if s["source_id"] == "S-POSITIVE")
+    negative_source = next(s for s in result["source_registry"] if s["source_id"] == "S-NEGATIVE")
+    # Positive preserves RECOVERED and VERIFIED with provenance REVIEWED
+    assert positive_source["retrieval_status"] == "RECOVERED"
+    assert positive_source["evidence_status"] == "VERIFIED"
+    assert positive_source["provenance"]["verification_status"] == "REVIEWED"
+    assert positive_source["provenance"]["acquisition_method"] == "SOFTWARE_CONTROLLED_ACQUISITION"
+    assert result["acquisition_bindings"][0]["recovery_artifact_ref"] == "recovery:S-POSITIVE"
+    # Negative remains NOT_RECOVERED/PENDING and NOT_REVIEWED, no recovery artifact
+    assert negative_source["retrieval_status"] == "NOT_RECOVERED"
+    assert negative_source["evidence_status"] == "PENDING"
+    assert negative_source["provenance"]["verification_status"] == "NOT_REVIEWED"
+    assert negative_source["provenance"]["acquisition_method"] == "SOFTWARE_CONTROLLED_ACQUISITION"
+    # Unavailable acquisition blocks only required scope: RESEARCH_READY with negative alone must still be evaluable but not produce DIRECT
+    from src.application.research_b2 import ResearchB2Orchestrator, ResearchB2Persistence
+    # The adapter itself is neutral: no provider selection, no model authority
+    assert adapter.bindings["S-POSITIVE"]["software_controlled"] is True
+
+
+def test_research_to_script_handoff_preserves_consultative_fields_as_non_authoritative(tmp_path):
+    # Use synthetic runner to get a real handoff and verify consultative preservation
+    state = ResearchM7SyntheticRunner(tmp_path).run(_input())
+    handoff = json.loads(Path(next(item for item in state["artifacts"] if item["stage"] == "B5_I3_HANDOFF")["path"]).read_text(encoding="utf-8"))
+    projection = handoff["research_v2_projection"]
+    # Consultative fields must be preserved via projection refs and lineage
+    assert projection["authority"] == "RESEARCH_V2"
+    assert "downstream_restrictions" in projection
+    assert "lineage" in projection
+    # Refined thesis payload must contain consultative contributions
+    refined_ref = projection["research_refs"]["refined_thesis"]
+    refined_payload = json.loads(Path(refined_ref["path"]).read_text(encoding="utf-8"))
+    assert "material_contributions" in refined_payload
+    assert "limits" in refined_payload
+    assert "counterevidence_refs" in refined_payload or "counterevidence" in json.dumps(refined_payload).lower()
+    assert "remaining_uncertainties" in refined_payload or "uncertaint" in json.dumps(refined_payload).lower()
+    assert "rival_interpretations" in refined_payload or "rival" in json.dumps(refined_payload).lower()
+    # Provenance must be present (checksum is canonical json hash, not raw file bytes)
+    from src.application.research_b2 import _checksum as _b2_checksum
+    assert refined_ref["checksum"] == _b2_checksum(refined_payload)
+    # Handoff must be consultative-only: narrative decisions not made
+    assert handoff["narrative_decisions_not_made"] is True
+    # Restrictions must be bound to manifest and resolvable
+    manifest_ref = next(item for item in state["artifacts"] if item["stage"] == "M6")
+    manifest = json.loads(Path(manifest_ref["path"]).read_text(encoding="utf-8"))
+    assert handoff["downstream_restrictions"] == manifest["downstream_restrictions"]
+    assert handoff["research_lineage"]["lineage"] == manifest["lineage"]
+    # Semantic context must equal projection (no divergence) and must not contain narrative authority
+    assert handoff["research_v2_semantic_context"] == projection
+    assert "viewer_journey" not in json.dumps(projection).lower()
+    assert "narrative_use" not in json.dumps(projection).lower()
+
+
 def test_extend01_max_iterations_is_bound_to_existing_guard_and_stops_before_editorial(tmp_path):
     runner = ResearchM7SyntheticRunner(tmp_path, max_iterations=2)
     with pytest.raises(ResearchM7Error, match="NO_PROGRESS / ITERATION_GUARD"):

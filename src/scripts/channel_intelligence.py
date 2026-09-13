@@ -61,6 +61,24 @@ def active_profile() -> dict[str, str]:
     return {"profile_id": active.get("ACTIVE_PROFILE_ID", ""), "profile_version": active.get("ACTIVE_PROFILE_VERSION", ""), "profile_checksum": active.get("profile_checksum", ""), "registry_key": key, "registry_checksum": entry.get("checksum", ""), "compiled_profile_path": entry.get("compiled_profile_path", "")}
 
 
+def active_territory_classification(name: Any) -> str | None:
+    """Resolve a proposed territory against the exact active profile."""
+    candidate = str(name or "").strip()
+    if not candidate:
+        return None
+    active = _load(ACTIVE)
+    registry = _load(REGISTRY)
+    key = f"{active.get('ACTIVE_PROFILE_ID')}@{active.get('ACTIVE_PROFILE_VERSION')}"
+    profile = registry.get("profiles", {}).get(key, {}).get("profile", {})
+    identity = profile.get("identity_stable", {}) if isinstance(profile, dict) else {}
+    territories = profile.get("territories", []) if isinstance(profile, dict) else []
+    territories = territories or identity.get("territories", [])
+    for territory in territories:
+        if isinstance(territory, dict) and str(territory.get("name") or "").strip() == candidate:
+            return str(territory.get("classification") or "").upper() or None
+    return None
+
+
 def check_agents_profile_consistency() -> list[str]:
     violations: list[str] = []
     text = AGENTS.read_text(encoding="utf-8")
@@ -116,6 +134,15 @@ def validate_assessment(data: dict[str, Any], topic_input: dict[str, Any] | None
     violations = validate_against_schema(data, "topic_belonging_assessment")
     violations.extend(_profile_binding(data, "ASSESSMENT"))
     violations.extend(_entry_mode_violations(data))
+    proposed_territory = data.get("proposed_territory")
+    resolved_classification = active_territory_classification(proposed_territory)
+    declared_classification = data.get("territory_classification")
+    if proposed_territory and resolved_classification is None:
+        violations.append("ASSESSMENT_PROPOSED_TERRITORY_UNKNOWN")
+    elif declared_classification != resolved_classification and not (
+        declared_classification == "EXPERIMENTAL" and resolved_classification == "ACTIVE"
+    ):
+        violations.append("ASSESSMENT_TERRITORY_CLASSIFICATION_NOT_BOUND_TO_ACTIVE_PROFILE")
     provenance = data.get("provenance", {})
     if provenance.get("actor_id") != data.get("producer_actor_id") or provenance.get("run_id") != data.get("producer_run_id"):
         violations.append("ASSESSMENT_PROVENANCE_MISMATCH")
@@ -163,6 +190,17 @@ def validate_decision(data: dict[str, Any], assessment: dict[str, Any]) -> list[
     violations = validate_against_schema(data, "topic_belonging_decision")
     violations.extend(f"ASSESSMENT_INVALID: {v}" for v in validate_assessment(assessment))
     violations.extend(_profile_binding(data, "DECISION"))
+    resolved_classification = active_territory_classification(assessment.get("proposed_territory"))
+    if resolved_classification is None or (
+        assessment.get("territory_classification") != resolved_classification
+        and not (
+            assessment.get("territory_classification") == "EXPERIMENTAL"
+            and resolved_classification == "ACTIVE"
+        )
+    ):
+        violations.append("DECISION_TERRITORY_NOT_RESOLVED_AGAINST_ACTIVE_PROFILE")
+    elif resolved_classification == "EXCLUDED" and data.get("decision") in {"APPROVE", "APPROVE_WITH_CONDITIONS"}:
+        violations.append("DECISION_EXCLUDED_TERRITORY_BLOCKED")
     if data.get("assessment_id") != assessment.get("assessment_id"):
         violations.append("DECISION_ASSESSMENT_ID_MISMATCH")
     for key in ("producer_artifact_checksum", "reviewer_input_checksum"):
@@ -236,7 +274,11 @@ def evaluate_topic_belonging_gate(
         else: violations.extend(validate_owner_decision(owner_decision, topic_input, assessment, decision))
     if decision.get("decision") == "ESCALATE_TO_OWNER" and owner_decision is None:
         violations.append("OWNER_DECISION_REQUIRED")
-    if decision.get("decision") in {"APPROVE", "APPROVE_WITH_CONDITIONS"} and assessment.get("entry_mode") == "TOPIC_FIRST":
+    if (
+        decision.get("decision") in {"APPROVE", "APPROVE_WITH_CONDITIONS"}
+        and assessment.get("entry_mode") == "TOPIC_FIRST"
+        and assessment.get("territory_classification") == "ACTIVE"
+    ):
         evidence = decision.get("pre_b5_i1_evidence")
         if not isinstance(work_lifecycle, dict) or not isinstance(research_dossier, dict):
             violations.append("PRE_B5_I1_BELONGING_APPROVAL_REQUIRES_MATERIAL_RESEARCH_BINDING")

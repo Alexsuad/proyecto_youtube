@@ -625,7 +625,7 @@ def test_m1_missing_authorization_blocks_before_episode_creation(tmp_path: Path)
         mock_outputs=_outputs(),
     )
     workflow = TopicBelongingTechnicalWorkflow(store, boundary=boundary)
-    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_(REQUIRED|MISSION_MISMATCH)"):
+    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_(REQUIRED|MISSION_MISMATCH|INVALID)"):
         EpisodeApplicationService(store, workflow=workflow).start(HumanInput.create(mode="TOPIC_FIRST", content="Tema sintético de prueba", channel="TERMINAL"))
     assert not (tmp_path / "vault/CHANNEL/episodios").exists()
 
@@ -674,7 +674,7 @@ def test_m2_real_requires_mission_authorization_even_with_neutral_family(tmp_pat
     live_control = ROOT.joinpath("plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8")
     current_line = next(line for line in live_control.splitlines() if line.startswith("CURRENT_MISSION:"))
     control.write_text(live_control.replace(current_line, "CURRENT_MISSION: MISSION_WITHOUT_BUNDLE"), encoding="utf-8")
-    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_(REQUIRED|MISSION_MISMATCH)"):
+    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_(REQUIRED|MISSION_MISMATCH|INVALID)"):
         ExecutionCognitiveBoundary(repository_root=ROOT, operational_authority_path=str(control), execution_mode="REAL").preflight()
 
 
@@ -689,7 +689,7 @@ def test_m2_real_without_authorization_blocks_before_provider(tmp_path: Path) ->
         execution_mode="REAL",
         execution_profile="ollama_local",
     )
-    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_(REQUIRED|MISSION_MISMATCH)"):
+    with pytest.raises(PermissionError, match="ACTIVE_MISSION_EXECUTION_BUNDLE_(REQUIRED|MISSION_MISMATCH|INVALID)"):
         boundary.preflight()
 
 

@@ -1,0 +1,23 @@
+{
+  "mission_id": "PLAN013_M0_ACTIVATION",
+  "contract_status": "DRAFT",
+  "authorizing": false,
+  "effective_authorization": false,
+  "authorization_artifact": null,
+  "objective": "Activar PLAN013 en el control operativo y suspender temporalmente EXTEND-01 REAL, sin cambiar producto.",
+  "non_objectives": ["Implementar findings", "Modificar runtime", "Ejecutar providers o IA REAL", "Autorizar M1-M10", "Commit", "Push"],
+  "required_prior_state": ["PLAN013 independent audit PASS", "OWNER authorization M0", "findings_manifest y evidencia reproducible disponibles", "control vivo coincide con el checkpoint observado"],
+  "allowlist": ["plans/001_CONTROL_OPERATIVO.md", "plans/plan_013/checkpoints/extend_01_pre_plan013.json", "plans/plan_013/mission_contracts/PLAN013_M0_ACTIVATION.json"],
+  "denylist": ["src/", "schemas/", "config/active_editorial_profile.json", "profiles/editorial/mas_alla_del_guion/1.2.2/", "profiles/voice/corpus_manifest.json", "providers/", "output/productive/"],
+  "preserve_preexisting_changes": ["AGENTS.md", "config/capability_routing.yaml", "output/execution_provenance_registry.json"],
+  "allowed_operations": ["read authority", "verify checkpoint hashes", "write only the explicitly authorized recovery-state fields", "write non-normative checkpoint"],
+  "dependencies": ["PLAN013 package audit PASS", "OWNER review"],
+  "focused_tests": ["control-state comparison", "checkpoint schema/hash verification", "git diff --check"],
+  "required_regressions": ["PLAN012 remains CLOSED", "EXTEND-01 remains preserved", "REAL_AI_EXECUTION remains NO", "PRODUCT_USE_AUTHORIZED remains NO"],
+  "expected_evidence": ["before/after control hash", "checkpoint_sha256", "M0 gate evidence", "no product-code diff"],
+  "stop_conditions": ["missing authorization", "state mismatch", "profile or corpus modification", "any product-code change", "any real execution"],
+  "commit_policy": "NO_COMMIT_WITHOUT_EXPLICIT_OWNER_AUTHORIZATION",
+  "push_policy": "FORBIDDEN",
+  "review_required": {"independent_review": false, "owner_review": true},
+  "mission_completion_gate": {"gate_id":"PLAN013_M0_GATE","double_rca_required_before_close":true,"jit_escape_cause_allowed_before_close":false}
+}

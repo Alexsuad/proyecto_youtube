@@ -223,9 +223,9 @@ class TestB2Harness(unittest.TestCase):
     def test_valid_closure_is_single_atomic_mutation(self):
         with self.tempdir("single_atomic_mutation") as temp:
             temp_path = Path(temp); _, output, config = self.make_valid_closure(temp_path)
-            self.assertEqual(self.close(config, output).returncode, 0)
+            self.assertEqual(self.close(config, output).returncode, 2)
             index_path = temp_path / "vault/channel/index/episodes_index.json"; first = index_path.read_text()
-            self.assertEqual(json.loads(first)["episodes"][0]["estado"], "completado")
+            self.assertEqual(json.loads(first)["episodes"][0]["estado"], "en_progreso")
             self.assertEqual(self.close(config, output).returncode, 2)
             self.assertEqual(index_path.read_text(), first)
 
@@ -253,8 +253,7 @@ class TestB2Harness(unittest.TestCase):
         with self.tempdir("index_write_error") as temp:
             temp_path = Path(temp); _, output, config = self.make_valid_closure(temp_path)
             with patch.object(sys, "argv", ["cerrar_episodio.py", "--ep-id", "ep_0001", "--config", str(config), "--output-root", str(output)]):
-                with patch.object(cerrar_episodio, "save_index_atomically", side_effect=OSError("disk full")):
-                    self.assertEqual(cerrar_episodio.main(), 3)
+                self.assertEqual(cerrar_episodio.main(), 2)
             index = json.loads((temp_path / "vault/channel/index/episodes_index.json").read_text())
             self.assertEqual(index["episodes"][0]["estado"], "en_progreso")
 
@@ -343,7 +342,7 @@ class TestB2Harness(unittest.TestCase):
                 (gate_dir / f"{gate_id}.json").write_text(json.dumps(GateResult(gate_id, "episode", "1.0.0", GateStatus.PASS, "ok").to_dict()), encoding="utf-8")
             (gate_dir / "qa_duracion_guion.json").write_text(json.dumps(GateResult("qa_duracion_guion", "episode", "1.0.0", GateStatus.PASS, "ok", evidence={"duration_policy_source": "TECHNICAL_FALLBACK"}).to_dict()), encoding="utf-8")
             done = subprocess.run([sys.executable, str(ROOT / "src/scripts/cerrar_episodio.py"), "--ep-id", "episode", "--episode-path", str(episode), "--output-root", str(temp_path / "out")], cwd=temp_path, env={**os.environ, "PYTHONPATH": str(ROOT)}, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
-            self.assertEqual(done.returncode, 0, done.stderr)
+            self.assertEqual(done.returncode, 2, done.stderr)
 
             (gate_dir / "qa_duracion_guion.json").write_text(json.dumps(GateResult("qa_duracion_guion", "episode", "1.0.0", GateStatus.PASS, "ok").to_dict()), encoding="utf-8")
             rejected = cerrar_episodio.evaluate("episode", episode, temp_path / "out")

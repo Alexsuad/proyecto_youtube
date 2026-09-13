@@ -6,6 +6,8 @@ current_execution: SOFTWARE_VALIDATES_AND_PERSISTS_AI_COGNITIVE_PROPOSALS
 
 > La ejecución requiere una misión B5-I3 activa y autorizada. No aplicar fórmulas de re-hook, timeline, número de eventos, CTA o estructura universal.
 
+Si falta la misión autorizada, el perfil activo o una entrada contractual, la ejecución queda `BLOCKED`.
+
 ## Objetivo
 
 Convertir el diseño editorial validado en recorrido, apertura, cierre y NarrativePlan antes de redactar el guion.

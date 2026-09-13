@@ -1,0 +1,23 @@
+{
+  "mission_id": "PLAN013_M3_ACQUISITION_HANDOFF",
+  "contract_status": "DRAFT",
+  "authorizing": false,
+  "effective_authorization": false,
+  "authorization_artifact": null,
+  "objective": "Materializar adquisición externa neutral y handoff consultativo Research→Script con provenance.",
+  "non_objectives": ["Crear navegador", "Elegir provider/modelo", "Ejecutar adquisición REAL", "Decidir hook o escritura", "Activar B5-I3 productivo", "Commit", "Push"],
+  "required_prior_state": ["M1 y M2 gates aplicables PASS", "OWNER autoriza M3", "adapter neutral existente localizado"],
+  "allowlist": ["src/application/research_planning.py", "src/application/research_m7.py", "schemas/research_plan.json", "schemas/research_plan_proposal.json", "config/capability_routing.yaml", "src/ai/providers/", "src/application/", "tests/", "plans/plan_013/mission_contracts/PLAN013_M3_ACQUISITION_HANDOFF.json"],
+  "denylist": ["config/active_editorial_profile.json", "profiles/editorial/", "profiles/voice/corpus_manifest.json", "providers/specific/", "output/productive/"],
+  "preserve_preexisting_changes": ["AGENTS.md", "config/capability_routing.yaml", "output/execution_provenance_registry.json"],
+  "allowed_operations": ["reuse or extend neutral acquisition adapter", "persist acquisition status/provenance", "extend consultative handoff", "add focused tests"],
+  "dependencies": ["Research V2 contracts", "existing capability routing", "no real provider invocation"],
+  "focused_tests": ["UNAVAILABLE/negative acquisition", "positive acquired and verified evidence", "consultative handoff preservation"],
+  "required_regressions": ["ResearchReady consumer resolution", "provenance retention", "no provider-specific authority"],
+  "expected_evidence": ["adapter contract", "handoff envelope", "negative and positive test output"],
+  "stop_conditions": ["provider selection required", "simulated discovery presented as acquired", "editorial authority in adapter", "scope expansion"],
+  "commit_policy": "NO_COMMIT_WITHOUT_EXPLICIT_OWNER_AUTHORIZATION",
+  "push_policy": "FORBIDDEN",
+  "review_required": {"independent_review": true, "owner_review": true},
+  "mission_completion_gate": {"gate_id":"PLAN013_B3_GATE","double_rca_required_before_close":true,"jit_escape_cause_allowed_before_close":false}
+}

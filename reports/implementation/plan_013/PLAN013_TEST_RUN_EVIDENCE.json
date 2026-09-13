@@ -1,0 +1,245 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "PLAN013_TEST_RUN_EVIDENCE",
+  "plan_id": "PLAN013",
+  "plan_version": "0.2.1",
+  "status": "PASS",
+  "scope": "Technical evidence for B6; no functional approval or product authorization.",
+  "collection": {
+    "command": [
+      "C:\\Users\\nalex\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "-m",
+      "pytest",
+      "--collect-only",
+      "-q"
+    ],
+    "collected": 1519,
+    "collection_file": "reports/implementation/plan_013/PLAN013_TEST_COLLECTION.txt",
+    "collection_sha256": "9b14b69fcc32a0ec3b5c4a6325b4cef66f8a7d870d4415883b7e853836de9d42"
+  },
+  "partitions": [
+    {
+      "partition_id": "P01_AI_APPLICATION",
+      "paths": [
+        "tests/ai",
+        "tests/application"
+      ],
+      "node_ids_file": "reports/implementation/plan_013/PLAN013_P01_AI_APPLICATION_NODE_IDS.txt",
+      "collected": 131,
+      "executed_testcases": 131,
+      "passed": 131,
+      "failed": 0,
+      "skipped": 0,
+      "subtests_passed": 0,
+      "exit_code": 0,
+      "junit_xml": "reports/implementation/plan_013/PLAN013_P01_AI_APPLICATION_JUNIT.xml",
+      "junit_sha256": "92a595f4b486b2d40f8373ac80c4659dd2ee5854720d1b8b29e7dd16902be45d",
+      "stdout": "reports/implementation/plan_013/PLAN013_P01_AI_APPLICATION_STDOUT.txt",
+      "stdout_sha256": "e49dc5077178a16629257b4c5f263b6891560efb45e8c9fe101081c545b42990",
+      "stderr": "reports/implementation/plan_013/PLAN013_P01_AI_APPLICATION_STDERR.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "skipped_tests": [],
+      "failed_tests": []
+    },
+    {
+      "partition_id": "P02_CORE",
+      "paths": [
+        "tests/core"
+      ],
+      "node_ids_file": "reports/implementation/plan_013/PLAN013_P02_CORE_NODE_IDS.txt",
+      "collected": 925,
+      "executed_testcases": 925,
+      "passed": 923,
+      "failed": 0,
+      "skipped": 2,
+      "subtests_passed": 277,
+      "exit_code": 0,
+      "junit_xml": "reports/implementation/plan_013/PLAN013_P02_CORE_JUNIT.xml",
+      "junit_sha256": "e068f15abeceffdce743d30d73990fe336e7a8c5e4fc80e5b4fa7996e71b9155",
+      "stdout": "reports/implementation/plan_013/PLAN013_P02_CORE_STDOUT.txt",
+      "stdout_sha256": "cd2f565e9219ff5d5acb10aa362a5bae21c65f420ca1b2c89cdc2330fd3d708a",
+      "stderr": "reports/implementation/plan_013/PLAN013_P02_CORE_STDERR.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "skipped_tests": [
+        {
+          "classname": "tests.core.test_material_decision_registry",
+          "name": "test_external_symlink_is_rejected_when_supported",
+          "reason": "el entorno no permite crear symlinks"
+        },
+        {
+          "classname": "tests.core.test_transversal_capability_governance",
+          "name": "test_symlink_escape_is_blocked_when_platform_allows_symlinks",
+          "reason": "symlink creation is unavailable in this environment"
+        }
+      ],
+      "failed_tests": []
+    },
+    {
+      "partition_id": "P03_INTEGRATION_OPENCODE",
+      "paths": [
+        "tests/integration",
+        "tests/opencode"
+      ],
+      "node_ids_file": "reports/implementation/plan_013/PLAN013_P03_INTEGRATION_OPENCODE_NODE_IDS.txt",
+      "collected": 13,
+      "executed_testcases": 13,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 1,
+      "subtests_passed": 0,
+      "exit_code": 0,
+      "junit_xml": "reports/implementation/plan_013/PLAN013_P03_INTEGRATION_OPENCODE_JUNIT.xml",
+      "junit_sha256": "195cc872a4bf57abeaab4ef4d0d5e43ce8766f7c0e4da44aca542f37decf4f3e",
+      "stdout": "reports/implementation/plan_013/PLAN013_P03_INTEGRATION_OPENCODE_STDOUT.txt",
+      "stdout_sha256": "694f69fb1b918a1ebbf838a0ead7cecde4323f317c6f47d6e3f72a6b3df42993",
+      "stderr": "reports/implementation/plan_013/PLAN013_P03_INTEGRATION_OPENCODE_STDERR.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "skipped_tests": [
+        {
+          "classname": "tests.opencode.test_controlled_integration.ControlledOpenCodeIntegrationTests",
+          "name": "test_preexisting_untracked_targets_are_not_changed_by_the_test",
+          "reason": "Historical OpenCode fixture(s) absent; no workspace artifacts are fabricated: output/r6_b/, reference/Ejemplo_01.md, reference/estilo_usuario/Ejemplo_02.md"
+        }
+      ],
+      "failed_tests": []
+    },
+    {
+      "partition_id": "P04_HARNESS_GROUP_1",
+      "paths": [
+        "tests/harness/test_b2_harness.py",
+        "tests/harness/test_b3_profile_pipeline.py",
+        "tests/harness/test_b3_i3_canonical_consumption.py",
+        "tests/harness/test_b3_i4_readiness.py",
+        "tests/harness/test_b5_i1_editorial_input.py",
+        "tests/harness/test_b5_i2.py",
+        "tests/harness/test_mission_completion_gate.py"
+      ],
+      "node_ids_file": "reports/implementation/plan_013/PLAN013_P04_HARNESS_GROUP_1_NODE_IDS.txt",
+      "collected": 199,
+      "executed_testcases": 199,
+      "passed": 199,
+      "failed": 0,
+      "skipped": 0,
+      "subtests_passed": 18,
+      "exit_code": 0,
+      "junit_xml": "reports/implementation/plan_013/PLAN013_P04_HARNESS_GROUP_1_JUNIT.xml",
+      "junit_sha256": "1b32fc30bc4dac5bfbdd31baebdb04f8541ed574682b059d047c970f00b58d92",
+      "stdout": "reports/implementation/plan_013/PLAN013_P04_HARNESS_GROUP_1_STDOUT.txt",
+      "stdout_sha256": "39966344c8552b3a5a608a834cc2eb65ce84f58e8928b6592275467cb87f4f73",
+      "stderr": "reports/implementation/plan_013/PLAN013_P04_HARNESS_GROUP_1_STDERR.txt",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "skipped_tests": [],
+      "failed_tests": []
+    },
+    {
+      "partition_id": "P05_HARNESS_GROUP_2",
+      "paths": [
+        "tests/harness/test_plan007_p6a_vertical.py",
+        "tests/harness/test_plan009_m1_vertical.py",
+        "tests/harness/test_plan009_p2_roundtrip.py",
+        "tests/harness/test_plan010_m2_m3.py",
+        "tests/harness/test_plan011_m3_b5_i3.py",
+        "tests/harness/test_youtube_adaptation_b5_i2.py",
+        "tests/harness/test_plan013_synthetic_e2e.py"
+      ],
+      "node_ids_file": "reports/implementation/plan_013/PLAN013_P05_HARNESS_GROUP_2_NODE_IDS.txt",
+      "collected": 192,
+      "executed_testcases": 192,
+      "passed": 192,
+      "failed": 0,
+      "skipped": 0,
+      "subtests_passed": 0,
+      "exit_code": 0,
+      "junit_xml": "reports/implementation/plan_013/PLAN013_P05_HARNESS_GROUP_2_JUNIT.xml",
+      "junit_sha256": "395f247535dad8949f1aca3aed0f73fb1d660e00c30b11b8a92bb0134532a62d",
+      "stdout": "reports/implementation/plan_013/PLAN013_P05_HARNESS_GROUP_2_LOG.txt",
+      "stdout_sha256": "61024339c2bd069d087a3e1e3f9409d4df9a992a40bf23331e4e6e432ebf112a",
+      "stderr": null,
+      "stderr_sha256": null,
+      "skipped_tests": [],
+      "failed_tests": []
+    },
+    {
+      "partition_id": "P06_PLAN012_M7_B5",
+      "paths": [
+        "tests/harness/test_plan012_m7_b5.py"
+      ],
+      "node_ids_file": "reports/implementation/plan_013/PLAN013_P06_PLAN012_M7_B5_NODE_IDS.txt",
+      "collected": 59,
+      "executed_testcases": 59,
+      "passed": 59,
+      "failed": 0,
+      "skipped": 0,
+      "subtests_passed": 0,
+      "exit_code": 0,
+      "junit_xml": "reports/implementation/plan_013/PLAN013_P06_PLAN012_M7_B5_JUNIT.xml",
+      "junit_sha256": "6b7d8b10d138e5842d18a8dff12dac29f95d36cb1c6874467b1b9da2202cd877",
+      "stdout": "reports/implementation/plan_013/PLAN013_P06_PLAN012_M7_B5_LOG.txt",
+      "stdout_sha256": "4391deab79358fd5ca36d80cffdf58069700b1e22568803045c87d8eca2dacb3",
+      "stderr": null,
+      "stderr_sha256": null,
+      "skipped_tests": [],
+      "failed_tests": []
+    }
+  ],
+  "reconciliation": {
+    "partition_count": 6,
+    "union_count": 1519,
+    "expected_count": 1519,
+    "intersection_count": 0,
+    "exact_coverage": true,
+    "disjoint": true,
+    "partition_node_id_files": [
+      "reports/implementation/plan_013/PLAN013_P01_AI_APPLICATION_NODE_IDS.txt",
+      "reports/implementation/plan_013/PLAN013_P02_CORE_NODE_IDS.txt",
+      "reports/implementation/plan_013/PLAN013_P03_INTEGRATION_OPENCODE_NODE_IDS.txt",
+      "reports/implementation/plan_013/PLAN013_P04_HARNESS_GROUP_1_NODE_IDS.txt",
+      "reports/implementation/plan_013/PLAN013_P05_HARNESS_GROUP_2_NODE_IDS.txt",
+      "reports/implementation/plan_013/PLAN013_P06_PLAN012_M7_B5_NODE_IDS.txt"
+    ]
+  },
+  "global_result": {
+    "passed": 1516,
+    "failed": 0,
+    "skipped": 3,
+    "subtests_passed": 295,
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "overall_status": "PASS"
+  },
+  "generated_at": "2026-09-12T22:29:11.011752Z",
+  "repository_revision": "WORKTREE_UNCOMMITTED",
+  "notes": "The monolithic command exceeded the operational timeout; all 1519 collected node IDs were executed exactly once in deterministic disjoint partitions. No real AI, Internet, provider or productive execution was used.",
+  "source_inputs": [
+    {
+      "path": "plans/plan_013/traceability_matrix.md",
+      "sha256": "be64187ead7ffa659938f6c117ff6b9c3c349e87e64a7b3695780d5406c2df05"
+    },
+    {
+      "path": "plans/plan_013/findings_manifest.json",
+      "sha256": "9f9f901ea04e492e7c7612db8ab32a03d6c2fee3636f73cf1b47069d6cf04f04"
+    },
+    {
+      "path": "plans/plan_013/gates/CP-01.md",
+      "sha256": "220790365311d6ff6e7c01e92e0055b65595b0e4d4dd57d01639340c092b301d"
+    },
+    {
+      "path": "plans/plan_013/gates/PLAN013_B6_GATE.md",
+      "sha256": "bd9b09af346d11d61fe849dbe09c6a4e9f224ac80b786e4177dea6a78c05a112"
+    },
+    {
+      "path": "plans/plan_013/gates/PLAN013_TECHNICAL_PASS.md",
+      "sha256": "3d06d3802c3290b8d41c4a67899c206176e4192a3a4e5ff09b4510ec4f6ef924"
+    },
+    {
+      "path": "reports/implementation/plan_013/PLAN013_TEST_COLLECTION.txt",
+      "sha256": "9b14b69fcc32a0ec3b5c4a6325b4cef66f8a7d870d4415883b7e853836de9d42"
+    }
+  ]
+}

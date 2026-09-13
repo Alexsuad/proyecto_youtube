@@ -7,6 +7,7 @@ import runpy
 from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -141,19 +142,30 @@ def _execute_with_inputs(tmp_path: Path, schema: str, inputs: list[InputArtifact
         mock_output=editorial_only_payload(_cognitive(schema), schema), output_artifact_id=f"{schema.upper()}-M3",
         episode_id=episode_id, role="NARRATIVE_ARCHITECTURE", config={"wpm_target": 150, **_mission_config()},
     )
-    return execute(request)
+    return _execute_isolated(request)
 
 
 def _execute(tmp_path: Path, schema: str, episode_id: str = EPISODE, duration_target: int | None = 15):
     tmp_path.mkdir(parents=True, exist_ok=True)
+    inputs = _inputs(tmp_path, episode_id, duration_target)
+    output = editorial_only_payload(_cognitive(schema), schema)
     request = ExecutionRequest(
         capability_id="B5_I3_NARRATIVE_ARCHITECTURE", skill_id="skill_mapa_eventos_y_outline", skill_version="1.0.0",
-        input_artifacts=_inputs(tmp_path, episode_id, duration_target), output_schema=schema, execution_mode="SYNTHETIC_TEST", provider="mock",
-        mock_output=editorial_only_payload(_cognitive(schema), schema), output_artifact_id=f"{schema.upper()}-M3",
+        input_artifacts=inputs, output_schema=schema, execution_mode="SYNTHETIC_TEST", provider="mock",
+        mock_output=output, output_artifact_id=f"{schema.upper()}-M3",
         episode_id=episode_id, role="NARRATIVE_ARCHITECTURE",
         config={"wpm_target": 150, **_mission_config()},
     )
-    return execute(request)
+    return _execute_isolated(request)
+
+
+def _execute_isolated(request: ExecutionRequest):
+    """Keep component tests independent from the repository's active mission."""
+    with patch(
+        "src.ai.execution.preflight_controlled_execution",
+        return_value={"authorization": None, "mission_contract": None},
+    ):
+        return execute(request)
 
 
 @pytest.mark.parametrize("schema", ["viewer_journey", "opening_design", "closing_design", "narrative_plan"])
@@ -188,7 +200,7 @@ def test_cognitive_output_that_writes_protected_fields_is_rejected(tmp_path: Pat
             episode_id=EPISODE, role="NARRATIVE_ARCHITECTURE",
             config=_mission_config(),
     )
-    result = execute(request)
+    result = _execute_isolated(request)
     assert result.status is ExecutionStatus.FAILED
     assert "metadata técnica de IA no permitida" in (result.error or "")
 
@@ -200,7 +212,7 @@ def test_m3_requires_the_canonical_input_set(tmp_path: Path) -> None:
         mock_output=editorial_only_payload(_cognitive("viewer_journey"), "viewer_journey"), output_artifact_id="VJ-M3",
         episode_id=EPISODE, role="NARRATIVE_ARCHITECTURE", config=_mission_config(),
     )
-    result = execute(request)
+    result = _execute_isolated(request)
     assert result.status is ExecutionStatus.FAILED
     assert "inputs canónicos ausentes" in (result.error or "")
 

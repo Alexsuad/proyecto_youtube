@@ -44,6 +44,58 @@ def test_role_contract_loads_prompt_profile_and_output_schema() -> None:
     assert '"execution_smoke_report"' in prompt and '"input_payload"' in prompt
 
 
+def test_script_roles_expose_content_contracts_and_required_context() -> None:
+    writing = resolve_role_execution_contract(
+        "WRITING", "script_draft",
+        {"narrative_plan": {}, "thesis_artifact": {}, "editorial_profile": {}, "research_pack": {}},
+        {"required_context": {"active_profile_identity": "profile", "voice_guidelines": "voice"}},
+    )
+    assert writing["output_schema_name"] == "script_draft"
+    assert {item["path"] for item in writing["applicable_policies"]} == {
+        "config/active_editorial_profile.json"
+    }
+
+    editor = resolve_role_execution_contract(
+        "EDITOR", "edited_script",
+        {"script_draft": {}, "editorial_profile": {}, "brief": {}, "claims_ledger": {}},
+        {"required_context": {"editorial_voice_profile": "voice", "quality_criteria": "quality"}},
+    )
+    assert editor["output_schema_name"] == "edited_script"
+    assert "runtime:quality_criteria" in {item["path"] for item in editor["applicable_policies"]}
+
+
+def test_final_auditor_requires_clean_independent_context() -> None:
+    with pytest.raises(RoleExecutionContractError, match="required context unresolved"):
+        resolve_role_execution_contract(
+            "FINAL_EDITORIAL_AUDITOR", "final_editorial_audit",
+            {"edited_script": {}, "EditorialEditReport": {}, "editorial_profile": {}, "brief": {}, "claims_ledger": {}},
+            {"required_context": {"audit_criteria": "criteria", "profile_identity": "profile"}},
+        )
+    contract = resolve_role_execution_contract(
+        "FINAL_EDITORIAL_AUDITOR", "final_editorial_audit",
+        {"edited_script": {}, "EditorialEditReport": {}, "editorial_profile": {}, "brief": {}, "claims_ledger": {}},
+        {"clean_session": True, "required_context": {"audit_criteria": "criteria", "profile_identity": "profile"}},
+    )
+    assert contract["output_schema_name"] == "final_editorial_audit"
+
+
+def test_final_auditor_runtime_binding_owns_exact_script_identity(tmp_path) -> None:
+    edited = tmp_path / "edited.json"
+    edited.write_text('{"episode_id":"EP-1","artifact_version":"1.1.0"}', encoding="utf-8")
+    request = ExecutionRequest(
+        capability_id="PLAN013_FINAL_EDITORIAL_AUDIT", skill_id="final-audit", skill_version="1.0.0",
+        input_artifacts=[InputArtifact("edited_script", "SCRIPT-1", edited, "RUN-EDITOR-1")],
+        output_schema="final_editorial_audit", execution_mode="SYNTHETIC_TEST", output_artifact_id="AUDIT-1",
+        episode_id="EP-1", role="FINAL_EDITORIAL_AUDITOR", mock_output={}, config={"independence_verified": True},
+    )
+    bound, run_id = _bind_runtime_fields(request, {})
+    assert bound["artifact_id"] == "SCRIPT-1"
+    assert bound["script_version"] == "1.1.0"
+    assert bound["script_checksum"]
+    assert bound["auditor_run_id"] == run_id
+    assert bound["independence_result"] == "PASS"
+
+
 def test_b5_i2_model_contract_exposes_only_cognitive_fields() -> None:
     contract = resolve_role_execution_contract(
         "SCRIPT_PRODUCT_PRODUCER",

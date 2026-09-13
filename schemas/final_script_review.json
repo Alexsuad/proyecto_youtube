@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/final_script_review.json",
+  "title": "FinalScriptReview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["review_id", "episode_id", "artifact_id", "script_version", "script_checksum", "profile_reference", "visible_promise_ref", "final_audit_ref", "final_audit_checksum", "review_run_id", "producer_run_id", "editor_run_id", "auditor_run_id", "review_actor_id", "producer_actor_id", "editor_actor_id", "auditor_actor_id", "evidence_refs", "lexical_sensor", "duration_telemetry", "authenticity", "reuse_context", "decision", "created_at"],
+  "properties": {
+    "review_id": {"type": "string", "minLength": 1},
+    "episode_id": {"type": "string", "minLength": 1},
+    "artifact_id": {"type": "string", "minLength": 1},
+    "script_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "script_checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "profile_reference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile_id", "profile_version", "profile_checksum"],
+      "properties": {
+        "profile_id": {"type": "string", "minLength": 1},
+        "profile_version": {"type": "string", "minLength": 1},
+        "profile_checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    },
+    "visible_promise_ref": {"type": "string", "minLength": 1},
+    "final_audit_ref": {"type": "string", "minLength": 1},
+    "final_audit_checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "review_run_id": {"type": "string", "minLength": 1},
+    "producer_run_id": {"type": "string", "minLength": 1},
+    "editor_run_id": {"type": "string", "minLength": 1},
+    "auditor_run_id": {"type": "string", "minLength": 1},
+    "review_actor_id": {"type": "string", "minLength": 1},
+    "producer_actor_id": {"type": "string", "minLength": 1},
+    "editor_actor_id": {"type": "string", "minLength": 1},
+    "auditor_actor_id": {"type": "string", "minLength": 1},
+    "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "lexical_sensor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "findings", "normative"],
+      "properties": {
+        "status": {"type": "string", "enum": ["PASS", "WARN", "FAIL", "UNRESOLVED"]},
+        "findings": {"type": "array", "items": {"type": "string"}},
+        "normative": {"const": false}
+      }
+    },
+    "duration_telemetry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "estimated_minutes", "target_range", "normative"],
+      "properties": {
+        "status": {"type": "string", "enum": ["MEASURED", "UNRESOLVED"]},
+        "estimated_minutes": {"type": ["number", "null"]},
+        "target_range": {"type": ["array", "null"], "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+        "normative": {"const": false}
+      }
+    },
+    "authenticity": {"type": "string", "enum": ["PASS", "WARN", "UNRESOLVED"]},
+    "reuse_context": {"type": "string", "enum": ["PASS", "WARN", "UNRESOLVED"]},
+    "decision": {"type": "string", "enum": ["PASS", "WARN", "BLOCKED"]},
+    "decision_basis": {"type": "array", "items": {"type": "string"}},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

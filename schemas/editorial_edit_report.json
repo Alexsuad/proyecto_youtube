@@ -4,12 +4,28 @@
   "title": "EditorialEditReport",
   "type": "object",
   "required": [
+    "episode_id",
+    "input_artifact_id",
+    "input_checksum",
+    "output_artifact_id",
+    "output_checksum",
     "input_version",
     "output_version",
     "edit_type",
-    "changes_by_category"
+    "changes_by_category",
+    "continuity_findings",
+    "redundancy_findings",
+    "line_findings",
+    "orality_findings",
+    "unresolved_issues",
+    "invalidated_artifacts"
   ],
   "properties": {
+    "episode_id": {"type": "string", "minLength": 1},
+    "input_artifact_id": {"type": "string", "minLength": 1},
+    "input_checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "output_artifact_id": {"type": "string", "minLength": 1},
+    "output_checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "input_version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"

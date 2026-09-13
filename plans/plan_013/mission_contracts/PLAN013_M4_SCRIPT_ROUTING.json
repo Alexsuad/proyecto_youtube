@@ -1,0 +1,23 @@
+{
+  "mission_id": "PLAN013_M4_SCRIPT_ROUTING",
+  "contract_status": "DRAFT",
+  "authorizing": false,
+  "effective_authorization": false,
+  "authorization_artifact": null,
+  "objective": "Conectar handoff Research→Script y resolver la ruta canónica B5-I3 sin activar producto.",
+  "non_objectives": ["Ejecución REAL B5-I3", "Crear agentes nuevos", "Cambiar perfil/corpus", "Modificar control operativo", "Commit", "Push"],
+  "required_prior_state": ["M3 gate PASS", "OWNER autoriza M4", "capability, schemas y preflight existentes inspeccionados"],
+  "allowlist": ["config/capability_registry.json", "config/capability_routing.yaml", "src/ai/role_execution.py", "src/ai/execution.py", "prompts/roles/NARRATIVE_ARCHITECTURE/", "tests/harness/test_plan011_m3_b5_i3.py", "tests/harness/test_plan009_m1_vertical.py", "tests/harness/test_plan012_m7_b5.py", "plans/plan_013/mission_contracts/PLAN013_M4_SCRIPT_ROUTING.json"],
+  "denylist": ["config/active_editorial_profile.json", "profiles/editorial/", "profiles/voice/corpus_manifest.json", "providers/", "output/productive/"],
+  "preserve_preexisting_changes": ["AGENTS.md", "config/capability_routing.yaml", "output/execution_provenance_registry.json"],
+  "allowed_operations": ["reuse existing B5-I3 role and schemas", "add one canonical route", "validate required inputs and outputs", "synthetic tests only"],
+  "dependencies": ["ResearchReady handoff", "existing B5-I3 contract boundary", "synthetic-only route"],
+  "focused_tests": ["route resolution", "required input/schema preflight", "handoff binding"],
+  "required_regressions": ["B5-I1 controlled behavior", "missing route fail-closed", "B5-I3 product execution remains NO"],
+  "expected_evidence": ["routing diff", "preflight output", "synthetic test output", "no real provider provenance"],
+  "stop_conditions": ["real route required", "new agent/capability required", "provider coupling", "product activation attempt"],
+  "commit_policy": "NO_COMMIT_WITHOUT_EXPLICIT_OWNER_AUTHORIZATION",
+  "push_policy": "FORBIDDEN",
+  "review_required": {"independent_review": true, "owner_review": true},
+  "mission_completion_gate": {"gate_id":"PLAN013_B3_GATE","double_rca_required_before_close":true,"jit_escape_cause_allowed_before_close":false}
+}

@@ -24,9 +24,11 @@ from src.core.contract_validation import (
     validate_research_plan,
     validate_research_stop_decision,
     validate_source_access_and_evidence_report,
+    validate_software_acquisition_pipeline,
     validate_thesis_artifact,
     validate_work_lifecycle,
     validate_work_research_dossier,
+    usable_source_ids,
 )
 
 
@@ -200,6 +202,216 @@ class SoftwareAcquisitionAdapter:
         )
         self.materialized_work_bindings: dict[str, dict[str, Any]] = {}
 
+    def run_pipeline(
+        self,
+        query: str,
+        *,
+        candidates: list[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]] | None = None,
+        request_ref: str | None = None,
+        pipeline_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Run the provider-neutral synthetic acquisition chain.
+
+        ``candidates`` is an explicit synthetic discovery result.  Without it,
+        the capability is unavailable; no source is inferred from the query.
+        Local recovery artifacts and execution provenance remain the only
+        positive acquisition authority.
+        """
+        if not isinstance(query, str) or not query.strip():
+            raise ResearchB2Error("ACQUISITION_QUERY_REQUIRED")
+        request_ref = request_ref or f"software:request:{_checksum({'query': query})[:16]}"
+        pipeline_id = pipeline_id or f"software:acquisition:{_checksum({'query': query, 'request_ref': request_ref})[:16]}"
+        if candidates is None:
+            result = self._unavailable_pipeline(query, request_ref, pipeline_id)
+            errors = validate_software_acquisition_pipeline(result)
+            if errors:
+                raise ResearchB2Error("ACQUISITION_PIPELINE_INVALID: " + " | ".join(errors))
+            return result
+
+        discovery_candidates = self._normalize_discovery_candidates(candidates)
+        fetched = []
+        for candidate in discovery_candidates:
+            source_id = candidate["source_id"]
+            record = self.bindings.get(source_id)
+            if record is None:
+                fetched.append(self._unavailable_source(candidate, request_ref, "ACQUISITION_BINDING_UNAVAILABLE"))
+                continue
+            if record.get("software_controlled") is not True:
+                fetched.append(self._unavailable_source(candidate, request_ref, "SOFTWARE_CONTROL_REQUIRED"))
+                continue
+            recovery_ref = record.get("recovery_artifact_ref")
+            recovery = self.recovery_artifacts.get(str(recovery_ref or ""))
+            path = Path(str(recovery.get("path") or "")) if recovery else None
+            if not recovery_ref or not recovery or path is None or not path.is_file():
+                fetched.append(self._unavailable_source(candidate, request_ref, "RECOVERY_ARTIFACT_UNAVAILABLE"))
+                continue
+            fetched.append({
+                "candidate": candidate,
+                "binding": dict(record),
+                "retrieval_status": "RECOVERED",
+                "evidence_status": "PENDING",
+                "recovery_artifact_ref": str(recovery_ref),
+                "retrieval_request_ref": str(record.get("retrieval_request_ref") or record.get("request_ref") or request_ref),
+                "software_controlled": True,
+                "checksum": recovery.get("checksum"),
+                "error": None,
+            })
+
+        verified = []
+        for item in fetched:
+            if item["retrieval_status"] != "RECOVERED":
+                verified.append(item)
+                continue
+            candidate = item["candidate"]
+            binding = item["binding"]
+            try:
+                self._resolve_recovery_artifact(binding, expected_id=candidate["source_id"], label="PIPELINE")
+            except ResearchB2Error as exc:
+                item = dict(item)
+                item.update({
+                    "retrieval_status": "FAILED",
+                    "evidence_status": "NOT_EVIDENCE",
+                    "error": self._pipeline_error("ACQUISITION_VERIFY_FAILED", str(exc), candidate["source_id"]),
+                })
+            else:
+                item = dict(item)
+                item["evidence_status"] = "VERIFIED"
+            verified.append(item)
+
+        registry = [self._registry_source(item) for item in verified]
+        usable = [item["source_id"] for item in registry if item["retrieval_status"] == "RECOVERED" and item["evidence_status"] == "VERIFIED"]
+        source_errors = [item["error"] for item in registry if item.get("error")]
+        result = {
+            "contract": "software_acquisition_pipeline",
+            "contract_version": "1.0.0",
+            "pipeline_id": pipeline_id,
+            "request_ref": request_ref,
+            "query": query,
+            "execution_mode": "SYNTHETIC",
+            "software_controlled": True,
+            "capability_status": "AVAILABLE",
+            "status": "COMPLETED" if usable else "BLOCKED",
+            "stages": [
+                self._pipeline_stage("SEARCH_DISCOVERY", "COMPLETED", [item["source_id"] for item in discovery_candidates]),
+                self._pipeline_stage("FETCH_ACQUISITION", "COMPLETED", [item["candidate"]["source_id"] for item in fetched], source_errors[0] if source_errors else None),
+                self._pipeline_stage("VERIFY", "COMPLETED", usable, source_errors[0] if source_errors and not usable else None),
+                self._pipeline_stage("SOURCE_REGISTRY", "COMPLETED", [item["source_id"] for item in registry]),
+            ],
+            "source_registry": registry,
+            "limitations": [] if usable else ["No existe una fuente sintética adquirida y verificada para este alcance."],
+            "error": None if usable else self._pipeline_error("NO_USABLE_SOURCE", "La adquisición no produjo una fuente verificable."),
+        }
+        errors = validate_software_acquisition_pipeline(result)
+        if errors:
+            raise ResearchB2Error("ACQUISITION_PIPELINE_INVALID: " + " | ".join(errors))
+        return result
+
+    def search_discovery(self, query: str, *, candidates: list[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]] | None = None, request_ref: str | None = None) -> dict[str, Any]:
+        """Expose the discovery boundary without implying acquisition."""
+        if not isinstance(query, str) or not query.strip():
+            raise ResearchB2Error("ACQUISITION_QUERY_REQUIRED")
+        if candidates is None:
+            return self._pipeline_stage(
+                "SEARCH_DISCOVERY", "UNAVAILABLE", [],
+                self._pipeline_error("CAPABILITY_UNAVAILABLE", "No hay capacidad de discovery sintético disponible."),
+            )
+        normalized = self._normalize_discovery_candidates(candidates)
+        return self._pipeline_stage("SEARCH_DISCOVERY", "COMPLETED", [item["source_id"] for item in normalized])
+
+    @staticmethod
+    def _normalize_discovery_candidates(candidates: list[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]]) -> list[dict[str, Any]]:
+        if isinstance(candidates, Mapping):
+            values = []
+            for key, value in sorted(candidates.items()):
+                if not isinstance(value, Mapping):
+                    raise ResearchB2Error("DISCOVERY_CANDIDATE_REQUIRES_OBJECT")
+                values.append(dict(value, source_id=str(key)))
+        elif isinstance(candidates, (list, tuple)):
+            values = list(candidates)
+        else:
+            raise ResearchB2Error("DISCOVERY_CANDIDATES_REQUIRED")
+        normalized = []
+        for candidate in values:
+            if not isinstance(candidate, Mapping) or not candidate.get("source_id") or not candidate.get("locator"):
+                raise ResearchB2Error("DISCOVERY_CANDIDATE_REQUIRES_SOURCE_ID_AND_LOCATOR")
+            item = copy.deepcopy(dict(candidate))
+            item["source_id"] = str(item["source_id"])
+            item["locator"] = str(item["locator"])
+            normalized.append(item)
+        ids = [str(item["source_id"]) for item in normalized]
+        if len(ids) != len(set(ids)):
+            raise ResearchB2Error("DISCOVERY_CANDIDATE_SOURCE_ID_DUPLICATE")
+        return normalized
+
+    @staticmethod
+    def _pipeline_error(code: str, message: str, source_id: str | None = None) -> dict[str, str]:
+        error = {"code": code, "message": message}
+        if source_id:
+            error["source_id"] = source_id
+        return error
+
+    @classmethod
+    def _pipeline_stage(cls, name: str, status: str, output_refs: list[str], error: dict[str, str] | None = None) -> dict[str, Any]:
+        return {"stage": name, "status": status, "output_refs": sorted(set(output_refs)), "error": error}
+
+    @classmethod
+    def _unavailable_pipeline(cls, query: str, request_ref: str, pipeline_id: str) -> dict[str, Any]:
+        return {
+            "contract": "software_acquisition_pipeline", "contract_version": "1.0.0",
+            "pipeline_id": pipeline_id, "request_ref": request_ref, "query": query,
+            "execution_mode": "SYNTHETIC", "software_controlled": True,
+            "capability_status": "UNAVAILABLE", "status": "UNAVAILABLE",
+            "stages": [
+                cls._pipeline_stage("SEARCH_DISCOVERY", "UNAVAILABLE", [], cls._pipeline_error("CAPABILITY_UNAVAILABLE", "No hay capacidad de discovery sintético disponible.")),
+                cls._pipeline_stage("FETCH_ACQUISITION", "SKIPPED", []),
+                cls._pipeline_stage("VERIFY", "SKIPPED", []),
+                cls._pipeline_stage("SOURCE_REGISTRY", "SKIPPED", []),
+            ],
+            "source_registry": [],
+            "limitations": ["Search / Discovery no está disponible; no se fabrican candidatos ni evidencia."],
+            "error": cls._pipeline_error("CAPABILITY_UNAVAILABLE", "No hay capacidad de discovery sintético disponible."),
+        }
+
+    @classmethod
+    def _unavailable_source(cls, candidate: Mapping[str, Any], request_ref: str, code: str) -> dict[str, Any]:
+        return {
+            "candidate": dict(candidate), "binding": {}, "retrieval_status": "NOT_RECOVERED",
+            "evidence_status": "PENDING", "recovery_artifact_ref": None,
+            "retrieval_request_ref": request_ref, "software_controlled": True,
+            "error": cls._pipeline_error(code, "La fuente no fue adquirida; permanece no utilizable.", str(candidate["source_id"])),
+        }
+
+    @classmethod
+    def _registry_source(cls, item: Mapping[str, Any]) -> dict[str, Any]:
+        candidate = item["candidate"]
+        provenance = copy.deepcopy(dict(candidate.get("provenance") or {}))
+        provenance.setdefault("locator", str(candidate["locator"]))
+        provenance["acquisition_method"] = "SOFTWARE_CONTROLLED_SYNTHETIC_ACQUISITION"
+        provenance["verification_status"] = "REVIEWED" if item["evidence_status"] == "VERIFIED" else "NOT_REVIEWED"
+        return {
+            "source_id": str(candidate["source_id"]),
+            "title": str(candidate.get("title") or candidate["source_id"]),
+            "source_type": str(candidate.get("source_type") or "RESEARCH_SOURCE"),
+            "url": candidate.get("url"),
+            "access_type": str(candidate.get("access_type") or "DIRECT"),
+            "locator": str(candidate["locator"]),
+            "confidence": str(candidate.get("confidence") or "MEDIUM"),
+            "acquisition_method": "SOFTWARE_CONTROLLED_SYNTHETIC_ACQUISITION",
+            "retrieval_status": item["retrieval_status"],
+            "evidence_status": item["evidence_status"],
+            "software_controlled": item["software_controlled"],
+            "recovery_artifact_ref": item["recovery_artifact_ref"],
+            "retrieval_request_ref": item["retrieval_request_ref"],
+            "provenance": provenance,
+            "checksum": cls._recovery_checksum(item),
+            "error": item.get("error"),
+        }
+
+    @staticmethod
+    def _recovery_checksum(item: Mapping[str, Any]) -> str | None:
+        checksum = item.get("checksum")
+        return str(checksum) if checksum else None
+
     @staticmethod
     def _representation_key(work_id: str, representation: Mapping[str, Any]) -> str:
         return "|".join(
@@ -314,8 +526,13 @@ class SoftwareAcquisitionAdapter:
                 }
             )
             provenance = dict(source.get("provenance") or {})
-            positive = binding["evidence_status"] in {"CONSULTED", "VERIFIED", "EVIDENCE"}
+            positive = (
+                binding["retrieval_status"] == "RECOVERED"
+                and binding["evidence_status"] in {"CONSULTED", "VERIFIED", "EVIDENCE"}
+            )
             if positive:
+                if binding["software_controlled"] is not True:
+                    raise ResearchB2Error("SOURCE_ACQUISITION_evidencia_REQUIRES_SOFTWARE_CONTROL")
                 self._resolve_recovery_artifact(binding, expected_id=source_id, label="SOURCE")
             provenance.update(
                 {
@@ -757,10 +974,17 @@ class ResearchB2Orchestrator:
                 if field in raw:
                     entry[field] = copy.deepcopy(raw[field])
             source_entries.append(entry)
+        usable_ids = usable_source_ids(source_entries)
         materials = source_access.get("materials", []) if isinstance(source_access, Mapping) else []
         limitations = [str(item) for item in source_access.get("limitations", [])] if isinstance(source_access, Mapping) else []
-        if not source_entries:
-            limitations.append("La investigación base no ha producido fuentes verificables.")
+        negative_sources = [
+            f"Fuente {entry['source_id']} no utilizable: retrieval_status={entry.get('retrieval_status', 'NOT_RECOVERED')}, evidence_status={entry.get('evidence_status', 'PENDING')}."
+            for entry in source_entries
+            if entry["source_id"] not in usable_ids
+        ]
+        limitations.extend(negative_sources)
+        if not usable_ids:
+            limitations.append("La investigación base no ha producido fuentes adquiridas y utilizables para el uso declarado.")
         limitations = list(dict.fromkeys(limitations))
         central_question = plan.get("central_question", {})
         central_question_text = str(central_question.get("question") if isinstance(central_question, Mapping) else central_question)
@@ -769,8 +993,12 @@ class ResearchB2Orchestrator:
             "episode_id": str(plan["episode_id"]),
             "research_id": str(plan["research_plan_id"]),
             "brief_version": str(plan["brief_version"]),
-            "material_principal_disponible": bool(materials or source_entries),
-            "tipo_de_acceso": "DIRECT" if source_entries else "UNAVAILABLE",
+            "material_principal_disponible": bool(usable_ids),
+            "tipo_de_acceso": (
+                "UNAVAILABLE" if not usable_ids else
+                "DIRECT" if len({str(source_entries[index].get('access_type') or 'DIRECT') for index, entry in enumerate(source_entries) if entry['source_id'] in usable_ids}) == 1
+                else "MIXED"
+            ),
             "fuentes_primarias": source_entries,
             "fuentes_secundarias": [],
             "escenas_verificadas": [],
@@ -779,10 +1007,10 @@ class ResearchB2Orchestrator:
             "claims_pendientes": [],
             "limitaciones": limitations,
             "nivel_de_confianza": "MEDIUM" if source_entries else "LOW",
-            "can_proceed": bool(source_entries),
-            "allowed_analyses": ["CONTEXTUAL_ANALYSIS"] if source_entries else [],
+            "can_proceed": bool(usable_ids),
+            "allowed_analyses": ["CONTEXTUAL_ANALYSIS"] if usable_ids else [],
             "limited_analyses": [],
-            "prohibited_analyses": [],
+            "prohibited_analyses": [] if usable_ids else ["EVIDENCE_DEPENDENT_ANALYSIS"],
             "excluded_claims": [],
             "required_disclosures": [],
             "propagated_constraints": limitations,
@@ -864,10 +1092,14 @@ class ResearchB2Orchestrator:
             if isinstance(candidates, list):
                 claims = list(report.get("claims_sostenibles") or [])
                 by_id = {str(item.get("claim_id")): item for item in claims if isinstance(item, Mapping) and item.get("claim_id")}
-                known_sources = {
-                    str(item.get("source_id")) for field in ("fuentes_primarias", "fuentes_secundarias")
-                    for item in report.get(field, []) if isinstance(item, Mapping) and item.get("source_id")
-                }
+                usable_sources = usable_source_ids(
+                    [
+                        item
+                        for field in ("fuentes_primarias", "fuentes_secundarias")
+                        for item in report.get(field, [])
+                        if isinstance(item, Mapping)
+                    ]
+                )
                 for candidate in candidates:
                     if not isinstance(candidate, Mapping) or not candidate.get("source_refs"):
                         continue
@@ -876,7 +1108,7 @@ class ResearchB2Orchestrator:
                     locator = str(candidate.get("locator") or "stage output")
                     if not claim_id or not claim_text:
                         continue
-                    source_refs = sorted({str(ref) for ref in candidate.get("source_refs", []) if str(ref).strip() and str(ref) in known_sources})
+                    source_refs = sorted({str(ref) for ref in candidate.get("source_refs", []) if str(ref).strip() and str(ref) in usable_sources})
                     if not source_refs:
                         continue
                     raw_confidence = candidate.get("confidence")
@@ -902,6 +1134,8 @@ class ResearchB2Orchestrator:
                     if not isinstance(item, Mapping) or not item.get("source_refs"):
                         continue
                     source_ref = str(item["source_refs"][0])
+                    if source_ref not in usable_sources:
+                        continue
                     scene_id = str(item.get("scene_id") or item.get("item_id") or "")
                     description = str(item.get("description") or item.get("statement") or "").strip()
                     if scene_id and description:

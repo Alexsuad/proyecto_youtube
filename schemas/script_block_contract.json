@@ -10,7 +10,11 @@
     "word_budget_min",
     "word_budget_max",
     "narrative_function",
-    "output_path"
+    "output_path",
+    "forbidden_repetitions",
+    "required_transition",
+    "previous_block_summary",
+    "next_block_purpose"
   ],
   "properties": {
     "block_id": {

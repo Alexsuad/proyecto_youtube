@@ -136,11 +136,11 @@ def test_profile_without_selector_path_uses_canonical_selector() -> None:
         }, profiles=profiles, environ={})
 
 
-def test_active_execution_family_must_be_authorized_for_mission() -> None:
+def test_historical_execution_family_authorization_is_stale_against_current_mission() -> None:
     authorization = load_mission_authorization(
         ROOT / "plans/plan_009/p2_real_roundtrip/mission/mission-authorization.json"
     )
-    with pytest.raises(PermissionError, match="execution family scope"):
+    with pytest.raises(PermissionError, match="MISSION_STALE_AGAINST_LIVE_STATE"):
         authorization.verify(
             ROOT,
             capability_id="TOPIC_BELONGING_ASSESSMENT",
@@ -202,6 +202,12 @@ def test_editorial_roles_traverse_canonical_profile_and_prompt_route(tmp_path: P
                 "role_id": role_id,
                 "execution_profile": route.execution_profile,
                 "execution_route": route.execution_route,
+                "clean_session": True,
+                "required_context": {
+                    "audit_criteria": "smoke criteria",
+                    "profile_identity": "smoke profile",
+                    "quality_criteria": "smoke quality criteria",
+                },
             },
         )
         model_prompt = build_model_prompt(contract)

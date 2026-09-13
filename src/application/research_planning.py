@@ -26,8 +26,84 @@ def _checksum(value: Mapping[str, Any]) -> str:
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 
 
+def _pick(value: Mapping[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
+    return {field: copy.deepcopy(value[field]) for field in fields if field in value}
+
+
+def _bound_claim(value: Any, index: int, evidence_ref: str) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        result = _pick(value, ("claim_id", "statement", "intended_use", "strength", "evidence_requirement_refs", "material_if_false", "claim_dimensions"))
+        result.setdefault("claim_id", f"C-{index}")
+        result.setdefault("statement", str(value.get("statement") or value.get("claim_text") or f"Claim {index}."))
+        result.setdefault("intended_use", "RESEARCH")
+        result.setdefault("strength", "LIMITED")
+        result.setdefault("evidence_requirement_refs", [evidence_ref])
+        result.setdefault("material_if_false", True)
+        return result
+    return {"claim_id": f"C-{index}", "statement": str(value), "intended_use": "RESEARCH", "strength": "LIMITED", "evidence_requirement_refs": [evidence_ref], "material_if_false": True}
+
+
+def _bound_rival(value: Any, index: int, evidence_ref: str) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        result = _pick(value, ("rival_id", "explanation", "refutation_signals", "evidence_requirement_refs"))
+        result.setdefault("rival_id", f"R-{index}")
+        result.setdefault("explanation", str(value.get("explanation") or value.get("statement") or f"Explicación rival {index}."))
+        result.setdefault("refutation_signals", ["Evidencia contradictoria"])
+        result.setdefault("evidence_requirement_refs", [evidence_ref])
+        return result
+    return {"rival_id": f"R-{index}", "explanation": str(value), "refutation_signals": ["Evidencia contradictoria"], "evidence_requirement_refs": [evidence_ref]}
+
+
+def _bound_gap(value: Any, index: int) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        result = _pick(value, ("gap_id", "kind", "description", "material_impact", "mitigation"))
+        result.setdefault("gap_id", f"G-{index}")
+        result.setdefault("kind", "EVIDENCE")
+        result.setdefault("description", str(value.get("description") or f"Brecha {index}."))
+        result.setdefault("material_impact", "PENDING")
+        result.setdefault("mitigation", "Revisar antes de declarar suficiencia.")
+        return result
+    return {"gap_id": f"G-{index}", "kind": "EVIDENCE", "description": str(value), "material_impact": "PENDING", "mitigation": "Revisar antes de declarar suficiencia."}
+
+
+def _bound_specialist(value: Any, index: int) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        result = _pick(value, ("specialist_id", "field", "activation_condition", "expected_contribution"))
+        result.setdefault("specialist_id", f"SP-{index}")
+        result.setdefault("field", str(value.get("field") or "GENERAL"))
+        result.setdefault("activation_condition", "Si aparece una brecha material.")
+        result.setdefault("expected_contribution", "Aportar contraste especializado.")
+        return result
+    return {"specialist_id": f"SP-{index}", "field": str(value), "activation_condition": "Si aparece una brecha material.", "expected_contribution": "Aportar contraste especializado."}
+
+
 class ResearchPlanningService:
     """Build the software-owned research context and bind a cognitive proposal."""
+
+    STANDARD_INTENDED_USE = "RESEARCH_AND_THESIS"
+
+    @classmethod
+    def resolve_intended_use(
+        cls,
+        *,
+        explicit: Any = None,
+        topic: Any = None,
+        question: Any = None,
+        reference: str = "human_episode_input",
+    ) -> dict[str, str]:
+        """Resolve purpose once, preserving whether it was supplied or derived.
+
+        A normal topic/question is sufficient for the standard Research V2
+        route.  Explicit purpose always wins; an empty explicit value is not
+        treated as a negative assertion and therefore does not create a false
+        ambiguity block.
+        """
+        value = str(explicit or "").strip()
+        if value:
+            return {"value": value, "origin": "OWNER_EXPLICIT", "reference": reference}
+        if str(topic or "").strip() or str(question or "").strip():
+            return {"value": cls.STANDARD_INTENDED_USE, "origin": "DERIVED_STANDARD", "reference": reference}
+        raise ResearchPlanningError("RESEARCH_INTENDED_USE_AMBIGUOUS")
 
     def build_episode_brief(
         self,
@@ -35,7 +111,7 @@ class ResearchPlanningService:
         episode_id: str,
         topic: str,
         question: str | None,
-        intended_use: str,
+        intended_use: str | None,
         profile: Mapping[str, Any],
         work_intents: list[Mapping[str, Any]] | None = None,
         selection_authority: str = "NOT_DECLARED",
@@ -49,8 +125,11 @@ class ResearchPlanningService:
         This is a deterministic preparation step: it records only information
         available before research and never invents a thesis or evidence.
         """
-        if not str(episode_id).strip() or not str(topic).strip() or not str(intended_use).strip():
+        if not str(episode_id).strip() or not str(topic).strip():
             raise ResearchPlanningError("PRE_RESEARCH_BRIEF_INPUT_REQUIRED")
+        intended_use_resolution = self.resolve_intended_use(
+            explicit=intended_use, topic=topic, question=question, reference=origin_ref,
+        )
         if not isinstance(profile, Mapping):
             raise ResearchPlanningError("EDITORIAL_PROFILE_REQUIRED")
         profile_data = dict(profile.get("profile", profile)) if isinstance(profile.get("profile", profile), Mapping) else {}
@@ -69,7 +148,8 @@ class ResearchPlanningService:
             "episode_id": str(episode_id), "brief_version": brief_version, "brief_stage": "PRE_RESEARCH",
             "profile_id": profile_id, "profile_version": profile_version, "profile_checksum": profile_checksum,
             "tema": str(topic).strip(), "initial_question": str(question).strip() if question else None,
-            "objetivo": str(intended_use),
+            "objetivo": intended_use_resolution["value"],
+            "intended_use_resolution": intended_use_resolution,
             "narrative_materials": [str(item.get("work_ref")) for item in intents if item.get("work_ref")],
             "work_intents": intents, "selection_authority": authority,
             "owner_material_refs": refs, "owner_restrictions": [str(item) for item in (owner_restrictions or [])],
@@ -168,13 +248,17 @@ class ResearchPlanningService:
         # The cognitive proposal is intentionally lightweight; Software owns
         # the canonical ResearchPlan 2.0.0 shape and adds stable identifiers.
         dimension_items = raw.get("dimensions") or ["primary"]
-        dimensions = [item if isinstance(item, Mapping) else {"dimension_id": f"D-{index}", "label": str(item), "research_question": str(item)} for index, item in enumerate(dimension_items, 1)]
+        dimensions = [copy.deepcopy(dict(item)) if isinstance(item, Mapping) else {"dimension_id": f"D-{index}", "label": str(item), "research_question": str(item)} for index, item in enumerate(dimension_items, 1)]
         for index, item in enumerate(dimensions, 1):
             item.setdefault("dimension_id", f"D-{index}"); item.setdefault("label", str(item.get("dimension_id"))); item.setdefault("research_question", str(item.get("label")))
         sub_items = raw.get("subquestions") or ["Delimitar el fenómeno."]
-        subquestions = [item if isinstance(item, Mapping) else {"subquestion_id": f"SQ-{index}", "dimension_id": dimensions[0]["dimension_id"], "question": str(item)} for index, item in enumerate(sub_items, 1)]
+        subquestions = [copy.deepcopy(dict(item)) if isinstance(item, Mapping) else {"subquestion_id": f"SQ-{index}", "dimension_id": dimensions[0]["dimension_id"], "question": str(item)} for index, item in enumerate(sub_items, 1)]
         evidence_items = raw.get("evidence_requirements") or ["Evidencia verificable."]
-        evidence = [item if isinstance(item, Mapping) else {"evidence_requirement_id": f"E-{index}", "subquestion_refs": [subquestions[0]["subquestion_id"]], "evidence_kind": "BOTH", "minimum_strength": str(item), "preferred_source_types": ["OWNER_MATERIAL"]} for index, item in enumerate(evidence_items, 1)]
+        evidence = [copy.deepcopy(dict(item)) if isinstance(item, Mapping) else {"evidence_requirement_id": f"E-{index}", "subquestion_refs": [subquestions[0]["subquestion_id"]], "evidence_kind": "BOTH", "minimum_strength": str(item), "preferred_source_types": ["OWNER_MATERIAL"]} for index, item in enumerate(evidence_items, 1)]
+        for index, item in enumerate(subquestions, 1):
+            item.setdefault("subquestion_id", f"SQ-{index}"); item.setdefault("dimension_id", dimensions[0]["dimension_id"]); item.setdefault("question", f"Subpregunta {index}.")
+        for index, item in enumerate(evidence, 1):
+            item.setdefault("evidence_requirement_id", f"E-{index}"); item.setdefault("subquestion_refs", [subquestions[0]["subquestion_id"]]); item.setdefault("evidence_kind", "BOTH"); item.setdefault("minimum_strength", "Evidencia verificable."); item.setdefault("preferred_source_types", ["OWNER_MATERIAL"])
         supplied_works = []
         for item in (raw.get("supplied_works") or []):
             if isinstance(item, Mapping):
@@ -209,10 +293,11 @@ class ResearchPlanningService:
             "intended_use": {"uses": [str(raw.get("intended_use") or "Research V2")], "required_outputs": ["evidence_report"]},
             "scope": {"included": [str(raw.get("scope") or "Tema y materiales suministrados")], "excluded": ["Producción editorial final"]},
             "dimensions": dimensions, "subquestions": subquestions, "evidence_requirements": evidence,
-            "source_strategy": [{"strategy_id": "S-1", "source_types": ["OWNER_MATERIAL"], "purpose": str(raw.get("source_strategy") or "Material local"), "limitations": ["Sin búsqueda web"]}],
-            "critical_claims": [{"claim_id": "C-1", "statement": str(item), "intended_use": "RESEARCH", "strength": "LIMITED", "evidence_requirement_refs": [evidence[0]["evidence_requirement_id"]], "material_if_false": True} for item in (raw.get("critical_claims") or ["No exceder la evidencia."])],
-            "rival_refutation": [{"rival_id": "R-1", "explanation": str(item), "refutation_signals": ["Evidencia contradictoria"], "evidence_requirement_refs": [evidence[0]["evidence_requirement_id"]]} for item in (raw.get("rival_refutation") or ["Considerar explicaciones alternativas."])],
-            "gaps_risks": [], "potential_specialists": [],
+            "source_strategy": [copy.deepcopy(dict(raw["source_strategy"]))] if isinstance(raw.get("source_strategy"), Mapping) else [{"strategy_id": "S-1", "source_types": ["OWNER_MATERIAL"], "purpose": str(raw.get("source_strategy") or "Material local"), "limitations": ["Sin búsqueda web"]}],
+            "critical_claims": [_bound_claim(item, index, evidence[0]["evidence_requirement_id"]) for index, item in enumerate(raw.get("critical_claims") or ["No exceder la evidencia."], 1)],
+            "rival_refutation": [_bound_rival(item, index, evidence[0]["evidence_requirement_id"]) for index, item in enumerate(raw.get("rival_refutation") or ["Considerar explicaciones alternativas."], 1)],
+            "gaps_risks": [_bound_gap(item, index) for index, item in enumerate(raw.get("gaps_risks") or [], 1)],
+            "potential_specialists": [_bound_specialist(item, index) for index, item in enumerate(raw.get("potential_specialists") or [], 1)],
             "sufficiency_criteria": [{"criterion_id": "SC-1", "dimension_id": dimensions[0]["dimension_id"], "condition": str(item), "pass_route": "CONTINUE_WITH_LIMITATIONS"} for item in (raw.get("sufficiency_criteria") or ["Evidencia suficiente para el uso declarado."])],
             "target_final_works_decision": target_final_works_decision,
             "supplied_works": supplied_works, "selection_policy": selection_policy,

@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/script_draft.json",
+  "title": "ScriptDraft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["script_id", "episode_id", "artifact_version", "content", "checksum", "narrative_plan_ref", "thesis_binding", "created_at"],
+  "properties": {
+    "script_id": {"type": "string", "minLength": 1},
+    "episode_id": {"type": "string", "minLength": 1},
+    "artifact_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "content": {"type": "string", "minLength": 1},
+    "blocks": {"type": "array", "items": {"$ref": "script_block_contract.json"}},
+    "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "narrative_plan_ref": {"type": "string", "minLength": 1},
+    "thesis_binding": {"$ref": "#/definitions/thesis_binding"},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "definitions": {
+    "thesis_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["thesis_id", "artifact_version", "checksum"],
+      "properties": {
+        "thesis_id": {"type": "string", "minLength": 1},
+        "artifact_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    }
+  }
+}

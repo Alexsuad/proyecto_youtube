@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.core.editorial_profile_registry import EditorialProfileRegistry
+from src.core.editorial_profile_registry import EditorialProfileRegistry, validate_b3_lineage_cross_registry
+from src.core.evidence_freshness import sha256_path
 from src.core.version_manifest import compute_checksum
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -177,3 +178,103 @@ def test_pending_profile_state_can_be_registered_without_active_pointer(tmp_path
     assert saved["profiles"][key]["status"] == "PENDING_FUNCTIONAL_APPROVAL"
     assert saved["profiles"][key]["active"] is False
     assert saved["active_profile_key"] is None
+
+
+def test_lineage_single_identity_and_incompatible_checksum_fails():
+    from src.core.editorial_profile_registry import validate_profile_lineage
+
+    # Single identity with same checksum is valid
+    ok = {
+        "source_lineage": [
+            {"source_id": "B3-FUNCTIONAL-SPEC-CANONICAL", "locator": "docs/specifications/B3_editorial_profile_functional_specification.md", "role": "FUNCTIONAL_SPECIFICATION", "checksum": "a" * 64},
+            {"source_id": "B3-FUNCTIONAL-SPEC-CANONICAL", "locator": "docs/specifications/B3_editorial_profile_functional_specification.md", "role": "FUNCTIONAL_SPECIFICATION", "checksum": "a" * 64},
+        ]
+    }
+    assert validate_profile_lineage(ok) == []
+    # Same identity with different checksum must fail
+    bad = {
+        "source_lineage": [
+            {"source_id": "B3-FUNCTIONAL-SPEC-CANONICAL", "locator": "docs/specifications/B3_editorial_profile_functional_specification.md", "role": "FUNCTIONAL_SPECIFICATION", "checksum": "a" * 64},
+            {"source_id": "B3-FUNCTIONAL-SPEC-CANONICAL", "locator": "docs/specifications/B3_editorial_profile_functional_specification.md", "role": "FUNCTIONAL_SPECIFICATION", "checksum": "b" * 64},
+        ]
+    }
+    violations = validate_profile_lineage(bad)
+    assert any("checksums incompatibles" in v for v in violations)
+    # Different identities with different checksums are allowed
+    distinct = {
+        "source_lineage": [
+            {"source_id": "S1", "locator": "docs/spec.md", "role": "FUNCTIONAL_SPECIFICATION", "checksum": "a" * 64},
+            {"source_id": "S2", "locator": "docs/other.md", "role": "FUNCTIONAL_SPECIFICATION", "checksum": "b" * 64},
+        ]
+    }
+    assert validate_profile_lineage(distinct) == []
+
+
+def test_active_profile_lineage_is_single_verifiable_identity():
+    from src.core.editorial_profile_registry import validate_profile_lineage, load_active_profile_authority
+
+    active = load_active_profile_authority()
+    # Verify registry entry has exactly one verifiable lineage identity currently
+    registry = json.loads((ROOT / "config" / "editorial_profile_registry.json").read_text(encoding="utf-8"))
+    key = registry["active_profile_key"]
+    profile = registry["profiles"][key]["profile"]
+    assert validate_profile_lineage(profile) == []
+    lineage = profile.get("source_lineage", [])
+    assert len(lineage) == 1
+    assert lineage[0]["source_id"] == "B3-FUNCTIONAL-SPEC-CANONICAL"
+    # Changing checksum must invalidate active authority
+    tampered = json.loads(json.dumps(profile))
+    tampered["source_lineage"][0]["checksum"] = "f" * 64
+    assert validate_profile_lineage(tampered) == []  # single entry still internally consistent
+    # But two entries with same identity and different checksum must fail (incompatible identity simulation)
+    dup = json.loads(json.dumps(profile))
+    dup["source_lineage"].append({"source_id": "B3-FUNCTIONAL-SPEC-CANONICAL", "locator": "docs/specifications/B3_editorial_profile_functional_specification.md", "role": "FUNCTIONAL_SPECIFICATION", "checksum": "f" * 64})
+    from src.core.editorial_profile_registry import validate_profile_lineage as v2
+    assert any("checksums incompatibles" in v for v in v2(dup))
+
+
+def test_b3_lineage_reconciles_registry_corpus_and_physical_source():
+    assert validate_b3_lineage_cross_registry(ROOT) == []
+    source_checksum = sha256_path(ROOT / "docs/specifications/B3_editorial_profile_functional_specification.md")
+    corpus_checksum = sha256_path(ROOT / "profiles/voice/corpus_manifest.json")
+    assert source_checksum != corpus_checksum
+
+
+def test_b3_lineage_rejects_manifest_checksum_used_as_source_checksum(tmp_path: Path):
+    import shutil
+
+    for relative in (
+        "config/editorial_profile_registry.json",
+        "config/active_editorial_profile.json",
+        "profiles/voice/corpus_manifest.json",
+        "docs/specifications/B3_editorial_profile_functional_specification.md",
+    ):
+        destination = tmp_path / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / relative, destination)
+    corpus_path = tmp_path / "profiles/voice/corpus_manifest.json"
+    corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
+    corpus["source_lineage"][0]["checksum"] = sha256_path(corpus_path)
+    corpus_path.write_text(json.dumps(corpus), encoding="utf-8")
+    violations = validate_b3_lineage_cross_registry(tmp_path)
+    assert any("corpus" in violation and "fuente física" in violation for violation in violations)
+
+
+def test_b3_lineage_rejects_cross_registry_identity_mismatch(tmp_path: Path):
+    import shutil
+
+    for relative in (
+        "config/editorial_profile_registry.json",
+        "config/active_editorial_profile.json",
+        "profiles/voice/corpus_manifest.json",
+        "docs/specifications/B3_editorial_profile_functional_specification.md",
+    ):
+        destination = tmp_path / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / relative, destination)
+    corpus_path = tmp_path / "profiles/voice/corpus_manifest.json"
+    corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
+    corpus["source_lineage"][0]["source_id"] = "OTHER-SOURCE"
+    corpus_path.write_text(json.dumps(corpus), encoding="utf-8")
+    violations = validate_b3_lineage_cross_registry(tmp_path)
+    assert any("única identidad B3" in violation for violation in violations)

@@ -37,6 +37,7 @@ B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
 EDITORIAL_RUNTIME_FIELDS = {
     "analysis_id",
     "analysis_ids",
+    "audit_id",
     "artifact_id",
     "artifact_checksum",
     "active_profile_reference",
@@ -56,9 +57,13 @@ EDITORIAL_RUNTIME_FIELDS = {
     "thesis_id",
     "brief_version",
     "artifact_version",
+    "script_version",
+    "script_checksum",
     "version",
     "checksum",
     "brief_checksum",
+    "curation_id",
+    "package_id",
     "packaging_id",
     "profile_id",
     "profile_version",
@@ -103,6 +108,32 @@ EDITORIAL_RUNTIME_FIELDS = {
     "estimated_time",
     "wpm_target",
     "word_budget_total",
+    "thesis_binding",
+    "script_id",
+    "narrative_plan_ref",
+    "source_script_version",
+    "edit_report_ref",
+    "input_artifact_id",
+    "input_checksum",
+    "output_artifact_id",
+    "output_checksum",
+    "input_version",
+    "output_version",
+    "review_id",
+    "profile_reference",
+    "visible_promise_ref",
+    "final_audit_ref",
+    "final_audit_checksum",
+    "review_run_id",
+    "producer_run_id",
+    "editor_run_id",
+    "review_actor_id",
+    "producer_actor_id",
+    "editor_actor_id",
+    "auditor_actor_id",
+    "created_at",
+    "audited_artifact_ids",
+    "audited_artifact_versions",
 }
 # These fields are semantic findings, not runtime metadata.  They must remain
 # in the cognitive projection and are later carried into the software-owned
@@ -116,11 +147,16 @@ EDITORIAL_ONLY_SCHEMAS = {
     "b5_i2_semantic_sufficiency_audit",
     "early_packaging_hypothesis",
     "youtube_adaptation_b5_i2_package",
-    "youtube_adaptation_review",
+        "youtube_adaptation_review",
+        "script_draft",
+        "edited_script",
+        "editorial_edit_report",
+        "final_script_review",
     "viewer_journey",
     "opening_design",
     "closing_design",
     "narrative_plan",
+    "final_editorial_audit",
 }
 M3_NARRATIVE_SCHEMAS = {"viewer_journey", "opening_design", "closing_design", "narrative_plan"}
 M3_REQUIRED_INPUT_KINDS = {
@@ -388,6 +424,12 @@ def _bind_runtime_fields(request: ExecutionRequest, output: dict[str, Any]) -> t
     runtime_run_id = f"RUN-AI-{uuid.uuid4().hex}"
     if request.output_schema in M3_NARRATIVE_SCHEMAS:
         return _bind_m3_runtime_fields(request, output, runtime_run_id), runtime_run_id
+    if request.output_schema == "final_editorial_audit":
+        return _bind_final_editorial_audit_runtime_fields(request, output, runtime_run_id), runtime_run_id
+    if request.output_schema in {"script_draft", "edited_script", "editorial_edit_report"}:
+        return _bind_script_stage_runtime_fields(request, output, runtime_run_id), runtime_run_id
+    if request.output_schema == "final_script_review":
+        return _bind_final_script_review_runtime_fields(request, output, runtime_run_id), runtime_run_id
     if request.output_schema in EDITORIAL_ONLY_SCHEMAS:
         return _bind_b5_i2_runtime_fields(request, output, runtime_run_id), runtime_run_id
     bound = copy.deepcopy(output)
@@ -403,6 +445,143 @@ def _bind_runtime_fields(request: ExecutionRequest, output: dict[str, Any]) -> t
         if not provenance.get("run_id"):
             provenance["run_id"] = runtime_run_id
     return bound, runtime_run_id
+
+
+def _bind_final_editorial_audit_runtime_fields(
+    request: ExecutionRequest,
+    output: dict[str, Any],
+    runtime_run_id: str,
+) -> dict[str, Any]:
+    """Bind the exact edited script to the independent final audit."""
+    bound = copy.deepcopy(output)
+    edited_document = next((item for item in request.input_artifacts if item.artifact_kind == "edited_script"), None)
+    if edited_document is None:
+        raise ValueError("FINAL_EDITORIAL_AUDITOR requiere el edited_script canónico")
+    edited_payload, edited_path, producer_run_id = _input_documents(request).get("edited_script", ({}, None, ""))
+    if edited_path is None:
+        raise ValueError("FINAL_EDITORIAL_AUDITOR edited_script inválido")
+    bound["episode_id"] = request.episode_id or str(edited_payload.get("episode_id") or "")
+    bound["artifact_id"] = edited_document.artifact_id
+    bound["script_version"] = str(edited_payload.get("artifact_version") or request.config.get("artifact_version") or "")
+    bound["script_checksum"] = str(edited_payload.get("checksum") or file_checksum(edited_path))
+    bound["auditor_run_id"] = runtime_run_id
+    independent = bool(
+        producer_run_id
+        and producer_run_id != runtime_run_id
+        and request.config.get("independence_verified") is True
+    )
+    bound["independence_result"] = "PASS" if independent else "BLOCKED"
+    if not bound["episode_id"] or not bound["script_version"]:
+        raise ValueError("FINAL_EDITORIAL_AUDITOR identidad del script incompleta")
+    return bound
+
+
+def _bind_script_stage_runtime_fields(
+    request: ExecutionRequest,
+    output: dict[str, Any],
+    runtime_run_id: str,
+) -> dict[str, Any]:
+    """Bind WRITING/EDITOR outputs without letting cognition choose identity."""
+    bound = copy.deepcopy(output)
+    documents = _input_documents(request)
+    bound["episode_id"] = request.episode_id or next(
+        (str(payload.get("episode_id")) for payload, _, _ in documents.values() if payload.get("episode_id")), ""
+    )
+    if request.output_schema == "script_draft":
+        narrative = documents.get("narrative_plan", ({}, None, ""))[0]
+        thesis, thesis_path, _ = documents.get("thesis_artifact", ({}, None, ""))
+        bound.update({
+            "script_id": request.output_artifact_id or f"SCRIPT-DRAFT-{runtime_run_id}",
+            "artifact_version": str(request.config.get("artifact_version") or "1.0.0"),
+            "narrative_plan_ref": str(narrative.get("script_plan_id") or request.config.get("narrative_plan_ref") or ""),
+            "thesis_binding": {
+                "thesis_id": str(thesis.get("thesis_id") or ""),
+                "artifact_version": str(thesis.get("artifact_version") or thesis.get("version") or "1.0.0"),
+                "checksum": file_checksum(thesis_path) if thesis_path else "",
+            },
+            "created_at": _now(),
+        })
+    elif request.output_schema == "edited_script":
+        draft = documents.get("script_draft", ({}, None, ""))[0]
+        thesis, thesis_path, _ = documents.get("thesis_artifact", ({}, None, ""))
+        bound.update({
+            "script_id": request.output_artifact_id or f"SCRIPT-EDITED-{runtime_run_id}",
+            "artifact_version": str(request.config.get("artifact_version") or "1.1.0"),
+            "source_script_version": str(draft.get("artifact_version") or ""),
+            "edit_report_ref": str(request.config.get("edit_report_ref") or "editorial_edit_report:PENDING"),
+            "thesis_binding": {
+                "thesis_id": str(thesis.get("thesis_id") or draft.get("thesis_binding", {}).get("thesis_id") or ""),
+                "artifact_version": str(thesis.get("artifact_version") or thesis.get("version") or draft.get("thesis_binding", {}).get("artifact_version") or "1.0.0"),
+                "checksum": file_checksum(thesis_path) if thesis_path else str(draft.get("thesis_binding", {}).get("checksum") or ""),
+            },
+            "created_at": _now(),
+        })
+    else:
+        draft = documents.get("script_draft", ({}, None, ""))[0]
+        edited = documents.get("edited_script", ({}, None, ""))[0]
+        bound.update({
+            "episode_id": bound["episode_id"] or str(edited.get("episode_id") or draft.get("episode_id") or ""),
+            "input_artifact_id": str(draft.get("script_id") or ""),
+            "input_checksum": str(draft.get("checksum") or ""),
+            "output_artifact_id": str(edited.get("script_id") or ""),
+            "output_checksum": str(edited.get("checksum") or ""),
+            "input_version": str(draft.get("artifact_version") or ""),
+            "output_version": str(edited.get("artifact_version") or ""),
+        })
+    if request.output_schema in {"script_draft", "edited_script"}:
+        bound["checksum"] = hashlib.sha256(
+            canonical_json({key: value for key, value in bound.items() if key != "checksum"})
+        ).hexdigest()
+    return bound
+
+
+def _bind_final_script_review_runtime_fields(
+    request: ExecutionRequest,
+    output: dict[str, Any],
+    runtime_run_id: str,
+) -> dict[str, Any]:
+    """Bind the final YouTube review to the exact edited script and audit."""
+    from src.core.editorial_profile_registry import load_active_profile_authority
+
+    bound = copy.deepcopy(output)
+    documents = _input_documents(request)
+    edited, edited_path, editor_input_run_id = documents.get("edited_script", ({}, None, ""))
+    audit, audit_path, auditor_input_run_id = documents.get("final_editorial_audit", ({}, None, ""))
+    if edited_path is None or audit_path is None:
+        raise ValueError("FINAL_SCRIPT_REVIEW requiere edited_script y final_editorial_audit canónicos")
+    active = load_active_profile_authority()
+    producer_run_id = str(request.config.get("producer_run_id") or "")
+    editor_run_id = str(request.config.get("editor_run_id") or editor_input_run_id or "")
+    auditor_run_id = str(request.config.get("auditor_run_id") or auditor_input_run_id or "")
+    bound.update({
+        "review_id": request.output_artifact_id or f"FINAL-SCRIPT-REVIEW-{runtime_run_id}",
+        "episode_id": request.episode_id or str(edited.get("episode_id") or ""),
+        "artifact_id": str(edited.get("script_id") or ""),
+        "script_version": str(edited.get("artifact_version") or ""),
+        "script_checksum": str(edited.get("checksum") or file_checksum(edited_path)),
+        "profile_reference": {
+            "profile_id": active["ACTIVE_PROFILE_ID"],
+            "profile_version": active["ACTIVE_PROFILE_VERSION"],
+            "profile_checksum": active["profile_checksum"],
+        },
+        "visible_promise_ref": str(request.config.get("visible_promise_ref") or ""),
+        "final_audit_ref": f"final_editorial_audit:{audit.get('artifact_id') or 'unknown'}@{audit.get('script_version') or 'unknown'}",
+        "final_audit_checksum": hashlib.sha256(canonical_json(audit)).hexdigest(),
+        "review_run_id": runtime_run_id,
+        "producer_run_id": producer_run_id,
+        "editor_run_id": editor_run_id,
+        "auditor_run_id": auditor_run_id,
+        "review_actor_id": str(request.config.get("review_actor_id") or request.role or "YOUTUBE_ADAPTATION_AUDITOR"),
+        "producer_actor_id": str(request.config.get("producer_actor_id") or "WRITING"),
+        "editor_actor_id": str(request.config.get("editor_actor_id") or "EDITOR"),
+        "auditor_actor_id": str(request.config.get("auditor_actor_id") or "FINAL_EDITORIAL_AUDITOR"),
+        "created_at": _now(),
+    })
+    if len({producer_run_id, editor_run_id, auditor_run_id, runtime_run_id}) != 4:
+        raise ValueError("FINAL_SCRIPT_REVIEW runs must be independent")
+    if bound["review_actor_id"] in {bound["producer_actor_id"], bound["editor_actor_id"], bound["auditor_actor_id"]}:
+        raise ValueError("FINAL_SCRIPT_REVIEW actor is incompatible with an editorial authority")
+    return bound
 
 
 def _input_documents(request: ExecutionRequest) -> dict[str, tuple[dict[str, Any], Path, str]]:
@@ -672,6 +851,18 @@ def _bind_m3_runtime_fields(
         bound["duration_target_minutes"] = human.get("duration_target_minutes")
         bound["target_language"] = human.get("target_language")
         bound["user_instructions"] = human.get("user_instructions", [])
+    if request.output_schema == "narrative_plan":
+        thesis_document = documents.get("refined_thesis")
+        if thesis_document is None:
+            raise ValueError("NarrativePlan requiere RefinedThesis canónica para binding")
+        thesis = thesis_document[0]
+        bound["thesis_binding"] = {
+            "thesis_id": str(thesis.get("thesis_id") or ""),
+            "artifact_version": str(thesis.get("artifact_version") or "1.0.0"),
+            "checksum": file_checksum(thesis_document[1]),
+            "research_id": str(thesis.get("research_id") or ""),
+            "evidence_report_id": str(thesis.get("evidence_report_id") or ""),
+        }
 
     resolved = resolve_narrative_budget(
         human.get("duration_target_minutes"),
@@ -1210,6 +1401,8 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
     else:
         output = output or {}
         runtime_run_id = None
+        if request.output_schema in {"topic_belonging_assessment", "topic_belonging_decision"}:
+            output, runtime_run_id = _bind_runtime_fields(request, output)
         violations = validate_against_schema(output, request.output_schema)
     if violations:
         return _result(request, provider_name, ExecutionStatus.FAILED, started, manifest, output=output, error="OUTPUT_CONTRACT_INVALID: " + "; ".join(violations), usage=usage)

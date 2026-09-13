@@ -1,10 +1,7 @@
 """Cierre fuerte: no modifica el índice hasta que todos los contratos pasan."""
 import argparse
 import json
-import os
 import sys
-import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +16,7 @@ from src.core.invalidation import InvalidationEngine
 from src.core.path_resolution import REPO_ROOT, expand_path, output_root
 from src.core.status import GateStatus
 from src.core.version_manifest import compute_checksum
+from src.application.storage import EpisodeHandle, StorageError, VaultEpisodeStore
 
 
 DELIVERABLES = [
@@ -273,27 +271,36 @@ def evaluate(
     return GateResult("cerrar_episodio", ep_id, "1.0.0", GateStatus.PASS, "Cierre validado", evidence=evidence)
 
 
-def save_index_atomically(index_path: Path, index: dict) -> None:
-    """Escribe el índice completo y reemplaza el archivo solo tras un write correcto."""
-    descriptor, temporary_path = tempfile.mkstemp(prefix=".episodes_index.", suffix=".tmp", dir=index_path.parent)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-            json.dump(index, handle, ensure_ascii=False, indent=2)
-            handle.write("\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary_path, index_path)
-    except Exception:
-        try:
-            os.unlink(temporary_path)
-        except FileNotFoundError:
-            pass
-        raise
+def close_plan013_from_entrypoint(config_path: Path, episode_id: str, closure_path: Path) -> dict:
+    """Compatibility entrypoint delegating all final authority to storage."""
+    store = VaultEpisodeStore.from_settings(config_path)
+    entry = store._entry(episode_id)
+    folder = store._folder_for_entry(entry)
+    handle = EpisodeHandle(episode_id, str(entry.get("slug") or folder.name.split("_", 1)[-1]), folder, store.index_path)
+    closure = json.loads(closure_path.read_text(encoding="utf-8"))
+    workflow_path = folder / "workflow_state.json"
+    episode_path = folder / "episode_state.json"
+    workflow_state = json.loads(workflow_path.read_text(encoding="utf-8")) if workflow_path.is_file() else {"episode_id": episode_id, "status": "IN_REVIEW"}
+    episode_state = json.loads(episode_path.read_text(encoding="utf-8")) if episode_path.is_file() else {"episode_id": episode_id, "status": "IN_REVIEW"}
+    return store.record_plan013_editorial_closure(
+        handle,
+        closure=closure,
+        workflow_state=workflow_state,
+        episode_state=episode_state,
+    )
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--ep-id"); parser.add_argument("--config", default=str(REPO_ROOT / "config/local_settings.json")); parser.add_argument("--episode-path", help="Ruta portable del episodio, sin índice Vault"); parser.add_argument("--duration-envelope", help="Paquete canónico que contiene el envelope episódico"); parser.add_argument("--duration-review", help="Review canónica independiente del paquete episódico"); parser.add_argument("--duration-execution-registry", help="Registro de ejecución del paquete y la review"); parser.add_argument("--duration-active-profile", help="Perfil activo explícito"); parser.add_argument("--output-root")
+    parser = argparse.ArgumentParser(); parser.add_argument("--ep-id"); parser.add_argument("--config", default=str(REPO_ROOT / "config/local_settings.json")); parser.add_argument("--episode-path", help="Ruta portable del episodio, sin índice Vault"); parser.add_argument("--plan013-closure", help="Payload de cierre PLAN013; única ruta autorizada para el cierre final"); parser.add_argument("--duration-envelope", help="Paquete canónico que contiene el envelope episódico"); parser.add_argument("--duration-review", help="Review canónica independiente del paquete episódico"); parser.add_argument("--duration-execution-registry", help="Registro de ejecución del paquete y la review"); parser.add_argument("--duration-active-profile", help="Perfil activo explícito"); parser.add_argument("--output-root")
     args = parser.parse_args(); config_path = Path(args.config)
+    if args.plan013_closure:
+        if not args.ep_id:
+            return run_gate(lambda: GateResult("plan013_editorial_closure", "unknown", "1.0.0", GateStatus.BLOCKED, "PLAN013 requiere --ep-id", ["episode_id ausente"]), output_root=args.output_root)
+        try:
+            close_plan013_from_entrypoint(config_path, args.ep_id, Path(args.plan013_closure))
+            return run_gate(lambda: GateResult("plan013_editorial_closure", args.ep_id, "1.0.0", GateStatus.PASS, "Cierre PLAN013 delegado a la autoridad software-owned"), output_root=args.output_root)
+        except (OSError, json.JSONDecodeError, StorageError, ValueError) as exc:
+            return run_gate(lambda: GateResult("plan013_editorial_closure", args.ep_id, "1.0.0", GateStatus.BLOCKED, "Cierre PLAN013 bloqueado", [str(exc)]), output_root=args.output_root)
     if args.episode_path:
         ep_path = expand_path(args.episode_path)
         ep_id = args.ep_id or ep_path.name
@@ -306,6 +313,16 @@ def main() -> int:
             duration_registry_path=Path(args.duration_execution_registry) if args.duration_execution_registry else None,
             duration_active_profile_path=Path(args.duration_active_profile) if args.duration_active_profile else None,
         )
+        if result.status == GateStatus.PASS:
+            result = GateResult(
+                "cerrar_episodio",
+                ep_id,
+                "1.0.0",
+                GateStatus.BLOCKED,
+                "El entrypoint legacy no puede cerrar episodios; requiere --plan013-closure",
+                ["PLAN013_CANONICAL_CLOSURE_REQUIRED"],
+                evidence=result.evidence,
+            )
         return run_gate(lambda: result, output_root=args.output_root)
     try: config = json.loads(config_path.read_text(encoding="utf-8"))
     except Exception as exc:
@@ -331,11 +348,18 @@ def main() -> int:
         duration_active_profile_path=Path(args.duration_active_profile) if args.duration_active_profile else None,
     )
     if result.status == GateStatus.PASS:
-        entry["estado"] = "completado"; entry["cerrado"] = datetime.now(timezone.utc).isoformat(); index["last_updated"] = entry["cerrado"]
-        try:
-            save_index_atomically(index_path, index)
-        except Exception as exc:
-            return run_gate(lambda: (_ for _ in ()).throw(RuntimeError(f"No se pudo actualizar el índice: {exc}")), output_root=args.output_root)
+        return run_gate(
+            lambda: GateResult(
+                "cerrar_episodio",
+                entry["ep_id"],
+                "1.0.0",
+                GateStatus.BLOCKED,
+                "El entrypoint legacy no puede cerrar episodios; requiere --plan013-closure",
+                ["PLAN013_CANONICAL_CLOSURE_REQUIRED"],
+                evidence=result.evidence,
+            ),
+            output_root=args.output_root,
+        )
     return run_gate(lambda: result, output_root=args.output_root)
 
 if __name__ == "__main__":

@@ -1,0 +1,15 @@
+{
+  "CURRENT_MISSION": "EXTEND_01_M2_REAL_E2E",
+  "CURRENT_MISSION_EXECUTION_BUNDLE": "plans/extend_01/m2/mission_contract_preparation.json",
+  "CURRENT_RECOVERY_PHASE": "NONE",
+  "CURRENT_RECOVERY_PLAN": "NONE",
+  "NEXT_ALLOWED_ACTION": "OWNER_REVIEW_B4_R4",
+  "actor": "OWNER_AUTHORIZED_PLAN013_EXECUTOR",
+  "capture_status": "DEFINITIVE_PRE_PLAN013_CAPTURE",
+  "captured_at": "2026-09-11",
+  "checkpoint_sha256": "04e3372a0e5fa99e4d25c979967f7dafcc4a69fe28d5cf3fdcdcb3853f6c8907",
+  "definitive_capture_reserved_to": "PLAN013_M0_ACTIVATION",
+  "live_state_sha256": "3b2f83ac169efdbcd44f37f75f3bae2e7ffdb373f6b499495a35aa91a8b77092",
+  "reason": "Definitive pre-PLAN013 capture made immediately before M0 activation under explicit OWNER authorization; preserves EXTEND-01 resumption context without authorizing resumption.",
+  "source_control_path": "plans/001_CONTROL_OPERATIVO.md"
+}

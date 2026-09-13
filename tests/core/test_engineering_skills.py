@@ -12,6 +12,7 @@ EXPECTED = {
     "evidencia-proporcional-git",
     "verificar-no-mezcla-de-capas",
     "harness-determinista",
+    "tests-validacion-cierre",
 }
 GENERAL_CAPABILITIES_MATERIALIZED_HERE = {
     "auditar-trazabilidad-input-output",

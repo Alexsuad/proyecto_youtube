@@ -10,6 +10,7 @@
     "artifact_version",
     "script_type",
     "thesis",
+    "thesis_binding",
     "main_objection",
     "nuance",
     "promise",
@@ -46,6 +47,18 @@
     },
     "thesis": {
       "type": "string"
+    },
+    "thesis_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["thesis_id", "artifact_version", "checksum", "research_id", "evidence_report_id"],
+      "properties": {
+        "thesis_id": {"type": "string", "minLength": 1},
+        "artifact_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "research_id": {"type": "string", "minLength": 1},
+        "evidence_report_id": {"type": "string", "minLength": 1}
+      }
     },
     "thesis_refined": {
       "type": "string"

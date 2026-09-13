@@ -1,0 +1,23 @@
+{
+  "mission_id": "PLAN013_M9_CLOSURE_AND_CONVERGENCE",
+  "contract_status": "DRAFT",
+  "authorizing": false,
+  "effective_authorization": false,
+  "authorization_artifact": null,
+  "objective": "Hacer obligatorio required_context, alinear api_base_env y concentrar cierre en una operación software-owned idempotente.",
+  "non_objectives": ["Provider/router multi-model", "Modificar perfil/corpus", "Publicar", "IA REAL", "Crear segundo lifecycle", "Commit", "Push"],
+  "required_prior_state": ["M8 gate PASS", "OWNER autoriza M9", "Final review y approval contract disponibles"],
+  "allowlist": ["src/ai/role_execution.py", "src/application/storage.py", "src/", "config/", "schemas/", "tests/", "plans/plan_013/mission_contracts/PLAN013_M9_CLOSURE_AND_CONVERGENCE.json"],
+  "denylist": ["plans/001_CONTROL_OPERATIVO.md", "config/active_editorial_profile.json", "profiles/editorial/", "profiles/voice/corpus_manifest.json", "providers/selection/", "output/productive/"],
+  "preserve_preexisting_changes": ["AGENTS.md", "config/capability_routing.yaml", "output/execution_provenance_registry.json"],
+  "allowed_operations": ["resolve required context canonically", "use api_base_env canonical name", "delegate legacy close entrypoint", "reconcile existing stores idempotently", "add retry and mismatch tests"],
+  "dependencies": ["M8 final review", "existing storage/locks/temp-replace", "same script identity across stores"],
+  "focused_tests": ["unresolvable required_context block", "config→request→provider mapping", "single closure authority", "retry/convergence/checksum mismatch"],
+  "required_regressions": ["legacy entrypoint compatibility", "existing provider config aliases only when demonstrated", "no duplicate approval"],
+  "expected_evidence": ["before/after store checksums", "retry result", "closure provenance", "config path trace"],
+  "stop_conditions": ["new database/lifecycle required", "provider selection", "partial convergence unobservable", "product authorization attempt"],
+  "commit_policy": "NO_COMMIT_WITHOUT_EXPLICIT_OWNER_AUTHORIZATION",
+  "push_policy": "FORBIDDEN",
+  "review_required": {"independent_review": true, "owner_review": true},
+  "mission_completion_gate": {"gate_id":"PLAN013_B6_GATE","double_rca_required_before_close":true,"jit_escape_cause_allowed_before_close":false}
+}

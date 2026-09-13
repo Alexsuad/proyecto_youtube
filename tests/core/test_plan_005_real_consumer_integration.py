@@ -209,7 +209,8 @@ def test_ready_not_authorized_with_exact_fixture_scope_reaches_runtime(tmp_path:
     )
     monkeypatch.setattr("src.ai.execution.AgentRuntimePort.resolve_run_configuration", lambda self, config, **kwargs: _ready_route())
     result = execute(_request(tmp_path, execution_route="local_model"))
-    assert result.status is ExecutionStatus.SUCCEEDED, result.error
+    assert result.status is ExecutionStatus.FAILED
+    assert "OUTPUT_COGNITIVE_CONTRACT_INVALID" in (result.error or "")
 
 
 def test_ready_not_authorized_ignores_alternate_registry_path(tmp_path: Path) -> None:

@@ -210,10 +210,21 @@ VALID_FIXTURES = {
         "decision": "APPROVED"
     },
     "editorial_edit_report": {
+        "episode_id": "EP-001",
+        "input_artifact_id": "SCRIPT-DRAFT-001",
+        "input_checksum": "a" * 64,
+        "output_artifact_id": "SCRIPT-EDITED-001",
+        "output_checksum": "b" * 64,
         "input_version": "1.0.0",
         "output_version": "1.1.0",
         "edit_type": "RESTRUCTURE",
-        "changes_by_category": {}
+        "changes_by_category": {},
+        "continuity_findings": [],
+        "redundancy_findings": [],
+        "line_findings": [],
+        "orality_findings": [],
+        "unresolved_issues": [],
+        "invalidated_artifacts": []
     },
     "editorial_learning_candidate": {
         "learning_id": "LEARN-001",
@@ -308,11 +319,27 @@ VALID_FIXTURES = {
         "approval_record": {}
     },
     "final_editorial_audit": {
+        "episode_id": "EP-001",
+        "artifact_id": "SCRIPT-EDITED-001",
+        "script_version": "1.1.0",
+        "script_checksum": "a" * 64,
+        "auditor_run_id": "RUN-FINAL-AUDIT-001",
+        "independence_result": "PASS",
         "profile_compliance": "PASS",
         "brief_compliance": "PASS",
         "packaging_promise_compliance": "PASS",
         "evidence_sufficiency": "PASS",
         "thesis_quality": "PASS",
+        "viewer_journey": "PASS",
+        "opening_quality": "PASS",
+        "progression": "PASS",
+        "coherence": "PASS",
+        "originality": "PASS",
+        "source_transformation": "PASS",
+        "voice": "PASS",
+        "orality": "PASS",
+        "closing_quality": "PASS",
+        "factual_traceability": "PASS",
         "decision": "PASS",
         "correction_route": "NONE"
     },
@@ -358,6 +385,7 @@ VALID_FIXTURES = {
         "artifact_version": "1.0.0",
         "script_type": "LONGFORM",
         "thesis": "El éxito requiere paciencia situada.",
+        "thesis_binding": {"thesis_id": "THESIS-001", "artifact_version": "1.0.0", "checksum": "a" * 64, "research_id": "RP-001", "evidence_report_id": "ER-001"},
         "main_objection": "No siempre.",
         "nuance": "Depende del contexto.",
         "promise": "Comprender la tensión.",
@@ -453,6 +481,10 @@ VALID_FIXTURES = {
         "word_budget_min": 100,
         "word_budget_max": 200,
         "narrative_function": "Introduccion y gancho",
+        "forbidden_repetitions": [],
+        "required_transition": "Conecta con el siguiente bloque.",
+        "previous_block_summary": "Inicio del episodio.",
+        "next_block_purpose": "Presentar el conflicto central.",
         "output_path": "output/bloques/block_01.md"
     },
     "script_version_manifest": {
@@ -858,6 +890,28 @@ VALID_FIXTURES["research_plan_proposal"] = {
     "planned_stages": ["PLANNING", "DISCOVERY"],
 }
 VALID_FIXTURES["source_grounded_research_adapter"] = {"adapter_id": "ADAPTER-FIXTURE-1", "contract_version": "1.0.0", "provider": "fixture-provider", "availability": "AVAILABLE", "source_refs": ["S-1"], "findings": [{"finding_id": "AF-1", "statement": "Contexto recuperado.", "evidence_refs": ["S-1"], "status": "LIMITED"}], "limitations": ["No es memoria canónica."], "canonicality": "NOT_CANONICAL_MEMORY", "veracity_authority": "NOT_VERACITY_AUTHORITY", "gate_behavior": "NOT_REQUIRED_GATE", "decision_authority": "SCRIPT_PRODUCT"}
+VALID_FIXTURES["software_acquisition_pipeline"] = {
+    "contract": "software_acquisition_pipeline", "contract_version": "1.0.0",
+    "pipeline_id": "PIPELINE-FIXTURE", "request_ref": "request:fixture", "query": "Consulta sintética",
+    "execution_mode": "SYNTHETIC", "software_controlled": True, "capability_status": "AVAILABLE",
+    "status": "COMPLETED",
+    "stages": [
+        {"stage": "SEARCH_DISCOVERY", "status": "COMPLETED", "output_refs": ["S-1"], "error": None},
+        {"stage": "FETCH_ACQUISITION", "status": "COMPLETED", "output_refs": ["S-1"], "error": None},
+        {"stage": "VERIFY", "status": "COMPLETED", "output_refs": ["S-1"], "error": None},
+        {"stage": "SOURCE_REGISTRY", "status": "COMPLETED", "output_refs": ["S-1"], "error": None},
+    ],
+    "source_registry": [{
+        "source_id": "S-1", "title": "Fuente sintética", "source_type": "TEXT", "url": None,
+        "access_type": "DIRECT", "locator": "fixture://S-1", "confidence": "HIGH",
+        "acquisition_method": "SOFTWARE_CONTROLLED_SYNTHETIC_ACQUISITION",
+        "retrieval_status": "RECOVERED", "evidence_status": "VERIFIED", "software_controlled": True,
+        "recovery_artifact_ref": "recovery:S-1", "retrieval_request_ref": "request:S-1",
+        "provenance": {"locator": "fixture://S-1", "acquisition_method": "SOFTWARE_CONTROLLED_SYNTHETIC_ACQUISITION", "verification_status": "REVIEWED"},
+        "checksum": "a" * 64, "error": None,
+    }],
+    "limitations": [], "error": None,
+}
 VALID_FIXTURES["delegation_decision"] = {"decision": "INLINE", "reasons": ["fixture"], "policy_version": "1.0.0", "evidence_refs": []}
 VALID_FIXTURES["review_workload_decision"] = {"review_level": "SELF_ONLY", "review_origin": "NOT_APPLICABLE", "reasons": ["fixture"], "evidence_refs": []}
 VALID_FIXTURES["routing_decision"] = {"status": "SELECTED", "reasons": ["fixture"], "candidate_set": ["local"], "selected_profile": "local", "external_cost_authorized": False}
@@ -1053,6 +1107,57 @@ VALID_FIXTURES["human_decision"] = {
     "action": "APPROVE", "selected_option": None, "correction": None,
     "actor_ref": "fixture-user", "channel": "TERMINAL", "episode_id": "ep_0001",
     "occurred_at": "2026-08-22T00:00:00Z", "request_checksum": "a" * 64,
+}
+
+VALID_FIXTURES["script_draft"] = {
+    "script_id": "SCRIPT-DRAFT-001",
+    "episode_id": "EP-1",
+    "artifact_version": "1.0.0",
+    "content": "Texto sintético de prueba.",
+    "checksum": "a" * 64,
+    "narrative_plan_ref": "narrative_plan:PLAN-1@1.0.0",
+    "thesis_binding": {"thesis_id": "T-1", "artifact_version": "1.0.0", "checksum": "b" * 64},
+    "created_at": "2026-08-22T00:00:00Z",
+}
+
+VALID_FIXTURES["edited_script"] = {
+    "script_id": "SCRIPT-EDITED-001",
+    "episode_id": "EP-1",
+    "artifact_version": "1.1.0",
+    "content": "Texto sintético editado de prueba.",
+    "checksum": "c" * 64,
+    "source_script_version": "1.0.0",
+    "edit_report_ref": "editorial_edit_report:EDIT-1@1.1.0",
+    "thesis_binding": {"thesis_id": "T-1", "artifact_version": "1.0.0", "checksum": "b" * 64},
+    "created_at": "2026-08-22T00:00:00Z",
+}
+
+VALID_FIXTURES["final_script_review"] = {
+    "review_id": "FSR-1",
+    "episode_id": "EP-1",
+    "artifact_id": "SCRIPT-EDITED-001",
+    "script_version": "1.1.0",
+    "script_checksum": "a" * 64,
+    "profile_reference": {"profile_id": "PROFILE-1", "profile_version": "1.2.2", "profile_checksum": "b" * 64},
+    "visible_promise_ref": "editorial_script_promise:SP-1@1.0.0",
+    "final_audit_ref": "final_editorial_audit:A-1@1.1.0",
+    "final_audit_checksum": "c" * 64,
+    "review_run_id": "RUN-YT-REVIEW-1",
+    "producer_run_id": "RUN-WRITING-1",
+    "editor_run_id": "RUN-EDITOR-1",
+    "auditor_run_id": "RUN-AUDITOR-1",
+    "review_actor_id": "YOUTUBE_ADAPTATION_AUDITOR",
+    "producer_actor_id": "WRITING",
+    "editor_actor_id": "EDITOR",
+    "auditor_actor_id": "FINAL_EDITORIAL_AUDITOR",
+    "evidence_refs": [],
+    "lexical_sensor": {"status": "PASS", "findings": [], "normative": False},
+    "duration_telemetry": {"status": "MEASURED", "estimated_minutes": 18.0, "target_range": [18, 22], "normative": False},
+    "authenticity": "PASS",
+    "reuse_context": "PASS",
+    "decision": "PASS",
+    "decision_basis": [],
+    "created_at": "2026-08-22T00:00:00Z",
 }
 VALID_FIXTURES["human_decision_request"] = {
     "contract": "human_decision_request", "contract_version": "1.0.0",

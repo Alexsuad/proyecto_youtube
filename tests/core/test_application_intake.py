@@ -484,7 +484,7 @@ def test_active_mission_bundle_requires_an_explicit_canonical_pointer(tmp_path: 
 def _temporary_entrypoint_repository(tmp_path: Path) -> tuple[Path, Path, str]:
     repo = tmp_path / "entrypoint-repo"
     for relative in (
-        "src", "config", "docs/legacy", "policies", "prompts", "profiles/editorial", "schemas", ".agent/skills"
+        "src", "config", "docs/legacy", "docs/specifications", "policies", "prompts", "profiles/editorial", "profiles/voice", "schemas", ".agent/skills"
     ):
         shutil.copytree(ROOT / relative, repo / relative, ignore=shutil.ignore_patterns("__pycache__"))
     (repo / "plans").mkdir()

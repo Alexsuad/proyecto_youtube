@@ -1,0 +1,23 @@
+{
+  "mission_id": "PLAN013_M1_RESEARCH_TRUTH_AND_BINDING",
+  "contract_status": "DRAFT",
+  "authorizing": false,
+  "effective_authorization": false,
+  "authorization_artifact": null,
+  "objective": "Resolver verdad de evidencia, propósito Research y binding íntegro de ResearchPlan.",
+  "non_objectives": ["Adquisición externa", "Modificar perfil activo", "B5-I3", "IA REAL", "Producto aprobado", "Commit", "Push"],
+  "required_prior_state": ["M0 cerrado y OWNER autoriza esta misión", "bundle y MissionAuthorization coincidentes", "evidencia de findings disponible"],
+  "allowlist": ["src/application/research_b2.py", "src/application/research_m7.py", "src/application/research_planning.py", "schemas/source_access_and_evidence_report.json", "schemas/research_source_access.json", "schemas/research_plan.json", "schemas/research_plan_proposal.json", "tests/core/test_plan012_m3_b2_base_research.py", "tests/harness/test_plan012_m7_b5.py", "plans/plan_013/mission_contracts/PLAN013_M1_RESEARCH_TRUTH_AND_BINDING.json"],
+  "denylist": ["config/active_editorial_profile.json", "profiles/editorial/", "profiles/voice/corpus_manifest.json", "providers/", "src/ai/providers/", "output/productive/"],
+  "preserve_preexisting_changes": ["AGENTS.md", "config/capability_routing.yaml", "output/execution_provenance_registry.json"],
+  "allowed_operations": ["extend existing Research contracts", "preserve IDs and provenance", "add deterministic validation", "add focal and regression tests"],
+  "dependencies": ["PLAN013_M0_ACTIVATION", "existing Research contracts and tests"],
+  "focused_tests": ["evidence status truth", "intended_use precedence", "ResearchPlan binding and reference validation"],
+  "required_regressions": ["positive recovered/verified source", "negative NOT_RECOVERED/PENDING source", "existing Research V2 consumers"],
+  "expected_evidence": ["diff allowlist", "test output", "before/after contract examples", "finding disposition evidence"],
+  "stop_conditions": ["scope expansion", "provider execution", "profile/corpus change", "ambiguous functional criterion", "missing source evidence"],
+  "commit_policy": "NO_COMMIT_WITHOUT_EXPLICIT_OWNER_AUTHORIZATION",
+  "push_policy": "FORBIDDEN",
+  "review_required": {"independent_review": true, "owner_review": true},
+  "mission_completion_gate": {"gate_id":"PLAN013_B1_GATE","double_rca_required_before_close":true,"jit_escape_cause_allowed_before_close":false}
+}

@@ -8,6 +8,7 @@ import os
 import re
 import tempfile
 import threading
+import time
 import unicodedata
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -28,6 +29,18 @@ _PROCESS_LOCKS: dict[str, threading.RLock] = {}
 _PROCESS_LOCKS_GUARD = threading.Lock()
 
 
+def _replace_atomic(temp_name: str, path: Path) -> None:
+    """Replace a local JSON file, tolerating short Windows handle races."""
+    for attempt in range(3):
+        try:
+            os.replace(temp_name, path)
+            return
+        except PermissionError:
+            if attempt == 2:
+                raise
+            time.sleep(0.02 * (attempt + 1))
+
+
 @dataclass(frozen=True)
 class EpisodeHandle:
     episode_id: str
@@ -46,7 +59,7 @@ def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
             handle.write("\n")
-        os.replace(temp_name, path)
+        _replace_atomic(temp_name, path)
     except OSError as exc:
         try:
             os.unlink(temp_name)
@@ -61,7 +74,7 @@ def _write_bytes_atomic(path: Path, payload: bytes) -> None:
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(payload)
-        os.replace(temp_name, path)
+        _replace_atomic(temp_name, path)
     except OSError as exc:
         try:
             os.unlink(temp_name)
@@ -92,6 +105,7 @@ class VaultEpisodeStore:
     ADMINISTRATIVE_CLOSED_STATE = "ADMINISTRATIVELY_CLOSED"
     ADMINISTRATIVE_CLOSED_INDEX_STATUS = "administratively_cerrado"
     ADMINISTRATIVE_CLOSURE_FILENAME = "administrative_recovery.json"
+    PLAN013_CLOSURE_FILENAME = "plan013_editorial_closure.json"
     RESEARCH_MATERIAL_MAX_BYTES = 5 * 1024 * 1024
     RESEARCH_MATERIAL_SUFFIXES = {".txt": "TEXT", ".md": "MARKDOWN", ".json": "JSON"}
 
@@ -738,6 +752,201 @@ class VaultEpisodeStore:
                     pass
                 raise
             return "PERSISTED"
+
+    def record_plan013_editorial_closure(
+        self,
+        handle: EpisodeHandle,
+        *,
+        closure: dict[str, Any],
+        workflow_state: dict[str, Any],
+        episode_state: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Converge the three existing editorial stores idempotently.
+
+        The method consumes an already validated final audit, final YouTube
+        review, and human approval. It never infers approval or creates a
+        parallel lifecycle.
+        """
+        self._validate_b5_i3_handle(handle)
+        required = ("episode_id", "script_artifact_id", "script_version", "script_checksum", "final_audit", "final_script_review", "human_approval")
+        if any(not closure.get(field) for field in required):
+            raise StorageError("PLAN013_CLOSURE_BINDING_INCOMPLETE")
+        if closure.get("episode_id") != handle.episode_id:
+            raise StorageError("PLAN013_CLOSURE_EPISODE_BINDING_INVALID")
+        if not isinstance(workflow_state, dict) or not isinstance(episode_state, dict):
+            raise StorageError("PLAN013_CLOSURE_STATES_REQUIRED")
+        if workflow_state.get("episode_id", handle.episode_id) != handle.episode_id or episode_state.get("episode_id", handle.episode_id) != handle.episode_id:
+            raise StorageError("PLAN013_CLOSURE_STATE_EPISODE_BINDING_INVALID")
+        approval = closure["human_approval"]
+        if not isinstance(approval, dict) or approval.get("decision") != "APPROVED" or approval.get("script_version") != closure["script_version"] or approval.get("checksum") != closure["script_checksum"]:
+            raise StorageError("PLAN013_CLOSURE_HUMAN_APPROVAL_INVALID")
+        final_audit = closure["final_audit"]
+        final_review = closure["final_script_review"]
+        audit_violations = validate_against_schema(final_audit, "final_editorial_audit") if isinstance(final_audit, dict) else ["FinalEditorialAudit must be an object"]
+        review_violations = validate_against_schema(final_review, "final_script_review") if isinstance(final_review, dict) else ["FinalScriptReview must be an object"]
+        if audit_violations:
+            raise StorageError("PLAN013_CLOSURE_FINAL_AUDIT_SCHEMA_INVALID: " + "; ".join(audit_violations))
+        if review_violations:
+            raise StorageError("PLAN013_CLOSURE_FINAL_REVIEW_SCHEMA_INVALID: " + "; ".join(review_violations))
+        if final_audit.get("decision") not in {"PASS", "WARN"} or final_audit.get("independence_result") != "PASS" or not final_audit.get("auditor_run_id"):
+            raise StorageError("PLAN013_CLOSURE_FINAL_AUDIT_INVALID")
+        if final_audit.get("artifact_id") != closure["script_artifact_id"] or final_audit.get("script_version") != closure["script_version"] or final_audit.get("script_checksum") != closure["script_checksum"]:
+            raise StorageError("PLAN013_CLOSURE_FINAL_AUDIT_INVALID")
+        if final_review.get("artifact_id") != closure["script_artifact_id"] or final_review.get("script_version") != closure["script_version"] or final_review.get("script_checksum") != closure["script_checksum"] or final_review.get("decision") not in {"PASS", "WARN"}:
+            raise StorageError("PLAN013_CLOSURE_FINAL_REVIEW_INVALID")
+        if final_review.get("final_audit_checksum") != hashlib.sha256(
+            json.dumps(final_audit, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest():
+            raise StorageError("PLAN013_CLOSURE_FINAL_REVIEW_AUDIT_CHECKSUM_INVALID")
+        try:
+            from src.core.editorial_profile_registry import load_active_profile_authority
+
+            active = load_active_profile_authority()
+        except (OSError, ValueError) as exc:
+            raise StorageError("PLAN013_CLOSURE_ACTIVE_PROFILE_UNRESOLVABLE") from exc
+        expected_profile = {
+            "profile_id": active["ACTIVE_PROFILE_ID"],
+            "profile_version": active["ACTIVE_PROFILE_VERSION"],
+            "profile_checksum": active["profile_checksum"],
+        }
+        if final_review.get("profile_reference") != expected_profile:
+            raise StorageError("PLAN013_CLOSURE_ACTIVE_PROFILE_STALE")
+        required_review_runs = ("producer_run_id", "editor_run_id", "auditor_run_id", "review_run_id")
+        if len({final_review.get(key) for key in required_review_runs}) != len(required_review_runs):
+            raise StorageError("PLAN013_CLOSURE_FINAL_REVIEW_INDEPENDENCE_INVALID")
+        if final_review.get("review_actor_id") in {
+            final_review.get("producer_actor_id"),
+            final_review.get("editor_actor_id"),
+            final_review.get("auditor_actor_id"),
+        }:
+            raise StorageError("PLAN013_CLOSURE_FINAL_REVIEW_ACTOR_INDEPENDENCE_INVALID")
+        workflow_state = {**workflow_state, "episode_id": handle.episode_id, "status": "EDITORIAL_SCRIPT_APPROVED"}
+        episode_state = {**episode_state, "episode_id": handle.episode_id, "status": "EDITORIAL_SCRIPT_APPROVED"}
+        closure = {**closure, "status": "EDITORIAL_SCRIPT_APPROVED", "closed_at": closure.get("closed_at") or datetime.now(timezone.utc).isoformat()}
+        closure_path = handle.folder / self.PLAN013_CLOSURE_FILENAME
+        workflow_path = handle.folder / "workflow_state.json"
+        episode_path = handle.folder / "episode_state.json"
+        with self._index_lock():
+            index = self._load_index()
+            entry = next((item for item in index.get("episodes", []) if item.get("ep_id") == handle.episode_id), None)
+            if entry is None:
+                raise StorageError(f"No existe el episodio {handle.episode_id} en el índice.")
+            if closure_path.is_file():
+                existing = _read_json(closure_path)
+                expected = {key: value for key, value in closure.items() if key != "closed_at"}
+                actual = {key: value for key, value in existing.items() if key != "closed_at"}
+                if expected != actual:
+                    raise StorageError("PLAN013_CLOSURE_CONFLICT")
+                return existing
+            prior_files = {path: _read_json(path, {}) for path in (closure_path, workflow_path, episode_path)}
+            prior_index = index
+            try:
+                _write_json_atomic(closure_path, closure)
+                _write_json_atomic(workflow_path, workflow_state)
+                _write_json_atomic(episode_path, episode_state)
+                updated_index = dict(index)
+                updated_index["episodes"] = [
+                    {**item, "estado": "EDITORIAL_SCRIPT_APPROVED", "application_status": "EDITORIAL_SCRIPT_APPROVED", "closure_ref": self.PLAN013_CLOSURE_FILENAME}
+                    if item.get("ep_id") == handle.episode_id else item
+                    for item in index.get("episodes", [])
+                ]
+                _write_json_atomic(self.index_path, updated_index)
+            except Exception:
+                for path, payload in prior_files.items():
+                    if payload:
+                        _write_json_atomic(path, payload)
+                    else:
+                        path.unlink(missing_ok=True)
+                _write_json_atomic(self.index_path, prior_index)
+                raise
+        return closure
+
+    def register_plan013_script_version(
+        self,
+        handle: EpisodeHandle,
+        *,
+        script_artifact_id: str,
+        script_version: str,
+        script_checksum: str,
+        reason: str = "SCRIPT_VERSION_CHANGED",
+    ) -> dict[str, Any]:
+        """Persist a new script identity and invalidate dependent approvals."""
+        self._validate_b5_i3_handle(handle)
+        if not all((script_artifact_id, script_version, script_checksum)):
+            raise StorageError("PLAN013_SCRIPT_VERSION_BINDING_INCOMPLETE")
+        versions_path = handle.folder / "plan013_script_versions.json"
+        closure_path = handle.folder / self.PLAN013_CLOSURE_FILENAME
+        workflow_path = handle.folder / "workflow_state.json"
+        episode_path = handle.folder / "episode_state.json"
+        with self._index_lock():
+            index = self._load_index()
+            entry = next((item for item in index.get("episodes", []) if item.get("ep_id") == handle.episode_id), None)
+            if entry is None:
+                raise StorageError(f"No existe el episodio {handle.episode_id} en el índice.")
+            versions = _read_json(versions_path, {"episode_id": handle.episode_id, "versions": []})
+            existing = next((item for item in versions.get("versions", []) if item.get("script_artifact_id") == script_artifact_id and item.get("script_version") == script_version), None)
+            if existing and existing.get("script_checksum") == script_checksum:
+                return existing
+            current = {
+                "script_artifact_id": script_artifact_id,
+                "script_version": script_version,
+                "script_checksum": script_checksum,
+                "registered_at": datetime.now(timezone.utc).isoformat(),
+                "status": "CURRENT",
+            }
+            prior_files = {
+                path: _read_json(path, {}) for path in (versions_path, closure_path, workflow_path, episode_path)
+            }
+            prior_index = index
+            try:
+                versions["episode_id"] = handle.episode_id
+                versions.setdefault("versions", []).append(current)
+                if closure_path.is_file():
+                    closure = _read_json(closure_path)
+                    approved_identity = {
+                        "script_artifact_id": closure.get("script_artifact_id"),
+                        "script_version": closure.get("script_version"),
+                        "script_checksum": closure.get("script_checksum"),
+                    }
+                    closure.update({
+                        "status": "INVALIDATED",
+                        "approval_status": "STALE",
+                        "invalidation": {
+                            "reason": reason,
+                            "invalidated_identity": approved_identity,
+                            "current_identity": {
+                                "script_artifact_id": script_artifact_id,
+                                "script_version": script_version,
+                                "script_checksum": script_checksum,
+                            },
+                            "invalidated_at": current["registered_at"],
+                        },
+                    })
+                    _write_json_atomic(closure_path, closure)
+                state = _read_json(episode_path)
+                state.update({"status": "IN_REVIEW", "approval_status": "STALE", "current_script": current, "updated_at": current["registered_at"]})
+                _write_json_atomic(episode_path, state)
+                if workflow_path.is_file():
+                    workflow = _read_json(workflow_path)
+                    workflow.update({"status": "IN_REVIEW", "approval_status": "STALE", "current_script": current})
+                    _write_json_atomic(workflow_path, workflow)
+                _write_json_atomic(versions_path, versions)
+                updated_index = dict(index)
+                updated_index["episodes"] = [
+                    {**item, "estado": "en_progreso", "application_status": "IN_REVIEW", "cerrado": None, "current_script": current}
+                    if item.get("ep_id") == handle.episode_id else item
+                    for item in index.get("episodes", [])
+                ]
+                _write_json_atomic(self.index_path, updated_index)
+            except Exception:
+                for path, payload in prior_files.items():
+                    if payload:
+                        _write_json_atomic(path, payload)
+                    else:
+                        path.unlink(missing_ok=True)
+                _write_json_atomic(self.index_path, prior_index)
+                raise
+        return current
 
     def _entry(self, episode_id: str) -> dict[str, Any]:
         entry = next((item for item in self._load_index().get("episodes", []) if item.get("ep_id") == episode_id), None)

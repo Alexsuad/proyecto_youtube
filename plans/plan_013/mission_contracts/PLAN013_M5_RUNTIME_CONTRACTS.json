@@ -1,0 +1,23 @@
+{
+  "mission_id": "PLAN013_M5_RUNTIME_CONTRACTS",
+  "contract_status": "DRAFT",
+  "authorizing": false,
+  "effective_authorization": false,
+  "authorization_artifact": null,
+  "objective": "Materializar contratos runtime para WRITING, EDITOR y FINAL_EDITORIAL_AUDITOR usando roles existentes.",
+  "non_objectives": ["Crear roles reemplazo", "Modificar perfil/corpus", "Cierre de episodios", "IA REAL", "Uso productivo", "Commit", "Push"],
+  "required_prior_state": ["M4 gate PASS", "OWNER autoriza M5", "roles y registries existentes verificados"],
+  "allowlist": ["src/ai/role_execution.py", "config/responsibility_registry.json", "config/agent_prompt_registry.json", "config/agent_execution_profiles.json", "config/capability_registry.json", "config/capability_routing.yaml", "prompts/roles/WRITING/", "prompts/roles/EDITOR/", "prompts/roles/FINAL_EDITORIAL_AUDITOR/", "schemas/", "tests/", "plans/plan_013/mission_contracts/PLAN013_M5_RUNTIME_CONTRACTS.json"],
+  "denylist": ["config/active_editorial_profile.json", "profiles/editorial/", "profiles/voice/corpus_manifest.json", "providers/", "output/productive/"],
+  "preserve_preexisting_changes": ["AGENTS.md", "config/capability_routing.yaml", "output/execution_provenance_registry.json"],
+  "allowed_operations": ["extend existing role contracts", "declare required inputs and output schemas", "enforce missing-input failure", "validate role independence"],
+  "dependencies": ["existing roles/prompts", "M4 canonical route", "schema validation"],
+  "focused_tests": ["role input/output contract", "missing required input", "producer/auditor separation"],
+  "required_regressions": ["historical role contracts", "existing capability routing", "no parallel auditor authority"],
+  "expected_evidence": ["contract/registry diff", "schema test output", "independence assertions"],
+  "stop_conditions": ["new role required", "second authority created", "profile or provider change", "functional criterion unresolved"],
+  "commit_policy": "NO_COMMIT_WITHOUT_EXPLICIT_OWNER_AUTHORIZATION",
+  "push_policy": "FORBIDDEN",
+  "review_required": {"independent_review": true, "owner_review": true},
+  "mission_completion_gate": {"gate_id":"PLAN013_B4_GATE","double_rca_required_before_close":true,"jit_escape_cause_allowed_before_close":false}
+}

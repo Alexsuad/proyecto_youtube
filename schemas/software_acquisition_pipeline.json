@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://masalladelguion.com/schemas/software_acquisition_pipeline.json",
+  "title": "SoftwareAcquisitionPipeline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "pipeline_id",
+    "request_ref",
+    "query",
+    "execution_mode",
+    "software_controlled",
+    "capability_status",
+    "status",
+    "stages",
+    "source_registry",
+    "limitations",
+    "error"
+  ],
+  "properties": {
+    "contract": {"const": "software_acquisition_pipeline"},
+    "contract_version": {"const": "1.0.0"},
+    "pipeline_id": {"type": "string", "minLength": 1},
+    "request_ref": {"type": "string", "minLength": 1},
+    "query": {"type": "string", "minLength": 1},
+    "execution_mode": {"const": "SYNTHETIC"},
+    "software_controlled": {"const": true},
+    "capability_status": {"enum": ["AVAILABLE", "UNAVAILABLE"]},
+    "status": {"enum": ["COMPLETED", "BLOCKED", "UNAVAILABLE"]},
+    "stages": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/definitions/stage"}
+    },
+    "source_registry": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/source"}
+    },
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "error": {"$ref": "#/definitions/errorOrNull"}
+  },
+  "definitions": {
+    "errorOrNull": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "message": {"type": "string", "minLength": 1},
+        "source_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "status", "output_refs", "error"],
+      "properties": {
+        "stage": {
+          "enum": ["SEARCH_DISCOVERY", "FETCH_ACQUISITION", "VERIFY", "SOURCE_REGISTRY"]
+        },
+        "status": {"enum": ["COMPLETED", "SKIPPED", "UNAVAILABLE", "FAILED"]},
+        "output_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "error": {"$ref": "#/definitions/errorOrNull"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "title",
+        "source_type",
+        "access_type",
+        "locator",
+        "confidence",
+        "retrieval_status",
+        "evidence_status",
+        "software_controlled",
+        "provenance",
+        "checksum",
+        "error"
+      ],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "source_type": {"type": "string", "minLength": 1},
+        "url": {"type": ["string", "null"], "format": "uri"},
+        "access_type": {"enum": ["DIRECT", "INDIRECT", "SECONDARY_ONLY"]},
+        "locator": {"type": "string", "minLength": 1},
+        "confidence": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+        "acquisition_method": {"type": "string", "minLength": 1},
+        "retrieval_status": {"enum": ["RECOVERED", "NOT_RECOVERED", "FAILED", "STALE"]},
+        "evidence_status": {"enum": ["CONSULTED", "VERIFIED", "EVIDENCE", "NOT_EVIDENCE", "PENDING"]},
+        "software_controlled": {"type": "boolean"},
+        "recovery_artifact_ref": {"type": ["string", "null"]},
+        "retrieval_request_ref": {"type": ["string", "null"]},
+        "provenance": {
+          "type": "object",
+          "required": ["locator", "acquisition_method", "verification_status"],
+          "properties": {
+            "locator": {"type": "string", "minLength": 1},
+            "acquisition_method": {"type": "string", "minLength": 1},
+            "verification_status": {"type": "string", "minLength": 1}
+          }
+        },
+        "checksum": {"type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$"},
+        "error": {"$ref": "#/definitions/errorOrNull"}
+      }
+    }
+  }
+}

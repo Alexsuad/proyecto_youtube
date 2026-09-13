@@ -1,4 +1,48 @@
 capabilities:
+  B5_I3_NARRATIVE_ARCHITECTURE:
+    entrypoint: src/ai/execution.py
+    route_type: SEMANTIC
+    output_schema: narrative_plan
+    routing:
+      explicit_mode: respect_requested_route
+      auto_agent_handoff: false
+      allow_external_api: false
+      unavailable: BLOCKED_BY_SEMANTIC_EVALUATOR
+  PLAN013_WRITING_SCRIPT_DRAFT:
+    entrypoint: src/ai/role_execution.py
+    route_type: SEMANTIC
+    output_schema: script_draft
+    routing:
+      explicit_mode: respect_requested_route
+      auto_agent_handoff: false
+      allow_external_api: false
+      unavailable: BLOCKED_BY_SEMANTIC_EVALUATOR
+  PLAN013_EDITOR_EDITED_SCRIPT:
+    entrypoint: src/ai/role_execution.py
+    route_type: SEMANTIC
+    output_schema: edited_script
+    routing:
+      explicit_mode: respect_requested_route
+      auto_agent_handoff: false
+      allow_external_api: false
+      unavailable: BLOCKED_BY_SEMANTIC_EVALUATOR
+  PLAN013_FINAL_EDITORIAL_AUDIT:
+    entrypoint: src/ai/role_execution.py
+    route_type: SEMANTIC
+    output_schema: final_editorial_audit
+    routing:
+      explicit_mode: respect_requested_route
+      auto_agent_handoff: false
+      allow_external_api: false
+      unavailable: BLOCKED_BY_SEMANTIC_EVALUATOR
+  EXTEND_01_RESEARCH_V2_REAL_E2E:
+    entrypoint: src/application/research_m7.py
+    output_schema: research_ready_manifest
+    routing:
+      explicit_mode: require_requested_route
+      auto_agent_handoff: false
+      allow_external_api: false
+      unavailable: BLOCKED_BY_SEMANTIC_EVALUATOR
   PLAN012_M6_INDEPENDENT_RESEARCH_AUDIT:
     entrypoint: src/application/research_b4.py
     output_schema: independent_research_audit

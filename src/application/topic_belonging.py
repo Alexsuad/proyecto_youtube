@@ -559,6 +559,24 @@ class ExecutionCognitiveBoundary:
             raise TopicBelongingExecutionError(f"{stage.upper()}_PROMPT_CONTRACT_INVALID:{exc}") from exc
         if not model_prompt.strip():
             raise TopicBelongingExecutionError(f"{stage.upper()}_PROMPT_EMPTY")
+        synthetic_cognitive_executor = None
+        synthetic_output_binder = None
+        if self.execution_mode == "SYNTHETIC_TEST" and mock_output is not None:
+            def synthetic_cognitive_executor(_request: ExecutionRequest) -> dict[str, Any]:
+                return copy.deepcopy(mock_output)
+
+            def synthetic_output_binder(
+                cognitive_output: dict[str, Any], runtime: dict[str, Any]
+            ) -> dict[str, Any]:
+                bound = copy.deepcopy(cognitive_output)
+                if stage == "produce":
+                    bound.setdefault("producer_run_id", runtime["run_id"])
+                    bound.setdefault("provenance", {}).setdefault("run_id", runtime["run_id"])
+                elif stage == "review":
+                    bound.setdefault("reviewer_run_id", runtime["run_id"])
+                    bound.setdefault("provenance", {}).setdefault("run_id", runtime["run_id"])
+                return bound
+
         with tempfile.TemporaryDirectory(prefix="topic-belonging-input-") as temp_dir:
             input_artifacts: list[InputArtifact] = []
             for index, (kind, artifact_id, payload, producer_run_id) in enumerate(inputs):
@@ -629,7 +647,9 @@ class ExecutionCognitiveBoundary:
                      "stage": {"enrich": "ENRICHMENT", "produce": "PRODUCER", "review": "REVIEWER"}[stage],
                      "expected_return": output_schema,
                      "convergence_callbacks": convergence_callbacks,
-                 },
+                     "_synthetic_cognitive_executor": synthetic_cognitive_executor,
+                     "_synthetic_output_binder": synthetic_output_binder,
+                  },
                  handoff_directory=self.handoff_directory,
              )
             result = execute(request)

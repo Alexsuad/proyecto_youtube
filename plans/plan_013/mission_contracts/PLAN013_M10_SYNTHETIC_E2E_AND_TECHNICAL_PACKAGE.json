@@ -1,0 +1,23 @@
+{
+  "mission_id": "PLAN013_M10_SYNTHETIC_E2E_AND_TECHNICAL_PACKAGE",
+  "contract_status": "DRAFT",
+  "authorizing": false,
+  "effective_authorization": false,
+  "authorization_artifact": null,
+  "objective": "Ejecutar E2E sintético representativo y preparar evidencia técnica de cierre de PLAN013.",
+  "non_objectives": ["Auditoría independiente", "Ejecución REAL", "Aprobación funcional", "Uso productivo", "Modificar findings de origen", "Commit", "Push"],
+  "required_prior_state": ["M9 gate PASS", "OWNER autoriza M10", "todos los cambios técnicos previos revisados"],
+  "allowlist": ["tests/", "plans/plan_013/", "output/plan013/", "plans/plan_013/mission_contracts/PLAN013_M10_SYNTHETIC_E2E_AND_TECHNICAL_PACKAGE.json"],
+  "denylist": ["plans/001_CONTROL_OPERATIVO.md", "src/", "schemas/", "config/active_editorial_profile.json", "profiles/editorial/", "profiles/voice/corpus_manifest.json", "providers/", "output/productive/"],
+  "preserve_preexisting_changes": ["AGENTS.md", "config/capability_routing.yaml", "output/execution_provenance_registry.json"],
+  "allowed_operations": ["run isolated synthetic E2E in test temporaries", "record evidence and technical gate", "validate all 16 findings against implemented evidence", "prepare audit package"],
+  "dependencies": ["M1-M9 gates", "independent review of mission changes where required", "no live-state writes"],
+  "focused_tests": ["full synthetic path", "fail-closed cases", "checksum/version invalidation", "convergence and required_context"],
+  "required_regressions": ["no productive evidence writes", "no REAL_AI_EXECUTION", "historical contract compatibility", "profile baseline unchanged"],
+  "expected_evidence": ["SYNTHETIC_E2E trace", "PLAN013_TECHNICAL_PASS candidate", "16-finding disposition package", "critical path traces"],
+  "stop_conditions": ["real provider/model", "live-state mutation", "functional approval claim", "missing finding evidence", "suite failure"],
+  "commit_policy": "NO_COMMIT_WITHOUT_EXPLICIT_OWNER_AUTHORIZATION",
+  "push_policy": "FORBIDDEN",
+  "review_required": {"independent_review": true, "owner_review": true},
+  "mission_completion_gate": {"gate_id":"PLAN013_B6_GATE","double_rca_required_before_close":true,"jit_escape_cause_allowed_before_close":false}
+}
