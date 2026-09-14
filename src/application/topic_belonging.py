@@ -1998,6 +1998,27 @@ class TopicBelongingTechnicalWorkflow:
         )
         return pending
 
+    def archive_completed_handoffs(self, handle: EpisodeHandle, history_root: str | Path) -> dict[str, Any]:
+        """Mueve a Historial los handoffs brutos de una ejecución ya terminada.
+
+        Solo archiva handoffs cuyo ``handoff_id`` ya está persistido en
+        ``roundtrip_results.json`` con workflow en STOP técnico. Los pendientes
+        permanecen visibles en ``handoff/``. Nunca toca la evidencia canónica.
+        """
+        from src.application.handoff_archive import archive_episode_handoffs_from_vault
+
+        configured = getattr(self.boundary, "handoff_directory", None)
+        if configured is not None:
+            candidate = Path(str(configured))
+            handoff_dir = candidate if candidate.is_absolute() else REPO_ROOT / candidate
+        else:
+            handoff_dir = REPO_ROOT / "handoff"
+        return archive_episode_handoffs_from_vault(
+            handoff_dir=handoff_dir,
+            history_root=history_root,
+            episode_folder=handle.folder,
+        )
+
     def _read_episode_file_path(self, path: Path) -> dict[str, Any]:
         try:
             return json.loads(path.read_text(encoding="utf-8"))

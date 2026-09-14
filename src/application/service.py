@@ -263,6 +263,31 @@ class EpisodeApplicationService:
         self.store.record_workflow(handle, outcome)
         return {"state": outcome, "folder": str(folder), "entry": current["entry"]}
 
+    def archive_completed_topic_belonging_handoffs(
+        self,
+        episode_id: str,
+        history_root: str | Path,
+    ) -> dict[str, Any]:
+        """Archive raw handoffs of a terminated execution into Historial.
+
+        Future runs invoke this once the workflow reaches its technical STOP;
+        pending handoffs stay visible in ``handoff/`` by design.
+        """
+        current = self.store.resume(episode_id)
+        if not current.get("folder"):
+            raise StorageError("HANDOFF_ARCHIVE_EPISODE_MISSING")
+        folder = Path(current["folder"])
+        handle = EpisodeHandle(
+            episode_id,
+            current["entry"].get("slug", "episodio"),
+            folder,
+            self.store.index_path,
+        )
+        archiver = getattr(self.workflow, "archive_completed_handoffs", None)
+        if not callable(archiver):
+            raise StorageError("HANDOFF_ARCHIVE_UNAVAILABLE")
+        return archiver(handle, Path(history_root))
+
     def administratively_close_irrecoverable_episode(
         self,
         episode_id: str,
