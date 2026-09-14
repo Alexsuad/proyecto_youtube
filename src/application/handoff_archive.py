@@ -91,6 +91,31 @@ def _move_verified(src: Path, dst: Path) -> str:
     return checksum_src
 
 
+def _rollback_moves(
+    *,
+    handoff_path: Path,
+    history_dir: Path,
+    source_snapshots: dict[str, bytes],
+    destination_existed: dict[str, bool],
+) -> None:
+    """Restore sources and remove only destinations created by this attempt."""
+    errors: list[str] = []
+    for name, content in source_snapshots.items():
+        source = handoff_path / name
+        destination = history_dir / name
+        try:
+            if not source.exists():
+                source.write_bytes(content)
+            if not destination_existed.get(name, False) and destination.exists():
+                destination.unlink()
+        except OSError as exc:
+            errors.append(f"{name}:{exc}")
+    if errors:
+        raise HandoffArchiveError(
+            "HANDOFF_ARCHIVE_ROLLBACK_FAILED:" + ";".join(errors)
+        )
+
+
 def archive_completed_handoffs(
     *,
     handoff_dir: str | Path,
@@ -112,9 +137,19 @@ def archive_completed_handoffs(
         [path for path in handoff_path.iterdir() if path.is_file() and (path.name.startswith("RUN-AI-") or path.name.startswith("RESULT-")) and path.suffix == ".json"],
         key=lambda item: item.name,
     )
+    history_dir = history_path / episode / "handoffs"
+    source_snapshots: dict[str, bytes] = {}
+    destination_existed: dict[str, bool] = {}
+    for path in candidates:
+        try:
+            source_snapshots[path.name] = path.read_bytes()
+            destination_existed[path.name] = (history_dir / path.name).exists()
+        except OSError as exc:
+            raise HandoffArchiveError(f"HANDOFF_ARCHIVE_UNREADABLE:{path.name}:{exc}") from exc
+
     report: dict[str, Any] = {
         "episode_id": episode,
-        "history_dir": str(history_path / episode / "handoffs"),
+        "history_dir": str(history_dir),
         "archived": [],
         "pending": [],
         "skipped": [],
@@ -124,26 +159,40 @@ def archive_completed_handoffs(
         report["pending"] = [path.name for path in candidates]
         return report
     completed = {str(item) for item in completed_handoff_ids if str(item).strip()}
-    for path in candidates:
+    try:
+        for path in candidates:
+            try:
+                payload = _read_json_object(path, path.name)
+            except HandoffArchiveError:
+                report["skipped"].append({"file": path.name, "reason": "UNREADABLE"})
+                continue
+            payload_episode = payload.get("episode_id")
+            if not isinstance(payload_episode, str) or payload_episode.strip() != episode:
+                report["skipped"].append({"file": path.name, "reason": "EPISODE_MISMATCH"})
+                continue
+            handoff_id = payload.get("handoff_id")
+            if not isinstance(handoff_id, str) or not handoff_id.strip():
+                report["skipped"].append({"file": path.name, "reason": "HANDOFF_ID_MISSING"})
+                continue
+            if handoff_id.strip() not in completed:
+                report["pending"].append(path.name)
+                continue
+            checksum = _move_verified(path, history_dir / path.name)
+            report["archived"].append(path.name)
+            report["checksums"][path.name] = checksum
+    except Exception as exc:
         try:
-            payload = _read_json_object(path, path.name)
+            _rollback_moves(
+                handoff_path=handoff_path,
+                history_dir=history_dir,
+                source_snapshots=source_snapshots,
+                destination_existed=destination_existed,
+            )
         except HandoffArchiveError:
-            report["skipped"].append({"file": path.name, "reason": "UNREADABLE"})
-            continue
-        payload_episode = payload.get("episode_id")
-        if not isinstance(payload_episode, str) or payload_episode.strip() != episode:
-            report["skipped"].append({"file": path.name, "reason": "EPISODE_MISMATCH"})
-            continue
-        handoff_id = payload.get("handoff_id")
-        if not isinstance(handoff_id, str) or not handoff_id.strip():
-            report["skipped"].append({"file": path.name, "reason": "HANDOFF_ID_MISSING"})
-            continue
-        if handoff_id.strip() not in completed:
-            report["pending"].append(path.name)
-            continue
-        checksum = _move_verified(path, history_path / episode / "handoffs" / path.name)
-        report["archived"].append(path.name)
-        report["checksums"][path.name] = checksum
+            raise
+        if isinstance(exc, HandoffArchiveError):
+            raise
+        raise HandoffArchiveError(f"HANDOFF_ARCHIVE_FAILED:{exc}") from exc
     return report
 
 

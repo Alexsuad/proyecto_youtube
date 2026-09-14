@@ -132,7 +132,18 @@ class EpisodeApplicationService:
                 outcome = complete(handle, human_input, handoff, run_id)
                 if outcome is not None:
                     self.store.record_workflow(handle, outcome)
+                    if str(outcome.get("status") or "") == "TOPIC_BELONGING_TECHNICAL_STOP":
+                        self._archive_terminated_handoffs(handle)
                     return self.store.resume(episode_id)
+            if current["state"].get("status") == "TOPIC_BELONGING_TECHNICAL_STOP":
+                handle = EpisodeHandle(
+                    episode_id,
+                    current["entry"].get("slug", "episodio"),
+                    Path(current["folder"]),
+                    self.store.index_path,
+                )
+                self._archive_terminated_handoffs(handle)
+                return self.store.resume(episode_id)
             return current
         folder = Path(current["folder"])
         human_input = HumanInput.from_dict(

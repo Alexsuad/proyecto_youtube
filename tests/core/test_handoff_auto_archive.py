@@ -8,12 +8,14 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from src.application.handoff_archive import HandoffArchiveError
+import src.application.topic_belonging as topic_belonging_module
+from src.application.topic_belonging import TopicBelongingExecutionError
 from src.core.p2_real_reporter import build_p2_report
 from tests.harness.test_plan009_p2_roundtrip import (
     ROOT,
@@ -42,6 +44,7 @@ def _run_full_flow_with_results_in_handoff(
     tmp_path: Path,
     tag: str,
     created: list[Path] | None = None,
+    before_final=None,
 ) -> list[Path]:
     """Drive ENRICHMENT → PRODUCER → REVIEWER writing RESULT envelopes in handoff/.
 
@@ -91,6 +94,8 @@ def _run_full_flow_with_results_in_handoff(
         ),
     )
     _track(handoff_dir / f"RESULT-{package.stem}.json")
+    if before_final is not None:
+        before_final()
     final = service.resume(episode.episode_id)
     assert final["state"]["status"] == "TOPIC_BELONGING_TECHNICAL_STOP"
     return local
@@ -172,6 +177,65 @@ def test_unwritable_history_preserves_canonical_result_and_source(tmp_path: Path
         handoff_names = {path.name for path in (ROOT / "handoff").iterdir()}
         for record in records:
             assert f"{record['handoff_id']}.json" in handoff_names
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_ref_update_failure_rolls_back_move_and_keeps_old_refs_valid(tmp_path: Path, monkeypatch) -> None:
+    created: list[Path] = []
+    service = None
+
+    def fail_replace(source, destination):
+        raise OSError("fallo inducido después del movimiento")
+
+    def fail_ref_update():
+        monkeypatch.setattr(
+            topic_belonging_module,
+            "os",
+            SimpleNamespace(replace=fail_replace),
+        )
+
+    try:
+        service, episode, package = _start(tmp_path)
+        tag = tmp_path.name.replace("_", "")[-8:]
+        with pytest.raises(TopicBelongingExecutionError, match="ROUNDTRIP_PACKAGE_REF_RELOCATION_FAILED"):
+            _run_full_flow_with_results_in_handoff(
+                service, episode, package, tmp_path, tag, created, fail_ref_update
+            )
+
+        assert all(path.is_file() for path in created)
+        records = json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))["results"]
+        assert all(Path(str(record["handoff_package_ref"])).is_file() for record in records)
+        history = _history_handoffs(service, episode.episode_id)
+        assert not history.exists() or not any(history.iterdir())
+    finally:
+        monkeypatch.setattr(topic_belonging_module, "os", __import__("os"))
+        _cleanup_handoffs(created, service)
+
+
+def test_temporary_archive_failure_is_retried_by_resume_after_repair(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        tag = tmp_path.name.replace("_", "")[-8:]
+        history_root = Path(service._p2_test_vault_root) / "CHANNEL" / "Historial"
+        history_root.write_text("bloqueo temporal", encoding="utf-8")
+        with pytest.raises(HandoffArchiveError):
+            _run_full_flow_with_results_in_handoff(service, episode, package, tmp_path, tag, created)
+
+        assert json.loads((episode.folder / "workflow_state.json").read_text(encoding="utf-8"))["status"] == "TOPIC_BELONGING_TECHNICAL_STOP"
+        history_root.unlink()
+        history_root.mkdir(parents=True)
+        retried = service.resume(episode.episode_id)
+
+        assert retried["state"]["status"] == "TOPIC_BELONGING_TECHNICAL_STOP"
+        records = json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))["results"]
+        history = _history_handoffs(service, episode.episode_id)
+        assert history.is_dir()
+        assert all(Path(str(record["handoff_package_ref"])).parent == history for record in records)
+        assert all(Path(str(record["handoff_package_ref"])).is_file() for record in records)
     finally:
         _cleanup_handoffs(created, service)
 

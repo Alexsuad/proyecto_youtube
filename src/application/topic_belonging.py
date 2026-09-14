@@ -6,6 +6,7 @@ import copy
 from dataclasses import dataclass, field
 import hashlib
 import json
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -2007,7 +2008,6 @@ class TopicBelongingTechnicalWorkflow:
         ``handoff_package_ref`` se reubica al destino verificado para que las
         revalidaciones post-STOP sigan resolviendo el mismo contenido.
         """
-        import os
         import tempfile
 
         from src.application.handoff_archive import archive_episode_handoffs_from_vault
@@ -2018,6 +2018,21 @@ class TopicBelongingTechnicalWorkflow:
             handoff_dir = candidate if candidate.is_absolute() else REPO_ROOT / candidate
         else:
             handoff_dir = REPO_ROOT / "handoff"
+        history_dir = Path(history_root) / handle.episode_id / "handoffs"
+        source_snapshots = (
+            {
+                path.name: path.read_bytes()
+                for path in handoff_dir.iterdir()
+                if path.is_file()
+                and (path.name.startswith("RUN-AI-") or path.name.startswith("RESULT-"))
+                and path.suffix == ".json"
+            }
+            if handoff_dir.is_dir()
+            else {}
+        )
+        destination_existed = {
+            name: (history_dir / name).exists() for name in source_snapshots
+        }
         report = archive_episode_handoffs_from_vault(
             handoff_dir=handoff_dir,
             history_root=history_root,
@@ -2027,30 +2042,65 @@ class TopicBelongingTechnicalWorkflow:
         refs_updated = 0
         if archived:
             history_dir = Path(str(report["history_dir"]))
-            results_path = handle.folder / ROUNDTRIP_RESULTS_FILENAME
-            data = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME)
-            results = data.get("results", [])
-            if not isinstance(results, list):
-                raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_RESULTS_INDEX_INVALID")
-            for record in results:
-                if not isinstance(record, dict):
-                    continue
-                current_ref = str(record.get("handoff_package_ref") or "")
-                if Path(current_ref).name in archived:
-                    record["handoff_package_ref"] = str(history_dir / Path(current_ref).name)
-                    refs_updated += 1
-            payload = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+            tmp_path: Path | None = None
             try:
+                results_path = handle.folder / ROUNDTRIP_RESULTS_FILENAME
+                data = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME)
+                results = data.get("results", [])
+                if not isinstance(results, list):
+                    raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_RESULTS_INDEX_INVALID")
+                for record in results:
+                    if not isinstance(record, dict):
+                        continue
+                    current_ref = str(record.get("handoff_package_ref") or "")
+                    if Path(current_ref).name in archived:
+                        record["handoff_package_ref"] = str(history_dir / Path(current_ref).name)
+                        refs_updated += 1
+                payload = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
                 with tempfile.NamedTemporaryFile(
                     mode="w", encoding="utf-8", dir=str(handle.folder), delete=False
                 ) as tmp:
                     tmp.write(payload)
                     tmp_path = Path(tmp.name)
                 os.replace(tmp_path, results_path)
-            except OSError as exc:
+            except Exception as exc:
+                if tmp_path is not None:
+                    tmp_path.unlink(missing_ok=True)
+                self._rollback_handoff_archive(
+                    handoff_dir,
+                    history_dir,
+                    source_snapshots,
+                    destination_existed,
+                )
+                if isinstance(exc, TopicBelongingExecutionError):
+                    raise
                 raise TopicBelongingExecutionError(f"ROUNDTRIP_PACKAGE_REF_RELOCATION_FAILED:{exc}") from exc
         report["refs_updated"] = refs_updated
         return report
+
+    @staticmethod
+    def _rollback_handoff_archive(
+        handoff_dir: Path,
+        history_dir: Path,
+        source_snapshots: dict[str, bytes],
+        destination_existed: dict[str, bool],
+    ) -> None:
+        errors: list[str] = []
+        for name, content in source_snapshots.items():
+            source = handoff_dir / name
+            destination = history_dir / name
+            try:
+                if not source.exists():
+                    handoff_dir.mkdir(parents=True, exist_ok=True)
+                    source.write_bytes(content)
+                if not destination_existed.get(name, False) and destination.exists():
+                    destination.unlink()
+            except OSError as exc:
+                errors.append(f"{name}:{exc}")
+        if errors:
+            raise TopicBelongingExecutionError(
+                "HANDOFF_ARCHIVE_ROLLBACK_FAILED:" + ";".join(errors)
+            )
 
     def _read_episode_file_path(self, path: Path) -> dict[str, Any]:
         try:
