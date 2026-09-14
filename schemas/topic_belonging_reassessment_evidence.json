@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Topic Belonging Reassessment Evidence Input",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "context": {"type": "string", "pattern": "\\S"},
+    "candidate_work_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "\\S"}},
+    "scene_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "\\S"}},
+    "evidence": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "\\S"}},
+    "question_answers": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"pattern": "\\S"},
+      "additionalProperties": {"type": "string", "pattern": "\\S"}
+    }
+  },
+  "anyOf": [
+    {"required": ["context"]},
+    {"required": ["candidate_work_refs"]},
+    {"required": ["scene_refs"]},
+    {"required": ["evidence"]},
+    {"required": ["question_answers"]}
+  ]
+}

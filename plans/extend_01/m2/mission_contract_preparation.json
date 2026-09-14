@@ -17,7 +17,7 @@
   "contains_material_repair": true,
   "repair_integrity_evidence_path": "plans/extend_01/m2/repair_integrity_evidence.json",
   "mission_authorization_path": "plans/extend_01/m2/mission-authorization-preparation.json",
-  "mission_authorization_sha256": "4f3990d6b60fdc12b7f70f5239e271e28c62304a2dc6e64d9b3959dae9c91307",
+  "mission_authorization_sha256": "2bbacff47a2ad34745f602901811cc97f673f4a3de75d4c3e9587b51c25b12cb",
   "state_requirements": {"control_path": "plans/001_CONTROL_OPERATIVO.md", "required": {"CURRENT_MISSION": "EXTEND_01_M2_REAL_E2E", "EXTEND_01_ACTIVE": "YES", "M2_AUTHORIZED": "YES", "MVP_PROVIDER_SELECTION_REQUIRED": "NO", "MVP_MODEL_SELECTION_REQUIRED": "NO", "MVP_RUNTIME_SELECTION_REQUIRED": "NO", "MVP_HARNESS_SELECTION_REQUIRED": "NO", "REAL_AI_EXECUTION": "NO", "M2_REAL_EXECUTION": "NOT_RUN", "REAL_ENTRYPOINT_OPERATIONAL": "NO"}, "forbidden": {"AUTHORIZED_FOR_PRODUCT_USE": ["YES", "AUTHORIZED", "ACTIVE"], "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"], "M2_REAL_EXECUTION": ["PASS", "YES", "DEMONSTRATED"], "REAL_ENTRYPOINT_OPERATIONAL": ["YES"]}},
   "schema_checks": [{"path": "plans/extend_01/m2/mission_contract_preparation.json", "schema": "mission_contract"}, {"path": "plans/extend_01/m2/repair_integrity_evidence.json", "schema": "repair_integrity_evidence"}],
   "objective": "Preparar B1-B3 de EXTEND-01 sin ejecutar cognición REAL ni autorizar uso productivo.",

@@ -144,6 +144,73 @@ def test_m2_refuses_a_healthy_topic_belonging_stop(tmp_path: Path) -> None:
     assert not (episode.folder / "administrative_recovery.json").exists()
 
 
+def test_m2_current_profile_not_recoverable(tmp_path: Path) -> None:
+    store = VaultEpisodeStore(tmp_path / "vault", "CHANNEL")
+    human_input = _human_input()
+    episode = store.create_episode(
+        human_input,
+        handoff=_handoff(human_input),
+        profile=_profile(),
+        run_id="RUN-M2-CURRENT-PROFILE",
+        slug_override="current",
+    )
+
+    with pytest.raises(StorageError, match="EPISODE_RECOVERABILITY_NOT_PROVEN"):
+        store.administratively_close_irrecoverable_episode(
+            episode.episode_id,
+            reason="current profile must remain recoverable",
+            actor="owner-recovery-test",
+        )
+
+    assert not (episode.folder / store.ADMINISTRATIVE_CLOSURE_FILENAME).exists()
+
+
+def test_m2_stale_profile_recovery_preserves_and_unblocks(tmp_path: Path) -> None:
+    store = VaultEpisodeStore(tmp_path / "vault", "CHANNEL")
+    human_input = _human_input()
+    stale_profile = {**_profile(), "ACTIVE_PROFILE_VERSION": "1.2.1", "profile_checksum": "d" * 64}
+    stale = store.create_episode(
+        human_input,
+        handoff=_handoff(human_input),
+        profile=stale_profile,
+        run_id="RUN-M2-STALE-PROFILE",
+        slug_override="stale",
+    )
+    evidence = stale.folder / "preserved-evidence.txt"
+    evidence.write_text("Evidence retained during administrative recovery.\n", encoding="utf-8")
+    origin_before = (stale.folder / "episode_origin.json").read_bytes()
+    human_before = (stale.folder / "00_human_input.json").read_bytes()
+    binding_before = json.loads((stale.folder / "episode_state.json").read_text(encoding="utf-8"))["profile_binding"]
+
+    closure = store.administratively_close_irrecoverable_episode(
+        stale.episode_id,
+        reason="PROFILE_BINDING_STALE_AGAINST_ACTIVE_PROFILE",
+        actor="owner-recovery-test",
+    )
+
+    assert closure["irrecoverability"]["basis"] == "PROFILE_BINDING_STALE_AGAINST_ACTIVE_PROFILE"
+    assert stale.folder.is_dir()
+    assert evidence.read_text(encoding="utf-8") == "Evidence retained during administrative recovery.\n"
+    assert (stale.folder / "episode_origin.json").read_bytes() == origin_before
+    assert (stale.folder / "00_human_input.json").read_bytes() == human_before
+    closed_state = json.loads((stale.folder / "episode_state.json").read_text(encoding="utf-8"))
+    assert closed_state["status"] == store.ADMINISTRATIVE_CLOSED_STATE
+    assert closed_state["profile_binding"] == binding_before
+    assert "EDITORIAL_SCRIPT_APPROVED" not in json.dumps(closed_state)
+
+    new_input = _human_input()
+    new_episode = store.create_episode(
+        new_input,
+        handoff=_handoff(new_input),
+        profile=_profile(),
+        run_id="RUN-M2-NEW-CURRENT-PROFILE",
+        slug_override="new",
+    )
+    new_state = json.loads((new_episode.folder / "episode_state.json").read_text(encoding="utf-8"))
+    assert new_state["profile_binding"]["profile_version"] == "1.2.2"
+    assert new_episode.episode_id == "ep_0002"
+
+
 def test_m2_retries_after_interruption_using_the_index_recovery_journal(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

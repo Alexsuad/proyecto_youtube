@@ -664,6 +664,58 @@ VALID_FIXTURES["topic_belonging_cognitive_proposal"] = {
     "initial_evidence": ["source-1"],
     "strategic_triggers": _TOPIC_TRIGGERS,
 }
+VALID_FIXTURES["topic_belonging_cognitive_assessment"] = {
+    "strategic_triggers": _TOPIC_TRIGGERS,
+    "sensitive_risks": [],
+    "territory_classification": "ACTIVE",
+    "identity_alignment": "ALIGNED",
+    "promise_alignment": "ALIGNED",
+    "risks": [],
+    "recommended_conditions": [],
+    "recommended_exclusions": [],
+    "owner_escalation_recommended": False,
+    "evidence": ["source-1"],
+    "status": "CLOSED_FOR_REVIEW",
+}
+VALID_FIXTURES["topic_belonging_cognitive_decision"] = {
+    "decision": "REQUEST_MORE_EVIDENCE",
+    "conditions": [],
+    "exclusions": [],
+    "risks": [],
+    "owner_escalation_required": False,
+    "owner_escalation_reason": "",
+    "strategic_dimensions_affected": [],
+    "temporary_or_permanent_effect": "NONE",
+    "precedent_risk": "LOW",
+    "evidence": ["source-1"],
+}
+VALID_FIXTURES["external_result_envelope"] = {
+    "handoff_id": "HANDOFF-FIXTURE",
+    "package_checksum": "a" * 64,
+    "input_manifest_checksum": "b" * 64,
+    "skill_id": "topic_belonging",
+    "skill_version": "1.0.0",
+    "mission_id": "MISSION-FIXTURE",
+    "episode_id": "ep_0001",
+    "capability_id": "TOPIC_BELONGING_ASSESSMENT",
+    "stage": "REVIEWER",
+    "role": "CHANNEL_INTELLIGENCE_REVIEWER",
+    "result_run_id": "RUN-FIXTURE",
+    "output": {"decision": "REQUEST_MORE_EVIDENCE"},
+    "output_checksum": "c" * 64,
+    "provenance": {
+        "mission_id": "MISSION-FIXTURE",
+        "episode_id": "ep_0001",
+        "capability_id": "TOPIC_BELONGING_ASSESSMENT",
+        "stage": "REVIEWER",
+        "role": "CHANNEL_INTELLIGENCE_REVIEWER",
+        "run_id": "RUN-FIXTURE",
+        "executor_identity": "fixture-reviewer",
+    },
+}
+VALID_FIXTURES["topic_belonging_reassessment_evidence"] = {
+    "context": "Fixture de evidencia adicional.",
+}
 VALID_FIXTURES["topic_belonging_input"] = {
     "topic_input_id": "TBI-FIXTURE", "profile_id": "mas_alla_del_guion", "profile_version": "1.2.2",
     "profile_checksum": "a" * 64, "topic": "Tema", "entry_mode": "ANCHOR_WORK_FIRST", "narrative_work": "Obra",

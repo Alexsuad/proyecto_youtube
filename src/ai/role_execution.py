@@ -139,11 +139,13 @@ ROLE_ALLOWED_OUTPUT_SCHEMAS = {
     "CHANNEL_INTELLIGENCE_PRODUCER": {
         "execution_smoke_report",
         "topic_belonging_cognitive_proposal",
+        "topic_belonging_cognitive_assessment",
         "topic_belonging_input",
         "topic_belonging_assessment",
     },
     "CHANNEL_INTELLIGENCE_REVIEWER": {
         "execution_smoke_report",
+        "topic_belonging_cognitive_decision",
         "topic_belonging_decision",
     },
     "RESEARCH_AND_CURATION": {

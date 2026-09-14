@@ -83,7 +83,7 @@
       "functional_requirements": ["CAPABILITY_SCOPE_DECLARED"],
       "implementation_kind": "SEMANTIC",
        "implementation_refs": ["src/application/topic_belonging.py", "src/scripts/channel_intelligence.py", "src/scripts/topic_belonging_flow.py"],
-       "contract_refs": ["schemas/topic_belonging_input.json", "schemas/topic_belonging_assessment.json", "schemas/topic_belonging_decision.json"],
+       "contract_refs": ["schemas/topic_belonging_input.json", "schemas/topic_belonging_cognitive_proposal.json", "schemas/topic_belonging_cognitive_assessment.json", "schemas/topic_belonging_cognitive_decision.json", "schemas/topic_belonging_assessment.json", "schemas/topic_belonging_decision.json", "schemas/external_result_envelope.json"],
       "profile_refs": ["config/active_editorial_profile.json", "config/editorial_profile_registry.json"],
       "execution_profile_refs": ["config/agent_execution_profiles.json"],
       "routing_ref": "config/capability_routing.yaml",

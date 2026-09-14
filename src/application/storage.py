@@ -19,6 +19,7 @@ from typing import Any
 from src.application.contracts import HumanInput
 from src.application.interaction import HumanDecision, HumanDecisionRequest, validate_human_decision
 from src.core.contract_validation import validate_against_schema
+from src.core.editorial_profile_registry import load_active_profile_authority
 
 
 class StorageError(RuntimeError):
@@ -662,10 +663,13 @@ class VaultEpisodeStore:
         *,
         envelope: dict[str, Any],
         workflow_state: dict[str, Any],
+        materialized_output: dict[str, Any] | None = None,
     ) -> str:
         """Persist one validated external result and its checkpoint idempotently."""
         if not isinstance(envelope, dict) or not isinstance(workflow_state, dict):
             raise StorageError("ROUNDTRIP_PERSISTENCE_REQUIRES_OBJECTS")
+        if materialized_output is not None and not isinstance(materialized_output, dict):
+            raise StorageError("ROUNDTRIP_MATERIALIZED_OUTPUT_REQUIRES_OBJECT")
         handoff_id = str(envelope.get("handoff_id") or "")
         result_checksum = str(envelope.get("output_checksum") or "")
         stage = str(envelope.get("stage") or "")
@@ -694,7 +698,7 @@ class VaultEpisodeStore:
                     return "ALREADY_IMPORTED"
                 raise StorageError("ROUNDTRIP_RESULT_CONFLICT: handoff ya tiene otro resultado")
             existing_stage = next((item for item in results if item.get("stage") == stage), None)
-            if existing_stage is not None:
+            if existing_stage is not None and not workflow_state.get("reassessment_id"):
                 raise StorageError("ROUNDTRIP_RESULT_CONFLICT: la etapa ya está cerrada")
             result_run_id = str(envelope.get("result_run_id") or "")
             if any(item.get("result_run_id") == result_run_id for item in results):
@@ -702,6 +706,13 @@ class VaultEpisodeStore:
 
             result_name = f"{stage.lower()}-{handoff_id}.json"
             result_path = results_dir / result_name
+            materialized_path = None
+            materialized_checksum = None
+            if materialized_output is not None:
+                materialized_token = hashlib.sha256(handoff_id.encode("utf-8")).hexdigest()
+                materialized_path = results_dir / f"{stage.lower()}-materialized-{materialized_token}.json"
+                _write_json_atomic(materialized_path, materialized_output)
+                materialized_checksum = self._file_checksum(materialized_path)
             result_record = {
                 "mission_id": envelope.get("mission_id"),
                 "episode_id": envelope.get("episode_id"),
@@ -719,6 +730,20 @@ class VaultEpisodeStore:
                 "result_path": f"roundtrip_results/{result_name}",
                 "persisted_at": datetime.now(timezone.utc).isoformat(),
             }
+            for key in (
+                "reassessment_id",
+                "attempt_number",
+                "prior_decision_ref",
+                "prior_decision_checksum",
+                "prior_decision_source_attempt",
+            ):
+                if key in workflow_state:
+                    result_record[key] = workflow_state[key]
+            if materialized_path is not None:
+                result_record["materialized_output_path"] = (
+                    f"roundtrip_results/{materialized_path.name}"
+                )
+                result_record["materialized_output_checksum"] = materialized_checksum
             results.append(result_record)
             prior_workflow = _read_json(handle.folder / "workflow_state.json") if (handle.folder / "workflow_state.json").exists() else None
             prior_state = _read_json(handle.folder / "episode_state.json")
@@ -741,6 +766,8 @@ class VaultEpisodeStore:
             except Exception:
                 try:
                     result_path.unlink(missing_ok=True)
+                    if materialized_path is not None:
+                        materialized_path.unlink(missing_ok=True)
                     if prior_workflow is None:
                         (handle.folder / "workflow_state.json").unlink(missing_ok=True)
                     else:
@@ -752,6 +779,43 @@ class VaultEpisodeStore:
                     pass
                 raise
             return "PERSISTED"
+
+    def append_topic_belonging_reassessment(
+        self,
+        handle: EpisodeHandle,
+        *,
+        reassessment: dict[str, Any],
+    ) -> str:
+        """Append one immutable evidence/reassessment record for Topic Belonging."""
+        if not isinstance(reassessment, dict) or not reassessment.get("reassessment_id"):
+            raise StorageError("TOPIC_BELONGING_REASSESSMENT_INVALID")
+        path = handle.folder / "topic_belonging_reassessments.json"
+        with self._index_lock():
+            current = _read_json(path, {"reassessments": []})
+            entries = list(current.get("reassessments", []))
+            if any(item.get("reassessment_id") == reassessment["reassessment_id"] for item in entries):
+                return "ALREADY_RECORDED"
+            entries.append(reassessment)
+            _write_json_atomic(path, {"reassessments": entries})
+            return "RECORDED"
+
+    def complete_topic_belonging_reassessment(
+        self,
+        handle: EpisodeHandle,
+        *,
+        reassessment_id: str,
+        result: dict[str, Any],
+    ) -> None:
+        """Attach the immutable reassessment outcome to its evidence record."""
+        path = handle.folder / "topic_belonging_reassessments.json"
+        with self._index_lock():
+            current = _read_json(path, {"reassessments": []})
+            entries = list(current.get("reassessments", []))
+            match = next((item for item in entries if item.get("reassessment_id") == reassessment_id), None)
+            if match is None:
+                raise StorageError("TOPIC_BELONGING_REASSESSMENT_MISSING")
+            match.update(result)
+            _write_json_atomic(path, {"reassessments": entries})
 
     def record_plan013_editorial_closure(
         self,
@@ -1005,6 +1069,22 @@ class VaultEpisodeStore:
                 return "EPISODE_STATE_INVALID", [state_path.name], None
             if state.get("status") == "TOPIC_BELONGING_TECHNICAL_STOP":
                 raise StorageError("EPISODE_RECOVERABLE_TECHNICAL_STOP: no se cierra administrativamente un episodio sano")
+
+            binding = state.get("profile_binding")
+            if isinstance(binding, dict):
+                try:
+                    active_profile = load_active_profile_authority()
+                except (OSError, ValueError):
+                    active_profile = None
+                if active_profile is not None and any(
+                    binding.get(key) != active_profile[source]
+                    for key, source in (
+                        ("profile_id", "ACTIVE_PROFILE_ID"),
+                        ("profile_version", "ACTIVE_PROFILE_VERSION"),
+                        ("profile_checksum", "profile_checksum"),
+                    )
+                ):
+                    return "PROFILE_BINDING_STALE_AGAINST_ACTIVE_PROFILE", [], state
 
         missing = [
             name

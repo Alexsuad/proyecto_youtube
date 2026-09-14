@@ -18,6 +18,7 @@ la autoridad viva ni relaja los controles de ejecución real o productiva.
 - El perfil editorial activo se resuelve exclusivamente desde
   `config/active_editorial_profile.json` y
   `config/editorial_profile_registry.json`.
+ACTIVE_EDITORIAL_PROFILE_AUTHORITY = config/active_editorial_profile.json
 
 ## Decisión rápida del camino de ejecución
 

@@ -1,0 +1,143 @@
+{
+  "mission_id": "EXTEND_01_M2_REAL_E2E",
+  "mission_mode": "REDUCED",
+  "artifact_id": "EXTEND_01_TOPIC_BELONGING_ENTRY",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/extend_01/m2/",
+    "handoff/",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "config/capability_registry.json",
+    "config/agent_prompt_registry.json",
+    "docs/legacy/material_decision_registry.json",
+    "config/execution_family_selection.json",
+    "src/application/topic_belonging.py",
+    "src/application/service.py",
+    "src/application/storage.py",
+    "src/cli.py",
+    "src/ai/role_execution.py",
+    "src/ai/providers/agent_handoff.py",
+    "src/scripts/channel_intelligence.py",
+    "schemas/",
+    "tests/core/",
+    "tests/harness/test_plan009_p2_roundtrip.py",
+    "tests/harness/test_plan010_m2_m3.py",
+    "src/core/execution_preflight.py",
+    "src/core/mission_authorization.py",
+    "src/core/p2_real_reporter.py",
+    "AGENTS.md"
+  ],
+  "protected_untracked_paths": [],
+  "protected_untracked_baseline": [],
+  "required_tests": [
+    {
+      "label": "P2 roundtrip",
+      "command": ["python", "-m", "pytest", "tests/harness/test_plan009_p2_roundtrip.py"],
+      "timeout_seconds": 900
+    },
+    {
+      "label": "Schemas and cross registry",
+      "command": ["python", "-m", "pytest", "tests/core/test_all_schemas.py", "tests/core/test_cross_registry_integrity.py"],
+      "timeout_seconds": 300
+    },
+    {
+      "label": "Channel Intelligence",
+      "command": ["python", "-m", "pytest", "tests/core/test_channel_intelligence.py"],
+      "timeout_seconds": 180
+    },
+    {
+      "label": "M2 M3 regression",
+      "command": ["python", "-m", "pytest", "tests/harness/test_plan010_m2_m3.py"],
+      "timeout_seconds": 600
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "7a9d81e9691ee7c2dc0076181481c046ddd22f0d"
+  },
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/extend_01/m2/topic_belonging_entry/mission-authorization.json",
+  "mission_authorization_sha256": "1c0d96a4842ea79d4e0975ecf191012fc28ae0a4c9eb5b13027e2fd445e58c89",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "EXTEND_01_M2_REAL_E2E"
+    },
+    "forbidden": {
+      "PRODUCT_USE_AUTHORIZED": ["YES", "AUTHORIZED", "ACTIVE"],
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"]
+    }
+  },
+  "schema_checks": [],
+  "objective": "Corregir y verificar la frontera Topic Belonging de EXTEND-01 para handoffs externos supervisados ENRICHMENT, PRODUCER y REVIEWER, incluyendo reentrada versionada de REQUEST_MORE_EVIDENCE.",
+  "preconditions": [
+    "La decisión material MD-CI-001 está vigente y limitada a demostración controlada.",
+    "El producto no selecciona provider, modelo ni perfil bajo AGENT_HARNESS."
+  ],
+  "canonical_inputs": [
+    "Terminal human input",
+    "config/active_editorial_profile.json",
+    "config/editorial_profile_registry.json",
+    "docs/legacy/material_decision_registry.json"
+  ],
+  "allowed_files": [
+    "plans/extend_01/m2/topic_belonging_entry/",
+    "handoff/",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "config/capability_registry.json",
+    "config/agent_prompt_registry.json",
+    "docs/legacy/material_decision_registry.json",
+    "config/execution_family_selection.json",
+    "src/application/topic_belonging.py",
+    "src/application/service.py",
+    "src/application/storage.py",
+    "src/cli.py",
+    "src/ai/providers/agent_handoff.py",
+    "src/ai/role_execution.py",
+    "src/core/execution_preflight.py",
+    "src/core/mission_authorization.py",
+    "src/core/p2_real_reporter.py",
+    "src/scripts/channel_intelligence.py",
+    "AGENTS.md",
+    "tests/core/test_all_schemas.py",
+    "tests/core/test_cross_registry_integrity.py",
+    "tests/harness/test_plan009_p2_roundtrip.py",
+    "tests/harness/test_plan010_m2_m3.py"
+  ],
+  "non_objectives": [
+    "Ejecución cognitiva REAL automática por provider",
+    "Uso productivo",
+    "Publicación",
+    "Selección interna de provider, modelo o runtime"
+  ],
+  "expected_outputs": [
+    "Handoffs Topic Belonging con contratos cognitivos explícitos.",
+    "Resultados externos transportados, validados y materializados por Software.",
+    "Reentrada versionada de REQUEST_MORE_EVIDENCE sin iniciar Research V2."
+  ],
+  "deterministic_validations": [
+    "MissionAuthorization y decisión material canónica",
+    "Ruta AGENT_HARNESS sin provider, modelo ni perfil",
+    "Frontera SOFTWARE a IA a SOFTWARE"
+  ],
+  "adversarial_cases": [
+    "CURRENT_MISSION incorrecta",
+    "decisión material stale o fuera de alcance",
+    "selección concreta bajo AGENT_HARNESS"
+  ],
+  "stop_conditions": [
+    "Fallo de autorización",
+    "Fallo de binding del perfil activo",
+    "Cualquier resultado cognitivo externo ejecutado localmente"
+  ],
+  "review_policy": {
+    "required_review": "OWNER_REVIEW",
+    "independent_review": "REQUIRED",
+    "owner_review": true
+  },
+  "owner_closure": {
+    "required": false
+  }
+}

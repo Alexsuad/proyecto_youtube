@@ -309,6 +309,30 @@ def _import_result(args: argparse.Namespace) -> int:
     return 0
 
 
+def _submit_topic_belonging_evidence(args: argparse.Namespace) -> int:
+    try:
+        state = _service_from_args(args).submit_topic_belonging_evidence(args.episodio, args.evidencia)
+    except (StorageError, PermissionError, ValueError, OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        print(f"ERROR: {exc}")
+        return 2
+    print(f"Evidencia Topic Belonging registrada: {args.episodio}")
+    print(f"Estado: {state['state'].get('status', 'desconocido')}")
+    return 0
+
+
+def _prepare_topic_belonging_reassessment(args: argparse.Namespace) -> int:
+    try:
+        state = _service_from_args(args).prepare_topic_belonging_reassessment(args.episodio)
+    except (StorageError, PermissionError, ValueError, OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        print(f"ERROR: {exc}")
+        return 2
+    print(f"Reevaluación Topic Belonging preparada: {args.episodio}")
+    print(f"Estado: {state['state'].get('status', 'desconocido')}")
+    if state["state"].get("status") == "PENDING_EXTERNAL_RESULT":
+        print(f"Handoff: {state['state'].get('handoff_package_ref')}")
+    return 0
+
+
 def _report_p2(args: argparse.Namespace) -> int:
     try:
         episode = VaultEpisodeStore.from_settings(args.config).resume(args.episodio)
@@ -552,7 +576,29 @@ def build_parser() -> argparse.ArgumentParser:
     )
     import_result.add_argument("resultado", type=Path, help="Archivo de resultado entregado por el trabajo externo")
     import_result.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    import_result.add_argument("--mission-authorization", help=argparse.SUPPRESS)
+    import_result.add_argument("--execution-family", help=argparse.SUPPRESS)
+    import_result.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
     import_result.set_defaults(handler=_import_result)
+    evidence = subparsers.add_parser(
+        "aportar-evidencia-topic",
+        help="Registrar evidencia adicional para REQUEST_MORE_EVIDENCE de Topic Belonging",
+    )
+    evidence.add_argument("episodio")
+    evidence.add_argument("evidencia", type=Path)
+    evidence.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    evidence.add_argument("--mission-authorization", help=argparse.SUPPRESS)
+    evidence.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
+    evidence.set_defaults(handler=_submit_topic_belonging_evidence)
+    reassess = subparsers.add_parser(
+        "preparar-reevaluacion-topic",
+        help="Preparar el handoff de reevaluación de Topic Belonging",
+    )
+    reassess.add_argument("episodio")
+    reassess.add_argument("--config", default=DEFAULT_SETTINGS, type=Path, help=argparse.SUPPRESS)
+    reassess.add_argument("--mission-authorization", help=argparse.SUPPRESS)
+    reassess.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
+    reassess.set_defaults(handler=_prepare_topic_belonging_reassessment)
     research_decision = subparsers.add_parser(
         "responder-decision-research",
         help="Registrar la respuesta OWNER de una decisión M4 pendiente",

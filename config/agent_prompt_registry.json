@@ -575,7 +575,7 @@
         "cargar política funcional canónica",
         "evaluar puerta narrativa, tesis, territorio, identidad y promesa",
         "registrar triggers estratégicos cuando el stage sea ENRICHMENT",
-        "emitir TopicBelongingInput en ENRICHMENT o TopicBelongingAssessment en PRODUCER, según el output contract"
+        "emitir el payload cognitivo TopicBelongingInput en ENRICHMENT o TopicBelongingAssessment en PRODUCER, según el output contract; Software materializa el artifact final"
       ],
       "forbidden_actions": [
         "aprobar",
@@ -584,7 +584,7 @@
         "emitir TopicBelongingDecision"
       ],
       "required_outputs": [
-        "TopicBelongingInput o TopicBelongingAssessment según el stage"
+        "payload cognitivo de TopicBelongingInput o TopicBelongingAssessment según el stage"
       ],
       "blocking_conditions": [
         "perfil ausente",
@@ -597,13 +597,9 @@
         "condition": "assessment CLOSED_FOR_REVIEW con checksum y provenance"
       },
       "evidence_requirements": [
-        "topic_input_id",
-        "profile_id",
-        "profile_version",
-        "profile_checksum",
-        "producer_actor_id",
-        "producer_run_id",
-        "artifact_checksum",
+        "criterios cognitivos de evaluación",
+        "executor_identity",
+        "provenance del resultado externo",
         "policy field citations"
       ]
     },
@@ -631,7 +627,7 @@
         "cargar política funcional canónica",
         "verificar aplicación independiente de criterios",
         "verificar triggers estratégicos",
-        "emitir únicamente TopicBelongingDecision o ESCALATE_TO_OWNER"
+        "emitir únicamente el payload cognitivo TopicBelongingDecision o ESCALATE_TO_OWNER; Software materializa la decisión canónica"
       ],
       "forbidden_actions": [
         "modificar el assessment",
@@ -641,7 +637,7 @@
         "crear subagentes"
       ],
       "required_outputs": [
-        "TopicBelongingDecision"
+        "payload cognitivo de TopicBelongingDecision"
       ],
       "blocking_conditions": [
         "mismo actor",
@@ -655,10 +651,9 @@
         "condition": "decision emitida con reviewer_input_checksum exacto"
       },
       "evidence_requirements": [
-        "reviewer_actor_id",
-        "reviewer_run_id",
-        "reviewer_input_checksum",
-        "decision checksum",
+        "decisión cognitiva",
+        "executor_identity",
+        "provenance del resultado externo",
         "policy field citations"
       ]
     }

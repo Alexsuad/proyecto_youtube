@@ -137,8 +137,10 @@ def validate_assessment(data: dict[str, Any], topic_input: dict[str, Any] | None
     proposed_territory = data.get("proposed_territory")
     resolved_classification = active_territory_classification(proposed_territory)
     declared_classification = data.get("territory_classification")
-    if proposed_territory and resolved_classification is None:
+    if proposed_territory and resolved_classification is None and declared_classification != "UNCLASSIFIED":
         violations.append("ASSESSMENT_PROPOSED_TERRITORY_UNKNOWN")
+    elif declared_classification == "UNCLASSIFIED" and resolved_classification is None:
+        pass
     elif declared_classification != resolved_classification and not (
         declared_classification == "EXPERIMENTAL" and resolved_classification == "ACTIVE"
     ):
@@ -191,7 +193,9 @@ def validate_decision(data: dict[str, Any], assessment: dict[str, Any]) -> list[
     violations.extend(f"ASSESSMENT_INVALID: {v}" for v in validate_assessment(assessment))
     violations.extend(_profile_binding(data, "DECISION"))
     resolved_classification = active_territory_classification(assessment.get("proposed_territory"))
-    if resolved_classification is None or (
+    if resolved_classification is None and data.get("decision") in {"APPROVE", "APPROVE_WITH_CONDITIONS"}:
+        violations.append("DECISION_TERRITORY_NOT_RESOLVED_AGAINST_ACTIVE_PROFILE")
+    elif resolved_classification is not None and (
         assessment.get("territory_classification") != resolved_classification
         and not (
             assessment.get("territory_classification") == "EXPERIMENTAL"

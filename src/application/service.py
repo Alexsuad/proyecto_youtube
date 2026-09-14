@@ -211,6 +211,58 @@ class EpisodeApplicationService:
             raise StorageError("ROUNDTRIP_RESULT_INVALID: falta episode_id.")
         return self.import_result(episode_id.strip(), path)
 
+    def submit_topic_belonging_evidence(
+        self,
+        episode_id: str,
+        evidence_path: str | Path,
+    ) -> dict[str, Any]:
+        """Submit owner-provided evidence through the Topic Belonging recovery port."""
+        preflight = getattr(self.workflow, "preflight", None)
+        if callable(preflight):
+            preflight()
+        current = self.store.resume(episode_id)
+        if not current.get("folder"):
+            raise StorageError("TOPIC_BELONGING_REASSESSMENT_EPISODE_MISSING")
+        try:
+            evidence = json.loads(Path(evidence_path).read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise StorageError(f"REASSESSMENT_EVIDENCE_INVALID:{exc}") from exc
+        folder = Path(current["folder"])
+        handle = EpisodeHandle(
+            episode_id,
+            current["entry"].get("slug", "episodio"),
+            folder,
+            self.store.index_path,
+        )
+        workflow = getattr(self.workflow, "submit_additional_evidence", None)
+        if not callable(workflow):
+            raise StorageError("TOPIC_BELONGING_REASSESSMENT_UNAVAILABLE")
+        outcome = workflow(handle, evidence)
+        self.store.record_workflow(handle, outcome)
+        return self.store.resume(episode_id)
+
+    def prepare_topic_belonging_reassessment(self, episode_id: str) -> dict[str, Any]:
+        """Create the next reviewer handoff after evidence has been persisted."""
+        preflight = getattr(self.workflow, "preflight", None)
+        if callable(preflight):
+            preflight()
+        current = self.store.resume(episode_id)
+        if not current.get("folder"):
+            raise StorageError("TOPIC_BELONGING_REASSESSMENT_EPISODE_MISSING")
+        folder = Path(current["folder"])
+        handle = EpisodeHandle(
+            episode_id,
+            current["entry"].get("slug", "episodio"),
+            folder,
+            self.store.index_path,
+        )
+        workflow = getattr(self.workflow, "prepare_reassessment", None)
+        if not callable(workflow):
+            raise StorageError("TOPIC_BELONGING_REASSESSMENT_UNAVAILABLE")
+        outcome = workflow(handle)
+        self.store.record_workflow(handle, outcome)
+        return {"state": outcome, "folder": str(folder), "entry": current["entry"]}
+
     def administratively_close_irrecoverable_episode(
         self,
         episode_id: str,

@@ -277,12 +277,21 @@ class AgentHandoffProvider:
         package_without_checksum = {key: value for key, value in package.items() if key != "package_checksum"}
         if expected_checksum != checksum(canonical_json(package_without_checksum)):
             raise ValueError("checksum incorrecto en paquete de handoff")
+        if package.get("output_schema") in {
+            "topic_belonging_cognitive_proposal",
+            "topic_belonging_cognitive_assessment",
+            "topic_belonging_cognitive_decision",
+        }:
+            envelope_errors = validate_against_schema(payload, "external_result_envelope")
+            if envelope_errors:
+                raise ValueError("EXTERNAL_RESULT_ENVELOPE_INVALID: " + " | ".join(envelope_errors))
         try:
             if package.get("completion_gate") is not None:
                 load_verified_completion_gate_from_payload(package.get("completion_gate"))
         except PermissionError as exc:
             raise PermissionError(str(exc)) from exc
         mission_id = package.get("mission_id")
+        content = payload.get("output")
         if mission_id is not None:
             self._verify_import_authorization(package)
             # Research V2 stages are coordinator-owned.  The package role and
@@ -319,7 +328,6 @@ class AgentHandoffProvider:
                         raise ValueError(f"execution_controls inválidos en {key}")
                 if controls.get("unbounded_execution") is not False:
                     raise ValueError("execution_controls permiten ejecución indefinida")
-                content = payload.get("output")
                 if not isinstance(content, (dict, list)) or (isinstance(content, list) and not content):
                     raise ValueError("RESEARCH_EXTERNAL_COGNITIVE_OUTPUT_INVALID: expected non-empty object or list")
                 # ResearchPlanProposal is itself the cognitive contract.  The
@@ -331,6 +339,11 @@ class AgentHandoffProvider:
                     output_errors = validate_against_schema(content, "research_plan_proposal")
                     if output_errors:
                         raise ValueError("RESEARCH_PLAN_PROPOSAL_INVALID: " + " | ".join(output_errors))
+            elif package.get("capability_id") == "TOPIC_BELONGING_ASSESSMENT":
+                output_schema = str(package.get("output_schema") or "")
+                output_errors = validate_against_schema(content, output_schema)
+                if output_errors:
+                    raise ValueError("TOPIC_BELONGING_OUTPUT_INVALID: " + " | ".join(output_errors))
             for field in ("mission_id", "episode_id", "capability_id", "stage", "role"):
                 if payload.get(field) != package.get(field):
                     raise ValueError(f"resultado importado no corresponde en {field}")
@@ -343,11 +356,12 @@ class AgentHandoffProvider:
                 for field in ("mission_id", "episode_id", "capability_id", "stage", "role"):
                     if field in provenance and provenance[field] != package.get(field):
                         raise ValueError(f"provenance no corresponde en {field}")
+                if package.get("output_schema") in {"topic_belonging_cognitive_proposal", "topic_belonging_cognitive_assessment", "topic_belonging_cognitive_decision"} and not str(provenance.get("executor_identity") or "").strip():
+                    raise ValueError("resultado importado requiere executor_identity real")
         if (payload.get("handoff_id") != package["handoff_id"] or payload.get("package_checksum") != expected_checksum
                 or payload.get("input_manifest_checksum") != package["input_manifest_checksum"]
                 or payload.get("skill_id") != package["skill_id"] or payload.get("skill_version") != package["skill_version"]):
             raise ValueError("resultado importado no corresponde al paquete de handoff")
-        content = payload.get("output")
         declared_return = package.get("strategic_return")
         if declared_return is not None and (not isinstance(content, dict) or content.get("strategic_return") != declared_return):
             raise ValueError("strategic_return no coincide con el handoff canónico")

@@ -21,6 +21,7 @@ from src.application.topic_belonging import (
 )
 from src.core.mission_authorization import scope_checksum, sha256_file
 from src.core.p2_real_reporter import STAGES, build_p2_report, render_p2_report
+from src.core.contract_validation import validate_against_schema
 from src.scripts.channel_intelligence import active_profile, canonical_checksum
 from tests.core.test_application_intake import _temporary_entrypoint_repository
 
@@ -66,6 +67,51 @@ def _topic_input() -> dict:
     }
 
 
+def _cognitive_proposal() -> dict:
+    topic = _topic_input()
+    return {
+        key: topic[key]
+        for key in (
+            "proposed_angle",
+            "proposed_territory",
+            "initial_evidence",
+            "strategic_triggers",
+        )
+    }
+
+
+def _materialized_topic_input(episode) -> dict:
+    results = json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))
+    record = next(item for item in results["results"] if item["stage"] == "ENRICHMENT")
+    return json.loads((episode.folder / record["materialized_output_path"]).read_text(encoding="utf-8"))
+
+
+def _materialized_producer_assessment(episode) -> dict:
+    results = json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))
+    record = next(item for item in results["results"] if item["stage"] == "PRODUCER")
+    return json.loads((episode.folder / record["materialized_output_path"]).read_text(encoding="utf-8"))
+
+
+def _cognitive_assessment(topic_input: dict, run_id: str) -> dict:
+    assessment = _assessment(topic_input, run_id)
+    return {
+        key: assessment[key]
+        for key in (
+            "strategic_triggers",
+            "sensitive_risks",
+            "territory_classification",
+            "identity_alignment",
+            "promise_alignment",
+            "risks",
+            "recommended_conditions",
+            "recommended_exclusions",
+            "owner_escalation_recommended",
+            "evidence",
+            "status",
+        )
+    }
+
+
 def _assessment(topic_input: dict, run_id: str) -> dict:
     profile = active_profile()
     data = {
@@ -80,7 +126,7 @@ def _assessment(topic_input: dict, run_id: str) -> dict:
         "promise_alignment": "ALIGNED", "risks": [], "recommended_conditions": [],
         "recommended_exclusions": [], "owner_escalation_recommended": False,
         "evidence": ["fixture://p2/assessment"], "status": "CLOSED_FOR_REVIEW", "artifact_checksum": "",
-        "provenance": {"actor_id": "actor-p2-producer", "role_id": "CHANNEL_INTELLIGENCE_PRODUCER", "run_id": run_id, "input_checksums": [canonical_checksum(topic_input, "input")], "output_checksum": ""},
+        "provenance": {"actor_id": "actor-p2-producer", "role_id": "CHANNEL_INTELLIGENCE_PRODUCER", "run_id": run_id, "input_checksums": [canonical_checksum(topic_input, "input")], "output_checksum": "", "executor_identity": "fixture-producer"},
     }
     checksum = canonical_checksum(data, "assessment")
     data["artifact_checksum"] = checksum
@@ -100,10 +146,35 @@ def _decision(assessment: dict, run_id: str) -> dict:
         "owner_escalation_required": False, "owner_escalation_reason": "", "strategic_dimensions_affected": [],
         "temporary_or_permanent_effect": "NONE", "precedent_risk": "LOW", "evidence": ["fixture://p2/review"],
         "decided_at": "2026-08-30T10:01:00Z",
-        "provenance": {"actor_id": "actor-p2-reviewer", "role_id": "CHANNEL_INTELLIGENCE_REVIEWER", "run_id": run_id, "input_checksum": assessment["artifact_checksum"], "output_checksum": ""},
+        "provenance": {"actor_id": "actor-p2-reviewer", "role_id": "CHANNEL_INTELLIGENCE_REVIEWER", "run_id": run_id, "input_checksum": assessment["artifact_checksum"], "output_checksum": "", "executor_identity": "fixture-reviewer"},
     }
     data["provenance"]["output_checksum"] = canonical_checksum(data, "decision")
     return data
+
+
+def _cognitive_decision(assessment: dict, decision_name: str = "REQUEST_MORE_EVIDENCE") -> dict:
+    decision = _decision(assessment, "fixture-reviewer-run")
+    decision["decision"] = decision_name
+    if decision_name == "APPROVE_WITH_CONDITIONS":
+        decision["conditions"] = ["Mantener el ángulo dentro del territorio activo."]
+    if decision_name == "ESCALATE_TO_OWNER":
+        decision["owner_escalation_required"] = True
+        decision["owner_escalation_reason"] = "Requiere decisión del owner."
+    return {
+        key: decision[key]
+        for key in (
+            "decision",
+            "conditions",
+            "exclusions",
+            "risks",
+            "owner_escalation_required",
+            "owner_escalation_reason",
+            "strategic_dimensions_affected",
+            "temporary_or_permanent_effect",
+            "precedent_risk",
+            "evidence",
+        )
+    }
 
 
 def _human_input() -> HumanInput:
@@ -221,7 +292,7 @@ def _service(tmp_path: Path, vault_root: Path | None = None) -> EpisodeApplicati
     return service
 
 
-def _result_for(package_path: Path, output: dict, result_run_id: str, path: Path) -> Path:
+def _result_for(package_path: Path, output: dict, result_run_id: str, path: Path, *, executor_identity: str | None = None) -> Path:
     package = json.loads(package_path.read_text(encoding="utf-8"))
     output_checksum = hashlib.sha256(json.dumps(output, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     payload = {
@@ -231,8 +302,9 @@ def _result_for(package_path: Path, output: dict, result_run_id: str, path: Path
         "episode_id": package["episode_id"], "capability_id": package["capability_id"],
         "stage": package["stage"], "role": package["role"], "result_run_id": result_run_id,
         "output": output, "output_checksum": output_checksum,
-        "provenance": {"mission_id": package["mission_id"], "episode_id": package["episode_id"], "capability_id": package["capability_id"], "stage": package["stage"], "role": package["role"], "run_id": result_run_id},
+        "provenance": {"mission_id": package["mission_id"], "episode_id": package["episode_id"], "capability_id": package["capability_id"], "stage": package["stage"], "role": package["role"], "run_id": result_run_id, "executor_identity": executor_identity or ("fixture-reviewer" if package["role"] == "CHANNEL_INTELLIGENCE_REVIEWER" else "fixture-producer")},
     }
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -255,6 +327,8 @@ def test_public_result_import_entrypoint_uses_real_cli_and_persists(tmp_path: Pa
                 "tema",
                 "--tema",
                 "T",
+                "--pregunta",
+                "¿Qué revela esta tensión sobre vivir con otros?",
             ],
             cwd=repo,
             text=True,
@@ -273,7 +347,7 @@ def test_public_result_import_entrypoint_uses_real_cli_and_persists(tmp_path: Pa
             package_path = repo / package_path
         result_path = _result_for(
             package_path,
-            _topic_input(),
+            _cognitive_proposal(),
             "RESULT-PUBLIC-IMPORT-P2",
             tmp_path / "public-result.json",
         )
@@ -348,21 +422,22 @@ def test_roundtrip_three_stages_persists_and_stops(tmp_path: Path) -> None:
         created.append(package)
         assert json.loads((episode.folder / "workflow_state.json").read_text()) ["status"] == "PENDING_EXTERNAL_RESULT"
 
-        topic = _topic_input()
-        result_path = _result_for(package, topic, "RESULT-ENRICHMENT-P2", tmp_path / "enrichment.json")
+        result_path = _result_for(package, _cognitive_proposal(), "RESULT-ENRICHMENT-P2", tmp_path / "enrichment.json")
         service.import_result(episode.episode_id, result_path)
         service.resume(episode.episode_id)
         _, _, package = _pending_package(episode)
         created.append(package)
 
-        assessment = _assessment(topic, "RESULT-PRODUCER-P2")
-        result_path = _result_for(package, assessment, "RESULT-PRODUCER-P2", tmp_path / "producer.json")
+        topic = _materialized_topic_input(episode)
+        cognitive_assessment = _cognitive_assessment(topic, "RESULT-PRODUCER-P2")
+        result_path = _result_for(package, cognitive_assessment, "RESULT-PRODUCER-P2", tmp_path / "producer.json")
         service.import_result(episode.episode_id, result_path)
         service.resume(episode.episode_id)
         _, _, package = _pending_package(episode)
         created.append(package)
 
-        decision = _decision(assessment, "RESULT-REVIEWER-P2")
+        assessment = _materialized_producer_assessment(episode)
+        decision = _cognitive_decision(assessment)
         result_path = _result_for(package, decision, "RESULT-REVIEWER-P2", tmp_path / "reviewer.json")
         service.import_result(episode.episode_id, result_path)
         final = service.resume(episode.episode_id)
@@ -370,7 +445,7 @@ def test_roundtrip_three_stages_persists_and_stops(tmp_path: Path) -> None:
         assert json.loads((episode.folder / "roundtrip_results.json").read_text())["results"]
         execution = json.loads((episode.folder / "topic_belonging_execution.json").read_text())["executions"]
         assert [item["stage"] for item in execution] == ["ENRICHMENT", "PRODUCER", "REVIEWER"]
-        assert all(item["execution_family"] == "AGENT_HARNESS" and item["execution_mode"] == "SYNTHETIC" for item in execution)
+        assert all(item["execution_family"] == "AGENT_HARNESS" and item["execution_mode"] == "REAL" for item in execution)
         results = json.loads((episode.folder / "roundtrip_results.json").read_text())["results"]
         assert len({item["handoff_id"] for item in results}) == 3
         assert [item["stage"] for item in results] == ["ENRICHMENT", "PRODUCER", "REVIEWER"]
@@ -378,9 +453,344 @@ def test_roundtrip_three_stages_persists_and_stops(tmp_path: Path) -> None:
         _cleanup_handoffs(created, service)
 
 
+def test_request_more_evidence_reentry_preserves_first_attempt(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        service.import_result(
+            episode.episode_id,
+            _result_for(package, _cognitive_proposal(), "RESULT-ENRICHMENT-RECOVERY", tmp_path / "enrichment.json"),
+        )
+        service.resume(episode.episode_id)
+        _, _, package = _pending_package(episode)
+        created.append(package)
+        topic = _materialized_topic_input(episode)
+        service.import_result(
+            episode.episode_id,
+            _result_for(package, _cognitive_assessment(topic, "RESULT-PRODUCER-RECOVERY"), "RESULT-PRODUCER-RECOVERY", tmp_path / "producer.json"),
+        )
+        service.resume(episode.episode_id)
+        _, _, package = _pending_package(episode)
+        created.append(package)
+        assessment = _materialized_producer_assessment(episode)
+        service.import_result(
+            episode.episode_id,
+            _result_for(package, _cognitive_decision(assessment), "RESULT-REVIEWER-RECOVERY", tmp_path / "reviewer.json"),
+        )
+        service.resume(episode.episode_id)
+        original_decision = (episode.folder / "04_topic_belonging_decision.json").read_bytes()
+
+        evidence_path = tmp_path / "evidence.json"
+        evidence_path.write_text(
+            json.dumps(
+                {
+                    "candidate_work_refs": ["work:concrete-narrative"],
+                    "scene_refs": ["scene:concrete-narrative:belonging-boundary"],
+                    "evidence": ["La obra concreta permite verificar reconocimiento e exclusion en escenas observables."],
+                    "question_answers": {"narrative_door": "work:concrete-narrative"},
+                },
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+        ready = service.submit_topic_belonging_evidence(
+            episode.episode_id,
+            evidence_path,
+        )
+        assert ready["state"]["status"] == "READY_FOR_REASSESSMENT"
+        ready_report = build_p2_report(episode.folder)
+        assert ready_report.result == "PARTIAL"
+        assert any(
+            step.name == "READY_FOR_REASSESSMENT" and step.status == "PASS"
+            for step in ready_report.steps
+        )
+        assert (episode.folder / "04_topic_belonging_decision.json").read_bytes() == original_decision
+
+        pending = service.prepare_topic_belonging_reassessment(episode.episode_id)
+        assert pending["state"]["status"] == "PENDING_EXTERNAL_RESULT"
+        package = Path(pending["state"]["handoff_package_ref"])
+        created.append(package)
+        package_data = json.loads(package.read_text(encoding="utf-8"))
+        assert package_data["output_schema"] == "topic_belonging_cognitive_decision"
+        assert any(
+            item["artifact_kind"] == "topic_belonging_reassessment_evidence"
+            for item in package_data["input_manifest"]["artifacts"]
+        )
+        service.import_result(
+            episode.episode_id,
+            _result_for(package, _cognitive_decision(assessment, "REJECT"), "RESULT-REVIEWER-RECOVERY-2", tmp_path / "reviewer-2.json"),
+        )
+        final = service.resume(episode.episode_id)
+        assert final["state"]["status"] == "TOPIC_BELONGING_TECHNICAL_STOP"
+        workflow_state = json.loads((episode.folder / "workflow_state.json").read_text(encoding="utf-8"))
+        assert workflow_state["editorial_decision"] == "REJECT"
+        assert (episode.folder / "04_topic_belonging_decision.json").read_bytes() == original_decision
+        reassessments = json.loads((episode.folder / "topic_belonging_reassessments.json").read_text(encoding="utf-8"))
+        assert reassessments["reassessments"][-1]["status"] == "COMPLETED"
+        reassessment = reassessments["reassessments"][-1]
+        assert workflow_state["effective_decision_ref"] == reassessment["decision_ref"]
+        assert workflow_state["effective_decision_checksum"] == reassessment["decision_checksum"]
+        assert workflow_state["effective_decision_source_attempt"] == 2
+        assert reassessment["prior_decision_ref"] == f"episode:{episode.episode_id}/04_topic_belonging_decision.json"
+        assert hashlib.sha256((episode.folder / "04_topic_belonging_decision.json").read_bytes()).hexdigest() == reassessment["prior_decision_checksum"]
+        decision_ref = reassessment["decision_ref"].split(f"episode:{episode.episode_id}/", 1)[1]
+        assert hashlib.sha256((episode.folder / decision_ref).read_bytes()).hexdigest() == reassessment["decision_checksum"]
+        assert len(json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))["results"]) == 4
+
+        duplicate = service.submit_topic_belonging_evidence(episode.episode_id, evidence_path)
+        assert duplicate["state"]["status"] == "TOPIC_BELONGING_TECHNICAL_STOP"
+        duplicate_workflow = json.loads((episode.folder / "workflow_state.json").read_text(encoding="utf-8"))
+        assert duplicate_workflow["editorial_decision"] == "REJECT"
+        assert duplicate_workflow["reassessment_id"] == reassessments["reassessments"][-1]["reassessment_id"]
+        assert len(json.loads((episode.folder / "topic_belonging_reassessments.json").read_text(encoding="utf-8"))["reassessments"]) == 1
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def _reassessment_evidence(label: str) -> dict:
+    return {
+        "context": f"Evidencia técnica de reevaluación {label}.",
+        "candidate_work_refs": [f"work:{label}"],
+        "scene_refs": [f"scene:{label}:belonging-boundary"],
+        "evidence": [f"La evidencia {label} permite verificar la frontera de pertenencia."],
+        "question_answers": {"narrative_door": f"work:{label}"},
+    }
+
+
+def _complete_reassessment(
+    service: EpisodeApplicationService,
+    episode,
+    tmp_path: Path,
+    label: str,
+    decision_name: str,
+    created: list[Path],
+) -> dict:
+    evidence_path = tmp_path / f"evidence-{label}.json"
+    evidence_path.write_text(json.dumps(_reassessment_evidence(label)), encoding="utf-8")
+    ready = service.submit_topic_belonging_evidence(episode.episode_id, evidence_path)
+    assert ready["state"]["status"] == "READY_FOR_REASSESSMENT"
+    pending = service.prepare_topic_belonging_reassessment(episode.episode_id)
+    package = Path(pending["state"]["handoff_package_ref"])
+    created.append(package)
+    assessment = _materialized_producer_assessment(episode)
+    service.import_result(
+        episode.episode_id,
+        _result_for(
+            package,
+            _cognitive_decision(assessment, decision_name),
+            f"RESULT-REASSESSMENT-{label}",
+            tmp_path / f"reviewer-{label}.json",
+        ),
+    )
+    final = service.resume(episode.episode_id)
+    assert final["state"]["status"] == "TOPIC_BELONGING_TECHNICAL_STOP"
+    return final
+
+
+@pytest.mark.parametrize("decision_name", ["REJECT", "BLOCK", "APPROVE", "APPROVE_WITH_CONDITIONS"])
+def test_terminal_decisions_reject_new_reassessment_evidence(tmp_path: Path, decision_name: str) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        _finish_roundtrip(service, episode, tmp_path, decision_name)
+        evidence_path = tmp_path / "terminal-evidence.json"
+        evidence_path.write_text(json.dumps(_reassessment_evidence(decision_name)), encoding="utf-8")
+        with pytest.raises(TopicBelongingExecutionError, match="TOPIC_BELONGING_REASSESSMENT_NOT_REQUESTED"):
+            service.submit_topic_belonging_evidence(episode.episode_id, evidence_path)
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_reassessment_chain_uses_latest_effective_decision(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        _finish_roundtrip(service, episode, tmp_path)
+        _complete_reassessment(service, episode, tmp_path, "attempt-2", "REQUEST_MORE_EVIDENCE", created)
+        _complete_reassessment(service, episode, tmp_path, "attempt-3", "REJECT", created)
+        reassessments = json.loads((episode.folder / "topic_belonging_reassessments.json").read_text(encoding="utf-8"))["reassessments"]
+        assert [item["attempt_number"] for item in reassessments] == [2, 3]
+        assert reassessments[1]["prior_decision_ref"] == reassessments[0]["decision_ref"]
+        assert reassessments[1]["prior_decision_checksum"] == reassessments[0]["decision_checksum"]
+        decision_path = reassessments[0]["decision_ref"].split(f"episode:{episode.episode_id}/", 1)[1]
+        assert hashlib.sha256((episode.folder / decision_path).read_bytes()).hexdigest() == reassessments[1]["prior_decision_checksum"]
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_reassessment_rejects_stale_prior_decision_binding(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        _finish_roundtrip(service, episode, tmp_path)
+        evidence_path = tmp_path / "stale-evidence.json"
+        evidence_path.write_text(json.dumps(_reassessment_evidence("stale")), encoding="utf-8")
+        service.submit_topic_belonging_evidence(episode.episode_id, evidence_path)
+        reassessment_path = episode.folder / "topic_belonging_reassessments.json"
+        data = json.loads(reassessment_path.read_text(encoding="utf-8"))
+        data["reassessments"][0]["prior_decision_checksum"] = "0" * 64
+        reassessment_path.write_text(json.dumps(data), encoding="utf-8")
+        with pytest.raises(TopicBelongingExecutionError, match="TOPIC_BELONGING_PRIOR_DECISION_BINDING_INVALID"):
+            service.prepare_topic_belonging_reassessment(episode.episode_id)
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_reassessment_schema_rejects_whitespace_only_values(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        _finish_roundtrip(service, episode, tmp_path)
+        evidence_path = tmp_path / "whitespace-evidence.json"
+        evidence_path.write_text(json.dumps({"context": "   \n\t"}), encoding="utf-8")
+        with pytest.raises(TopicBelongingExecutionError, match="REASSESSMENT_EVIDENCE_INVALID"):
+            service.submit_topic_belonging_evidence(episode.episode_id, evidence_path)
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"context": " \t\n"},
+        {"candidate_work_refs": [" \t\n"]},
+        {"scene_refs": [" \t\n"]},
+        {"evidence": [" \t\n"]},
+        {"question_answers": {" \t\n": "valid"}},
+        {"question_answers": {"valid": " \t\n"}},
+    ],
+)
+def test_reassessment_schema_rejects_whitespace_strings_elements_and_keys(payload: dict) -> None:
+    assert validate_against_schema(payload, "topic_belonging_reassessment_evidence")
+
+
 def _pending_package(episode):
     workflow = json.loads((episode.folder / "workflow_state.json").read_text(encoding="utf-8"))
     return workflow["stage"], episode, Path(workflow["handoff_package_ref"])
+
+
+def test_enrichment_import_materializes_software_owned_input(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        proposal = _cognitive_proposal()
+        result_path = _result_for(package, proposal, "RESULT-ENRICHMENT-MATERIALIZED", tmp_path / "enrichment.json")
+        service.import_result(episode.episode_id, result_path)
+
+        results = json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))
+        record = results["results"][0]
+        materialized = json.loads((episode.folder / record["materialized_output_path"]).read_text(encoding="utf-8"))
+        assert materialized["topic"] == "T"
+        assert materialized["central_question"] == "¿Qué revela esta tensión sobre vivir con otros?"
+        assert materialized["topic_input_id"].startswith("TBI-")
+        assert materialized["submitted_at"]
+        assert materialized["profile_id"] == active_profile()["profile_id"]
+        assert materialized["profile_version"] == active_profile()["profile_version"]
+        assert materialized["proposed_angle"] == proposal["proposed_angle"]
+        assert "topic_input_id" not in proposal
+        assert "submitted_at" not in proposal
+        workflow = json.loads((episode.folder / "workflow_state.json").read_text(encoding="utf-8"))
+        assert workflow["status"] == "PERSISTED"
+        assert workflow["next_stage"] == "PRODUCER"
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_enrichment_import_rejects_missing_canonical_input(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        (episode.folder / "01_editorial_intake_handoff.json").unlink()
+        result_path = _result_for(package, _cognitive_proposal(), "RESULT-ENRICHMENT-NO-INPUT", tmp_path / "missing-input.json")
+        with pytest.raises(TopicBelongingExecutionError, match="ROUNDTRIP_INPUT_CANONICAL_MISSING"):
+            service.import_result(episode.episode_id, result_path)
+        workflow = json.loads((episode.folder / "workflow_state.json").read_text(encoding="utf-8"))
+        assert workflow["status"] == "PENDING_EXTERNAL_RESULT"
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_enrichment_import_rejects_wrong_episode_binding(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        result_path = _result_for(package, _cognitive_proposal(), "RESULT-ENRICHMENT-WRONG-EPISODE", tmp_path / "wrong-episode.json")
+        payload = json.loads(result_path.read_text(encoding="utf-8"))
+        payload["episode_id"] = "ep-other"
+        result_path.write_text(json.dumps(payload), encoding="utf-8")
+        with pytest.raises(TopicBelongingExecutionError, match="ROUNDTRIP_RESULT_PACKAGE_BINDING_INVALID"):
+            service.import_result(episode.episode_id, result_path)
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_enrichment_import_rejects_wrong_result_correlation(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        result_path = _result_for(package, _cognitive_proposal(), "RESULT-ENRICHMENT-CORRELATION", tmp_path / "wrong-correlation.json")
+        payload = json.loads(result_path.read_text(encoding="utf-8"))
+        payload["provenance"]["run_id"] = "RESULT-ENRICHMENT-CORRELATION-OTHER"
+        result_path.write_text(json.dumps(payload), encoding="utf-8")
+        with pytest.raises(TopicBelongingExecutionError, match="ROUNDTRIP_RESULT_PROVENANCE_BINDING_INVALID"):
+            service.import_result(episode.episode_id, result_path)
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_enrichment_import_rejects_software_owned_metadata_from_proposal(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        proposal = _cognitive_proposal()
+        proposal["topic_input_id"] = "TBI-FORGED"
+        result_path = _result_for(package, proposal, "RESULT-ENRICHMENT-FORGED-METADATA", tmp_path / "forged-metadata.json")
+        with pytest.raises(TopicBelongingExecutionError, match="COGNITIVE_PROPOSAL_INVALID"):
+            service.import_result(episode.episode_id, result_path)
+        assert not (episode.folder / "roundtrip_results.json").exists()
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_enrichment_import_resumes_to_producer_handoff(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        result_path = _result_for(package, _cognitive_proposal(), "RESULT-ENRICHMENT-NEXT-STAGE", tmp_path / "next-stage.json")
+        service.import_result(episode.episode_id, result_path)
+        resumed = service.resume(episode.episode_id)
+        assert resumed["state"]["status"] == "PENDING_EXTERNAL_RESULT"
+        workflow = json.loads((episode.folder / "workflow_state.json").read_text(encoding="utf-8"))
+        assert workflow["stage"] == "PRODUCER"
+        assert workflow["next_stage"] == "PRODUCER"
+        assert workflow["completed_stages"] == ["ENRICHMENT"]
+        producer_package = Path(workflow["handoff_package_ref"])
+        created.append(producer_package)
+        assert json.loads(producer_package.read_text(encoding="utf-8"))["stage"] == "PRODUCER"
+    finally:
+        _cleanup_handoffs(created, service)
 
 
 def test_p2_reporter_marks_pending_without_inventing_pass(tmp_path: Path) -> None:
@@ -433,7 +843,7 @@ def test_p2_reporter_exposes_persisted_evidence_failure(tmp_path: Path) -> None:
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        result = _result_for(package, _topic_input(), "RESULT-REPORTER-TAMPER", tmp_path / "reporter.json")
+        result = _result_for(package, _cognitive_proposal(), "RESULT-REPORTER-TAMPER", tmp_path / "reporter.json")
         service.import_result(episode.episode_id, result)
         indexed = json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))["results"][0]
         (episode.folder / indexed["result_path"]).unlink()
@@ -469,27 +879,28 @@ def test_p2_reporter_rejects_inconsistent_terminal_state(tmp_path: Path) -> None
         _cleanup_handoffs(created, service)
 
 
-def _finish_roundtrip(service, episode, tmp_path: Path) -> list[Path]:
+def _finish_roundtrip(service, episode, tmp_path: Path, decision_name: str = "REQUEST_MORE_EVIDENCE") -> list[Path]:
     created: list[Path] = []
     _, _, package = _pending_package(episode)
     created.append(package)
-    topic = _topic_input()
     service.import_result(
         episode.episode_id,
-        _result_for(package, topic, "RESULT-FIX-ENRICHMENT", tmp_path / "fix-enrichment.json"),
+        _result_for(package, _cognitive_proposal(), "RESULT-FIX-ENRICHMENT", tmp_path / "fix-enrichment.json"),
     )
     service.resume(episode.episode_id)
     _, _, package = _pending_package(episode)
     created.append(package)
-    assessment = _assessment(topic, "RESULT-FIX-PRODUCER")
+    topic = _materialized_topic_input(episode)
+    cognitive_assessment = _cognitive_assessment(topic, "RESULT-FIX-PRODUCER")
     service.import_result(
         episode.episode_id,
-        _result_for(package, assessment, "RESULT-FIX-PRODUCER", tmp_path / "fix-producer.json"),
+        _result_for(package, cognitive_assessment, "RESULT-FIX-PRODUCER", tmp_path / "fix-producer.json"),
     )
     service.resume(episode.episode_id)
     _, _, package = _pending_package(episode)
     created.append(package)
-    decision = _decision(assessment, "RESULT-FIX-REVIEWER")
+    assessment = _materialized_producer_assessment(episode)
+    decision = _cognitive_decision(assessment, decision_name)
     service.import_result(
         episode.episode_id,
         _result_for(package, decision, "RESULT-FIX-REVIEWER", tmp_path / "fix-reviewer.json"),
@@ -504,7 +915,7 @@ def test_roundtrip_duplicate_import_is_idempotent(tmp_path: Path) -> None:
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        result_path = _result_for(package, _topic_input(), "RESULT-DUPLICATE-P2", tmp_path / "duplicate.json")
+        result_path = _result_for(package, _cognitive_proposal(), "RESULT-DUPLICATE-P2", tmp_path / "duplicate.json")
         service.import_result(episode.episode_id, result_path)
         count_before = len(json.loads((episode.folder / "roundtrip_results.json").read_text())["results"])
         service.import_result(episode.episode_id, result_path)
@@ -520,7 +931,7 @@ def test_roundtrip_duplicate_without_provenance_is_blocked(tmp_path: Path) -> No
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        original = _result_for(package, _topic_input(), "RESULT-DUPLICATE-MISSING-PROVENANCE", tmp_path / "duplicate-missing-provenance.json")
+        original = _result_for(package, _cognitive_proposal(), "RESULT-DUPLICATE-MISSING-PROVENANCE", tmp_path / "duplicate-missing-provenance.json")
         service.import_result(episode.episode_id, original)
         altered = json.loads(original.read_text(encoding="utf-8"))
         altered.pop("provenance")
@@ -538,7 +949,7 @@ def test_roundtrip_duplicate_with_provenance_run_mismatch_is_blocked(tmp_path: P
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        original = _result_for(package, _topic_input(), "RESULT-DUPLICATE-PROVENANCE-RUN", tmp_path / "duplicate-provenance-run.json")
+        original = _result_for(package, _cognitive_proposal(), "RESULT-DUPLICATE-PROVENANCE-RUN", tmp_path / "duplicate-provenance-run.json")
         service.import_result(episode.episode_id, original)
         altered = json.loads(original.read_text(encoding="utf-8"))
         altered["provenance"]["run_id"] = "RESULT-DUPLICATE-PROVENANCE-RUN-OTHER"
@@ -556,7 +967,7 @@ def test_roundtrip_duplicate_with_changed_result_run_id_is_blocked(tmp_path: Pat
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        original = _result_for(package, _topic_input(), "RESULT-DUPLICATE-RUN", tmp_path / "duplicate-run.json")
+        original = _result_for(package, _cognitive_proposal(), "RESULT-DUPLICATE-RUN", tmp_path / "duplicate-run.json")
         service.import_result(episode.episode_id, original)
         altered = json.loads(original.read_text(encoding="utf-8"))
         altered["result_run_id"] = "RESULT-DUPLICATE-RUN-ALTERED"
@@ -575,7 +986,7 @@ def test_roundtrip_duplicate_with_changed_mission_is_blocked(tmp_path: Path) -> 
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        original = _result_for(package, _topic_input(), "RESULT-DUPLICATE-MISSION", tmp_path / "duplicate-mission.json")
+        original = _result_for(package, _cognitive_proposal(), "RESULT-DUPLICATE-MISSION", tmp_path / "duplicate-mission.json")
         service.import_result(episode.episode_id, original)
         altered = json.loads(original.read_text(encoding="utf-8"))
         altered["mission_id"] = "OTHER-MISSION"
@@ -594,10 +1005,10 @@ def test_roundtrip_conflicting_duplicate_is_blocked(tmp_path: Path) -> None:
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        original = _result_for(package, _topic_input(), "RESULT-CONFLICT-P2", tmp_path / "original.json")
+        original = _result_for(package, _cognitive_proposal(), "RESULT-CONFLICT-P2", tmp_path / "original.json")
         service.import_result(episode.episode_id, original)
         conflicting = json.loads(original.read_text(encoding="utf-8"))
-        conflicting["output"]["topic"] = "conflicto"
+        conflicting["output"]["proposed_angle"] = "conflicto"
         conflicting["output_checksum"] = "0" * 64
         conflict_path = tmp_path / "conflict.json"
         conflict_path.write_text(json.dumps(conflicting), encoding="utf-8")
@@ -700,7 +1111,7 @@ def test_roundtrip_import_rejects_wrong_stage_binding(tmp_path: Path) -> None:
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        result_path = _result_for(package, _topic_input(), "RESULT-WRONG-STAGE-P2", tmp_path / "wrong.json")
+        result_path = _result_for(package, _cognitive_proposal(), "RESULT-WRONG-STAGE-P2", tmp_path / "wrong.json")
         payload = json.loads(result_path.read_text(encoding="utf-8"))
         payload["stage"] = "REVIEWER"
         result_path.write_text(json.dumps(payload), encoding="utf-8")
@@ -720,27 +1131,30 @@ def test_roundtrip_valid_result_with_wrong_persisted_checkpoint_is_blocked(tmp_p
         workflow = json.loads(workflow_path.read_text(encoding="utf-8"))
         workflow["handoff_id"] = "HANDOFF-WRONG-CHECKPOINT"
         workflow_path.write_text(json.dumps(workflow), encoding="utf-8")
-        result_path = _result_for(package, _topic_input(), "RESULT-WRONG-CHECKPOINT-P2", tmp_path / "wrong-checkpoint.json")
+        result_path = _result_for(package, _cognitive_proposal(), "RESULT-WRONG-CHECKPOINT-P2", tmp_path / "wrong-checkpoint.json")
         with pytest.raises(TopicBelongingExecutionError, match="CHECKPOINT_BINDING"):
             service.import_result(episode.episode_id, result_path)
     finally:
         _cleanup_handoffs(created, service)
 
 
-def test_roundtrip_result_run_id_mismatch_is_blocked(tmp_path: Path) -> None:
+def test_roundtrip_producer_result_provenance_mismatch_is_blocked(tmp_path: Path) -> None:
     created: list[Path] = []
     service = None
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        topic = _topic_input()
-        service.import_result(episode.episode_id, _result_for(package, topic, "RESULT-ENRICHMENT-RUN", tmp_path / "enrichment.json"))
+        service.import_result(episode.episode_id, _result_for(package, _cognitive_proposal(), "RESULT-ENRICHMENT-RUN", tmp_path / "enrichment.json"))
         service.resume(episode.episode_id)
         _, _, package = _pending_package(episode)
         created.append(package)
-        assessment = _assessment(topic, "RESULT-PRODUCER-DECLARED")
-        result_path = _result_for(package, assessment, "RESULT-PRODUCER-ACTUAL", tmp_path / "producer.json")
-        with pytest.raises(TopicBelongingExecutionError, match="PRODUCER_RESULT_RUN_BINDING_INVALID"):
+        topic = _materialized_topic_input(episode)
+        cognitive_assessment = _cognitive_assessment(topic, "RESULT-PRODUCER-DECLARED")
+        result_path = _result_for(package, cognitive_assessment, "RESULT-PRODUCER-ACTUAL", tmp_path / "producer.json")
+        payload = json.loads(result_path.read_text(encoding="utf-8"))
+        payload["provenance"]["run_id"] = "RESULT-PRODUCER-DECLARED"
+        result_path.write_text(json.dumps(payload), encoding="utf-8")
+        with pytest.raises(TopicBelongingExecutionError, match="ROUNDTRIP_RESULT_PROVENANCE_BINDING_INVALID"):
             service.import_result(episode.episode_id, result_path)
     finally:
         _cleanup_handoffs(created, service)
@@ -753,12 +1167,12 @@ def test_roundtrip_new_service_revalidates_tampered_persisted_envelope(tmp_path:
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        result_path = _result_for(package, _topic_input(), "RESULT-RESTART-P2", tmp_path / "restart.json")
+        result_path = _result_for(package, _cognitive_proposal(), "RESULT-RESTART-P2", tmp_path / "restart.json")
         service.import_result(episode.episode_id, result_path)
         persisted = json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))["results"][0]
         stored_result = episode.folder / persisted["result_path"]
         envelope = json.loads(stored_result.read_text(encoding="utf-8"))
-        envelope["output"]["topic"] = "altered-after-import"
+        envelope["output"]["proposed_angle"] = "altered-after-import"
         stored_result.write_text(json.dumps(envelope), encoding="utf-8")
         restarted = _service(tmp_path, getattr(service, "_p2_test_vault_root"))
         with pytest.raises(TopicBelongingExecutionError, match="PERSISTED_ENVELOPE"):
@@ -774,7 +1188,7 @@ def test_roundtrip_new_service_continues_from_persisted_checkpoint(tmp_path: Pat
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        service.import_result(episode.episode_id, _result_for(package, _topic_input(), "RESULT-RESTART-CONTINUE", tmp_path / "restart-continue.json"))
+        service.import_result(episode.episode_id, _result_for(package, _cognitive_proposal(), "RESULT-RESTART-CONTINUE", tmp_path / "restart-continue.json"))
         restarted = _service(tmp_path, getattr(service, "_p2_test_vault_root"))
         resumed = restarted.resume(episode.episode_id)
         assert resumed["state"]["status"] == "PENDING_EXTERNAL_RESULT"
@@ -791,7 +1205,7 @@ def test_roundtrip_resume_rejects_incompatible_next_stage(tmp_path: Path) -> Non
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        service.import_result(episode.episode_id, _result_for(package, _topic_input(), "RESULT-BAD-NEXT-STAGE", tmp_path / "bad-next-stage.json"))
+        service.import_result(episode.episode_id, _result_for(package, _cognitive_proposal(), "RESULT-BAD-NEXT-STAGE", tmp_path / "bad-next-stage.json"))
         workflow_path = episode.folder / "workflow_state.json"
         workflow = json.loads(workflow_path.read_text(encoding="utf-8"))
         workflow["next_stage"] = "UNKNOWN"
@@ -808,7 +1222,7 @@ def test_roundtrip_resume_is_idempotent_while_next_handoff_is_pending(tmp_path: 
     try:
         service, episode, package = _start(tmp_path)
         created.append(package)
-        service.import_result(episode.episode_id, _result_for(package, _topic_input(), "RESULT-RESUME-IDEMPOTENT", tmp_path / "resume.json"))
+        service.import_result(episode.episode_id, _result_for(package, _cognitive_proposal(), "RESULT-RESUME-IDEMPOTENT", tmp_path / "resume.json"))
         first = service.resume(episode.episode_id)
         first_package = first["state"].get("handoff_package_ref")
         second = service.resume(episode.episode_id)

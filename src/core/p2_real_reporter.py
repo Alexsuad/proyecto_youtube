@@ -14,6 +14,7 @@ from src.application.topic_belonging import TopicBelongingTechnicalWorkflow
 STAGES = ("ENRICHMENT", "PRODUCER", "REVIEWER")
 FINAL_STATUS = "TOPIC_BELONGING_TECHNICAL_STOP"
 PENDING_STATUSES = {"PENDING_EXTERNAL_RESULT", "PERSISTED"}
+REASSESSMENT_READY_STATUS = "READY_FOR_REASSESSMENT"
 
 
 @dataclass(frozen=True)
@@ -78,10 +79,9 @@ def _result_record_index(folder: Path) -> tuple[dict[str, Any] | None, list[P2Re
     if any(not isinstance(item, dict) for item in results):
         return None, [_step_fail("RESULT_INDEX", "results contiene un registro que no es objeto", "registros JSON objeto", repr(results))]
     stages = [str(item.get("stage") or "") for item in results]
-    if len(set(stages)) != len(stages) or any(stage not in STAGES for stage in stages):
+    prefix_length = min(len(stages), len(STAGES))
+    if any(stage not in STAGES for stage in stages) or stages[:prefix_length] != list(STAGES)[:prefix_length] or any(stage != "REVIEWER" for stage in stages[len(STAGES):]):
         return None, [_step_fail("RESULT_INDEX", "etapas duplicadas o desconocidas en el índice", repr(STAGES), repr(stages))]
-    if tuple(stages) != tuple(STAGES[: len(stages)]):
-        return None, [_step_fail("RESULT_INDEX", "el índice no conserva el orden canónico", "prefijo ordenado de las etapas P2", repr(stages))]
     return {str(item["stage"]): item for item in results}, []
 
 
@@ -195,6 +195,31 @@ def build_p2_report(episode_folder: str | Path) -> P2Report:
                 break
     if workflow_status in PENDING_STATUSES:
         steps.append(_step_pass("PENDING_EXTERNAL_RESULT", workflow_path))
+    elif workflow_status == REASSESSMENT_READY_STATUS:
+        reassessments_path = folder / "topic_belonging_reassessments.json"
+        reassessment_id = workflow.get("reassessment_id")
+        try:
+            reassessments = _read_json(reassessments_path, "topic_belonging_reassessments.json")
+            ready = next(
+                item for item in reassessments.get("reassessments", [])
+                if isinstance(item, dict)
+                and item.get("reassessment_id") == reassessment_id
+                and item.get("status") == "EVIDENCE_RECEIVED"
+            )
+            if not ready:
+                raise ValueError("no hay evidencia de reevaluación pendiente")
+        except (StopIteration, ValueError) as exc:
+            steps.append(
+                _step_fail(
+                    "READY_FOR_REASSESSMENT",
+                    str(exc),
+                    "evidencia persistida para la reevaluación pendiente",
+                    "estado READY sin evidencia compatible",
+                )
+            )
+        else:
+            steps.append(_step_pass("READY_FOR_REASSESSMENT", workflow_path, reassessments_path))
+            steps.append(_step_pending("PENDING_EXTERNAL_RESULT", "handoff de reevaluación preparado", "aún no preparado"))
     elif workflow_status == FINAL_STATUS and result_records:
         steps.append(_step_pass("PENDING_EXTERNAL_RESULT", folder / "roundtrip_results.json"))
     else:

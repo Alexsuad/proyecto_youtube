@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Topic Belonging Cognitive Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision",
+    "conditions",
+    "exclusions",
+    "risks",
+    "owner_escalation_required",
+    "owner_escalation_reason",
+    "strategic_dimensions_affected",
+    "temporary_or_permanent_effect",
+    "precedent_risk",
+    "evidence"
+  ],
+  "properties": {
+    "decision": {"enum": ["APPROVE", "APPROVE_WITH_CONDITIONS", "REQUEST_MORE_EVIDENCE", "REJECT", "BLOCK", "ESCALATE_TO_OWNER"]},
+    "conditions": {"type": "array"},
+    "exclusions": {"type": "array"},
+    "risks": {"type": "array"},
+    "owner_escalation_required": {"type": "boolean"},
+    "owner_escalation_reason": {"type": "string"},
+    "strategic_dimensions_affected": {"type": "array"},
+    "temporary_or_permanent_effect": {"enum": ["TEMPORARY", "PERMANENT", "NONE"]},
+    "precedent_risk": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+    "evidence": {"type": "array", "minItems": 1},
+    "pre_b5_i1_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["topic_input_checksum", "research_ref", "narrative_door_evidence_refs", "candidate_work_refs"],
+      "properties": {
+        "topic_input_checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "research_ref": {"type": "string", "minLength": 1},
+        "narrative_door_evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true},
+        "candidate_work_refs": {"type": "array", "minItems": 1, "uniqueItems": true}
+      }
+    }
+  }
+}
