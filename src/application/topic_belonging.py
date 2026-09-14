@@ -2003,8 +2003,13 @@ class TopicBelongingTechnicalWorkflow:
 
         Solo archiva handoffs cuyo ``handoff_id`` ya está persistido en
         ``roundtrip_results.json`` con workflow en STOP técnico. Los pendientes
-        permanecen visibles en ``handoff/``. Nunca toca la evidencia canónica.
+        permanecen visibles en ``handoff/``. Tras mover cada paquete, su
+        ``handoff_package_ref`` se reubica al destino verificado para que las
+        revalidaciones post-STOP sigan resolviendo el mismo contenido.
         """
+        import os
+        import tempfile
+
         from src.application.handoff_archive import archive_episode_handoffs_from_vault
 
         configured = getattr(self.boundary, "handoff_directory", None)
@@ -2013,11 +2018,39 @@ class TopicBelongingTechnicalWorkflow:
             handoff_dir = candidate if candidate.is_absolute() else REPO_ROOT / candidate
         else:
             handoff_dir = REPO_ROOT / "handoff"
-        return archive_episode_handoffs_from_vault(
+        report = archive_episode_handoffs_from_vault(
             handoff_dir=handoff_dir,
             history_root=history_root,
             episode_folder=handle.folder,
         )
+        archived = [str(name) for name in report.get("archived", [])]
+        refs_updated = 0
+        if archived:
+            history_dir = Path(str(report["history_dir"]))
+            results_path = handle.folder / ROUNDTRIP_RESULTS_FILENAME
+            data = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME)
+            results = data.get("results", [])
+            if not isinstance(results, list):
+                raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_RESULTS_INDEX_INVALID")
+            for record in results:
+                if not isinstance(record, dict):
+                    continue
+                current_ref = str(record.get("handoff_package_ref") or "")
+                if Path(current_ref).name in archived:
+                    record["handoff_package_ref"] = str(history_dir / Path(current_ref).name)
+                    refs_updated += 1
+            payload = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+            try:
+                with tempfile.NamedTemporaryFile(
+                    mode="w", encoding="utf-8", dir=str(handle.folder), delete=False
+                ) as tmp:
+                    tmp.write(payload)
+                    tmp_path = Path(tmp.name)
+                os.replace(tmp_path, results_path)
+            except OSError as exc:
+                raise TopicBelongingExecutionError(f"ROUNDTRIP_PACKAGE_REF_RELOCATION_FAILED:{exc}") from exc
+        report["refs_updated"] = refs_updated
+        return report
 
     def _read_episode_file_path(self, path: Path) -> dict[str, Any]:
         try:

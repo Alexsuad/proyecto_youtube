@@ -88,6 +88,8 @@ class EpisodeApplicationService:
             outcome = roundtrip_resume(handle)
             if outcome is not None:
                 self.store.record_workflow(handle, outcome)
+                if str(outcome.get("status") or "") == "TOPIC_BELONGING_TECHNICAL_STOP":
+                    self._archive_terminated_handoffs(handle)
                 return self.store.resume(episode_id)
             return current
         if callable(roundtrip_resume) and current["state"].get("status") in {"PENDING_EXTERNAL_RESULT", "VALIDATED"}:
@@ -287,6 +289,22 @@ class EpisodeApplicationService:
         if not callable(archiver):
             raise StorageError("HANDOFF_ARCHIVE_UNAVAILABLE")
         return archiver(handle, Path(history_root))
+
+    def _archive_terminated_handoffs(self, handle: EpisodeHandle) -> None:
+        """Archive raw handoffs automatically once the STOP state is persisted.
+
+        Runs strictly after IMPORT → VALIDATE → PERSIST → UPDATE STATE. Only
+        workflows exposing ``archive_completed_handoffs`` trigger it; pending
+        executions are left visible by the archiver itself. Archive failures
+        propagate as explicit operational errors without deleting sources.
+        """
+        archiver = getattr(self.workflow, "archive_completed_handoffs", None)
+        if not callable(archiver):
+            return
+        channel_path = getattr(self.store, "channel_path", None)
+        if channel_path is None:
+            raise StorageError("HANDOFF_ARCHIVE_CHANNEL_PATH_MISSING")
+        archiver(handle, Path(channel_path) / "Historial")
 
     def administratively_close_irrecoverable_episode(
         self,
