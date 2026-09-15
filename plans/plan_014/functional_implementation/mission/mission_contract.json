@@ -1,0 +1,196 @@
+{
+  "mission_id": "PLAN014_FUNCTIONAL_IMPLEMENTATION",
+  "mission_mode": "LEGACY",
+  "artifact_id": "PLAN014_FUNCTIONAL_IMPLEMENTATION",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_014/functional_implementation/",
+    "src/application/topic_belonging.py",
+    "tests/harness/test_plan009_m1_vertical.py",
+    "tests/harness/test_topic_belonging_http_e2e.py",
+    "tests/harness/test_plan014_materialization.py",
+    "requirements-dev.txt"
+  ],
+  "protected_untracked_paths": [
+    "plans/plan_014/PLAN014_Convergencia_materializacion_cognition_only_API_RUNNER.md",
+    "plans/plan_014/mission/authority.json",
+    "plans/plan_014/mission/mission-authorization.json",
+    "plans/plan_014/mission/mission_contract.json",
+    "tests/ai/test_deepseek_http_boundary.py"
+  ],
+  "protected_untracked_baseline": [
+    {
+      "path": "plans/plan_014/PLAN014_Convergencia_materializacion_cognition_only_API_RUNNER.md",
+      "sha256": "f8f13d60e679afbe1c90a7016977e1baa593c2d85d178cc4beb4f719a78a13ed"
+    },
+    {
+      "path": "plans/plan_014/mission/authority.json",
+      "sha256": "e119725e8937853f853cbe16f91b382013b40331b5b24b019e394a1ede85ad0e"
+    },
+    {
+      "path": "plans/plan_014/mission/mission-authorization.json",
+      "sha256": "1a4fe269f16657673a5c4bec00d673629e164fbfa5ca32498c9bdd12bd5091f6"
+    },
+    {
+      "path": "plans/plan_014/mission/mission_contract.json",
+      "sha256": "6d94be2d53a44a2d4b35f02d4d0935585091db64eeb255b7f8a55f2aa684a812"
+    },
+    {
+      "path": "tests/ai/test_deepseek_http_boundary.py",
+      "sha256": "2fd2b969279f2cbf4ebe31fb908a3ac6be36147913bfa306369cdc5e8f804af3"
+    }
+  ],
+  "required_tests": [
+    {
+      "label": "PLAN014_M1_REGRESSION",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_plan009_m1_vertical.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "PLAN014_HTTP_E2E",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_topic_belonging_http_e2e.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "PLAN009_P2_REGRESSION",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/harness/test_plan009_p2_roundtrip.py"],
+      "timeout_seconds": 480
+    },
+    {
+      "label": "DEEPSEEK_BOUNDARY_REGRESSION",
+      "command": ["py", "-3", "-m", "pytest", "-q", "tests/ai/test_deepseek_http_boundary.py"],
+      "timeout_seconds": 360
+    },
+    {
+      "label": "REQUIREMENTS_DEV_PRESERVATION",
+      "command": ["py", "-3", "-c", "import hashlib,pathlib,sys; p=pathlib.Path('requirements-dev.txt'); h=hashlib.sha256(p.read_bytes()).hexdigest(); expected='6a62fddf7730de04da7b5ae672971d15f08a8056bd66214ffe1d7000115e994b'; print(h); sys.exit(0 if h == expected else 1)"],
+      "timeout_seconds": 60
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "c090112f7922229b6d0ab04591d835270173d3ff"
+  },
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/plan_014/functional_implementation/mission/mission-authorization.json",
+  "mission_authorization_sha256": "534ffd22fe3911c8a32e90a12effa9590d84fd1c192ab254783437add9778bda",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_PLAN": "PLAN014",
+      "CURRENT_ACTIVITY": "PLAN014_FUNCTIONAL_IMPLEMENTATION",
+      "CURRENT_MISSION": "PLAN014_FUNCTIONAL_IMPLEMENTATION",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "plans/plan_014/functional_implementation/mission/mission_contract.json",
+      "NEXT_ALLOWED_ACTION": "EXECUTE_PLAN014_FUNCTIONAL_IMPLEMENTATION_ONLY",
+      "EXECUTION_AUTHORIZED": "YES",
+      "EXECUTION_AUTHORIZATION_SCOPE": "PLAN014_FUNCTIONAL_MINIMAL_IMPLEMENTATION_ONLY",
+      "REAL_AI_EXECUTION": "NO",
+      "PRODUCT_USE_AUTHORIZED": "NO",
+      "PLAN014_STATUS": "FUNCTIONAL_IMPLEMENTATION",
+      "PLAN014_FUNCTIONAL_IMPLEMENTATION": "AUTHORIZED"
+    },
+    "forbidden": {
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "PRODUCT_USE_AUTHORIZED": ["YES", "AUTHORIZED", "ACTIVE"],
+      "PLAN014_STATUS": ["CLOSED", "COMPLETED"],
+      "NEXT_ALLOWED_ACTION": ["OWNER_REVIEW_PLAN014_FUNCTIONAL_IMPLEMENTATION"]
+    }
+  },
+  "schema_checks": [
+    {
+      "path": "plans/plan_014/functional_implementation/mission/mission_contract.json",
+      "schema": "mission_contract"
+    }
+  ],
+  "objective": "Implementar la convergencia software-owned de materialización cognition-only API/RUNNER para Topic Belonging, manteniendo schemas y validators sin cambios, sin IA real ni uso productivo.",
+  "preconditions": [
+    "La autorización explícita del OWNER para PLAN014_FUNCTIONAL_IMPLEMENTATION está vigente.",
+    "El binding material MD-CI-001 corresponde a TOPIC_BELONGING_ASSESSMENT y permanece vigente.",
+    "REAL_AI_EXECUTION permanece NO y PRODUCT_USE_AUTHORIZED permanece NO.",
+    "Los artifacts untracked protegidos permanecen inmutables con sus hashes declarados.",
+    "requirements-dev.txt conserva exactamente el hash autorizado para preservación."
+  ],
+  "canonical_inputs": [
+    "AGENTS.md",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_014/PLAN014_Convergencia_materializacion_cognition_only_API_RUNNER.md",
+    "src/application/topic_belonging.py",
+    "schemas/topic_belonging_cognitive_assessment.json",
+    "schemas/topic_belonging_cognitive_decision.json",
+    "schemas/topic_belonging_assessment.json",
+    "schemas/topic_belonging_decision.json",
+    "tests/harness/test_plan009_p2_roundtrip.py",
+    "tests/ai/test_deepseek_http_boundary.py"
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_014/functional_implementation/",
+    "src/application/topic_belonging.py",
+    "tests/harness/test_plan009_m1_vertical.py",
+    "tests/harness/test_topic_belonging_http_e2e.py",
+    "tests/harness/test_plan014_materialization.py",
+    "requirements-dev.txt"
+  ],
+  "non_objectives": [
+    "Modificar el documento rector de PLAN014 o los artifacts protegidos de authority preparation.",
+    "Modificar requirements-dev.txt; queda autorizado únicamente para preservación.",
+    "Cambiar schemas cognitivos o canónicos.",
+    "Modificar src/ai/, providers, CLI, config o prompts.",
+    "Ejecutar DeepSeek, Internet, IA real, endpoints externos, episodios productivos o YT_VAULT.",
+    "Autorizar uso productivo, Research, Writing, publicación, commit o push."
+  ],
+  "expected_outputs": [
+    "La API materializa assessment y decision canónicos desde payloads cognition-only.",
+    "RUNNER conserva su materialización y sus identidades AGENT_HARNESS_EXTERNAL_*.",
+    "API usa identidades API-owned y no hereda identidades de RUNNER.",
+    "El núcleo común recibe actor, role, run_id y provenance/contexto técnico sin duplicación.",
+    "Los campos software-owned son generados exclusivamente por Software.",
+    "El E2E usa exactamente tres requests y dispatch contractual por stage y schema.",
+    "El workflow termina en TOPIC_BELONGING_TECHNICAL_STOP sin downstream."
+  ],
+  "deterministic_validations": [
+    "Validar este MissionContract y sus bindings de autoridad.",
+    "Exigir el hash exacto de requirements-dev.txt con código de salida distinto de cero ante mismatch.",
+    "Validar assessment cognition-only y decision cognition-only antes de materializar envelopes canónicos.",
+    "Comprobar que los campos reservados son rechazados antes de persistir artifacts.",
+    "Comprobar independencia RUNNER por executor_identity y API por actor, role y run_id.",
+    "Comprobar tres requests HTTP en orden ENRICHMENT, PRODUCER, REVIEWER.",
+    "Comprobar que no se modifican schemas, validators, provider code ni artifacts protegidos.",
+    "Ejecutar las pruebas focales y regresiones declaradas."
+  ],
+  "adversarial_cases": [
+    "Payload cognitivo con IDs, checksums, provenance o campos técnicos.",
+    "Payload cognitivo incompleto o con input binding inválido.",
+    "API intentando heredar una identidad AGENT_HARNESS_EXTERNAL_*.",
+    "RUNNER perdiendo la independencia de executor_identity.",
+    "API compartiendo actor, role o run_id entre PRODUCER y REVIEWER.",
+    "Dispatch HTTP por contador o schema incorrecto.",
+    "Cambio de cualquier artifact untracked protegido o de requirements-dev.txt."
+  ],
+  "stop_conditions": [
+    "Cambiar schemas cognitivos o canónicos.",
+    "Debilitar validators, provenance, checksums o guards.",
+    "Modificar src/ai/, providers, CLI, config, prompts o el documento rector de PLAN014.",
+    "Duplicar materializadores API/RUNNER.",
+    "Eliminar o relajar la independencia externa RUNNER.",
+    "Aceptar IDs, checksums, provenance o bindings suministrados por la IA.",
+    "Hacer que API herede identidades AGENT_HARNESS_EXTERNAL_*.",
+    "Modificar requirements-dev.txt o alterar su hash obligatorio.",
+    "Modificar, eliminar o cambiar el hash de cualquier protected untracked path.",
+    "Ampliar Research, downstream, vaults productivos o autoridad fuera del bundle.",
+    "Usar Internet, credenciales reales, endpoints externos o YT_VAULT.",
+    "Requerir un archivo fuera del scope autorizado.",
+    "No poder representar requirements-dev.txt como preservación-only sin concederle permiso efectivo de modificación."
+  ],
+  "review_policy": {
+    "required_review": "INDEPENDENT_REVIEW",
+    "independent_review": "REQUIRED",
+    "owner_review": true
+  },
+  "owner_closure": {
+    "required": false
+  }
+}

@@ -119,12 +119,13 @@ COGNITIVE_DECISION_FIELDS = frozenset(
         "temporary_or_permanent_effect",
         "precedent_risk",
         "evidence",
-        "pre_b5_i1_evidence",
     }
 )
-REQUIRED_COGNITIVE_DECISION_FIELDS = COGNITIVE_DECISION_FIELDS - {"pre_b5_i1_evidence"}
+REQUIRED_COGNITIVE_DECISION_FIELDS = COGNITIVE_DECISION_FIELDS
 EXTERNAL_PRODUCER_ACTOR_ID = "AGENT_HARNESS_EXTERNAL_PRODUCER"
 EXTERNAL_REVIEWER_ACTOR_ID = "AGENT_HARNESS_EXTERNAL_REVIEWER"
+API_PRODUCER_ACTOR_ID = "API_PROVIDER_PRODUCER"
+API_REVIEWER_ACTOR_ID = "API_PROVIDER_REVIEWER"
 
 
 def _prompt_contract_for_stage(stage: str) -> dict[str, Any]:
@@ -157,8 +158,21 @@ def _expected_raw_output_checksum(
     assessment: dict[str, Any],
     decision: dict[str, Any],
     enrichment_proposal: dict[str, Any] | None = None,
+    *,
+    cognitive_only: bool = False,
 ) -> str:
     """Reconstruct the synthetic runtime payload before provenance normalization."""
+    if cognitive_only:
+        if stage == "ENRICHMENT":
+            return _json_checksum(enrichment_proposal or {})
+        if stage == "PRODUCER":
+            return _json_checksum(
+                {key: assessment.get(key) for key in COGNITIVE_ASSESSMENT_FIELDS}
+            )
+        if stage == "REVIEWER":
+            return _json_checksum(
+                {key: decision.get(key) for key in COGNITIVE_DECISION_FIELDS}
+            )
     if stage == "ENRICHMENT":
         return _json_checksum(enrichment_proposal or topic_input)
     if stage == "PRODUCER":
@@ -369,6 +383,30 @@ def _combine_cognitive_proposal(
         if value not in (None, "", []):
             topic_input[field_name] = copy.deepcopy(value)
     return topic_input
+
+
+def _materialize_pre_b5_i1_evidence(topic_input: dict[str, Any]) -> dict[str, Any] | None:
+    """Bind optional pre-B5 evidence to the canonical input, never to provider output."""
+    research_ref = topic_input.get("research_ref")
+    narrative_refs = topic_input.get("narrative_door_evidence_refs")
+    candidate_refs = topic_input.get("candidate_work_refs")
+    if (
+        not isinstance(research_ref, str)
+        or not research_ref.strip()
+        or not isinstance(narrative_refs, list)
+        or not narrative_refs
+        or not all(isinstance(value, str) and value.strip() for value in narrative_refs)
+        or not isinstance(candidate_refs, list)
+        or not candidate_refs
+        or not all(isinstance(value, str) and value.strip() for value in candidate_refs)
+    ):
+        return None
+    return {
+        "topic_input_checksum": canonical_checksum(topic_input, "input"),
+        "research_ref": research_ref,
+        "narrative_door_evidence_refs": copy.deepcopy(narrative_refs),
+        "candidate_work_refs": copy.deepcopy(candidate_refs),
+    }
 
 
 def _validate_human_handoff_binding(human_input: dict[str, Any], handoff: dict[str, Any]) -> list[str]:
@@ -591,6 +629,7 @@ class ExecutionCognitiveBoundary:
     ) -> tuple[dict[str, Any], ExecutionResult]:
         request_run_id = f"REQUEST-{stage.upper()}-{uuid4().hex}"
         role_id = role
+        stage_name = {"enrich": "ENRICHMENT", "produce": "PRODUCER", "review": "REVIEWER"}.get(stage, stage.upper())
         try:
             prompt_contract = resolve_role_execution_contract(
                 role_id,
@@ -598,7 +637,7 @@ class ExecutionCognitiveBoundary:
                 role_input_payload,
                 {
                     "episode_id": episode_id,
-                    "stage": stage.upper(),
+                    "stage": stage_name,
                     "execution_mode": self.execution_mode,
                     "execution_route": self.execution_route,
                     "execution_profile": self.execution_profile,
@@ -720,7 +759,11 @@ class ExecutionCognitiveBoundary:
             )
         output = copy.deepcopy(result.output)
         run_key = "producer_run_id" if stage == "produce" else "reviewer_run_id" if stage == "review" else None
-        if run_key:
+        cognitive_schema = output_schema in {
+            "topic_belonging_cognitive_assessment",
+            "topic_belonging_cognitive_decision",
+        }
+        if run_key and not cognitive_schema:
             declared_run_id = output.get(run_key)
             declared_provenance_run_id = output.get("provenance", {}).get("run_id")
             for declared in (declared_run_id, declared_provenance_run_id):
@@ -888,9 +931,23 @@ class TopicBelongingTechnicalWorkflow:
         if input_violations:
             raise TopicBelongingExecutionError("TOPIC_INPUT_INVALID: " + "; ".join(input_violations))
 
+        software_runtime_context = (
+            self._technical_provenance_from_result(enrich_result)
+            if self.boundary.execution_mode == "REAL"
+            else None
+        )
         assessment, producer_result = self.boundary.produce(topic_input, profile, handle.episode_id, input_producer_run_id=enrich_result.run_id)
         if producer_result.status is ExecutionStatus.HANDOFF_PREPARED:
             return self._pending_handoff_state(handle, run_id, producer_result, "PRODUCER")
+        if self.boundary.execution_mode == "REAL":
+            assessment = self._materialize_assessment(
+                topic_input,
+                assessment,
+                actor_id=API_PRODUCER_ACTOR_ID,
+                role_id=PRODUCER_ROLE,
+                run_id=producer_result.run_id,
+                technical_provenance=software_runtime_context or {},
+            )
         assessment_violations = validate_assessment(assessment, topic_input)
         if assessment_violations:
             raise TopicBelongingExecutionError("ASSESSMENT_INVALID: " + "; ".join(assessment_violations))
@@ -900,13 +957,30 @@ class TopicBelongingTechnicalWorkflow:
         decision, reviewer_result = self.boundary.review(topic_input, assessment, profile, handle.episode_id, input_producer_run_id=enrich_result.run_id)
         if reviewer_result.status is ExecutionStatus.HANDOFF_PREPARED:
             return self._pending_handoff_state(handle, run_id, reviewer_result, "REVIEWER")
+        if self.boundary.execution_mode == "REAL":
+            decision = self._materialize_decision(
+                decision,
+                assessment,
+                topic_input=topic_input,
+                actor_id=API_REVIEWER_ACTOR_ID,
+                role_id=REVIEWER_ROLE,
+                run_id=reviewer_result.run_id,
+                technical_provenance=software_runtime_context or {},
+            )
         if producer_result.run_id == reviewer_result.run_id:
             raise TopicBelongingExecutionError("EXECUTION_INDEPENDENCE_INVALID:SAME_RUNTIME_RUN_ID")
-        if self.boundary.execution_mode == "REAL":
+        if self.boundary.execution_mode == "REAL" and self._uses_external_runner():
             producer_executor = assessment.get("provenance", {}).get("executor_identity")
             reviewer_executor = decision.get("provenance", {}).get("executor_identity")
             if not producer_executor or not reviewer_executor or producer_executor == reviewer_executor:
                 raise TopicBelongingExecutionError("EXECUTION_INDEPENDENCE_INVALID:EXECUTOR_IDENTITY")
+        elif self.boundary.execution_mode == "REAL":
+            if (
+                assessment.get("producer_actor_id") == decision.get("reviewer_actor_id")
+                or assessment.get("producer_role_id") == decision.get("reviewer_role_id")
+                or assessment.get("producer_run_id") == decision.get("reviewer_run_id")
+            ):
+                raise TopicBelongingExecutionError("EXECUTION_INDEPENDENCE_INVALID:API_ACTOR_ROLE_RUN")
         decision_violations = validate_decision(decision, assessment)
         if decision_violations:
             raise TopicBelongingExecutionError("DECISION_INVALID: " + "; ".join(decision_violations))
@@ -945,6 +1019,7 @@ class TopicBelongingTechnicalWorkflow:
                 [],
                 artifact_ref=f"topic_belonging_input:{topic_input['topic_input_id']}",
                 cognitive_proposal=cognitive_proposal,
+                software_runtime_context=software_runtime_context,
             ),
             self._execution_record(
                 "PRODUCER",
@@ -953,6 +1028,8 @@ class TopicBelongingTechnicalWorkflow:
                 assessment["artifact_checksum"],
                 [f"topic_belonging_input:{topic_input['topic_input_id']}"],
                 [enrich_result.run_id],
+                artifact_ref=f"topic_belonging_assessment:{assessment['assessment_id']}",
+                software_runtime_context=software_runtime_context,
             ),
             self._execution_record(
                 "REVIEWER",
@@ -964,6 +1041,8 @@ class TopicBelongingTechnicalWorkflow:
                     f"topic_belonging_assessment:{assessment['assessment_id']}",
                 ],
                 [enrich_result.run_id, producer_result.run_id],
+                artifact_ref=f"topic_belonging_decision:{decision['decision_id']}",
+                software_runtime_context=software_runtime_context,
             ),
         ]
         self.store.record_topic_belonging_vertical(
@@ -1006,6 +1085,94 @@ class TopicBelongingTechnicalWorkflow:
                 }
             )
         return state
+
+    def _trusted_api_execution_context(self, *, require_model: bool = True) -> dict[str, str]:
+        profile_id = str(getattr(self.boundary, "execution_profile", None) or "").strip()
+        repository_root = Path(getattr(self.boundary, "repository_root", REPO_ROOT))
+        try:
+            profiles = load_execution_profiles(repository_root / "config/agent_execution_profiles.json")
+            profile = profiles.get("execution_profiles", {}).get(profile_id)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_PROFILE_INVALID") from exc
+        if not isinstance(profile, dict):
+            raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_PROFILE_INVALID")
+
+        route = str(
+            getattr(self.boundary, "execution_route", None)
+            or profile.get("execution_route")
+            or ""
+        ).strip()
+        executor = str(profile.get("executor") or "").strip()
+        provider = str(profile.get("provider") or "").strip()
+        if (
+            not profile_id
+            or not route
+            or not executor
+            or not provider
+            or route == "agent_harness"
+            or str(profile.get("route_type") or "").upper() == "AGENT_HARNESS_RUNTIME"
+        ):
+            raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_PROFILE_INVALID")
+
+        model = str(
+            getattr(self.boundary, "model_override", None)
+            or profile.get("default_model")
+            or ""
+        ).strip()
+        if not model:
+            model_env = str(profile.get("model_env") or "").strip()
+            model = os.getenv(model_env, "").strip() if model_env else ""
+        if require_model and not model:
+            raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_MODEL_UNRESOLVED")
+        return {
+            "executor_identity": executor,
+            "provider": provider,
+            "model": model,
+            "execution_route": route,
+            "execution_profile": profile_id,
+        }
+
+    def _technical_provenance_from_result(self, result: ExecutionResult) -> dict[str, Any]:
+        """Use the selected runtime profile, never provider-reported metadata."""
+        del result
+        context = self._trusted_api_execution_context()
+        return {
+            key: context[key]
+            for key in (
+                "executor_identity",
+                "provider",
+                "model",
+                "execution_route",
+                "execution_profile",
+            )
+        } | {
+            "provider_kind": "REAL",
+            "execution_mode": "REAL",
+        }
+
+    def _expected_persisted_execution_metadata(self, *, real_api_vertical: bool) -> dict[str, str]:
+        if not real_api_vertical:
+            return {
+                "provider_kind": "SYNTHETIC",
+                "provider_or_adapter": "mock",
+                "execution_mode": "SYNTHETIC",
+                "execution_route": "local_model",
+                "execution_profile": "ollama_local",
+            }
+        context = self._trusted_api_execution_context(require_model=False)
+        return {
+            "provider_kind": "REAL",
+            "provider_or_adapter": context["provider"],
+            "execution_mode": "REAL",
+            "execution_route": context["execution_route"],
+            "execution_profile": context["execution_profile"],
+        }
+
+    def _uses_external_runner(self) -> bool:
+        return (
+            getattr(self.boundary, "execution_route", None) == "agent_harness"
+            or getattr(self.boundary, "execution_family", None) == "AGENT_HARNESS"
+        )
 
     @staticmethod
     def _pending_handoff_state(
@@ -1449,16 +1616,45 @@ class TopicBelongingTechnicalWorkflow:
             raise TopicBelongingExecutionError("ROUNDTRIP_INPUT_CANONICAL_INVALID: " + "; ".join(violations))
         return materialized
 
-    def _materialize_producer_assessment(
-        self,
-        handle: EpisodeHandle,
-        package: dict[str, Any],
-        cognitive_assessment: dict[str, Any],
-        result_run_id: str,
-        external_provenance: dict[str, Any],
+    @staticmethod
+    def _materialization_provenance(
+        *,
+        actor_id: str,
+        role_id: str,
+        run_id: str,
+        technical_provenance: dict[str, Any],
     ) -> dict[str, Any]:
-        """Build the assessment envelope from canonical input and cognition."""
-        topic_input = self._read_roundtrip_output(handle, "ENRICHMENT")
+        if not isinstance(technical_provenance, dict):
+            raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_INVALID")
+        actor = str(actor_id or "").strip()
+        role = str(role_id or "").strip()
+        runtime = str(run_id or "").strip()
+        executor_identity = str(technical_provenance.get("executor_identity") or "").strip()
+        if not actor or not role or not runtime or not executor_identity:
+            raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_INVALID")
+        provenance: dict[str, Any] = {
+            "actor_id": actor,
+            "run_id": runtime,
+            "role_id": role,
+            "executor_identity": executor_identity,
+        }
+        for key in ("provider", "model", "session_id"):
+            value = str(technical_provenance.get(key) or "").strip()
+            if value:
+                provenance[key] = value
+        return provenance
+
+    def _materialize_assessment(
+        self,
+        topic_input: dict[str, Any],
+        cognitive_assessment: dict[str, Any],
+        *,
+        actor_id: str,
+        role_id: str,
+        run_id: str,
+        technical_provenance: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Build one software-owned assessment envelope for API and RUNNER."""
         unknown_fields = set(cognitive_assessment) - COGNITIVE_ASSESSMENT_FIELDS
         missing_fields = COGNITIVE_ASSESSMENT_FIELDS - set(cognitive_assessment)
         if unknown_fields or missing_fields:
@@ -1468,26 +1664,27 @@ class TopicBelongingTechnicalWorkflow:
             if missing_fields:
                 details.append("COGNITIVE_FIELDS_MISSING:" + ",".join(sorted(missing_fields)))
             raise TopicBelongingExecutionError("COGNITIVE_ASSESSMENT_INVALID: " + "; ".join(details))
+        cognitive_violations = validate_against_schema(
+            cognitive_assessment,
+            "topic_belonging_cognitive_assessment",
+        )
+        if cognitive_violations:
+            raise TopicBelongingExecutionError(
+                "COGNITIVE_ASSESSMENT_INVALID: " + "; ".join(cognitive_violations)
+            )
+        if role_id != PRODUCER_ROLE:
+            raise TopicBelongingExecutionError("ASSESSMENT_MATERIALIZATION_ROLE_INVALID")
         if cognitive_assessment["strategic_triggers"] != topic_input["strategic_triggers"]:
             raise TopicBelongingExecutionError("COGNITIVE_ASSESSMENT_INPUT_BINDING_INVALID: strategic_triggers")
         if cognitive_assessment["status"] != "CLOSED_FOR_REVIEW":
             raise TopicBelongingExecutionError("COGNITIVE_ASSESSMENT_INVALID: status")
-        expected_manifest = _expected_input_manifest_checksum(
-            handle.episode_id,
-            "PRODUCER",
-            self._read_episode_file(handle, "01_editorial_intake_handoff.json"),
-            topic_input,
-            {},
-        )
-        if package.get("input_manifest_checksum") != expected_manifest:
-            raise TopicBelongingExecutionError("ROUNDTRIP_INPUT_CANONICAL_STALE")
         assessment = {
             "assessment_id": f"TBA-{uuid4().hex}",
             "strategic_triggers": copy.deepcopy(topic_input["strategic_triggers"]),
             "topic_input_id": topic_input["topic_input_id"],
-            "producer_actor_id": EXTERNAL_PRODUCER_ACTOR_ID,
-            "producer_run_id": result_run_id,
-            "producer_role_id": PRODUCER_ROLE,
+            "producer_actor_id": actor_id,
+            "producer_run_id": run_id,
+            "producer_role_id": role_id,
             "profile_id": topic_input["profile_id"],
             "profile_version": topic_input["profile_version"],
             "profile_checksum": topic_input["profile_checksum"],
@@ -1505,17 +1702,14 @@ class TopicBelongingTechnicalWorkflow:
             "status": "CLOSED_FOR_REVIEW",
             "artifact_checksum": "",
             "provenance": {
-                "actor_id": EXTERNAL_PRODUCER_ACTOR_ID,
-                "run_id": result_run_id,
-                "role_id": PRODUCER_ROLE,
+                **self._materialization_provenance(
+                    actor_id=actor_id,
+                    role_id=role_id,
+                    run_id=run_id,
+                    technical_provenance=technical_provenance,
+                ),
                 "input_checksums": [canonical_checksum(topic_input, "input")],
                 "output_checksum": "",
-                "executor_identity": external_provenance.get("executor_identity"),
-                **{
-                    key: external_provenance[key]
-                    for key in ("provider", "model", "session_id")
-                    if external_provenance.get(key)
-                },
             },
         }
         for field_name in ("corpus_ref", "narrative_work"):
@@ -1528,6 +1722,34 @@ class TopicBelongingTechnicalWorkflow:
         if violations:
             raise TopicBelongingExecutionError("ASSESSMENT_INVALID: " + "; ".join(violations))
         return assessment
+
+    def _materialize_producer_assessment(
+        self,
+        handle: EpisodeHandle,
+        package: dict[str, Any],
+        cognitive_assessment: dict[str, Any],
+        result_run_id: str,
+        external_provenance: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Validate RUNNER bindings, then use the shared assessment materializer."""
+        topic_input = self._read_roundtrip_output(handle, "ENRICHMENT")
+        expected_manifest = _expected_input_manifest_checksum(
+            handle.episode_id,
+            "PRODUCER",
+            self._read_episode_file(handle, "01_editorial_intake_handoff.json"),
+            topic_input,
+            {},
+        )
+        if package.get("input_manifest_checksum") != expected_manifest:
+            raise TopicBelongingExecutionError("ROUNDTRIP_INPUT_CANONICAL_STALE")
+        return self._materialize_assessment(
+            topic_input,
+            cognitive_assessment,
+            actor_id=EXTERNAL_PRODUCER_ACTOR_ID,
+            role_id=PRODUCER_ROLE,
+            run_id=result_run_id,
+            technical_provenance=external_provenance,
+        )
 
     def _read_materialized_producer_assessment(
         self,
@@ -1687,6 +1909,74 @@ class TopicBelongingTechnicalWorkflow:
     def _effective_decision(self, handle: EpisodeHandle) -> dict[str, Any]:
         return self._effective_decision_binding(handle)["decision"]
 
+    def _materialize_decision(
+        self,
+        cognitive_decision: dict[str, Any],
+        assessment: dict[str, Any],
+        *,
+        topic_input: dict[str, Any] | None = None,
+        actor_id: str,
+        role_id: str,
+        run_id: str,
+        technical_provenance: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Build one software-owned decision envelope for API and RUNNER."""
+        unknown_fields = set(cognitive_decision) - COGNITIVE_DECISION_FIELDS
+        missing_fields = REQUIRED_COGNITIVE_DECISION_FIELDS - set(cognitive_decision)
+        if unknown_fields or missing_fields:
+            details = []
+            if unknown_fields:
+                details.append("RESERVED_FIELDS:" + ",".join(sorted(unknown_fields)))
+            if missing_fields:
+                details.append("COGNITIVE_FIELDS_MISSING:" + ",".join(sorted(missing_fields)))
+            raise TopicBelongingExecutionError("COGNITIVE_DECISION_INVALID: " + "; ".join(details))
+        cognitive_violations = validate_against_schema(
+            cognitive_decision,
+            "topic_belonging_cognitive_decision",
+        )
+        if cognitive_violations:
+            raise TopicBelongingExecutionError(
+                "COGNITIVE_DECISION_INVALID: " + "; ".join(cognitive_violations)
+            )
+        if role_id != REVIEWER_ROLE:
+            raise TopicBelongingExecutionError("DECISION_MATERIALIZATION_ROLE_INVALID")
+        if not isinstance(topic_input, dict):
+            raise TopicBelongingExecutionError("DECISION_MATERIALIZATION_INPUT_INVALID")
+        decision = copy.deepcopy(cognitive_decision)
+        pre_b5_i1_evidence = _materialize_pre_b5_i1_evidence(topic_input)
+        if pre_b5_i1_evidence is not None:
+            decision["pre_b5_i1_evidence"] = pre_b5_i1_evidence
+        decision.update(
+            {
+                "decision_id": f"TBD-{uuid4().hex}",
+                "assessment_id": assessment["assessment_id"],
+                "profile_id": assessment["profile_id"],
+                "profile_version": assessment["profile_version"],
+                "profile_checksum": assessment["profile_checksum"],
+                "producer_artifact_checksum": assessment["artifact_checksum"],
+                "reviewer_actor_id": actor_id,
+                "reviewer_run_id": run_id,
+                "reviewer_role_id": role_id,
+                "reviewer_input_checksum": assessment["artifact_checksum"],
+                "decided_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "provenance": {
+                    **self._materialization_provenance(
+                        actor_id=actor_id,
+                        role_id=role_id,
+                        run_id=run_id,
+                        technical_provenance=technical_provenance,
+                    ),
+                    "input_checksum": assessment["artifact_checksum"],
+                    "output_checksum": "",
+                },
+            }
+        )
+        decision["provenance"]["output_checksum"] = canonical_checksum(decision, "decision")
+        violations = validate_decision(decision, assessment)
+        if violations:
+            raise TopicBelongingExecutionError("DECISION_INVALID: " + "; ".join(violations))
+        return decision
+
     def _materialize_reviewer_decision(
         self,
         handle: EpisodeHandle,
@@ -1697,16 +1987,7 @@ class TopicBelongingTechnicalWorkflow:
         external_provenance: dict[str, Any],
         additional_evidence: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Build the decision envelope from reviewer cognition and canonical assessment."""
-        unknown_fields = set(cognitive_decision) - COGNITIVE_DECISION_FIELDS
-        missing_fields = REQUIRED_COGNITIVE_DECISION_FIELDS - set(cognitive_decision)
-        if unknown_fields or missing_fields:
-            details = []
-            if unknown_fields:
-                details.append("RESERVED_FIELDS:" + ",".join(sorted(unknown_fields)))
-            if missing_fields:
-                details.append("COGNITIVE_FIELDS_MISSING:" + ",".join(sorted(missing_fields)))
-            raise TopicBelongingExecutionError("COGNITIVE_DECISION_INVALID: " + "; ".join(details))
+        """Validate RUNNER bindings, then use the shared decision materializer."""
         expected_manifest = _expected_input_manifest_checksum(
             handle.episode_id,
             "REVIEWER",
@@ -1717,40 +1998,15 @@ class TopicBelongingTechnicalWorkflow:
         )
         if package.get("input_manifest_checksum") != expected_manifest:
             raise TopicBelongingExecutionError("ROUNDTRIP_INPUT_CANONICAL_STALE")
-        decision = copy.deepcopy(cognitive_decision)
-        decision.update(
-            {
-                "decision_id": f"TBD-{uuid4().hex}",
-                "assessment_id": assessment["assessment_id"],
-                "profile_id": assessment["profile_id"],
-                "profile_version": assessment["profile_version"],
-                "profile_checksum": assessment["profile_checksum"],
-                "producer_artifact_checksum": assessment["artifact_checksum"],
-                "reviewer_actor_id": EXTERNAL_REVIEWER_ACTOR_ID,
-                "reviewer_run_id": result_run_id,
-                "reviewer_role_id": REVIEWER_ROLE,
-                "reviewer_input_checksum": assessment["artifact_checksum"],
-                "decided_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-                "provenance": {
-                    "actor_id": EXTERNAL_REVIEWER_ACTOR_ID,
-                    "run_id": result_run_id,
-                    "role_id": REVIEWER_ROLE,
-                    "input_checksum": assessment["artifact_checksum"],
-                    "output_checksum": "",
-                    "executor_identity": external_provenance.get("executor_identity"),
-                    **{
-                        key: external_provenance[key]
-                        for key in ("provider", "model", "session_id")
-                        if external_provenance.get(key)
-                    },
-                },
-            }
+        return self._materialize_decision(
+            cognitive_decision,
+            assessment,
+            topic_input=self._read_roundtrip_output(handle, "ENRICHMENT"),
+            actor_id=EXTERNAL_REVIEWER_ACTOR_ID,
+            role_id=REVIEWER_ROLE,
+            run_id=result_run_id,
+            technical_provenance=external_provenance,
         )
-        decision["provenance"]["output_checksum"] = canonical_checksum(decision, "decision")
-        violations = validate_decision(decision, assessment)
-        if violations:
-            raise TopicBelongingExecutionError("DECISION_INVALID: " + "; ".join(violations))
-        return decision
 
     def _read_materialized_reviewer_decision(
         self,
@@ -1784,6 +2040,9 @@ class TopicBelongingTechnicalWorkflow:
                 raise TopicBelongingExecutionError(
                     f"ROUNDTRIP_DECISION_COGNITIVE_BINDING_INVALID:{field}"
                 )
+        topic_input = self._read_roundtrip_output(handle, "ENRICHMENT")
+        if materialized.get("pre_b5_i1_evidence") != _materialize_pre_b5_i1_evidence(topic_input):
+            raise TopicBelongingExecutionError("ROUNDTRIP_DECISION_SOFTWARE_BINDING_INVALID:pre_b5_i1_evidence")
         additional_evidence = self._read_reassessment_for_package(handle, package)
         expected_manifest = _expected_input_manifest_checksum(
             handle.episode_id,
@@ -2019,6 +2278,16 @@ class TopicBelongingTechnicalWorkflow:
         else:
             handoff_dir = REPO_ROOT / "handoff"
         history_dir = Path(history_root) / handle.episode_id / "handoffs"
+        if not (handle.folder / ROUNDTRIP_RESULTS_FILENAME).is_file():
+            return {
+                "episode_id": handle.episode_id,
+                "history_dir": str(history_dir),
+                "archived": [],
+                "pending": [],
+                "skipped": [],
+                "checksums": {},
+                "refs_updated": 0,
+            }
         source_snapshots = (
             {
                 path.name: path.read_bytes()
@@ -2576,6 +2845,14 @@ class TopicBelongingTechnicalWorkflow:
             and origin_kind == "LEGACY_M1"
         )
         legacy_vertical = lineage.get("mission_id") == LEGACY_M1_LINEAGE_ID and legacy_storage
+        real_api_vertical = (
+            str(getattr(self.boundary, "execution_mode", "")).upper() == "REAL"
+            and not legacy_vertical
+            and lineage.get("roundtrip_kind") != "AGENT_HARNESS_ROUNDTRIP"
+        )
+        expected_runtime_metadata = self._expected_persisted_execution_metadata(
+            real_api_vertical=real_api_vertical
+        )
 
         violations.extend(
             f"HANDOFF_SCHEMA_INVALID: {violation}"
@@ -2598,6 +2875,8 @@ class TopicBelongingTechnicalWorkflow:
             f"DECISION_INVALID: {violation}"
             for violation in validate_decision(decision, assessment)
         )
+        if real_api_vertical and decision.get("pre_b5_i1_evidence") != _materialize_pre_b5_i1_evidence(topic_input):
+            violations.append("DECISION_PRE_B5_I1_EVIDENCE_SOFTWARE_BINDING_INVALID")
 
         if lineage.get("roundtrip_kind") == "AGENT_HARNESS_ROUNDTRIP":
             try:
@@ -2789,8 +3068,16 @@ class TopicBelongingTechnicalWorkflow:
             enrichment_uses_proposal = isinstance(stored_enrichment_proposal, dict)
             prompt_schemas = {
                 "ENRICHMENT": COGNITIVE_PROPOSAL_SCHEMA if enrichment_uses_proposal else "topic_belonging_input",
-                "PRODUCER": "topic_belonging_assessment",
-                "REVIEWER": "topic_belonging_decision",
+                "PRODUCER": (
+                    "topic_belonging_cognitive_assessment"
+                    if real_api_vertical
+                    else "topic_belonging_assessment"
+                ),
+                "REVIEWER": (
+                    "topic_belonging_cognitive_decision"
+                    if real_api_vertical
+                    else "topic_belonging_decision"
+                ),
             }
             for stage, schema_name in prompt_schemas.items():
                 role = PRODUCER_ROLE if stage != "REVIEWER" else REVIEWER_ROLE
@@ -2822,13 +3109,7 @@ class TopicBelongingTechnicalWorkflow:
                     violations.append(f"EXECUTION_{stage}_{key.upper()}_MISMATCH")
             if execution.get("input_manifest_checksum") != expected_input_manifests.get(stage):
                 violations.append(f"EXECUTION_{stage}_INPUT_MANIFEST_CHECKSUM_MISMATCH")
-            for key, expected_value in {
-                "provider_kind": "SYNTHETIC",
-                "provider_or_adapter": "mock",
-                "execution_mode": "SYNTHETIC",
-                "execution_route": "local_model",
-                "execution_profile": "ollama_local",
-            }.items():
+            for key, expected_value in expected_runtime_metadata.items():
                 if execution.get(key) != expected_value:
                     violations.append(f"EXECUTION_{stage}_{key.upper()}_INCOMPATIBLE")
             if not legacy_vertical:
@@ -2843,7 +3124,12 @@ class TopicBelongingTechnicalWorkflow:
                     violations.append(f"EXECUTION_{stage}_{checksum_key.upper()}_INVALID")
             stored_proposal = stored_enrichment_proposal if stage == "ENRICHMENT" else None
             expected_raw_checksum = _expected_raw_output_checksum(
-                stage, topic_input, assessment, decision, stored_proposal
+                stage,
+                topic_input,
+                assessment,
+                decision,
+                stored_proposal,
+                cognitive_only=real_api_vertical,
             )
             if execution.get("output_checksum") != expected_raw_checksum:
                 violations.append(f"EXECUTION_{stage}_RAW_OUTPUT_CHECKSUM_MISMATCH")
@@ -3066,15 +3352,17 @@ class TopicBelongingTechnicalWorkflow:
         *,
         artifact_ref: str | None = None,
         cognitive_proposal: dict[str, Any] | None = None,
+        software_runtime_context: dict[str, str] | None = None,
     ) -> dict[str, Any]:
+        runtime_context = software_runtime_context or {}
         record = {
             "stage": stage,
             "role": role,
             "run_id": result.run_id,
             "status": result.status.value,
-            "provider_kind": result.usage.get("provider_kind"),
-            "provider_or_adapter": result.provider,
-            "model_or_evaluator": result.model,
+            "provider_kind": runtime_context.get("provider_kind", result.usage.get("provider_kind")),
+            "provider_or_adapter": runtime_context.get("provider", result.provider),
+            "model_or_evaluator": runtime_context.get("model", result.model),
             "input_manifest_checksum": result.input_manifest_checksum,
             "input_artifact_ids": list(input_artifact_ids),
             "input_versions": list(input_versions),
@@ -3083,9 +3371,9 @@ class TopicBelongingTechnicalWorkflow:
             # Canonical checksum of the persisted artifact after deterministic normalization/binding.
             "artifact_checksum": artifact_checksum,
             "artifact_ref": artifact_ref or result.output_artifact_ref,
-            "execution_mode": result.usage.get("execution_mode", "SYNTHETIC" if result.provider == "mock" else "REAL"),
-            "execution_route": result.usage.get("execution_route"),
-            "execution_profile": result.usage.get("execution_profile"),
+            "execution_mode": runtime_context.get("execution_mode", result.usage.get("execution_mode", "SYNTHETIC" if result.provider == "mock" else "REAL")),
+            "execution_route": runtime_context.get("execution_route", result.usage.get("execution_route")),
+            "execution_profile": runtime_context.get("execution_profile", result.usage.get("execution_profile")),
             "prompt_id": result.usage.get("prompt_id"),
             "prompt_version": result.usage.get("prompt_version"),
             "prompt_checksum": result.usage.get("prompt_checksum"),

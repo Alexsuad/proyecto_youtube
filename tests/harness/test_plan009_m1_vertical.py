@@ -194,6 +194,26 @@ def _assessment(topic_input: dict, run_id: str | None = None) -> dict:
     return data
 
 
+def _cognitive_assessment(topic_input: dict) -> dict:
+    assessment = _assessment(topic_input)
+    return {
+        key: assessment[key]
+        for key in (
+            "strategic_triggers",
+            "sensitive_risks",
+            "territory_classification",
+            "identity_alignment",
+            "promise_alignment",
+            "risks",
+            "recommended_conditions",
+            "recommended_exclusions",
+            "owner_escalation_recommended",
+            "evidence",
+            "status",
+        )
+    }
+
+
 def _decision(assessment: dict, run_id: str | None = None) -> dict:
     profile = active_profile()
     data = {
@@ -224,6 +244,25 @@ def _decision(assessment: dict, run_id: str | None = None) -> dict:
     }
     data["provenance"]["output_checksum"] = canonical_checksum(data, "decision")
     return data
+
+
+def _cognitive_decision(assessment: dict) -> dict:
+    decision = _decision(assessment)
+    return {
+        key: decision[key]
+        for key in (
+            "decision",
+            "conditions",
+            "exclusions",
+            "risks",
+            "owner_escalation_required",
+            "owner_escalation_reason",
+            "strategic_dimensions_affected",
+            "temporary_or_permanent_effect",
+            "precedent_risk",
+            "evidence",
+        )
+    }
 
 
 def _service(
@@ -557,6 +596,67 @@ def test_m1_persisted_proposed_question_remains_bound_to_final_input(tmp_path: P
         service.resume(result.episode.episode_id)
 
 
+def test_m1_shared_decision_materializer_rejects_provider_pre_b5_evidence(
+    tmp_path: Path, mission_auth: str
+) -> None:
+    service = _service(tmp_path, mission_auth, _outputs())
+    topic_input = _input()
+    assessment = _assessment(topic_input)
+    cognitive_decision = _cognitive_decision(assessment)
+    cognitive_decision["pre_b5_i1_evidence"] = {
+        "topic_input_checksum": "f" * 64,
+        "research_ref": "FORGED-RESEARCH",
+        "narrative_door_evidence_refs": ["FORGED-EVIDENCE"],
+        "candidate_work_refs": ["FORGED-WORK"],
+    }
+
+    with pytest.raises(TopicBelongingExecutionError, match="RESERVED_FIELDS:pre_b5_i1_evidence"):
+        service.workflow._materialize_decision(
+            cognitive_decision,
+            assessment,
+            topic_input=topic_input,
+            actor_id="API_PROVIDER_REVIEWER",
+            role_id="CHANNEL_INTELLIGENCE_REVIEWER",
+            run_id="RUN-REVIEWER-M1",
+            technical_provenance={"executor_identity": "native_provider"},
+        )
+
+
+def test_m1_shared_decision_materializer_rebuilds_pre_b5_evidence_from_input(
+    tmp_path: Path, mission_auth: str
+) -> None:
+    service = _service(tmp_path, mission_auth, _outputs())
+    topic_input = _input()
+    topic_input.update(
+        {
+            "research_ref": "RESEARCH-001",
+            "narrative_door_evidence_refs": ["EVIDENCE-001"],
+            "candidate_work_refs": ["M1", "M2", "M3", "M4", "M5"],
+        }
+    )
+    assessment = _assessment(topic_input)
+    assessment["producer_run_id"] = "RUN-PRODUCER-M1"
+    assessment["provenance"]["run_id"] = "RUN-PRODUCER-M1"
+    assessment["artifact_checksum"] = canonical_checksum(assessment, "assessment")
+    assessment["provenance"]["output_checksum"] = assessment["artifact_checksum"]
+    materialized = service.workflow._materialize_decision(
+        _cognitive_decision(assessment),
+        assessment,
+        topic_input=topic_input,
+        actor_id="API_PROVIDER_REVIEWER",
+        role_id="CHANNEL_INTELLIGENCE_REVIEWER",
+        run_id="RUN-REVIEWER-M1",
+        technical_provenance={"executor_identity": "native_provider"},
+    )
+
+    assert materialized["pre_b5_i1_evidence"] == {
+        "topic_input_checksum": canonical_checksum(topic_input, "input"),
+        "research_ref": "RESEARCH-001",
+        "narrative_door_evidence_refs": ["EVIDENCE-001"],
+        "candidate_work_refs": ["M1", "M2", "M3", "M4", "M5"],
+    }
+
+
 def test_m1_reviewer_actor_provenance_mismatch_blocks_fresh_execution(tmp_path: Path, mission_auth: str) -> None:
     outputs = _outputs()
     outputs["review"]["provenance"]["actor_id"] = "FORGED-REVIEWER-ACTOR"
@@ -756,23 +856,16 @@ def test_m2_real_authorized_reaches_provider_boundary_without_external_call(
         name = "ollama"
 
         def execute(self, request: ExecutionRequest):
-            output = copy.deepcopy({
-                "topic_belonging_cognitive_proposal": outputs["enrich"],
-                "topic_belonging_input": _input(),
-                "topic_belonging_assessment": outputs["produce"],
-                "topic_belonging_decision": outputs["review"],
-            }[request.output_schema])
-            if request.output_schema == "topic_belonging_assessment":
+            if request.output_schema == "topic_belonging_cognitive_proposal":
+                output = copy.deepcopy(outputs["enrich"])
+            elif request.output_schema == "topic_belonging_cognitive_assessment":
                 topic_input = json.loads(request.input_artifacts[0].path.read_text(encoding="utf-8"))
-                output["topic_input_id"] = topic_input["topic_input_id"]
-                output["artifact_checksum"] = canonical_checksum(output, "assessment")
-                output["provenance"]["output_checksum"] = output["artifact_checksum"]
-            if request.output_schema == "topic_belonging_decision":
+                output = _cognitive_assessment(topic_input)
+            elif request.output_schema == "topic_belonging_cognitive_decision":
                 assessment = json.loads(request.input_artifacts[1].path.read_text(encoding="utf-8"))
-                output["producer_artifact_checksum"] = assessment["artifact_checksum"]
-                output["reviewer_input_checksum"] = assessment["artifact_checksum"]
-                output["provenance"]["input_checksum"] = assessment["artifact_checksum"]
-                output["provenance"]["output_checksum"] = canonical_checksum(output, "decision")
+                output = _cognitive_decision(assessment)
+            else:
+                raise AssertionError(f"unexpected output schema: {request.output_schema}")
             return output, {"provider_or_adapter": "ollama", "model_or_evaluator": request.model}
 
     monkeypatch.setattr(ai_execution, "OllamaProvider", ProviderDouble)
@@ -798,6 +891,100 @@ def test_m2_real_authorized_reaches_provider_boundary_without_external_call(
         assert all(item["execution_mode"] == "REAL" for item in executions)
         assert all(item["provider_or_adapter"] == "ollama" for item in executions)
         assert all(item["model_or_evaluator"] == "test-double-model" for item in executions)
+        assessment = json.loads((result.episode.folder / "03_topic_belonging_assessment.json").read_text(encoding="utf-8"))
+        decision = json.loads((result.episode.folder / "04_topic_belonging_decision.json").read_text(encoding="utf-8"))
+        assert assessment["producer_actor_id"] == topic_belonging.API_PRODUCER_ACTOR_ID
+        assert assessment["provenance"]["actor_id"] == assessment["producer_actor_id"]
+        assert assessment["producer_run_id"] == assessment["provenance"]["run_id"]
+        assert assessment["artifact_checksum"] == canonical_checksum(assessment, "assessment")
+        assert decision["reviewer_actor_id"] == topic_belonging.API_REVIEWER_ACTOR_ID
+        assert decision["provenance"]["actor_id"] == decision["reviewer_actor_id"]
+        assert decision["reviewer_run_id"] == decision["provenance"]["run_id"]
+        assert decision["producer_artifact_checksum"] == assessment["artifact_checksum"]
+        assert decision["provenance"]["output_checksum"] == canonical_checksum(decision, "decision")
+        assert assessment["provenance"]["executor_identity"] != "AGENT_HARNESS_EXTERNAL_PRODUCER"
+        assert decision["provenance"]["executor_identity"] != "AGENT_HARNESS_EXTERNAL_REVIEWER"
+        assert assessment["producer_run_id"] != decision["reviewer_run_id"]
+        assert assessment["producer_actor_id"] != decision["reviewer_actor_id"]
+    finally:
+        shutil.rmtree(short_root, ignore_errors=True)
+
+
+@pytest.mark.parametrize("invalid_stage", ["produce", "review"])
+def test_m2_real_invalid_cognitive_result_fails_closed_without_canonical_artifacts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    invalid_stage: str,
+) -> None:
+    import src.ai.execution as ai_execution
+
+    mission_auth = _mission_authorization(
+        tmp_path,
+        execution_interface="TOPIC_BELONGING_TEST",
+        execution_mode="REAL",
+        execution_profile="ollama_local",
+    )
+    selection = tmp_path / "execution-family-selection.json"
+    selection.write_text(json.dumps({
+        "selection_version": "1.0.0",
+        "families": {"AGENT_HARNESS": False, "API_PROVIDER": False, "LOCAL_MODEL": True},
+    }), encoding="utf-8")
+    outputs = _outputs()
+
+    class InvalidProviderDouble:
+        name = "ollama"
+
+        def execute(self, request: ExecutionRequest):
+            if request.output_schema == "topic_belonging_cognitive_proposal":
+                output = copy.deepcopy(outputs["enrich"])
+            elif request.output_schema == "topic_belonging_cognitive_assessment":
+                if invalid_stage == "produce":
+                    output = {}
+                else:
+                    topic_input = json.loads(request.input_artifacts[0].path.read_text(encoding="utf-8"))
+                    output = _cognitive_assessment(topic_input)
+            elif request.output_schema == "topic_belonging_cognitive_decision":
+                if invalid_stage == "review":
+                    output = {}
+                else:
+                    assessment = json.loads(request.input_artifacts[1].path.read_text(encoding="utf-8"))
+                    output = _cognitive_decision(assessment)
+            else:
+                raise AssertionError(f"unexpected output schema: {request.output_schema}")
+            return output, {"provider_or_adapter": "ollama", "model_or_evaluator": request.model}
+
+    monkeypatch.setattr(ai_execution, "OllamaProvider", InvalidProviderDouble)
+    short_root = tmp_path / "r"
+    try:
+        short_root.mkdir()
+        store = VaultEpisodeStore(short_root / "vault", "C")
+        boundary = ExecutionCognitiveBoundary(
+            repository_root=ROOT,
+            mission_authorization_path=mission_auth,
+            operational_authority_path=_authority_path_for_authorization(mission_auth),
+            execution_mode="REAL",
+            execution_interface="TOPIC_BELONGING_TEST",
+            execution_profile="ollama_local",
+            execution_family_selection_path=selection.relative_to(ROOT).as_posix(),
+            model_override="test-double-model",
+        )
+        service = EpisodeApplicationService(
+            store,
+            workflow=TopicBelongingTechnicalWorkflow(store, boundary=boundary),
+        )
+        with pytest.raises(TopicBelongingExecutionError, match="EXECUTION_BLOCKED|COGNITIVE_"):
+            service.start(
+                HumanInput.create(
+                    mode="TOPIC_FIRST",
+                    content="Tema sintético de prueba",
+                    initial_question="¿Qué revela este conflicto sobre vivir con otros?",
+                    channel="TERMINAL",
+                )
+            )
+        episode_folders = list((short_root / "vault/C/episodios").iterdir())
+        assert len(episode_folders) == 1
+        assert not (episode_folders[0] / "03_topic_belonging_assessment.json").exists()
+        assert not (episode_folders[0] / "04_topic_belonging_decision.json").exists()
     finally:
         shutil.rmtree(short_root, ignore_errors=True)
 

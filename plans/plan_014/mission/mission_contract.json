@@ -1,0 +1,124 @@
+{
+  "mission_id": "PLAN014_AUTHORITY_PREPARATION",
+  "mission_mode": "REDUCED",
+  "artifact_id": "PLAN014_AUTHORITY_PREPARATION",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_014/"
+  ],
+  "protected_untracked_paths": [
+    "tests/ai/test_deepseek_http_boundary.py",
+    "tests/harness/test_topic_belonging_http_e2e.py"
+  ],
+  "protected_untracked_baseline": [
+    {
+      "path": "tests/ai/test_deepseek_http_boundary.py",
+      "sha256": "2fd2b969279f2cbf4ebe31fb908a3ac6be36147913bfa306369cdc5e8f804af3"
+    },
+    {
+      "path": "tests/harness/test_topic_belonging_http_e2e.py",
+      "sha256": "0ef73ad4738805218f528dc2879528f2c77fc0bff7edcf5dd7ac34ddc399e390"
+    }
+  ],
+  "required_tests": [],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "c090112f7922229b6d0ab04591d835270173d3ff"
+  },
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/plan_014/mission/mission-authorization.json",
+  "mission_authorization_sha256": "1a4fe269f16657673a5c4bec00d673629e164fbfa5ca32498c9bdd12bd5091f6",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_PLAN": "PLAN014",
+      "CURRENT_ACTIVITY": "PLAN014_AUTHORITY_PREPARATION",
+      "CURRENT_MISSION": "PLAN014_AUTHORITY_PREPARATION",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "plans/plan_014/mission/mission_contract.json",
+      "NEXT_ALLOWED_ACTION": "MATERIALIZE_PLAN014_AUTHORITY_ONLY",
+      "EXECUTION_AUTHORIZED": "YES",
+      "EXECUTION_AUTHORIZATION_SCOPE": "DOCUMENTAL_MACHINE_READABLE_ONLY",
+      "REAL_AI_EXECUTION": "NO",
+      "PRODUCT_USE_AUTHORIZED": "NO",
+      "PLAN014_STATUS": "AUTHORITY_PREPARATION",
+      "PLAN014_FUNCTIONAL_IMPLEMENTATION": "NOT_AUTHORIZED"
+    },
+    "forbidden": {
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "PRODUCT_USE_AUTHORIZED": ["YES", "AUTHORIZED", "ACTIVE"],
+      "PLAN014_FUNCTIONAL_IMPLEMENTATION": ["AUTHORIZED", "ACTIVE", "EXECUTING", "IMPLEMENTING"],
+      "M2_REAL_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED", "PASS"]
+    }
+  },
+  "schema_checks": [
+    {
+      "path": "plans/plan_014/mission/mission_contract.json",
+      "schema": "mission_contract"
+    }
+  ],
+  "objective": "Preparar y materializar la autoridad documental de PLAN014 para una futura convergencia software-owned entre resultados cognition-only API/RUNNER y los artifacts canónicos de Topic Belonging, sin ejecutar la corrección funcional.",
+  "preconditions": [
+    "La causa raíz PRODUCER cognition-only → ASSESSMENT_INVALID está demostrada por el E2E mecánico local.",
+    "La materialización canónica existente de RUNNER debe inspeccionarse antes de cualquier implementación.",
+    "REAL_AI_EXECUTION permanece NO y PRODUCT_USE_AUTHORIZED permanece NO.",
+    "Los cambios tracked y untracked preexistentes se preservan sin atribuirlos a PLAN014."
+  ],
+  "canonical_inputs": [
+    "AGENTS.md",
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/extend_01/m2/topic_belonging_entry/mission_contract.json",
+    "tests/harness/test_topic_belonging_http_e2e.py",
+    "tests/ai/test_deepseek_http_boundary.py",
+    "src/application/topic_belonging.py",
+    "schemas/topic_belonging_cognitive_assessment.json",
+    "schemas/topic_belonging_cognitive_decision.json"
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_014/"
+  ],
+  "non_objectives": [
+    "Implementar la corrección en src/.",
+    "Modificar o crear tests funcionales.",
+    "Cambiar schemas cognitivos o canónicos.",
+    "Ejecutar DeepSeek, Internet, IA real, providers, episodios o YT_VAULT.",
+    "Modificar o cerrar contratos y artifacts de EXTEND_01.",
+    "Autorizar uso productivo, Research, Writing, publicación, commit o push."
+  ],
+  "expected_outputs": [
+    "Documento PLAN014 con causa raíz, arquitectura convergente, alcance futuro y criterios de parada.",
+    "Authority, MissionAuthorization y MissionContract coherentes y ligados al live state.",
+    "LIVE_STATE actualizado exclusivamente a la preparación de autoridad de PLAN014.",
+    "No run_configuration.json, porque esta misión no invoca el runtime."
+  ],
+  "deterministic_validations": [
+    "Validar JSON contra mission_contract y cargar MissionAuthorization con sus bindings.",
+    "Resolver el bundle activo desde plans/001_CONTROL_OPERATIVO.md.",
+    "Comprobar mission_id, live_state_sha256, authorized_scope_sha256 y hashes de artifacts.",
+    "Comprobar que el scope usado se limita a plans/001_CONTROL_OPERATIVO.md y plans/plan_014/.",
+    "Ejecutar git diff --check sin ejecutar tests funcionales de producción."
+  ],
+  "adversarial_cases": [
+    "CURRENT_MISSION o CURRENT_MISSION_EXECUTION_BUNDLE incoherentes.",
+    "live_state_sha256, authority_sha256 o mission authorization checksum stale.",
+    "Scope que incluya src/, tests/, schemas/, config/, prompts/ o YT_VAULT.",
+    "Intento de usar PLAN014_AUTHORITY_PREPARATION como mission_id de implementación funcional."
+  ],
+  "stop_conditions": [
+    "Fallo de resolución del bundle o de cualquier binding de autoridad.",
+    "Necesidad de modificar cualquier archivo fuera del scope documental autorizado.",
+    "Cualquier ejecución funcional, provider, Internet, IA real o uso productivo.",
+    "Cualquier necesidad de cambiar schemas, validators, gobernanza o contratos históricos."
+  ],
+  "review_policy": {
+    "required_review": "INDEPENDENT_REVIEW",
+    "independent_review": "REQUIRED",
+    "owner_review": true
+  },
+  "owner_closure": {
+    "required": false
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "mission_id": "PLAN014_AUTHORITY_PREPARATION",
+  "decision": "APPROVE",
+  "artifact_version": "1.0.0",
+  "authorized_scope_sha256": "26ea01f62231876b07898fe1633aaacaf4616e6f83f90623e20128d4a6f7497e",
+  "material_decision_binding": {
+    "registry_path": "docs/legacy/material_decision_registry.json",
+    "decision_id": "MD-CI-001",
+    "subject_ref": "capability:TOPIC_BELONGING_ASSESSMENT",
+    "decision_sha256": "25f21f5c413a366b5565d0200264e22ccb0ea18def0dd452c3e51bf76864ca9c"
+  }
+}

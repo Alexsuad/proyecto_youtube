@@ -1,0 +1,22 @@
+{
+  "mission_id": "PLAN014_FUNCTIONAL_IMPLEMENTATION",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "baaa3ed931c31ee42b785de63c413bf703ff0695e753db9ee602b92bb1a3df45",
+    "capability_ids": ["TOPIC_BELONGING_ASSESSMENT"],
+    "role_ids": ["CHANNEL_INTELLIGENCE_PRODUCER", "CHANNEL_INTELLIGENCE_REVIEWER"],
+    "execution_profile_ids": ["deepseek_chat"],
+    "execution_interface": "TOPIC_BELONGING_TERMINAL",
+    "allowed_operations": ["EXECUTE_CAPABILITY"],
+    "allowed_paths": [".runtime-tmp/"],
+    "allowed_routes": ["api_model"],
+    "execution_mode": "REAL",
+    "single_use": false,
+    "authority_ref": "plans/plan_014/functional_implementation/mission/authority.json",
+    "authority_sha256": "0f2d26d9a266fb76cec6d701226fbf8facd97c5cd470ed72e86defd7c363f146",
+    "authorized_scope_sha256": "73656b97bf536f67631e6a773b5392c687dec2402cd5545480e592fad5383e8b",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false,
+    "repair_integrity_evidence_path": "NONE"
+  }
+}

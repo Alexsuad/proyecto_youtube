@@ -1,0 +1,25 @@
+{
+  "mission_id": "PLAN014_AUTHORITY_PREPARATION",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "75d552ad7d7d40cdb2ea95a37b9ef4bae34d55735bb74d0abad2ea8b730df97b",
+    "capability_ids": ["TOPIC_BELONGING_ASSESSMENT"],
+    "role_ids": ["ORCHESTRATION"],
+    "execution_profile_ids": ["NONE_SELECTED"],
+    "execution_interface": "PLAN014_AUTHORITY_PREPARATION",
+    "allowed_operations": ["PREPARE_AUTHORITY"],
+    "allowed_paths": [
+      "plans/001_CONTROL_OPERATIVO.md",
+      "plans/plan_014/"
+    ],
+    "allowed_routes": ["NONE"],
+    "execution_mode": "PREPARATION_ONLY",
+    "single_use": false,
+    "authority_ref": "plans/plan_014/mission/authority.json",
+    "authority_sha256": "e119725e8937853f853cbe16f91b382013b40331b5b24b019e394a1ede85ad0e",
+    "authorized_scope_sha256": "26ea01f62231876b07898fe1633aaacaf4616e6f83f90623e20128d4a6f7497e",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false,
+    "repair_integrity_evidence_path": "NONE"
+  }
+}
