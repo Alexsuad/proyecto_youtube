@@ -375,6 +375,35 @@ def test_api_provider_override_and_paid_guard_work_without_code_changes(tmp_path
     assert resolved.model == "gpt-4.1-mini"
 
 
+def test_api_provider_family_can_run_without_execution_profile(tmp_path: Path) -> None:
+    profiles = load_execution_profiles(ROOT / "config/agent_execution_profiles.json")
+    resolved = resolve_run_configuration(
+        {
+            "role_id": "SCRIPT_PRODUCT_AUDITOR",
+            "execution_route": "api_model",
+            "execution_family": "API_PROVIDER",
+            "executor_override": None,
+            "provider_override": "deepseek",
+            "model_override": "deepseek-chat",
+            "timeout_seconds": 30,
+            "max_retries": 0,
+            "temperature": None,
+            "max_tokens": None,
+            "budget_limit": None,
+            "paid_cost_approved": True,
+            "execution_family_selection_path": _selection_path(tmp_path, "API_PROVIDER"),
+        },
+        profiles=profiles,
+        environ={"DEEPSEEK_API_KEY": "test-key"},
+    )
+    assert resolved.status == "READY"
+    assert resolved.execution_profile is None
+    assert resolved.execution_family == "API_PROVIDER"
+    assert resolved.provider == "deepseek"
+    assert resolved.provider_adapter == "deepseek"
+    assert resolved.model == "deepseek-chat"
+
+
 def test_agent_harness_route_uses_managed_provider_identity(monkeypatch: pytest.MonkeyPatch) -> None:
     profiles = load_execution_profiles(ROOT / "config/agent_execution_profiles.json")
     monkeypatch.setattr("src.ai.runtime_profiles.shutil.which", lambda command: f"C:/tools/{command}")

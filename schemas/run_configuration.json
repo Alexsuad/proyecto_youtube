@@ -6,7 +6,6 @@
   "required": [
     "role_id",
     "execution_route",
-    "execution_profile",
     "executor_override",
     "provider_override",
     "model_override",

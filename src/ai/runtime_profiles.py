@@ -315,15 +315,45 @@ def resolve_run_configuration(
                 model_selection="OWNER_MANAGED",
                 execution_family=execution_family,
             )
-        raise ValueError(f"EXECUTION_FAMILY_REQUIRES_EXPLICIT_PROFILE:{execution_family}")
+        if execution_family == "API_PROVIDER":
+            provider_ref = str(run_configuration.get("provider_override") or "").strip()
+            if not provider_ref:
+                raise ValueError("API_PROVIDER_REQUIRES_EXPLICIT_PROVIDER")
+            provider_entry = profiles.get("providers", {}).get(provider_ref)
+            if not provider_entry or str(provider_entry.get("route_type")) != "API_MODEL_RUNTIME":
+                raise ValueError(f"provider incompatible con route_type API_MODEL_RUNTIME: {provider_ref}")
+            if run_configuration.get("execution_route") != "api_model":
+                raise ValueError("API_PROVIDER_REQUIRES_API_MODEL_ROUTE")
+            execution_profile = None
+            # Build a transient route descriptor from the selected provider;
+            # API family selection must not require a named profile.
+            profile = {
+                "route_type": "API_MODEL_RUNTIME",
+                "execution_route": "api_model",
+                "executor": "native_provider",
+                "provider": provider_ref,
+                "provider_config_ref": provider_ref,
+            }
+        else:
+            raise ValueError(f"EXECUTION_FAMILY_REQUIRES_EXPLICIT_PROFILE:{execution_family}")
 
-    execution_profile = str(
-        _pick(
-            run_configuration.get("execution_profile"),
-            role_defaults.get("default_execution_profile"),
-            global_defaults.get("execution_profile"),
+    else:
+        execution_profile = str(
+            _pick(
+                run_configuration.get("execution_profile"),
+                role_defaults.get("default_execution_profile"),
+                global_defaults.get("execution_profile"),
+            )
         )
-    )
+        if execution_profile in NON_EXECUTABLE_PROFILES:
+            profile = None
+        else:
+            profile = profiles.get("execution_profiles", {}).get(execution_profile)
+            if profile is None:
+                raise ValueError(f"execution_profile inexistente: {execution_profile}")
+            if execution_profile not in set(role_defaults.get("allowed_execution_profiles", [])):
+                raise ValueError(f"execution_profile no permitido para {role_id}: {execution_profile}")
+
     if execution_profile in NON_EXECUTABLE_PROFILES:
         return _build_blocked(
             role_id=role_id,
@@ -344,11 +374,7 @@ def resolve_run_configuration(
             provider_config_ref=None,
             blocking_reason="BLOCKED_BY_CONFIGURATION",
         )
-    profile = profiles.get("execution_profiles", {}).get(execution_profile)
-    if profile is None:
-        raise ValueError(f"execution_profile inexistente: {execution_profile}")
-    if execution_profile not in set(role_defaults.get("allowed_execution_profiles", [])):
-        raise ValueError(f"execution_profile no permitido para {role_id}: {execution_profile}")
+    profile = profile or {}
 
     route_type = str(profile["route_type"])
     execution_route = str(
@@ -359,7 +385,7 @@ def resolve_run_configuration(
             global_defaults.get("execution_route"),
         )
     )
-    if execution_route != str(profile.get("execution_route")):
+    if profile.get("execution_route") and execution_route != str(profile.get("execution_route")):
         raise ValueError(f"ruta incompatible con el perfil {execution_profile}: {execution_route}")
 
     executor = str(
@@ -697,6 +723,7 @@ def resolve_run_configuration(
         provider_label=provider_label,
         executor_accepts_model_override=executor_accepts_model_override,
         model_selection=model_selection,
+        execution_family=execution_family,
     )
 
 
