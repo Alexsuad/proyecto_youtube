@@ -53,6 +53,7 @@ def _service(
     execution_profile: str | None = None,
     execution_family: str | None = None,
     execution_family_selection_path: str | None = None,
+    provider_override: str | None = None,
     model_override: str | None = None,
     reasoning_effort: str | None = None,
     paid_cost_approved: bool = False,
@@ -74,6 +75,7 @@ def _service(
                 execution_profile=execution_profile,
                 execution_family=execution_family,
                 execution_family_selection_path=execution_family_selection_path,
+                provider_override=provider_override,
                 operational_authority_path=operational_authority_path,
                 model_override=model_override,
                 reasoning_effort=reasoning_effort,
@@ -97,6 +99,7 @@ def _service_from_args(args: argparse.Namespace) -> EpisodeApplicationService:
         execution_profile=getattr(args, "execution_profile", None),
         execution_family=getattr(args, "execution_family", None),
         execution_family_selection_path=getattr(args, "execution_family_selection_path", None),
+        provider_override=getattr(args, "provider_override", None),
         model_override=getattr(args, "model_override", None),
         reasoning_effort=getattr(args, "reasoning_effort", None),
         paid_cost_approved=bool(getattr(args, "paid_cost_approved", False)),
@@ -536,6 +539,7 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--execution-profile", help=argparse.SUPPRESS)
     start.add_argument("--execution-family", help=argparse.SUPPRESS)
     start.add_argument("--execution-family-selection", dest="execution_family_selection_path", help=argparse.SUPPRESS)
+    start.add_argument("--provider", dest="provider_override", help=argparse.SUPPRESS)
     start.add_argument("--model", dest="model_override", help=argparse.SUPPRESS)
     start.add_argument("--reasoning-effort", help=argparse.SUPPRESS)
     start.add_argument("--paid-cost-approved", action="store_true", help=argparse.SUPPRESS)
@@ -562,6 +566,7 @@ def build_parser() -> argparse.ArgumentParser:
     resume.add_argument("--execution-profile", help=argparse.SUPPRESS)
     resume.add_argument("--execution-family", help=argparse.SUPPRESS)
     resume.add_argument("--execution-family-selection", dest="execution_family_selection_path", help=argparse.SUPPRESS)
+    resume.add_argument("--provider", dest="provider_override", help=argparse.SUPPRESS)
     resume.add_argument("--model", dest="model_override", help=argparse.SUPPRESS)
     resume.add_argument("--reasoning-effort", help=argparse.SUPPRESS)
     resume.add_argument("--paid-cost-approved", action="store_true", help=argparse.SUPPRESS)

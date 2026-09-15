@@ -20,7 +20,7 @@
     "role_id": {"type": "string", "minLength": 1},
     "execution_route": {"type": "string", "minLength": 1},
     "execution_profile": {"type": ["string", "null"], "minLength": 1},
-    "execution_family": {"type": ["string", "null"], "enum": ["AGENT_HARNESS", "API_PROVIDER", "LOCAL_MODEL", null]},
+    "execution_family": {"type": ["string", "null"], "enum": ["AGENT_HARNESS", "API_PROVIDER", null]},
     "execution_family_selection_path": {"type": ["string", "null"], "minLength": 1},
     "mission_contract_path": {"type": ["string", "null"], "minLength": 1},
     "completion_gate_result_path": {"type": ["string", "null"], "minLength": 1},

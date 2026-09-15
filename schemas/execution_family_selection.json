@@ -10,11 +10,10 @@
     "families": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["AGENT_HARNESS", "API_PROVIDER", "LOCAL_MODEL"],
+       "required": ["AGENT_HARNESS", "API_PROVIDER"],
       "properties": {
         "AGENT_HARNESS": {"type": "boolean"},
-        "API_PROVIDER": {"type": "boolean"},
-        "LOCAL_MODEL": {"type": "boolean"}
+         "API_PROVIDER": {"type": "boolean"}
       }
     }
   }

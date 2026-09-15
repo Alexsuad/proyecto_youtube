@@ -19,7 +19,7 @@ def _selection_path(tmp_path: Path, family: str) -> str:
     path = tmp_path / "execution-family-selection.json"
     path.write_text(json.dumps({
         "selection_version": "1.0.0",
-        "families": {name: name == family for name in ("AGENT_HARNESS", "API_PROVIDER", "LOCAL_MODEL")},
+        "families": {name: name == family for name in ("AGENT_HARNESS", "API_PROVIDER")},
     }), encoding="utf-8")
     return str(path)
 
@@ -37,8 +37,18 @@ def test_hybrid_profile_contract_declares_owner_authority_and_extensible_profile
 
 def test_mvp_execution_family_selection_has_exactly_one_active_family() -> None:
     selection = load_execution_family_selection(ROOT / "config/execution_family_selection.json")
-    assert selection["families"] == {"AGENT_HARNESS": True, "API_PROVIDER": False, "LOCAL_MODEL": False}
+    assert selection["families"] == {"AGENT_HARNESS": True, "API_PROVIDER": False}
     assert selected_execution_family(ROOT / "config/execution_family_selection.json") == "AGENT_HARNESS"
+
+
+def test_local_model_is_not_an_execution_family(tmp_path: Path) -> None:
+    selection = tmp_path / "selection.json"
+    selection.write_text(json.dumps({
+        "selection_version": "1.0.0",
+        "families": {"AGENT_HARNESS": False, "API_PROVIDER": False, "LOCAL_MODEL": True},
+    }), encoding="utf-8")
+    with pytest.raises(ValueError, match="ExecutionFamilySelection invalida"):
+        load_execution_family_selection(selection)
 
 
 def test_agent_harness_family_does_not_select_concrete_runtime_identity(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -76,7 +86,7 @@ def test_explicit_execution_family_must_match_operational_selector(tmp_path: Pat
     selection = tmp_path / "selection.json"
     selection.write_text(json.dumps({
         "selection_version": "1.0.0",
-        "families": {"AGENT_HARNESS": True, "API_PROVIDER": False, "LOCAL_MODEL": False},
+        "families": {"AGENT_HARNESS": True, "API_PROVIDER": False},
     }), encoding="utf-8")
     configuration = {
         "role_id": "CHANNEL_INTELLIGENCE_PRODUCER", "execution_route": "agent_harness",
@@ -91,7 +101,7 @@ def test_explicit_execution_family_must_match_operational_selector(tmp_path: Pat
 
     selection.write_text(json.dumps({
         "selection_version": "1.0.0",
-        "families": {"AGENT_HARNESS": False, "API_PROVIDER": True, "LOCAL_MODEL": False},
+        "families": {"AGENT_HARNESS": False, "API_PROVIDER": True},
     }), encoding="utf-8")
     with pytest.raises(ValueError, match="EXECUTION_FAMILY_SELECTION_MISMATCH"):
         resolve_run_configuration(configuration, profiles=profiles, environ={})
@@ -102,7 +112,7 @@ def test_explicit_profile_must_match_operational_selector(tmp_path: Path) -> Non
     selection = tmp_path / "selection.json"
     selection.write_text(json.dumps({
         "selection_version": "1.0.0",
-        "families": {"AGENT_HARNESS": True, "API_PROVIDER": False, "LOCAL_MODEL": False},
+        "families": {"AGENT_HARNESS": True, "API_PROVIDER": False},
     }), encoding="utf-8")
     configuration = {
         "role_id": "SCRIPT_PRODUCT_PRODUCER", "execution_route": "local_model",
@@ -112,13 +122,13 @@ def test_explicit_profile_must_match_operational_selector(tmp_path: Path) -> Non
         "temperature": None, "max_tokens": None, "budget_limit": None, "paid_cost_approved": False,
         "execution_family_selection_path": str(selection),
     }
-    assert resolve_profile_family("ollama_local", profiles=profiles) == "LOCAL_MODEL"
+    assert resolve_profile_family("ollama_local", profiles=profiles) == "API_PROVIDER"
     with pytest.raises(ValueError, match="EXECUTION_FAMILY_SELECTION_PROFILE_MISMATCH"):
         resolve_run_configuration(configuration, profiles=profiles, environ={})
 
     selection.write_text(json.dumps({
         "selection_version": "1.0.0",
-        "families": {"AGENT_HARNESS": False, "API_PROVIDER": False, "LOCAL_MODEL": True},
+        "families": {"AGENT_HARNESS": False, "API_PROVIDER": True},
     }), encoding="utf-8")
     resolved = resolve_run_configuration(configuration, profiles=profiles, environ={})
     assert resolved.execution_profile == "ollama_local"
@@ -154,8 +164,8 @@ def test_historical_execution_family_authorization_is_stale_against_current_miss
 
 
 @pytest.mark.parametrize("families", [
-    {"AGENT_HARNESS": False, "API_PROVIDER": False, "LOCAL_MODEL": False},
-    {"AGENT_HARNESS": True, "API_PROVIDER": True, "LOCAL_MODEL": False},
+    {"AGENT_HARNESS": False, "API_PROVIDER": False},
+    {"AGENT_HARNESS": True, "API_PROVIDER": True},
 ])
 def test_execution_family_selection_rejects_zero_or_multiple_active_families(tmp_path: Path, families: dict[str, bool]) -> None:
     selection = tmp_path / "selection.json"
@@ -186,7 +196,7 @@ def test_editorial_roles_traverse_canonical_profile_and_prompt_route(tmp_path: P
                     "max_tokens": None,
                     "budget_limit": None,
                     "paid_cost_approved": False,
-                    "execution_family_selection_path": _selection_path(tmp_path, "LOCAL_MODEL"),
+                    "execution_family_selection_path": _selection_path(tmp_path, "API_PROVIDER"),
                 },
             profiles=profiles,
             environ={},
@@ -293,7 +303,7 @@ def test_resolution_priority_is_per_run_then_profile_then_role_then_global(tmp_p
             "max_tokens": None,
             "budget_limit": None,
             "paid_cost_approved": False,
-            "execution_family_selection_path": _selection_path(tmp_path, "LOCAL_MODEL"),
+            "execution_family_selection_path": _selection_path(tmp_path, "API_PROVIDER"),
         },
         profiles=profiles,
         environ={},
@@ -319,7 +329,7 @@ def test_local_model_override_switches_models_without_code_change(tmp_path: Path
             "max_tokens": None,
             "budget_limit": None,
             "paid_cost_approved": False,
-            "execution_family_selection_path": _selection_path(tmp_path, "LOCAL_MODEL"),
+            "execution_family_selection_path": _selection_path(tmp_path, "API_PROVIDER"),
         },
         profiles=profiles,
         environ={},
@@ -338,7 +348,7 @@ def test_local_model_override_switches_models_without_code_change(tmp_path: Path
             "max_tokens": None,
             "budget_limit": None,
             "paid_cost_approved": False,
-            "execution_family_selection_path": _selection_path(tmp_path, "LOCAL_MODEL"),
+            "execution_family_selection_path": _selection_path(tmp_path, "API_PROVIDER"),
         },
         profiles=profiles,
         environ={},
@@ -402,6 +412,34 @@ def test_api_provider_family_can_run_without_execution_profile(tmp_path: Path) -
     assert resolved.provider == "deepseek"
     assert resolved.provider_adapter == "deepseek"
     assert resolved.model == "deepseek-chat"
+
+
+def test_ollama_remains_a_direct_provider_under_api_family(tmp_path: Path) -> None:
+    profiles = load_execution_profiles(ROOT / "config/agent_execution_profiles.json")
+    resolved = resolve_run_configuration(
+        {
+            "role_id": "SCRIPT_PRODUCT_PRODUCER",
+            "execution_route": "local_model",
+            "execution_family": "API_PROVIDER",
+            "executor_override": None,
+            "provider_override": "ollama",
+            "model_override": "llama3.2:latest",
+            "timeout_seconds": 30,
+            "max_retries": 0,
+            "temperature": None,
+            "max_tokens": None,
+            "budget_limit": None,
+            "paid_cost_approved": False,
+            "execution_family_selection_path": _selection_path(tmp_path, "API_PROVIDER"),
+        },
+        profiles=profiles,
+        environ={},
+    )
+    assert resolved.status == "READY"
+    assert resolved.execution_profile is None
+    assert resolved.execution_family == "API_PROVIDER"
+    assert resolved.provider == "ollama"
+    assert resolved.execution_route == "local_model"
 
 
 def test_agent_harness_route_uses_managed_provider_identity(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -531,28 +569,28 @@ def test_unknown_profile_route_provider_and_executor_are_rejected(tmp_path: Path
             "role_id": "SCRIPT_PRODUCT_PRODUCER", "execution_route": "local_model", "execution_profile": "missing", "executor_override": None,
             "provider_override": None, "model_override": None, "timeout_seconds": 30, "max_retries": 0, "temperature": None,
             "max_tokens": None, "budget_limit": None, "paid_cost_approved": False,
-            "execution_family_selection_path": _selection_path(tmp_path, "LOCAL_MODEL"),
+            "execution_family_selection_path": _selection_path(tmp_path, "API_PROVIDER"),
         }, profiles=profiles, environ={})
     with pytest.raises(ValueError, match="ruta incompatible"):
         resolve_run_configuration({
             "role_id": "SCRIPT_PRODUCT_PRODUCER", "execution_route": "api_model", "execution_profile": "ollama_local", "executor_override": None,
             "provider_override": None, "model_override": None, "timeout_seconds": 30, "max_retries": 0, "temperature": None,
             "max_tokens": None, "budget_limit": None, "paid_cost_approved": False,
-            "execution_family_selection_path": _selection_path(tmp_path, "LOCAL_MODEL"),
+            "execution_family_selection_path": _selection_path(tmp_path, "API_PROVIDER"),
         }, profiles=profiles, environ={})
     with pytest.raises(ValueError, match="provider incompatible"):
         resolve_run_configuration({
             "role_id": "SCRIPT_PRODUCT_PRODUCER", "execution_route": "local_model", "execution_profile": "ollama_local", "executor_override": None,
             "provider_override": "openai", "model_override": "llama3.2:latest", "timeout_seconds": 30, "max_retries": 0, "temperature": None,
             "max_tokens": None, "budget_limit": None, "paid_cost_approved": False,
-            "execution_family_selection_path": _selection_path(tmp_path, "LOCAL_MODEL"),
+            "execution_family_selection_path": _selection_path(tmp_path, "API_PROVIDER"),
         }, profiles=profiles, environ={})
     with pytest.raises(ValueError, match="executor inexistente"):
         resolve_run_configuration({
             "role_id": "SCRIPT_PRODUCT_PRODUCER", "execution_route": "local_model", "execution_profile": "ollama_local", "executor_override": "ghost",
             "provider_override": None, "model_override": "llama3.2:latest", "timeout_seconds": 30, "max_retries": 0, "temperature": None,
             "max_tokens": None, "budget_limit": None, "paid_cost_approved": False,
-            "execution_family_selection_path": _selection_path(tmp_path, "LOCAL_MODEL"),
+            "execution_family_selection_path": _selection_path(tmp_path, "API_PROVIDER"),
         }, profiles=profiles, environ={})
 
 

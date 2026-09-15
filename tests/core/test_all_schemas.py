@@ -913,7 +913,7 @@ VALID_FIXTURES["mission_contract"] = {
 }
 VALID_FIXTURES["execution_family_selection"] = {
     "selection_version": "1.0.0",
-    "families": {"AGENT_HARNESS": True, "API_PROVIDER": False, "LOCAL_MODEL": False},
+    "families": {"AGENT_HARNESS": True, "API_PROVIDER": False},
 }
 VALID_FIXTURES["research_stop_decision"] = {"decision_id": "RSD-1", "decision_version": "1.0.0", "subject_kind": "MATERIAL_CLAIM", "subject_ref": "CLAIM-001", "intended_use": "CENTRAL_CLAIM_SUPPORT", "evidence_refs": ["S-1"], "claim_decision": "CLAIM_ALLOWED", "sufficiency_status": "SUFFICIENT_FOR_INTENDED_USE", "limitations": [], "pending_matters": [], "unresolved_material_contradiction_refs": [], "invalidators": ["CLAIM_OR_USE_CHANGED"], "invalidator_codes": ["CLAIM_OR_SCOPE_CHANGED"], "return_route": "Revalidar si cambia el uso.", "return_route_code": "AUTHORIZE_INTENDED_USE_ONLY", "decision_basis": "Evidencia primaria suficiente para el uso evaluado."}
 VALID_FIXTURES["research_channel_context"] = {

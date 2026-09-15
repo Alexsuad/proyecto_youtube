@@ -461,6 +461,7 @@ class ExecutionCognitiveBoundary:
     execution_profile: str | None = None
     execution_family: str | None = None
     execution_family_selection_path: str | None = None
+    provider_override: str | None = None
     model_override: str | None = None
     reasoning_effort: str | None = None
     paid_cost_approved: bool = False
@@ -498,6 +499,14 @@ class ExecutionCognitiveBoundary:
             raise PermissionError("AGENT_HARNESS_DOES_NOT_SELECT_PROFILE_EXECUTOR_PROVIDER_OR_MODEL")
         if self.execution_family == "AGENT_HARNESS" and self.execution_route is None:
             self.execution_route = "agent_harness"
+        if self.execution_family == "API_PROVIDER" and self.execution_route is None and self.provider_override:
+            profiles = load_execution_profiles(self.repository_root / "config/agent_execution_profiles.json")
+            provider = profiles.get("providers", {}).get(self.provider_override)
+            route_type = str(provider.get("route_type") or "").upper() if isinstance(provider, dict) else ""
+            if route_type == "API_MODEL_RUNTIME":
+                self.execution_route = "api_model"
+            elif route_type == "LOCAL_MODEL_RUNTIME":
+                self.execution_route = "local_model"
 
     def _resolve_profile_route(self) -> None:
         """Bind the route declared by an explicitly selected profile only.
@@ -550,6 +559,7 @@ class ExecutionCognitiveBoundary:
             input_artifacts=[],
             output_schema="topic_belonging_input",
             execution_mode=self.execution_mode,
+            provider=self.provider_override,
             model=self.model_override,
             reasoning_effort=self.reasoning_effort,
             execution_route=self.execution_route,
@@ -565,6 +575,7 @@ class ExecutionCognitiveBoundary:
                      "mission_id": live_mission_id,
                 "execution_interface": self.execution_interface,
                 "execution_family": self.execution_family,
+                "provider_override": self.provider_override,
                 "mission_contract_path": self.mission_contract_path,
                 "execution_family_selection_path": self.execution_family_selection_path or str(EXECUTION_FAMILY_SELECTION_PATH),
                 "mission_repo_root": self.mission_repo_root or str(self.repository_root),
@@ -690,7 +701,7 @@ class ExecutionCognitiveBoundary:
                 execution_mode=self.execution_mode,
                 model=("synthetic-structural-test" if self.execution_mode == "SYNTHETIC_TEST" else self.model_override),
                 reasoning_effort=self.reasoning_effort,
-                provider="mock" if mock_output is not None else None,
+                provider="mock" if mock_output is not None else self.provider_override,
                 mock_output=mock_output,
                 output_artifact_kind=output_kind,
                 output_artifact_id=output_id,
@@ -714,6 +725,7 @@ class ExecutionCognitiveBoundary:
                      "mission_id": self.resolved_mission_id or "UNRESOLVED_MISSION",
                     "execution_interface": self.execution_interface,
                     "execution_family": self.execution_family,
+                    "provider_override": self.provider_override,
                     "execution_family_selection_path": self.execution_family_selection_path or str(EXECUTION_FAMILY_SELECTION_PATH),
                     "paid_cost_approved": self.paid_cost_approved,
                     "reasoning_effort": self.reasoning_effort,
@@ -1086,14 +1098,40 @@ class TopicBelongingTechnicalWorkflow:
             )
         return state
 
-    def _trusted_api_execution_context(self, *, require_model: bool = True) -> dict[str, str]:
-        profile_id = str(getattr(self.boundary, "execution_profile", None) or "").strip()
+    def _trusted_api_execution_context(self, *, require_model: bool = True) -> dict[str, str | None]:
+        family = str(getattr(self.boundary, "execution_family", None) or "").strip().upper()
         repository_root = Path(getattr(self.boundary, "repository_root", REPO_ROOT))
         try:
             profiles = load_execution_profiles(repository_root / "config/agent_execution_profiles.json")
-            profile = profiles.get("execution_profiles", {}).get(profile_id)
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
-            raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_PROFILE_INVALID") from exc
+            raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_REGISTRY_INVALID") from exc
+
+        if family == "API_PROVIDER":
+            provider = str(getattr(self.boundary, "provider_override", None) or "").strip()
+            provider_entry = profiles.get("providers", {}).get(provider)
+            provider_route_type = str(provider_entry.get("route_type") or "").upper() if isinstance(provider_entry, dict) else ""
+            if provider_route_type not in {"API_MODEL_RUNTIME", "LOCAL_MODEL_RUNTIME"}:
+                raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_PROVIDER_INVALID")
+            expected_route = "local_model" if provider_route_type == "LOCAL_MODEL_RUNTIME" else "api_model"
+            route = str(getattr(self.boundary, "execution_route", None) or expected_route).strip()
+            if route != expected_route:
+                raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_ROUTE_INVALID")
+            model = str(getattr(self.boundary, "model_override", None) or "").strip()
+            if not model:
+                model_env = str(provider_entry.get("model_env") or "").strip()
+                model = os.getenv(model_env, "").strip() if model_env else ""
+            if require_model and not model:
+                raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_MODEL_UNRESOLVED")
+            return {
+                "executor_identity": "native_provider",
+                "provider": provider,
+                "model": model,
+                "execution_route": route,
+                "execution_profile": None,
+            }
+
+        profile_id = str(getattr(self.boundary, "execution_profile", None) or "").strip()
+        profile = profiles.get("execution_profiles", {}).get(profile_id)
         if not isinstance(profile, dict):
             raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_PROFILE_INVALID")
 
@@ -1150,7 +1188,7 @@ class TopicBelongingTechnicalWorkflow:
             "execution_mode": "REAL",
         }
 
-    def _expected_persisted_execution_metadata(self, *, real_api_vertical: bool) -> dict[str, str]:
+    def _expected_persisted_execution_metadata(self, *, real_api_vertical: bool) -> dict[str, str | None]:
         if not real_api_vertical:
             return {
                 "provider_kind": "SYNTHETIC",
@@ -3135,7 +3173,13 @@ class TopicBelongingTechnicalWorkflow:
                 violations.append(f"EXECUTION_{stage}_RAW_OUTPUT_CHECKSUM_MISMATCH")
             if not isinstance(execution.get("execution_route"), str) or not execution.get("execution_route", "").strip():
                 violations.append(f"EXECUTION_{stage}_ROUTE_INVALID")
-            if not isinstance(execution.get("execution_profile"), str) or not execution.get("execution_profile", "").strip():
+            execution_profile = execution.get("execution_profile")
+            if real_api_vertical:
+                if execution_profile is not None and (
+                    not isinstance(execution_profile, str) or not execution_profile.strip()
+                ):
+                    violations.append(f"EXECUTION_{stage}_PROFILE_INVALID")
+            elif not isinstance(execution_profile, str) or not execution_profile.strip():
                 violations.append(f"EXECUTION_{stage}_PROFILE_INVALID")
 
         if violations:

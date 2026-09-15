@@ -1,4 +1,4 @@
-"""Owner-selected per-run resolution for local, API, and agent harness executions."""
+"""Owner-selected per-run resolution for API and agent harness executions."""
 from __future__ import annotations
 
 import json
@@ -12,7 +12,7 @@ from src.core.contract_validation import validate_against_schema
 
 PROFILE_PATH = Path("config/agent_execution_profiles.json")
 EXECUTION_FAMILY_SELECTION_PATH = Path("config/execution_family_selection.json")
-EXECUTION_FAMILIES = ("AGENT_HARNESS", "API_PROVIDER", "LOCAL_MODEL")
+EXECUTION_FAMILIES = ("AGENT_HARNESS", "API_PROVIDER")
 UNAVAILABLE = "UNAVAILABLE_FROM_PROVIDER"
 UNAVAILABLE_FROM_EXECUTOR = "UNAVAILABLE_FROM_EXECUTOR"
 MANAGED_BY_EXECUTOR = "MANAGED_BY_EXECUTOR"
@@ -112,7 +112,7 @@ def resolve_profile_family(
     if route_type == "AGENT_HARNESS_RUNTIME":
         return "AGENT_HARNESS"
     if route_type == "LOCAL_MODEL_RUNTIME":
-        return "LOCAL_MODEL"
+        return "API_PROVIDER"
     if route_type == "API_MODEL_RUNTIME":
         return "API_PROVIDER"
     raise ValueError(f"execution_profile route_type invalido: {profile_id}")
@@ -268,10 +268,11 @@ def resolve_run_configuration(
     if violations:
         raise ValueError("RunConfiguration invalido: " + "; ".join(violations))
 
+    selected_family = None
     if enforce_selector:
         selection_path_value = run_configuration.get("execution_family_selection_path")
         selection_path = Path(str(selection_path_value)) if selection_path_value else None
-        validate_execution_family_selection(
+        selected_family = validate_execution_family_selection(
             run_configuration.get("execution_family"),
             selection_path,
             requested_profile=run_configuration.get("execution_profile"),
@@ -320,16 +321,24 @@ def resolve_run_configuration(
             if not provider_ref:
                 raise ValueError("API_PROVIDER_REQUIRES_EXPLICIT_PROVIDER")
             provider_entry = profiles.get("providers", {}).get(provider_ref)
-            if not provider_entry or str(provider_entry.get("route_type")) != "API_MODEL_RUNTIME":
-                raise ValueError(f"provider incompatible con route_type API_MODEL_RUNTIME: {provider_ref}")
-            if run_configuration.get("execution_route") != "api_model":
-                raise ValueError("API_PROVIDER_REQUIRES_API_MODEL_ROUTE")
+            if not provider_entry or str(provider_entry.get("route_type")) not in {
+                "API_MODEL_RUNTIME",
+                "LOCAL_MODEL_RUNTIME",
+            }:
+                raise ValueError(f"provider incompatible con API/direct route: {provider_ref}")
+            provider_route = (
+                "local_model"
+                if str(provider_entry.get("route_type")) == "LOCAL_MODEL_RUNTIME"
+                else "api_model"
+            )
+            if run_configuration.get("execution_route") != provider_route:
+                raise ValueError(f"API_PROVIDER_REQUIRES_ROUTE:{provider_route}")
             execution_profile = None
             # Build a transient route descriptor from the selected provider;
             # API family selection must not require a named profile.
             profile = {
-                "route_type": "API_MODEL_RUNTIME",
-                "execution_route": "api_model",
+                "route_type": str(provider_entry.get("route_type")),
+                "execution_route": provider_route,
                 "executor": "native_provider",
                 "provider": provider_ref,
                 "provider_config_ref": provider_ref,
@@ -723,7 +732,7 @@ def resolve_run_configuration(
         provider_label=provider_label,
         executor_accepts_model_override=executor_accepts_model_override,
         model_selection=model_selection,
-        execution_family=execution_family,
+        execution_family=execution_family or selected_family,
     )
 
 

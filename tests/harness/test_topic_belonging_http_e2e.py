@@ -1,7 +1,7 @@
 """Software-only E2E coverage for the public Topic Belonging entrypoint.
 
-The test exercises ``src.cli.main`` with the REAL execution path selected by
-the ``deepseek_chat`` profile.  The DeepSeek HTTP adapter is real, but the
+The test exercises ``src.cli.main`` with the REAL API family and an explicitly
+selected provider/model.  The DeepSeek HTTP adapter is real, but the
 server is a local pytest-httpserver fixture and returns deterministic
 cognitive-only JSON.  No production source is patched and no real AI call is
 made.
@@ -176,7 +176,6 @@ def test_public_cli_real_profile_reaches_topic_belonging_stop_over_local_http(
                 "families": {
                     "AGENT_HARNESS": False,
                     "API_PROVIDER": True,
-                    "LOCAL_MODEL": False,
                 },
             }
         ),
@@ -203,8 +202,10 @@ def test_public_cli_real_profile_reaches_topic_belonging_stop_over_local_http(
                 mission_auth,
                 "--operational-authority",
                 _authority_path_for_authorization(mission_auth),
-                "--execution-profile",
-                "deepseek_chat",
+                "--execution-family",
+                "API_PROVIDER",
+                "--provider",
+                "deepseek",
                 "--execution-family-selection",
                 family_selection_ref,
                 "--paid-cost-approved",
@@ -229,8 +230,10 @@ def test_public_cli_real_profile_reaches_topic_belonging_stop_over_local_http(
                 mission_auth,
                 "--operational-authority",
                 _authority_path_for_authorization(mission_auth),
-                "--execution-profile",
-                "deepseek_chat",
+                "--execution-family",
+                "API_PROVIDER",
+                "--provider",
+                "deepseek",
                 "--execution-family-selection",
                 family_selection_ref,
                 "--paid-cost-approved",
@@ -303,7 +306,7 @@ def test_public_cli_real_profile_reaches_topic_belonging_stop_over_local_http(
     assert [item["stage"] for item in executions] == ["ENRICHMENT", "PRODUCER", "REVIEWER"]
     assert all(item["provider_or_adapter"] == "deepseek" for item in executions)
     assert all(item["execution_route"] == "api_model" for item in executions)
-    assert all(item["execution_profile"] == "deepseek_chat" for item in executions)
+    assert all(item["execution_profile"] is None for item in executions)
     assert all(item["provider_kind"] == "REAL" for item in executions)
 
     assessment = json.loads((episode_folder / "03_topic_belonging_assessment.json").read_text(encoding="utf-8"))
