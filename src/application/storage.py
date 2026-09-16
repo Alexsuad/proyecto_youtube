@@ -709,7 +709,9 @@ class VaultEpisodeStore:
             materialized_path = None
             materialized_checksum = None
             if materialized_output is not None:
-                materialized_token = hashlib.sha256(handoff_id.encode("utf-8")).hexdigest()
+                # Keep Windows materialization paths below MAX_PATH; the full
+                # content checksum remains authoritative in the result record.
+                materialized_token = hashlib.sha256(handoff_id.encode("utf-8")).hexdigest()[:16]
                 materialized_path = results_dir / f"{stage.lower()}-materialized-{materialized_token}.json"
                 _write_json_atomic(materialized_path, materialized_output)
                 materialized_checksum = self._file_checksum(materialized_path)
@@ -805,7 +807,7 @@ class VaultEpisodeStore:
         *,
         reassessment_id: str,
         result: dict[str, Any],
-    ) -> None:
+    ) -> dict[str, str]:
         """Attach the immutable reassessment outcome to its evidence record."""
         path = handle.folder / "topic_belonging_reassessments.json"
         with self._index_lock():
@@ -814,8 +816,31 @@ class VaultEpisodeStore:
             match = next((item for item in entries if item.get("reassessment_id") == reassessment_id), None)
             if match is None:
                 raise StorageError("TOPIC_BELONGING_REASSESSMENT_MISSING")
-            match.update(result)
-            _write_json_atomic(path, {"reassessments": entries})
+            persisted = dict(result)
+            decision = persisted.get("decision")
+            decision_ref = str(persisted.get("decision_ref") or "")
+            decision_checksum = str(persisted.get("decision_checksum") or "")
+            decision_path: Path | None = None
+            if isinstance(decision, dict) and not decision_ref:
+                attempt = int(match.get("attempt_number") or 0)
+                decision_path = handle.folder / f"topic_belonging_reassessment_attempt_{attempt}_decision.json"
+                _write_json_atomic(decision_path, decision)
+                decision_ref = f"episode:{handle.episode_id}/{decision_path.name}"
+                decision_checksum = self._file_checksum(decision_path)
+                persisted.update({"decision_ref": decision_ref, "decision_checksum": decision_checksum})
+                lineage = persisted.get("lineage")
+                if isinstance(lineage, dict):
+                    lineage = dict(lineage)
+                    lineage.update({"decision_ref": decision_ref, "decision_checksum": decision_checksum})
+                    persisted["lineage"] = lineage
+            match.update(persisted)
+            try:
+                _write_json_atomic(path, {"reassessments": entries})
+            except Exception:
+                if decision_path is not None:
+                    decision_path.unlink(missing_ok=True)
+                raise
+            return {"decision_ref": decision_ref, "decision_checksum": decision_checksum}
 
     def record_plan013_editorial_closure(
         self,

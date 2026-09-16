@@ -1,0 +1,19 @@
+{
+  "role_id": "ORCHESTRATION",
+  "execution_route": "agent_harness",
+  "execution_family": "AGENT_HARNESS",
+  "execution_family_selection_path": "config/execution_family_selection.json",
+  "mission_contract_path": "plans/mvp_real_e2e_script_01/mission_contract.json",
+  "completion_gate_result_path": null,
+  "mission_repo_root": null,
+  "executor_override": null,
+  "provider_override": null,
+  "model_override": null,
+  "reasoning_effort": null,
+  "timeout_seconds": 300,
+  "max_retries": 0,
+  "temperature": null,
+  "max_tokens": null,
+  "budget_limit": null,
+  "paid_cost_approved": false
+}

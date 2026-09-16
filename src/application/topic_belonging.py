@@ -453,6 +453,7 @@ class ExecutionCognitiveBoundary:
     """Use the shared execution runtime; ``mock_outputs`` is test-only injection."""
 
     repository_root: Path = REPO_ROOT
+    capability_id: str = CAPABILITY_ID
     mission_authorization_path: str | None = None
     execution_mode: str = "REAL"
     execution_interface: str = "TOPIC_BELONGING_TERMINAL"
@@ -553,7 +554,7 @@ class ExecutionCognitiveBoundary:
             raise PermissionError("CURRENT_MISSION_REQUIRED: authority has no current mission")
         enrich_prompt = _prompt_contract_for_stage("enrich")
         probe = ExecutionRequest(
-            capability_id=CAPABILITY_ID,
+            capability_id=self.capability_id,
             skill_id="topic_belonging",
             skill_version="1.0.0",
             input_artifacts=[],
@@ -693,7 +694,7 @@ class ExecutionCognitiveBoundary:
                 mock_output=mock_output,
             )
             request = ExecutionRequest(
-                capability_id=CAPABILITY_ID,
+                 capability_id=self.capability_id,
                 skill_id="topic_belonging",
                 skill_version="1.0.0",
                 input_artifacts=input_artifacts,
@@ -711,6 +712,11 @@ class ExecutionCognitiveBoundary:
                 execution_family=self.execution_family,
                 episode_id=episode_id,
                 role=role,
+                run_configuration=(
+                    self._run_configuration_for_role(role)
+                    if self.execution_mode == "REAL"
+                    else None
+                ),
                 config={
                     "repository_root": str(self.repository_root),
                     "mission_authorization_path": self.mission_authorization_path,
@@ -745,7 +751,7 @@ class ExecutionCognitiveBoundary:
                         "output_schema_name": prompt_contract["output_schema_name"],
                     },
                      "run_id": request_run_id,
-                     "handoff_target": REVIEWER_ROLE if stage == "produce" else CAPABILITY_ID,
+                     "handoff_target": REVIEWER_ROLE if stage == "produce" else self.capability_id,
                      "stage": {"enrich": "ENRICHMENT", "produce": "PRODUCER", "review": "REVIEWER"}[stage],
                      "expected_return": output_schema,
                      "convergence_callbacks": convergence_callbacks,
@@ -753,7 +759,7 @@ class ExecutionCognitiveBoundary:
                      "_synthetic_output_binder": synthetic_output_binder,
                   },
                  handoff_directory=self.handoff_directory,
-             )
+              )
             result = execute(request)
             result.usage.update(
                 {
@@ -791,6 +797,22 @@ class ExecutionCognitiveBoundary:
                 output["artifact_checksum"] = checksum
             provenance["output_checksum"] = checksum
         return output, result
+
+    def _run_configuration_for_role(self, role: str) -> dict[str, Any]:
+        if not self.mission_contract_path:
+            raise TopicBelongingExecutionError("RUN_CONFIGURATION_REQUIRED")
+        contract_path = Path(self.mission_contract_path)
+        if not contract_path.is_absolute():
+            contract_path = self.repository_root / contract_path
+        configuration_path = contract_path.with_name("run_configuration.json")
+        try:
+            configuration = json.loads(configuration_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise TopicBelongingExecutionError("RUN_CONFIGURATION_INVALID") from exc
+        if not isinstance(configuration, dict):
+            raise TopicBelongingExecutionError("RUN_CONFIGURATION_INVALID")
+        configuration["role_id"] = role
+        return configuration
 
     def enrich(self, handoff: dict[str, Any], human_input: HumanInput, profile: dict[str, Any], episode_id: str) -> tuple[dict[str, Any], ExecutionResult]:
         output = self.mock_outputs.get("enrich") if self.mock_outputs is not None else None
@@ -974,15 +996,21 @@ class TopicBelongingTechnicalWorkflow:
                 decision,
                 assessment,
                 topic_input=topic_input,
-                actor_id=API_REVIEWER_ACTOR_ID,
+                actor_id=(
+                    EXTERNAL_REVIEWER_ACTOR_ID
+                    if str(getattr(self.boundary, "execution_family", "")).upper() == "AGENT_HARNESS"
+                    else API_REVIEWER_ACTOR_ID
+                ),
                 role_id=REVIEWER_ROLE,
                 run_id=reviewer_result.run_id,
-                technical_provenance=software_runtime_context or {},
+                technical_provenance=self._technical_provenance_from_result(reviewer_result),
             )
         if producer_result.run_id == reviewer_result.run_id:
             raise TopicBelongingExecutionError("EXECUTION_INDEPENDENCE_INVALID:SAME_RUNTIME_RUN_ID")
         if self.boundary.execution_mode == "REAL" and self._uses_external_runner():
-            producer_executor = assessment.get("provenance", {}).get("executor_identity")
+            producer_executor = assessment.get("provenance", {}).get("executor_identity") or (
+                f"actor:{assessment.get('producer_actor_id')}"
+            )
             reviewer_executor = decision.get("provenance", {}).get("executor_identity")
             if not producer_executor or not reviewer_executor or producer_executor == reviewer_executor:
                 raise TopicBelongingExecutionError("EXECUTION_INDEPENDENCE_INVALID:EXECUTOR_IDENTITY")
@@ -1106,6 +1134,18 @@ class TopicBelongingTechnicalWorkflow:
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
             raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_REGISTRY_INVALID") from exc
 
+        if family == "AGENT_HARNESS":
+            route = str(getattr(self.boundary, "execution_route", None) or "agent_harness").strip()
+            if route != "agent_harness":
+                raise TopicBelongingExecutionError("TECHNICAL_PROVENANCE_ROUTE_INVALID")
+            return {
+                "executor_identity": "opencode",
+                "provider": "MANAGED_BY_EXECUTOR",
+                "model": "CURRENT_OPENCODE_MODEL",
+                "execution_route": route,
+                "execution_profile": None,
+            }
+
         if family == "API_PROVIDER":
             provider = str(getattr(self.boundary, "provider_override", None) or "").strip()
             provider_entry = profiles.get("providers", {}).get(provider)
@@ -1172,8 +1212,9 @@ class TopicBelongingTechnicalWorkflow:
 
     def _technical_provenance_from_result(self, result: ExecutionResult) -> dict[str, Any]:
         """Use the selected runtime profile, never provider-reported metadata."""
-        del result
         context = self._trusted_api_execution_context()
+        if str(getattr(self.boundary, "execution_family", None) or "").strip().upper() == "AGENT_HARNESS":
+            context["executor_identity"] = f"opencode:{result.run_id}"
         return {
             key: context[key]
             for key in (
@@ -1303,7 +1344,7 @@ class TopicBelongingTechnicalWorkflow:
         expected_bindings = {
             "mission_id": self._mission_id,
             "episode_id": handle.episode_id,
-            "capability_id": CAPABILITY_ID,
+            "capability_id": self.boundary.capability_id,
             "stage": workflow.get("stage"),
             "role": workflow.get("role"),
             "handoff_id": workflow.get("handoff_id"),
@@ -1363,7 +1404,9 @@ class TopicBelongingTechnicalWorkflow:
                 violations.append("REVIEWER_RESULT_RUN_BINDING_INVALID")
             if materialized_output.get("reviewer_run_id") == assessment.get("producer_run_id"):
                 violations.append("PRODUCER_REVIEWER_INDEPENDENCE_INVALID")
-            producer_executor = assessment.get("provenance", {}).get("executor_identity")
+            producer_executor = assessment.get("provenance", {}).get("executor_identity") or (
+                f"actor:{assessment.get('producer_actor_id')}"
+            )
             reviewer_executor = raw_payload.get("provenance", {}).get("executor_identity")
             if not producer_executor or not reviewer_executor or producer_executor == reviewer_executor:
                 violations.append("PRODUCER_REVIEWER_EXECUTOR_INDEPENDENCE_INVALID")
@@ -2114,7 +2157,7 @@ class TopicBelongingTechnicalWorkflow:
         expected = {
             "mission_id": self._mission_id,
             "episode_id": handle.episode_id,
-            "capability_id": CAPABILITY_ID,
+            "capability_id": self.boundary.capability_id,
             "stage": record.get("stage"),
             "role": record.get("role"),
             "handoff_id": record.get("handoff_id"),
@@ -2275,7 +2318,7 @@ class TopicBelongingTechnicalWorkflow:
         topic_input = self._read_episode_file(handle, "02_topic_belonging_input.json")
         assessment = self._read_episode_file(handle, "03_topic_belonging_assessment.json")
         profile = self.profile_loader()
-        _, result = self.boundary.review(
+        cognitive_decision, result = self.boundary.review(
             topic_input,
             assessment,
             profile,
@@ -2283,6 +2326,82 @@ class TopicBelongingTechnicalWorkflow:
             input_producer_run_id=assessment["producer_run_id"],
             additional_evidence=evidence,
         )
+        if result.status is ExecutionStatus.SUCCEEDED:
+            if not isinstance(cognitive_decision, dict):
+                raise TopicBelongingExecutionError("REASSESSMENT_DECISION_OUTPUT_MISSING")
+            cognitive_decision = dict(cognitive_decision)
+            # This field is Software-owned; discard an accidental model echo
+            # before the shared materializer binds it from canonical inputs.
+            cognitive_decision.pop("pre_b5_i1_evidence", None)
+            decision = self._materialize_decision(
+                cognitive_decision,
+                assessment,
+                topic_input=topic_input,
+                actor_id=API_REVIEWER_ACTOR_ID,
+                role_id=REVIEWER_ROLE,
+                run_id=result.run_id,
+                technical_provenance=self._technical_provenance_from_result(result),
+            )
+            if result.run_id == assessment.get("producer_run_id"):
+                raise TopicBelongingExecutionError("EXECUTION_INDEPENDENCE_INVALID:SAME_RUNTIME_RUN_ID")
+            producer_executor = assessment.get("provenance", {}).get("executor_identity") or (
+                f"actor:{assessment.get('producer_actor_id')}"
+            )
+            reviewer_executor = decision.get("provenance", {}).get("executor_identity")
+            if not producer_executor or not reviewer_executor or producer_executor == reviewer_executor:
+                raise TopicBelongingExecutionError("EXECUTION_INDEPENDENCE_INVALID:EXECUTOR_IDENTITY")
+            decision_violations = validate_decision(decision, assessment)
+            if decision_violations:
+                raise TopicBelongingExecutionError("DECISION_INVALID: " + "; ".join(decision_violations))
+            gate = evaluate_topic_belonging_gate(decision, assessment, topic_input)
+            reviewer_execution = self._execution_record(
+                "REVIEWER",
+                REVIEWER_ROLE,
+                result,
+                decision["provenance"]["output_checksum"],
+                [
+                    f"topic_belonging_input:{topic_input['topic_input_id']}",
+                    f"topic_belonging_assessment:{assessment['assessment_id']}",
+                    f"topic_belonging_reassessment_evidence:{evidence['evidence_id']}",
+                ],
+                [assessment["producer_run_id"]],
+                artifact_ref=f"topic_belonging_decision:{decision['decision_id']}",
+                software_runtime_context=self._technical_provenance_from_result(result),
+            )
+            lineage = self._roundtrip_lineage(handle, topic_input, assessment, decision)
+            lineage.update(
+                {
+                    "reassessment_id": evidence["reassessment_id"],
+                    "attempt_number": evidence["attempt_number"],
+                    "prior_decision_ref": evidence["prior_decision_ref"],
+                    "prior_decision_checksum": evidence["prior_decision_checksum"],
+                    "reviewer_run_id": result.run_id,
+                    "reviewer_actor_id": decision["reviewer_actor_id"],
+                    "reviewer_executor_identity": reviewer_executor,
+                }
+            )
+            self.store.complete_topic_belonging_reassessment(
+                handle,
+                reassessment_id=evidence["reassessment_id"],
+                result={
+                    "status": "COMPLETED",
+                    "decision": decision,
+                    "gate": gate,
+                    "lineage": lineage,
+                    "executions": [reviewer_execution],
+                    "decision_source_attempt": evidence["attempt_number"],
+                },
+            )
+            return self._build_stop_state(
+                handle,
+                str(workflow.get("run_id")),
+                gate,
+                decision,
+                decision_binding=self._effective_decision_binding(handle),
+            ) | {
+                "reassessment_id": evidence["reassessment_id"],
+                "attempt_number": evidence["attempt_number"],
+            }
         if result.status is not ExecutionStatus.HANDOFF_PREPARED:
             raise TopicBelongingExecutionError("REASSESSMENT_HANDOFF_NOT_PREPARED")
         pending = self._pending_handoff_state(handle, str(workflow.get("run_id")), result, "REVIEWER")
@@ -2424,13 +2543,15 @@ class TopicBelongingTechnicalWorkflow:
         profile = self.profile_loader()
         if next_stage == "PRODUCER":
             topic_input = self._read_roundtrip_output(handle, "ENRICHMENT")
-            _, result = self.boundary.produce(
+            assessment, result = self.boundary.produce(
                 topic_input,
                 profile,
                 handle.episode_id,
                 input_producer_run_id=self._roundtrip_result_run_id(handle, "ENRICHMENT"),
             )
             if result.status is not ExecutionStatus.HANDOFF_PREPARED:
+                if result.status is ExecutionStatus.SUCCEEDED and self.boundary.execution_mode == "REAL" and self._uses_external_runner():
+                    return self._complete_integrated_roundtrip(handle, workflow, topic_input, profile, assessment, result)
                 raise TopicBelongingExecutionError("PRODUCER_HANDOFF_NOT_PREPARED")
             return self._pending_handoff_state(handle, str(workflow.get("run_id")), result, "PRODUCER") | {
                 "completed_stages": list(workflow.get("completed_stages", [])),
@@ -2505,6 +2626,178 @@ class TopicBelongingTechnicalWorkflow:
             return self._build_stop_state(handle, str(workflow.get("run_id")), gate, decision)
         raise TopicBelongingExecutionError(f"ROUNDTRIP_NEXT_STAGE_INVALID:{next_stage}")
 
+    def _complete_integrated_roundtrip(
+        self,
+        handle: EpisodeHandle,
+        workflow: dict[str, Any],
+        topic_input: dict[str, Any],
+        profile: dict[str, Any],
+        assessment: dict[str, Any] | None,
+        producer_result: ExecutionResult,
+    ) -> dict[str, Any]:
+        """Finish a persisted enrichment with the managed integrated runner."""
+        if assessment is None:
+            raise TopicBelongingExecutionError("PRODUCER_OUTPUT_MISSING")
+        assessment = self._materialize_assessment(
+            topic_input,
+            assessment,
+            actor_id=API_PRODUCER_ACTOR_ID,
+            role_id=PRODUCER_ROLE,
+            run_id=producer_result.run_id,
+            technical_provenance=self._technical_provenance_from_result(producer_result),
+        )
+        assessment_violations = validate_assessment(assessment, topic_input)
+        if assessment_violations:
+            raise TopicBelongingExecutionError("ASSESSMENT_INVALID: " + "; ".join(assessment_violations))
+
+        decision, reviewer_result = self.boundary.review(
+            topic_input,
+            assessment,
+            profile,
+            handle.episode_id,
+            input_producer_run_id=self._roundtrip_result_run_id(handle, "ENRICHMENT"),
+        )
+        if reviewer_result.status is not ExecutionStatus.SUCCEEDED or decision is None:
+            raise TopicBelongingExecutionError("REVIEWER_EXECUTION_BLOCKED")
+        decision = self._materialize_decision(
+            decision,
+            assessment,
+            topic_input=topic_input,
+            actor_id=API_REVIEWER_ACTOR_ID,
+            role_id=REVIEWER_ROLE,
+            run_id=reviewer_result.run_id,
+            technical_provenance=self._technical_provenance_from_result(reviewer_result),
+        )
+        if producer_result.run_id == reviewer_result.run_id:
+            raise TopicBelongingExecutionError("EXECUTION_INDEPENDENCE_INVALID:SAME_RUNTIME_RUN_ID")
+        producer_executor = assessment.get("provenance", {}).get("executor_identity")
+        reviewer_executor = decision.get("provenance", {}).get("executor_identity")
+        if not producer_executor or not reviewer_executor or producer_executor == reviewer_executor:
+            raise TopicBelongingExecutionError("EXECUTION_INDEPENDENCE_INVALID:EXECUTOR_IDENTITY")
+        decision_violations = validate_decision(decision, assessment)
+        if decision_violations:
+            raise TopicBelongingExecutionError("DECISION_INVALID: " + "; ".join(decision_violations))
+
+        gate = evaluate_topic_belonging_gate(decision, assessment, topic_input)
+        enrichment_record = self._persisted_execution_record(
+            handle,
+            "ENRICHMENT",
+            topic_input,
+            canonical_checksum(topic_input, "input"),
+        )
+        executions = [
+            enrichment_record,
+            self._execution_record(
+                "PRODUCER",
+                PRODUCER_ROLE,
+                producer_result,
+                assessment["artifact_checksum"],
+                [f"topic_belonging_input:{topic_input['topic_input_id']}"],
+                [self._roundtrip_result_run_id(handle, "ENRICHMENT")],
+                artifact_ref=f"topic_belonging_assessment:{assessment['assessment_id']}",
+                software_runtime_context=self._technical_provenance_from_result(producer_result),
+            ),
+            self._execution_record(
+                "REVIEWER",
+                REVIEWER_ROLE,
+                reviewer_result,
+                decision["provenance"]["output_checksum"],
+                [
+                    f"topic_belonging_input:{topic_input['topic_input_id']}",
+                    f"topic_belonging_assessment:{assessment['assessment_id']}",
+                ],
+                [self._roundtrip_result_run_id(handle, "ENRICHMENT"), producer_result.run_id],
+                artifact_ref=f"topic_belonging_decision:{decision['decision_id']}",
+                software_runtime_context=self._technical_provenance_from_result(reviewer_result),
+            ),
+        ]
+        lineage = {
+            "mission_id": self._mission_id,
+            "episode_id": handle.episode_id,
+            "human_input_ref": f"episode:{handle.episode_id}/00_human_input.json",
+            "handoff_ref": f"episode:{handle.episode_id}/01_editorial_intake_handoff.json",
+            "topic_input_ref": f"episode:{handle.episode_id}/02_topic_belonging_input.json",
+            "assessment_ref": f"episode:{handle.episode_id}/03_topic_belonging_assessment.json",
+            "decision_ref": f"episode:{handle.episode_id}/04_topic_belonging_decision.json",
+            "gate_ref": f"episode:{handle.episode_id}/05_topic_belonging_gate.json",
+            "handoff_checksum": _json_checksum(self._read_episode_file(handle, "01_editorial_intake_handoff.json")),
+            "topic_input_checksum": canonical_checksum(topic_input, "input"),
+            "assessment_checksum": assessment["artifact_checksum"],
+            "decision_checksum": decision["provenance"]["output_checksum"],
+            "enrichment_run_id": self._roundtrip_result_run_id(handle, "ENRICHMENT"),
+            "producer_run_id": producer_result.run_id,
+            "reviewer_run_id": reviewer_result.run_id,
+            "producer_actor_id": assessment["producer_actor_id"],
+            "reviewer_actor_id": decision["reviewer_actor_id"],
+            "field_ownership": _field_ownership(topic_input, self._read_episode_file(handle, "01_editorial_intake_handoff.json")),
+            "stop_after": "TOPIC_BELONGING_GATE",
+        }
+        self.store.record_topic_belonging_vertical(
+            handle,
+            topic_input=topic_input,
+            assessment=assessment,
+            decision=decision,
+            gate_result=gate,
+            lineage=lineage,
+            executions=executions,
+        )
+        return self._build_stop_state(handle, str(workflow.get("run_id")), gate, decision)
+
+    def _persisted_execution_record(
+        self,
+        handle: EpisodeHandle,
+        stage: str,
+        output: dict[str, Any],
+        artifact_checksum: str,
+    ) -> dict[str, Any]:
+        results = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME).get("results", [])
+        record = next((item for item in results if item.get("stage") == stage), None)
+        if not isinstance(record, dict):
+            raise TopicBelongingExecutionError(f"ROUNDTRIP_RESULT_MISSING:{stage}")
+        envelope = self._read_episode_file_path(handle.folder / str(record.get("result_path")))
+        package = self._read_episode_file_path(Path(str(record.get("handoff_package_ref"))))
+        provenance = envelope.get("provenance", {})
+        result = ExecutionResult(
+            run_id=str(envelope.get("result_run_id")),
+            status=ExecutionStatus.SUCCEEDED,
+            executor_type="provider",
+            provider=str(provenance.get("provider") or "agent_executor"),
+            model=str(provenance.get("model") or "CURRENT_OPENCODE_MODEL"),
+            input_manifest_checksum=str(package.get("input_manifest_checksum") or ""),
+            output=output,
+            output_checksum=str(envelope.get("output_checksum") or ""),
+            started_at="",
+            completed_at="",
+            usage={
+                "provider_kind": "REAL",
+                "execution_mode": "REAL",
+                "execution_route": "agent_harness",
+                "execution_profile": None,
+            },
+        )
+        input_ids = [
+            f"{item.get('artifact_kind')}:{item.get('artifact_id')}"
+            for item in package.get("input_manifest", {}).get("artifacts", [])
+        ]
+        return self._execution_record(
+            stage,
+            str(package.get("role") or PRODUCER_ROLE),
+            result,
+            artifact_checksum,
+            input_ids,
+            [],
+            artifact_ref=f"topic_belonging_input:{output.get('topic_input_id')}" if stage == "ENRICHMENT" else None,
+            cognitive_proposal=output if stage == "ENRICHMENT" else None,
+            software_runtime_context={
+                "provider_kind": "REAL",
+                "provider": str(provenance.get("provider") or "MANAGED_BY_EXECUTOR"),
+                "model": str(provenance.get("model") or "CURRENT_OPENCODE_MODEL"),
+                "execution_mode": "REAL",
+                "execution_route": "agent_harness",
+                "execution_profile": None,
+            },
+        )
+
     def _roundtrip_lineage(
         self,
         handle: EpisodeHandle,
@@ -2516,6 +2809,32 @@ class TopicBelongingTechnicalWorkflow:
     ) -> dict[str, Any]:
         results = self._read_episode_file(handle, ROUNDTRIP_RESULTS_FILENAME).get("results", [])
         by_stage = {item.get("stage"): item for item in results}
+        if not by_stage:
+            # A reassessment can follow the integrated first attempt, which
+            # persists topic_belonging_lineage.json rather than roundtrip results.
+            # Preserve that canonical lineage and replace only the reassessment's
+            # decision-bound fields.
+            lineage_path = handle.folder / "topic_belonging_lineage.json"
+            if lineage_path.is_file():
+                lineage = self._read_episode_file(handle, "topic_belonging_lineage.json")
+                lineage.update(
+                    {
+                        "decision_checksum": decision["provenance"]["output_checksum"],
+                        "reviewer_run_id": decision.get("reviewer_run_id"),
+                        "reviewer_actor_id": decision.get("reviewer_actor_id"),
+                        "producer_executor_identity": assessment.get("provenance", {}).get("executor_identity"),
+                        "reviewer_executor_identity": decision.get("provenance", {}).get("executor_identity"),
+                        "independence_status": (
+                            "VERIFIED"
+                            if assessment.get("provenance", {}).get("executor_identity")
+                            and decision.get("provenance", {}).get("executor_identity")
+                            and assessment.get("provenance", {}).get("executor_identity")
+                            != decision.get("provenance", {}).get("executor_identity")
+                            else "INDEPENDENCE_UNVERIFIED"
+                        ),
+                    }
+                )
+                return lineage
         if reviewer_record is not None:
             by_stage["REVIEWER"] = reviewer_record
         return {
@@ -3253,7 +3572,7 @@ class TopicBelongingTechnicalWorkflow:
             expected_identity = {
                 "mission_id": self._mission_id,
                 "episode_id": handle.episode_id,
-                "capability_id": CAPABILITY_ID,
+                "capability_id": self.boundary.capability_id,
                 "stage": stage,
                 "role": role_by_stage[stage],
                 "handoff_id": package.get("handoff_id"),

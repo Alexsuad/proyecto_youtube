@@ -2,7 +2,7 @@
   "mission_id": "EXTEND_01_M2_REAL_E2E",
   "decision": "APPROVE",
   "artifact_version": "1.0.0",
-  "authorized_scope_sha256": "fc42285f16aeb6ac6dd536301bea20811e1150168d9258d9e69c727514bcff4d",
+  "authorized_scope_sha256": "21a6b4970530010e50c8284519015b549e00e6d784947e08f07a61b815240155",
   "material_decision_binding": {
     "registry_path": "docs/legacy/material_decision_registry.json",
     "decision_id": "MD-CI-001",

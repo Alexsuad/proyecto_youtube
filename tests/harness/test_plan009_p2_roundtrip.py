@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 import src.cli as cli
+from src.ai.contracts import ExecutionResult, ExecutionStatus
 from src.ai.providers.agent_handoff import AgentHandoffProvider
 from src.application.contracts import HumanInput
 from src.application.service import EpisodeApplicationService
@@ -201,9 +202,12 @@ def _mission_bundle(tmp_path: Path) -> tuple[str, str, Path, Path]:
     authority_ref = authority_path.relative_to(ROOT).as_posix()
 
     control = (ROOT / "plans/001_CONTROL_OPERATIVO.md").read_text(encoding="utf-8")
-    current_line = next(line for line in control.splitlines() if line.startswith("CURRENT_MISSION:"))
-    control = control.replace(current_line, f"CURRENT_MISSION: {mission_id}")
-    control = control.replace("CURRENT_MISSION_EXECUTION_BUNDLE: NONE", f"CURRENT_MISSION_EXECUTION_BUNDLE: {contract_ref}")
+    control = "\n".join(
+        f"CURRENT_MISSION: {mission_id}" if line.startswith("CURRENT_MISSION:")
+        else f"CURRENT_MISSION_EXECUTION_BUNDLE: {contract_ref}" if line.startswith("CURRENT_MISSION_EXECUTION_BUNDLE:")
+        else line
+        for line in control.splitlines()
+    ) + "\n"
     live_state.write_text(control, encoding="utf-8")
 
     scope = {
@@ -270,6 +274,30 @@ def _mission_bundle(tmp_path: Path) -> tuple[str, str, Path, Path]:
         "schema_checks": [],
     }
     contract_path.write_text(json.dumps(contract, ensure_ascii=False), encoding="utf-8")
+    (bundle_root / "run_configuration.json").write_text(
+        json.dumps(
+            {
+                "role_id": "CHANNEL_INTELLIGENCE_PRODUCER",
+                "execution_route": "agent_harness",
+                "execution_profile": None,
+                "execution_family": "AGENT_HARNESS",
+                "execution_family_selection_path": "config/execution_family_selection.json",
+                "executor_override": None,
+                "provider_override": None,
+                "model_override": None,
+                "reasoning_effort": None,
+                "mission_contract_path": contract_ref,
+                "timeout_seconds": 600,
+                "max_retries": 1,
+                "temperature": None,
+                "max_tokens": None,
+                "budget_limit": None,
+                "paid_cost_approved": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     return authorization_ref, contract_ref, live_state, bundle_root
 
 
@@ -284,6 +312,7 @@ def _service(tmp_path: Path, vault_root: Path | None = None) -> EpisodeApplicati
         operational_authority_path=str(live_state),
         execution_mode="REAL",
         execution_family="AGENT_HARNESS",
+        provider_override="agent_handoff",
         handoff_directory=ROOT / "handoff",
     )
     service = EpisodeApplicationService(store, workflow=TopicBelongingTechnicalWorkflow(store, boundary=boundary))
@@ -545,6 +574,58 @@ def test_request_more_evidence_reentry_preserves_first_attempt(tmp_path: Path) -
         assert duplicate_workflow["editorial_decision"] == "REJECT"
         assert duplicate_workflow["reassessment_id"] == reassessments["reassessments"][-1]["reassessment_id"]
         assert len(json.loads((episode.folder / "topic_belonging_reassessments.json").read_text(encoding="utf-8"))["reassessments"]) == 1
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_integrated_reassessment_succeeded_materializes_and_stops(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        created.extend(_finish_roundtrip(service, episode, tmp_path))
+        original_decision = (episode.folder / "04_topic_belonging_decision.json").read_bytes()
+        evidence_path = tmp_path / "integrated-evidence.json"
+        evidence_path.write_text(json.dumps(_reassessment_evidence("integrated")), encoding="utf-8")
+        service.submit_topic_belonging_evidence(episode.episode_id, evidence_path)
+        assessment = _materialized_producer_assessment(episode)
+        cognitive_decision = _cognitive_decision(assessment, "APPROVE_WITH_CONDITIONS")
+        cognitive_decision["pre_b5_i1_evidence"] = {"forged": "model-owned"}
+
+        def integrated_review(*args, **kwargs):
+            return cognitive_decision, ExecutionResult(
+                run_id="RUN-INTEGRATED-REASSESSMENT",
+                status=ExecutionStatus.SUCCEEDED,
+                executor_type="provider",
+                provider="agent_executor",
+                model="CURRENT_OPENCODE_MODEL",
+                input_manifest_checksum="manifest-integrated",
+                output=cognitive_decision,
+                output_checksum=canonical_checksum(cognitive_decision, "decision"),
+                started_at="2026-09-15T20:00:00Z",
+                completed_at="2026-09-15T20:00:01Z",
+                usage={
+                    "provider_kind": "REAL",
+                    "execution_mode": "REAL",
+                    "execution_route": "agent_harness",
+                    "execution_profile": None,
+                },
+            )
+
+        monkeypatch.setattr(service.workflow.boundary, "review", integrated_review)
+        final = service.prepare_topic_belonging_reassessment(episode.episode_id)
+        assert final["state"]["status"] == "TOPIC_BELONGING_TECHNICAL_STOP"
+        assert (episode.folder / "04_topic_belonging_decision.json").read_bytes() == original_decision
+        reassessments = json.loads((episode.folder / "topic_belonging_reassessments.json").read_text(encoding="utf-8"))
+        reassessment = reassessments["reassessments"][-1]
+        assert reassessment["status"] == "COMPLETED"
+        assert reassessment["attempt_number"] == 2
+        assert reassessment["prior_decision_ref"] == f"episode:{episode.episode_id}/04_topic_belonging_decision.json"
+        assert reassessment["lineage"]["reviewer_run_id"] == "RUN-INTEGRATED-REASSESSMENT"
+        decision_path = episode.folder / reassessment["decision_ref"].split(f"episode:{episode.episode_id}/", 1)[1]
+        assert decision_path.is_file()
+        assert hashlib.sha256(decision_path.read_bytes()).hexdigest() == reassessment["decision_checksum"]
     finally:
         _cleanup_handoffs(created, service)
 

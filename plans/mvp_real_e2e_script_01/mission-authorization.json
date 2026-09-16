@@ -1,0 +1,44 @@
+{
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "053f7a45da1c9ab5013610c3e3dfbb623919802d17d75aae7d8ddb7c7990f2d7",
+    "capability_ids": [
+      "MVP_REAL_E2E_TOPIC_BELONGING",
+      "EXTEND_01_RESEARCH_V2_REAL_E2E",
+      "PLAN012_M6_INDEPENDENT_RESEARCH_AUDIT",
+      "B5_I2_SEMANTIC_AUDITOR",
+      "B5_I3_NARRATIVE_ARCHITECTURE",
+      "PLAN013_WRITING_SCRIPT_DRAFT",
+      "PLAN013_EDITOR_EDITED_SCRIPT",
+      "PLAN013_FINAL_EDITORIAL_AUDIT"
+    ],
+    "role_ids": [
+      "CHANNEL_INTELLIGENCE_PRODUCER",
+      "CHANNEL_INTELLIGENCE_REVIEWER",
+      "RESEARCH_AND_CURATION",
+      "INDEPENDENT_RESEARCH_AUDITOR",
+      "SCRIPT_PRODUCT_PRODUCER",
+      "SCRIPT_PRODUCT_AUDITOR",
+      "YOUTUBE_ADAPTATION_PRODUCER",
+      "YOUTUBE_ADAPTATION_AUDITOR",
+      "NARRATIVE_ARCHITECTURE",
+      "WRITING",
+      "EDITOR",
+      "FINAL_EDITORIAL_AUDITOR"
+    ],
+    "execution_family_ids": ["AGENT_HARNESS"],
+    "execution_interface": "MVP_REAL_E2E_TERMINAL",
+    "allowed_operations": ["EXECUTE_CAPABILITY"],
+    "allowed_paths": ["artifacts/mvp_real_e2e_script_01/", "handoff/"],
+    "allowed_routes": ["agent_harness"],
+    "execution_mode": "REAL",
+    "single_use": false,
+    "authority_ref": "plans/mvp_real_e2e_script_01/authority.json",
+    "authority_sha256": "d7a503fe33d601ee96c619d01df6b6e1f8ad71060f995127317e064299d014dc",
+      "authorized_scope_sha256": "eb59d1fb73db2c299a26d9a2be16f2305fb560dd709daa2ee067b654698a471c",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false,
+    "repair_integrity_evidence_path": "plans/mvp_real_e2e_script_01/repair_integrity.json"
+  }
+}

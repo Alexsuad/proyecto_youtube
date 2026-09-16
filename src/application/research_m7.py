@@ -448,6 +448,15 @@ class ExternalResearchCognitiveExecutor:
             raise ResearchM7Error("EXTERNAL_HANDOFF_PREPARED_CONTRACT_REQUIRED")
         input_artifacts = self._input_artifacts(self.episode, request)
         run_id = f"RUN-EXTEND01-HANDOFF-{uuid4().hex}"
+        mission_id = ""
+        if self.preparation.mission_authorization_path:
+            try:
+                authorization_payload = _read(self.preparation.mission_authorization_path)
+                mission_id = str(authorization_payload.get("mission_id") or "").strip()
+            except ResearchM7Error:
+                mission_id = ""
+        if not mission_id:
+            raise ResearchM7Error("REAL_ROUTE_MISSION_ID_UNRESOLVED")
         execution_request = ExecutionRequest(
             capability_id=REAL_RESEARCH_CAPABILITY,
             skill_id="extend_01_research_v2_real_e2e",
@@ -466,9 +475,9 @@ class ExternalResearchCognitiveExecutor:
                 "mission_repo_root": str(Path(__file__).resolve().parents[2]),
                 "mission_authorization_path": self.preparation.mission_authorization_path,
                 "mission_contract_path": self.preparation.mission_contract_path,
-                "mission_id": "EXTEND_01_M2_REAL_E2E",
+                "mission_id": mission_id,
                 "mission_operation": "EXECUTE_CAPABILITY",
-                "execution_interface": "EXTEND_01_M2_B4_HANDOFF",
+                "execution_interface": "MVP_REAL_E2E_TERMINAL",
                 "execution_family": "AGENT_HARNESS",
                 "stage": str(request.stage),
                 "expected_return": str(request.output_schema),
@@ -1532,7 +1541,7 @@ def import_and_resume_external_research(
     # There is intentionally no parallel stage list here: the coordinator
     # emitted this package and the importer accepts only that exact package.
     bindings = {
-        "mission_id": "EXTEND_01_M2_REAL_E2E",
+                "mission_id": str(state.get("mission_id") or package.get("mission_id") or ""),
         "episode_id": episode_id,
         "capability_id": REAL_RESEARCH_CAPABILITY,
         "handoff_id": state.get("handoff_id"),
@@ -1606,6 +1615,7 @@ def import_and_resume_external_research(
             "RESEARCH_PLAN_PROPOSAL", dict(proposal),
             artifact_id=f"{episode_id}:RESEARCH_PLAN_PROPOSAL",
             artifact_kind="ResearchPlanProposal",
+            replace_invalid=True,
         )
         # The persisted artifact checksum is the lineage checksum.  Do not
         # derive a replacement from a newly materialized plan representation.

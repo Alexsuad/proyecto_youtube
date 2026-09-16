@@ -1,0 +1,67 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-fe9baef06995400e8478362104b79027",
+  "package_checksum": "a3f8a1b4c68468e2af26385451496da8fcb5654c3ab107be0af3cc103388528f",
+  "input_manifest_checksum": "50e64589439f27ebe402b76f714455ab2a677135f0ef90b5801e2bc28923e0b4",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "BASE_RESEARCH_POOL",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-c05bfe04feac4e58a548549a6c926370",
+  "output": {
+    "dossier_id": "ep_0001:WORK_RESEARCH_DOSSIER:UNAVAILABLE",
+    "dossier_version": "2.0.0",
+    "episode_id": "ep_0001",
+    "research_id": "ep_0001:RESEARCH_PLAN",
+    "evidence_report_id": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT",
+    "work": {
+      "material_id": "NO_SUPPLIED_WORK",
+      "title": "No hay obra suministrada",
+      "creator": "No disponible",
+      "consulted_representations": [
+        {
+          "representation_kind": "ORIGINAL_WORK",
+          "edition_or_version": "No disponible",
+          "consulted_locator": "No hay material de obra recuperado"
+        }
+      ]
+    },
+    "dossier_stage": "IDENTIFIED",
+    "pending_items": [
+      "No se han suministrado obras ni materiales del propietario.",
+      "No existe evidencia verificable para realizar investigación profesional o evaluación de fidelidad."
+    ],
+    "confidence": "LOW",
+    "created_at": "2026-09-16T05:35:50.324581+00:00",
+    "artifact_validity": "PENDING_VALIDATION",
+    "research_stage": "BASE_RESEARCH",
+    "research_sufficiency": "BLOCKED_BY_EVIDENCE",
+    "preliminary_fidelity": "NOT_ASSESSED",
+    "deep_fidelity": "NOT_ASSESSED",
+    "selection_state": "PENDING_DECISION",
+    "thesis_stage": "NONE",
+    "evidence_type_separation": {
+      "work_evidence_refs": [],
+      "external_reality_evidence_refs": []
+    },
+    "lineage": [
+      "ep_0001:RESEARCH_PLAN",
+      "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT"
+    ]
+  },
+  "output_checksum": "00bef7f172e1829643eb9dfbd130a559c31f9b091074ac19b22bf5065f2f53a0",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "BASE_RESEARCH_POOL",
+    "role": "RESEARCH_AND_CURATION",
+    "run_id": "RESULT-c05bfe04feac4e58a548549a6c926370",
+    "executor_id": "opencode:RESULT-c05bfe04feac4e58a548549a6c926370",
+    "executor_identity": "opencode:RESULT-c05bfe04feac4e58a548549a6c926370",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

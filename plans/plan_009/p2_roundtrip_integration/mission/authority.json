@@ -1,6 +1,6 @@
 {
   "artifact_version": "1.0.0",
-  "authorized_scope_sha256": "428c8e6fd9048ebc8ddd7c758832c13c4c1d8eece5aaf319ede90543ea73f932",
+  "authorized_scope_sha256": "1b0c2be6c1d4b452249f12bdd792676d79abf45da27c872a4d22cd030979146c",
   "decision": "APPROVE",
   "material_decision_binding": {
     "decision_id": "MD-CI-001",

@@ -20,7 +20,7 @@ from src.core.contract_validation import load_schema, validate_against_schema
 from src.core.execution_preflight import preflight_controlled_execution
 from src.core.replay_protection import mark_mission_reservation
 
-REAL_EXTERNAL_PROVIDERS = {"ollama", "deepseek", "openai_compatible"}
+REAL_EXTERNAL_PROVIDERS = {"ollama", "deepseek", "openai_compatible", "agent_executor"}
 TECHNICAL_HARNESS_PROVIDERS = {"mock", "agent_handoff", "agent_executor"}
 
 B5_I2_ROLE_ARTIFACT_COMPATIBILITY = {
@@ -1052,16 +1052,11 @@ def _normalized_run_configuration(request: ExecutionRequest) -> dict[str, Any] |
 
 def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
     # An explicitly requested canonical handoff remains handoff-only after
-    # profile resolution.  The selected profile is still resolved by
-    # AgentRuntimePort; this branch prevents the HANDOFF_ONLY route from being
-    # silently converted into the integrated AgentExecutorProvider.
+    # profile resolution. Neutral AGENT_HARNESS resolves to the managed
+    # integrated executor, which owns the OpenCode invocation.
     request.resolved_route = route
     request.resolved_route_token = _VERIFIED_ROUTE_TOKEN
-    handoff_requested = (
-        request.provider == "agent_handoff"
-        or (request.execution_mode or "").lower() == "agent_handoff"
-        or getattr(route, "execution_family", None) == "AGENT_HARNESS"
-    )
+    handoff_requested = request.provider == "agent_handoff" or (request.execution_mode or "").lower() == "agent_handoff"
     request.provider = "agent_handoff" if handoff_requested and getattr(route, "route_type", None) == "AGENT_HARNESS_RUNTIME" else route.provider_adapter
     request.model = route.model
     request.reasoning_effort = getattr(route, "reasoning_effort", None)

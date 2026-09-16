@@ -1,0 +1,67 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-8d34afd077734e658e45de9142a4fe37",
+  "package_checksum": "303fcbe40a5b8abad22653ae22ef0b4f389696c605baea22883a9dd1745fb5b5",
+  "input_manifest_checksum": "f2cdf088cf68796e25c3b7ab90eac986005b1bd832e4ad15fe8105c02709f606",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "WORK_DISCOVERY",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-dd1bd27c24c0412c84ca0a593221d0b9",
+  "output": {
+    "lifecycle_id": "ep_0001:WORK_LIFECYCLE",
+    "lifecycle_version": "2.0.0",
+    "episode_id": "ep_0001",
+    "research_id": "ep_0001:RESEARCH_PLAN",
+    "research_contract_version": "2.0.0",
+    "entry_mode": "TOPIC_FIRST",
+    "anchor_work_id": null,
+    "works": [
+      {
+        "work_id": "ep_0001:WORK_DISCOVERY_PENDING",
+        "state": "DISCOVERED_WORK",
+        "state_version": "2.0.0",
+        "identity_ref": "ep_0001:WORK_DISCOVERY_PENDING",
+        "version_ref": null,
+        "is_anchor": false,
+        "lineage_refs": [
+          "ep_0001:RESEARCH_PLAN"
+        ],
+        "stage_evidence_refs": []
+      }
+    ],
+    "transitions": [],
+    "screening": {
+      "candidate_work_ids": [
+        "ep_0001:WORK_DISCOVERY_PENDING"
+      ],
+      "format_policy_ref": "policies/script_product/main_episode_format_policy.md",
+      "range_status": "NOT_APPLICABLE",
+      "exception": null
+    },
+    "final_selection": {
+      "selected_work_ids": [],
+      "format_policy_ref": "policies/script_product/main_episode_format_policy.md",
+      "range_status": "NOT_APPLICABLE",
+      "curation_ref": null,
+      "exception": null
+    },
+    "critical_doubts": [],
+    "created_at": "2026-09-15T23:01:12.172623+00:00"
+  },
+  "output_checksum": "8d81dfa5f934cc61d222dee8f7193e057882a150524bc3403eabab6edd64131f",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "WORK_DISCOVERY",
+    "role": "RESEARCH_AND_CURATION",
+    "run_id": "RESULT-dd1bd27c24c0412c84ca0a593221d0b9",
+    "executor_id": "opencode:RESULT-dd1bd27c24c0412c84ca0a593221d0b9",
+    "executor_identity": "opencode:RESULT-dd1bd27c24c0412c84ca0a593221d0b9",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

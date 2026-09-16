@@ -76,6 +76,19 @@ class EpisodeApplicationService:
         current = self.store.resume(episode_id)
         if current["entry"].get("estado") == self.store.ADMINISTRATIVE_CLOSED_INDEX_STATUS:
             raise StorageError("EPISODE_ADMINISTRATIVELY_CLOSED: no se reanuda un episodio cerrado por recovery")
+        if current["state"].get("status") == "READY_FOR_REASSESSMENT":
+            prepare_reassessment = getattr(self.workflow, "prepare_reassessment", None)
+            if not callable(prepare_reassessment):
+                raise StorageError("TOPIC_BELONGING_REASSESSMENT_UNAVAILABLE")
+            handle = EpisodeHandle(
+                episode_id,
+                current["entry"].get("slug", "episodio"),
+                Path(current["folder"]),
+                self.store.index_path,
+            )
+            outcome = prepare_reassessment(handle)
+            self.store.record_workflow(handle, outcome)
+            return self.store.resume(episode_id)
         roundtrip_resume = getattr(self.workflow, "resume_roundtrip", None)
         if callable(roundtrip_resume) and current["state"].get("status") == "PERSISTED":
             folder = Path(current["folder"])

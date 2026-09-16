@@ -1,0 +1,30 @@
+{
+  "context": "Se propone explorar cómo la búsqueda de pertenencia puede exigir adaptación, ocultamiento o transformación de aspectos de la identidad. Las obras seleccionadas permiten observar distintas formas de tensión entre pertenecer a un grupo y conservar una identidad propia.",
+  "candidate_work_refs": [
+    "Billy Elliot (2000), dirigida por Stephen Daldry",
+    "Encanto (2021), dirigida por Jared Bush y Byron Howard",
+    "Mean Girls (2004), dirigida por Mark Waters"
+  ],
+  "scene_refs": [
+    "Billy Elliot: Billy practica ballet mientras su familia y su entorno minero esperan de él actividades asociadas a los roles masculinos tradicionales de su comunidad.",
+    "Encanto: Mirabel participa en una familia donde cada miembro posee un don mágico excepto ella, y busca encontrar su lugar dentro de la familia Madrigal.",
+    "Mean Girls: Cady Heron modifica progresivamente su comportamiento, apariencia y relaciones para integrarse en el grupo de las Plastics."
+  ],
+  "evidence": [
+    "HECHO — En Billy Elliot, el protagonista es un niño de una comunidad minera inglesa que desarrolla interés por el ballet y encuentra oposición en su entorno familiar y social.",
+    "HECHO — En Encanto, Mirabel es la única integrante de su generación inmediata de la familia Madrigal que no recibe un don mágico durante su ceremonia.",
+    "HECHO — En Mean Girls, Cady entra inicialmente en contacto con las Plastics como parte de un plan contra ellas y termina adoptando progresivamente sus comportamientos y códigos sociales.",
+    "INTERPRETACIÓN — Billy Elliot permite observar un conflicto entre pertenecer a una comunidad con expectativas identitarias fuertes y desarrollar una identidad que se aparta de esas expectativas.",
+    "INTERPRETACIÓN — Encanto permite explorar cómo una persona puede asociar su valor y pertenencia con el cumplimiento de expectativas familiares.",
+    "INTERPRETACIÓN — Mean Girls permite explorar cómo la adaptación a un grupo puede transformar conductas, relaciones y la imagen que una persona tiene de sí misma.",
+    "HIPÓTESIS EDITORIAL — Buscar pertenencia no implica necesariamente perder la identidad, pero cuando la aceptación depende de ajustarse a expectativas externas puede producir ocultamiento, transformación o abandono temporal de partes de uno mismo.",
+    "HIPÓTESIS EDITORIAL — Las tres obras permiten contrastar diferentes respuestas al conflicto entre pertenencia e identidad: resistir las expectativas del grupo, intentar satisfacerlas o transformarse para ser aceptado."
+  ],
+  "question_answers": {
+    "puerta_narrativa": "Billy Elliot puede funcionar como puerta narrativa porque presenta de forma concreta y verificable a un personaje que desea seguir perteneciendo a su familia y comunidad mientras desarrolla una identidad que entra en conflicto con las expectativas de ese entorno.",
+    "obras_candidatas": "Billy Elliot, Encanto y Mean Girls forman un conjunto inicial de tres obras suficiente para el formato editorial principal.",
+    "escenas_conflictos": "Las tres obras contienen conflictos observables entre aceptación grupal e identidad individual: Billy frente a las expectativas de su familia y comunidad; Mirabel frente al sistema de valor de los Madrigal; y Cady frente a los códigos sociales de las Plastics.",
+    "hechos_interpretaciones_hipotesis": "Los acontecimientos narrativos descritos se consideran hechos de las obras. Las relaciones entre esos acontecimientos y los conceptos de pertenencia e identidad son interpretaciones editoriales. La afirmación general sobre cómo la búsqueda de pertenencia puede modificar, preservar u ocultar partes de la identidad se mantiene como hipótesis editorial que deberá desarrollarse y contrastarse durante Research.",
+    "tesis_provisional": "Pertenecer siempre exige algún grado de adaptación, pero el problema aparece cuando ser aceptado depende de borrar, ocultar o reemplazar partes esenciales de la identidad. Las obras permiten explorar dónde termina la adaptación necesaria para convivir y dónde comienza la desaparición de uno mismo."
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-8ea5cc809c31424a877b068b03287e15",
+  "package_checksum": "e6455ebcd271a0f39486bf9a9155e89dcd675320054533be029e22747899ea55",
+  "input_manifest_checksum": "97a43ab43bcb4df117effab7c8fd18818ab43a2c0b1b7cc2ccf7ec714eb73fb0",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "PHENOMENON_BASE_RESEARCH",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-d4703e18f1d44a5fb47be37e96c160d9",
+  "output": {
+    "research_id": "ep_0001:PHENOMENON_BASE_RESEARCH",
+    "episode_id": "ep_0001",
+    "brief_version": "2.0.0",
+    "scope": "Examinar cómo las personas construyen pertenencia en relaciones, grupos y estructuras sociales; qué prácticas de adaptación, reconocimiento y renuncia intervienen; bajo qué condiciones la pertenencia fortalece o erosiona la identidad; y cuáles son los límites para generalizar desde las obras y la evidencia disponible.",
+    "facts": [],
+    "interpretations": [],
+    "hypotheses": [],
+    "contradictions": [],
+    "alternative_views": [],
+    "coverage": [
+      {
+        "dimension_id": "CENTRAL_QUESTION",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "No hay materiales locales verificables disponibles en esta fase.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "No formular una tesis sustentada ni declarar suficiencia.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "CONFLICT",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "No se han podido examinar mecanismos, condiciones ni evidencia rival.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "Mantener abiertas las explicaciones rivales.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "INITIAL_HYPOTHESIS",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "La hipótesis inicial no puede evaluarse sin fuentes verificables.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "No presentar la hipótesis como hecho.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "No hay literatura especializada, estudios, datos o fuentes institucionales accesibles.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "Requiere investigación adicional antes de evaluar suficiencia.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "PRIMARY_NARRATIVE_MATERIAL",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "No se suministraron obras, versiones, escenas, pasajes ni transcripciones.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "No analizar ni seleccionar obras.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "CRITICAL_CLAIMS",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "Las afirmaciones críticas C-1 a C-5 carecen de fuentes verificables y localizadores reproducibles.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "No usar las afirmaciones como conclusiones de investigación.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "ALTERNATIVE_PERSPECTIVES",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "Las explicaciones rivales R-1 a R-5 no han sido contrastadas con evidencia.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "Conservar rivales y contradicciones como asuntos abiertos.",
+        "mitigation_status": "INSUFFICIENT"
+      }
+    ],
+    "critical_claims_assessment": {
+      "status": "IDENTIFIED",
+      "claim_ids": [
+        "C-1",
+        "C-2",
+        "C-3",
+        "C-4",
+        "C-5"
+      ],
+      "justification": "Las afirmaciones materiales están identificadas en el ResearchPlan, pero no pueden evaluarse por ausencia de materiales verificables.",
+      "editorial_impact": "CRITICAL"
+    },
+    "narrative_evidence": [],
+    "external_reality_evidence": [],
+    "source_registry": [
+      {
+        "source_id": "ep_0001:SOURCE_ACCESS",
+        "title": "Declaración de acceso a fuentes: sin materiales suministrados",
+        "source_type": "OWNER_MATERIAL",
+        "access_type": "SECONDARY_ONLY",
+        "locator": "input_payload.source_access.materials (vacío)",
+        "confidence": "LOW",
+        "provenance": {
+          "source_kind": "SOURCE_ORIGINAL",
+          "version": "2.0.0",
+          "original_language": "es",
+          "derivative_language": null,
+          "locator": "input_payload.source_access.materials (vacío)",
+          "acquisition_method": "Metadatos suministrados en la entrada",
+          "transformation_method": "Ninguna",
+          "transcription_type": "NOT_APPLICABLE",
+          "verification_status": "NOT_REVIEWED",
+          "translation_transcription_risk": "NONE",
+          "limitations": [
+            "No contiene materiales de investigación consultables.",
+            "No puede respaldar afirmaciones sustantivas."
+          ],
+          "permitted_uses": [
+            "Registrar la ausencia de materiales disponibles"
+          ],
+          "primary_verification_required": false,
+          "primary_verification_performed": false,
+          "claim_authority": "NONE",
+          "authority_domain": "GENERAL",
+          "official_primary": false
+        },
+        "evidence_domain": "EXTERNAL_REALITY_EVIDENCE",
+        "evidence_status": "NOT_EVIDENCE",
+        "retrieval_status": "NOT_RECOVERED",
+        "recovery_artifact_ref": null,
+        "retrieval_request_ref": null,
+        "notes": "Registro administrativo de acceso, no fuente de evidencia."
+      }
+    ],
+    "claims_candidates": [],
+    "unsupported_claims": [
+      {
+        "claim_id": "C-1",
+        "statement": "La pertenencia implica una negociación entre reconocimiento social y continuidad de la identidad, no solo aceptación formal.",
+        "reason": "No hay fuentes verificables ni materiales locales consultables.",
+        "attempted_source_refs": []
+      },
+      {
+        "claim_id": "C-2",
+        "statement": "Las pérdidas asociadas a pertenecer dependen de las normas, relaciones de poder y condiciones concretas del grupo.",
+        "reason": "No hay fuentes verificables ni materiales locales consultables.",
+        "attempted_source_refs": []
+      },
+      {
+        "claim_id": "C-3",
+        "statement": "La adaptación puede preservar la pertenencia y la agencia en algunos contextos, pero puede erosionar la identidad cuando exige ocultamiento o renuncia sostenida.",
+        "reason": "No hay fuentes verificables ni materiales locales consultables.",
+        "attempted_source_refs": []
+      },
+      {
+        "claim_id": "C-4",
+        "statement": "La pertenencia no tiene un efecto único: sus beneficios y costes varían según el contexto, los recursos y las alternativas disponibles.",
+        "reason": "No hay fuentes verificables ni materiales locales consultables.",
+        "attempted_source_refs": []
+      },
+      {
+        "claim_id": "C-5",
+        "statement": "Las obras narrativas pueden revelar conflictos, decisiones y consecuencias de la pertenencia, pero no constituyen por sí mismas evidencia científica de mecanismos generales.",
+        "reason": "No se suministraron obras ni fuentes narrativas verificables.",
+        "attempted_source_refs": []
+      }
+    ],
+    "limitations": [
+      "La búsqueda web y la obtención HTTP no están disponibles.",
+      "No se suministraron materiales del propietario.",
+      "No hay obras, estudios, datos, textos completos ni transcripciones verificables.",
+      "La investigación queda bloqueada por evidencia insuficiente.",
+      "No se puede formular una tesis provisional responsable ni declarar suficiencia."
+    ],
+    "multilingual_research": {
+      "activation_status": "NOT_ACTIVATED",
+      "triggers": [],
+      "non_trigger_examples": [
+        "FIXED_LANGUAGE_QUOTA",
+        "SOURCE_VOLUME_ONLY",
+        "OFFICIAL_TRANSLATION_SUFFICIENT",
+        "DUPLICATED_FOREIGN_COVERAGE",
+        "UNRELATED_INTERNATIONAL_PERSPECTIVE",
+        "TRANSLATE_ALL_AUTOMATICALLY",
+        "LANGUAGE_AS_AUTHORITY_SIGNAL",
+        "NO_LINGUISTIC_DIFFERENCE_REQUIRED",
+        "TECHNICAL_CAPABILITY_DEMO"
+      ],
+      "affected_source_ids": [],
+      "affected_claim_ids": [],
+      "required_language": null,
+      "material_risk": [],
+      "consultation_result": "NOT_APPLICABLE",
+      "limitations": [
+        "No se consultaron fuentes."
+      ],
+      "invalidators": [],
+      "return_route": "NOT_APPLICABLE",
+      "decision_basis": "No hay fuentes lingüísticamente accesibles que evaluar."
+    },
+    "created_at": "2026-09-15T23:01:12.172623+00:00"
+  },
+  "output_checksum": "678930d3d00195b6f30db40bf320acf3a60c3014c54bf52be014f8c7aeda1e46",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "PHENOMENON_BASE_RESEARCH",
+    "role": "RESEARCH_AND_CURATION",
+    "run_id": "RESULT-d4703e18f1d44a5fb47be37e96c160d9",
+    "executor_id": "opencode:RESULT-d4703e18f1d44a5fb47be37e96c160d9",
+    "executor_identity": "opencode:RESULT-d4703e18f1d44a5fb47be37e96c160d9",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

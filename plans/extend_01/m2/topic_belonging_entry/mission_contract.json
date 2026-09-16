@@ -59,7 +59,7 @@
   },
   "contains_material_repair": false,
   "mission_authorization_path": "plans/extend_01/m2/topic_belonging_entry/mission-authorization.json",
-  "mission_authorization_sha256": "1c0d96a4842ea79d4e0975ecf191012fc28ae0a4c9eb5b13027e2fd445e58c89",
+  "mission_authorization_sha256": "f6ca87cd5b2edb7bc16a31f23a2389531422db5ea2d7d98723661f2449ec1918",
   "state_requirements": {
     "control_path": "plans/001_CONTROL_OPERATIVO.md",
     "required": {

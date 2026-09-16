@@ -1,0 +1,137 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-867f44dae8ea4073bae7dcfc536c9dd2",
+  "package_checksum": "b8b617fb6657790a22a1af87e6724af61e5f20e0c6345e9c41e57a5b07f5659d",
+  "input_manifest_checksum": "c21c9cfe9b756cc34220309ba986f9efc54fec0d32815f27a433956d58136ba9",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "RESEARCH_PLANNING",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-922600e21a2c4c8c98ee76fc87c26408",
+  "output": {
+    "contract": "research_plan_proposal",
+    "contract_version": "1.0.0",
+    "central_question": "¿Cómo aprendemos a pertenecer sin desaparecer, y qué perdemos y qué conservamos en ese proceso?",
+    "intended_use": "Investigar y desarrollar una tesis provisional para un videoensayo sobre identidad, pertenencia y adaptación, utilizando obras narrativas como materiales de análisis sin convertirlas en prueba científica ni decidir todavía la estructura narrativa final.",
+    "scope": "Examinar cómo las personas construyen pertenencia en relaciones, grupos y estructuras sociales; qué prácticas de adaptación, reconocimiento y renuncia intervienen; bajo qué condiciones la pertenencia fortalece o erosiona la identidad; y cuáles son los límites para generalizar desde las obras y la evidencia disponible. No incluye diagnóstico clínico, coaching, resumen de obras, propaganda ni afirmaciones universales no sustentadas.",
+    "dimensions": [
+      "Definición y formas de pertenencia",
+      "Identidad, continuidad personal y límites de la adaptación",
+      "Reconocimiento, aceptación y exclusión",
+      "Costes, pérdidas y renuncias asociados a pertenecer",
+      "Agencia, negociación y resistencia dentro de los grupos",
+      "Relaciones entre pertenencia individual, normas sociales e instituciones",
+      "Condiciones que permiten pertenecer sin desaparecer",
+      "Diferencia entre representación narrativa y evidencia sobre la realidad"
+    ],
+    "subquestions": [
+      "¿Qué significa pertenecer y cómo se distingue de ser aceptado, adaptarse o conformarse?",
+      "¿Qué aspectos de la identidad suelen negociarse, ocultarse o abandonarse para obtener pertenencia?",
+      "¿Cuándo la adaptación es una estrategia de agencia y cuándo se convierte en autoanulación?",
+      "¿Qué papel desempeñan el reconocimiento, el rechazo, la vergüenza y la seguridad en la construcción de pertenencia?",
+      "¿Cómo influyen las relaciones, las normas grupales y las estructuras de poder en lo que una persona puede conservar de sí misma?",
+      "¿Qué mecanismos permiten sostener una identidad propia dentro de una comunidad?",
+      "¿Qué explicaciones rivales pueden dar cuenta de la pérdida de identidad aparente sin reducirla exclusivamente a la búsqueda de pertenencia?",
+      "¿Qué pueden mostrar las obras narrativas sobre estas tensiones y qué no pueden demostrar sobre la realidad externa?"
+    ],
+    "evidence_requirements": [
+      "Definiciones y marcos especializados sobre pertenencia, identidad social, reconocimiento, conformidad, exclusión y agencia.",
+      "Fuentes primarias u originales y literatura especializada que permitan distinguir asociación, interpretación y causalidad.",
+      "Evidencia sobre mecanismos y condiciones, incluyendo límites contextuales y explicaciones rivales.",
+      "Datos o estudios relevantes sobre pertenencia e identidad cuando estén disponibles en materiales locales verificables.",
+      "Para cada obra considerada: identidad exacta, versión, contexto factual, escenas o pasajes concretos, acciones, decisiones, consecuencias y distinción entre motivos explícitos e inferidos.",
+      "Cada afirmación material debe vincularse a una fuente verificable con autor, título o documento, recurso consultado y localizador reproducible.",
+      "Separación explícita entre evidencia narrativa de las obras y evidencia sobre la realidad externa.",
+      "Registro de contradicciones, limitaciones, incertidumbres y afirmaciones que la evidencia no permite establecer."
+    ],
+    "source_strategy": "Trabajar únicamente con materiales locales previamente verificados, porque la búsqueda web y la obtención HTTP no están disponibles. Priorizar fuentes originales o institucionales, literatura especializada, datos pertinentes y textos o transcripciones verificables de las obras. Usar materiales orientativos solo para descubrimiento y someterlos a una comprobación preliminar de identidad, versión, relevancia, acceso y fidelidad antes de incorporarlos a la investigación profesional. No declarar verificadas las fuentes cuyo contenido o localizador no pueda comprobarse.",
+    "critical_claims": [
+      "La pertenencia implica una negociación entre reconocimiento social y continuidad de la identidad, no solo aceptación formal.",
+      "Las pérdidas asociadas a pertenecer dependen de las normas, relaciones de poder y condiciones concretas del grupo.",
+      "La adaptación puede preservar la pertenencia y la agencia en algunos contextos, pero puede erosionar la identidad cuando exige ocultamiento o renuncia sostenida.",
+      "La pertenencia no tiene un efecto único: sus beneficios y costes varían según el contexto, los recursos y las alternativas disponibles.",
+      "Las obras narrativas pueden revelar conflictos, decisiones y consecuencias de la pertenencia, pero no constituyen por sí mismas evidencia científica de mecanismos generales."
+    ],
+    "rival_refutation": [
+      "La pérdida de identidad puede explicarse principalmente por coerción, desigualdad o violencia, sin que la pertenencia sea el mecanismo central.",
+      "La adaptación observada puede ser una forma de agencia estratégica y no necesariamente autoanulación.",
+      "La sensación de no pertenecer puede derivar de aislamiento, duelo, precariedad o conflicto interno, no solo de exclusión grupal.",
+      "Las obras pueden dramatizar dilemas individuales de manera excepcional y no representar patrones generales de la vida social.",
+      "La identidad puede ser relacional y cambiante sin que todo cambio implique pérdida o desaparición del yo."
+    ],
+    "gaps_risks": [
+      "No hay obras ni materiales del propietario suministrados en esta fase.",
+      "El acceso está limitado a materiales locales previamente verificados; no puede asumirse disponibilidad de estudios, datos, textos completos o transcripciones.",
+      "Puede confundirse pertenencia con conformidad, integración, reconocimiento o dependencia si no se delimitan los conceptos.",
+      "Existe riesgo de presentar interpretaciones de personajes como intenciones explícitas o como evidencia sobre personas reales.",
+      "La evidencia puede concentrarse en contextos culturales o grupos específicos y no permitir generalización amplia.",
+      "La pregunta puede contener una metáfora de desaparición que debe operacionalizarse sin patologizar ni moralizar la adaptación.",
+      "La ausencia de fuentes independientes puede dejar claims centrales en estado parcial, pendiente o no verificable."
+    ],
+    "potential_specialists": [
+      "Psicología social especializada en identidad, pertenencia y procesos grupales",
+      "Sociología de la exclusión, reconocimiento, normas y desigualdad",
+      "Estudios culturales y teoría de la identidad",
+      "Antropología social sobre pertenencia, comunidad y negociación cultural",
+      "Especialistas en análisis narrativo, guion, literatura o cine para evaluar evidencia interna de las obras"
+    ],
+    "sufficiency_criteria": [
+      "La pregunta central, dimensiones y subpreguntas tienen respuestas suficientemente apoyadas para el uso previsto, o sus estados parciales permanecen explícitos.",
+      "Las afirmaciones materiales tienen fuentes verificables, localizadores reproducibles y una correspondencia comprobada entre evidencia y fuerza de la afirmación.",
+      "Se distingue de forma consistente entre descripción, asociación, interpretación, intención, causalidad y generalización.",
+      "La base cubre definiciones, mecanismos, condiciones, límites, rivales, contradicciones y aquello que la evidencia no demuestra.",
+      "Las obras supervivientes cuentan con identidad y versión verificadas, evidencia concreta, relación defendible con el fenómeno y evaluación de limitaciones.",
+      "Las explicaciones rivales y los riesgos de sobreinterpretación han sido examinados antes de formular la tesis provisional.",
+      "Las limitaciones de acceso no impiden responder de forma responsable al uso previsto; de lo contrario, la investigación debe quedar bloqueada o requerir más investigación.",
+      "La selección final de obras se decidirá después de la investigación mediante autoridad humana explícita; esta propuesta no preselecciona obras ni define una estructura narrativa."
+    ],
+    "target_final_works_decision": {
+      "decision_stage": "Posterior a la investigación y a la evaluación comparativa de las obras supervivientes.",
+      "decision_authority": "OWNER",
+      "decision_scope": "Elegir, mantener o rechazar obras únicamente dentro del conjunto investigado y con evidencia de identidad, relevancia, fidelidad, contribución, límites y complementariedad.",
+      "decision_basis": [
+        "Ajuste real con el fenómeno y la pregunta central",
+        "Calidad y adecuación de la evidencia",
+        "Fidelidad a escenas, pasajes, acciones, decisiones y consecuencias",
+        "Contribución diferencial y cobertura de dimensiones",
+        "Complementariedad, diversidad útil y redundancia",
+        "Riesgo de sobreinterpretación y limitaciones de acceso"
+      ],
+      "restriction": "No decidir en esta fase la función narrativa, el orden, el recorrido del espectador, el gancho, el ritmo, el cierre, la llamada a la acción, el título ni la miniatura."
+    },
+    "supplied_works": [],
+    "selection_policy": {
+      "mode": "OWNER_DECISION_REQUIRED",
+      "discovery_policy": "La exploración puede ser amplia y orientativa, pero ninguna obra entra en la base profesional sin filtro preliminar de identidad, versión, acceso, relación con el fenómeno y relevancia.",
+      "evaluation_policy": "Comparar obras por contribución, cobertura, complementariedad, redundancia, contraste, fidelidad, evidencia, límites y riesgo de sobreinterpretación.",
+      "authority": "El propietario conserva la autoridad de selección. No se puede inventar, sustituir, ampliar ni eliminar una selección sin una decisión explícita y autorizada.",
+      "narrative_boundary": "La investigación no decide funciones narrativas, orden ni estructura del video."
+    },
+    "planned_stages": [
+      "Delimitar el fenómeno, conceptos y pregunta central del ResearchPlan.",
+      "Construir la base de investigación del fenómeno con fuentes locales verificables, mecanismos, límites, rivales y contradicciones.",
+      "Descubrir obras potencialmente relevantes y aplicar un filtro preliminar de identidad, versión, acceso y relación con el fenómeno.",
+      "Investigar profesionalmente las obras supervivientes: contexto, escenas o pasajes, decisiones, consecuencias, contribución, límites y riesgos de interpretación.",
+      "Evaluar la suficiencia para el uso previsto y documentar incertidumbres, brechas y estados de cobertura.",
+      "Emitir una decisión de alcance de investigación cuando la evidencia permita detener esta fase de forma válida.",
+      "Formular una tesis provisional refutable, separando evidencia narrativa de evidencia sobre la realidad externa.",
+      "Comparar investigativamente las obras sin convertir la comparación en selección narrativa.",
+      "Entregar objetivos estructurados para una eventual profundización posterior y reservar la decisión final de obras al propietario."
+    ]
+  },
+  "output_checksum": "690a4615ea290bd60a2980140e340e8b6ebbe0d63f98fb481ddd1755ea580b61",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "RESEARCH_PLANNING",
+    "role": "RESEARCH_AND_CURATION",
+    "run_id": "RESULT-922600e21a2c4c8c98ee76fc87c26408",
+    "executor_id": "opencode:RESULT-922600e21a2c4c8c98ee76fc87c26408",
+    "executor_identity": "opencode:RESULT-922600e21a2c4c8c98ee76fc87c26408",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

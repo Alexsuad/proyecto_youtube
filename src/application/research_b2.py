@@ -122,7 +122,15 @@ class ResearchB2Persistence:
         self.root = Path(root)
         self._persisted: dict[str, dict[str, str]] = {}
 
-    def persist(self, stage: str, payload: Any, *, artifact_id: str, artifact_kind: str) -> dict[str, str]:
+    def persist(
+        self,
+        stage: str,
+        payload: Any,
+        *,
+        artifact_id: str,
+        artifact_kind: str,
+        replace_invalid: bool = False,
+    ) -> dict[str, str]:
         if stage in self._persisted:
             raise ResearchB2Error(f"B2_ARTIFACT_ALREADY_PERSISTED: {stage}")
         filename = self._FILENAMES.get(stage)
@@ -131,7 +139,10 @@ class ResearchB2Persistence:
         document = payload if isinstance(payload, dict) else {"dossiers": payload}
         path = self.root / filename
         if path.exists():
-            raise ResearchB2Error(f"B2_ARTIFACT_ALREADY_EXISTS: {path}")
+            if not replace_invalid or stage != "RESEARCH_PLAN_PROPOSAL":
+                raise ResearchB2Error(f"B2_ARTIFACT_ALREADY_EXISTS: {path}")
+            if (path.parent / self._FILENAMES["RESEARCH_PLAN"]).exists():
+                raise ResearchB2Error(f"B2_ARTIFACT_ALREADY_EXISTS: {path}")
         _write_json_atomic(path, document)
         checksum = _checksum(document)
         ref = {

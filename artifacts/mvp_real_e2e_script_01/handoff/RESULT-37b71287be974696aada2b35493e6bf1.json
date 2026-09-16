@@ -1,0 +1,387 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-37b71287be974696aada2b35493e6bf1",
+  "package_checksum": "ddb82a8e3b831120cc84ed385178328be07a17507291504e23faf644d82600b1",
+  "input_manifest_checksum": "97a43ab43bcb4df117effab7c8fd18818ab43a2c0b1b7cc2ccf7ec714eb73fb0",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "PHENOMENON_BASE_RESEARCH",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-d283903003744d409557ed3f65df38dc",
+  "output": {
+    "research_id": "ep_0001:PHENOMENON_BASE_RESEARCH",
+    "episode_id": "ep_0001",
+    "brief_version": "2.0.0",
+    "scope": "Examinar cómo se construye la pertenencia y bajo qué condiciones la adaptación preserva o erosiona la identidad, sin generalizar desde obras narrativas ni declarar suficiencia sin evidencia verificable.",
+    "facts": [],
+    "interpretations": [],
+    "hypotheses": [],
+    "contradictions": [],
+    "alternative_views": [],
+    "coverage": [
+      {
+        "dimension_id": "CENTRAL_QUESTION",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "No hay materiales locales verificables disponibles para responder la pregunta central.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "No formular tesis provisional ni afirmar suficiencia.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "CONFLICT",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "No hay evidencia para evaluar qué se pierde y qué se conserva al pertenecer.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "Mantener abierto el conflicto investigativo.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "INITIAL_HYPOTHESIS",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "La hipótesis inicial requiere fuentes especializadas y evidencia sobre mecanismos y condiciones.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "No presentar la hipótesis como conclusión.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "HUMAN_SOCIAL_HISTORICAL_OR_CULTURAL_PHENOMENON",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "No se han consultado fuentes sobre pertenencia, identidad, reconocimiento, exclusión o agencia.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "Requiere investigación documental local verificable.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "PRIMARY_NARRATIVE_MATERIAL",
+        "status": "NOT_VERIFIABLE",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "No se suministraron obras, versiones, escenas ni pasajes.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "No incorporar obras al conjunto de investigación.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "CRITICAL_CLAIMS",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "Las afirmaciones críticas no tienen fuentes verificables ni localizadores reproducibles en esta fase.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "No autorizar uso sustantivo de los claims.",
+        "mitigation_status": "INSUFFICIENT"
+      },
+      {
+        "dimension_id": "ALTERNATIVE_PERSPECTIVES",
+        "status": "PENDING",
+        "related_finding_ids": [],
+        "related_source_ids": [],
+        "limitation_or_pending": "Las explicaciones rivales están declaradas en el plan, pero no han sido contrastadas con evidencia.",
+        "scope_decision": "BLOCKED",
+        "editorial_impact": "CRITICAL",
+        "propagated_constraint": "No cerrar la interpretación ni la tesis.",
+        "mitigation_status": "INSUFFICIENT"
+      }
+    ],
+    "critical_claims_assessment": {
+      "status": "IDENTIFIED",
+      "claim_ids": [
+        "C-1",
+        "C-2",
+        "C-3",
+        "C-4",
+        "C-5"
+      ],
+      "justification": "Los cinco claims del ResearchPlan son materiales para el uso previsto, pero no pueden evaluarse sin materiales locales verificables.",
+      "editorial_impact": "CRITICAL"
+    },
+    "narrative_evidence": [],
+    "external_reality_evidence": [],
+    "source_registry": [
+      {
+        "source_id": "ep_0001:SOURCE_ACCESS",
+        "title": "Descripción de acceso a fuentes de ep_0001",
+        "source_type": "SOURCE_ACCESS",
+        "access_type": "DIRECT",
+        "locator": "ep_0001:SOURCE_ACCESS",
+        "confidence": "HIGH",
+        "evidence_status": "PENDING",
+        "retrieval_status": "NOT_RECOVERED",
+        "url": null,
+        "notes": "El acceso declara disponibilidad de ingestión de materiales del propietario, pero no hay materiales suministrados.",
+        "recovery_artifact_ref": null,
+        "retrieval_request_ref": null,
+        "provenance": {
+          "source_kind": "SOURCE_ORIGINAL",
+          "version": "1.0.0",
+          "original_language": "es",
+          "derivative_language": null,
+          "locator": "ep_0001:SOURCE_ACCESS",
+          "acquisition_method": "Suministrado en input_payload",
+          "transformation_method": "Sin transformación",
+          "transcription_type": "NOT_APPLICABLE",
+          "verification_status": "REVIEWED",
+          "translation_transcription_risk": "NONE",
+          "limitations": [
+            "Solo se aceptan materiales locales previamente verificados.",
+            "No hay materiales disponibles en esta fase."
+          ],
+          "permitted_uses": [
+            "Evaluar disponibilidad y limitaciones de acceso"
+          ],
+          "primary_verification_required": false,
+          "primary_verification_performed": false,
+          "claim_authority": "NONE",
+          "authority_domain": "GENERAL",
+          "official_primary": false
+        }
+      }
+    ],
+    "claims_candidates": [],
+    "unsupported_claims": [
+      {
+        "claim_id": "C-1",
+        "statement": "La pertenencia implica una negociación entre reconocimiento social y continuidad de la identidad, no solo aceptación formal.",
+        "reason": "No hay fuentes locales verificables disponibles."
+      },
+      {
+        "claim_id": "C-2",
+        "statement": "Las pérdidas asociadas a pertenecer dependen de las normas, relaciones de poder y condiciones concretas del grupo.",
+        "reason": "No hay fuentes locales verificables disponibles."
+      },
+      {
+        "claim_id": "C-3",
+        "statement": "La adaptación puede preservar la pertenencia y la agencia en algunos contextos, pero puede erosionar la identidad cuando exige ocultamiento o renuncia sostenida.",
+        "reason": "No hay fuentes locales verificables disponibles."
+      },
+      {
+        "claim_id": "C-4",
+        "statement": "La pertenencia no tiene un efecto único: sus beneficios y costes varían según el contexto, los recursos y las alternativas disponibles.",
+        "reason": "No hay fuentes locales verificables disponibles."
+      },
+      {
+        "claim_id": "C-5",
+        "statement": "Las obras narrativas pueden revelar conflictos, decisiones y consecuencias de la pertenencia, pero no constituyen por sí mismas evidencia científica de mecanismos generales.",
+        "reason": "No hay obras ni materiales narrativos suministrados."
+      }
+    ],
+    "limitations": [
+      "No se suministraron obras ni materiales del propietario.",
+      "La búsqueda web y la obtención HTTP no están disponibles.",
+      "No se pueden verificar claims, mecanismos, rivales ni evidencia narrativa.",
+      "La investigación queda bloqueada hasta recibir materiales locales verificables."
+    ],
+    "multilingual_research": {
+      "activation_status": "NOT_ACTIVATED",
+      "triggers": [],
+      "non_trigger_examples": [
+        "FIXED_LANGUAGE_QUOTA",
+        "SOURCE_VOLUME_ONLY",
+        "OFFICIAL_TRANSLATION_SUFFICIENT",
+        "DUPLICATED_FOREIGN_COVERAGE",
+        "UNRELATED_INTERNATIONAL_PERSPECTIVE",
+        "TRANSLATE_ALL_AUTOMATICALLY",
+        "LANGUAGE_AS_AUTHORITY_SIGNAL",
+        "NO_LINGUISTIC_DIFFERENCE_REQUIRED",
+        "TECHNICAL_CAPABILITY_DEMO"
+      ],
+      "affected_source_ids": [],
+      "affected_claim_ids": [],
+      "required_language": null,
+      "material_risk": [],
+      "consultation_result": "NOT_APPLICABLE",
+      "limitations": [
+        "No se consultaron fuentes externas ni multilingües."
+      ],
+      "invalidators": [],
+      "return_route": "NOT_APPLICABLE",
+      "decision_basis": "No se activó investigación multilingüe porque no hay fuentes accesibles para evaluar."
+    },
+    "created_at": "2026-09-15T23:01:12.190707+00:00",
+    "research_pack_kind": "PHENOMENON",
+    "phenomenon": {
+      "phenomenon_id": "ep_0001:PERTENENCIA_IDENTIDAD_ADAPTACION",
+      "phenomenon_kind": "HUMAN",
+      "definition": "Construcción de pertenencia mediante reconocimiento, adaptación, negociación y límites de continuidad identitaria dentro de relaciones, grupos y estructuras sociales."
+    },
+    "editorial_uses": {
+      "intended_uses": [
+        "CENTRAL_CLAIM_SUPPORT",
+        "SECONDARY_CONTEXT",
+        "CONTROVERSIAL_BALANCE"
+      ],
+      "criticality_map": {
+        "claims": [
+          {
+            "claim_id": "C-1",
+            "criticality": "CENTRAL",
+            "intended_use": "CENTRAL_CLAIM_SUPPORT"
+          },
+          {
+            "claim_id": "C-2",
+            "criticality": "CENTRAL",
+            "intended_use": "CENTRAL_CLAIM_SUPPORT"
+          },
+          {
+            "claim_id": "C-3",
+            "criticality": "CENTRAL",
+            "intended_use": "CENTRAL_CLAIM_SUPPORT"
+          },
+          {
+            "claim_id": "C-4",
+            "criticality": "CENTRAL",
+            "intended_use": "CENTRAL_CLAIM_SUPPORT"
+          },
+          {
+            "claim_id": "C-5",
+            "criticality": "CONTROVERSIAL",
+            "intended_use": "CONTROVERSIAL_BALANCE"
+          }
+        ]
+      }
+    },
+    "rival_analysis": [
+      {
+        "rival_explanation_id": "R-1",
+        "statement": "La pérdida de identidad puede explicarse principalmente por coerción, desigualdad o violencia, sin que la pertenencia sea el mecanismo central.",
+        "agreement_status": "UNCERTAINTY",
+        "disagreement_kind": "BLOCKED",
+        "claim_ids": [
+          "C-2",
+          "C-3",
+          "C-4"
+        ],
+        "source_refs": [
+          "ep_0001:SOURCE_ACCESS"
+        ]
+      },
+      {
+        "rival_explanation_id": "R-2",
+        "statement": "La adaptación observada puede ser una forma de agencia estratégica y no necesariamente autoanulación.",
+        "agreement_status": "UNCERTAINTY",
+        "disagreement_kind": "BLOCKED",
+        "claim_ids": [
+          "C-3",
+          "C-4"
+        ],
+        "source_refs": [
+          "ep_0001:SOURCE_ACCESS"
+        ]
+      },
+      {
+        "rival_explanation_id": "R-3",
+        "statement": "La sensación de no pertenecer puede derivar de aislamiento, duelo, precariedad o conflicto interno, no solo de exclusión grupal.",
+        "agreement_status": "UNCERTAINTY",
+        "disagreement_kind": "BLOCKED",
+        "claim_ids": [
+          "C-2",
+          "C-4"
+        ],
+        "source_refs": [
+          "ep_0001:SOURCE_ACCESS"
+        ]
+      },
+      {
+        "rival_explanation_id": "R-4",
+        "statement": "Las obras pueden dramatizar dilemas individuales de manera excepcional y no representar patrones generales de la vida social.",
+        "agreement_status": "UNCERTAINTY",
+        "disagreement_kind": "BLOCKED",
+        "claim_ids": [
+          "C-5"
+        ],
+        "source_refs": [
+          "ep_0001:SOURCE_ACCESS"
+        ]
+      },
+      {
+        "rival_explanation_id": "R-5",
+        "statement": "La identidad puede ser relacional y cambiante sin que todo cambio implique pérdida o desaparición del yo.",
+        "agreement_status": "UNCERTAINTY",
+        "disagreement_kind": "BLOCKED",
+        "claim_ids": [
+          "C-1",
+          "C-3",
+          "C-4"
+        ],
+        "source_refs": [
+          "ep_0001:SOURCE_ACCESS"
+        ]
+      }
+    ],
+    "semantic_status": {
+      "status_per_claim": [
+        {
+          "claim_id": "C-1",
+          "semantic_level": "SPECULATIVE",
+          "intended_use": "RESEARCH",
+          "sufficiency_for_intended_use": "NOT_FUNCTIONALLY_VALIDATED"
+        },
+        {
+          "claim_id": "C-2",
+          "semantic_level": "SPECULATIVE",
+          "intended_use": "RESEARCH",
+          "sufficiency_for_intended_use": "NOT_FUNCTIONALLY_VALIDATED"
+        },
+        {
+          "claim_id": "C-3",
+          "semantic_level": "SPECULATIVE",
+          "intended_use": "RESEARCH",
+          "sufficiency_for_intended_use": "NOT_FUNCTIONALLY_VALIDATED"
+        },
+        {
+          "claim_id": "C-4",
+          "semantic_level": "SPECULATIVE",
+          "intended_use": "RESEARCH",
+          "sufficiency_for_intended_use": "NOT_FUNCTIONALLY_VALIDATED"
+        },
+        {
+          "claim_id": "C-5",
+          "semantic_level": "SPECULATIVE",
+          "intended_use": "RESEARCH",
+          "sufficiency_for_intended_use": "NOT_FUNCTIONALLY_VALIDATED"
+        }
+      ],
+      "ir4_dependency": "DEFERRED_TO_R1_M6"
+    },
+    "phenomenon_research_stop_decision_ref": "ep_0001:PHENOMENON_RESEARCH_STOP_DECISION",
+    "research_contract_version": "2.0.0",
+    "research_stage": "BASE_RESEARCH",
+    "research_sufficiency": "BLOCKED_BY_EVIDENCE",
+    "artifact_validity": "PENDING_VALIDATION",
+    "thesis_stage": "NONE",
+    "evidence_type_separation": {
+      "work_evidence_refs": [],
+      "external_reality_evidence_refs": []
+    },
+    "research_pack_stage": "RESEARCH_IN_PROGRESS"
+  },
+  "output_checksum": "a9114e68b2cf0f9335f65301489062d6efa237f4b7428ce23eb245fee16bd999",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "PHENOMENON_BASE_RESEARCH",
+    "role": "RESEARCH_AND_CURATION",
+    "run_id": "RESULT-d283903003744d409557ed3f65df38dc",
+    "executor_id": "opencode:RESULT-d283903003744d409557ed3f65df38dc",
+    "executor_identity": "opencode:RESULT-d283903003744d409557ed3f65df38dc",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

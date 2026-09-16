@@ -1,0 +1,89 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-5d14846b6227456dbebaebc981f7fcd9",
+  "package_checksum": "472d0454273ecccd3181d50c039f12c7d528e40f84d19470ef8b2231d2e24943",
+  "input_manifest_checksum": "50e64589439f27ebe402b76f714455ab2a677135f0ef90b5801e2bc28923e0b4",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "BASE_RESEARCH_POOL",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-defce0e966ea4a0aaeb39308c69d0e01",
+  "output": {
+    "dossier_id": "ep_0001:RESEARCH_PLAN:NO_WORK_SUPPLIED",
+    "dossier_version": "2.0.0",
+    "episode_id": "ep_0001",
+    "research_id": "ep_0001:RESEARCH_PLAN",
+    "evidence_report_id": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT",
+    "work": {
+      "material_id": "NO_WORK_SUPPLIED",
+      "title": "No work supplied",
+      "creator": "Not available",
+      "consulted_representations": [
+        {
+          "representation_kind": "ORIGINAL_WORK",
+          "edition_or_version": "NOT_AVAILABLE",
+          "consulted_locator": "No owner material supplied"
+        }
+      ]
+    },
+    "dossier_stage": "IDENTIFIED",
+    "pending_items": [
+      "No narrative works or owner materials were supplied.",
+      "Work identity, version, content, evidence, fidelity and phenomenon relation cannot be verified.",
+      "Professional work research cannot proceed until a work is supplied and locally verified."
+    ],
+    "confidence": "LOW",
+    "created_at": "2026-09-16T05:35:50.324581+00:00",
+    "artifact_validity": "PENDING_VALIDATION",
+    "research_sufficiency": "BLOCKED_BY_EVIDENCE",
+    "research_stage": "BASE_RESEARCH",
+    "selection_state": "PENDING_DECISION",
+    "preliminary_fidelity": "NOT_ASSESSED",
+    "deep_fidelity": "NOT_ASSESSED",
+    "thesis_stage": "NONE",
+    "lineage": [
+      "ep_0001:RESEARCH_PLAN",
+      "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT"
+    ],
+    "acquisition_bindings": [],
+    "downstream_restrictions": [
+      {
+        "restriction_id": "DR-1",
+        "kind": "CLAIM_BLOCKED",
+        "statement": "No claims about a narrative work or its relation to the phenomenon are authorized.",
+        "affected_consumers": [
+          "research",
+          "editorial"
+        ]
+      },
+      {
+        "restriction_id": "DR-2",
+        "kind": "NOT_AUTHORIZED",
+        "statement": "No work selection, fidelity approval or narrative use is authorized.",
+        "affected_consumers": [
+          "curation",
+          "editorial"
+        ]
+      }
+    ],
+    "evidence_type_separation": {
+      "work_evidence_refs": [],
+      "external_reality_evidence_refs": []
+    }
+  },
+  "output_checksum": "bc7d5134cf1449e6737cb8a55c99a41aec7f903ee5cea3cdd27168c948a81df6",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "BASE_RESEARCH_POOL",
+    "role": "RESEARCH_AND_CURATION",
+    "run_id": "RESULT-defce0e966ea4a0aaeb39308c69d0e01",
+    "executor_id": "opencode:RESULT-defce0e966ea4a0aaeb39308c69d0e01",
+    "executor_identity": "opencode:RESULT-defce0e966ea4a0aaeb39308c69d0e01",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

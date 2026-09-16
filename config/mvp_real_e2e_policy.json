@@ -1,0 +1,14 @@
+{
+  "policy_id": "MVP_REAL_E2E_SCRIPT_01",
+  "product_use": "allowed",
+  "agent_harness": "allowed",
+  "topic_belonging": "allowed",
+  "research": "allowed",
+  "narrative_design": "allowed",
+  "writing": "allowed",
+  "editing": "allowed",
+  "final_audit": "allowed",
+  "human_script_approval": "allowed",
+  "paid_api": "ask_owner",
+  "publication": "denied"
+}

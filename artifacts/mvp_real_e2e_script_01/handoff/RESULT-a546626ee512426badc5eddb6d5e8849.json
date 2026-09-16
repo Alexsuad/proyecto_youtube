@@ -1,0 +1,53 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-a546626ee512426badc5eddb6d5e8849",
+  "package_checksum": "0b05ba2ca2e1bdc0637de74ca440e9f63b2daeea53d933568a2bfd529bddaf1a",
+  "input_manifest_checksum": "50e64589439f27ebe402b76f714455ab2a677135f0ef90b5801e2bc28923e0b4",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "BASE_RESEARCH_POOL",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-2acdcea3ed1f4e01a4244da9d3da1c32",
+  "output": {
+    "dossier_id": "ep_0001:WORK_RESEARCH_DOSSIER:UNAVAILABLE",
+    "dossier_version": "2.0.0",
+    "episode_id": "ep_0001",
+    "research_id": "ep_0001:RESEARCH_PLAN",
+    "evidence_report_id": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT",
+    "work": {
+      "material_id": "NO_WORK_SUPPLIED",
+      "title": "No se ha suministrado ninguna obra",
+      "creator": "No disponible",
+      "consulted_representations": [
+        {
+          "representation_kind": "ORIGINAL_WORK",
+          "edition_or_version": "No aplica",
+          "consulted_locator": "ep_0001:SOURCE_ACCESS"
+        }
+      ]
+    },
+    "dossier_stage": "IDENTIFIED",
+    "pending_items": [
+      "No hay obras suministradas por el propietario.",
+      "No existe material local verificable para investigar identidad, versión, escenas, acciones, decisiones o consecuencias.",
+      "No puede realizarse evaluación de fidelidad ni análisis de contribución."
+    ],
+    "confidence": "LOW",
+    "created_at": "2026-09-15T23:01:12.172623+00:00"
+  },
+  "output_checksum": "11539afedb578d3a29ac2bcf913551c4e5faed7c2ad31672059db54a701b8e96",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "BASE_RESEARCH_POOL",
+    "role": "RESEARCH_AND_CURATION",
+    "run_id": "RESULT-2acdcea3ed1f4e01a4244da9d3da1c32",
+    "executor_id": "opencode:RESULT-2acdcea3ed1f4e01a4244da9d3da1c32",
+    "executor_identity": "opencode:RESULT-2acdcea3ed1f4e01a4244da9d3da1c32",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

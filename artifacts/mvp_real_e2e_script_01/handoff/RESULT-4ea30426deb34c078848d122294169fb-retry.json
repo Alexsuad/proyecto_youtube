@@ -1,0 +1,27 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-4ea30426deb34c078848d122294169fb",
+  "package_checksum": "2f767c5435910bf013ef0f9e0fd99268da579ff2be1cbec70395e805f242b3b8",
+  "input_manifest_checksum": "50e64589439f27ebe402b76f714455ab2a677135f0ef90b5801e2bc28923e0b4",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "BASE_RESEARCH_POOL",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-97e0d208d69f4943843da6640d69786d",
+  "output": [],
+  "output_checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "BASE_RESEARCH_POOL",
+    "role": "RESEARCH_AND_CURATION",
+    "run_id": "RESULT-97e0d208d69f4943843da6640d69786d",
+    "executor_id": "opencode:RESULT-97e0d208d69f4943843da6640d69786d",
+    "executor_identity": "opencode:RESULT-97e0d208d69f4943843da6640d69786d",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

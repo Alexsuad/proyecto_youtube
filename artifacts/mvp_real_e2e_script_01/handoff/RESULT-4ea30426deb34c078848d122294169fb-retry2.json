@@ -1,0 +1,107 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-4ea30426deb34c078848d122294169fb",
+  "package_checksum": "2f767c5435910bf013ef0f9e0fd99268da579ff2be1cbec70395e805f242b3b8",
+  "input_manifest_checksum": "50e64589439f27ebe402b76f714455ab2a677135f0ef90b5801e2bc28923e0b4",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "BASE_RESEARCH_POOL",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-fc49ca014fb145adb7502a0a435a292a",
+  "output": [
+    {
+      "dossier_id": "ep_0001:RESEARCH_PLAN:DISCOVERY",
+      "dossier_version": "2.0.0",
+      "episode_id": "ep_0001",
+      "research_id": "ep_0001:RESEARCH_PLAN",
+      "evidence_report_id": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT",
+      "work": {
+        "material_id": "ep_0001:RESEARCH_PLAN:DISCOVERY",
+        "title": "No hay obra suministrada",
+        "creator": "No disponible",
+        "consulted_representations": [
+          {
+            "representation_kind": "ORIGINAL_WORK",
+            "edition_or_version": "No disponible",
+            "consulted_locator": "C:\\YT_VAULT_MVP_REAL_E2E_01\\MasAllaDelGuion\\episodios\\ep_0001_como_aprendemos_a_pertenecer_sin_desaparecer\\research_v2\\b2\\work_discovery.json"
+          }
+        ]
+      },
+      "dossier_stage": "IDENTIFIED",
+      "pending_items": [
+        "No se suministraron obras del propietario.",
+        "No hay acceso a materiales verificables para investigar una obra.",
+        "No puede evaluarse identidad, versión, evidencia narrativa ni fidelidad preliminar."
+      ],
+      "confidence": "LOW",
+      "created_at": "2026-09-15T23:01:12.190707+00:00",
+      "research_contract_version": "2.0.0",
+      "research_stage": "BASE_RESEARCH",
+      "research_sufficiency": "BLOCKED_BY_EVIDENCE",
+      "selection_state": "PENDING_DECISION",
+      "preliminary_fidelity": "NOT_ASSESSED",
+      "thesis_stage": "NONE",
+      "analysis_references": [
+        {
+          "analysis_id": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT",
+          "material_id": "ep_0001:RESEARCH_PLAN:DISCOVERY"
+        }
+      ],
+      "locators": [
+        {
+          "analysis_id": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT",
+          "locator": "C:\\YT_VAULT_MVP_REAL_E2E_01\\MasAllaDelGuion\\episodios\\ep_0001_como_aprendemos_a_pertenecer_sin_desaparecer\\research_v2\\b2\\source_access_and_evidence_report.json"
+        }
+      ],
+      "overinterpretation_risk": {
+        "level": "HIGH",
+        "rationale": "No existe material narrativo verificable; cualquier afirmación sobre una obra, sus escenas o su relación con el fenómeno sería inventada."
+      },
+      "evidence_type_separation": {
+        "work_evidence_refs": [],
+        "external_reality_evidence_refs": []
+      },
+      "work_use_sufficiency": {
+        "intended_use": "Investigar una obra narrativa como material de análisis del fenómeno de pertenencia.",
+        "status": "NOT_FUNCTIONALLY_VALIDATED"
+      },
+      "claim_dispositions": {
+        "claims_ledger_id": "ep_0001:RESEARCH_PLAN",
+        "authority_status": "REPRESENTATION_ONLY_IR4_PENDING",
+        "candidate_allowed_claim_ids": [],
+        "candidate_limited_claim_ids": [],
+        "candidate_blocked_claim_ids": [
+          "C-1",
+          "C-2",
+          "C-3",
+          "C-4",
+          "C-5"
+        ]
+      },
+      "question_and_thesis_relation": {
+        "central_question_ref": "ep_0001:RESEARCH_PLAN",
+        "provisional_thesis_ref": "ep_0001:RESEARCH_PLAN",
+        "demonstrates_analysis_ref": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT",
+        "does_not_establish_analysis_ref": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT",
+        "main_interpretation_analysis_ref": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT",
+        "rival_interpretation_analysis_refs": []
+      },
+      "candidate_editorial_function_analysis_ref": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT"
+    }
+  ],
+  "output_checksum": "332b3140faeb89bf15d039c4a21b3664611aab5a8fa69be7384b49ad4cabc25f",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "BASE_RESEARCH_POOL",
+    "role": "RESEARCH_AND_CURATION",
+    "run_id": "RESULT-fc49ca014fb145adb7502a0a435a292a",
+    "executor_id": "opencode:RESULT-fc49ca014fb145adb7502a0a435a292a",
+    "executor_identity": "opencode:RESULT-fc49ca014fb145adb7502a0a435a292a",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

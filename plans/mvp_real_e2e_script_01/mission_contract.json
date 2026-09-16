@@ -1,0 +1,115 @@
+{
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "mission_mode": "REDUCED",
+  "artifact_id": "MVP_REAL_E2E_SCRIPT_01",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/mvp_real_e2e_script_01/",
+    "config/",
+    "src/",
+    "tests/application/",
+    "tests/harness/test_mvp_real_e2e.py",
+    "artifacts/mvp_real_e2e_script_01/"
+  ],
+  "protected_untracked_paths": [],
+  "protected_untracked_baseline": [],
+  "required_tests": [
+    {
+      "label": "MVP real E2E focal tests",
+      "command": ["python", "-m", "pytest", "tests/harness/test_mvp_real_e2e.py"],
+      "timeout_seconds": 300
+    }
+  ],
+  "push_allowed": false,
+  "push_guard": {
+    "remote": "LOCAL",
+    "ref": "HEAD",
+    "baseline_remote_commit": "1a84de07f2eef7cb1fd0942838d1eb2b4969d676"
+  },
+  "contains_material_repair": false,
+  "repair_integrity_evidence_path": "plans/mvp_real_e2e_script_01/repair_integrity.json",
+  "mission_authorization_path": "plans/mvp_real_e2e_script_01/mission-authorization.json",
+  "mission_authorization_sha256": "665adda2d7c4eed51d38cfd0e6ff183db731b4cfcfb5022d8dc5729d2f1e7ca3",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_MISSION": "MVP_REAL_E2E_SCRIPT_01",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "plans/mvp_real_e2e_script_01/mission_contract.json",
+      "EXECUTION_AUTHORIZED": "YES",
+      "EXECUTION_AUTHORIZATION_SCOPE": "MVP_REAL_E2E_SCRIPT_01",
+      "REAL_AI_EXECUTION": "YES",
+      "PRODUCT_USE_AUTHORIZED": "YES",
+      "MVP_REAL_E2E_STATUS": "ACTIVE"
+    },
+    "forbidden": {
+      "publication": ["allowed", "active", "authorized"],
+      "MVP_REAL_E2E_PAID_API": ["allowed", "authorized"]
+    }
+  },
+  "schema_checks": [
+    {"path": "plans/mvp_real_e2e_script_01/mission_contract.json", "schema": "mission_contract"},
+    {"path": "plans/mvp_real_e2e_script_01/run_configuration.json", "schema": "run_configuration"}
+  ],
+  "objective": "Materializar y ejecutar el primer recorrido real del MVP desde Terminal hasta SCRIPT_READY_FOR_APPROVAL y EDITORIAL_SCRIPT_APPROVED.",
+  "preconditions": [
+    "PRODUCT_USE_AUTHORIZED y REAL_AI_EXECUTION están autorizados por OWNER.",
+    "AGENT_HARNESS es la única familia autorizada para esta prueba.",
+    "La API de pago permanece en ASK_OWNER y publicación está denegada.",
+    "No se usa ni modifica ep_0003."
+  ],
+  "canonical_inputs": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "config/mvp_real_e2e_policy.json",
+    "config/active_editorial_profile.json",
+    "config/editorial_profile_registry.json",
+    "Terminal human input"
+  ],
+  "allowed_files": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/mvp_real_e2e_script_01/",
+    "config/",
+    "src/",
+    "tests/application/",
+    "tests/harness/test_mvp_real_e2e.py",
+    "artifacts/mvp_real_e2e_script_01/"
+  ],
+  "non_objectives": [
+    "Publicación o upload a YouTube.",
+    "Producción audiovisual.",
+    "Recuperación universal de episodios.",
+    "Soporte multi-canal nuevo.",
+    "Modificar o cerrar ep_0003.",
+    "Uso de APIs de pago sin autorización OWNER."
+  ],
+  "expected_outputs": [
+    "Episodio nuevo creado desde python -m src.cli iniciar.",
+    "Continuidad desde python -m src.cli reanudar <episode_id>.",
+    "SCRIPT_READY_FOR_APPROVAL.",
+    "Aprobación humana persistida como EDITORIAL_SCRIPT_APPROVED."
+  ],
+  "deterministic_validations": [
+    "Misión, contrato, autoridad, bindings y hashes coherentes.",
+    "Política operativa aplicada antes de cada capacidad.",
+    "No fijar provider, modelo ni execution_profile bajo AGENT_HARNESS.",
+    "Aprobación humana no inferida por Software."
+  ],
+  "adversarial_cases": [
+    "API_PROVIDER o API de pago seleccionados sin autorización.",
+    "Intento de publicación.",
+    "Entrada de ep_0003.",
+    "Resultado cognitivo sintético en la prueba REAL.",
+    "CURRENT_MISSION o hashes stale."
+  ],
+  "stop_conditions": [
+    "Decisión humana real.",
+    "API de pago pendiente de autorización OWNER.",
+    "Gate editorial bloqueado.",
+    "Capacidad no implementada.",
+    "Error que impida continuar con seguridad.",
+    "SCRIPT_READY_FOR_APPROVAL.",
+    "EDITORIAL_SCRIPT_APPROVED."
+  ],
+  "review_policy": {"required_review": "OWNER_REVIEW", "independent_review": "ON_FAILURE", "owner_review": true},
+  "owner_closure": {"required": false}
+}

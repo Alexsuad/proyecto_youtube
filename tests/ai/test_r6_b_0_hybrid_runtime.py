@@ -545,21 +545,35 @@ def test_reasoning_effort_is_transport_only_when_executor_declares_support(monke
     assert resolved.as_run_configuration()["reasoning_effort"] == "medium"
 
 
-def test_agent_executor_real_mode_is_fail_closed_before_subprocess(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_agent_executor_real_mode_invokes_current_opencode_without_model_override(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    calls: list[list[str]] = []
     monkeypatch.setattr("src.ai.providers.agent_executor.shutil.which", lambda command: f"C:/tools/{command}")
-    monkeypatch.setattr("src.ai.providers.agent_executor.subprocess.run", lambda *args, **kwargs: pytest.fail("real agent subprocess must not run"))
+
+    def _run(args, **kwargs):
+        calls.append(args)
+        return type("Completed", (), {
+            "returncode": 0,
+            "stdout": '{"type":"text","part":{"text":"{\\"proposed_angle\\":\\"angle\\",\\"proposed_territory\\":\\"territory\\",\\"initial_evidence\\":[\\"evidence\\"],\\"strategic_triggers\\":{\\"political_partisan_sensitivity\\":false,\\"high_sensitivity\\":false,\\"audience_matrix_change\\":false,\\"excluded_boundary_reinterpretation\\":false,\\"new_personal_exposure\\":false,\\"voice_or_author_persona_change\\":false,\\"positioning_expansion\\":false,\\"permanent_effect\\":false,\\"high_precedent_risk\\":false,\\"experimental_territory\\":false}}"}}\n',
+            "stderr": "",
+        })()
+    monkeypatch.setattr("src.ai.providers.agent_executor.subprocess.run", _run)
     request = type("Request", (), {
-        "config": {"smoke_test": False, "isolated_workdir": str(tmp_path)},
-        "executor": "codex_cli",
+        "config": {"smoke_test": False, "isolated_workdir": str(tmp_path), "prompt": "Return JSON."},
+        "executor": "OWNER_MANAGED",
         "timeout": 5,
-        "role": "SCRIPT_PRODUCT_PRODUCER",
-        "capability_id": "SCRIPT_PRODUCT_PRODUCER",
-        "execution_profile": "codex_current",
+        "role": "CHANNEL_INTELLIGENCE_PRODUCER",
+        "capability_id": "TOPIC_BELONGING_ASSESSMENT",
+        "execution_profile": None,
         "execution_route": "agent_harness",
         "model": None,
     })()
-    with pytest.raises(PermissionError, match="AGENT_HARNESS_SMOKE_ONLY_UNTIL_R6_B_RETRY"):
-        AgentExecutorProvider().execute(request)
+    payload, usage = AgentExecutorProvider().execute(request)
+    assert payload["proposed_angle"] == "angle"
+    assert usage["provider_kind"] == "REAL"
+    assert usage["actual_executor"] == "opencode"
+    assert usage["actual_model"] == "CURRENT_OPENCODE_MODEL"
+    assert calls[0][1:4] == ["run", "--format", "json"]
+    assert "--model" not in calls[0]
 
 
 def test_unknown_profile_route_provider_and_executor_are_rejected(tmp_path: Path) -> None:

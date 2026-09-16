@@ -1,0 +1,126 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-867f44dae8ea4073bae7dcfc536c9dd2",
+  "package_checksum": "b8b617fb6657790a22a1af87e6724af61e5f20e0c6345e9c41e57a5b07f5659d",
+  "input_manifest_checksum": "c21c9cfe9b756cc34220309ba986f9efc54fec0d32815f27a433956d58136ba9",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "RESEARCH_PLANNING",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-1d264127473a45849a4d2f83869450c0",
+  "output": {
+    "contract": "research_plan_proposal",
+    "contract_version": "1.0.0",
+    "central_question": "¿Cómo aprendemos a pertenecer sin desaparecer, y qué perdemos y qué conservamos en ese proceso?",
+    "intended_use": "Investigar y desarrollar una tesis provisional para un videoensayo reflexivo sobre la relación entre pertenencia, identidad, adaptación y autonomía.",
+    "scope": "Examinar cómo las personas negocian su identidad individual al integrarse en familias, amistades, comunidades, grupos culturales o instituciones, distinguiendo adaptación, reciprocidad, renuncia, transformación y desaparición de la propia voz. No diagnosticar, moralizar ni presentar una explicación universal.",
+    "dimensions": [
+      "Significado de pertenecer y formas de pertenencia",
+      "Tensión entre identidad individual y normas del grupo",
+      "Adaptación, reconocimiento, reciprocidad y límites personales",
+      "Costes de la pertenencia: silenciamiento, exclusión, autocensura o pérdida de autonomía",
+      "Beneficios y elementos conservados: apoyo, identidad compartida, continuidad y sentido",
+      "Condiciones sociales, culturales y relacionales que modifican la experiencia",
+      "Diferencia entre pertenecer voluntariamente, pertenecer por necesidad y ser incluido desde fuera"
+    ],
+    "subquestions": [
+      "¿Qué necesidades humanas puede satisfacer la pertenencia?",
+      "¿Qué mecanismos hacen que la adaptación a un grupo se convierta en desaparición de la propia identidad?",
+      "¿Qué aspectos de la identidad suelen modificarse, negociarse o conservarse?",
+      "¿Cómo distinguir una transformación elegida de una renuncia impuesta?",
+      "¿Qué papel tienen el reconocimiento, el conflicto, los límites y la reciprocidad?",
+      "¿Qué explicaciones rivales existen frente a la idea de que pertenecer exige perderse?",
+      "¿En qué contextos la pertenencia fortalece la autonomía en lugar de reducirla?"
+    ],
+    "evidence_requirements": [
+      "Definir con precisión pertenencia, identidad, adaptación, conformidad, inclusión y autonomía, evitando tratarlos como equivalentes.",
+      "Usar fuentes primarias u originales y literatura especializada cuando se formulen afirmaciones sobre mecanismos psicológicos, sociales o culturales.",
+      "Distinguir evidencia sobre experiencias narrativas de personajes y obras de evidencia sobre la realidad externa.",
+      "Sustentar cada afirmación material con una fuente identificable y un localizador reproducible cuando los materiales estén disponibles.",
+      "Separar asociación, interpretación y causalidad; explicitar contexto, límites, rivales y condiciones de validez.",
+      "Buscar evidencia que apoye, limite y contradiga la hipótesis inicial.",
+      "No usar una obra narrativa como prueba científica de una afirmación sobre la realidad."
+    ],
+    "source_strategy": "Trabajar únicamente con materiales locales previamente verificados y con materiales aportados por el propietario. La búsqueda web y la consulta HTTP no están disponibles; por tanto, no afirmar acceso a fuentes externas ni cerrar afirmaciones que requieran fuentes ausentes. Priorizar fuentes originales, estudios especializados, datos pertinentes, crítica experta y obras narrativas relevantes después de verificar su identidad y versión.",
+    "critical_claims": [
+      "La pertenencia puede ofrecer reconocimiento, apoyo y continuidad, pero también puede exigir adaptaciones que reduzcan la autonomía.",
+      "La desaparición de la identidad no es una consecuencia necesaria de pertenecer; depende de las normas del grupo, la reciprocidad, el poder, el contexto y los márgenes de elección.",
+      "Conservar la identidad no implica permanecer intacto: pertenecer puede transformar aspectos de la identidad sin eliminarlos.",
+      "La distinción entre adaptación elegida y renuncia impuesta es central para evaluar qué se pierde y qué se conserva."
+    ],
+    "rival_refutation": [
+      "La pertenencia siempre exige conformidad y pérdida de individualidad; contrastar esta explicación con casos de pertenencia que amplían capacidades, vínculos o autonomía.",
+      "La identidad es completamente individual y los grupos solo la restringen; contrastar con evidencia sobre formación relacional, reconocimiento y construcción compartida.",
+      "El problema se explica únicamente por decisiones personales; contrastar con condiciones materiales, jerarquías, sanciones, dependencia y desigualdad.",
+      "Toda transformación identitaria causada por la pertenencia es una pérdida; contrastar con transformaciones voluntarias, integración y adquisición de recursos simbólicos o sociales."
+    ],
+    "gaps_risks": [
+      "No hay materiales locales verificados disponibles en la entrada actual.",
+      "No es posible realizar búsqueda web ni consulta HTTP durante esta fase.",
+      "El concepto de desaparición puede volverse metafórico o demasiado amplio si no se operacionaliza.",
+      "Existe riesgo de psicologizar experiencias determinadas por desigualdad, coerción o condiciones materiales.",
+      "Las obras narrativas pueden favorecer interpretaciones intensas pero no demostrar generalizaciones externas.",
+      "La evidencia disponible podría concentrarse en contextos culturales concretos y limitar la generalización.",
+      "La hipótesis inicial puede confundir pertenencia, conformidad, dependencia e inclusión si no se mantienen diferenciadas."
+    ],
+    "potential_specialists": [
+      "Psicología social de la identidad y la pertenencia",
+      "Sociología de grupos, inclusión, normas y exclusión",
+      "Antropología de identidad, comunidad y pertenencia cultural",
+      "Filosofía social y política sobre reconocimiento, autonomía y comunidad",
+      "Estudios culturales y análisis narrativo"
+    ],
+    "sufficiency_criteria": [
+      "Existe una definición operativa y no contradictoria de los conceptos centrales.",
+      "Las dimensiones principales del fenómeno están cubiertas con evidencia apropiada para el uso previsto.",
+      "Cada afirmación material tiene apoyo trazable o queda explícitamente marcada como limitada, pendiente o no verificable.",
+      "Se han examinado explicaciones rivales, contradicciones y límites de generalización.",
+      "La evidencia distingue mecanismos sociales o psicológicos de interpretaciones narrativas.",
+      "La hipótesis inicial ha sido sometida a evidencia favorable, limitante y contradictoria.",
+      "La ausencia de acceso externo no se oculta y las lagunas críticas permanecen abiertas.",
+      "La base permite formular una tesis provisional sin presentarla como hecho universal."
+    ],
+    "target_final_works_decision": {
+      "status": "PENDING_RESEARCH",
+      "policy": "No se propone una selección final en esta fase. Las obras se incorporarán únicamente después de verificar identidad, versión, acceso, relación defendible con el fenómeno y evidencia concreta.",
+      "decision_basis": "La entrada no contiene obras ni materiales locales verificados; cualquier decisión sobre obras sería prematura."
+    },
+    "supplied_works": [],
+    "selection_policy": {
+      "authority": "OWNER_SELECTION_REQUIRED",
+      "discovery": "Puede realizarse una exploración amplia únicamente con materiales disponibles y verificables.",
+      "filter": "Conservar solo obras con identidad y versión verificadas, acceso suficiente, relación defendible con la pregunta y aporte diferencial.",
+      "constraints": [
+        "No inventar obras, fuentes, escenas, ediciones ni accesos.",
+        "No convertir una obra en prueba científica del fenómeno.",
+        "No seleccionar por función narrativa, orden, gancho o packaging.",
+        "Mantener separadas la evidencia de la obra y la evidencia sobre la realidad externa."
+      ],
+      "final_selection": "Requiere decisión explícita del propietario o una delegación válida posterior a la investigación."
+    },
+    "planned_stages": [
+      "Delimitar conceptos, alcance, hipótesis inicial y criterios de suficiencia.",
+      "Construir la base de investigación del fenómeno con fuentes locales verificadas.",
+      "Explorar y filtrar posibles obras sin tratarlas todavía como evidencia externa.",
+      "Investigar profesionalmente las obras supervivientes, verificando identidad, versión, contexto y aporte.",
+      "Contrastar la hipótesis con evidencia favorable, limitante, rival y contradictoria.",
+      "Registrar afirmaciones, fuentes, localizadores, incertidumbres y lagunas.",
+      "Emitir una decisión de suficiencia acotada al uso previsto y formular una tesis provisional, sin autorizar todavía una selección narrativa final."
+    ]
+  },
+  "output_checksum": "d71f6ba4d46693cfe0aecffb4127e11ce2dfe92727deb432987879a4f3423100",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "RESEARCH_PLANNING",
+    "role": "RESEARCH_AND_CURATION",
+      "run_id": "RESULT-1d264127473a45849a4d2f83869450c0",
+      "executor_id": "opencode:RESULT-1d264127473a45849a4d2f83869450c0",
+      "executor_identity": "opencode:RESULT-1d264127473a45849a4d2f83869450c0",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

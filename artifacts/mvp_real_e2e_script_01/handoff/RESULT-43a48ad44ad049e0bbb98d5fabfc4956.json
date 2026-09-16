@@ -1,0 +1,73 @@
+{
+  "handoff_id": "RUN-EXTEND01-HANDOFF-43a48ad44ad049e0bbb98d5fabfc4956",
+  "package_checksum": "e519f2dde8f41527ea97f378826aad556a3b015bf9d2d65722a50e5970c570fb",
+  "input_manifest_checksum": "50e64589439f27ebe402b76f714455ab2a677135f0ef90b5801e2bc28923e0b4",
+  "skill_id": "extend_01_research_v2_real_e2e",
+  "skill_version": "2.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "stage": "BASE_RESEARCH_POOL",
+  "role": "RESEARCH_AND_CURATION",
+  "result_run_id": "RESULT-f5b89455752d4506aad21979ca23a6b6",
+  "output": {
+    "dossier_id": "ep_0001:RESEARCH_PLAN:DISCOVERY",
+    "dossier_version": "2.0.0",
+    "episode_id": "ep_0001",
+    "research_id": "ep_0001:RESEARCH_PLAN",
+    "evidence_report_id": "ep_0001:RESEARCH_PLAN:SOURCE_ACCESS_EVIDENCE_REPORT",
+    "work": {
+      "material_id": "ep_0001",
+      "title": "Ninguna obra suministrada",
+      "creator": "No suministrado",
+      "consulted_representations": [
+        {
+          "representation_kind": "ORIGINAL_WORK",
+          "edition_or_version": "NO_DISPONIBLE",
+          "consulted_locator": "NO_DISPONIBLE"
+        }
+      ]
+    },
+    "dossier_stage": "IDENTIFIED",
+    "pending_items": [
+      "No hay obras ni materiales del propietario suministrados.",
+      "El acceso a fuentes y representaciones verificables está pendiente."
+    ],
+    "confidence": "LOW",
+    "created_at": "2026-09-16T05:35:50.324581+00:00",
+    "research_contract_version": "2.0.0",
+    "research_stage": "DISCOVERY",
+    "selection_state": "PENDING_DECISION",
+    "preliminary_fidelity": "NOT_ASSESSED",
+    "thesis_stage": "NONE",
+    "research_sufficiency": "BLOCKED_BY_EVIDENCE",
+    "evidence_type_separation": {
+      "work_evidence_refs": [],
+      "external_reality_evidence_refs": []
+    },
+    "downstream_restrictions": [
+      {
+        "restriction_id": "R-EP0001-001",
+        "kind": "CLAIM_BLOCKED",
+        "statement": "No se pueden formular afirmaciones materiales ni evaluar fidelidad sin una obra y evidencia verificables.",
+        "affected_consumers": [
+          "BASE_RESEARCH_POOL",
+          "EDITORIAL"
+        ]
+      }
+    ]
+  },
+  "output_checksum": "730f236a53517d7934b1b94de2561c094558b8e5ab064940629ca5e84dfbb483",
+  "provenance": {
+    "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+    "episode_id": "ep_0001",
+    "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+    "stage": "BASE_RESEARCH_POOL",
+    "role": "RESEARCH_AND_CURATION",
+    "run_id": "RESULT-f5b89455752d4506aad21979ca23a6b6",
+    "executor_id": "opencode:RESULT-f5b89455752d4506aad21979ca23a6b6",
+    "executor_identity": "opencode:RESULT-f5b89455752d4506aad21979ca23a6b6",
+    "provider": "MANAGED_BY_EXECUTOR",
+    "model": "CURRENT_OPENCODE_MODEL"
+  }
+}

@@ -59,9 +59,12 @@ def _service(
     paid_cost_approved: bool = False,
     operational_authority_path: str | None = None,
     mission_contract_path: str | None = None,
+    capability_id: str | None = None,
+    execution_interface: str | None = None,
     completion_gate_result_path: str | None = None,
     mission_repo_root: str | None = None,
 ) -> EpisodeApplicationService:
+    capability_id = capability_id or "MVP_REAL_E2E_TOPIC_BELONGING"
     store = VaultEpisodeStore.from_settings(settings)
     return EpisodeApplicationService(
         store,
@@ -69,6 +72,12 @@ def _service(
             store,
             boundary=ExecutionCognitiveBoundary(
                 repository_root=REPO_ROOT,
+                capability_id=capability_id,
+                execution_interface=execution_interface or (
+                    "MVP_REAL_E2E_TERMINAL"
+                    if capability_id == "MVP_REAL_E2E_TOPIC_BELONGING"
+                    else "TOPIC_BELONGING_TERMINAL"
+                ),
                 mission_authorization_path=mission_authorization_path,
                 execution_mode=execution_mode,
                 mock_outputs=mock_outputs,
@@ -105,6 +114,7 @@ def _service_from_args(args: argparse.Namespace) -> EpisodeApplicationService:
         paid_cost_approved=bool(getattr(args, "paid_cost_approved", False)),
         operational_authority_path=getattr(args, "operational_authority_path", None),
         mission_contract_path=getattr(args, "mission_contract_path", None),
+        capability_id=getattr(args, "capability_id", None),
         completion_gate_result_path=getattr(args, "completion_gate_result_path", None),
         mission_repo_root=getattr(args, "mission_repo_root", None),
     )
@@ -547,6 +557,7 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
     start.add_argument("--completion-gate", dest="completion_gate_result_path", help=argparse.SUPPRESS)
     start.add_argument("--mission-repo-root", dest="mission_repo_root", help=argparse.SUPPRESS)
+    start.add_argument("--capability-id", dest="capability_id", help=argparse.SUPPRESS)
     start.add_argument("--modo", choices=["tema", "obra", "corpus"], help="Omitir para usar el flujo interactivo")
     start.add_argument("--tema")
     start.add_argument("--obra")
@@ -574,6 +585,7 @@ def build_parser() -> argparse.ArgumentParser:
     resume.add_argument("--mission-contract", dest="mission_contract_path", help=argparse.SUPPRESS)
     resume.add_argument("--completion-gate", dest="completion_gate_result_path", help=argparse.SUPPRESS)
     resume.add_argument("--mission-repo-root", dest="mission_repo_root", help=argparse.SUPPRESS)
+    resume.add_argument("--capability-id", dest="capability_id", help=argparse.SUPPRESS)
     resume.set_defaults(handler=_resume)
     import_result = subparsers.add_parser(
         "importar-resultado",

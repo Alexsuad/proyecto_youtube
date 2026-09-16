@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
-from src.ai.execution import editorial_only_payload, execute, manifest_checksum, persist_execution_result
+from src.ai.execution import _apply_route_resolution, editorial_only_payload, execute, manifest_checksum, persist_execution_result
 from src.ai.manifest import manifest_checksum as shared_manifest_checksum
 from src.ai.providers.agent_handoff import AgentHandoffProvider
 from src.ai.runtime_profiles import READY, ResolvedExecutionRoute
@@ -166,44 +166,36 @@ def test_handoff_without_completion_gate_is_blocked(tmp_path: Path) -> None:
     assert "MISSION_COMPLETION_GATE_REQUIRED" in (result.error or "")
 
 
-def test_neutral_agent_harness_family_prepares_handoff_without_concrete_identity(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    gate_config = _completion_gate_config(tmp_path)
-    monkeypatch.setattr("src.ai.runtime_profiles.shutil.which", lambda command: pytest.fail("neutral family must not inspect a concrete executor"))
-    result = execute(_request(
-        tmp_path,
-        provider=None,
-        execution_mode="agent_harness",
+def test_neutral_agent_harness_family_runs_managed_executor_without_concrete_identity(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    request = type("Request", (), {
+        "provider": None,
+        "execution_mode": "REAL",
+        "execution_family": "AGENT_HARNESS",
+        "execution_route": "agent_harness",
+        "execution_profile": None,
+        "model": None,
+        "executor": None,
+        "reasoning_effort": None,
+        "timeout": 30,
+        "config": {},
+    })()
+    route = ResolvedExecutionRoute(
+        role_id=AUDITOR_ROLE,
         execution_route="agent_harness",
-        execution_family="AGENT_HARNESS",
         execution_profile=None,
-        model=None,
-        config={"execution_family": "AGENT_HARNESS"},
-        run_configuration={
-            "role_id": AUDITOR_ROLE,
-            "execution_route": "agent_harness",
-            "execution_profile": None,
-            "execution_family": "AGENT_HARNESS",
-            "executor_override": None,
-            "provider_override": None,
-            "model_override": None,
-            "reasoning_effort": None,
-            "mission_contract_path": gate_config["mission_contract_path"],
-            "completion_gate_result_path": gate_config["completion_gate_result_path"],
-            "mission_repo_root": gate_config["mission_repo_root"],
-            "timeout_seconds": 180,
-            "max_retries": 1,
-            "temperature": None,
-            "max_tokens": None,
-            "budget_limit": None,
-            "paid_cost_approved": False,
-        },
-        handoff_directory=tmp_path / "handoff",
-    ))
-    assert result.status is ExecutionStatus.HANDOFF_PREPARED
-    package = json.loads(Path(result.usage["package"]).read_text(encoding="utf-8"))
-    assert package["execution_family"] == "AGENT_HARNESS"
-    assert package["execution_profile"] is None
-    assert package["model_override"] is None
+        route_type="AGENT_HARNESS_RUNTIME",
+        executor="OWNER_MANAGED",
+        provider="MANAGED_BY_EXECUTOR",
+        provider_adapter="agent_executor",
+        model="UNAVAILABLE_FROM_EXECUTOR",
+        status=READY,
+        execution_family="AGENT_HARNESS",
+    )
+    _apply_route_resolution(request, route)
+    assert request.provider == "agent_executor"
+    assert request.execution_family == "AGENT_HARNESS"
+    assert request.execution_profile is None
+    assert request.model == "UNAVAILABLE_FROM_EXECUTOR"
 
 
 def test_direct_neutral_agent_harness_handoff_requires_verified_route(tmp_path: Path) -> None:

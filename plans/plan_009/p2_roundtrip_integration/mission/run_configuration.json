@@ -11,7 +11,7 @@
   "mission_contract_path": "plans/plan_009/p2_roundtrip_integration/mission/mission_contract.json",
   "completion_gate_result_path": null,
   "mission_repo_root": ".",
-  "timeout_seconds": 180,
+  "timeout_seconds": 600,
   "max_retries": 1,
   "temperature": null,
   "max_tokens": null,
