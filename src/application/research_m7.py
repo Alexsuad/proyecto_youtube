@@ -33,6 +33,7 @@ from src.core.editorial_profile_registry import load_active_profile_authority
 from src.core.gate_result import GateResult
 from src.core.gate_runtime import validate_gate_result
 from src.core.invalidation import InvalidationEngine
+from src.core.mission_authorization import MissionAuthorization, MissionAuthorizationError, load_mission_authorization
 
 M7_VERSION = "2.0.0"
 STAGES = ("INTAKE", "RESEARCH_PLAN", "B2", "M4", "M5", "M6", "B5_I3_HANDOFF")
@@ -436,6 +437,19 @@ class ExternalResearchCognitiveExecutor:
             )
         return artifacts
 
+    def _mission_authorization(self) -> MissionAuthorization:
+        reference = str(self.preparation.mission_authorization_path or "").strip()
+        if not reference:
+            raise ResearchM7Error("MISSION_AUTHORIZATION_REQUIRED")
+        path = Path(reference)
+        if not path.is_absolute():
+            path = Path(__file__).resolve().parents[2] / path
+        try:
+            authorization = load_mission_authorization(path)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError, MissionAuthorizationError) as exc:
+            raise ResearchM7Error("REAL_ROUTE_MISSION_AUTHORIZATION_INVALID") from exc
+        return authorization
+
     def __call__(self, request: Any) -> Any:
         existing = self._existing_pending()
         if existing is not None:
@@ -448,15 +462,8 @@ class ExternalResearchCognitiveExecutor:
             raise ResearchM7Error("EXTERNAL_HANDOFF_PREPARED_CONTRACT_REQUIRED")
         input_artifacts = self._input_artifacts(self.episode, request)
         run_id = f"RUN-EXTEND01-HANDOFF-{uuid4().hex}"
-        mission_id = ""
-        if self.preparation.mission_authorization_path:
-            try:
-                authorization_payload = _read(self.preparation.mission_authorization_path)
-                mission_id = str(authorization_payload.get("mission_id") or "").strip()
-            except ResearchM7Error:
-                mission_id = ""
-        if not mission_id:
-            raise ResearchM7Error("REAL_ROUTE_MISSION_ID_UNRESOLVED")
+        authorization = self._mission_authorization()
+        mission_id = authorization.mission_id
         execution_request = ExecutionRequest(
             capability_id=REAL_RESEARCH_CAPABILITY,
             skill_id="extend_01_research_v2_real_e2e",
@@ -477,7 +484,7 @@ class ExternalResearchCognitiveExecutor:
                 "mission_contract_path": self.preparation.mission_contract_path,
                 "mission_id": mission_id,
                 "mission_operation": "EXECUTE_CAPABILITY",
-                "execution_interface": "MVP_REAL_E2E_TERMINAL",
+                "execution_interface": authorization.execution_interface,
                 "execution_family": "AGENT_HARNESS",
                 "stage": str(request.stage),
                 "expected_return": str(request.output_schema),
@@ -1615,7 +1622,6 @@ def import_and_resume_external_research(
             "RESEARCH_PLAN_PROPOSAL", dict(proposal),
             artifact_id=f"{episode_id}:RESEARCH_PLAN_PROPOSAL",
             artifact_kind="ResearchPlanProposal",
-            replace_invalid=True,
         )
         # The persisted artifact checksum is the lineage checksum.  Do not
         # derive a replacement from a newly materialized plan representation.

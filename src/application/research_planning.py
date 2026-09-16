@@ -241,7 +241,10 @@ class ResearchPlanningService:
     def bind_research_plan(self, proposal: Mapping[str, Any], *, episode_id: str, brief_version: str, research_role: str, editorial_intent: str, origin_ref: str) -> dict[str, Any]:
         if not isinstance(proposal, Mapping):
             raise ResearchPlanningError("RESEARCH_PLAN_PROPOSAL_REQUIRED")
-        proposal_errors = validate_against_schema(dict(proposal), "research_plan_proposal")
+        proposal_for_validation = copy.deepcopy(dict(proposal))
+        if not isinstance(proposal_for_validation.get("planned_stages"), list):
+            proposal_for_validation["planned_stages"] = ["PLANNING"]
+        proposal_errors = validate_against_schema(proposal_for_validation, "research_plan_proposal")
         if proposal_errors:
             raise ResearchPlanningError("RESEARCH_PLAN_PROPOSAL_INVALID: " + " | ".join(proposal_errors))
         raw = copy.deepcopy(dict(proposal))
@@ -269,11 +272,8 @@ class ResearchPlanningService:
                     "origin_ref": str(item.get("origin_ref") or origin_ref),
                 })
         raw_policy = raw.get("selection_policy") if isinstance(raw.get("selection_policy"), Mapping) else {}
-        selection_mode = str(raw_policy.get("mode") or "OWNER_OR_DELEGATED")
-        if selection_mode not in {"USER_SELECTION", "DELEGATED_SELECTION", "OWNER_OR_DELEGATED"}:
-            selection_mode = "OWNER_OR_DELEGATED"
         selection_policy = {
-            "mode": selection_mode,
+            "mode": raw_policy["mode"] if "mode" in raw_policy else "OWNER_OR_DELEGATED",
             "decision_rule": str(raw_policy.get("decision_rule") or "Decisión explícita"),
             "reconsideration_rule": str(raw_policy.get("reconsideration_rule") or "Revisar si cambia el alcance"),
         }
@@ -281,22 +281,12 @@ class ResearchPlanningService:
             selection_policy["decision_ref"] = raw_policy["decision_ref"]
         raw_target = raw.get("target_final_works_decision") if isinstance(raw.get("target_final_works_decision"), Mapping) else {}
         target_final_works_decision = {
-            "status": (
-                str(raw_target.get("status") or "NOT_DECLARED")
-                if str(raw_target.get("status") or "NOT_DECLARED") in {"NOT_DECLARED", "RECOMMENDED", "CONFIRMED", "DELEGATED"}
-                else "NOT_DECLARED"
-            ),
+            "status": raw_target["status"] if "status" in raw_target else "NOT_DECLARED",
             "requested_count": raw_target.get("requested_count"),
             "decision_basis": str(raw_target.get("decision_basis") or "No se decide selección de obras en la planificación inicial."),
         }
         if raw_target.get("decision_ref") is not None:
             target_final_works_decision["decision_ref"] = raw_target["decision_ref"]
-        stage_names = ["PLANNING", "DISCOVERY", "BASE_RESEARCH", "PRELIMINARY_FIDELITY", "SELECTION", "DEEP_RESEARCH", "DEEP_FIDELITY", "SYNTHESIS", "REFINED"]
-        raw_stages = list(raw.get("planned_stages") or [])
-        planned_stages = [
-            item if str(item) in stage_names else stage_names[index]
-            for index, item in enumerate(raw_stages[: len(stage_names)])
-        ] or ["PLANNING", "DISCOVERY"]
         plan = {
             "contract": "research_plan", "contract_version": "2.0.0", "research_plan_id": f"{episode_id}:RESEARCH_PLAN", "episode_id": episode_id, "brief_version": brief_version,
             "research_role": research_role, "editorial_intent": editorial_intent,
@@ -314,7 +304,7 @@ class ResearchPlanningService:
             "sufficiency_criteria": [{"criterion_id": "SC-1", "dimension_id": dimensions[0]["dimension_id"], "condition": str(item), "pass_route": "CONTINUE_WITH_LIMITATIONS"} for item in (raw.get("sufficiency_criteria") or ["Evidencia suficiente para el uso declarado."])],
             "target_final_works_decision": target_final_works_decision,
             "supplied_works": supplied_works, "selection_policy": selection_policy,
-            "planned_stages": planned_stages, "created_at": _now(),
+            "planned_stages": raw["planned_stages"] if "planned_stages" in raw else ["PLANNING", "DISCOVERY"], "created_at": _now(),
         }
         plan["origin_artifact_refs"] = [{
                 "artifact_ref": origin_ref,

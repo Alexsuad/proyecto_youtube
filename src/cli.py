@@ -64,7 +64,7 @@ def _service(
     completion_gate_result_path: str | None = None,
     mission_repo_root: str | None = None,
 ) -> EpisodeApplicationService:
-    capability_id = capability_id or "MVP_REAL_E2E_TOPIC_BELONGING"
+    capability_id = capability_id or "TOPIC_BELONGING_ASSESSMENT"
     store = VaultEpisodeStore.from_settings(settings)
     return EpisodeApplicationService(
         store,

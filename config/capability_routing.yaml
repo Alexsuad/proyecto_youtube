@@ -69,3 +69,11 @@ capabilities:
       auto_agent_handoff: false
       allow_external_api: false
       unavailable: BLOCKED_UNTIL_MISSION_AUTHORIZED
+  MVP_REAL_E2E_TOPIC_BELONGING:
+    entrypoint: src/application/topic_belonging.py
+    output_schema: topic_belonging_cognitive_decision
+    routing:
+      explicit_mode: respect_requested_route
+      auto_agent_handoff: false
+      allow_external_api: false
+      unavailable: BLOCKED_UNTIL_MISSION_AUTHORIZED

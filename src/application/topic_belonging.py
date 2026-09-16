@@ -2154,10 +2154,14 @@ class TopicBelongingTechnicalWorkflow:
             envelope = json.loads(result_path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
             raise TopicBelongingExecutionError(f"ROUNDTRIP_PERSISTED_ENVELOPE_INVALID:{exc}") from exc
+        boundary = getattr(self, "boundary", None)
+        capability_id = getattr(boundary, "capability_id", None) or record.get("capability_id")
+        if not capability_id:
+            raise TopicBelongingExecutionError("ROUNDTRIP_PERSISTED_CAPABILITY_BINDING_INVALID")
         expected = {
             "mission_id": self._mission_id,
             "episode_id": handle.episode_id,
-            "capability_id": self.boundary.capability_id,
+            "capability_id": capability_id,
             "stage": record.get("stage"),
             "role": record.get("role"),
             "handoff_id": record.get("handoff_id"),
