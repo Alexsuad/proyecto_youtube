@@ -1,0 +1,192 @@
+{
+  "reconciliation_version": "1.0.0",
+  "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+  "episode_id": "ep_0001",
+  "recorded_at": "2026-09-17T07:46:34.4327736Z",
+  "reason": "PLAN015 activation reconciliation; prior mission superseded by PLAN015.",
+  "handoffs_inventoried": 16,
+  "consumed": 1,
+  "archived": 15,
+  "cancelled": 0,
+  "ambiguous_handoffs": 0,
+  "pending_old_mission_handoffs": 0,
+  "checksum_conflicts": 0,
+  "handoffs": [
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-1a7d9d319ee4470990d3c273bfd42070",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "b5580b42c2afd4589259fee77647c3c3b914f67fa0fea648af704d559871e928",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-1a7d9d319ee4470990d3c273bfd42070.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-1a7d9d319ee4470990d3c273bfd42070.json", "output_checksum": "c7bb01fc4dafd57114a0f6771ac5fa071369e8adce58a9d7811b1c21ace58aed", "file_sha256": "f631d470728e99b1e54c180e236e13d6ba10599ac307232b8bdce09eca2d15fd"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-2c91d92dce0a4a6fa13cceba9b2a4dc6",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "2c9135ca0c5bcccf3193df1e11f3bd808d7b95fc5801e4cf9a937a1b205a7a93",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-2c91d92dce0a4a6fa13cceba9b2a4dc6.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-2c91d92dce0a4a6fa13cceba9b2a4dc6.json", "output_checksum": "89bd15f2488b92bea73b58d64cdabb11d7c49cd96e7b9c99aa2d336927462008", "file_sha256": "6017f5b631adaee3e7efb3a9294132ed8d8a89eedaae8e7b88740a4d1ff03cdc"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-37b71287be974696aada2b35493e6bf1",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "ddb82a8e3b831120cc84ed385178328be07a17507291504e23faf644d82600b1",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-37b71287be974696aada2b35493e6bf1.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-37b71287be974696aada2b35493e6bf1.json", "output_checksum": "a9114e68b2cf0f9335f65301489062d6efa237f4b7428ce23eb245fee16bd999", "file_sha256": "eaf09821b9ad4b30d1acfa76e0c8932b982138ff0ef06572bc5301c1c75724b4"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-43a48ad44ad049e0bbb98d5fabfc4956",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "e519f2dde8f41527ea97f378826aad556a3b015bf9d2d65722a50e5970c570fb",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-43a48ad44ad049e0bbb98d5fabfc4956.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-43a48ad44ad049e0bbb98d5fabfc4956.json", "output_checksum": "730f236a53517d7934b1b94de2561c094558b8e5ab064940629ca5e84dfbb483", "file_sha256": "e6ba4ca090ea50a0790ae993b1041c78447a83014a7750678f8009552736c64d"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-4ea30426deb34c078848d122294169fb",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "CONSUMED",
+      "reason": "Vault research_external_handoff.json records imported_result_consumed=true; retained without reconsumption.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "2f767c5435910bf013ef0f9e0fd99268da579ff2be1cbec70395e805f242b3b8",
+      "result_refs": ["C:\\YT_VAULT_MVP_REAL_E2E_01\\MasAllaDelGuion\\episodios\\ep_0001_como_aprendemos_a_pertenecer_sin_desaparecer\\research_external_result.json"],
+      "result_checksums": [{"ref": "C:\\YT_VAULT_MVP_REAL_E2E_01\\MasAllaDelGuion\\episodios\\ep_0001_como_aprendemos_a_pertenecer_sin_desaparecer\\research_external_result.json", "output_checksum": "332b3140faeb89bf15d039c4a21b3664611aab5a8fa69be7384b49ad4cabc25f", "file_sha256": "8ddf8693b2191bd59eec11f89093cc2ea4b5b9e7fbc267ec3d4f6d6c789e7b97"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-5108c9c494e846d5b520ca4ba51a68f8",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "0d777c0681b6d09c926d84f3e9521d8688ef0eb55e7bbf2b79e9a2e3f71e39bd",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-5108c9c494e846d5b520ca4ba51a68f8.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-5108c9c494e846d5b520ca4ba51a68f8.json", "output_checksum": "7dc9925b0cc5941a4b060b06d96c0aed00830c2740503e66fa8b0222df4b39bf", "file_sha256": "d7a5b39164e8e4f403335b3c6a861e87f7a2fa65f6fff4701912949cf7388bba"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-5d14846b6227456dbebaebc981f7fcd9",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "472d0454273ecccd3181d50c039f12c7d528e40f84d19470ef8b2231d2e24943",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-5d14846b6227456dbebaebc981f7fcd9.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-5d14846b6227456dbebaebc981f7fcd9.json", "output_checksum": "bc7d5134cf1449e6737cb8a55c99a41aec7f903ee5cea3cdd27168c948a81df6", "file_sha256": "ee86a038496f7a949275fd7f03507034ede1bd567c6347cb9163550683683a97"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-6c5a02c385704deea9fc091bb9ede735",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with all results including retry.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "8a1022f569c0ce11e577e611cf7c88c967a554681feed4e9135244ba014ff164",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-6c5a02c385704deea9fc091bb9ede735.json", "Historial/ep_0001/handoffs/RESULT-6c5a02c385704deea9fc091bb9ede735-retry.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-6c5a02c385704deea9fc091bb9ede735.json", "output_checksum": "b93da10768fe80e88214b347a07b9e22a76966c59d5f0dce056339e5941ad043", "file_sha256": "5535941a0df8451cb43f1b18efe230e0e40fe93e41099914240ab6697f9a4d18"}, {"ref": "Historial/ep_0001/handoffs/RESULT-6c5a02c385704deea9fc091bb9ede735-retry.json", "output_checksum": "23056a1704bc8fca19b7827f8ea547b43e148fa6cbab73d5434edca2a47c74b3", "file_sha256": "5bac423bbde5a30e01a5bac2c641d03044f20164cb958d951bbfa345e7d380fb"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-867f44dae8ea4073bae7dcfc536c9dd2",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with all results including retry.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "b8b617fb6657790a22a1af87e6724af61e5f20e0c6345e9c41e57a5b07f5659d",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-867f44dae8ea4073bae7dcfc536c9dd2.json", "Historial/ep_0001/handoffs/RESULT-867f44dae8ea4073bae7dcfc536c9dd2-retry.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-867f44dae8ea4073bae7dcfc536c9dd2.json", "output_checksum": "d71f6ba4d46693cfe0aecffb4127e11ce2dfe92727deb432987879a4f3423100", "file_sha256": "6ce2cff6250ba1737eafe47a16654f7c1afc5ae7a9e5afcec39bf9a0aff95764"}, {"ref": "Historial/ep_0001/handoffs/RESULT-867f44dae8ea4073bae7dcfc536c9dd2-retry.json", "output_checksum": "690a4615ea290bd60a2980140e340e8b6ebbe0d63f98fb481ddd1755ea580b61", "file_sha256": "e84b6a1203d25b838af7eb920fe80c1efb8d272c0319fd41a7ecf5873c0723f1"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-8d34afd077734e658e45de9142a4fe37",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "303fcbe40a5b8abad22653ae22ef0b4f389696c605baea22883a9dd1745fb5b5",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-8d34afd077734e658e45de9142a4fe37.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-8d34afd077734e658e45de9142a4fe37.json", "output_checksum": "8d81dfa5f934cc61d222dee8f7193e057882a150524bc3403eabab6edd64131f", "file_sha256": "22d19beaa15f45b67e25549fb5c7f82caef3a04819879630493467b331ff11ba"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-8ea5cc809c31424a877b068b03287e15",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "e6455ebcd271a0f39486bf9a9155e89dcd675320054533be029e22747899ea55",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-8ea5cc809c31424a877b068b03287e15.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-8ea5cc809c31424a877b068b03287e15.json", "output_checksum": "678930d3d00195b6f30db40bf320acf3a60c3014c54bf52be014f8c7aeda1e46", "file_sha256": "5e214cc347bfb51379a002ba7660afc520167502e944f7a3df37934d043fde56"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-a2cd418f784e4d8ab31eb85838abeb15",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "53a803fca426f885315fea6ec68afee5cce6135446e300dce47d8a34787dfc87",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-a2cd418f784e4d8ab31eb85838abeb15.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-a2cd418f784e4d8ab31eb85838abeb15.json", "output_checksum": "7c3cb45371569792008730230c117cea1dc41fcb571138a9b2ea70756a8c777c", "file_sha256": "21cf30cb9fefc06be46bb1cc93647f130316c1b045d57fb688bfa70357640684"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-a546626ee512426badc5eddb6d5e8849",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "0b05ba2ca2e1bdc0637de74ca440e9f63b2daeea53d933568a2bfd529bddaf1a",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-a546626ee512426badc5eddb6d5e8849.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-a546626ee512426badc5eddb6d5e8849.json", "output_checksum": "11539afedb578d3a29ac2bcf913551c4e5faed7c2ad31672059db54a701b8e96", "file_sha256": "5154fa8131aabc60c23a64f66f4ea1db80f2d6572c2b16c1968976a348689e78"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-af80e819bfd842f4b15b8b106addeca8",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "20df9b674cb5e0de67478ce30c6fc8dfb8e528d522cee813e4b54e348cebb3de",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-af80e819bfd842f4b15b8b106addeca8.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-af80e819bfd842f4b15b8b106addeca8.json", "output_checksum": "07aca86939b5a2a020654ec658a511672265cb680f1b6aadc0ecfb77d05c88f3", "file_sha256": "42bbd79653e9337bbd2d8c37057dad39bd16a5bcb53a5b86de97b21121a62906"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-c35855b628fd491d84d6e434eb6b1908",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "f952ed6da2c6da4c03d0a9d7d272bfe14a3f58848872bad303661bb23f6bdc9d",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-c35855b628fd491d84d6e434eb6b1908.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-c35855b628fd491d84d6e434eb6b1908.json", "output_checksum": "ec4531d1dc704d32c5648a86c53d1f9a131dbde3169df7933cae82f23fcf5064", "file_sha256": "2e4312e1952ae81bff9186f4d6eaad1d78353488978fb03f4651eec6bec6dd6c"}]
+    },
+    {
+      "handoff_id": "RUN-EXTEND01-HANDOFF-fe9baef06995400e8478362104b79027",
+      "mission_id": "MVP_REAL_E2E_SCRIPT_01",
+      "episode_id": "ep_0001",
+      "disposition": "ARCHIVED",
+      "reason": "No durable consumption evidence; archived with its result.",
+      "timestamp": "2026-09-17T07:46:34.4327736Z",
+      "package_checksum": "a3f8a1b4c68468e2af26385451496da8fcb5654c3ab107be0af3cc103388528f",
+      "result_refs": ["Historial/ep_0001/handoffs/RESULT-fe9baef06995400e8478362104b79027.json"],
+      "result_checksums": [{"ref": "Historial/ep_0001/handoffs/RESULT-fe9baef06995400e8478362104b79027.json", "output_checksum": "00bef7f172e1829643eb9dfbd130a559c31f9b091074ac19b22bf5065f2f53a0", "file_sha256": "aa0da88ecd83607c74b7479ac835fdb4579aaaaf830cb5bda4bc0c38af89f70f"}]
+    }
+  ]
+}
