@@ -49,12 +49,80 @@ def preflight_controlled_execution(
     config = getattr(request, "config", {}) or {}
     repository_root = Path(root).resolve()
     capability_id = str(request.capability_id)
+    authorization_mode = str(config.get("authorization_mode") or "MISSION").upper()
+    if authorization_mode not in {"MISSION", "PRODUCT"}:
+        raise PermissionError("AUTHORIZATION_MODE_INVALID:" + authorization_mode)
     registry_capability = _load_registered_capability(repository_root, capability_id)
     if registry_capability is None:
         raise PermissionError("CAPABILITY_UNREGISTERED:" + capability_id)
     if registry_capability.get("availability_status") in NON_EXECUTABLE_AVAILABILITY:
         raise PermissionError("CAPABILITY_UNAVAILABLE:" + capability_id)
     authorization_path = config.get("mission_authorization_path")
+    if authorization_mode == "PRODUCT":
+        if authorization_path or config.get("mission_contract_path"):
+            raise PermissionError("AUTHORIZATION_MODE_CONFLICT:PRODUCT_WITH_MISSION_BINDING")
+        requested_provider = str(getattr(request, "provider", "") or "").strip().lower()
+        if requested_provider not in {"", "agent_handoff"}:
+            raise PermissionError("PRODUCT_AUTHORIZATION_REQUIRES_NEUTRAL_AGENT_HANDOFF")
+        requested_route = str(request.execution_route or config.get("execution_route") or config.get("default_execution_route") or "")
+        requested_profile_value = request.execution_profile or config.get("execution_profile")
+        requested_profile = str(requested_profile_value) if requested_profile_value else None
+        requested_family_value = getattr(request, "execution_family", None) or config.get("execution_family")
+        requested_family = str(requested_family_value) if requested_family_value else None
+        if not requested_family:
+            raise PermissionError("PRODUCT_AUTHORIZATION_EXECUTION_FAMILY_REQUIRED")
+        requested_interface = str(config.get("execution_interface") or "UNSPECIFIED_INTERFACE")
+        selection_path_value = config.get("execution_family_selection_path")
+        try:
+            from src.ai.runtime_profiles import load_execution_profiles, validate_execution_family_selection
+
+            selection_candidate = Path(str(selection_path_value or "config/execution_family_selection.json"))
+            if selection_candidate.is_absolute() or ".." in selection_candidate.parts:
+                raise PermissionError("EXECUTION_FAMILY_SELECTION_INVALID: path outside repository")
+            selection_file = (repository_root / selection_candidate).resolve()
+            profiles_file = repository_root / "config/agent_execution_profiles.json"
+            selected_family = validate_execution_family_selection(
+                requested_family,
+                selection_file,
+                requested_profile=requested_profile,
+                profiles=load_execution_profiles(profiles_file),
+            )
+            if selected_family != requested_family.strip().upper():
+                raise PermissionError("EXECUTION_FAMILY_SELECTION_MISMATCH")
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise PermissionError("EXECUTION_FAMILY_SELECTION_INVALID") from exc
+        from src.core.product_authorization import resolve_product_authorization
+
+        product_authorization, material_decision_ref = resolve_product_authorization(
+            repository_root,
+            capability_id=capability_id,
+            role_id=str(getattr(request, "role", "")),
+            execution_family=requested_family.strip().upper(),
+            execution_route=requested_route,
+            execution_profile_id=requested_profile,
+            execution_interface=requested_interface,
+        )
+        context_manifest = resolve_context(
+            config.get("context_references", []),
+            root=repository_root,
+            capability_id=capability_id,
+            role_id=str(getattr(request, "role", "")),
+            run_id=str(config.get("run_id") or "PENDING_RUN"),
+            policy_path=config.get("context_policy_path"),
+            mission_id=product_authorization.mission_id,
+            execution_profile_id=requested_profile or ("EXECUTOR_MANAGED" if requested_family.strip().upper() == "AGENT_HARNESS" else None),
+            execution_family=requested_family.strip().upper(),
+            prompt_id=str(config.get("prompt_id") or "UNSPECIFIED_PROMPT"),
+            input_refs=[str(item) for item in config.get("input_refs", [])],
+            output_refs=[str(item) for item in config.get("output_refs", [])],
+        )
+        return {
+            "authorization": product_authorization,
+            "context_manifest": context_manifest,
+            "reservation": None,
+            "mission_contract": None,
+            "required_material_decision_ref": material_decision_ref,
+        }
     if registry_capability.get("availability_status") == "READY_NOT_AUTHORIZED" and not authorization_path:
         raise PermissionError("MISSION_AUTHORIZATION_REQUIRED:" + capability_id)
     if not authorization_path:

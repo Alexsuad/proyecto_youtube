@@ -1098,6 +1098,22 @@ def _apply_route_resolution(request: ExecutionRequest, route: Any) -> None:
     }
 
 
+def _enforce_product_handoff_boundary(request: ExecutionRequest) -> None:
+    """Keep PRODUCT authority on the neutral handoff seam.
+
+    Product capability authority is technical and scoped; it is not a
+    permission to invoke a managed executor or a native model provider. A
+    request without an explicit provider is normalized to the only permitted
+    PRODUCT transport, while an explicit provider is rejected by preflight.
+    """
+    if str(request.config.get("authorization_mode") or "").upper() != "PRODUCT":
+        return
+    provider = str(request.provider or "").strip().lower()
+    if provider not in {"", "agent_handoff"}:
+        raise PermissionError("PRODUCT_AUTHORIZATION_REQUIRES_NEUTRAL_AGENT_HANDOFF")
+    request.provider = "agent_handoff"
+
+
 def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
     started, manifest = _now(), manifest_checksum(request)
     synthetic_cognitive_executor = request.config.get("_synthetic_cognitive_executor")
@@ -1128,11 +1144,18 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
                 "_mission_authorization_token": _VERIFIED_AUTHORIZATION_TOKEN,
                 "mission_id": getattr(preflight["authorization"], "mission_id", request.config.get("mission_id")),
                 "mission_contract_sha256": getattr(preflight["authorization"], "contract_sha256", None),
+                "authorization_id": getattr(preflight["authorization"], "authorization_id", request.config.get("authorization_id")),
+                "authorization_checksum": getattr(preflight["authorization"], "authorization_checksum", request.config.get("authorization_checksum")),
+                "authorization_mode": getattr(preflight["authorization"], "values", {}).get("authorization_mode", request.config.get("authorization_mode")) if hasattr(getattr(preflight["authorization"], "values", {}), "get") else request.config.get("authorization_mode"),
             }
         capture_pre_run_snapshot(request, authorization=preflight.get("authorization"), root=repository_root)
         if preflight.get("context_manifest") is not None:
             request.config = {**request.config, "resolved_context_manifest": preflight["context_manifest"], "resolved_context_manifest_sha256": preflight["context_manifest"]["manifest_sha256"], "mission_contract_sha256": getattr(preflight.get("authorization"), "contract_sha256", None)}
     except (PermissionError, ValueError) as exc:
+        return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=str(exc))
+    try:
+        _enforce_product_handoff_boundary(request)
+    except PermissionError as exc:
         return _result(request, "none", ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=str(exc))
     mission_contract = preflight.get("mission_contract")
     if mission_contract is not None and mission_contract.mission_mode == "REDUCED":
@@ -1147,7 +1170,12 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
             "_mission_convergence": convergence_result.usage,
         }
     runtime_port = AgentRuntimePort(Path(request.config["execution_profiles_path"]) if request.config.get("execution_profiles_path") else None)
-    run_configuration = _normalized_run_configuration(request)
+    product_external_handoff = (
+        str(request.config.get("authorization_mode") or "").upper() == "PRODUCT"
+        and request.provider == "agent_handoff"
+        and request.execution_family == "AGENT_HARNESS"
+    )
+    run_configuration = None if product_external_handoff else _normalized_run_configuration(request)
     if run_configuration:
         request.config = {
             **request.config,
@@ -1186,7 +1214,7 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
                 },
             )
         _apply_route_resolution(request, route)
-    elif request.execution_route:
+    elif request.execution_route and not product_external_handoff:
         try:
             route = runtime_port.resolve(request.role, request.execution_route)
         except ValueError as exc:
@@ -1249,7 +1277,10 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
     if provider_name == "agent_handoff":
         run_id = f"RUN-AI-{uuid.uuid4().hex}"
         try:
-            package = AgentHandoffProvider().prepare(request, manifest, run_id)
+            if str(request.config.get("authorization_mode") or "").upper() == "PRODUCT":
+                package = AgentHandoffProvider().prepare_external(request, manifest, run_id)
+            else:
+                package = AgentHandoffProvider().prepare(request, manifest, run_id)
         except PermissionError as exc:
             return _result(request, provider_name, ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR, started, manifest, error=str(exc), usage=_availability_metadata(str(exc)))
         if request.config.get("execution_registry_path"):

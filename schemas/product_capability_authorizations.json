@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProductCapabilityAuthorizations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["registry_version", "authorizations"],
+  "properties": {
+    "registry_version": {"type": "string", "minLength": 1},
+    "authorizations": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/authorization"}
+    }
+  },
+  "definitions": {
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorization_id", "authority_version", "capability_id", "allowed_role_ids",
+        "allowed_execution_families", "allowed_routes", "allowed_profiles",
+        "allowed_interfaces", "cost_policy", "authorized_by", "authorized_role",
+        "issued_at", "valid_from", "valid_until", "status", "supersedes",
+        "revoked_at", "revoked_by", "authorization_checksum"
+      ],
+      "properties": {
+        "authorization_id": {"type": "string", "minLength": 1},
+        "authority_version": {"type": "string", "minLength": 1},
+        "capability_id": {"type": "string", "minLength": 1},
+        "allowed_role_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "allowed_execution_families": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["AGENT_HARNESS", "API_PROVIDER"]}},
+        "allowed_routes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "allowed_profiles": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "allowed_interfaces": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "allowed_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "cost_policy": {"type": "string", "minLength": 1},
+        "authorized_by": {"type": "string", "minLength": 1},
+        "authorized_role": {"type": "string", "minLength": 1},
+        "issued_at": {"type": "string", "format": "date-time"},
+        "valid_from": {"type": "string", "format": "date-time"},
+        "valid_until": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}]},
+        "status": {"enum": ["ACTIVE", "SUPERSEDED", "REVOKED", "EXPIRED"]},
+        "supersedes": {"type": ["string", "null"]},
+        "revoked_at": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}]},
+        "revoked_by": {"type": ["string", "null"]},
+        "revocation_reason": {"type": ["string", "null"]},
+        "authorization_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "authorization_mode": {"const": "PRODUCT"},
+        "material_decision_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["registry_path", "decision_id", "subject_ref", "decision_sha256"],
+          "properties": {
+            "registry_path": {"type": "string", "minLength": 1},
+            "decision_id": {"type": "string", "minLength": 1},
+            "subject_ref": {"type": "string", "minLength": 1},
+            "decision_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "REVOKED"}}},
+          "then": {
+            "required": ["revocation_reason"],
+            "properties": {
+              "revoked_at": {"type": "string", "format": "date-time"},
+              "revoked_by": {"type": "string", "minLength": 1},
+              "revocation_reason": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

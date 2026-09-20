@@ -7,7 +7,7 @@
       "decision": "TOPIC_BELONGING_ASSESSMENT queda autorizada exclusivamente para demostraciones controladas R2/B5-I1 destinadas a probar la aplicación; no activa globalmente la capability, no autoriza uso productivo ni autoriza ninguna capability posterior.",
       "reason": "Decisión explícita del owner para separar la demostración controlada de la activación general y del uso productivo.",
       "authority": "CHANNEL_INTELLIGENCE",
-      "state": "VIGENTE",
+      "state": "SUSTITUIDA",
       "authorization_scope": {
         "capability_id": "TOPIC_BELONGING_ASSESSMENT",
         "controlled_demonstration": true,
@@ -22,8 +22,33 @@
         "schemas/topic_belonging_input.json",
         "schemas/topic_belonging_decision.json"
       ],
-      "superseded_by": null,
+      "superseded_by": "MD-CI-001-PLAN015",
       "recorded_at": "2026-08-22T00:00:00Z"
+    },
+    {
+      "decision_id": "MD-CI-001-PLAN015",
+      "subject_ref": "capability:TOPIC_BELONGING_ASSESSMENT",
+      "decision": "PLAN015 autoriza la operación ordinaria de TOPIC_BELONGING_ASSESSMENT dentro del alcance de episodio único, con la autoridad de producto explícita y separada de la ruta histórica MVP_REAL_E2E_TOPIC_BELONGING.",
+      "reason": "OWNER APPROVAL de PLAN015 y sucesión explícita de la decisión material MD-CI-001 sin ampliar capabilities, costes, familias, rutas o arquitectura.",
+      "authority": "CHANNEL_INTELLIGENCE",
+      "state": "VIGENTE",
+      "authorization_scope": {
+        "capability_id": "TOPIC_BELONGING_ASSESSMENT",
+        "controlled_demonstration": false,
+        "general_activation": true,
+        "product_use": true,
+        "successor_capabilities": false,
+        "scope": "PLAN015_SINGLE_EPISODE"
+      },
+      "evidence_refs": [
+        "plans/plan_015/PLAN015_Integracion_E2E_operativa_del_episodio.md",
+        "config/product_capability_authorizations.json",
+        "schemas/product_capability_authorizations.json",
+        "docs/legacy/material_decision_registry.json"
+      ],
+      "supersedes": "MD-CI-001",
+      "superseded_by": null,
+      "recorded_at": "2026-09-17T07:46:34.4327736Z"
     },
     {
       "decision_id": "MD-LEGACY-001",

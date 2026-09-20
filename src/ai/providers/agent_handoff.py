@@ -17,6 +17,15 @@ from src.core.mission_completion_gate import (
 from src.core.mission_authorization import load_mission_authorization
 from src.core.contract_validation import validate_against_schema
 
+VALID_AUTHORIZATION_MODES = frozenset({"MISSION", "PRODUCT"})
+
+def _validated_authorization_mode(value: Any) -> str:
+    mode = str(value or "MISSION").upper()
+    if mode not in VALID_AUTHORIZATION_MODES:
+        raise PermissionError("AUTHORIZATION_MODE_INVALID:" + mode)
+    return mode
+
+
 
 def load_verified_completion_gate_from_payload(data: dict[str, Any] | None):
     if not isinstance(data, dict):
@@ -76,9 +85,14 @@ class AgentHandoffProvider:
             "expected_provider_or_agent": request.config.get("expected_provider_or_agent"),
             "execution_family": request.execution_family or request.config.get("execution_family"),
             "execution_profile": request.execution_profile,
+            "selection_mode": request.config.get("selection_mode") or ("EXECUTOR_MANAGED" if (request.execution_family or request.config.get("execution_family")) == "AGENT_HARNESS" else None),
+            "profile_binding": request.config.get("profile_binding") or ("EXECUTOR_MANAGED" if (request.execution_family or request.config.get("execution_family")) == "AGENT_HARNESS" else request.execution_profile),
             "execution_route": request.execution_route,
             "execution_interface": request.config.get("execution_interface"),
             "execution_mode": request.execution_mode,
+            **({"authorization_mode": request.config["authorization_mode"]} if request.config.get("authorization_mode") else {}),
+            **({"authorization_id": request.config["authorization_id"]} if request.config.get("authorization_id") else {}),
+            **({"authorization_checksum": request.config["authorization_checksum"]} if request.config.get("authorization_checksum") else {}),
             "model_override": None
             if (request.execution_family or request.config.get("execution_family")) == "AGENT_HARNESS"
             else request.model,
@@ -171,13 +185,34 @@ class AgentHandoffProvider:
         """
         from src.core.execution_preflight import _load_registered_capability
 
+        authorization_mode = _validated_authorization_mode(request.config.get("authorization_mode"))
         if (
             request.execution_mode != "REAL"
             or request.execution_family != "AGENT_HARNESS"
             or request.execution_route != "agent_harness"
-            or any((request.provider, request.model, request.executor, request.execution_profile, request.run_configuration))
+            or any((request.provider if request.provider not in (None, "agent_handoff") else None, request.model, request.executor, request.execution_profile, request.run_configuration))
         ):
             raise PermissionError("EXTERNAL_HANDOFF_REQUIRES_NEUTRAL_AGENT_HARNESS_BOUNDARY")
+        if authorization_mode == "PRODUCT":
+            from src.core.product_authorization import resolve_product_authorization
+
+            try:
+                relative_directory = directory.resolve().relative_to(repo_root).as_posix()
+            except ValueError as exc:
+                raise PermissionError("HANDOFF_PATH_OUTSIDE_REPOSITORY") from exc
+            authorization, _ = resolve_product_authorization(
+                repo_root,
+                capability_id=str(request.capability_id),
+                role_id=str(request.role),
+                execution_family=str(request.execution_family),
+                execution_route=str(request.execution_route),
+                execution_profile_id=request.execution_profile,
+                execution_interface=str(request.config.get("execution_interface") or ""),
+                path=relative_directory + "/",
+            )
+            if request.config.get("authorization_id") != authorization.authorization_id or request.config.get("authorization_checksum") != authorization.authorization_checksum:
+                raise PermissionError("PRODUCT_AUTHORIZATION_REQUEST_STALE")
+            return
         authorization_path = request.config.get("mission_authorization_path")
         contract_path = request.config.get("mission_contract_path")
         if not authorization_path or not contract_path:
