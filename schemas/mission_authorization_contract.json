@@ -29,6 +29,30 @@
     "authorized_scope_sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "executor_substitution_policy": {"const": "COMPATIBLE_INTERFACE_ONLY"},
     "contains_material_repair": {"type": "boolean"},
-    "repair_integrity_evidence_path": {"type": "string", "minLength": 1}
-  }
+    "repair_integrity_evidence_path": {"type": "string", "minLength": 1},
+    "controlled_validation": {"type": "boolean"},
+    "controlled_validation_state_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "forbidden"],
+      "properties": {
+        "required": {"type": "object", "additionalProperties": {"type": "string"}},
+        "forbidden": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "array", "items": {"type": "string"}}
+            ]
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"required": ["controlled_validation"], "properties": {"controlled_validation": {"const": true}}},
+      "then": {"required": ["controlled_validation_state_requirements"]}
+    }
+  ]
 }

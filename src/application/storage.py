@@ -14,11 +14,11 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from src.application.contracts import HumanInput
 from src.application.interaction import HumanDecision, HumanDecisionRequest, validate_human_decision
-from src.core.contract_validation import validate_against_schema
+from src.core.contract_validation import validate_against_schema, validate_editorial_script_approval
 from src.core.editorial_profile_registry import load_active_profile_authority
 
 
@@ -55,7 +55,14 @@ def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
     # Keep the destination directory explicit immediately before mkstemp; this
     # also protects callers that construct a nested roundtrip result path.
     os.makedirs(path.parent, exist_ok=True)
-    fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    except FileNotFoundError:
+        # A concurrent cleanup/recovery boundary may remove an empty nested
+        # artifact directory between mkdir and mkstemp; recreate only this
+        # destination and retry once without changing the persisted contract.
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
@@ -107,6 +114,18 @@ class VaultEpisodeStore:
     ADMINISTRATIVE_CLOSED_INDEX_STATUS = "administratively_cerrado"
     ADMINISTRATIVE_CLOSURE_FILENAME = "administrative_recovery.json"
     PLAN013_CLOSURE_FILENAME = "plan013_editorial_closure.json"
+    EDITORIAL_SCRIPT_APPROVAL_FILENAME = "editorial_script_approval.json"
+    APPROVED_CURRENT_FILENAME = "approved_current.json"
+    PLAN013_SCRIPT_VERSIONS_FILENAME = "plan013_script_versions.json"
+    PLAN015_DOWNSTREAM_ARTIFACT_FILES = {
+        "script_draft": "10_script_draft.json",
+        "script_version_manifest": "11_script_version_manifest.json",
+        "edited_script": "12_edited_script.json",
+        "editorial_edit_report": "13_editorial_edit_report.json",
+        "edited_script_version_manifest": "14_edited_script_version_manifest.json",
+        "final_editorial_audit": "15_final_editorial_audit.json",
+        "final_script_review": "16_final_script_review.json",
+    }
     RESEARCH_MATERIAL_MAX_BYTES = 5 * 1024 * 1024
     RESEARCH_MATERIAL_SUFFIXES = {".txt": "TEXT", ".md": "MARKDOWN", ".json": "JSON"}
 
@@ -193,6 +212,7 @@ class VaultEpisodeStore:
         profile: dict[str, Any],
         run_id: str,
         mission_id: str | None = None,
+        authorization_id: str | None = None,
         episode_number: int | None = None,
         slug_override: str | None = None,
     ) -> EpisodeHandle:
@@ -203,6 +223,7 @@ class VaultEpisodeStore:
                 profile=profile,
                 run_id=run_id,
                 mission_id=mission_id,
+                authorization_id=authorization_id,
                 episode_number=episode_number,
                 slug_override=slug_override,
             )
@@ -232,6 +253,7 @@ class VaultEpisodeStore:
         profile: dict[str, Any] | None,
         run_id: str,
         mission_id: str | None = None,
+        authorization_id: str | None = None,
         episode_number: int | None = None,
         slug_override: str | None = None,
         legacy: bool = False,
@@ -316,6 +338,9 @@ class VaultEpisodeStore:
                 if mission_id:
                     state["mission_id"] = str(mission_id)
                     entry["mission_id"] = str(mission_id)
+                if authorization_id:
+                    state["authorization_id"] = str(authorization_id)
+                    entry["authorization_id"] = str(authorization_id)
                 state_anchor = {
                     key: value
                     for key, value in state.items()
@@ -642,7 +667,19 @@ class VaultEpisodeStore:
             if not path_value:
                 raise StorageError(f"B5_I3_DESIGN_DEPENDENCY_UNRESOLVED:{dependency.get('artifact_id')}")
             path = Path(path_value)
-            if not path.is_file() or self._file_checksum(path) != dependency.get("checksum"):
+            actual_checksums = {self._file_checksum(path)} if path.is_file() else set()
+            if path.is_file() and path.suffix.lower() == ".json":
+                try:
+                    actual_checksums.add(
+                        hashlib.sha256(
+                            json.dumps(
+                                _read_json(path), ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                            ).encode("utf-8")
+                        ).hexdigest()
+                    )
+                except StorageError:
+                    pass
+            if str(dependency.get("checksum")) not in actual_checksums:
                 raise StorageError(f"B5_I3_DESIGN_INVALIDATED:{dependency.get('artifact_id')}")
         return {"status": "PERSISTED", "manifest": manifest, "artifacts": artifacts}
 
@@ -656,6 +693,228 @@ class VaultEpisodeStore:
             raise StorageError("B5_I3_EPISODE_HANDLE_INVALID") from exc
         if actual_folder != expected_folder or actual_index != expected_index or not actual_folder.is_dir():
             raise StorageError("B5_I3_EPISODE_HANDLE_INVALID")
+
+    def record_plan015_downstream(
+        self,
+        handle: EpisodeHandle,
+        *,
+        artifacts: Mapping[str, dict[str, Any]],
+        bindings: Mapping[str, dict[str, Any]],
+        workflow: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Persist HF-02 artifacts and its terminal pre-approval workflow state."""
+        self._validate_b5_i3_handle(handle)
+        schemas = {
+            "script_draft": "script_draft",
+            "script_version_manifest": "script_version_manifest",
+            "edited_script": "edited_script",
+            "editorial_edit_report": "editorial_edit_report",
+            "edited_script_version_manifest": "script_version_manifest",
+            "final_editorial_audit": "final_editorial_audit",
+            "final_script_review": "final_script_review",
+        }
+        required = set(self.PLAN015_DOWNSTREAM_ARTIFACT_FILES)
+        if set(artifacts) != required or set(bindings) != required:
+            raise StorageError("PLAN015_DOWNSTREAM_ARTIFACT_SET_INCOMPLETE")
+        if workflow.get("episode_id") != handle.episode_id or workflow.get("status") != "LEGITIMATE_STOP":
+            raise StorageError("PLAN015_DOWNSTREAM_WORKFLOW_INVALID")
+        for kind, payload in artifacts.items():
+            if not isinstance(payload, dict) or payload.get("episode_id", handle.episode_id) != handle.episode_id:
+                raise StorageError(f"PLAN015_DOWNSTREAM_ARTIFACT_INVALID:{kind}")
+            violations = validate_against_schema(payload, schemas[kind])
+            if violations:
+                raise StorageError(f"PLAN015_DOWNSTREAM_SCHEMA_INVALID:{kind}:" + ";".join(violations))
+            binding = bindings[kind]
+            if not isinstance(binding, dict) or any(not str(binding.get(field) or "") for field in ("artifact_id", "artifact_version", "checksum")):
+                raise StorageError(f"PLAN015_DOWNSTREAM_BINDING_INVALID:{kind}")
+
+        manifest_path = handle.folder / "plan015_downstream_manifest.json"
+        versions_path = handle.folder / self.PLAN013_SCRIPT_VERSIONS_FILENAME
+        paths = {kind: handle.folder / filename for kind, filename in self.PLAN015_DOWNSTREAM_ARTIFACT_FILES.items()}
+        with self._index_lock():
+            if manifest_path.exists() or any(path.exists() for path in paths.values()):
+                raise StorageError("PLAN015_DOWNSTREAM_ALREADY_PERSISTED")
+            prior_versions = _read_json(versions_path) if versions_path.is_file() else None
+            versions = dict(prior_versions or {"episode_id": handle.episode_id, "versions": []})
+            if versions.get("episode_id") not in (None, handle.episode_id) or not isinstance(versions.get("versions"), list):
+                raise StorageError("PLAN015_SCRIPT_VERSION_HISTORY_INVALID")
+            draft_manifest = artifacts["script_version_manifest"]
+            edited_manifest = artifacts["edited_script_version_manifest"]
+            new_versions = [
+                {
+                    "script_artifact_id": str(draft_manifest["script_id"]),
+                    "script_version": str(draft_manifest["version"]),
+                    "script_checksum": str(draft_manifest["checksum"]),
+                    "status": "HISTORICAL",
+                },
+                {
+                    "script_artifact_id": str(edited_manifest["script_id"]),
+                    "script_version": str(edited_manifest["version"]),
+                    "script_checksum": str(edited_manifest["checksum"]),
+                    "status": "WORKING_CURRENT",
+                },
+            ]
+            for candidate in new_versions:
+                same_identity = [
+                    item for item in versions["versions"]
+                    if item.get("script_artifact_id") == candidate["script_artifact_id"]
+                    and item.get("script_version") == candidate["script_version"]
+                ]
+                if same_identity and any(item.get("script_checksum") != candidate["script_checksum"] for item in same_identity):
+                    raise StorageError("PLAN015_SCRIPT_VERSION_HISTORY_CONFLICT")
+                if not same_identity:
+                    versions["versions"].append(candidate)
+            versions["episode_id"] = handle.episode_id
+            artifact_records = {
+                kind: {**dict(bindings[kind]), "artifact_path": filename}
+                for kind, filename in self.PLAN015_DOWNSTREAM_ARTIFACT_FILES.items()
+            }
+            manifest = {
+                "contract": "plan015_downstream",
+                "contract_version": "1.0.0",
+                "episode_id": handle.episode_id,
+                "status": "PERSISTED",
+                "artifact_records": artifact_records,
+                "persisted_at": datetime.now(timezone.utc).isoformat(),
+            }
+            written: list[Path] = []
+            try:
+                for kind, path in paths.items():
+                    _write_json_atomic(path, artifacts[kind])
+                    written.append(path)
+                    artifact_records[kind]["file_checksum"] = self._file_checksum(path)
+                manifest["manifest_checksum"] = hashlib.sha256(
+                    json.dumps(manifest, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                ).hexdigest()
+                _write_json_atomic(manifest_path, manifest)
+                written.append(manifest_path)
+                _write_json_atomic(versions_path, versions)
+                written.append(versions_path)
+                self._record_workflow_locked(handle, workflow)
+            except Exception:
+                for path in written:
+                    if path == versions_path and prior_versions is not None:
+                        _write_json_atomic(path, prior_versions)
+                    else:
+                        path.unlink(missing_ok=True)
+                raise
+        return manifest
+
+    def validate_plan015_downstream(self, handle: EpisodeHandle) -> dict[str, Any]:
+        """Verify the persisted HF-02 graph before returning an idempotent resume."""
+        self._validate_b5_i3_handle(handle)
+        workflow = _read_json(handle.folder / "workflow_state.json")
+        if workflow.get("status") != "LEGITIMATE_STOP" or workflow.get("stop_boundary") != "FINAL_VALIDATIONS_COMPLETE":
+            raise StorageError("PLAN015_DOWNSTREAM_WORKFLOW_INVALID")
+        manifest_ref = workflow.get("research_ready_manifest_ref")
+        handoff_ref = workflow.get("research_v2_b5_i3_handoff_ref")
+        if not isinstance(manifest_ref, dict) or not isinstance(handoff_ref, dict):
+            raise StorageError("PLAN015_DOWNSTREAM_RESEARCH_BINDING_MISSING")
+        manifest_path = Path(str(manifest_ref.get("path") or ""))
+        handoff_path = Path(str(handoff_ref.get("path") or ""))
+        if not manifest_path.is_file() or not handoff_path.is_file():
+            raise StorageError("PLAN015_DOWNSTREAM_RESEARCH_BINDING_STALE")
+        def json_checksums(path: Path) -> set[str]:
+            values = {self._file_checksum(path)}
+            try:
+                values.add(
+                    hashlib.sha256(
+                        json.dumps(_read_json(path), ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                    ).hexdigest()
+                )
+            except StorageError:
+                pass
+            return values
+        if str(manifest_ref.get("checksum") or "") not in json_checksums(manifest_path):
+            raise StorageError("PLAN015_DOWNSTREAM_RESEARCH_MANIFEST_STALE")
+        if str(handoff_ref.get("checksum") or "") not in json_checksums(handoff_path):
+            raise StorageError("PLAN015_DOWNSTREAM_RESEARCH_HANDOFF_STALE")
+        manifest = _read_json(manifest_path)
+        handoff = _read_json(handoff_path)
+        try:
+            from src.ai.contracts import InputArtifact
+            from src.application.research_m7 import ResearchV2B5I3Adapter
+
+            refs = [
+                InputArtifact(
+                    str(item["artifact_kind"]),
+                    str(item["artifact_id"]),
+                    Path(str(item["path"])),
+                    str(item.get("producer_run_id") or ""),
+                    str(item.get("artifact_version") or ""),
+                )
+                for item in handoff.get("b5_i3_input_refs", [])
+            ]
+            ResearchV2B5I3Adapter.validate_research_v2_precondition(
+                episode_id=handle.episode_id,
+                manifest_ref=manifest_ref,
+                manifest=manifest,
+                handoff=handoff,
+                inputs=refs,
+            )
+        except Exception as exc:
+            raise StorageError(f"PLAN015_DOWNSTREAM_RESEARCH_BINDING_INVALID:{exc}") from exc
+        manifest = _read_json(handle.folder / "plan015_downstream_manifest.json")
+        if manifest.get("episode_id") != handle.episode_id or manifest.get("status") != "PERSISTED":
+            raise StorageError("PLAN015_DOWNSTREAM_MANIFEST_INVALID")
+        manifest_checksum = manifest.get("manifest_checksum")
+        unsigned_manifest = {key: value for key, value in manifest.items() if key != "manifest_checksum"}
+        expected_manifest_checksum = hashlib.sha256(
+            json.dumps(unsigned_manifest, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        if manifest_checksum != expected_manifest_checksum:
+            raise StorageError("PLAN015_DOWNSTREAM_MANIFEST_CHECKSUM_MISMATCH")
+        schemas = {
+            "script_draft": "script_draft",
+            "script_version_manifest": "script_version_manifest",
+            "edited_script": "edited_script",
+            "editorial_edit_report": "editorial_edit_report",
+            "edited_script_version_manifest": "script_version_manifest",
+            "final_editorial_audit": "final_editorial_audit",
+            "final_script_review": "final_script_review",
+        }
+        records = manifest.get("artifact_records")
+        if not isinstance(records, dict) or set(records) != set(schemas):
+            raise StorageError("PLAN015_DOWNSTREAM_MANIFEST_INVALID")
+        for kind, schema in schemas.items():
+            record = records[kind]
+            expected_filename = self.PLAN015_DOWNSTREAM_ARTIFACT_FILES[kind]
+            if record.get("artifact_path") != expected_filename:
+                raise StorageError(f"PLAN015_DOWNSTREAM_BINDING_INVALID:{kind}")
+            path = handle.folder / expected_filename
+            if not path.is_file() or not str(record.get("file_checksum") or "") or self._file_checksum(path) != record["file_checksum"]:
+                raise StorageError(f"PLAN015_DOWNSTREAM_STALE:{kind}")
+            payload = _read_json(path)
+            violations = validate_against_schema(payload, schema)
+            if violations:
+                raise StorageError(f"PLAN015_DOWNSTREAM_SCHEMA_INVALID:{kind}")
+            expected_identity = {
+                "script_draft": (payload.get("script_id"), payload.get("artifact_version"), payload.get("checksum")),
+                "script_version_manifest": (payload.get("script_id"), payload.get("version"), payload.get("checksum")),
+                "edited_script": (payload.get("script_id"), payload.get("artifact_version"), payload.get("checksum")),
+                "editorial_edit_report": (payload.get("output_artifact_id"), payload.get("output_version"), payload.get("output_checksum")),
+                "edited_script_version_manifest": (payload.get("script_id"), payload.get("version"), payload.get("checksum")),
+                "final_editorial_audit": (payload.get("artifact_id"), payload.get("script_version"), payload.get("script_checksum")),
+                "final_script_review": (payload.get("artifact_id"), payload.get("script_version"), payload.get("script_checksum")),
+            }[kind]
+            actual_identity = (
+                record.get("artifact_id"),
+                record.get("artifact_version"),
+                record.get("checksum"),
+            )
+            if tuple(str(value) for value in expected_identity) != tuple(str(value) for value in actual_identity):
+                raise StorageError(f"PLAN015_DOWNSTREAM_BINDING_STALE:{kind}")
+            if payload.get("episode_id") not in (None, handle.episode_id):
+                raise StorageError(f"PLAN015_DOWNSTREAM_EPISODE_BINDING_INVALID:{kind}")
+        dependency_paths: dict[str, str] = {}
+        handoff_path = handle.folder / "canonical_g1" / "b5_i3_handoff.json"
+        if handoff_path.is_file():
+            handoff = _read_json(handoff_path)
+            for ref in handoff.get("b5_i3_input_refs", []):
+                if isinstance(ref, dict) and ref.get("artifact_id") and ref.get("path"):
+                    dependency_paths[str(ref["artifact_id"])] = str(ref["path"])
+        self.recover_b5_i3_design(handle, dependency_paths=dependency_paths or None)
+        return manifest
 
     def record_roundtrip_result(
         self,
@@ -673,8 +932,10 @@ class VaultEpisodeStore:
         handoff_id = str(envelope.get("handoff_id") or "")
         result_checksum = str(envelope.get("output_checksum") or "")
         stage = str(envelope.get("stage") or "")
+        authorization_mode = str(envelope.get("authorization_mode") or "MISSION").upper()
+        authority_identity_field = "authorization_id" if authorization_mode == "PRODUCT" else "mission_id"
         identity_fields = (
-            "mission_id",
+            authority_identity_field,
             "episode_id",
             "capability_id",
             "stage",
@@ -716,7 +977,8 @@ class VaultEpisodeStore:
                 _write_json_atomic(materialized_path, materialized_output)
                 materialized_checksum = self._file_checksum(materialized_path)
             result_record = {
-                "mission_id": envelope.get("mission_id"),
+                authority_identity_field: envelope.get(authority_identity_field),
+                "authorization_mode": authorization_mode,
                 "episode_id": envelope.get("episode_id"),
                 "capability_id": envelope.get("capability_id"),
                 "stage": stage,
@@ -735,6 +997,7 @@ class VaultEpisodeStore:
             for key in (
                 "reassessment_id",
                 "attempt_number",
+                "reassessment_kind",
                 "prior_decision_ref",
                 "prior_decision_checksum",
                 "prior_decision_source_attempt",
@@ -869,6 +1132,52 @@ class VaultEpisodeStore:
         approval = closure["human_approval"]
         if not isinstance(approval, dict) or approval.get("decision") != "APPROVED" or approval.get("script_version") != closure["script_version"] or approval.get("checksum") != closure["script_checksum"]:
             raise StorageError("PLAN013_CLOSURE_HUMAN_APPROVAL_INVALID")
+        canonical_approval_fields = {
+            "artifact_id", "script_version", "checksum", "decision",
+            "approved_by", "approved_role", "approved_at",
+        }
+        canonical_approval = bool(canonical_approval_fields.intersection(approval)) and canonical_approval_fields.issubset(approval)
+        if canonical_approval:
+            if approval.get("artifact_id") != closure["script_artifact_id"]:
+                raise StorageError("PLAN015_CLOSURE_APPROVAL_BINDING_INVALID")
+            approval_violations = validate_editorial_script_approval(approval)
+            if approval_violations:
+                raise StorageError("PLAN015_CLOSURE_APPROVAL_INVALID:" + ";".join(approval_violations))
+            decision_ref = closure.get("human_decision_ref")
+            if not isinstance(decision_ref, dict) or any(
+                not str(decision_ref.get(field) or "")
+                for field in ("request_id", "request_checksum", "actor_ref", "channel", "occurred_at", "action")
+            ):
+                raise StorageError("PLAN015_CLOSURE_DECISION_BINDING_INCOMPLETE")
+            try:
+                interaction = self.interaction_record(handle.episode_id, str(decision_ref["request_id"]))
+                request_model = HumanDecisionRequest.from_dict(interaction["request"], require_contract=True)
+                decision_model = HumanDecision.from_dict(interaction["decision"], require_bound_metadata=True)
+                validate_human_decision(
+                    request_model,
+                    decision_model,
+                    handle.episode_id,
+                    require_bound_metadata=True,
+                )
+            except (KeyError, TypeError, ValueError, PermissionError, StorageError) as exc:
+                raise StorageError("PLAN015_CLOSURE_DECISION_BINDING_INVALID") from exc
+            if (
+                decision_model.action != "APPROVE"
+                or request_model.request_id != decision_ref["request_id"]
+                or request_model.checksum() != decision_ref["request_checksum"]
+                or request_model.subject_ref != closure["script_artifact_id"]
+                or request_model.subject_version != closure["script_version"]
+                or request_model.subject_checksum != closure["script_checksum"]
+                or request_model.expected_actor_ref != approval["approved_by"]
+                or request_model.expected_approval_role != approval["approved_role"]
+                or decision_model.actor_ref != approval["approved_by"]
+                or decision_model.channel != decision_ref["channel"]
+                or decision_model.occurred_at != approval["approved_at"]
+                or decision_ref["action"] != "APPROVE"
+            ):
+                raise StorageError("PLAN015_CLOSURE_DECISION_BINDING_INVALID")
+        elif canonical_approval_fields.intersection(approval) - {"script_version", "checksum", "decision"}:
+            raise StorageError("PLAN015_CLOSURE_APPROVAL_INCOMPLETE")
         final_audit = closure["final_audit"]
         final_review = closure["final_script_review"]
         audit_violations = validate_against_schema(final_audit, "final_editorial_audit") if isinstance(final_audit, dict) else ["FinalEditorialAudit must be an object"]
@@ -909,10 +1218,43 @@ class VaultEpisodeStore:
             final_review.get("auditor_actor_id"),
         }:
             raise StorageError("PLAN013_CLOSURE_FINAL_REVIEW_ACTOR_INDEPENDENCE_INVALID")
-        workflow_state = {**workflow_state, "episode_id": handle.episode_id, "status": "EDITORIAL_SCRIPT_APPROVED"}
-        episode_state = {**episode_state, "episode_id": handle.episode_id, "status": "EDITORIAL_SCRIPT_APPROVED"}
+        approved_current = {
+            "artifact_id": closure["script_artifact_id"],
+            "script_version": closure["script_version"],
+            "checksum": closure["script_checksum"],
+        }
+        if canonical_approval:
+            approval_checksum = hashlib.sha256(
+                json.dumps(approval, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+            closure = {
+                **closure,
+                "editorial_script_approval_ref": {
+                    "artifact_path": self.EDITORIAL_SCRIPT_APPROVAL_FILENAME,
+                    "checksum": approval_checksum,
+                },
+                "approved_current": approved_current,
+            }
+        workflow_state = {
+            **workflow_state,
+            "episode_id": handle.episode_id,
+            "status": "EDITORIAL_SCRIPT_APPROVED",
+            "approval_status": "APPROVED",
+            "approved_current": approved_current,
+            "next_action": "COMPLETE",
+        }
+        episode_state = {
+            **episode_state,
+            "episode_id": handle.episode_id,
+            "status": "EDITORIAL_SCRIPT_APPROVED",
+            "approval_status": "APPROVED",
+            "approved_current": approved_current,
+        }
         closure = {**closure, "status": "EDITORIAL_SCRIPT_APPROVED", "closed_at": closure.get("closed_at") or datetime.now(timezone.utc).isoformat()}
         closure_path = handle.folder / self.PLAN013_CLOSURE_FILENAME
+        approval_path = handle.folder / self.EDITORIAL_SCRIPT_APPROVAL_FILENAME
+        approved_current_path = handle.folder / self.APPROVED_CURRENT_FILENAME
+        versions_path = handle.folder / self.PLAN013_SCRIPT_VERSIONS_FILENAME
         workflow_path = handle.folder / "workflow_state.json"
         episode_path = handle.folder / "episode_state.json"
         with self._index_lock():
@@ -920,22 +1262,68 @@ class VaultEpisodeStore:
             entry = next((item for item in index.get("episodes", []) if item.get("ep_id") == handle.episode_id), None)
             if entry is None:
                 raise StorageError(f"No existe el episodio {handle.episode_id} en el índice.")
+            versions: dict[str, Any] | None = None
+            if canonical_approval:
+                if not versions_path.is_file():
+                    raise StorageError("PLAN015_SCRIPT_VERSION_HISTORY_MISSING")
+                raw_versions = _read_json(versions_path)
+                if raw_versions.get("episode_id") != handle.episode_id or not isinstance(raw_versions.get("versions"), list):
+                    raise StorageError("PLAN015_SCRIPT_VERSION_HISTORY_INVALID")
+                entries = [dict(item) for item in raw_versions["versions"] if isinstance(item, dict)]
+                matching = [
+                    item for item in entries
+                    if item.get("script_artifact_id") == approved_current["artifact_id"]
+                    and item.get("script_version") == approved_current["script_version"]
+                    and item.get("script_checksum") == approved_current["checksum"]
+                ]
+                if len(matching) != 1:
+                    raise StorageError("PLAN015_APPROVED_CURRENT_IDENTITY_AMBIGUOUS")
+                if len([item for item in entries if item.get("status") == "APPROVED_CURRENT"]) > 1:
+                    raise StorageError("PLAN015_MULTIPLE_APPROVED_CURRENT_DECLARATIONS")
+                for item in entries:
+                    if item is matching[0]:
+                        item["status"] = "APPROVED_CURRENT"
+                    elif item.get("status") == "APPROVED_CURRENT":
+                        item["status"] = "SUPERSEDED"
+                    elif item.get("status") == "WORKING_CURRENT":
+                        item["status"] = "HISTORICAL"
+                versions = {**raw_versions, "episode_id": handle.episode_id, "versions": entries}
             if closure_path.is_file():
                 existing = _read_json(closure_path)
                 expected = {key: value for key, value in closure.items() if key != "closed_at"}
                 actual = {key: value for key, value in existing.items() if key != "closed_at"}
                 if expected != actual:
                     raise StorageError("PLAN013_CLOSURE_CONFLICT")
+                if canonical_approval and (
+                    _read_json(approval_path) != approval
+                    or _read_json(approved_current_path) != approved_current
+                    or _read_json(versions_path) != versions
+                ):
+                    raise StorageError("PLAN015_CLOSURE_MATERIALIZATION_CONFLICT")
                 return existing
-            prior_files = {path: _read_json(path, {}) for path in (closure_path, workflow_path, episode_path)}
+            closure_files = [closure_path, workflow_path, episode_path]
+            if canonical_approval:
+                closure_files.extend((approval_path, approved_current_path, versions_path))
+            prior_files = {path: _read_json(path, {}) for path in closure_files}
             prior_index = index
             try:
+                if canonical_approval:
+                    _write_json_atomic(approval_path, approval)
+                    _write_json_atomic(approved_current_path, approved_current)
+                    _write_json_atomic(versions_path, versions or {})
                 _write_json_atomic(closure_path, closure)
                 _write_json_atomic(workflow_path, workflow_state)
                 _write_json_atomic(episode_path, episode_state)
                 updated_index = dict(index)
                 updated_index["episodes"] = [
-                    {**item, "estado": "EDITORIAL_SCRIPT_APPROVED", "application_status": "EDITORIAL_SCRIPT_APPROVED", "closure_ref": self.PLAN013_CLOSURE_FILENAME}
+                    {
+                        **item,
+                        "estado": "EDITORIAL_SCRIPT_APPROVED",
+                        "application_status": "EDITORIAL_SCRIPT_APPROVED",
+                        "closure_ref": self.PLAN013_CLOSURE_FILENAME,
+                        "approval_status": "APPROVED",
+                        "approved_current": approved_current,
+                    }
                     if item.get("ep_id") == handle.episode_id else item
                     for item in index.get("episodes", [])
                 ]
@@ -965,6 +1353,8 @@ class VaultEpisodeStore:
             raise StorageError("PLAN013_SCRIPT_VERSION_BINDING_INCOMPLETE")
         versions_path = handle.folder / "plan013_script_versions.json"
         closure_path = handle.folder / self.PLAN013_CLOSURE_FILENAME
+        approval_path = handle.folder / self.EDITORIAL_SCRIPT_APPROVAL_FILENAME
+        approved_current_path = handle.folder / self.APPROVED_CURRENT_FILENAME
         workflow_path = handle.folder / "workflow_state.json"
         episode_path = handle.folder / "episode_state.json"
         with self._index_lock():
@@ -973,6 +1363,7 @@ class VaultEpisodeStore:
             if entry is None:
                 raise StorageError(f"No existe el episodio {handle.episode_id} en el índice.")
             versions = _read_json(versions_path, {"episode_id": handle.episode_id, "versions": []})
+            plan015_current_semantics = approval_path.is_file() and approved_current_path.is_file()
             existing = next((item for item in versions.get("versions", []) if item.get("script_artifact_id") == script_artifact_id and item.get("script_version") == script_version), None)
             if existing and existing.get("script_checksum") == script_checksum:
                 return existing
@@ -981,7 +1372,7 @@ class VaultEpisodeStore:
                 "script_version": script_version,
                 "script_checksum": script_checksum,
                 "registered_at": datetime.now(timezone.utc).isoformat(),
-                "status": "CURRENT",
+                "status": "WORKING_CURRENT" if plan015_current_semantics else "CURRENT",
             }
             prior_files = {
                 path: _read_json(path, {}) for path in (versions_path, closure_path, workflow_path, episode_path)
@@ -989,8 +1380,12 @@ class VaultEpisodeStore:
             prior_index = index
             try:
                 versions["episode_id"] = handle.episode_id
+                if plan015_current_semantics:
+                    for item in versions.setdefault("versions", []):
+                        if item.get("status") == "WORKING_CURRENT":
+                            item["status"] = "HISTORICAL"
                 versions.setdefault("versions", []).append(current)
-                if closure_path.is_file():
+                if closure_path.is_file() and not plan015_current_semantics:
                     closure = _read_json(closure_path)
                     approved_identity = {
                         "script_artifact_id": closure.get("script_artifact_id"),
@@ -1013,16 +1408,32 @@ class VaultEpisodeStore:
                     })
                     _write_json_atomic(closure_path, closure)
                 state = _read_json(episode_path)
-                state.update({"status": "IN_REVIEW", "approval_status": "STALE", "current_script": current, "updated_at": current["registered_at"]})
+                state.update({
+                    "status": "IN_REVIEW",
+                    "approval_status": "APPROVED_CURRENT_PRESERVED" if plan015_current_semantics else "STALE",
+                    "current_script": current,
+                    "updated_at": current["registered_at"],
+                })
                 _write_json_atomic(episode_path, state)
                 if workflow_path.is_file():
                     workflow = _read_json(workflow_path)
-                    workflow.update({"status": "IN_REVIEW", "approval_status": "STALE", "current_script": current})
+                    workflow.update({
+                        "status": "IN_REVIEW",
+                        "approval_status": "APPROVED_CURRENT_PRESERVED" if plan015_current_semantics else "STALE",
+                        "current_script": current,
+                    })
                     _write_json_atomic(workflow_path, workflow)
                 _write_json_atomic(versions_path, versions)
                 updated_index = dict(index)
                 updated_index["episodes"] = [
-                    {**item, "estado": "en_progreso", "application_status": "IN_REVIEW", "cerrado": None, "current_script": current}
+                    {
+                        **item,
+                        "estado": "en_progreso",
+                        "application_status": "IN_REVIEW",
+                        "cerrado": None,
+                        "current_script": current,
+                        **({"approval_status": "APPROVED_CURRENT_PRESERVED"} if plan015_current_semantics else {}),
+                    }
                     if item.get("ep_id") == handle.episode_id else item
                     for item in index.get("episodes", [])
                 ]
@@ -1036,6 +1447,58 @@ class VaultEpisodeStore:
                 _write_json_atomic(self.index_path, prior_index)
                 raise
         return current
+
+    def validate_plan015_editorial_closure(self, handle: EpisodeHandle) -> dict[str, Any]:
+        """Fail closed unless approval, closure and APPROVED_CURRENT remain one graph."""
+        self._validate_b5_i3_handle(handle)
+        closure = _read_json(handle.folder / self.PLAN013_CLOSURE_FILENAME)
+        approval = _read_json(handle.folder / self.EDITORIAL_SCRIPT_APPROVAL_FILENAME)
+        approved_current = _read_json(handle.folder / self.APPROVED_CURRENT_FILENAME)
+        workflow = _read_json(handle.folder / "workflow_state.json")
+        state = _read_json(handle.folder / "episode_state.json")
+        versions = _read_json(handle.folder / self.PLAN013_SCRIPT_VERSIONS_FILENAME)
+        if closure.get("status") != "EDITORIAL_SCRIPT_APPROVED":
+            raise StorageError("PLAN015_CLOSURE_STATUS_INVALID")
+        violations = validate_editorial_script_approval(approval)
+        if violations or approval.get("decision") != "APPROVED":
+            raise StorageError("PLAN015_CLOSURE_APPROVAL_INVALID:" + ";".join(violations))
+        identity = {
+            "artifact_id": closure.get("script_artifact_id"),
+            "script_version": closure.get("script_version"),
+            "checksum": closure.get("script_checksum"),
+        }
+        if (
+            approved_current != identity
+            or closure.get("approved_current") != identity
+            or closure.get("human_approval") != approval
+            or approval.get("artifact_id") != identity["artifact_id"]
+            or approval.get("script_version") != identity["script_version"]
+            or approval.get("checksum") != identity["checksum"]
+            or workflow.get("approved_current") != identity
+            or state.get("approved_current") != identity
+            or workflow.get("status") != "EDITORIAL_SCRIPT_APPROVED"
+            or state.get("status") != "EDITORIAL_SCRIPT_APPROVED"
+        ):
+            raise StorageError("PLAN015_CLOSURE_GRAPH_STALE")
+        version_entries = versions.get("versions") if isinstance(versions, dict) else None
+        approved_entries = [
+            item for item in (version_entries or [])
+            if isinstance(item, dict) and item.get("status") == "APPROVED_CURRENT"
+        ]
+        if len(approved_entries) != 1 or {
+            "artifact_id": approved_entries[0].get("script_artifact_id"),
+            "script_version": approved_entries[0].get("script_version"),
+            "checksum": approved_entries[0].get("script_checksum"),
+        } != identity:
+            raise StorageError("PLAN015_APPROVED_CURRENT_IDENTITY_AMBIGUOUS")
+        entry = self._entry(handle.episode_id)
+        if entry.get("approved_current") != identity or entry.get("application_status") != "EDITORIAL_SCRIPT_APPROVED":
+            raise StorageError("PLAN015_APPROVED_CURRENT_INDEX_STALE")
+        return {
+            "closure": closure,
+            "approval": approval,
+            "approved_current": approved_current,
+        }
 
     def _entry(self, episode_id: str) -> dict[str, Any]:
         entry = next((item for item in self._load_index().get("episodes", []) if item.get("ep_id") == episode_id), None)
@@ -1323,36 +1786,39 @@ class VaultEpisodeStore:
 
     def record_workflow(self, handle: EpisodeHandle, workflow: dict[str, Any]) -> None:
         with self._index_lock():
-            workflow_path = handle.folder / "workflow_state.json"
-            state_path = handle.folder / "episode_state.json"
-            prior_workflow = _read_json(workflow_path) if workflow_path.exists() else None
-            prior_state = _read_json(state_path)
-            prior_index = self._load_index()
+            self._record_workflow_locked(handle, workflow)
+
+    def _record_workflow_locked(self, handle: EpisodeHandle, workflow: dict[str, Any]) -> None:
+        workflow_path = handle.folder / "workflow_state.json"
+        state_path = handle.folder / "episode_state.json"
+        prior_workflow = _read_json(workflow_path) if workflow_path.exists() else None
+        prior_state = _read_json(state_path)
+        prior_index = self._load_index()
+        try:
+            _write_json_atomic(workflow_path, workflow)
+            state = dict(prior_state)
+            state.update({"status": workflow["status"], "updated_at": datetime.now(timezone.utc).isoformat()})
+            _write_json_atomic(state_path, state)
+            index = dict(prior_index)
+            index["episodes"] = [dict(entry) for entry in prior_index.get("episodes", [])]
+            for entry in index["episodes"]:
+                if entry.get("ep_id") == handle.episode_id:
+                    entry["application_status"] = workflow["status"]
+                    break
+            index["last_updated"] = datetime.now(timezone.utc).isoformat()
+            _write_json_atomic(self.index_path, index)
+        except Exception:
             try:
-                _write_json_atomic(workflow_path, workflow)
-                state = dict(prior_state)
-                state.update({"status": workflow["status"], "updated_at": datetime.now(timezone.utc).isoformat()})
-                _write_json_atomic(state_path, state)
-                index = dict(prior_index)
-                index["episodes"] = [dict(entry) for entry in prior_index.get("episodes", [])]
-                for entry in index["episodes"]:
-                    if entry.get("ep_id") == handle.episode_id:
-                        entry["application_status"] = workflow["status"]
-                        break
-                index["last_updated"] = datetime.now(timezone.utc).isoformat()
-                _write_json_atomic(self.index_path, index)
+                if prior_workflow is None:
+                    workflow_path.unlink(missing_ok=True)
+                else:
+                    _write_json_atomic(workflow_path, prior_workflow)
+                _write_json_atomic(state_path, prior_state)
+                _write_json_atomic(self.index_path, prior_index)
             except Exception:
-                try:
-                    if prior_workflow is None:
-                        workflow_path.unlink(missing_ok=True)
-                    else:
-                        _write_json_atomic(workflow_path, prior_workflow)
-                    _write_json_atomic(state_path, prior_state)
-                    _write_json_atomic(self.index_path, prior_index)
-                except Exception:
-                    # The original exception remains the public failure signal.
-                    pass
-                raise
+                # The original exception remains the public failure signal.
+                pass
+            raise
 
     def record_workflow_transition(self, episode_id: str, transition: dict[str, Any]) -> dict[str, Any]:
         """Append one logical workflow transition and make repeated consumption idempotent."""

@@ -356,7 +356,7 @@ class ResearchPlanningService:
         if not episode_id or not topic or not brief_version:
             raise ResearchPlanningError("RESEARCH_PLAN_BRIEF_BINDING_REQUIRED")
 
-        from src.ai.role_execution import RoleExecutionContractError, resolve_role_execution_contract
+        from src.ai.role_execution import RoleExecutionContractError, research_runtime_values, resolve_role_execution_contract
         from src.application.research_b2 import B2CognitiveRequest
 
         payload = {
@@ -368,7 +368,7 @@ class ResearchPlanningService:
         try:
             prepared = resolve_role_execution_contract(
                 "RESEARCH_AND_CURATION", "research_plan_proposal", payload,
-                {"stage": "RESEARCH_PLANNING"},
+                research_runtime_values(payload, stage="RESEARCH_PLANNING"),
             )
         except RoleExecutionContractError as exc:
             raise ResearchPlanningError("RESEARCH_PLAN_CONTRACT_INVALID") from exc

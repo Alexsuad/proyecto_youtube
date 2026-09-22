@@ -118,10 +118,25 @@ def _entry_mode_violations(data: dict[str, Any]) -> list[str]:
         return ["ENTRY_MODE_REQUIRES_CORPUS"]
     return []
 
-def validate_topic_input(data: dict[str, Any]) -> list[str]:
+def validate_topic_input(
+    data: dict[str, Any],
+    *,
+    require_canonical_territory: bool = False,
+) -> list[str]:
     violations = validate_against_schema(data, "topic_belonging_input")
     violations.extend(_profile_binding(data, "INPUT"))
     violations.extend(_entry_mode_violations(data))
+    if require_canonical_territory:
+        proposed_territory = data.get("proposed_territory")
+        classification = active_territory_classification(proposed_territory)
+        if (
+            not isinstance(proposed_territory, str)
+            or proposed_territory != proposed_territory.strip()
+            or classification is None
+        ):
+            violations.append("INPUT_PROPOSED_TERRITORY_NOT_CANONICAL")
+        elif classification == "PENDING":
+            violations.append("INPUT_PROPOSED_TERRITORY_NOT_ALLOWED")
     return violations
 
 
@@ -141,9 +156,7 @@ def validate_assessment(data: dict[str, Any], topic_input: dict[str, Any] | None
         violations.append("ASSESSMENT_PROPOSED_TERRITORY_UNKNOWN")
     elif declared_classification == "UNCLASSIFIED" and resolved_classification is None:
         pass
-    elif declared_classification != resolved_classification and not (
-        declared_classification == "EXPERIMENTAL" and resolved_classification == "ACTIVE"
-    ):
+    elif declared_classification != resolved_classification:
         violations.append("ASSESSMENT_TERRITORY_CLASSIFICATION_NOT_BOUND_TO_ACTIVE_PROFILE")
     provenance = data.get("provenance", {})
     if provenance.get("actor_id") != data.get("producer_actor_id") or provenance.get("run_id") != data.get("producer_run_id"):
@@ -197,10 +210,6 @@ def validate_decision(data: dict[str, Any], assessment: dict[str, Any]) -> list[
         violations.append("DECISION_TERRITORY_NOT_RESOLVED_AGAINST_ACTIVE_PROFILE")
     elif resolved_classification is not None and (
         assessment.get("territory_classification") != resolved_classification
-        and not (
-            assessment.get("territory_classification") == "EXPERIMENTAL"
-            and resolved_classification == "ACTIVE"
-        )
     ):
         violations.append("DECISION_TERRITORY_NOT_RESOLVED_AGAINST_ACTIVE_PROFILE")
     elif resolved_classification == "EXCLUDED" and data.get("decision") in {"APPROVE", "APPROVE_WITH_CONDITIONS"}:

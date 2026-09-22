@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
-from src.ai.role_execution import resolve_role_execution_contract
+from src.ai.role_execution import research_runtime_values, resolve_role_execution_contract
 from src.application.storage import _write_json_atomic
 from src.core.contract_validation import (
     validate_against_schema,
@@ -1237,7 +1237,12 @@ class ResearchB2Orchestrator:
             ROLE_ID,
             output_schema,
             input_payload,
-            {"stage": stage, "real_ai_execution": False, "real_research": False},
+            research_runtime_values(
+                input_payload,
+                stage=stage,
+                real_ai_execution=False,
+                real_research=False,
+            ),
         )
         request = B2CognitiveRequest(stage, output_schema, tuple(copy.deepcopy(input_artifacts)), prepared)
         events.append({"stage": stage, "boundary": "IA_COGNITIVE_STEP", "output_schema": output_schema})

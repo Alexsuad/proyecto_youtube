@@ -462,7 +462,33 @@ class ExternalResearchCognitiveExecutor:
             raise ResearchM7Error("EXTERNAL_HANDOFF_PREPARED_CONTRACT_REQUIRED")
         input_artifacts = self._input_artifacts(self.episode, request)
         run_id = f"RUN-EXTEND01-HANDOFF-{uuid4().hex}"
-        authorization = self._mission_authorization()
+        product_authorization = None
+        if self.preparation.authorization_mode == "PRODUCT":
+            from src.core.product_authorization import resolve_product_authorization
+
+            handoff_path = Path(self.preparation.handoff_directory)
+            repository_root = Path(__file__).resolve().parents[2]
+            if handoff_path.is_absolute():
+                try:
+                    handoff_ref = handoff_path.resolve().relative_to(repository_root.resolve()).as_posix()
+                except ValueError as exc:
+                    raise ResearchM7Error("PRODUCT_AUTHORIZATION_HANDOFF_PATH_OUTSIDE_REPOSITORY") from exc
+            else:
+                handoff_ref = handoff_path.as_posix()
+            product_authorization, _ = resolve_product_authorization(
+                repository_root,
+                capability_id=REAL_RESEARCH_CAPABILITY,
+                role_id="RESEARCH_AND_CURATION",
+                execution_family="AGENT_HARNESS",
+                execution_route="agent_harness",
+                execution_profile_id=None,
+                execution_interface="PLAN015_EPISODE_TERMINAL",
+                path=handoff_ref + "/",
+            )
+            authorization = product_authorization
+        else:
+            authorization = self._mission_authorization()
+        controlled_validation = bool(getattr(authorization, "controlled_validation", False))
         mission_id = authorization.mission_id
         execution_request = ExecutionRequest(
             capability_id=REAL_RESEARCH_CAPABILITY,
@@ -481,11 +507,18 @@ class ExternalResearchCognitiveExecutor:
                 "repository_root": str(Path(__file__).resolve().parents[2]),
                 "mission_repo_root": str(Path(__file__).resolve().parents[2]),
                 "mission_authorization_path": self.preparation.mission_authorization_path,
-                "mission_contract_path": self.preparation.mission_contract_path,
-                "mission_id": mission_id,
-                "mission_operation": "EXECUTE_CAPABILITY",
-                "execution_interface": authorization.execution_interface,
+                "mission_contract_path": self.preparation.mission_contract_path if self.preparation.authorization_mode != "PRODUCT" else None,
+                "mission_operation": (
+                    "VALIDATE_OPERATIONAL_ENTRYPOINT"
+                    if controlled_validation
+                    else "EXECUTE_CAPABILITY"
+                ),
+                "controlled_validation": controlled_validation,
+                "execution_interface": getattr(authorization, "execution_interface", None) or "PLAN015_EPISODE_TERMINAL",
                 "execution_family": "AGENT_HARNESS",
+                "authorization_mode": self.preparation.authorization_mode,
+                **({"authorization_id": authorization.authorization_id, "authorization_checksum": authorization.authorization_checksum} if product_authorization is not None else {}),
+                **({"mission_id": mission_id} if mission_id else {}),
                 "stage": str(request.stage),
                 "expected_return": str(request.output_schema),
                 "expected_provider_or_agent": "OWNER_EXTERNAL_COGNITIVE_EXECUTOR",
@@ -529,6 +562,7 @@ class ExternalResearchCognitiveExecutor:
             for key in ("research_plan_proposal", "research_plan", "provenance", "provenance_status", "producer_provenance", "external_cognitive_provenance", "auditor_provenance")
             if isinstance(prior_state, Mapping) and key in prior_state
         }
+        package_data = json.loads(package_path.read_text(encoding="utf-8"))
         _write_json_atomic(
             self.state_path,
             {
@@ -539,12 +573,15 @@ class ExternalResearchCognitiveExecutor:
                 "stage": str(request.stage),
                 "handoff_id": run_id,
                 "handoff_package_ref": str(package_path.resolve()),
-                "handoff_package_checksum": json.loads(package_path.read_text(encoding="utf-8")).get("package_checksum"),
+                "handoff_package_checksum": package_data.get("package_checksum"),
+                "authorization_mode": package_data.get("authorization_mode"),
+                **({"authorization_id": package_data.get("authorization_id")} if package_data.get("authorization_id") else {}),
+                **({"mission_id": package_data.get("mission_id")} if package_data.get("mission_id") else {}),
                 "expected_return": str(request.output_schema),
                 "role": str(getattr(request, "role_id", None) or "RESEARCH_AND_CURATION"),
-                "input_manifest_checksum": json.loads(package_path.read_text(encoding="utf-8")).get("input_manifest_checksum"),
-                "skill_id": json.loads(package_path.read_text(encoding="utf-8")).get("skill_id"),
-                "skill_version": json.loads(package_path.read_text(encoding="utf-8")).get("skill_version"),
+                "input_manifest_checksum": package_data.get("input_manifest_checksum"),
+                "skill_id": package_data.get("skill_id"),
+                "skill_version": package_data.get("skill_version"),
                 "completed_stages": prior_completed,
                 "real_ai_execution": False,
                 "real_ai_calls": 0,
@@ -1289,6 +1326,7 @@ class RealResearchRoutePreparation:
     mission_authorization_path: str | None = None
     mission_contract_path: str = REAL_EXTERNAL_HANDOFF_CONTRACT
     handoff_directory: Path = REAL_EXTERNAL_HANDOFF_DIRECTORY
+    authorization_mode: str = "MISSION"
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]) -> "RealResearchRoutePreparation":
@@ -1325,6 +1363,7 @@ class RealResearchRoutePreparation:
             mission_authorization_path=(str(values["mission_authorization_path"]) if values.get("mission_authorization_path") else None),
             mission_contract_path=str(values.get("mission_contract_path") or REAL_EXTERNAL_HANDOFF_CONTRACT),
             handoff_directory=Path(str(values.get("handoff_directory") or REAL_EXTERNAL_HANDOFF_DIRECTORY)),
+            authorization_mode=str(values.get("authorization_mode") or "MISSION").upper(),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -1341,11 +1380,14 @@ class RealResearchRoutePreparation:
             "mission_authorization_path": self.mission_authorization_path,
             "mission_contract_path": self.mission_contract_path,
             "handoff_directory": str(self.handoff_directory),
+            "authorization_mode": self.authorization_mode,
             "terminal_stage": REAL_RESEARCH_TERMINAL_STAGE,
             "canonical_route": self.canonical_route_descriptor(),
             "real_ai_execution": False,
             "real_ai_calls": 0,
             "real_research_quality": "NOT_DEMONSTRATED",
+            # Route preparation has not resolved ProductCapabilityAuthorization
+            # yet; never report a requested mode as an authorization fact.
             "authorized_for_product_use": False,
         }
 
@@ -1547,8 +1589,10 @@ def import_and_resume_external_research(
     # The pending package is the sole authority for the next cognitive seam.
     # There is intentionally no parallel stage list here: the coordinator
     # emitted this package and the importer accepts only that exact package.
+    authorization_mode = str(package.get("authorization_mode") or state.get("authorization_mode") or "MISSION").upper()
+    authority_identity_field = "authorization_id" if authorization_mode == "PRODUCT" else "mission_id"
     bindings = {
-                "mission_id": str(state.get("mission_id") or package.get("mission_id") or ""),
+                authority_identity_field: str(state.get(authority_identity_field) or package.get(authority_identity_field) or ""),
         "episode_id": episode_id,
         "capability_id": REAL_RESEARCH_CAPABILITY,
         "handoff_id": state.get("handoff_id"),
@@ -1576,7 +1620,7 @@ def import_and_resume_external_research(
     if provenance is not None:
         if not isinstance(provenance, Mapping):
             raise ResearchM7Error("EXTERNAL_PROVENANCE_INVALID")
-        for field in ("mission_id", "episode_id", "capability_id", "stage", "role", "handoff_id"):
+        for field in (authority_identity_field, "episode_id", "capability_id", "stage", "role", "handoff_id"):
             if field in provenance and provenance.get(field) != package.get(field):
                 raise ResearchM7Error(f"EXTERNAL_PROVENANCE_BINDING_INVALID:{field}")
         if not str(provenance.get("run_id") or "") or not str(provenance.get("executor_id") or ""):
@@ -1689,6 +1733,7 @@ def import_and_resume_external_research(
         "mission_authorization_path": package.get("mission_authorization_path"),
         "mission_contract_path": package.get("mission_contract_path"),
         "handoff_directory": str(package_path.parent),
+        "authorization_mode": package.get("authorization_mode") or "MISSION",
     })
     resumed = preparation.run_canonical_vertical(
         ProductiveResearchStageAdapters(
@@ -2199,7 +2244,19 @@ class ResearchM7SyntheticRunner:
             "origin_artifact_refs": [f"synthetic-input:{inp['episode_id']}"],
             "created_at": _now(),
         }
-        return {"topic": str(inp["topic"]), "source_access": source_access, "brief": {"brief_id": f"BRIEF-{inp['episode_id']}"}, "channel_context": {"channel_id": "CHANNEL-M7"}}
+        planning = ResearchPlanningService()
+        profile = load_active_profile_authority()
+        channel_context = planning.build_channel_context(
+            episode_id=str(inp["episode_id"]),
+            profile=profile,
+            origin_ref=f"synthetic-input:{inp['episode_id']}",
+        )
+        return {
+            "topic": str(inp["topic"]),
+            "source_access": source_access,
+            "brief": {"brief_id": f"BRIEF-{inp['episode_id']}"},
+            "channel_context": channel_context,
+        }
 
     def _store_coord(self, state: dict[str, Any], stage: str, ref: Mapping[str, Any], *, kind: str | None = None) -> None:
         item = {"stage": stage, **_ref_payload(ref)}
@@ -2342,6 +2399,8 @@ class ResearchM7SyntheticRunner:
             claims_ledger=claims,
             refined_thesis_payload=thesis,
             refined_thesis_checksum=hashlib.sha256(Path(m5["refined_thesis"]["path"]).read_bytes()).hexdigest(),
+            duration_target_minutes=state["human_input"].get("duration_target_minutes", 15),
+            target_language=state["human_input"].get("target_language") or "es",
         )
         b2_manifest_ref = next(item for item in state["artifacts"] if item["stage"] == "B2")
         b2_manifest = _read(b2_manifest_ref["path"])

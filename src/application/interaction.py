@@ -25,12 +25,13 @@ class HumanDecisionRequest:
     subject_checksum: str | None = None
     workflow_ref: str | None = None
     expected_actor_ref: str | None = None
+    expected_approval_role: str | None = None
     expected_channel: str | None = None
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     status: str = "PENDING"
 
     def _payload(self) -> dict[str, Any]:
-        return {
+        payload = {
             "contract": "human_decision_request",
             "contract_version": "1.0.0",
             "request_id": self.request_id,
@@ -47,6 +48,9 @@ class HumanDecisionRequest:
             "created_at": self.created_at,
             "status": self.status,
         }
+        if self.expected_approval_role is not None:
+            payload["expected_approval_role"] = self.expected_approval_role
+        return payload
 
     def checksum(self) -> str:
         payload = {key: value for key, value in self._payload().items() if key not in {"status"}}
@@ -74,6 +78,7 @@ class HumanDecisionRequest:
             subject_checksum=data.get("subject_checksum"),
             workflow_ref=data.get("workflow_ref"),
             expected_actor_ref=data.get("expected_actor_ref"),
+            expected_approval_role=data.get("expected_approval_role"),
             expected_channel=data.get("expected_channel"),
             created_at=data.get("created_at") or datetime.now(timezone.utc).isoformat(),
             status=data.get("status", "PENDING"),
@@ -242,6 +247,9 @@ class HumanInteraction(Protocol):
 class TerminalInteraction:
     channel = "TERMINAL"
 
+    def __init__(self, *, actor_ref: str = "local-user") -> None:
+        self.actor_ref = actor_ref
+
     def present(self, message: str) -> None:
         print(message)
 
@@ -295,13 +303,25 @@ class TerminalInteraction:
         except (EOFError, KeyboardInterrupt) as exc:
             raise UserCancelled from exc
         if raw == "A":
-            return HumanDecision(request.request_id, "APPROVE", actor_ref="local-user")
+            return HumanDecision(request.request_id, "APPROVE", actor_ref=self.actor_ref, channel=self.channel)
         if raw == "E":
             selected = self.choose("Elige una alternativa:", [(item["id"], item["label"]) for item in request.options])
-            return HumanDecision(request.request_id, "SELECT_ALTERNATIVE", selected_option=selected)
+            return HumanDecision(
+                request.request_id,
+                "SELECT_ALTERNATIVE",
+                selected_option=selected,
+                actor_ref=self.actor_ref,
+                channel=self.channel,
+            )
         if raw == "C":
             correction = self.free_text("Escribe la corrección o instrucción:")
-            return HumanDecision(request.request_id, "CORRECT", correction=correction)
+            return HumanDecision(
+                request.request_id,
+                "CORRECT",
+                correction=correction,
+                actor_ref=self.actor_ref,
+                channel=self.channel,
+            )
         if raw == "R":
-            return HumanDecision(request.request_id, "REJECT")
+            return HumanDecision(request.request_id, "REJECT", actor_ref=self.actor_ref, channel=self.channel)
         raise ValueError("Respuesta inválida. Usa A, E, C o R.")

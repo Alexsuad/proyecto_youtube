@@ -14,7 +14,7 @@ from pathlib import Path
 from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
 from src.ai.execution import execute, persist_execution_result
 from src.ai.registry import load_registry, register_external_output
-from src.ai.role_execution import resolve_role_execution_contract
+from src.ai.role_execution import research_runtime_values, resolve_role_execution_contract
 from src.application.research_b2 import B2CognitiveRequest, CONTRACT_VERSION
 from src.application.research_b3 import (
     ResearchB3Error,
@@ -958,7 +958,10 @@ class ResearchB4Orchestrator:
             M6_AUDIT_SCHEMA,
             prepared_payload,
             {
-                "stage": M6_AUDIT_STAGE,
+                **research_runtime_values(
+                    prepared_payload,
+                    stage=M6_AUDIT_STAGE,
+                ),
                 "responsibility": "INDEPENDENT_RESEARCH_AUDIT",
                 "auditor_provenance": copy.deepcopy(declared_auditor),
                 "real_ai_execution": False,

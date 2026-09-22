@@ -291,7 +291,6 @@ def _applicable_policies(
 ) -> list[dict[str, str]]:
     policies: list[dict[str, str]] = []
     runtime_values = runtime_values or {}
-    enforce_symbolic = prompt_contract.get("role_id") in {"WRITING", "EDITOR", "FINAL_EDITORIAL_AUDITOR"}
     for ref in prompt_contract.get("required_context", []):
         if not isinstance(ref, str):
             raise RoleExecutionContractError("INPUT_CONTRACT_INVALID: required context reference invalid")
@@ -321,8 +320,6 @@ def _applicable_policies(
             else:
                 supplied = runtime_values.get("required_context", {})
                 content = supplied.get(ref) if isinstance(supplied, dict) else None
-                if not enforce_symbolic:
-                    continue
                 if not isinstance(content, (str, dict, list)) or not content:
                     raise RoleExecutionContractError(f"INPUT_CONTRACT_INVALID: required context unresolved: {ref}")
                 if not isinstance(content, str):
@@ -332,6 +329,42 @@ def _applicable_policies(
             raise RoleExecutionContractError(f"INPUT_CONTRACT_INVALID: required context empty: {ref}")
         policies.append({"path": resolved_ref, "content": content})
     return policies
+
+
+def research_runtime_values(
+    input_payload: dict[str, Any],
+    *,
+    stage: str,
+    **extra_values: Any,
+) -> dict[str, Any]:
+    """Bind Research's symbolic context from the current canonical payload.
+
+    ``RESEARCH_AND_CURATION`` declares two symbolic required contexts.  They
+    are not optional labels: every Research caller must derive them from the
+    channel/source contracts it is already carrying, so an incomplete input
+    remains fail-closed in ``_applicable_policies``.
+    """
+    channel_context = input_payload.get("channel_context")
+    source_access = input_payload.get("source_access")
+    required_context: dict[str, Any] = {}
+    if isinstance(channel_context, dict):
+        territories = channel_context.get("territories")
+        if territories:
+            required_context["editorial_territories"] = territories
+        guidelines = {
+            "contract": "research_guidelines",
+            "research_relevant_limits": channel_context.get("research_relevant_limits", []),
+            "source_access_contract": source_access.get("contract") if isinstance(source_access, dict) else None,
+            "source_access_limitations": source_access.get("limitations", []) if isinstance(source_access, dict) else [],
+        }
+        if any(value for value in guidelines.values() if value not in (None, [], "")):
+            required_context["research_guidelines"] = guidelines
+    runtime_values: dict[str, Any] = {
+        "stage": stage,
+        "required_context": required_context,
+    }
+    runtime_values.update(extra_values)
+    return runtime_values
 
 
 def resolve_role_execution_contract(role_id: str, output_schema: str, input_payload: Any, runtime_values: dict[str, Any]) -> dict[str, Any]:

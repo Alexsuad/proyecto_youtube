@@ -541,6 +541,9 @@
             "REAL"
           ]
         },
+        "authorization_mode": {"enum": ["MISSION", "PRODUCT"]},
+        "authorization_id": {"type": "string", "minLength": 1},
+        "authorization_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "modified_artifact_ids": {
           "type": "array",
           "items": {"type": "string", "minLength": 1},
@@ -732,6 +735,9 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
+            "authorization_mode": {"enum": ["MISSION", "PRODUCT"]},
+            "authorization_id": {"type": "string", "minLength": 1},
+            "authorization_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
             "mission_id": {"type": "string", "minLength": 1},
             "capability_id": {"type": "string", "minLength": 1},
             "role_id": {"type": "string", "minLength": 1},
@@ -771,7 +777,29 @@
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
         }
-      }
+      },
+      "allOf": [
+          {
+            "if": {
+              "required": ["authorization_mode"],
+              "properties": {"authorization_mode": {"const": "PRODUCT"}}
+            },
+            "then": {
+              "required": ["authorization_id", "authorization_checksum"],
+              "not": {"required": ["mission_id"]}
+            }
+          },
+          {
+            "if": {
+              "required": ["authorization_mode"],
+              "properties": {"authorization_mode": {"const": "MISSION"}}
+            },
+            "then": {
+              "required": ["mission_id"],
+              "not": {"required": ["authorization_id"]}
+            }
+          }
+      ]
     },
     "attempt": {
       "type": "object",

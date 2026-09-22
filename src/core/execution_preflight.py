@@ -57,6 +57,23 @@ def preflight_controlled_execution(
         raise PermissionError("CAPABILITY_UNREGISTERED:" + capability_id)
     if registry_capability.get("availability_status") in NON_EXECUTABLE_AVAILABILITY:
         raise PermissionError("CAPABILITY_UNAVAILABLE:" + capability_id)
+    synthetic_execution = str(getattr(request, "execution_mode", "")).upper() in {
+        "SYNTHETIC",
+        "SYNTHETIC_TEST",
+        "MOCK",
+    }
+    controlled_validation = (
+        not synthetic_execution
+        and authorization_mode == "MISSION"
+        and config.get("controlled_validation") is True
+        and str(config.get("mission_operation") or "") == "VALIDATE_OPERATIONAL_ENTRYPOINT"
+    )
+    if (
+        not synthetic_execution
+        and not controlled_validation
+        and registry_capability.get("executability_evidence", {}).get("real_entrypoint_operational") is False
+    ):
+        raise PermissionError("REAL_ENTRYPOINT_NOT_OPERATIONAL:" + capability_id)
     authorization_path = config.get("mission_authorization_path")
     if authorization_mode == "PRODUCT":
         if authorization_path or config.get("mission_contract_path"):
@@ -109,7 +126,10 @@ def preflight_controlled_execution(
             role_id=str(getattr(request, "role", "")),
             run_id=str(config.get("run_id") or "PENDING_RUN"),
             policy_path=config.get("context_policy_path"),
-            mission_id=product_authorization.mission_id,
+            # Product authority is ordinary product scope, not a mission.
+            # Do not project its envelope compatibility identifier into the
+            # resolved context manifest.
+            mission_id=None,
             execution_profile_id=requested_profile or ("EXECUTOR_MANAGED" if requested_family.strip().upper() == "AGENT_HARNESS" else None),
             execution_family=requested_family.strip().upper(),
             prompt_id=str(config.get("prompt_id") or "UNSPECIFIED_PROMPT"),
@@ -144,8 +164,12 @@ def preflight_controlled_execution(
     except ValueError as exc:
         raise PermissionError("MISSION_CONTRACT_INVALID: authorization path outside repository") from exc
     authorization = load_mission_authorization(authorization_file)
+    if controlled_validation and not authorization.controlled_validation:
+        raise PermissionError("CONTROLLED_VALIDATION_AUTHORIZATION_REQUIRED")
     mission_contract = None
     contract_path = config.get("mission_contract_path")
+    if controlled_validation and not contract_path:
+        raise PermissionError("CONTROLLED_VALIDATION_CONTRACT_REQUIRED")
     if contract_path:
         contract_candidate = Path(str(contract_path))
         if contract_candidate.is_absolute() or ".." in contract_candidate.parts:
@@ -158,6 +182,11 @@ def preflight_controlled_execution(
         mission_contract = load_mission_contract(contract_file)
         if mission_contract.mission_mode == "REDUCED" and mission_contract.mission_id != authorization.mission_id:
             raise PermissionError("MISSION_CONTRACT_INVALID: reduced mission id does not match authorization")
+        if controlled_validation:
+            try:
+                authorization.verify_controlled_validation_contract(mission_contract)
+            except PermissionError as exc:
+                raise PermissionError(str(exc)) from exc
 
     output_path = getattr(request, "output_artifact_path", None)
     relative_output = None
@@ -172,7 +201,6 @@ def preflight_controlled_execution(
     requested_family_value = getattr(request, "execution_family", None) or config.get("execution_family")
     requested_family = str(requested_family_value) if requested_family_value else None
     selection_path_value = config.get("execution_family_selection_path")
-    synthetic_execution = str(getattr(request, "execution_mode", "")).upper() in {"SYNTHETIC", "SYNTHETIC_TEST", "MOCK"}
     if not synthetic_execution and (requested_family or requested_profile):
         from src.ai.runtime_profiles import load_execution_profiles, validate_execution_family_selection
 

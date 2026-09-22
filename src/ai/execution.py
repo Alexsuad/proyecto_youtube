@@ -1148,6 +1148,9 @@ def _execute_unfinalized(request: ExecutionRequest) -> ExecutionResult:
                 "authorization_checksum": getattr(preflight["authorization"], "authorization_checksum", request.config.get("authorization_checksum")),
                 "authorization_mode": getattr(preflight["authorization"], "values", {}).get("authorization_mode", request.config.get("authorization_mode")) if hasattr(getattr(preflight["authorization"], "values", {}), "get") else request.config.get("authorization_mode"),
             }
+            if str(request.config.get("authorization_mode") or "").upper() == "PRODUCT":
+                request.config.pop("mission_id", None)
+                request.config.pop("mission_contract_sha256", None)
         capture_pre_run_snapshot(request, authorization=preflight.get("authorization"), root=repository_root)
         if preflight.get("context_manifest") is not None:
             request.config = {**request.config, "resolved_context_manifest": preflight["context_manifest"], "resolved_context_manifest_sha256": preflight["context_manifest"]["manifest_sha256"], "mission_contract_sha256": getattr(preflight.get("authorization"), "contract_sha256", None)}

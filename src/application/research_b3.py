@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
-from src.ai.role_execution import resolve_role_execution_contract
+from src.ai.role_execution import research_runtime_values, resolve_role_execution_contract
 from src.application.interaction import (
     HumanDecision,
     HumanDecisionRequest,
@@ -1935,7 +1935,12 @@ class ResearchB3Orchestrator:
         }
         prepared = resolve_role_execution_contract(
             ROLE_ID, output_schema, payload,
-            {"stage": stage, "real_ai_execution": False, "real_research": False},
+            research_runtime_values(
+                payload,
+                stage=stage,
+                real_ai_execution=False,
+                real_research=False,
+            ),
         )
         request = B2CognitiveRequest(stage, output_schema, tuple(copy.deepcopy(input_refs)), prepared)
         events.append({"stage": stage, "boundary": "IA_COGNITIVE_STEP", "output_schema": output_schema})
@@ -2438,7 +2443,12 @@ class ResearchB3Orchestrator:
             ROLE_ID,
             output_schema,
             input_payload,
-            {"stage": stage, "real_ai_execution": False, "real_research": False},
+            research_runtime_values(
+                input_payload,
+                stage=stage,
+                real_ai_execution=False,
+                real_research=False,
+            ),
         )
         request = B2CognitiveRequest(stage, output_schema, tuple(copy.deepcopy(input_artifacts)), prepared)
         events.append({"stage": stage, "boundary": "IA_COGNITIVE_STEP", "output_schema": output_schema})
@@ -2693,7 +2703,12 @@ class ResearchB3Orchestrator:
                 ROLE_ID,
                 "work_lifecycle",
                 selection_payload,
-                {"stage": "DELEGATED_SELECTION", "real_ai_execution": False, "real_research": False},
+                research_runtime_values(
+                    selection_payload,
+                    stage="DELEGATED_SELECTION",
+                    real_ai_execution=False,
+                    real_research=False,
+                ),
             )
             delegated_request = B2CognitiveRequest(
                 "DELEGATED_SELECTION",

@@ -9,7 +9,6 @@
     "input_manifest_checksum",
     "skill_id",
     "skill_version",
-    "mission_id",
     "episode_id",
     "capability_id",
     "stage",
@@ -25,6 +24,8 @@
     "input_manifest_checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "skill_id": {"type": "string", "minLength": 1},
     "skill_version": {"type": "string", "minLength": 1},
+    "authorization_mode": {"enum": ["MISSION", "PRODUCT"]},
+    "authorization_id": {"type": "string", "minLength": 1},
     "mission_id": {"type": "string", "minLength": 1},
     "episode_id": {"type": "string", "minLength": 1},
     "capability_id": {"type": "string", "minLength": 1},
@@ -36,8 +37,9 @@
     "provenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["mission_id", "episode_id", "capability_id", "stage", "role", "run_id", "executor_identity"],
+      "required": ["episode_id", "capability_id", "stage", "role", "run_id", "executor_identity"],
       "properties": {
+        "authorization_id": {"type": "string", "minLength": 1},
         "mission_id": {"type": "string", "minLength": 1},
         "episode_id": {"type": "string", "minLength": 1},
         "capability_id": {"type": "string", "minLength": 1},
@@ -50,5 +52,26 @@
         "session_id": {"type": "string", "minLength": 1}
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["authorization_mode"],
+        "properties": {"authorization_mode": {"const": "PRODUCT"}}
+      },
+      "then": {
+        "required": ["authorization_mode", "authorization_id"],
+        "not": {"required": ["mission_id"]}
+      },
+      "else": {"required": ["mission_id"]}
+    },
+    {
+      "if": {"required": ["authorization_id"]},
+      "then": {
+        "required": ["authorization_id"],
+        "not": {"required": ["mission_id"]}
+      },
+      "else": {"required": ["mission_id"]}
+    }
+  ]
 }

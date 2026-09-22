@@ -7,7 +7,7 @@ from pathlib import Path
 from src.ai.contracts import ExecutionRequest
 from src.ai.execution import execute, persist_execution_attempt, persist_execution_result
 from src.ai.manifest import file_checksum
-from src.ai.role_execution import RoleExecutionContractError, build_model_prompt, resolve_role_execution_contract
+from src.ai.role_execution import RoleExecutionContractError, build_model_prompt, resolve_prompt, resolve_role_execution_contract
 from src.ai.runtime_profiles import AgentRuntimePort
 
 
@@ -39,7 +39,14 @@ def main() -> int:
     args=build_parser().parse_args(); output_path=Path(args.output); output_path.parent.mkdir(parents=True,exist_ok=True)
     try:
         runtime=AgentRuntimePort(Path(args.execution_profiles_path)); resolved=runtime.resolve_run_configuration(build_run_configuration(args))
-        runtime_values={"smoke_id":output_path.stem,"role_id":args.role,"execution_profile":resolved.execution_profile,"execution_route":resolved.execution_route,"selected_executor":resolved.executor,"selected_provider":resolved.provider,"selected_model":resolved.model,"reasoning_effort":resolved.reasoning_effort,"actual_executor":resolved.executor,"actual_provider":resolved.provider,"actual_model":resolved.model,"result":"SUCCEEDED","decision":"CONTRACTUAL_SMOKE_PASS","stdout_preview":"contractual role prompt and output schema validated","stderr_preview":"","exit_code":0,"notes":["controlled R6-B smoke; no editorial product"]}
+        prompt_contract = resolve_prompt(args.role)
+        canonical_aliases = {"active_profile_identity", "profile_identity", "editorial_profile", "editorial_voice_profile", "voice_guidelines"}
+        required_context = {
+            ref: f"controlled-smoke-context:{ref}"
+            for ref in prompt_contract.get("required_context", [])
+            if not str(ref).endswith((".md", ".json")) and ref not in canonical_aliases and ref != "clean_session"
+        }
+        runtime_values={"smoke_id":output_path.stem,"role_id":args.role,"execution_profile":resolved.execution_profile,"execution_route":resolved.execution_route,"selected_executor":resolved.executor,"selected_provider":resolved.provider,"selected_model":resolved.model,"reasoning_effort":resolved.reasoning_effort,"actual_executor":resolved.executor,"actual_provider":resolved.provider,"actual_model":resolved.model,"result":"SUCCEEDED","decision":"CONTRACTUAL_SMOKE_PASS","stdout_preview":"contractual role prompt and output schema validated","stderr_preview":"","exit_code":0,"notes":["controlled R6-B smoke; no editorial product"],"clean_session":True,"required_context":required_context}
         contract=resolve_role_execution_contract(args.role,"execution_smoke_report",load_input(args.input),runtime_values)
     except (RoleExecutionContractError, ValueError) as exc:
         payload={"status":"FAILED","error":str(exc),"role_id":args.role,"execution_profile":args.profile}; output_path.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); print(json.dumps(payload,ensure_ascii=False)); return 1

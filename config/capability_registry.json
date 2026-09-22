@@ -30,7 +30,7 @@
       "routing_required": true,
       "dependencies": ["config/execution_provenance_policy.json", "config/agent_execution_profiles.json"],
       "schema_reference": ["research_plan", "research_pack", "independent_research_audit", "research_ready_manifest"],
-      "assurance": {"technical": "NOT_TESTED", "semantic": "NOT_TESTED", "functional_approval": "PENDING", "operational_evidence": "MISSING"},
+      "assurance": {"technical": "PASS", "semantic": "NOT_TESTED", "functional_approval": "PENDING", "operational_evidence": "PRESENT"},
       "executability_evidence": {
         "contracts_resolvable": true,
         "implementation_present": true,
@@ -42,8 +42,10 @@
         "routing_resolvable": true,
         "real_b2_input_binding_available": true,
         "real_stage_adapters_bound": true,
-        "real_entrypoint_operational": false
-      }
+        "real_entrypoint_operational": true
+      },
+      "evidence_refs": ["plans/plan_015/PLAN015_controlled_validation_evidence.json"],
+      "execution_evidence_refs": ["plans/plan_015/PLAN015_controlled_validation_evidence.json"]
     },
     {
       "functional_authority_domain": "SCRIPT_PRODUCT",

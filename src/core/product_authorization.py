@@ -52,6 +52,43 @@ def _safe_repo_path(root: Path, reference: str, label: str) -> Path:
     return resolved
 
 
+def _normalize_authorized_path(value: str, label: str) -> str:
+    """Normalize a repository-relative scope without weakening traversal checks."""
+    raw = str(value).replace("\\", "/")
+    if not raw or raw.startswith("/") or (len(raw) >= 2 and raw[1] == ":"):
+        raise ProductAuthorizationError(f"{label}_OUTSIDE_REPOSITORY")
+    parts = raw.split("/")
+    if any(part == ".." for part in parts):
+        raise ProductAuthorizationError(f"{label}_OUTSIDE_REPOSITORY")
+    normalized = "/".join(part for part in parts if part not in {"", "."}).rstrip("/")
+    if not normalized:
+        raise ProductAuthorizationError(f"{label}_OUTSIDE_REPOSITORY")
+    return normalized
+
+
+def _path_allowed(path: str, allowed_paths: list[str] | tuple[str, ...], label: str) -> bool:
+    normalized = _normalize_authorized_path(path, label)
+    return any(
+        normalized == allowed or normalized.startswith(allowed + "/")
+        for allowed in (
+            _normalize_authorized_path(item, f"{label}_SCOPE") for item in allowed_paths
+        )
+    )
+
+
+def _resolve_requested_path(root: Path, path: str, label: str) -> str:
+    """Validate textual scope and physical repository containment.
+
+    The authorization registry is expressed in repository-relative text, but
+    the target supplied by a caller may traverse a symlink, junction, or
+    another Windows reparse point.  Normalize first for scope matching and
+    then resolve the actual filesystem target before accepting it.
+    """
+    normalized = _normalize_authorized_path(path, label)
+    _safe_repo_path(root.resolve(), normalized, label)
+    return normalized
+
+
 def _load_registry(root: Path) -> list[dict[str, Any]]:
     path = _safe_repo_path(root, PRODUCT_AUTHORIZATION_PATH, "PRODUCT_AUTHORIZATION_REGISTRY")
     try:
@@ -79,6 +116,8 @@ def _load_registry(root: Path) -> list[dict[str, Any]]:
             raise ProductAuthorizationError(f"PRODUCT_AUTHORIZATION_CHECKSUM_MISMATCH:{authorization_id}")
         if raw.get("status") == "REVOKED" and not all(raw.get(key) for key in ("revoked_at", "revoked_by", "revocation_reason")):
             raise ProductAuthorizationError(f"PRODUCT_AUTHORIZATION_REVOCATION_INCOMPLETE:{authorization_id}")
+        for allowed_path in raw.get("allowed_paths", []):
+            _normalize_authorized_path(str(allowed_path), "PRODUCT_AUTHORIZATION_ALLOWED_PATH")
     return [dict(item) for item in authorizations]
 
 
@@ -132,8 +171,9 @@ class ProductCapabilityAuthorization:
         return tuple(str(item) for item in self.values.get("allowed_paths", ()))
 
     @property
-    def mission_id(self) -> str:
-        return "PLAN015"
+    def mission_id(self) -> str | None:
+        """PRODUCT authority is not mission-bound and has no mission id."""
+        return None
 
     @property
     def contract_sha256(self) -> None:
@@ -169,9 +209,9 @@ class ProductCapabilityAuthorization:
             raise ProductAuthorizationError("PRODUCT_AUTHORIZATION_PROFILE_DENIED")
         if execution_interface not in self.values.get("allowed_interfaces", []):
             raise ProductAuthorizationError("PRODUCT_AUTHORIZATION_INTERFACE_DENIED")
-        if path:
-            normalized = str(path).replace("\\", "/").lstrip("./")
-            if not any(normalized == allowed.rstrip("/") or normalized.startswith(allowed.rstrip("/") + "/") for allowed in self.allowed_paths):
+        if path is not None:
+            normalized_path = _resolve_requested_path(repository_root, path, "PRODUCT_AUTHORIZATION_PATH")
+            if not _path_allowed(normalized_path, self.allowed_paths, "PRODUCT_AUTHORIZATION_PATH"):
                 raise ProductAuthorizationError("PRODUCT_AUTHORIZATION_PATH_DENIED")
         now = datetime.now(timezone.utc)
         if now < _parse_datetime(str(self.values["valid_from"]), "VALID_FROM"):
@@ -207,9 +247,15 @@ def resolve_product_authorization(
         and (execution_profile_id or ("EXECUTOR_MANAGED" if execution_family == "AGENT_HARNESS" else None)) in item.get("allowed_profiles", [])
         and execution_interface in item.get("allowed_interfaces", [])
     ]
-    if path:
-        normalized = str(path).replace("\\", "/").lstrip("./")
-        candidates = [item for item in candidates if any(normalized == allowed.rstrip("/") or normalized.startswith(allowed.rstrip("/") + "/") for allowed in item.get("allowed_paths", []))]
+    if path is not None:
+        # Validate before filtering so traversal cannot be normalized into an
+        # apparently authorized descendant or silently become a plain DENY.
+        normalized_path = _resolve_requested_path(repository_root, path, "PRODUCT_AUTHORIZATION_PATH")
+        candidates = [
+            item
+            for item in candidates
+            if _path_allowed(normalized_path, [str(value) for value in item.get("allowed_paths", [])], "PRODUCT_AUTHORIZATION_PATH")
+        ]
     if len(candidates) == 0:
         raise ProductAuthorizationError("PRODUCT_AUTHORIZATION_DENY")
     if len(candidates) > 1:

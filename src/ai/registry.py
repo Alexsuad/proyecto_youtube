@@ -658,13 +658,25 @@ def append_result(
         handoff_target = str(result.usage.get("handoff_target") or "NONE")
         execution_profile = str(result.usage.get("execution_profile") or "UNSPECIFIED_PROFILE")
     provenance_config = request.config if request is not None else result.usage
+    authorization_mode = str(provenance_config.get("authorization_mode") or "").upper() or None
+    authorization_id = provenance_config.get("authorization_id")
+    authorization_checksum = provenance_config.get("authorization_checksum")
+    mission_id = provenance_config.get("mission_id")
+    if authorization_mode == "PRODUCT":
+        if mission_id is not None:
+            raise ValueError("PRODUCT_PROVENANCE_MUST_NOT_HAVE_MISSION_ID")
+        if not str(authorization_id or "").strip() or not str(authorization_checksum or "").strip():
+            raise ValueError("PRODUCT_PROVENANCE_AUTHORIZATION_REQUIRED")
     modification_manifest = _modification_manifest(request) if request is not None else {
         "source": "RUNTIME_PRE_POST_DIFF_UNAVAILABLE",
         "modified_artifact_ids": [],
         "modified_artifact_paths": [],
     }
     functional_identity = _non_null({
-        "mission_id": provenance_config.get("mission_id"),
+        "authorization_mode": authorization_mode,
+        "authorization_id": authorization_id if authorization_mode == "PRODUCT" else None,
+        "authorization_checksum": authorization_checksum if authorization_mode == "PRODUCT" else None,
+        "mission_id": mission_id if authorization_mode != "PRODUCT" else None,
         "capability_id": provenance_config.get("capability_id") or getattr(request, "capability_id", None),
         "role_id": provenance_config.get("role_id") or role,
         "execution_profile_id": provenance_config.get("execution_profile_id") or execution_profile,
@@ -715,7 +727,25 @@ def append_result(
         "functional_identity": functional_identity,
         "reproducibility": reproducibility,
         "operational_telemetry": operational_telemetry,
-        **{key: provenance_config[key] for key in ("mission_id", "capability_id", "execution_profile_id", "mission_contract_sha256", "resolved_context_manifest", "resolved_context_manifest_sha256", "input_sha256", "output_sha256", "prompt_artifact_sha256", "result_status") if provenance_config.get(key)},
+        **{
+            key: provenance_config[key]
+            for key in (
+                "authorization_mode",
+                "authorization_id",
+                "authorization_checksum",
+                "mission_id",
+                "capability_id",
+                "execution_profile_id",
+                "mission_contract_sha256",
+                "resolved_context_manifest",
+                "resolved_context_manifest_sha256",
+                "input_sha256",
+                "output_sha256",
+                "prompt_artifact_sha256",
+                "result_status",
+            )
+            if provenance_config.get(key)
+        },
         **_provenance_fields(
             role=role,
             provider=result.provider,

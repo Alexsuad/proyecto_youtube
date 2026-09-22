@@ -22,6 +22,8 @@ def b5_i3_transversal_fixtures(
     claims_ledger: Mapping[str, Any],
     refined_thesis_payload: Mapping[str, Any],
     refined_thesis_checksum: str,
+    duration_target_minutes: int | None = 15,
+    target_language: str | None = "es",
 ) -> dict[str, dict[str, Any]]:
     """Return schema-shaped non-Research fixtures for the B5-I3 preflight.
 
@@ -44,6 +46,9 @@ def b5_i3_transversal_fixtures(
         "works": list(works), "actor_ref": "m7-synthetic-fixture",
         "provenance": {"capture_method": "TEXT", "source": "CONTROLLED_FIXTURE"},
         "processing_status": "RECEIVED",
+        "duration_target_minutes": duration_target_minutes,
+        "target_language": target_language,
+        "user_instructions": [],
     }
     brief = {
         "episode_id": episode_id, "brief_version": "1.0.0", "profile_id": profile_id,

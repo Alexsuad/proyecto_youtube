@@ -94,6 +94,13 @@
           ],
           "default": null
         },
+        "supersedes": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
         "recorded_at": {
           "type": "string",
           "format": "date-time"
@@ -110,10 +117,11 @@
           ],
           "properties": {
             "capability_id": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
-            "controlled_demonstration": {"const": true},
-            "general_activation": {"const": false},
-            "product_use": {"const": false},
-            "successor_capabilities": {"const": false}
+            "controlled_demonstration": {"type": "boolean"},
+            "general_activation": {"type": "boolean"},
+            "product_use": {"type": "boolean"},
+            "successor_capabilities": {"type": "boolean"},
+            "scope": {"type": "string"}
           }
         }
       }

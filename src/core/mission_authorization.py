@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +46,8 @@ def _verify_material_decision_binding(
     authority_data: dict[str, Any],
     required_reference: dict[str, Any],
     capability_id: str,
+    *,
+    allow_superseded: bool = False,
 ) -> None:
     binding = authority_data.get("material_decision_binding")
     if not isinstance(binding, dict):
@@ -62,9 +64,10 @@ def _verify_material_decision_binding(
         raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_INVALID: registry unavailable") from exc
     decision = next((item for item in registry.get("decisions", []) if item.get("decision_id") == expected["decision_id"]), None)
     scope = decision.get("authorization_scope") if isinstance(decision, dict) else None
+    decision_state = decision.get("state") if isinstance(decision, dict) else None
     if (
         not isinstance(decision, dict)
-        or decision.get("state") != "VIGENTE"
+        or decision_state not in {"VIGENTE", "SUSTITUIDA"}
         or decision.get("subject_ref") != expected["subject_ref"]
         or not isinstance(scope, dict)
         or scope.get("capability_id") != capability_id
@@ -72,6 +75,13 @@ def _verify_material_decision_binding(
         or scope.get("general_activation") is not False
         or scope.get("product_use") is not False
         or scope.get("successor_capabilities") is not False
+        or (
+            decision_state == "SUSTITUIDA"
+            and (
+                not allow_superseded
+                or not str(decision.get("superseded_by") or "").strip()
+            )
+        )
     ):
         raise MissionAuthorizationError("MATERIAL_DECISION_BINDING_INVALID")
     try:
@@ -114,6 +124,8 @@ class MissionAuthorization:
     repair_integrity_evidence_path: str
     contract_path: str | None = None
     execution_family_ids: tuple[str, ...] = ()
+    controlled_validation: bool = False
+    controlled_validation_state_requirements: dict[str, Any] = field(default_factory=dict)
 
     def scope_payload(self) -> dict[str, Any]:
         payload = {
@@ -132,6 +144,9 @@ class MissionAuthorization:
         }
         if self.execution_family_ids:
             payload["execution_family_ids"] = list(self.execution_family_ids)
+        if self.controlled_validation:
+            payload["controlled_validation"] = True
+            payload["controlled_validation_state_requirements"] = self.controlled_validation_state_requirements
         return payload
 
     @classmethod
@@ -166,6 +181,10 @@ class MissionAuthorization:
         for optional_scope_key in ("execution_profile_ids", "execution_family_ids"):
             if optional_scope_key in auth:
                 flat[optional_scope_key] = auth[optional_scope_key]
+        if "controlled_validation" in auth:
+            flat["controlled_validation"] = auth["controlled_validation"]
+        if "controlled_validation_state_requirements" in auth:
+            flat["controlled_validation_state_requirements"] = auth["controlled_validation_state_requirements"]
         violations = validate_against_schema(flat, "mission_authorization_contract")
         if violations:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: " + "; ".join(violations))
@@ -191,6 +210,8 @@ class MissionAuthorization:
             repair_integrity_evidence_path=str(auth["repair_integrity_evidence_path"]),
             contract_path=contract_path,
             execution_family_ids=tuple(str(value) for value in auth.get("execution_family_ids", [])),
+            controlled_validation=bool(auth.get("controlled_validation", False)),
+            controlled_validation_state_requirements=dict(auth.get("controlled_validation_state_requirements", {})),
         )
         if scope_checksum(instance.scope_payload()) != instance.authorized_scope_sha256:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authorized scope checksum")
@@ -258,7 +279,7 @@ class MissionAuthorization:
         operational_authority = "## 1. Estado canónico" in state_text
         if operational_authority and current_mission is None:
             raise MissionAuthorizationError("MISSION_STALE_AGAINST_LIVE_STATE: CURRENT_MISSION missing")
-        if operational_authority and current_mission != self.mission_id:
+        if operational_authority and current_mission != self.mission_id and not self.controlled_validation:
             raise MissionAuthorizationError("MISSION_STALE_AGAINST_LIVE_STATE: mission_id does not match CURRENT_MISSION")
         if authority_data.get("mission_id") != self.mission_id:
             raise MissionAuthorizationError("MISSION_CONTRACT_INVALID: authority mission binding")
@@ -274,6 +295,10 @@ class MissionAuthorization:
                 authority_data,
                 required_material_decision_ref,
                 capability_id,
+                allow_superseded=(
+                    self.controlled_validation
+                    and operation == "VALIDATE_OPERATIONAL_ENTRYPOINT"
+                ),
             )
         if capability_id not in self.capability_ids:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: capability scope")
@@ -285,7 +310,12 @@ class MissionAuthorization:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: execution profile scope")
         if execution_interface and self.execution_interface not in {"ANY", execution_interface}:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: execution interface")
-        self.verify_current_mission(repository_root)
+        if self.controlled_validation:
+            if operation != "VALIDATE_OPERATIONAL_ENTRYPOINT":
+                raise MissionAuthorizationError("CONTROLLED_VALIDATION_OPERATION_REQUIRED")
+            self._verify_controlled_validation_state(repository_root)
+        else:
+            self.verify_current_mission(repository_root)
         if operation not in self.allowed_operations:
             raise MissionAuthorizationError("EXECUTION_NOT_AUTHORIZED: operation scope")
         if path and self.allowed_paths and not any(path == allowed or path.startswith(allowed.rstrip("/") + "/") for allowed in self.allowed_paths):
@@ -313,6 +343,55 @@ class MissionAuthorization:
             raise MissionAuthorizationError("NO_ACTIVE_CURRENT_MISSION")
         if current_mission != self.mission_id:
             raise MissionAuthorizationError("MISSION_STALE_AGAINST_LIVE_STATE: mission_id does not match CURRENT_MISSION")
+
+    def verify_controlled_validation_contract(self, contract: Any) -> None:
+        """Bind the signed bootstrap state rules to the canonical mission contract."""
+        if not self.controlled_validation:
+            return
+        if (
+            getattr(contract, "mission_id", None) != self.mission_id
+            or dict(getattr(contract, "required_state", {}))
+            != self.controlled_validation_state_requirements.get("required", {})
+            or {
+                key: tuple(value)
+                for key, value in dict(getattr(contract, "forbidden_state", {})).items()
+            }
+            != {
+                key: tuple(value) if isinstance(value, list) else (value,)
+                for key, value in self.controlled_validation_state_requirements.get("forbidden", {}).items()
+            }
+        ):
+            raise MissionAuthorizationError("CONTROLLED_VALIDATION_CONTRACT_MISMATCH")
+
+    def _verify_controlled_validation_state(self, root: str | Path) -> None:
+        """Allow only the signed bootstrap state, never ordinary execution."""
+        repository_root = Path(root).resolve()
+        state = (repository_root / self.live_state_path).resolve()
+        try:
+            values: dict[str, str] = {}
+            state_lines = state.read_text(encoding="utf-8").splitlines()
+            if "```yaml" in state_lines:
+                state_lines = state_lines[state_lines.index("```yaml") + 1 :]
+                if "```" in state_lines:
+                    state_lines = state_lines[: state_lines.index("```")]
+            for line in state_lines:
+                if ":" in line and not line.startswith(" "):
+                    key, value = line.split(":", 1)
+                    values[key.strip()] = value.strip().strip('"')
+        except (OSError, UnicodeDecodeError) as exc:
+            raise MissionAuthorizationError("CONTROLLED_VALIDATION_LIVE_STATE_UNREADABLE") from exc
+        requirements = self.controlled_validation_state_requirements
+        required = requirements.get("required") if isinstance(requirements, dict) else None
+        forbidden = requirements.get("forbidden") if isinstance(requirements, dict) else None
+        if not isinstance(required, dict) or not isinstance(forbidden, dict):
+            raise MissionAuthorizationError("CONTROLLED_VALIDATION_STATE_REQUIREMENTS_MISSING")
+        for key, expected in required.items():
+            if values.get(str(key)) != str(expected):
+                raise MissionAuthorizationError(f"CONTROLLED_VALIDATION_REQUIRED_STATE_INVALID:{key}")
+        for key, blocked_values in forbidden.items():
+            blocked = blocked_values if isinstance(blocked_values, list) else [blocked_values]
+            if values.get(str(key)) in {str(value) for value in blocked}:
+                raise MissionAuthorizationError(f"CONTROLLED_VALIDATION_FORBIDDEN_STATE:{key}")
 
 
 def load_mission_authorization(path: str | Path) -> MissionAuthorization:

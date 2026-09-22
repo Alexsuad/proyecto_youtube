@@ -63,6 +63,9 @@ def _service(
     execution_interface: str | None = None,
     completion_gate_result_path: str | None = None,
     mission_repo_root: str | None = None,
+    authorization_mode: str | None = None,
+    editorial_approval_actor_ref: str | None = None,
+    editorial_approval_role: str | None = None,
 ) -> EpisodeApplicationService:
     capability_id = capability_id or "TOPIC_BELONGING_ASSESSMENT"
     store = VaultEpisodeStore.from_settings(settings)
@@ -92,9 +95,13 @@ def _service(
                 mission_contract_path=mission_contract_path,
                 completion_gate_result_path=completion_gate_result_path,
                 mission_repo_root=mission_repo_root,
+                authorization_mode=authorization_mode or ("MISSION" if mission_authorization_path else "PRODUCT"),
             ),
         ),
-        interaction=TerminalInteraction(),
+        interaction=TerminalInteraction(actor_ref=editorial_approval_actor_ref or "local-user"),
+        synthetic_outputs=mock_outputs,
+        editorial_approval_actor_ref=editorial_approval_actor_ref,
+        editorial_approval_role=editorial_approval_role,
     )
 
 
@@ -117,6 +124,9 @@ def _service_from_args(args: argparse.Namespace) -> EpisodeApplicationService:
         capability_id=getattr(args, "capability_id", None),
         completion_gate_result_path=getattr(args, "completion_gate_result_path", None),
         mission_repo_root=getattr(args, "mission_repo_root", None),
+        authorization_mode=getattr(args, "authorization_mode", None),
+        editorial_approval_actor_ref=getattr(args, "approval_actor", None),
+        editorial_approval_role=getattr(args, "approval_role", None),
     )
 
 
@@ -285,6 +295,13 @@ def _resume(args: argparse.Namespace) -> int:
         return 2
     print(f"Episodio reanudado: {args.episodio}")
     print(f"Estado: {state['state'].get('status', 'desconocido')}")
+    approved_current = state["state"].get("approved_current")
+    if isinstance(approved_current, dict):
+        print(
+            "Guion aprobado CURRENT: "
+            f"{approved_current.get('artifact_id')}@{approved_current.get('script_version')} "
+            f"checksum={approved_current.get('checksum')}"
+        )
     print(f"Ruta: {state['folder']}")
     return 0
 
@@ -431,6 +448,7 @@ def _real_preparation_from_args(args: argparse.Namespace) -> tuple[RealResearchR
         "mission_authorization_path": args.mission_authorization,
         "mission_contract_path": getattr(args, "mission_contract_path", None),
         "handoff_directory": getattr(args, "handoff_directory", None),
+        "authorization_mode": getattr(args, "authorization_mode", None) or "MISSION",
     }), episode
 
 
@@ -504,8 +522,6 @@ def _investigate_research_m7_real(args: argparse.Namespace) -> int:
         print("REAL_AI_EXECUTION: NO")
         print("REAL_AI_CALLS: 0")
         return 0
-    # A synthetic stage double can prove the binding, but it never turns this
-    # entrypoint into an operational REAL route.
     print("REAL_ENTRYPOINT_OPERATIONAL: NO")
     print("REAL_ENTRYPOINT_AVAILABLE: YES")
     print("ENTRYPOINT: investigar-real")
@@ -586,6 +602,12 @@ def build_parser() -> argparse.ArgumentParser:
     resume.add_argument("--completion-gate", dest="completion_gate_result_path", help=argparse.SUPPRESS)
     resume.add_argument("--mission-repo-root", dest="mission_repo_root", help=argparse.SUPPRESS)
     resume.add_argument("--capability-id", dest="capability_id", help=argparse.SUPPRESS)
+    resume.add_argument("--approval-actor", help="Identidad registrada que emitirá la decisión editorial final")
+    resume.add_argument(
+        "--approval-role",
+        choices=["EDITORIAL_LEAD", "EDITORIAL_REVIEWER"],
+        help="Rol editorial exacto con el que se emitirá la aprobación final",
+    )
     resume.set_defaults(handler=_resume)
     import_result = subparsers.add_parser(
         "importar-resultado",

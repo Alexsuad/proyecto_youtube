@@ -17,14 +17,15 @@ from src.core.mission_completion_gate import (
 from src.core.mission_authorization import load_mission_authorization
 from src.core.contract_validation import validate_against_schema
 
+
 VALID_AUTHORIZATION_MODES = frozenset({"MISSION", "PRODUCT"})
+
 
 def _validated_authorization_mode(value: Any) -> str:
     mode = str(value or "MISSION").upper()
     if mode not in VALID_AUTHORIZATION_MODES:
         raise PermissionError("AUTHORIZATION_MODE_INVALID:" + mode)
     return mode
-
 
 
 def load_verified_completion_gate_from_payload(data: dict[str, Any] | None):
@@ -47,6 +48,33 @@ class AgentHandoffProvider:
     name = "agent_handoff"
 
     @staticmethod
+    def _require_preparation_authority(request: ExecutionRequest) -> str:
+        """Require a complete, unambiguous authority before serializing a package."""
+        raw_mode = request.config.get("authorization_mode")
+        if not str(raw_mode or "").strip():
+            raise PermissionError("AUTHORIZATION_MODE_REQUIRED_FOR_HANDOFF")
+        authorization_mode = _validated_authorization_mode(raw_mode)
+        mission_id = request.config.get("mission_id")
+        authorization_id = request.config.get("authorization_id")
+        authorization_checksum = request.config.get("authorization_checksum")
+        mission_binding_present = any(
+            request.config.get(key)
+            for key in ("mission_authorization_path", "mission_contract_path", "_mission_authorization_token")
+        )
+        product_binding_present = bool(authorization_id or authorization_checksum)
+        if authorization_mode == "PRODUCT":
+            if mission_id is not None or mission_binding_present:
+                raise PermissionError("AUTHORIZATION_MODE_CONFLICT:PRODUCT_WITH_MISSION_BINDING")
+            if not str(authorization_id or "").strip() or not str(authorization_checksum or "").strip():
+                raise PermissionError("PRODUCT_AUTHORIZATION_REQUIRED_FOR_HANDOFF")
+            return authorization_mode
+        if product_binding_present:
+            raise PermissionError("AUTHORIZATION_MODE_CONFLICT:MISSION_WITH_PRODUCT_BINDING")
+        if not str(mission_id or "").strip():
+            raise PermissionError("MISSION_ID_REQUIRED_FOR_HANDOFF")
+        return authorization_mode
+
+    @staticmethod
     def _resolve_directory(request: ExecutionRequest, repo_root: Path) -> Path:
         directory = request.handoff_directory or Path("handoff")
         if not directory.is_absolute():
@@ -61,6 +89,9 @@ class AgentHandoffProvider:
         directory: Path,
         completion_gate: Any | None = None,
     ) -> Path:
+        authorization_mode = AgentHandoffProvider._require_preparation_authority(request)
+        if authorization_mode == "PRODUCT" and request.config.get("mission_id") is not None:
+            raise PermissionError("PRODUCT_AUTHORIZATION_MUST_NOT_HAVE_MISSION_ID")
         directory.mkdir(parents=True, exist_ok=True)
         artifacts = [
             {
@@ -90,16 +121,22 @@ class AgentHandoffProvider:
             "execution_route": request.execution_route,
             "execution_interface": request.config.get("execution_interface"),
             "execution_mode": request.execution_mode,
-            **({"authorization_mode": request.config["authorization_mode"]} if request.config.get("authorization_mode") else {}),
-            **({"authorization_id": request.config["authorization_id"]} if request.config.get("authorization_id") else {}),
-            **({"authorization_checksum": request.config["authorization_checksum"]} if request.config.get("authorization_checksum") else {}),
+            **({"authorization_mode": authorization_mode} if request.config.get("authorization_mode") else {}),
+            **(
+                {
+                    "authorization_id": request.config["authorization_id"],
+                    "authorization_checksum": request.config["authorization_checksum"],
+                }
+                if authorization_mode == "PRODUCT" and request.config.get("authorization_id") and request.config.get("authorization_checksum")
+                else {}
+            ),
             "model_override": None
             if (request.execution_family or request.config.get("execution_family")) == "AGENT_HARNESS"
             else request.model,
             "reasoning_effort": request.reasoning_effort,
             "artifacts": artifacts,
             **({"completion_gate": completion_gate.to_dict()} if completion_gate is not None else {}),
-            **({"mission_id": request.config["mission_id"]} if request.config.get("mission_id") else {}),
+            **({"mission_id": request.config["mission_id"]} if authorization_mode == "MISSION" and request.config.get("mission_id") else {}),
             **({"mission_authorization_path": request.config["mission_authorization_path"]} if request.config.get("mission_authorization_path") else {}),
             **({"mission_contract_path": request.config["mission_contract_path"]} if request.config.get("mission_contract_path") else {}),
             **({"mission_repo_root": str(Path(request.config["mission_repo_root"]).resolve())} if request.config.get("mission_repo_root") else {}),
@@ -138,8 +175,32 @@ class AgentHandoffProvider:
         from src.ai.registry import _VERIFIED_AUTHORIZATION_TOKEN
         from src.core.execution_preflight import _load_registered_capability
 
-        if request.config.get("_mission_authorization_token") is not _VERIFIED_AUTHORIZATION_TOKEN:
+        authorization_mode = _validated_authorization_mode(request.config.get("authorization_mode"))
+        if (
+            request.config.get("_mission_authorization_token") is not _VERIFIED_AUTHORIZATION_TOKEN
+            and authorization_mode != "PRODUCT"
+        ):
             raise PermissionError("MISSION_AUTHORIZATION_REQUIRED_FOR_HANDOFF")
+        if authorization_mode == "PRODUCT":
+            from src.core.product_authorization import resolve_product_authorization
+
+            try:
+                relative_directory = directory.resolve().relative_to(repo_root).as_posix()
+            except ValueError as exc:
+                raise PermissionError("HANDOFF_PATH_OUTSIDE_REPOSITORY") from exc
+            authorization, _ = resolve_product_authorization(
+                repo_root,
+                capability_id=str(request.capability_id),
+                role_id=str(request.role),
+                execution_family=str(request.execution_family or request.config.get("execution_family") or ""),
+                execution_route=str(request.execution_route or ""),
+                execution_profile_id=request.execution_profile,
+                execution_interface=str(request.config.get("execution_interface") or ""),
+                path=relative_directory + "/",
+            )
+            if request.config.get("authorization_id") != authorization.authorization_id or request.config.get("authorization_checksum") != authorization.authorization_checksum:
+                raise PermissionError("PRODUCT_AUTHORIZATION_REQUEST_STALE")
+            return
         authorization_path = request.config.get("mission_authorization_path")
         contract_path = request.config.get("mission_contract_path")
         if not authorization_path or not contract_path:
@@ -158,6 +219,7 @@ class AgentHandoffProvider:
         authorization = load_mission_authorization(authorization_file)
         if contract.mission_id != authorization.mission_id:
             raise PermissionError("MISSION_CONTRACT_AUTHORIZATION_MISMATCH")
+        authorization.verify_controlled_validation_contract(contract)
         expected_authorization_ref = authorization_file.relative_to(repo_root).as_posix()
         if contract.mission_authorization_path != expected_authorization_ref:
             raise PermissionError("MISSION_CONTRACT_AUTHORIZATION_PATH_MISMATCH")
@@ -231,6 +293,7 @@ class AgentHandoffProvider:
         authorization = load_mission_authorization(authorization_file)
         if contract.mission_id != authorization.mission_id:
             raise PermissionError("MISSION_CONTRACT_AUTHORIZATION_MISMATCH")
+        authorization.verify_controlled_validation_contract(contract)
         capability = _load_registered_capability(repo_root, request.capability_id)
         if capability is None:
             raise PermissionError("CAPABILITY_UNREGISTERED:" + str(request.capability_id))
@@ -292,7 +355,10 @@ class AgentHandoffProvider:
             )
         directory = self._resolve_directory(request, Path(repo_root).resolve())
         if gate_path:
-            completion_gate = verify_completion_gate_for_repository(gate_path, contract_path, repo_root)
+            contract_file = Path(str(contract_path))
+            if not contract_file.is_absolute():
+                contract_file = Path(repo_root).resolve() / contract_file
+            completion_gate = verify_completion_gate_for_repository(gate_path, contract_file, repo_root)
         else:
             self._verify_pre_handoff_authorization(request, Path(repo_root).resolve(), directory)
             completion_gate = None
@@ -305,9 +371,23 @@ class AgentHandoffProvider:
         self._verify_external_preparation_authorization(request, repo_root, directory)
         return self._write_package(request, manifest_checksum, run_id, directory)
 
-    def import_result(self, package_path: Path, result_path: Path) -> dict[str, Any]:
+    def import_result(
+        self,
+        package_path: Path,
+        result_path: Path,
+        *,
+        historical_checkpoint: bool = False,
+    ) -> dict[str, Any]:
+        """Import a result, optionally as an already-committed checkpoint.
+
+        ``historical_checkpoint`` skips only authorization of a new
+        execution. Package, result, schema, checksum, and binding validation
+        remain mandatory; the caller must establish durable checkpoint
+        evidence before using this mode.
+        """
         package = json.loads(package_path.read_text(encoding="utf-8"))
         payload = json.loads(result_path.read_text(encoding="utf-8"))
+        content = payload.get("output")
         expected_checksum = package.get("package_checksum")
         package_without_checksum = {key: value for key, value in package.items() if key != "package_checksum"}
         if expected_checksum != checksum(canonical_json(package_without_checksum)):
@@ -317,29 +397,46 @@ class AgentHandoffProvider:
             "topic_belonging_cognitive_assessment",
             "topic_belonging_cognitive_decision",
         }:
-            envelope_errors = validate_against_schema(payload, "external_result_envelope")
-            if envelope_errors:
-                raise ValueError("EXTERNAL_RESULT_ENVELOPE_INVALID: " + " | ".join(envelope_errors))
+            if historical_checkpoint:
+                if not isinstance(content, dict):
+                    raise ValueError("TOPIC_BELONGING_OUTPUT_INVALID: expected object")
+            else:
+                envelope_errors = validate_against_schema(payload, "external_result_envelope")
+                if envelope_errors:
+                    raise ValueError("EXTERNAL_RESULT_ENVELOPE_INVALID: " + " | ".join(envelope_errors))
         try:
             if package.get("completion_gate") is not None:
                 load_verified_completion_gate_from_payload(package.get("completion_gate"))
         except PermissionError as exc:
             raise PermissionError(str(exc)) from exc
-        mission_id = package.get("mission_id")
-        content = payload.get("output")
-        if mission_id is not None:
-            self._verify_import_authorization(package)
+        authorization_mode = _validated_authorization_mode(package.get("authorization_mode"))
+        authority_identity_field = "authorization_id" if authorization_mode == "PRODUCT" else "mission_id"
+        authority_identity = package.get(authority_identity_field)
+        if not str(authority_identity or "").strip():
+            raise ValueError(f"resultado importado requiere {authority_identity_field}")
+        if authority_identity is not None:
+            if not historical_checkpoint:
+                self._verify_import_authorization(package, package_path)
             # Research V2 stages are coordinator-owned.  The package role and
             # stage are validated against the pending coordinator checkpoint
             # by the application boundary; this transport provider must not
             # maintain a parallel stage-to-role workflow table.
             is_research_v2 = package.get("capability_id") == "EXTEND_01_RESEARCH_V2_REAL_E2E"
-            if not is_research_v2:
+            declared_stage = str(package.get("stage") or "").strip()
+            if not is_research_v2 and declared_stage:
                 expected_role = {
                     "ENRICHMENT": "CHANNEL_INTELLIGENCE_PRODUCER",
                     "PRODUCER": "CHANNEL_INTELLIGENCE_PRODUCER",
                     "REVIEWER": "CHANNEL_INTELLIGENCE_REVIEWER",
-                }.get(str(package.get("stage")))
+                    "PLAN015_VIEWER_JOURNEY": "NARRATIVE_ARCHITECTURE",
+                    "PLAN015_OPENING_DESIGN": "NARRATIVE_ARCHITECTURE",
+                    "PLAN015_CLOSING_DESIGN": "NARRATIVE_ARCHITECTURE",
+                    "PLAN015_NARRATIVE_PLAN": "NARRATIVE_ARCHITECTURE",
+                    "PLAN015_SCRIPT_DRAFT": "WRITING",
+                    "PLAN015_EDITED_SCRIPT": "EDITOR",
+                    "PLAN015_EDITORIAL_EDIT_REPORT": "EDITOR",
+                    "PLAN015_FINAL_EDITORIAL_AUDIT": "FINAL_EDITORIAL_AUDITOR",
+                }.get(declared_stage)
                 if expected_role is None:
                     raise ValueError("stage de handoff desconocida")
                 if package.get("role") != expected_role:
@@ -376,10 +473,26 @@ class AgentHandoffProvider:
                         raise ValueError("RESEARCH_PLAN_PROPOSAL_INVALID: " + " | ".join(output_errors))
             elif package.get("capability_id") == "TOPIC_BELONGING_ASSESSMENT":
                 output_schema = str(package.get("output_schema") or "")
-                output_errors = validate_against_schema(content, output_schema)
-                if output_errors:
-                    raise ValueError("TOPIC_BELONGING_OUTPUT_INVALID: " + " | ".join(output_errors))
-            for field in ("mission_id", "episode_id", "capability_id", "stage", "role"):
+                if historical_checkpoint:
+                    if not isinstance(content, dict):
+                        raise ValueError("TOPIC_BELONGING_OUTPUT_INVALID: expected object")
+                else:
+                    output_errors = validate_against_schema(content, output_schema)
+                    if output_errors:
+                        raise ValueError("TOPIC_BELONGING_OUTPUT_INVALID: " + " | ".join(output_errors))
+            binding_fields = [authority_identity_field, "episode_id", "capability_id", "stage", "role"]
+            if "authorization_mode" in package:
+                binding_fields.insert(1, "authorization_mode")
+            for field in binding_fields:
+                # Older MISSION results were valid without echoing the now
+                # explicit mode.  Preserve that compatibility only for the
+                # implicit MISSION default; PRODUCT remains explicit.
+                if (
+                    field == "authorization_mode"
+                    and package.get("authorization_mode") == "MISSION"
+                    and field not in payload
+                ):
+                    continue
                 if payload.get(field) != package.get(field):
                     raise ValueError(f"resultado importado no corresponde en {field}")
             if not payload.get("result_run_id"):
@@ -387,11 +500,24 @@ class AgentHandoffProvider:
             provenance = payload.get("provenance")
             if provenance is not None and not isinstance(provenance, dict):
                 raise ValueError("provenance inválida en resultado importado")
+            if str(package.get("stage") or "").startswith("PLAN015_") and (
+                not isinstance(provenance, dict)
+                or not str(provenance.get("executor_identity") or "").strip()
+            ):
+                raise ValueError("resultado PLAN015 requiere executor_identity real")
             if isinstance(provenance, dict):
-                for field in ("mission_id", "episode_id", "capability_id", "stage", "role"):
+                for field in (authority_identity_field, "episode_id", "capability_id", "stage", "role"):
                     if field in provenance and provenance[field] != package.get(field):
                         raise ValueError(f"provenance no corresponde en {field}")
-                if package.get("output_schema") in {"topic_belonging_cognitive_proposal", "topic_belonging_cognitive_assessment", "topic_belonging_cognitive_decision"} and not str(provenance.get("executor_identity") or "").strip():
+                if (
+                    not historical_checkpoint
+                    and package.get("output_schema") in {
+                        "topic_belonging_cognitive_proposal",
+                        "topic_belonging_cognitive_assessment",
+                        "topic_belonging_cognitive_decision",
+                    }
+                    and not str(provenance.get("executor_identity") or "").strip()
+                ):
                     raise ValueError("resultado importado requiere executor_identity real")
         if (payload.get("handoff_id") != package["handoff_id"] or payload.get("package_checksum") != expected_checksum
                 or payload.get("input_manifest_checksum") != package["input_manifest_checksum"]
@@ -406,10 +532,37 @@ class AgentHandoffProvider:
         return content
 
     @staticmethod
-    def _verify_import_authorization(package: dict[str, Any]) -> None:
+    def _verify_import_authorization(package: dict[str, Any], package_path: Path | None = None) -> None:
         from src.core.execution_preflight import _load_registered_capability
 
         repo_root = Path(str(package.get("mission_repo_root") or ".")).resolve()
+        authorization_mode = _validated_authorization_mode(package.get("authorization_mode"))
+        if authorization_mode == "PRODUCT":
+            from src.core.product_authorization import resolve_product_authorization
+
+            if package_path is None:
+                raise PermissionError("PRODUCT_AUTHORIZATION_IMPORT_PACKAGE_PATH_REQUIRED")
+            try:
+                handoff_directory = package_path.resolve().parent.relative_to(repo_root).as_posix()
+            except ValueError as exc:
+                raise PermissionError("PRODUCT_AUTHORIZATION_HANDOFF_PATH_OUTSIDE_REPOSITORY") from exc
+            authorization, _ = resolve_product_authorization(
+                repo_root,
+                capability_id=str(package.get("capability_id") or ""),
+                role_id=str(package.get("role") or ""),
+                execution_family=str(package.get("execution_family") or ""),
+                execution_route=str(package.get("execution_route") or ""),
+                execution_profile_id=package.get("execution_profile"),
+                execution_interface=str(package.get("execution_interface") or ""),
+                path=handoff_directory + "/",
+            )
+            if (
+                package.get("authorization_id") != authorization.authorization_id
+                or package.get("authorization_checksum") != authorization.authorization_checksum
+                or package.get("mission_id") is not None
+            ):
+                raise PermissionError("PRODUCT_AUTHORIZATION_REQUEST_STALE")
+            return
         authorization_ref = str(package.get("mission_authorization_path") or "")
         contract_ref = str(package.get("mission_contract_path") or "")
         if not authorization_ref or not contract_ref:
@@ -422,6 +575,7 @@ class AgentHandoffProvider:
         contract = load_mission_contract(contract_path)
         if authorization.mission_id != package.get("mission_id") or contract.mission_id != package.get("mission_id"):
             raise PermissionError("MISSION_SCOPE_AUTHORIZATION_MISMATCH: imported result")
+        authorization.verify_controlled_validation_contract(contract)
         capability = _load_registered_capability(repo_root, str(package.get("capability_id")))
         authorization.verify(
             repo_root,

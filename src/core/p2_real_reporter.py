@@ -65,6 +65,28 @@ def _step_fail(name: str, error: str, expected: str, obtained: str) -> P2ReportS
     return P2ReportStep(name=name, status="FAIL", error=error, expected=expected, obtained=obtained)
 
 
+def _reassessment_record_index(folder: Path) -> dict[int, dict[str, Any]]:
+    path = folder / "topic_belonging_reassessments.json"
+    if not path.is_file():
+        return {}
+    data = _read_json(path, "topic_belonging_reassessments.json")
+    entries = data.get("reassessments")
+    if not isinstance(entries, list):
+        raise ValueError("topic_belonging_reassessments.json: reassessments no es una lista")
+    indexed: dict[int, dict[str, Any]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise ValueError("topic_belonging_reassessments.json: registro inválido")
+        try:
+            attempt = int(entry["attempt_number"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("topic_belonging_reassessments.json: attempt_number inválido") from exc
+        if attempt in indexed:
+            raise ValueError("topic_belonging_reassessments.json: attempt duplicado")
+        indexed[attempt] = entry
+    return dict(sorted(indexed.items()))
+
+
 def _result_record_index(folder: Path) -> tuple[dict[str, Any] | None, list[P2ReportStep]]:
     path = folder / "roundtrip_results.json"
     if not path.is_file():
@@ -78,11 +100,66 @@ def _result_record_index(folder: Path) -> tuple[dict[str, Any] | None, list[P2Re
         return None, [_step_fail("RESULT_INDEX", "results no es una lista", "results: lista", repr(results))]
     if any(not isinstance(item, dict) for item in results):
         return None, [_step_fail("RESULT_INDEX", "results contiene un registro que no es objeto", "registros JSON objeto", repr(results))]
-    stages = [str(item.get("stage") or "") for item in results]
-    prefix_length = min(len(stages), len(STAGES))
-    if any(stage not in STAGES for stage in stages) or stages[:prefix_length] != list(STAGES)[:prefix_length] or any(stage != "REVIEWER" for stage in stages[len(STAGES):]):
-        return None, [_step_fail("RESULT_INDEX", "etapas duplicadas o desconocidas en el índice", repr(STAGES), repr(stages))]
-    return {str(item["stage"]): item for item in results}, []
+    if any(str(item.get("stage") or "") not in STAGES for item in results):
+        return None, [_step_fail("RESULT_INDEX", "etapa desconocida en el índice", repr(STAGES), repr(results))]
+
+    attempts: dict[int, list[dict[str, Any]]] = {}
+    for item in results:
+        try:
+            attempt = int(item.get("attempt_number") or 1)
+        except (TypeError, ValueError) as exc:
+            return None, [_step_fail("RESULT_INDEX", "attempt_number inválido", "attempt entero", repr(item.get("attempt_number")))]
+        attempts.setdefault(attempt, []).append(item)
+
+    try:
+        reassessments = _reassessment_record_index(folder)
+        workflow = _read_json(folder / "workflow_state.json", "workflow_state.json")
+    except ValueError as exc:
+        return None, [_step_fail("RESULT_INDEX", str(exc), "lineage de reassessment válido", "lineage inválido")]
+
+    def stage_map(records: list[dict[str, Any]], *, expected_kind: str | None = None) -> dict[str, Any]:
+        stages = [str(item.get("stage") or "") for item in records]
+        if len(stages) != len(set(stages)):
+            raise ValueError("etapas duplicadas dentro del attempt")
+        if expected_kind == "STRUCTURAL_REASSESSMENT" and stages != list(STAGES):
+            raise ValueError("attempt estructural incompleto u orden inválido")
+        if expected_kind == "REVIEWER_ONLY_REASSESSMENT" and stages != ["REVIEWER"]:
+            raise ValueError("attempt reviewer-only contiene etapas inválidas")
+        if expected_kind is None and stages != list(STAGES)[: len(stages)]:
+            raise ValueError("attempt inicial incompleto u orden inválido")
+        return {stage: item for stage, item in zip(stages, records)}
+
+    try:
+        orphan_attempts = sorted(set(attempts) - ({1} | set(reassessments)))
+        if orphan_attempts:
+            raise ValueError(f"attempts no declarados: {orphan_attempts}")
+        effective = stage_map(attempts.get(1, []))
+        for attempt, reassessment in reassessments.items():
+            records = attempts.get(attempt, [])
+            kind = reassessment.get("reassessment_kind", "REVIEWER_ONLY_REASSESSMENT")
+            reassessment_id = reassessment.get("reassessment_id")
+            if reassessment.get("status") != "COMPLETED":
+                if (
+                    workflow.get("attempt_number") == attempt
+                    and kind == "STRUCTURAL_REASSESSMENT"
+                ):
+                    raise ValueError("attempt estructural incompleto")
+                continue
+            if not reassessment_id or any(item.get("reassessment_id") != reassessment_id for item in records):
+                raise ValueError("reassessment_id no coincide con los resultados del attempt")
+            if kind == "STRUCTURAL_REASSESSMENT":
+                effective = stage_map(records, expected_kind=kind)
+            elif kind == "REVIEWER_ONLY_REASSESSMENT":
+                reviewer = stage_map(records, expected_kind=kind)
+                if set(effective) != {"ENRICHMENT", "PRODUCER", "REVIEWER"}:
+                    raise ValueError("reviewer-only no tiene bundle padre completo")
+                effective = {**effective, "REVIEWER": reviewer["REVIEWER"]}
+            else:
+                raise ValueError("reassessment_kind inválido")
+    except ValueError as exc:
+        return None, [_step_fail("RESULT_INDEX", str(exc), "attempts coherentes por reassessment", "índice inconsistente")]
+
+    return effective, []
 
 
 def _canonical_probe(mission_id: str | None) -> TopicBelongingTechnicalWorkflow:

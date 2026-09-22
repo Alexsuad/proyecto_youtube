@@ -104,13 +104,24 @@ def _validate_material_decision_ref(root: Path, capability: dict[str, Any], capa
         return [f"CAP_MATERIAL_DECISION_REGISTRY_INVALID:{capability_id}"]
     decision = next((item for item in registry.get("decisions", []) if item.get("decision_id") == reference.get("decision_id")), None)
     scope = decision.get("authorization_scope") if isinstance(decision, dict) else None
+    decision_state = decision.get("state") if isinstance(decision, dict) else None
     if (
         not isinstance(decision, dict)
-        or decision.get("state") != "VIGENTE"
+        or decision_state not in {"VIGENTE", "SUSTITUIDA"}
         or decision.get("subject_ref") != reference.get("subject_ref")
         or not isinstance(scope, dict)
         or scope.get("capability_id") != capability_id
         or scope.get("controlled_demonstration") is not True
+        or (
+            decision_state == "SUSTITUIDA"
+            and (
+                capability.get("availability_status") == "ACTIVE"
+                or scope.get("general_activation") is not False
+                or scope.get("product_use") is not False
+                or scope.get("successor_capabilities") is not False
+                or not str(decision.get("superseded_by") or "").strip()
+            )
+        )
     ):
         return [f"CAP_MATERIAL_DECISION_UNRESOLVED:{capability_id}"]
     if decision.get("authority") != capability.get("functional_authority_domain"):
