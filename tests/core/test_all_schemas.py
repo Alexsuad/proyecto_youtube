@@ -1216,8 +1216,36 @@ VALID_FIXTURES["human_decision_request"] = {
     "request_id": "REQ-FIXTURE", "episode_id": "ep_0001", "prompt": "Aprobar propuesta",
     "options": [], "recommendation": None, "subject_ref": None, "subject_version": None,
     "subject_checksum": None, "workflow_ref": "B5_I1_CONTROLLED_EXECUTION",
-    "expected_actor_ref": "fixture-user", "expected_channel": "TERMINAL",
+    "expected_actor_ref": "fixture-user", "expected_approval_role": None, "expected_channel": "TERMINAL",
     "created_at": "2026-08-22T00:00:00Z", "status": "PENDING", "request_checksum": "a" * 64,
+}
+VALID_FIXTURES["product_capability_authorizations"] = {
+    "registry_version": "1.0.0",
+    "authorizations": [
+        {
+            "authorization_id": "PCA-FIXTURE-001",
+            "authority_version": "1.0.0",
+            "capability_id": "CAPABILITY_FIXTURE",
+            "allowed_role_ids": ["ROLE_FIXTURE"],
+            "allowed_execution_families": ["AGENT_HARNESS"],
+            "allowed_routes": ["agent_harness"],
+            "allowed_profiles": ["EXECUTOR_MANAGED"],
+            "allowed_interfaces": ["FIXTURE_INTERFACE"],
+            "allowed_paths": ["handoff/"],
+            "cost_policy": "FREE_ONLY",
+            "authorized_by": "OWNER",
+            "authorized_role": "OWNER",
+            "issued_at": "2026-09-20T00:00:00Z",
+            "valid_from": "2026-09-20T00:00:00Z",
+            "valid_until": None,
+            "status": "ACTIVE",
+            "supersedes": None,
+            "revoked_at": None,
+            "revoked_by": None,
+            "authorization_checksum": "a" * 64,
+            "authorization_mode": "PRODUCT",
+        }
+    ],
 }
 
 

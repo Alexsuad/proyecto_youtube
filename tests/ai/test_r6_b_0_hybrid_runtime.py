@@ -8,7 +8,9 @@ import pytest
 from src.ai.runtime_profiles import AgentRuntimePort, MANAGED_BY_EXECUTOR, UNAVAILABLE, UNAVAILABLE_FROM_EXECUTOR, inventory_executor, load_execution_family_selection, load_execution_profiles, resolve_profile_family, resolve_run_configuration, selected_execution_family
 from src.core.mission_authorization import load_mission_authorization
 from src.ai.providers.agent_executor import AgentExecutorProvider
-from src.ai.role_execution import build_model_prompt, resolve_role_execution_contract
+from src.ai.role_execution import build_model_prompt, research_runtime_values, resolve_role_execution_contract
+from src.application.research_planning import ResearchPlanningService
+from src.core.editorial_profile_registry import load_active_profile_authority
 from src.core.contract_validation import validate_against_schema
 from src.core.prompt_resolver import resolve_prompt
 
@@ -204,21 +206,43 @@ def test_editorial_roles_traverse_canonical_profile_and_prompt_route(tmp_path: P
         assert route.execution_profile == "ollama_local"
         resolved_prompt = resolve_prompt(role_id)
         assert resolved_prompt["prompt_id"] == prompt_entry["prompt_id"]
+        runtime_values = {
+            "role_id": role_id,
+            "execution_profile": route.execution_profile,
+            "execution_route": route.execution_route,
+            "clean_session": True,
+            "required_context": {
+                "audit_criteria": "smoke criteria",
+                "profile_identity": "smoke profile",
+                "quality_criteria": "smoke quality criteria",
+            },
+        }
+        if role_id == "RESEARCH_AND_CURATION":
+            planning = ResearchPlanningService()
+            channel_context = planning.build_channel_context(
+                episode_id="EP-HYBRID-SMOKE",
+                profile=load_active_profile_authority(),
+                origin_ref="test:hybrid-smoke",
+            )
+            runtime_values = research_runtime_values(
+                {
+                    "channel_context": channel_context,
+                    "source_access": {
+                        "contract": "research_source_access",
+                        "limitations": ["Synthetic smoke only."],
+                    },
+                },
+                stage="HYBRID_SMOKE",
+                role_id=role_id,
+                execution_profile=route.execution_profile,
+                execution_route=route.execution_route,
+                clean_session=True,
+            )
         contract = resolve_role_execution_contract(
             role_id,
             "execution_smoke_report",
             {},
-            {
-                "role_id": role_id,
-                "execution_profile": route.execution_profile,
-                "execution_route": route.execution_route,
-                "clean_session": True,
-                "required_context": {
-                    "audit_criteria": "smoke criteria",
-                    "profile_identity": "smoke profile",
-                    "quality_criteria": "smoke quality criteria",
-                },
-            },
+            runtime_values,
         )
         model_prompt = build_model_prompt(contract)
         assert model_prompt.strip()

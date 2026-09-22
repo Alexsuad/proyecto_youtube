@@ -19,11 +19,13 @@ from src.application.topic_belonging import (
     ExecutionCognitiveBoundary,
     TopicBelongingExecutionError,
     TopicBelongingTechnicalWorkflow,
+    _expected_input_manifest_checksum,
 )
 from src.core.mission_authorization import scope_checksum, sha256_file
 from src.core.p2_real_reporter import STAGES, build_p2_report, render_p2_report
 from src.core.contract_validation import validate_against_schema
 from src.scripts.channel_intelligence import active_profile, canonical_checksum
+from src.scripts.topic_belonging_flow import evaluate_topic_belonging_gate
 from tests.core.test_application_intake import _temporary_entrypoint_repository
 
 
@@ -313,7 +315,7 @@ def _service(tmp_path: Path, vault_root: Path | None = None) -> EpisodeApplicati
         execution_mode="REAL",
         execution_family="AGENT_HARNESS",
         provider_override="agent_handoff",
-        handoff_directory=ROOT / "handoff",
+        handoff_directory=tmp_path / "handoff",
     )
     service = EpisodeApplicationService(store, workflow=TopicBelongingTechnicalWorkflow(store, boundary=boundary))
     service._p2_test_vault_root = vault_root
@@ -324,15 +326,20 @@ def _service(tmp_path: Path, vault_root: Path | None = None) -> EpisodeApplicati
 def _result_for(package_path: Path, output: dict, result_run_id: str, path: Path, *, executor_identity: str | None = None) -> Path:
     package = json.loads(package_path.read_text(encoding="utf-8"))
     output_checksum = hashlib.sha256(json.dumps(output, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    authorization_mode = str(package.get("authorization_mode") or "MISSION").upper()
+    authority_identity_field = "authorization_id" if authorization_mode == "PRODUCT" else "mission_id"
+    identity = {authority_identity_field: package[authority_identity_field]}
     payload = {
         "handoff_id": package["handoff_id"], "package_checksum": package["package_checksum"],
         "input_manifest_checksum": package["input_manifest_checksum"], "skill_id": package["skill_id"],
-        "skill_version": package["skill_version"], "mission_id": package["mission_id"],
+        "skill_version": package["skill_version"], **identity,
         "episode_id": package["episode_id"], "capability_id": package["capability_id"],
         "stage": package["stage"], "role": package["role"], "result_run_id": result_run_id,
         "output": output, "output_checksum": output_checksum,
-        "provenance": {"mission_id": package["mission_id"], "episode_id": package["episode_id"], "capability_id": package["capability_id"], "stage": package["stage"], "role": package["role"], "run_id": result_run_id, "executor_identity": executor_identity or ("fixture-reviewer" if package["role"] == "CHANNEL_INTELLIGENCE_REVIEWER" else "fixture-producer")},
+        "provenance": {**identity, "episode_id": package["episode_id"], "capability_id": package["capability_id"], "stage": package["stage"], "role": package["role"], "run_id": result_run_id, "executor_identity": executor_identity or ("fixture-reviewer" if package["role"] == "CHANNEL_INTELLIGENCE_REVIEWER" else "fixture-producer")},
     }
+    if "authorization_mode" in package:
+        payload["authorization_mode"] = package["authorization_mode"]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return path
@@ -630,6 +637,157 @@ def test_integrated_reassessment_succeeded_materializes_and_stops(tmp_path: Path
         _cleanup_handoffs(created, service)
 
 
+def test_structural_reassessment_forms_effective_attempt_and_preserves_history(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        created.extend(_finish_roundtrip(service, episode, tmp_path))
+        original = {
+            name: (episode.folder / name).read_bytes()
+            for name in (
+                "02_topic_belonging_input.json",
+                "03_topic_belonging_assessment.json",
+                "04_topic_belonging_decision.json",
+                "05_topic_belonging_gate.json",
+            )
+        }
+        monkeypatch.setattr(
+            service.workflow,
+            "_select_reassessment_kind",
+            lambda _handle: "STRUCTURAL_REASSESSMENT",
+        )
+        evidence_path = tmp_path / "structural-evidence.json"
+        evidence_path.write_text(json.dumps(_reassessment_evidence("structural")), encoding="utf-8")
+        ready = service.submit_topic_belonging_evidence(episode.episode_id, evidence_path)
+        reassessments = json.loads(
+            (episode.folder / "topic_belonging_reassessments.json").read_text(encoding="utf-8")
+        )["reassessments"]
+        assert reassessments[-1]["reassessment_kind"] == "STRUCTURAL_REASSESSMENT"
+
+        pending = service.prepare_topic_belonging_reassessment(episode.episode_id)
+        package = Path(pending["state"]["handoff_package_ref"])
+        created.append(package)
+        service.import_result(
+            episode.episode_id,
+            _result_for(package, _cognitive_proposal(), "RESULT-STRUCTURAL-ENRICHMENT", tmp_path / "structural-enrichment.json"),
+        )
+        service.resume(episode.episode_id)
+        _, _, package = _pending_package(episode)
+        created.append(package)
+        results = json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))["results"]
+        structural_input_record = next(
+            item for item in results
+            if item["stage"] == "ENRICHMENT" and item.get("attempt_number") == 2
+        )
+        structural_input = json.loads(
+            (episode.folder / structural_input_record["materialized_output_path"]).read_text(encoding="utf-8")
+        )
+        service.import_result(
+            episode.episode_id,
+            _result_for(
+                package,
+                _cognitive_assessment(structural_input, "RESULT-STRUCTURAL-PRODUCER"),
+                "RESULT-STRUCTURAL-PRODUCER",
+                tmp_path / "structural-producer.json",
+            ),
+        )
+        service.resume(episode.episode_id)
+        _, _, package = _pending_package(episode)
+        created.append(package)
+        results = json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))["results"]
+        structural_assessment_record = next(
+            item for item in results
+            if item["stage"] == "PRODUCER" and item.get("attempt_number") == 2
+        )
+        structural_assessment = json.loads(
+            (episode.folder / structural_assessment_record["materialized_output_path"]).read_text(encoding="utf-8")
+        )
+        service.import_result(
+            episode.episode_id,
+            _result_for(
+                package,
+                _cognitive_decision(structural_assessment),
+                "RESULT-STRUCTURAL-REVIEWER",
+                tmp_path / "structural-reviewer.json",
+            ),
+        )
+        results = json.loads((episode.folder / "roundtrip_results.json").read_text(encoding="utf-8"))["results"]
+        structural_input_record = next(
+            item for item in results
+            if item["stage"] == "ENRICHMENT" and item.get("attempt_number") == 2
+        )
+        structural_package = json.loads(
+            Path(structural_input_record["handoff_package_ref"]).read_text(encoding="utf-8")
+        )
+        structural_evidence = service.workflow._read_reassessment_for_package(
+            episode, structural_package
+        )
+        expected_manifest = _expected_input_manifest_checksum(
+            episode.episode_id,
+            "ENRICHMENT",
+            json.loads((episode.folder / "01_editorial_intake_handoff.json").read_text(encoding="utf-8")),
+            {},
+            {},
+            structural_evidence,
+        )
+        assert structural_package["input_manifest_checksum"] == expected_manifest
+        final = service.resume(episode.episode_id)
+        assert final["state"]["status"] == "TOPIC_BELONGING_TECHNICAL_STOP"
+        effective = service.workflow._effective_topic_bundle(episode)
+        assert effective["source_attempt"] == 2
+        assert effective["topic_input"] == structural_input
+        assert effective["assessment"] == structural_assessment
+        assert effective["gate_ref"] is None
+        assert effective["gate"] == evaluate_topic_belonging_gate(
+            effective["decision"], effective["assessment"], effective["topic_input"]
+        )
+        assert all((episode.folder / name).read_bytes() == content for name, content in original.items())
+        report = build_p2_report(episode.folder)
+        assert report.result == "PASS"
+    finally:
+        if service is not None:
+            shutil.rmtree(service.store.episodes_path, ignore_errors=True)
+        _cleanup_handoffs(created, service)
+
+
+def test_incomplete_structural_reassessment_keeps_previous_effective_bundle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        created.extend(_finish_roundtrip(service, episode, tmp_path))
+        monkeypatch.setattr(
+            service.workflow,
+            "_select_reassessment_kind",
+            lambda _handle: "STRUCTURAL_REASSESSMENT",
+        )
+        evidence_path = tmp_path / "incomplete-structural-evidence.json"
+        evidence_path.write_text(json.dumps(_reassessment_evidence("incomplete")), encoding="utf-8")
+        service.submit_topic_belonging_evidence(episode.episode_id, evidence_path)
+        pending = service.prepare_topic_belonging_reassessment(episode.episode_id)
+        package = Path(pending["state"]["handoff_package_ref"])
+        created.append(package)
+
+        effective = service.workflow._effective_topic_bundle(episode)
+        assert effective["source_attempt"] == 1
+        assert effective["decision"]["decision"] == "REQUEST_MORE_EVIDENCE"
+        assert effective["topic_input_ref"].endswith("02_topic_belonging_input.json")
+        report = build_p2_report(episode.folder)
+        assert report.result == "FAIL"
+        assert report.failed_step == "RESULT_INDEX"
+    finally:
+        if service is not None:
+            shutil.rmtree(service.store.episodes_path, ignore_errors=True)
+        _cleanup_handoffs(created, service)
+
+
 def _reassessment_evidence(label: str) -> dict:
     return {
         "context": f"Evidencia técnica de reevaluación {label}.",
@@ -789,6 +947,40 @@ def test_enrichment_import_materializes_software_owned_input(tmp_path: Path) -> 
         _cleanup_handoffs(created, service)
 
 
+def test_enrichment_import_rejects_noncanonical_territory_before_persisting_input(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        proposal = _cognitive_proposal()
+        proposal["proposed_territory"] = "Los rituales cotidianos y las fronteras sociales de pertenencia"
+        result_path = _result_for(package, proposal, "RESULT-ENRICHMENT-NONCANONICAL-TERRITORY", tmp_path / "enrichment.json")
+        with pytest.raises(TopicBelongingExecutionError, match="INPUT_PROPOSED_TERRITORY_NOT_CANONICAL"):
+            service.import_result(episode.episode_id, result_path)
+        assert not (episode.folder / "roundtrip_results.json").is_file()
+        assert not (episode.folder / "02_topic_belonging_input.json").is_file()
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_enrichment_import_rejects_pending_territory_before_persisting_input(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        proposal = _cognitive_proposal()
+        proposal["proposed_territory"] = "Territorios secundarios aún no aprobados por Inteligencia del Canal"
+        result_path = _result_for(package, proposal, "RESULT-ENRICHMENT-PENDING-TERRITORY", tmp_path / "enrichment.json")
+        with pytest.raises(TopicBelongingExecutionError, match="INPUT_PROPOSED_TERRITORY_NOT_ALLOWED"):
+            service.import_result(episode.episode_id, result_path)
+        assert not (episode.folder / "roundtrip_results.json").is_file()
+        assert not (episode.folder / "02_topic_belonging_input.json").is_file()
+    finally:
+        _cleanup_handoffs(created, service)
+
+
 def test_enrichment_import_rejects_missing_canonical_input(tmp_path: Path) -> None:
     created: list[Path] = []
     service = None
@@ -935,6 +1127,29 @@ def test_p2_reporter_exposes_persisted_evidence_failure(tmp_path: Path) -> None:
         assert "No such file or directory" in report.error
         assert report.expected == "resultado persistido compatible con su handoff"
         assert report.obtained == "evidencia incompatible"
+    finally:
+        _cleanup_handoffs(created, service)
+
+
+def test_p2_reporter_rejects_orphan_attempt_without_reassessment(tmp_path: Path) -> None:
+    created: list[Path] = []
+    service = None
+    try:
+        service, episode, package = _start(tmp_path)
+        created.append(package)
+        created.extend(_finish_roundtrip(service, episode, tmp_path))
+        results_path = episode.folder / "roundtrip_results.json"
+        results = json.loads(results_path.read_text(encoding="utf-8"))
+        orphan = dict(results["results"][-1])
+        orphan["attempt_number"] = 99
+        orphan["reassessment_id"] = "ORPHAN-REASSESSMENT"
+        results["results"].append(orphan)
+        results_path.write_text(json.dumps(results), encoding="utf-8")
+
+        report = build_p2_report(episode.folder)
+        assert report.result == "FAIL"
+        assert report.failed_step == "RESULT_INDEX"
+        assert "attempts no declarados" in (report.error or "")
     finally:
         _cleanup_handoffs(created, service)
 

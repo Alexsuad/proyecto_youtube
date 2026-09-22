@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -8,15 +9,35 @@ import pytest
 from src.ai.contracts import ExecutionRequest, ExecutionStatus, InputArtifact
 from src.ai.execution import _bind_runtime_fields, editorial_only_payload, execute
 from src.ai.providers.ollama import OllamaProvider
-from src.ai.role_execution import RoleExecutionContractError, build_model_prompt, resolve_role_execution_contract
+from src.ai.role_execution import (
+    RoleExecutionContractError,
+    _applicable_policies,
+    build_model_prompt,
+    resolve_prompt,
+    resolve_role_execution_contract,
+)
 from src.core.contract_validation import validate_against_schema
 from tests.core.test_plan_005_real_consumer_integration import _request as governed_request, _setup as setup_governed_repo
 from tests.harness.test_b5_i2 import _analysis, _refresh_b5_i2_audit, _write_case
 from tests.harness.test_youtube_adaptation_b5_i2 import _early_packaging, _valid_package
 
 
+ROLE_CONTEXT_FIXTURES = {
+    "compiled profile approved": "compiled-profile-approved",
+    "B5-I2 contracts": "b5-i2-contracts",
+    "B5-I1 approval state": "b5-i1-approval-state",
+    "B5-I2 criteria": "b5-i2-criteria",
+    "producer provenance": {"run_id": "RUN-PRODUCER"},
+    "independence rules": "independence-rules",
+    "límites B5-I2": "limites-b5-i2",
+    "rules of producer/auditor independence": "independence-rules",
+    "límites de publicación": "limites-publicacion",
+    "compiled_profile_path resolved from active registry": "config/editorial_profile_registry.json",
+}
+
+
 def _runtime_values() -> dict[str, object]:
-    return {"smoke_id":"SMOKE-1","role_id":"SCRIPT_PRODUCT_PRODUCER","execution_profile":"ollama_local","execution_route":"local_model","selected_executor":"native_provider","selected_provider":"ollama","selected_model":"Qwen2.5-Coder:latest","actual_executor":"native_provider","actual_provider":"ollama","actual_model":"Qwen2.5-Coder:latest","result":"SUCCEEDED","decision":"CONTRACTUAL_SMOKE_PASS","stdout_preview":"ok","stderr_preview":"","exit_code":0,"notes":[]}
+    return {"smoke_id":"SMOKE-1","role_id":"SCRIPT_PRODUCT_PRODUCER","execution_profile":"ollama_local","execution_route":"local_model","selected_executor":"native_provider","selected_provider":"ollama","selected_model":"Qwen2.5-Coder:latest","actual_executor":"native_provider","actual_provider":"ollama","actual_model":"Qwen2.5-Coder:latest","result":"SUCCEEDED","decision":"CONTRACTUAL_SMOKE_PASS","stdout_preview":"ok","stderr_preview":"","exit_code":0,"notes":[],"clean_session":True,"required_context":dict(ROLE_CONTEXT_FIXTURES)}
 
 
 def _producer_input() -> dict[str, object]:
@@ -77,6 +98,61 @@ def test_final_auditor_requires_clean_independent_context() -> None:
         {"clean_session": True, "required_context": {"audit_criteria": "criteria", "profile_identity": "profile"}},
     )
     assert contract["output_schema_name"] == "final_editorial_audit"
+
+
+def test_youtube_adaptation_auditor_fails_closed_on_unresolved_symbolic_context() -> None:
+    payload = {
+        "youtube_adaptation_b5_i2_package": {},
+        "producer_run_reference": "RUN-PRODUCER",
+        "active_editorial_profile_reference": {},
+        "refined_thesis": {},
+        "claims_ledger": [],
+        "evidence_report": {},
+    }
+    with pytest.raises(RoleExecutionContractError, match="required context unresolved"):
+        resolve_role_execution_contract(
+        "YOUTUBE_ADAPTATION_AUDITOR",
+            "youtube_adaptation_review",
+            payload,
+            {"required_context": {"rules of producer/auditor independence": "independent"}},
+        )
+
+
+def test_required_context_matrix_is_generated_from_active_prompt_registry() -> None:
+    registry = json.loads(
+        (Path(__file__).resolve().parents[2] / "config" / "agent_prompt_registry.json").read_text(encoding="utf-8")
+    )
+    canonical_aliases = {
+        "active_profile_identity",
+        "profile_identity",
+        "editorial_profile",
+        "editorial_voice_profile",
+        "voice_guidelines",
+    }
+    for entry in registry["prompts"]:
+        prompt_contract = resolve_prompt(str(entry["role_id"]))
+        required = list(entry.get("required_context", []))
+        supplied = {
+            ref: f"fixture:{ref}"
+            for ref in required
+            if not str(ref).endswith((".md", ".json")) and ref != "clean_session"
+        }
+        policies = _applicable_policies(
+            prompt_contract,
+            {"clean_session": True, "required_context": supplied},
+        )
+        assert len(policies) == len(required)
+        for missing in required:
+            if str(missing).endswith((".md", ".json")) or missing in canonical_aliases:
+                continue
+            runtime = {"clean_session": True, "required_context": dict(supplied)}
+            if missing != "clean_session":
+                runtime["required_context"].pop(missing, None)
+                with pytest.raises(RoleExecutionContractError, match="required context unresolved"):
+                    _applicable_policies(prompt_contract, runtime)
+            else:
+                with pytest.raises(RoleExecutionContractError, match="required context"):
+                    _applicable_policies(prompt_contract, {"required_context": dict(supplied)})
 
 
 def test_final_auditor_runtime_binding_owns_exact_script_identity(tmp_path) -> None:
@@ -403,7 +479,7 @@ def test_channel_intelligence_producer_prompt_is_stage_aware() -> None:
         "CHANNEL_INTELLIGENCE_PRODUCER",
         "topic_belonging_input",
         enrichment_payload,
-        {"stage": "ENRICHMENT", "execution_profile": "codex_current"},
+        {"stage": "ENRICHMENT", "execution_profile": "codex_current", "required_context": {"compiled_profile_path resolved from active registry": "config/editorial_profile_registry.json"}},
     ))
     producer_payload = {
         "TopicBelongingInput": {"topic_input_id": "TBI-1"},
@@ -414,7 +490,7 @@ def test_channel_intelligence_producer_prompt_is_stage_aware() -> None:
         "CHANNEL_INTELLIGENCE_PRODUCER",
         "topic_belonging_assessment",
         producer_payload,
-        {"stage": "PRODUCER", "execution_profile": "codex_current"},
+        {"stage": "PRODUCER", "execution_profile": "codex_current", "required_context": {"compiled_profile_path resolved from active registry": "config/editorial_profile_registry.json"}},
     ))
     assert '"stage": "ENRICHMENT"' in enrichment
     assert "produce únicamente un `TopicBelongingInput`" in enrichment
@@ -428,13 +504,13 @@ def test_channel_intelligence_stage_input_contracts_are_not_circular() -> None:
             "CHANNEL_INTELLIGENCE_PRODUCER",
             "topic_belonging_assessment",
             {"active_editorial_profile": {}, "initial_evidence": []},
-            {"stage": "PRODUCER", "execution_profile": "codex_current"},
+            {"stage": "PRODUCER", "execution_profile": "codex_current", "required_context": {"compiled_profile_path resolved from active registry": "config/editorial_profile_registry.json"}},
         )
     contract = resolve_role_execution_contract(
         "CHANNEL_INTELLIGENCE_PRODUCER",
         "topic_belonging_input",
         {"EditorialIntakeHandoff": {}, "active_editorial_profile": {}, "initial_evidence": []},
-        {"stage": "ENRICHMENT", "execution_profile": "codex_current"},
+        {"stage": "ENRICHMENT", "execution_profile": "codex_current", "required_context": {"compiled_profile_path resolved from active registry": "config/editorial_profile_registry.json"}},
     )
     assert contract["output_schema_name"] == "topic_belonging_input"
 

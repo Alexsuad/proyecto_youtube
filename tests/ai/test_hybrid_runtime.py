@@ -64,7 +64,7 @@ def _audit() -> dict:
     }
 
 
-def _completion_gate_config(tmp_path: Path) -> dict[str, str]:
+def _completion_gate_config(tmp_path: Path, *, include_mission_identity: bool = False) -> dict[str, str]:
     repo = tmp_path / "gate_repo"
     repo.mkdir()
     def git(*args: str) -> str:
@@ -77,7 +77,7 @@ def _completion_gate_config(tmp_path: Path) -> dict[str, str]:
     git("commit", "-m", "control", "--quiet")
     baseline_commit = git("rev-parse", "HEAD")
     contract_path = repo / "mission_contract.json"
-    contract_path.write_text(json.dumps({
+    contract_payload = {
         "mission_id": "TEST_MISSION",
         "artifact_id": "test-mission",
         "artifact_version": "1.0.0",
@@ -90,19 +90,109 @@ def _completion_gate_config(tmp_path: Path) -> dict[str, str]:
         "push_guard": {"remote": "LOCAL", "ref": "HEAD~1", "baseline_remote_commit": baseline_commit},
         "state_requirements": {"control_path": "control.md", "required": {"CURRENT_MISSION": "TEST_MISSION"}, "forbidden": {}},
         "schema_checks": [],
-    }), encoding="utf-8")
-    git("add", "mission_contract.json")
+    }
+    if include_mission_identity:
+        contract_payload["authorized_paths"] += ["mission-authorization.json", "authority.json", "config/"]
+        contract_payload["mission_authorization_path"] = "mission-authorization.json"
+    if include_mission_identity:
+        (repo / "config").mkdir()
+        (repo / "config" / "execution_family_selection.json").write_text(json.dumps({
+            "selection_version": "1.0.0",
+            "families": {"AGENT_HARNESS": True, "API_PROVIDER": False},
+        }), encoding="utf-8")
+        (repo / "config" / "context_resolution_policy.json").write_text(json.dumps({
+            "normative_allowed_roots": [],
+            "evidentiary_allowed_roots": [],
+            "historical_allowed_roots": [],
+        }), encoding="utf-8")
+        (repo / "config" / "capability_registry.json").write_text(json.dumps({
+            "registry_version": "1.0.0",
+            "authority": "CAPABILITY_FUNCTIONAL_AUTHORITY",
+            "routing_consumer": "HYBRID_RUNTIME_TEST",
+            "compatibility_tokens": {"maturity": {}, "availability": {}, "assurance": {}, "approval": {}, "evidence": {}},
+            "capabilities": [{
+                "capability_id": CAPABILITY,
+                "domain": "SCRIPT_PRODUCT",
+                "functional_authority_domain": "SCRIPT_PRODUCT",
+                "purpose": "Synthetic semantic auditor fixture.",
+                "functional_requirements": [],
+                "implementation_kind": "DETERMINISTIC",
+                "maturity_status": "DEFINED",
+                "assigned_role": [AUDITOR_ROLE],
+                "routing_required": False,
+            }],
+        }), encoding="utf-8")
+        scope = {
+            "mission_id": "TEST_MISSION",
+            "capability_ids": [CAPABILITY],
+            "role_ids": [AUDITOR_ROLE],
+            "execution_profile_ids": ["ANY"],
+            "execution_interface": "ANY",
+            "allowed_operations": ["EXECUTE_CAPABILITY"],
+            "allowed_paths": ["handoff/"],
+            "allowed_routes": ["ANY"],
+            "execution_mode": "ANY",
+            "live_state_sha256": hashlib.sha256((repo / "control.md").read_bytes()).hexdigest(),
+            "contains_material_repair": False,
+            "repair_integrity_evidence_path": "NONE",
+        }
+        authority_path = repo / "authority.json"
+        authority_path.write_text(json.dumps({
+            "mission_id": "TEST_MISSION",
+            "authorized_scope_sha256": _checksum(scope),
+            "artifact_version": "1.0.0",
+            "decision": "AUTHORIZED",
+        }), encoding="utf-8")
+        (repo / "mission-authorization.json").write_text(json.dumps({
+            "mission_id": "TEST_MISSION",
+            "authorization": {
+                "live_state_path": "control.md",
+                "live_state_sha256": scope["live_state_sha256"],
+                "capability_ids": [CAPABILITY],
+                "role_ids": [AUDITOR_ROLE],
+                "execution_profile_ids": ["ANY"],
+                "execution_interface": "ANY",
+                "allowed_operations": ["EXECUTE_CAPABILITY"],
+                "allowed_paths": ["handoff/"],
+                "allowed_routes": ["ANY"],
+                "execution_mode": "ANY",
+                "single_use": False,
+                "authority_ref": "authority.json",
+                "authority_sha256": hashlib.sha256(authority_path.read_bytes()).hexdigest(),
+                "authorized_scope_sha256": _checksum(scope),
+                "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+                "contains_material_repair": False,
+                "repair_integrity_evidence_path": "NONE",
+            },
+        }), encoding="utf-8")
+        contract_payload["mission_authorization_sha256"] = hashlib.sha256(
+            (repo / "mission-authorization.json").read_bytes()
+        ).hexdigest()
+    contract_path.write_text(json.dumps(contract_payload), encoding="utf-8")
+    files_to_add = ["mission_contract.json"]
+    if include_mission_identity:
+        files_to_add += ["mission-authorization.json", "authority.json", "config/capability_registry.json", "config/context_resolution_policy.json", "config/execution_family_selection.json"]
+    git("add", *files_to_add)
     git("commit", "-m", "contract", "--quiet")
     contract = load_mission_contract(contract_path)
     result = run_mission_completion_gate(contract, repo)
     assert result.status.value == "PASS", result.to_dict()
     result_path = tmp_path / "completion_gate.json"
     result_path.write_text(json.dumps(result.to_dict(), ensure_ascii=False), encoding="utf-8")
-    return {
+    config = {
         "completion_gate_result_path": str(result_path),
-        "mission_contract_path": str(contract_path),
+        "mission_contract_path": "mission_contract.json" if include_mission_identity else str(contract_path),
         "mission_repo_root": str(repo),
     }
+    if include_mission_identity:
+        config.update({
+            "repository_root": str(repo),
+            "authorization_mode": "MISSION",
+            "mission_id": "TEST_MISSION",
+            "mission_authorization_path": "mission-authorization.json",
+            "context_policy_path": "config/context_resolution_policy.json",
+        })
+    return config
 
 
 def _register_synthetic_auditor(root: Path) -> None:
@@ -272,7 +362,7 @@ def test_profile_reasoning_effort_is_blocked_before_handoff_package(tmp_path: Pa
 
 
 def test_resolved_agent_profile_prepares_handoff_without_integrated_executor(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    config = _completion_gate_config(tmp_path)
+    config = _completion_gate_config(tmp_path, include_mission_identity=True)
     config["execution_profiles_path"] = str(Path(__file__).resolve().parents[2] / "config/agent_execution_profiles.json")
     monkeypatch.setattr("src.ai.runtime_profiles.shutil.which", lambda command: f"C:/tools/{command}")
     request = _request(
@@ -383,6 +473,19 @@ def test_handoff_rejects_pass_without_mandatory_evidence(tmp_path: Path) -> None
 
     assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
     assert "mandatory evidence" in (result.error or "")
+
+
+def test_handoff_with_completion_gate_without_authority_identity_is_blocked(tmp_path: Path) -> None:
+    result = execute(_request(
+        tmp_path,
+        provider="agent_handoff",
+        execution_mode="agent_handoff",
+        handoff_directory=tmp_path / "handoff",
+        config=_completion_gate_config(tmp_path),
+    ))
+    assert result.status is ExecutionStatus.BLOCKED_BY_SEMANTIC_EVALUATOR
+    assert "AUTHORIZATION_MODE_REQUIRED_FOR_HANDOFF" in (result.error or "")
+    assert not list((tmp_path / "handoff").glob("*.json"))
 
 def _four_artifacts(tmp_path: Path) -> list[InputArtifact]:
     _register_synthetic_auditor(tmp_path)
@@ -499,13 +602,13 @@ def test_local_unavailable_blocks(tmp_path: Path) -> None:
 
 
 def test_agent_handoff_package_is_importable_and_rejects_bad_checksum(tmp_path: Path) -> None:
-    request = _request(tmp_path, provider="agent_handoff", execution_mode="agent_handoff", handoff_directory=tmp_path / "handoff")
+    request = _request(tmp_path, provider="agent_handoff", execution_mode="agent_handoff", handoff_directory=tmp_path / "handoff", config=_completion_gate_config(tmp_path, include_mission_identity=True))
     result = execute(request)
-    assert result.status is ExecutionStatus.HANDOFF_PREPARED
+    assert result.status is ExecutionStatus.HANDOFF_PREPARED, result.error
     package = Path(result.usage["package"])
     imported = tmp_path / "result.json"
     package_data = json.loads(package.read_text(encoding="utf-8"))
-    payload = {"handoff_id": result.run_id, "package_checksum": package_data["package_checksum"], "skill_id": SKILL_ID, "skill_version": SKILL_VERSION, "input_manifest_checksum": result.input_manifest_checksum, "output": _audit()}
+    payload = {"handoff_id": result.run_id, "package_checksum": package_data["package_checksum"], "skill_id": SKILL_ID, "skill_version": SKILL_VERSION, "authorization_mode": "MISSION", "mission_id": "TEST_MISSION", "episode_id": "EP-1", "capability_id": CAPABILITY, "role": AUDITOR_ROLE, "input_manifest_checksum": result.input_manifest_checksum, "result_run_id": f"{result.run_id}-RESULT", "output": _audit()}
     payload["output_checksum"] = _checksum(payload["output"])
     imported.write_text(json.dumps(payload), encoding="utf-8")
     assert AgentHandoffProvider().import_result(package, imported) == _audit()
@@ -780,12 +883,13 @@ def test_auto_and_api_do_not_authorize_external_use_from_environment(tmp_path: P
 
 def test_handoff_import_rejects_foreign_package_and_persists_valid_result(tmp_path: Path) -> None:
     artifacts = _four_artifacts(tmp_path)
-    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={**_completion_gate_config(tmp_path), "repository_root": str(tmp_path), "prompt": "instrucciones editoriales", "execution_registry_path": str(tmp_path / "registry.json")}, role=AUDITOR_ROLE)
+    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={**_completion_gate_config(tmp_path, include_mission_identity=True), "prompt": "instrucciones editoriales", "execution_registry_path": str(tmp_path / "registry.json")}, role=AUDITOR_ROLE)
     prepared = execute(request)
+    assert prepared.status is ExecutionStatus.HANDOFF_PREPARED, prepared.error
     package = Path(prepared.usage["package"])
     data = json.loads(package.read_text(encoding="utf-8"))
     imported = tmp_path / "import.json"
-    payload = {"handoff_id": prepared.run_id, "package_checksum": data["package_checksum"], "skill_id": SKILL_ID, "skill_version": SKILL_VERSION, "input_manifest_checksum": prepared.input_manifest_checksum, "output": _audit()}
+    payload = {"handoff_id": prepared.run_id, "package_checksum": data["package_checksum"], "skill_id": SKILL_ID, "skill_version": SKILL_VERSION, "authorization_mode": "MISSION", "mission_id": "TEST_MISSION", "episode_id": "EP-1", "capability_id": CAPABILITY, "role": AUDITOR_ROLE, "input_manifest_checksum": prepared.input_manifest_checksum, "result_run_id": f"{prepared.run_id}-RESULT", "output": _audit()}
     payload["output_checksum"] = _checksum(payload["output"])
     imported.write_text(json.dumps(payload), encoding="utf-8")
     result = import_b5_i2_handoff(package_path=package, result_path=imported, artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=tmp_path / "registry.json", episode_id="EP-1")
@@ -909,13 +1013,14 @@ def test_runner_accepts_optional_early_packaging_when_present(tmp_path: Path) ->
 
 def test_fabricated_self_consistent_handoff_without_registry_is_rejected(tmp_path: Path) -> None:
     artifacts = _four_artifacts(tmp_path)
-    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={**_completion_gate_config(tmp_path), "repository_root": str(tmp_path), "prompt": "prompt"}, role=AUDITOR_ROLE)
+    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={**_completion_gate_config(tmp_path, include_mission_identity=True), "prompt": "prompt"}, role=AUDITOR_ROLE)
     prepared = execute(request)
     package = Path(prepared.usage["package"])
     registry = tmp_path / "missing-registry.json"
     payload = json.loads(package.read_text(encoding="utf-8"))
     result_file = tmp_path / "result.json"
     result_payload = {"handoff_id": prepared.run_id, "package_checksum": payload["package_checksum"], "skill_id": payload["skill_id"], "skill_version": payload["skill_version"], "input_manifest_checksum": payload["input_manifest_checksum"], "output": _audit()}
+    result_payload.update({"authorization_mode": "MISSION", "mission_id": "TEST_MISSION", "episode_id": "EP-1", "capability_id": CAPABILITY, "role": AUDITOR_ROLE, "result_run_id": f"{prepared.run_id}-RESULT"})
     result_payload["output_checksum"] = _checksum(result_payload["output"])
     result_file.write_text(json.dumps(result_payload), encoding="utf-8")
     rejected = import_b5_i2_handoff(package_path=package, result_path=result_file, artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=registry, episode_id="EP-1")
@@ -926,10 +1031,14 @@ def test_fabricated_self_consistent_handoff_without_registry_is_rejected(tmp_pat
 def test_modified_package_with_recalculated_checksum_is_rejected_against_registry(tmp_path: Path) -> None:
     registry = tmp_path / "registry.json"
     artifacts = _four_artifacts(tmp_path)
-    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={**_completion_gate_config(tmp_path), "repository_root": str(tmp_path), "prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
+    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={**_completion_gate_config(tmp_path, include_mission_identity=True), "prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
     prepared = execute(request); package = Path(prepared.usage["package"])
     package_data = json.loads(package.read_text(encoding="utf-8")); package_data["prompt"] = "altered"; package_data["package_checksum"] = _checksum({key: value for key, value in package_data.items() if key != "package_checksum"}); package.write_text(json.dumps(package_data), encoding="utf-8")
     result_file = tmp_path / "result.json"; payload = {"handoff_id": prepared.run_id, "package_checksum": package_data["package_checksum"], "skill_id": package_data["skill_id"], "skill_version": package_data["skill_version"], "input_manifest_checksum": package_data["input_manifest_checksum"], "output": _audit()}; payload["output_checksum"] = _checksum(payload["output"]); result_file.write_text(json.dumps(payload), encoding="utf-8")
+    payload = json.loads(result_file.read_text(encoding="utf-8"))
+    payload.update({"authorization_mode": "MISSION", "mission_id": "TEST_MISSION", "episode_id": "EP-1", "capability_id": CAPABILITY, "role": AUDITOR_ROLE, "result_run_id": f"{prepared.run_id}-RESULT"})
+    payload["output_checksum"] = _checksum(payload["output"])
+    result_file.write_text(json.dumps(payload), encoding="utf-8")
     rejected = import_b5_i2_handoff(package_path=package, result_path=result_file, artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=registry, episode_id="EP-1")
     assert rejected.status is ExecutionStatus.FAILED
     assert "package_checksum" in (rejected.error or "")
@@ -937,8 +1046,8 @@ def test_modified_package_with_recalculated_checksum_is_rejected_against_registr
 
 def test_handoff_cannot_be_consumed_twice(tmp_path: Path) -> None:
     registry = tmp_path / "registry.json"; artifacts = _four_artifacts(tmp_path)
-    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={**_completion_gate_config(tmp_path), "repository_root": str(tmp_path), "prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
-    prepared = execute(request); package = Path(prepared.usage["package"]); data = json.loads(package.read_text(encoding="utf-8")); result_file = tmp_path / "result.json"; payload = {"handoff_id": prepared.run_id, "package_checksum": data["package_checksum"], "skill_id": data["skill_id"], "skill_version": data["skill_version"], "input_manifest_checksum": data["input_manifest_checksum"], "output": _audit()}; payload["output_checksum"] = _checksum(payload["output"]); result_file.write_text(json.dumps(payload), encoding="utf-8")
+    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={**_completion_gate_config(tmp_path, include_mission_identity=True), "prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
+    prepared = execute(request); assert prepared.status is ExecutionStatus.HANDOFF_PREPARED, prepared.error; package = Path(prepared.usage["package"]); data = json.loads(package.read_text(encoding="utf-8")); result_file = tmp_path / "result.json"; payload = {"handoff_id": prepared.run_id, "package_checksum": data["package_checksum"], "skill_id": data["skill_id"], "skill_version": data["skill_version"], "authorization_mode": "MISSION", "mission_id": "TEST_MISSION", "episode_id": "EP-1", "capability_id": CAPABILITY, "role": AUDITOR_ROLE, "input_manifest_checksum": data["input_manifest_checksum"], "result_run_id": f"{prepared.run_id}-RESULT", "output": _audit()}; payload["output_checksum"] = _checksum(payload["output"]); result_file.write_text(json.dumps(payload), encoding="utf-8")
     first = import_b5_i2_handoff(package_path=package, result_path=result_file, artifacts=artifacts, output_path=tmp_path / "audit.json", registry_path=registry, episode_id="EP-1")
     second = import_b5_i2_handoff(package_path=package, result_path=result_file, artifacts=artifacts, output_path=tmp_path / "audit2.json", registry_path=registry, episode_id="EP-1")
     assert first.status is ExecutionStatus.SUCCEEDED and second.status is ExecutionStatus.FAILED
@@ -946,8 +1055,11 @@ def test_handoff_cannot_be_consumed_twice(tmp_path: Path) -> None:
 
 def _registered_handoff_fixture(tmp_path: Path):
     registry = tmp_path / "registry.json"; artifacts = _four_artifacts(tmp_path)
-    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={**_completion_gate_config(tmp_path), "repository_root": str(tmp_path), "prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
+    request = ExecutionRequest(CAPABILITY, SKILL_ID, SKILL_VERSION, artifacts, "b5_i2_semantic_sufficiency_audit", execution_mode="agent", provider="agent_handoff", output_artifact_id="B5I2-SSA-1", handoff_directory=tmp_path / "handoff", episode_id="EP-1", config={**_completion_gate_config(tmp_path, include_mission_identity=True), "prompt": "prompt", "execution_registry_path": str(registry)}, role=AUDITOR_ROLE)
     prepared = execute(request); package = Path(prepared.usage["package"]); data = json.loads(package.read_text(encoding="utf-8")); result_file = tmp_path / "result.json"; payload = {"handoff_id": prepared.run_id, "package_checksum": data["package_checksum"], "skill_id": data["skill_id"], "skill_version": data["skill_version"], "input_manifest_checksum": data["input_manifest_checksum"], "output": _audit()}; payload["output_checksum"] = _checksum(payload["output"]); result_file.write_text(json.dumps(payload), encoding="utf-8")
+    payload.update({"authorization_mode": "MISSION", "mission_id": "TEST_MISSION", "episode_id": "EP-1", "capability_id": CAPABILITY, "role": AUDITOR_ROLE, "result_run_id": f"{prepared.run_id}-RESULT"})
+    payload["output_checksum"] = _checksum(payload["output"])
+    result_file.write_text(json.dumps(payload), encoding="utf-8")
     return package, result_file, artifacts, registry
 
 

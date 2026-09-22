@@ -81,7 +81,7 @@ def test_each_structured_strategic_trigger_requires_escalation():
         assert any(v.startswith("OWNER_ESCALATION_REQUIRED") for v in violations), trigger
         assert any(v.startswith("OWNER_ESCALATION_DECISION_REQUIRED") for v in violations), trigger
 def test_owner_decision_completes_only_escalated_flow():
-    inp=topic_input(strategic_triggers={key:key=="experimental_territory" for key in TRIGGER_KEYS}); a=assessment(inp, territory_classification="EXPERIMENTAL", owner_escalation_recommended=True); d=decision(a, decision="ESCALATE_TO_OWNER", owner_escalation_required=True, owner_escalation_reason="Territorio experimental")
+    inp=topic_input(proposed_territory="Actualidad interpretada mediante ficción", strategic_triggers={key:key=="experimental_territory" for key in TRIGGER_KEYS}); a=assessment(inp, territory_classification="EXPERIMENTAL", owner_escalation_recommended=True); d=decision(a, decision="ESCALATE_TO_OWNER", owner_escalation_required=True, owner_escalation_reason="Territorio experimental")
     o=owner(inp,a,d)
     assert validate_owner_decision(o,inp,a,d) == []
     result=evaluate_topic_belonging_gate(d,a,inp,o)
@@ -153,3 +153,33 @@ def test_active_territory_classification_is_deterministic_against_active_profile
     assert ci.active_territory_classification("Territorio inexistente XYZ999") is None
     assert ci.active_territory_classification("") is None
     assert ci.active_territory_classification(None) is None
+
+
+def test_new_topic_input_requires_exact_canonical_territory_name():
+    assert validate_topic_input(
+        topic_input(proposed_territory="Individuo e identidad"),
+        require_canonical_territory=True,
+    ) == []
+    assert validate_topic_input(
+        topic_input(proposed_territory="Actualidad interpretada mediante ficción"),
+        require_canonical_territory=True,
+    ) == []
+    assert validate_topic_input(
+        topic_input(proposed_territory="Política partidista o propaganda"),
+        require_canonical_territory=True,
+    ) == []
+    pending_violations = validate_topic_input(
+        topic_input(proposed_territory="Territorios secundarios aún no aprobados por Inteligencia del Canal"),
+        require_canonical_territory=True,
+    )
+    assert "INPUT_PROPOSED_TERRITORY_NOT_ALLOWED" in pending_violations
+    for territory in (
+        "Territorio inexistente XYZ999",
+        "individuo e identidad",
+        " Individuo e identidad ",
+        "Los rituales cotidianos y las fronteras sociales de pertenencia",
+    ):
+        assert "INPUT_PROPOSED_TERRITORY_NOT_CANONICAL" in validate_topic_input(
+            topic_input(proposed_territory=territory),
+            require_canonical_territory=True,
+        )

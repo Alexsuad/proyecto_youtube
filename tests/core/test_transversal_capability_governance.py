@@ -7,9 +7,19 @@ from pathlib import Path
 
 import pytest
 
-from src.core.capability_governance import find_executable_capabilities_outside_registry, validate_capability_registry
+from src.core.capability_governance import (
+    _validate_material_decision_ref,
+    find_executable_capabilities_outside_registry,
+    validate_capability_registry,
+)
 from src.core.context_resolution import ContextResolutionError, resolve_context
-from src.core.mission_authorization import MissionAuthorizationError, load_mission_authorization, scope_checksum, sha256_file
+from src.core.mission_authorization import (
+    MissionAuthorizationError,
+    _verify_material_decision_binding,
+    load_mission_authorization,
+    scope_checksum,
+    sha256_file,
+)
 from src.core.portability_gate import evaluate_portability
 from src.core.replay_protection import ReplayProtectionError, reserve_mission_execution
 from src.scripts.channel_intelligence import active_profile, validate_topic_input
@@ -237,6 +247,86 @@ def test_mission_authorization_accepts_canonical_material_decision_binding(tmp_p
         execution_profile_id="PROFILE", execution_interface="INTERFACE",
         required_material_decision_ref={key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")},
     )
+
+
+def test_mission_authorization_rejects_superseded_decision_for_new_execution(tmp_path: Path) -> None:
+    decision, registry = _material_decision(tmp_path)
+    decision["state"] = "SUSTITUIDA"
+    decision["superseded_by"] = "MD-CURRENT"
+    _write(tmp_path / "docs/legacy/material_decision_registry.json", json.dumps(registry))
+    auth, binding = _bound_authorization(tmp_path, decision)
+
+    with pytest.raises(MissionAuthorizationError, match="MATERIAL_DECISION_BINDING_INVALID"):
+        auth.verify(
+            tmp_path,
+            capability_id="CAP",
+            role_id="ROLE",
+            operation="EXECUTE_CAPABILITY",
+            path="output/result.json",
+            execution_mode="SYNTHETIC",
+            execution_route="route",
+            execution_profile_id="PROFILE",
+            execution_interface="INTERFACE",
+            required_material_decision_ref={
+                key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")
+            },
+        )
+
+
+def test_superseded_binding_is_only_admitted_for_explicit_historical_validation(
+    tmp_path: Path,
+) -> None:
+    decision, registry = _material_decision(tmp_path)
+    decision["state"] = "SUSTITUIDA"
+    decision["superseded_by"] = "MD-CURRENT"
+    _write(tmp_path / "docs/legacy/material_decision_registry.json", json.dumps(registry))
+    binding = {
+        "registry_path": "docs/legacy/material_decision_registry.json",
+        "decision_id": decision["decision_id"],
+        "subject_ref": decision["subject_ref"],
+        "decision_sha256": scope_checksum(decision),
+    }
+
+    _verify_material_decision_binding(
+        tmp_path,
+        {"material_decision_binding": binding},
+        {key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")},
+        "CAP",
+        allow_superseded=True,
+    )
+    with pytest.raises(MissionAuthorizationError, match="MATERIAL_DECISION_BINDING_INVALID"):
+        _verify_material_decision_binding(
+            tmp_path,
+            {"material_decision_binding": binding},
+            {key: binding[key] for key in ("registry_path", "decision_id", "subject_ref")},
+            "CAP",
+        )
+
+
+def test_capability_governance_rejects_superseded_decision_as_active_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    decision, registry = _material_decision(tmp_path)
+    decision["state"] = "SUSTITUIDA"
+    decision["superseded_by"] = "MD-CURRENT"
+    _write(tmp_path / "docs/legacy/material_decision_registry.json", json.dumps(registry))
+    monkeypatch.setattr("src.core.capability_governance.validate_registry", lambda _: [])
+
+    violations = _validate_material_decision_ref(
+        tmp_path,
+        {
+            "availability_status": "ACTIVE",
+            "functional_authority_domain": "CHANNEL_INTELLIGENCE",
+            "material_decision_ref": {
+                "registry_path": "docs/legacy/material_decision_registry.json",
+                "decision_id": decision["decision_id"],
+                "subject_ref": decision["subject_ref"],
+            },
+        },
+        "CAP",
+    )
+
+    assert violations == ["CAP_MATERIAL_DECISION_UNRESOLVED:CAP"]
 
 
 def test_mission_authorization_rejects_non_canonical_material_registry(tmp_path: Path) -> None:

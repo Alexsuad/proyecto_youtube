@@ -4,9 +4,13 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 from src.ai.contracts import ExecutionRequest, ExecutionResult, ExecutionStatus, InputArtifact
 from src.ai.execution import execute, persist_execution_result
-from src.ai.registry import load_registry
+from src.ai.manifest import canonical_json
+from src.ai.providers.agent_handoff import AgentHandoffProvider, checksum
+from src.ai.registry import append_result, load_registry
 from src.ai.subagents import assert_no_self_approval, assert_not_immutable_target, get_agent_definition
 from src.core.contract_validation import validate_against_schema
 from tests.ai.test_hybrid_runtime import _completion_gate_config, _register_synthetic_auditor
@@ -135,6 +139,88 @@ def test_append_result_records_extended_r6_provenance_fields(tmp_path: Path) -> 
     assert run["operational_telemetry"]["actual_provider"] == "provider-x"
     assert run["operational_telemetry"]["actual_model"] == "model-y"
     assert run["operational_telemetry"]["cost"] == 0.25
+
+
+def test_append_result_preserves_product_authority_identity_without_mission_id(tmp_path: Path) -> None:
+    source = _artifact(tmp_path, "research.json", {"id": "R-PRODUCT", "content": "evidencia"})
+    output_path = _artifact(tmp_path, "analysis.json", {"analysis_id": "A-PRODUCT", "episode_id": "EP-PRODUCT", "content": "ok"})
+    request = ExecutionRequest(
+        capability_id="SCRIPT_PRODUCT_PRODUCER",
+        skill_id="skill_analysis",
+        skill_version="1.0.0",
+        input_artifacts=[InputArtifact("research", "R-PRODUCT", source, "RUN-R")],
+        output_schema="narrative_human_analysis",
+        execution_mode="mock",
+        provider="mock",
+        episode_id="EP-PRODUCT",
+        role="SCRIPT_PRODUCT_PRODUCER",
+        config={
+            "authorization_mode": "PRODUCT",
+            "authorization_id": "PCA-TEST-001",
+            "authorization_checksum": "e" * 64,
+            "execution_profile_id": "PROFILE-PRODUCT",
+            "prompt_version": "1.0.0",
+        },
+        mock_output=_read_json(output_path),
+        output_artifact_kind="analysis",
+        output_artifact_id="A-PRODUCT",
+        output_artifact_path=output_path,
+        output_artifact_ref="analysis:A-PRODUCT",
+    )
+    result = ExecutionResult(
+        run_id="RUN-PRODUCT-1",
+        status=ExecutionStatus.SUCCEEDED,
+        executor_type="provider",
+        provider="agent_handoff",
+        model="handoff_only",
+        input_manifest_checksum="a" * 64,
+        output=_read_json(output_path),
+        output_checksum=hashlib.sha256(output_path.read_bytes()).hexdigest(),
+        started_at="2026-09-21T10:00:00Z",
+        completed_at="2026-09-21T10:00:05Z",
+        usage={"skill_id": "skill_analysis", "skill_version": "1.0.0", "prompt_version": "1.0.0", "retry_count": 0},
+        episode_id="EP-PRODUCT",
+        output_artifact_id="A-PRODUCT",
+        output_artifact_kind="analysis",
+        output_artifact_path=output_path,
+        output_artifact_ref="analysis:A-PRODUCT",
+        is_real_editorial_execution=False,
+    )
+    registry_path = tmp_path / "product-registry.json"
+    append_result(registry_path, result, execution_mode="SYNTHETIC", role="SCRIPT_PRODUCT_PRODUCER", request=request)
+    run = load_registry(registry_path)["runs"][0]
+    assert run["authorization_mode"] == "PRODUCT"
+    assert run["authorization_id"] == "PCA-TEST-001"
+    assert "mission_id" not in run
+    assert run["functional_identity"]["authorization_id"] == "PCA-TEST-001"
+    assert run["functional_identity"]["authorization_checksum"] == "e" * 64
+    assert "mission_id" not in run["functional_identity"]
+
+
+def test_identity_free_handoff_result_is_rejected(tmp_path: Path) -> None:
+    package = {
+        "handoff_id": "HANDOFF-IDENTITY-FREE",
+        "input_manifest_checksum": "a" * 64,
+        "skill_id": "skill",
+        "skill_version": "1.0.0",
+        "output_schema": "opaque",
+        "episode_id": "EP-IDENTITY-FREE",
+        "capability_id": "CAPABILITY",
+        "stage": "PRODUCER",
+        "role": "CHANNEL_INTELLIGENCE_PRODUCER",
+    }
+    package["package_checksum"] = checksum(canonical_json(package))
+    package_path = tmp_path / "package.json"
+    package_path.write_text(json.dumps(package), encoding="utf-8")
+    result = {
+        "handoff_id": package["handoff_id"],
+        "package_checksum": package["package_checksum"],
+        "output": {},
+    }
+    result_path = tmp_path / "result.json"
+    result_path.write_text(json.dumps(result), encoding="utf-8")
+    with pytest.raises(ValueError, match="requiere mission_id"):
+        AgentHandoffProvider().import_result(package_path, result_path)
 
 
 def test_agent_handoff_registers_extended_preparation_fields(tmp_path: Path) -> None:

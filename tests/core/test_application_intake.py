@@ -581,7 +581,7 @@ def _temporary_entrypoint_repository(tmp_path: Path) -> tuple[Path, Path, str]:
     return repo, settings, mission_id
 
 
-def test_cli_public_entrypoint_resolves_temporary_active_bundle_and_reaches_handoff(tmp_path: Path) -> None:
+def test_cli_public_entrypoint_uses_product_authority_independently_of_active_mission(tmp_path: Path) -> None:
     repo, _, mission_id = _temporary_entrypoint_repository(tmp_path)
     bundle = resolve_active_mission_bundle(repo / "plans/001_CONTROL_OPERATIVO.md", repository_root=repo)
     assert bundle.mission_id == mission_id
@@ -604,7 +604,8 @@ def test_cli_public_entrypoint_resolves_temporary_active_bundle_and_reaches_hand
     workflow = json.loads((episodes[0] / "workflow_state.json").read_text(encoding="utf-8"))
     assert workflow["status"] == "PENDING_EXTERNAL_RESULT"
     episode_state = json.loads((episodes[0] / "episode_state.json").read_text(encoding="utf-8"))
-    assert episode_state["mission_id"] == mission_id
+    assert "mission_id" not in episode_state
+    assert episode_state["authorization_id"] == "PCA-PLAN015-TOPIC-001"
     assert (repo / "handoff").is_dir()
 
 
