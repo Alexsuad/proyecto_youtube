@@ -9,7 +9,11 @@ import hashlib
 import json
 from typing import Any
 
-from src.core.contract_validation import validate_against_schema
+from src.core.contract_validation import (
+    validate_against_schema,
+    validate_editorial_edit_report,
+    validate_final_editorial_audit,
+)
 
 
 class ScriptCoordinatorError(ValueError):
@@ -90,6 +94,12 @@ def coordinate_script_pipeline(
     _validate_schema("edited_script", edited)
     _validate_schema("editorial_edit_report", report)
     _validate_schema("final_editorial_audit", audit)
+    report_violations = validate_editorial_edit_report(report, check_schema=False)
+    if report_violations:
+        raise ScriptCoordinatorError("editorial_edit_report invalid: " + "; ".join(report_violations))
+    audit_violations = validate_final_editorial_audit(audit, check_schema=False)
+    if audit_violations:
+        raise ScriptCoordinatorError("final_editorial_audit invalid: " + "; ".join(audit_violations))
 
     if report.get("input_artifact_id") != draft.get("script_id") or report.get("output_artifact_id") != edited.get("script_id"):
         raise ScriptCoordinatorError("edit report does not identify its input and output scripts")

@@ -16,7 +16,12 @@ from src.ai.manifest import canonical_json, file_checksum, manifest_checksum as 
 from src.ai.providers import AgentExecutorProvider, AgentHandoffProvider, DeepSeekProvider, MockProvider, OllamaProvider, OpenAICompatibleProvider
 from src.ai.router import KNOWN_PROVIDERS, resolve_provider
 from src.ai.runtime_profiles import AgentRuntimePort, READY, _VERIFIED_ROUTE_TOKEN
-from src.core.contract_validation import load_schema, validate_against_schema
+from src.core.contract_validation import (
+    load_schema,
+    validate_against_schema,
+    validate_editorial_edit_report,
+    validate_final_editorial_audit,
+)
 from src.core.execution_preflight import preflight_controlled_execution
 from src.core.replay_protection import mark_mission_reservation
 
@@ -952,10 +957,15 @@ def _validate_m3_input_artifacts(request: ExecutionRequest) -> None:
 
 def validate_editorial_payload(payload: dict[str, Any], schema_name: str) -> list[str]:
     errors = Draft7Validator(editorial_projection_schema(schema_name)).iter_errors(payload)
-    return [
+    violations = [
         f"[{' -> '.join(str(p) for p in error.path) if error.path else 'root'}] {error.message}"
         for error in sorted(errors, key=lambda e: e.path)
     ]
+    if schema_name == "final_editorial_audit":
+        violations.extend(validate_final_editorial_audit(payload, check_schema=False))
+    elif schema_name == "editorial_edit_report":
+        violations.extend(validate_editorial_edit_report(payload, check_schema=False))
+    return violations
 
 
 def _runtime_fields_for_schema(schema_name: str | None) -> set[str]:

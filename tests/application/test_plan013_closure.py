@@ -25,6 +25,16 @@ def _closure(episode_id: str) -> dict:
         "opening_quality": "PASS", "progression": "PASS", "coherence": "PASS", "originality": "PASS",
         "source_transformation": "PASS", "voice": "PASS", "orality": "PASS", "closing_quality": "PASS",
         "factual_traceability": "PASS", "decision": "PASS", "correction_route": "NONE",
+        "decision_basis": "Evaluacion cualitativa sustentada en el guion y sus artifacts de entrada.",
+        "dimension_evidence": {
+            field: {"observation": "Fixture cualitativo para validacion de contrato."}
+            for field in (
+                "profile_compliance", "brief_compliance", "packaging_promise_compliance",
+                "evidence_sufficiency", "thesis_quality", "viewer_journey", "opening_quality",
+                "progression", "coherence", "originality", "source_transformation", "voice",
+                "orality", "closing_quality", "factual_traceability",
+            )
+        },
     }
     profile = {"profile_id": "mas_alla_del_guion", "profile_version": "1.2.2", "profile_checksum": ACTIVE_PROFILE_CHECKSUM}
     review = build_final_script_review(

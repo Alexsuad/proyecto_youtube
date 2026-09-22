@@ -35,7 +35,8 @@
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
     "edit_type": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "changes_by_category": {
       "type": "object"
@@ -75,6 +76,10 @@
       "items": {
         "type": "string"
       }
+    },
+    "no_change_justification": {
+      "type": "string",
+      "minLength": 1
     }
   }
 }

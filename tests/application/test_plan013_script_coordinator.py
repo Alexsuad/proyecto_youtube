@@ -30,7 +30,7 @@ def _graph() -> dict[str, object]:
             "episode_id": "EP-1", "input_artifact_id": "SCRIPT-DRAFT-001", "input_checksum": "a" * 64,
             "output_artifact_id": "SCRIPT-EDITED-001", "output_checksum": "c" * 64,
             "input_version": "1.0.0", "output_version": "1.1.0", "edit_type": "RESTRUCTURE",
-            "changes_by_category": {}, "continuity_findings": [], "redundancy_findings": [],
+            "changes_by_category": {"structure": ["Reorganizacion del argumento."]}, "continuity_findings": [], "redundancy_findings": [],
             "line_findings": [], "orality_findings": [], "unresolved_issues": [], "invalidated_artifacts": [],
         },
         "final_audit": {
@@ -41,6 +41,16 @@ def _graph() -> dict[str, object]:
             "opening_quality": "PASS", "progression": "PASS", "coherence": "PASS", "originality": "PASS",
             "source_transformation": "PASS", "voice": "PASS", "orality": "PASS", "closing_quality": "PASS",
             "factual_traceability": "PASS", "decision": "PASS", "correction_route": "NONE",
+            "decision_basis": "Evaluacion cualitativa sustentada en el guion y sus artifacts de entrada.",
+            "dimension_evidence": {
+                field: {"observation": "Fixture cualitativo para validacion de contrato."}
+                for field in (
+                    "profile_compliance", "brief_compliance", "packaging_promise_compliance",
+                    "evidence_sufficiency", "thesis_quality", "viewer_journey", "opening_quality",
+                    "progression", "coherence", "originality", "source_transformation", "voice",
+                    "orality", "closing_quality", "factual_traceability",
+                )
+            },
         },
         "producer_run_id": "RUN-WRITING-1", "editor_run_id": "RUN-EDITOR-1", "auditor_run_id": "RUN-AUDITOR-1",
     }

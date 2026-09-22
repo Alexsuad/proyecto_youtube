@@ -889,6 +889,100 @@ def _validate_specialist_research(
     return violations
 
 
+_FINAL_EDITORIAL_AUDIT_TEXT_FIELDS = (
+    "profile_compliance",
+    "brief_compliance",
+    "packaging_promise_compliance",
+    "evidence_sufficiency",
+    "thesis_quality",
+)
+_FINAL_EDITORIAL_AUDIT_DIMENSION_FIELDS = (
+    "viewer_journey",
+    "opening_quality",
+    "progression",
+    "coherence",
+    "originality",
+    "source_transformation",
+    "voice",
+    "orality",
+    "closing_quality",
+    "factual_traceability",
+)
+_FINAL_EDITORIAL_AUDIT_MATERIAL_FIELDS = (
+    *_FINAL_EDITORIAL_AUDIT_TEXT_FIELDS,
+    *_FINAL_EDITORIAL_AUDIT_DIMENSION_FIELDS,
+)
+
+
+def _non_empty_text(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _has_editorial_support(value: Any) -> bool:
+    if not isinstance(value, Mapping):
+        return False
+    if any(_non_empty_text(value.get(field)) for field in ("rationale", "observation", "justification")):
+        return True
+    refs = value.get("evidence_refs")
+    return isinstance(refs, list) and any(_non_empty_text(ref) for ref in refs)
+
+
+def validate_final_editorial_audit(
+    data: Dict[str, Any],
+    *,
+    check_schema: bool = True,
+) -> List[str]:
+    """Require qualitative support without imposing a scoring model."""
+    violations = validate_against_schema(data, "final_editorial_audit") if check_schema else []
+    if not isinstance(data, Mapping):
+        return violations
+
+    decision = data.get("decision")
+    if decision not in {"PASS", "WARN"}:
+        return violations
+    if not _non_empty_text(data.get("decision_basis")):
+        violations.append("FinalEditorialAudit PASS/WARN requiere decision_basis no vacio.")
+
+    dimension_evidence = data.get("dimension_evidence")
+    if not isinstance(dimension_evidence, Mapping):
+        violations.append("FinalEditorialAudit PASS/WARN requiere dimension_evidence.")
+        return violations
+
+    for field in _FINAL_EDITORIAL_AUDIT_MATERIAL_FIELDS:
+        if not _non_empty_text(data.get(field)):
+            violations.append(f"FinalEditorialAudit requiere {field} no vacio.")
+        support = dimension_evidence.get(field)
+        if not _has_editorial_support(support):
+            violations.append(f"FinalEditorialAudit requiere rationale/observation/evidence para {field}.")
+        if data.get(field) == "N/A_JUSTIFIED" and (
+            not isinstance(support, Mapping) or not _non_empty_text(support.get("justification"))
+        ):
+            violations.append(f"FinalEditorialAudit {field}=N/A_JUSTIFIED requiere justification.")
+    return violations
+
+
+def validate_editorial_edit_report(
+    data: Dict[str, Any],
+    *,
+    check_schema: bool = True,
+) -> List[str]:
+    """Require an edit trace or an explicit justified no-change result."""
+    violations = validate_against_schema(data, "editorial_edit_report") if check_schema else []
+    if not isinstance(data, Mapping):
+        return violations
+
+    edit_type = str(data.get("edit_type") or "").strip().upper()
+    if edit_type == "NO_CHANGE":
+        if not _non_empty_text(data.get("no_change_justification")):
+            violations.append("EditorialEditReport NO_CHANGE requiere no_change_justification.")
+        return violations
+
+    changes = data.get("changes_by_category")
+    if not isinstance(changes, Mapping) or not any(value not in (None, "", [], {}) for value in changes.values()):
+        violations.append("EditorialEditReport requiere cambios_by_category documentado cuando hubo edicion.")
+    return violations
+
+
 _V2_STATE_FIELDS = {
     "research_stage",
     "selection_state",

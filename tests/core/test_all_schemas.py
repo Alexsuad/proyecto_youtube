@@ -218,7 +218,7 @@ VALID_FIXTURES = {
         "input_version": "1.0.0",
         "output_version": "1.1.0",
         "edit_type": "RESTRUCTURE",
-        "changes_by_category": {},
+        "changes_by_category": {"structure": ["Reorganizacion del argumento."]},
         "continuity_findings": [],
         "redundancy_findings": [],
         "line_findings": [],
@@ -341,7 +341,17 @@ VALID_FIXTURES = {
         "closing_quality": "PASS",
         "factual_traceability": "PASS",
         "decision": "PASS",
-        "correction_route": "NONE"
+        "correction_route": "NONE",
+        "decision_basis": "Evaluacion cualitativa sustentada en el guion y sus artifacts de entrada.",
+        "dimension_evidence": {
+            field: {"observation": "Fixture cualitativo para validacion de contrato."}
+            for field in (
+                "profile_compliance", "brief_compliance", "packaging_promise_compliance",
+                "evidence_sufficiency", "thesis_quality", "viewer_journey", "opening_quality",
+                "progression", "coherence", "originality", "source_transformation", "voice",
+                "orality", "closing_quality", "factual_traceability",
+            )
+        }
     },
     "gate_result": {
         "gate_id": "GATE-001",

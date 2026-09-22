@@ -132,12 +132,22 @@ def test_plan013_synthetic_path_keeps_one_script_identity_to_youtube_review() ->
         "opening_quality": "PASS", "progression": "PASS", "coherence": "PASS", "originality": "PASS",
         "source_transformation": "PASS", "voice": "PASS", "orality": "PASS", "closing_quality": "PASS",
         "factual_traceability": "PASS", "decision": "PASS", "correction_route": "NONE",
+        "decision_basis": "Evaluacion cualitativa sustentada en el guion y sus artifacts de entrada.",
+        "dimension_evidence": {
+            field: {"observation": "Fixture cualitativo para validacion de contrato."}
+            for field in (
+                "profile_compliance", "brief_compliance", "packaging_promise_compliance",
+                "evidence_sufficiency", "thesis_quality", "viewer_journey", "opening_quality",
+                "progression", "coherence", "originality", "source_transformation", "voice",
+                "orality", "closing_quality", "factual_traceability",
+            )
+        },
     }
     report = {
         "episode_id": "EP-1", "input_artifact_id": draft["script_id"], "input_checksum": checksum,
         "output_artifact_id": edited["script_id"], "output_checksum": edited["checksum"],
         "input_version": "1.0.0", "output_version": "1.1.0", "edit_type": "RESTRUCTURE",
-        "changes_by_category": {}, "continuity_findings": [], "redundancy_findings": [],
+            "changes_by_category": {"structure": ["Reorganizacion del argumento."]}, "continuity_findings": [], "redundancy_findings": [],
         "line_findings": [], "orality_findings": [], "unresolved_issues": [], "invalidated_artifacts": [],
     }
     final_review = build_final_script_review(
@@ -203,7 +213,7 @@ def test_plan013_integrated_synthetic_e2e_from_human_intake_to_convergent_close(
     editing = run_stage("EDITOR", "edited_script", [InputArtifact("script_draft", draft["script_id"], draft_path, writing.run_id), InputArtifact("thesis_artifact", thesis["thesis_id"], thesis_artifact_path, "RUN-RESEARCH-PLAN013")], {"content": "Edición sintética trazable."}, "SCRIPT-EDITED-PLAN013", {"artifact_version": "1.1.0", "edit_report_ref": "editorial_edit_report:EDIT-PLAN013@1.1.0"})
     edited_path = tmp_path / "edited_script.json"; edited_path.write_text(json.dumps(editing.output), encoding="utf-8")
     edited = editing.output
-    report_result = run_stage("EDITOR", "editorial_edit_report", [InputArtifact("script_draft", draft["script_id"], draft_path, writing.run_id), InputArtifact("edited_script", edited["script_id"], edited_path, editing.run_id)], {"edit_type": "RESTRUCTURE", "changes_by_category": {}, "continuity_findings": [], "redundancy_findings": [], "line_findings": [], "orality_findings": [], "unresolved_issues": [], "invalidated_artifacts": []}, "EDIT-PLAN013")
+    report_result = run_stage("EDITOR", "editorial_edit_report", [InputArtifact("script_draft", draft["script_id"], draft_path, writing.run_id), InputArtifact("edited_script", edited["script_id"], edited_path, editing.run_id)], {"edit_type": "RESTRUCTURE", "changes_by_category": {"structure": ["Reorganizacion del argumento."]}, "continuity_findings": [], "redundancy_findings": [], "line_findings": [], "orality_findings": [], "unresolved_issues": [], "invalidated_artifacts": []}, "EDIT-PLAN013")
     report_path = tmp_path / "editorial_edit_report.json"; report_path.write_text(json.dumps(report_result.output), encoding="utf-8")
     report = report_result.output
     audit = editorial_only_payload(copy.deepcopy(VALID_FIXTURES["final_editorial_audit"]), "final_editorial_audit")

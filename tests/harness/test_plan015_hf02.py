@@ -45,7 +45,7 @@ def _outputs() -> dict[str, dict]:
         "edited_script": {"content": "Una edición sintética trazable."},
         "editorial_edit_report": {
             "edit_type": "RESTRUCTURE",
-            "changes_by_category": {},
+            "changes_by_category": {"structure": ["Reorganizacion del argumento."]},
             "continuity_findings": [],
             "redundancy_findings": [],
             "line_findings": [],
