@@ -7,7 +7,11 @@ from src.application.research_planning import ResearchPlanningError, ResearchPla
 from src.application.research_b2 import ResearchB2Persistence
 from src.application.storage import VaultEpisodeStore
 from src.core.editorial_profile_registry import load_active_profile_authority
-from src.ai.role_execution import RoleExecutionContractError, resolve_role_execution_contract
+from src.ai.role_execution import (
+    RoleExecutionContractError,
+    research_runtime_values,
+    resolve_role_execution_contract,
+)
 from src.core.contract_validation import (
     validate_against_schema,
     validate_claims_ledger,
@@ -215,14 +219,20 @@ def test_b1_registry_and_prompt_remain_non_executable_and_pre_b2() -> None:
 
 
 def test_research_planning_role_requires_all_pre_research_inputs() -> None:
+    channel_context = deepcopy(VALID_FIXTURES["research_channel_context"])
+    channel_context["episode_id"] = "EP-1"
+    channel_context["context_id"] = "EP-1:CHANNEL_CONTEXT"
     payload = {
         "topic": "Fenómeno de prueba",
         "source_access": {"contract": "research_source_access"},
         "brief": {"brief_id": "BRIEF-1"},
-        "channel_context": {"channel_id": "CHANNEL-1"},
+        "channel_context": channel_context,
     }
     contract = resolve_role_execution_contract(
-        "RESEARCH_AND_CURATION", "research_plan_proposal", payload, {"stage": "RESEARCH_PLANNING"}
+        "RESEARCH_AND_CURATION",
+        "research_plan_proposal",
+        payload,
+        research_runtime_values(payload, stage="RESEARCH_PLANNING"),
     )
     assert contract["output_schema_name"] == "research_plan_proposal"
     for missing in payload:
@@ -230,7 +240,10 @@ def test_research_planning_role_requires_all_pre_research_inputs() -> None:
         incomplete.pop(missing)
         with pytest.raises(RoleExecutionContractError, match="INPUT_CONTRACT_INVALID"):
             resolve_role_execution_contract(
-                "RESEARCH_AND_CURATION", "research_plan_proposal", incomplete, {"stage": "RESEARCH_PLANNING"}
+                "RESEARCH_AND_CURATION",
+                "research_plan_proposal",
+                incomplete,
+                research_runtime_values(incomplete, stage="RESEARCH_PLANNING"),
             )
 
 

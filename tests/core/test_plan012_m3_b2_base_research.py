@@ -271,11 +271,14 @@ def test_b2_accepts_targets_only_for_eligible_researched_works(tmp_path):
 
 
 def _context() -> dict:
+    channel_context = deepcopy(VALID_FIXTURES["research_channel_context"])
+    channel_context["episode_id"] = "EP-001"
+    channel_context["context_id"] = "EP-001:CHANNEL_CONTEXT"
     return {
         "topic": "Fenómeno de prueba",
         "source_access": deepcopy(VALID_FIXTURES["research_source_access"]),
         "brief": {"brief_id": "BRIEF-1"},
-        "channel_context": {"channel_id": "CHANNEL-1"},
+        "channel_context": channel_context,
     }
 
 
