@@ -75,6 +75,15 @@ def test_coordinator_routes_failed_audit_without_deciding_editorial_outcome() ->
     assert trace["approval_inferred"] is False
 
 
+@pytest.mark.parametrize("dimension_state", ["BLOCK", "REQUEST_CHANGES"])
+def test_coordinator_rejects_incoherent_pass_audit(dimension_state: str) -> None:
+    graph = _graph()
+    graph["final_audit"]["viewer_journey"] = dimension_state
+
+    with pytest.raises(ScriptCoordinatorError, match="decision=PASS"):
+        coordinate_script_pipeline(**graph)
+
+
 def test_coordinator_rejects_stale_thesis_binding() -> None:
     graph = _graph()
     graph["edited_script"]["thesis_binding"]["checksum"] = "d" * 64

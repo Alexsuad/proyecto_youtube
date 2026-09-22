@@ -112,6 +112,22 @@ def test_plan013_closure_rejects_incomplete_or_non_independent_audit(tmp_path) -
         store.record_plan013_editorial_closure(handle, closure=closure, workflow_state={}, episode_state={})
 
 
+@pytest.mark.parametrize("dimension_state", ["BLOCK", "REQUEST_CHANGES"])
+def test_plan013_closure_rejects_incoherent_pass_audit(tmp_path, dimension_state: str) -> None:
+    store = VaultEpisodeStore(tmp_path / "vault", "CHANNEL")
+    handle = store.create_episode(
+        HumanInput.create(mode="tema", content="Tema sintético"),
+        handoff={"target_contract": "editorial_intake_handoff"},
+        profile={"ACTIVE_PROFILE_ID": "mas_alla_del_guion", "ACTIVE_PROFILE_VERSION": "1.2.2", "profile_checksum": "a" * 64},
+        run_id="RUN-PLAN013",
+    )
+    closure = _closure(handle.episode_id)
+    closure["final_audit"]["viewer_journey"] = dimension_state
+
+    with pytest.raises(StorageError, match="FINAL_AUDIT_SCHEMA_INVALID"):
+        store.record_plan013_editorial_closure(handle, closure=closure, workflow_state={}, episode_state={})
+
+
 def test_plan013_closure_rejects_stale_profile_and_incompatible_youtube_review(tmp_path) -> None:
     store = VaultEpisodeStore(tmp_path / "vault", "CHANNEL")
     handle = store.create_episode(

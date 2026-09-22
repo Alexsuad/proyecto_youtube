@@ -940,6 +940,17 @@ def validate_final_editorial_audit(
     decision = data.get("decision")
     if decision not in {"PASS", "WARN"}:
         return violations
+    incoherent_dimensions = [
+        field
+        for field in _FINAL_EDITORIAL_AUDIT_DIMENSION_FIELDS
+        if data.get(field) in {"BLOCK", "REQUEST_CHANGES"}
+    ]
+    if incoherent_dimensions:
+        violations.append(
+            "FinalEditorialAudit decision="
+            f"{decision} no puede coexistir con dimensiones BLOCK/REQUEST_CHANGES: "
+            + ", ".join(incoherent_dimensions)
+        )
     if not _non_empty_text(data.get("decision_basis")):
         violations.append("FinalEditorialAudit PASS/WARN requiere decision_basis no vacio.")
 
@@ -975,11 +986,23 @@ def validate_editorial_edit_report(
     if edit_type == "NO_CHANGE":
         if not _non_empty_text(data.get("no_change_justification")):
             violations.append("EditorialEditReport NO_CHANGE requiere no_change_justification.")
+        changes = data.get("changes_by_category")
+        if not isinstance(changes, Mapping) or changes:
+            violations.append("EditorialEditReport NO_CHANGE requiere changes_by_category vacio.")
         return violations
 
     changes = data.get("changes_by_category")
-    if not isinstance(changes, Mapping) or not any(value not in (None, "", [], {}) for value in changes.values()):
+    def has_real_description(value: Any) -> bool:
+        if _non_empty_text(value):
+            return True
+        return isinstance(value, list) and bool(value) and all(_non_empty_text(item) for item in value)
+
+    if not isinstance(changes, Mapping) or not changes or not any(
+        has_real_description(value) for value in changes.values()
+    ):
         violations.append("EditorialEditReport requiere cambios_by_category documentado cuando hubo edicion.")
+    elif any(not has_real_description(value) for value in changes.values()):
+        violations.append("EditorialEditReport changes_by_category contiene un cambio vacio o no descriptivo.")
     return violations
 
 
