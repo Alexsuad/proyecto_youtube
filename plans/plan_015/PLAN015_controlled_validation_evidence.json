@@ -1,0 +1,31 @@
+{
+  "evidence_version": "1.0.0",
+  "validation_status": "PASS",
+  "mission_id": "PLAN015_CONTROLLED_VALIDATION_001",
+  "capability_id": "EXTEND_01_RESEARCH_V2_REAL_E2E",
+  "operation": "VALIDATE_OPERATIONAL_ENTRYPOINT",
+  "execution_mode": "REAL",
+  "execution_family": "AGENT_HARNESS",
+  "execution_route": "agent_harness",
+  "execution_interface": "PLAN015_CONTROLLED_VALIDATION",
+  "episode_id": "ep_0003",
+  "mission_authorization_ref": "plans/plan_015/PLAN015_controlled_validation_authorization.json",
+  "mission_contract_ref": "plans/plan_015/PLAN015_controlled_validation_mission_contract.json",
+  "live_state_sha256": "375f984270232fc5fd5d13e8fd7561122dd78724f45432249f79ab7c1b365084",
+  "handoff_package_ref": "handoff/RUN-EXTEND01-HANDOFF-0df9587f8e3f45bcb944d56a2352c77a.json",
+  "handoff_package_sha256": "f6e7ef865dd2ba5fc884d11e5f4ac08eba086bd2adf039fde66a8aa269a888b3",
+  "handoff_package_checksum": "dbcecad3676587b741a215a02bdc6cf2ad013220b86b199d5568db70cdb8feb1",
+  "result": "PENDING_EXTERNAL_COGNITIVE_RESULT",
+  "checks": {
+    "mission_authorization_verified": true,
+    "live_state_verified": true,
+    "capability_route_verified": true,
+    "handoff_prepared": true,
+    "real_ai_execution": false,
+    "provider_api_call": false,
+    "product_use_authorized": false
+  },
+  "limitations": [
+    "La validación demuestra el entrypoint y el handoff neutral; no demuestra inferencia real ni uso productivo."
+  ]
+}

@@ -18,7 +18,7 @@ la autoridad viva ni relaja los controles de ejecución real o productiva.
 - El perfil editorial activo se resuelve exclusivamente desde
   `config/active_editorial_profile.json` y
   `config/editorial_profile_registry.json`.
-ACTIVE_EDITORIAL_PROFILE_AUTHORITY = config/active_editorial_profile.json
+  ACTIVE_EDITORIAL_PROFILE_AUTHORITY = config/active_editorial_profile.json
 
 ## Decisión rápida del camino de ejecución
 
@@ -115,7 +115,16 @@ sistémico.
 
 ## Git y cierre
 
-Preservar cambios preexistentes, revisar únicamente el alcance propio y no
-limpiar, mezclar, hacer commit o push sin autorización expresa. Declarar el
-resultado con evidencia proporcional, limitaciones y siguiente paso cuando
-corresponda.
+Durante el trabajo normal no es obligatorio hacer commit/push por cada cambio.
+
+En el cierre de una tarea, subproceso, misión, plan o fase material:
+
+- revisar `git status`, rama, HEAD y upstream;
+- revisar también cambios antiguos o preexistentes;
+- clasificar y sanear lo pendiente;
+- no ignorar cambios solo porque no pertenezcan a la última tarea;
+- separar iniciativas distintas y evitar `git add .` por defecto;
+- crear commits coherentes y hacer push;
+- dejar el repositorio limpio y sincronizado, salvo bloqueo justificado.
+
+Si un cambio pendiente no puede clasificarse con seguridad, aplicar `STOP` antes de commitear.

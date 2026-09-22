@@ -1,0 +1,42 @@
+{
+  "mission_id": "PLAN015_CONTROLLED_VALIDATION_001",
+  "mission_mode": "LEGACY",
+  "artifact_id": "PLAN015_CONTROLLED_OPERATIONAL_VALIDATION",
+  "artifact_version": "1.0.0",
+  "authorized_paths": [
+    "plans/001_CONTROL_OPERATIVO.md",
+    "plans/plan_015/",
+    "src/core/mission_authorization.py",
+    "src/core/execution_preflight.py",
+    "src/application/research_m7.py",
+    "src/ai/providers/agent_handoff.py",
+    "schemas/mission_authorization_contract.json",
+    "handoff/"
+  ],
+  "protected_untracked_paths": [],
+  "protected_untracked_baseline": [],
+  "required_tests": [
+    {"label": "CONTROLLED_AUTHORIZATION", "command": ["py", "-3", "-m", "pytest", "-q", "tests/core/test_transversal_capability_governance.py"], "timeout_seconds": 300}
+  ],
+  "push_allowed": false,
+  "push_guard": {"remote": "LOCAL", "ref": "HEAD", "baseline_remote_commit": "e6885736e300e7d1543759b577d16a39eb3925be"},
+  "contains_material_repair": false,
+  "mission_authorization_path": "plans/plan_015/PLAN015_controlled_validation_authorization.json",
+  "mission_authorization_sha256": "2220c48a639183ab86198639aeef509a3406359db8274c4ce644c0f24dd57c62",
+  "state_requirements": {
+    "control_path": "plans/001_CONTROL_OPERATIVO.md",
+    "required": {
+      "CURRENT_PLAN": "PLAN015",
+      "CURRENT_MISSION": "NONE",
+      "CURRENT_MISSION_EXECUTION_BUNDLE": "NONE",
+      "REAL_AI_EXECUTION": "NO",
+      "PRODUCT_USE_AUTHORIZED": "NO",
+      "PLAN015_EXECUTION_AUTHORIZED": "YES"
+    },
+    "forbidden": {
+      "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+      "PRODUCT_USE_AUTHORIZED": ["YES", "AUTHORIZED", "ACTIVE"]
+    }
+  },
+  "schema_checks": []
+}

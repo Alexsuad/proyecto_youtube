@@ -1,0 +1,37 @@
+{
+  "mission_id": "PLAN015_CONTROLLED_VALIDATION_001",
+  "authorization": {
+    "live_state_path": "plans/001_CONTROL_OPERATIVO.md",
+    "live_state_sha256": "375f984270232fc5fd5d13e8fd7561122dd78724f45432249f79ab7c1b365084",
+    "capability_ids": ["EXTEND_01_RESEARCH_V2_REAL_E2E"],
+    "role_ids": ["RESEARCH_AND_CURATION"],
+    "execution_family_ids": ["AGENT_HARNESS"],
+    "execution_interface": "PLAN015_CONTROLLED_VALIDATION",
+    "allowed_operations": ["VALIDATE_OPERATIONAL_ENTRYPOINT"],
+    "allowed_paths": ["handoff/"],
+    "allowed_routes": ["agent_harness"],
+    "execution_mode": "REAL",
+    "single_use": true,
+    "authority_ref": "plans/plan_015/PLAN015_controlled_validation_authority.json",
+    "authority_sha256": "acc6fe7628911e28a3bc42b08299098e40b0fadb8c52fa14944839f059d7fce3",
+    "authorized_scope_sha256": "df0008e1315578f03b0a2f2d78b442dfbdf6470fe8a2933e667f80186af4202e",
+    "executor_substitution_policy": "COMPATIBLE_INTERFACE_ONLY",
+    "contains_material_repair": false,
+    "repair_integrity_evidence_path": "NONE",
+    "controlled_validation": true,
+    "controlled_validation_state_requirements": {
+      "required": {
+        "CURRENT_PLAN": "PLAN015",
+        "CURRENT_MISSION": "NONE",
+        "CURRENT_MISSION_EXECUTION_BUNDLE": "NONE",
+        "REAL_AI_EXECUTION": "NO",
+        "PRODUCT_USE_AUTHORIZED": "NO",
+        "PLAN015_EXECUTION_AUTHORIZED": "YES"
+      },
+      "forbidden": {
+        "REAL_AI_EXECUTION": ["YES", "AUTHORIZED", "DEMONSTRATED"],
+        "PRODUCT_USE_AUTHORIZED": ["YES", "AUTHORIZED", "ACTIVE"]
+      }
+    }
+  }
+}

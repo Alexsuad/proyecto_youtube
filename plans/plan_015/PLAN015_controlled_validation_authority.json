@@ -1,0 +1,7 @@
+{
+  "mission_id": "PLAN015_CONTROLLED_VALIDATION_001",
+  "decision": "AUTHORIZED",
+  "artifact_version": "1.0.0",
+  "purpose": "CONTROLLED_OPERATIONAL_VALIDATION",
+  "authorized_scope_sha256": "df0008e1315578f03b0a2f2d78b442dfbdf6470fe8a2933e667f80186af4202e"
+}
