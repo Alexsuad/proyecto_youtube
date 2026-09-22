@@ -44,7 +44,11 @@ def _closure(episode_id: str) -> dict:
         final_audit_checksum=hashlib.sha256(json.dumps(audit, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest(), review_run_id="RUN-YT-REVIEW-1",
         producer_run_id="RUN-WRITING-1", editor_run_id="RUN-EDITOR-1", auditor_run_id="RUN-AUDITOR-1", review_actor_id="YOUTUBE_ADAPTATION_AUDITOR",
         producer_actor_id="WRITING", editor_actor_id="EDITOR", auditor_actor_id="FINAL_EDITORIAL_AUDITOR",
-        estimated_minutes=18.0, target_range=(18, 22), created_at="2026-09-01T00:00:00Z",
+        duration_telemetry={
+            "status": "UNRESOLVED", "estimated_minutes": None, "duration_target_minutes": 18.0,
+            "target_range": [16.0, 20.0], "normative": False, "measurement_method": None,
+            "word_count": None, "wpm_applied": None, "measured_script_checksum": None,
+        }, created_at="2026-09-01T00:00:00Z",
     )
     return {
         "episode_id": episode_id, "script_artifact_id": "SCRIPT-EDITED-1", "script_version": "1.1.0",

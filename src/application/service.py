@@ -29,7 +29,7 @@ from src.application.workflow import ControlledB5I1Preparation, WorkflowCoordina
 from src.application.plan013_script_coordinator import coordinate_script_pipeline
 from src.application.research_m7 import ResearchM7Error, ResearchV2B5I3Adapter
 from src.core.editorial_profile_registry import load_active_profile_authority
-from src.core.final_script_review import build_final_script_review
+from src.core.final_script_review import build_final_script_review, measure_duration_telemetry
 from src.core.contract_validation import (
     validate_editorial_script_approval,
     validate_work_lifecycle,
@@ -876,10 +876,13 @@ class EpisodeApplicationService:
                 edited_script=edited_payload, edit_report=report, final_audit=audit_payload,
                 producer_run_id=writing.run_id, editor_run_id=edited.run_id, auditor_run_id=audit_payload["auditor_run_id"],
             )
-            human_input = self._read_object(folder / "00_human_input.json", "HUMAN_INPUT")
-            duration = human_input.get("duration_target_minutes")
             active = self.profile_loader()
             profile_identity = {"profile_id": active["ACTIVE_PROFILE_ID"], "profile_version": active["ACTIVE_PROFILE_VERSION"], "profile_checksum": active["profile_checksum"]}
+            duration_telemetry = measure_duration_telemetry(
+                edited_payload,
+                plan,
+                script_draft=draft,
+            )
             review = build_final_script_review(
                 review_id=f"FSR-{episode_id}", episode_id=episode_id, artifact_id=edited_payload["script_id"],
                 script_version=edited_payload["artifact_version"], script_checksum=edited_payload["checksum"],
@@ -890,8 +893,7 @@ class EpisodeApplicationService:
                 producer_run_id=writing.run_id, editor_run_id=edited.run_id, auditor_run_id=audit_payload["auditor_run_id"],
                 review_actor_id="FINAL_SCRIPT_REVIEW", producer_actor_id="WRITING", editor_actor_id="EDITOR", auditor_actor_id="FINAL_EDITORIAL_AUDITOR",
                 evidence_refs=[f"final_editorial_audit:{edited_payload['script_id']}@{edited_payload['artifact_version']}"],
-                estimated_minutes=float(duration) if duration is not None else None,
-                target_range=(max(1.0, float(duration) - 2), float(duration) + 2) if duration is not None else None,
+                duration_telemetry=duration_telemetry,
             )
             draft_manifest = self._script_manifest(draft, plan, "DRAFT")
             edited_manifest = self._script_manifest(edited_payload, plan, "IN_REVIEW")

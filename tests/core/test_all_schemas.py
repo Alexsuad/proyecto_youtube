@@ -1214,7 +1214,12 @@ VALID_FIXTURES["final_script_review"] = {
     "auditor_actor_id": "FINAL_EDITORIAL_AUDITOR",
     "evidence_refs": [],
     "lexical_sensor": {"status": "PASS", "findings": [], "normative": False},
-    "duration_telemetry": {"status": "MEASURED", "estimated_minutes": 18.0, "target_range": [18, 22], "normative": False},
+    "duration_telemetry": {
+        "status": "MEASURED", "estimated_minutes": 18.0, "duration_target_minutes": 18.0,
+        "target_range": [16.0, 20.0], "normative": False,
+        "measurement_method": "NARRATED_CONTENT_WHITESPACE_WORD_COUNT_DIVIDED_BY_NARRATIVE_PLAN_WPM",
+        "word_count": 1800, "wpm_applied": 100, "measured_script_checksum": "a" * 64,
+    },
     "authenticity": "PASS",
     "reuse_context": "PASS",
     "decision": "PASS",

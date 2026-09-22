@@ -155,8 +155,13 @@ def test_plan013_synthetic_path_keeps_one_script_identity_to_youtube_review() ->
         script_version=edited["artifact_version"], script_checksum=edited["checksum"],
         profile_reference={"profile_id": "mas_alla_del_guion", "profile_version": "1.2.2", "profile_checksum": ACTIVE_PROFILE_CHECKSUM},
         visible_promise_ref="editorial_script_promise:SP-1@1.0.0",
-        final_audit_ref="final_editorial_audit:SCRIPT-EDITED-1@1.1.0", estimated_minutes=18.0,
-        final_audit_checksum="d" * 64, review_run_id="RUN-YT-REVIEW-1", producer_run_id="RUN-WRITING-1", editor_run_id="RUN-EDITOR-1", auditor_run_id="RUN-AUDIT-1", review_actor_id="YOUTUBE_ADAPTATION_AUDITOR", producer_actor_id="WRITING", editor_actor_id="EDITOR", auditor_actor_id="FINAL_EDITORIAL_AUDITOR", target_range=(18, 22), created_at="2026-09-01T00:00:00Z",
+        final_audit_ref="final_editorial_audit:SCRIPT-EDITED-1@1.1.0",
+        final_audit_checksum="d" * 64, review_run_id="RUN-YT-REVIEW-1", producer_run_id="RUN-WRITING-1", editor_run_id="RUN-EDITOR-1", auditor_run_id="RUN-AUDIT-1", review_actor_id="YOUTUBE_ADAPTATION_AUDITOR", producer_actor_id="WRITING", editor_actor_id="EDITOR", auditor_actor_id="FINAL_EDITORIAL_AUDITOR",
+        duration_telemetry={
+            "status": "UNRESOLVED", "estimated_minutes": None, "duration_target_minutes": 18.0,
+            "target_range": [16.0, 20.0], "normative": False, "measurement_method": None,
+            "word_count": None, "wpm_applied": None, "measured_script_checksum": None,
+        }, created_at="2026-09-01T00:00:00Z",
     )
     trace = coordinate_script_pipeline(
         episode_id="EP-1", narrative_plan={"episode_id": "EP-1", "script_plan_id": "PLAN-1"},
@@ -166,7 +171,7 @@ def test_plan013_synthetic_path_keeps_one_script_identity_to_youtube_review() ->
     assert trace["status"] == "HANDOFF_READY"
     assert final_review["artifact_id"] == trace["stages"][2]["artifact_ref"]
     assert final_review["script_checksum"] == edited["checksum"]
-    assert final_review["decision"] == "PASS"
+    assert final_review["decision"] == "WARN"
 
 
 def test_plan013_integrated_synthetic_e2e_from_human_intake_to_convergent_close(tmp_path, monkeypatch) -> None:
@@ -221,7 +226,7 @@ def test_plan013_integrated_synthetic_e2e_from_human_intake_to_convergent_close(
     final_audit = final_audit_result.output
     resolve_role_execution_contract("YOUTUBE_ADAPTATION_AUDITOR", "final_script_review", {"youtube_adaptation_b5_i2_package": {}, "producer_run_reference": writing.run_id, "active_editorial_profile_reference": active_profile, "refined_thesis": thesis, "claims_ledger": {}, "evidence_report": {}}, {"clean_session": True, "required_context": {"audit_criteria": "criteria", "profile_identity": "profile", "rules of producer/auditor independence": "independence-rules", "límites de publicación": "publication-limits"}})
     audit_path = tmp_path / "final_editorial_audit.json"; audit_path.write_text(json.dumps(final_audit), encoding="utf-8")
-    final_review_result = run_stage("YOUTUBE_ADAPTATION_AUDITOR", "final_script_review", [InputArtifact("edited_script", edited["script_id"], edited_path, editing.run_id), InputArtifact("final_editorial_audit", edited["script_id"], audit_path, final_audit_result.run_id)], {"evidence_refs": [], "lexical_sensor": {"status": "PASS", "findings": [], "normative": False}, "duration_telemetry": {"status": "MEASURED", "estimated_minutes": 18.0, "target_range": [18, 22], "normative": False}, "authenticity": "PASS", "reuse_context": "PASS", "decision": "PASS", "decision_basis": []}, "FSR-PLAN013", {"producer_run_id": writing.run_id, "editor_run_id": editing.run_id, "auditor_run_id": final_audit_result.run_id, "review_actor_id": "YOUTUBE_ADAPTATION_AUDITOR", "producer_actor_id": "WRITING", "editor_actor_id": "EDITOR", "auditor_actor_id": "FINAL_EDITORIAL_AUDITOR", "visible_promise_ref": "editorial_script_promise:SP-1@1.0.0"})
+    final_review_result = run_stage("YOUTUBE_ADAPTATION_AUDITOR", "final_script_review", [InputArtifact("edited_script", edited["script_id"], edited_path, editing.run_id), InputArtifact("final_editorial_audit", edited["script_id"], audit_path, final_audit_result.run_id)], {"evidence_refs": [], "lexical_sensor": {"status": "PASS", "findings": [], "normative": False}, "duration_telemetry": {"status": "UNRESOLVED", "estimated_minutes": None, "duration_target_minutes": 18.0, "target_range": [16.0, 20.0], "normative": False, "measurement_method": None, "word_count": None, "wpm_applied": None, "measured_script_checksum": None}, "authenticity": "PASS", "reuse_context": "PASS", "decision": "WARN", "decision_basis": ["DURATION_TELEMETRY_UNRESOLVED"]}, "FSR-PLAN013", {"producer_run_id": writing.run_id, "editor_run_id": editing.run_id, "auditor_run_id": final_audit_result.run_id, "review_actor_id": "YOUTUBE_ADAPTATION_AUDITOR", "producer_actor_id": "WRITING", "editor_actor_id": "EDITOR", "auditor_actor_id": "FINAL_EDITORIAL_AUDITOR", "visible_promise_ref": "editorial_script_promise:SP-1@1.0.0"})
     final_review = final_review_result.output
     trace = coordinate_script_pipeline(episode_id=handle.episode_id, narrative_plan=narrative_plan, thesis_artifact={**thesis, "artifact_version": "1.0.0", "checksum": hashlib.sha256(thesis_artifact_path.read_bytes()).hexdigest()}, script_draft=draft, edited_script=edited, edit_report=report, final_audit=final_audit, producer_run_id=writing.run_id, editor_run_id=editing.run_id, auditor_run_id=final_audit_result.run_id)
     assert trace["status"] == "HANDOFF_READY"

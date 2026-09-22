@@ -10,6 +10,10 @@
     "episode_id": {"type": "string", "minLength": 1},
     "artifact_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
     "content": {"type": "string", "minLength": 1},
+    "narrated_content": {
+      "type": ["string", "null"],
+      "description": "Texto que el artefacto identifica explicitamente como narrado; no se infiere desde content."
+    },
     "blocks": {"type": "array", "items": {"$ref": "script_block_contract.json"}},
     "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "source_script_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},

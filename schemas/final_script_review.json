@@ -43,12 +43,17 @@
     },
     "duration_telemetry": {
       "type": "object", "additionalProperties": false,
-      "required": ["status", "estimated_minutes", "target_range", "normative"],
+      "required": ["status", "estimated_minutes", "duration_target_minutes", "target_range", "normative", "measurement_method", "word_count", "wpm_applied", "measured_script_checksum"],
       "properties": {
         "status": {"type": "string", "enum": ["MEASURED", "UNRESOLVED"]},
         "estimated_minutes": {"type": ["number", "null"]},
+        "duration_target_minutes": {"type": ["number", "null"], "minimum": 1},
         "target_range": {"type": ["array", "null"], "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
-        "normative": {"const": false}
+        "normative": {"const": false},
+        "measurement_method": {"type": ["string", "null"], "minLength": 1},
+        "word_count": {"type": ["integer", "null"], "minimum": 1},
+        "wpm_applied": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "measured_script_checksum": {"type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$"}
       }
     },
     "authenticity": {"type": "string", "enum": ["PASS", "WARN", "UNRESOLVED"]},

@@ -97,6 +97,10 @@ def test_plan015_hf02_normal_service_completes_downstream_chain(tmp_path: Path) 
     assert workflow["human_approval_pending"] is True
     assert workflow["script_lifecycle"]["status"] == "WORKING_CURRENT"
     assert workflow["edited_script_lifecycle"]["status"] == "WORKING_CURRENT"
+    review = json.loads((episode.folder / "16_final_script_review.json").read_text(encoding="utf-8"))
+    assert review["duration_telemetry"]["status"] == "UNRESOLVED"
+    assert review["duration_telemetry"]["estimated_minutes"] is None
+    assert review["duration_telemetry"]["normative"] is False
     assert service.resume(episode.episode_id)["state"]["status"] == "LEGITIMATE_STOP"
     assert set(manifest["artifact_records"]) == {
         "script_draft", "script_version_manifest", "edited_script", "editorial_edit_report",
