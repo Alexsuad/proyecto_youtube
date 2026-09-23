@@ -36,11 +36,13 @@ class _ResearchReadyWorkflow:
 
 def _outputs() -> dict[str, dict]:
     audit = editorial_only_payload(copy.deepcopy(VALID_FIXTURES["final_editorial_audit"]), "final_editorial_audit")
+    narrative_plan = _cognitive("narrative_plan")
+    narrative_plan["blocks"][-1]["word_budget"] += 342
     return {
         "viewer_journey": _cognitive("viewer_journey"),
         "opening_design": _cognitive("opening_design"),
         "closing_design": _cognitive("closing_design"),
-        "narrative_plan": _cognitive("narrative_plan"),
+        "narrative_plan": narrative_plan,
         "script_draft": {"content": "Un borrador sintético trazable."},
         "edited_script": {"content": "Una edición sintética trazable."},
         "editorial_edit_report": {
@@ -68,12 +70,17 @@ def _service(tmp_path: Path) -> tuple[EpisodeApplicationService, object]:
             works=["REAL-A", "REAL-B", "REAL-C"],
             duration_target_minutes=18,
             target_language="es",
+            wpm_target=144,
+            wpm_provenance="SUGGESTED_ACCEPTED",
         )
     )
     ResearchM7SyntheticRunner(started.episode.folder).run(
         {
             "episode_id": started.episode.episode_id,
             "topic": "Fenómeno sintético controlado",
+            "duration_target_minutes": 18,
+            "wpm_target": 144,
+            "wpm_provenance": "SUGGESTED_ACCEPTED",
             "initial_question": "¿Qué puede sostenerse con evidencia?",
             "context": "SYNTHETIC_E2E",
             "works": ["REAL-A", "REAL-B", "REAL-C"],

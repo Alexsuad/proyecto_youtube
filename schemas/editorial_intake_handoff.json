@@ -25,7 +25,9 @@
         "candidate_work_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
         "user_instructions": {"type": "array", "items": {"$ref": "#/$defs/user_instruction"}},
         "duration_target_minutes": {"type": ["integer", "null"], "minimum": 1},
-        "target_language": {"type": ["string", "null"], "minLength": 1}
+        "target_language": {"type": ["string", "null"], "minLength": 1},
+        "wpm_target": {"type": ["integer", "null"], "minimum": 1},
+        "wpm_provenance": {"type": ["string", "null"], "enum": ["EPISODE_EXPLICIT", "SUGGESTED_ACCEPTED", null]}
       }
     },
     "unresolved_fields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},

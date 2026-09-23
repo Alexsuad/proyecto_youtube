@@ -107,6 +107,24 @@
       ],
       "minLength": 1
     },
+    "wpm_target": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "wpm_provenance": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "EPISODE_EXPLICIT",
+        "SUGGESTED_ACCEPTED",
+        null
+      ]
+    },
     "research_role": {
       "type": "string",
       "enum": [
@@ -156,6 +174,18 @@
     {
       "if": {"properties": {"contract_version": {"const": "3.0.0"}}, "required": ["contract_version"]},
       "then": {"required": ["work_intents", "selection_authority", "material_refs"]}
+    },
+    {
+      "if": {"required": ["wpm_target"], "properties": {"wpm_target": {"type": "integer"}}},
+      "then": {"required": ["wpm_provenance"], "properties": {"wpm_provenance": {"enum": ["EPISODE_EXPLICIT", "SUGGESTED_ACCEPTED"]}}}
+    },
+    {
+      "if": {"required": ["wpm_target"], "properties": {"wpm_target": {"type": "null"}}},
+      "then": {"properties": {"wpm_provenance": {"type": "null"}}}
+    },
+    {
+      "if": {"required": ["wpm_provenance"]},
+      "then": {"required": ["wpm_target"]}
     }
   ],
   "$defs": {

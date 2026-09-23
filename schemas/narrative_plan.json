@@ -21,6 +21,7 @@
     "blocks",
     "word_budget_total",
     "wpm_target",
+    "wpm_provenance",
     "duration_target_minutes",
     "target_language",
     "user_instructions",
@@ -119,10 +120,15 @@
       "type": "string"
     },
     "word_budget_total": {
-      "type": "integer"
+      "type": ["integer", "null"],
+      "minimum": 1
     },
     "wpm_target": {
-      "type": "integer"
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
+    "wpm_provenance": {
+      "enum": ["EPISODE_EXPLICIT", "SUGGESTED_ACCEPTED", null]
     },
     "duration_target_minutes": {
       "type": ["integer", "null"],
@@ -140,5 +146,31 @@
     "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
     "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "created_at": {"type": "string", "format": "date-time"}
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["wpm_target"],
+        "properties": {"wpm_target": {"type": "null"}}
+      },
+      "then": {
+        "properties": {
+          "wpm_provenance": {"type": "null"},
+          "word_budget_total": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["wpm_target"],
+        "properties": {"wpm_target": {"type": "integer"}}
+      },
+      "then": {
+        "properties": {
+          "wpm_provenance": {"enum": ["EPISODE_EXPLICIT", "SUGGESTED_ACCEPTED"]},
+          "word_budget_total": {"type": "integer", "minimum": 1}
+        }
+      }
+    }
+  ]
 }

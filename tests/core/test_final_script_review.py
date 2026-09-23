@@ -32,11 +32,12 @@ def _script_draft() -> dict:
     return {"episode_id": "EP-1", "narrative_plan_ref": "PLAN-1", "artifact_version": "1.0.0"}
 
 
-def _plan(*, wpm_target: int | None = 100, duration_target_minutes: int | None = 18) -> dict:
+def _plan(*, wpm_target: int | None = 100, wpm_provenance: str | None = "EPISODE_EXPLICIT", duration_target_minutes: int | None = 18) -> dict:
     return {
         "episode_id": "EP-1",
         "script_plan_id": "PLAN-1",
         "wpm_target": wpm_target,
+        "wpm_provenance": wpm_provenance,
         "duration_target_minutes": duration_target_minutes,
     }
 
@@ -78,6 +79,7 @@ def test_duration_measurement_persists_reproducible_provenance() -> None:
     assert telemetry["word_count"] == 4
     assert telemetry["wpm_applied"] == 100
     assert telemetry["measured_script_checksum"] == script["checksum"]
+    assert telemetry["wpm_provenance"] == "EPISODE_EXPLICIT"
 
 
 def test_duration_measurement_is_unresolved_without_valid_wpm() -> None:
@@ -85,6 +87,15 @@ def test_duration_measurement_is_unresolved_without_valid_wpm() -> None:
 
     assert telemetry["status"] == "UNRESOLVED"
     assert telemetry["estimated_minutes"] is None
+
+
+def test_duration_measurement_is_unresolved_without_wpm_provenance() -> None:
+    telemetry = measure_duration_telemetry(
+        _script(), _plan(wpm_provenance=None), script_draft=_script_draft()
+    )
+
+    assert telemetry["status"] == "UNRESOLVED"
+    assert telemetry["wpm_applied"] is None
 
 
 def test_duration_measurement_is_unresolved_without_explicit_narrated_text() -> None:

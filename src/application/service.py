@@ -754,6 +754,8 @@ class EpisodeApplicationService:
             "user_instructions": human_payload.get("user_instructions", []),
             "target_duration": human_payload.get("duration_target_minutes"),
             "target_language": human_payload.get("target_language"),
+            "wpm_target": human_payload.get("wpm_target"),
+            "wpm_provenance": human_payload.get("wpm_provenance"),
         }
         with TemporaryDirectory(prefix="plan015-hf02-", dir=folder) as staging_name:
             staging = Path(staging_name)
@@ -781,7 +783,11 @@ class EpisodeApplicationService:
                         imported_result=imported_outputs.get(schema),
                         output_artifact_id=f"HF02-{schema.upper()}-{episode_id}",
                         episode_id=episode_id,
-                        config={"artifact_version": "1.0.0"},
+                        config={
+                            "artifact_version": "1.0.0",
+                            "wpm_target": human_payload.get("wpm_target"),
+                            "wpm_provenance": human_payload.get("wpm_provenance"),
+                        },
                     )
                     b5_artifacts[schema] = result.output or {}
                     b5_runs[schema] = result.run_id

@@ -76,6 +76,67 @@ def test_plan013_closure_converges_and_retries_idempotently(tmp_path) -> None:
     assert resumed["entry"]["application_status"] == "EDITORIAL_SCRIPT_APPROVED"
 
 
+@pytest.mark.parametrize(
+    "missing_field",
+    ["wpm_applied", "word_count", "measurement_method", "estimated_minutes", "measured_script_checksum"],
+)
+def test_plan013_closure_rejects_incomplete_measured_duration_telemetry(tmp_path, missing_field: str) -> None:
+    store = VaultEpisodeStore(tmp_path / "vault", "CHANNEL")
+    handle = store.create_episode(
+        HumanInput.create(mode="tema", content="Tema sintético"),
+        handoff={"target_contract": "editorial_intake_handoff"},
+        profile={"ACTIVE_PROFILE_ID": "mas_alla_del_guion", "ACTIVE_PROFILE_VERSION": "1.2.2", "profile_checksum": "a" * 64},
+        run_id="RUN-PLAN013",
+    )
+    closure = _closure(handle.episode_id)
+    closure["final_script_review"]["duration_telemetry"] = {
+        "status": "MEASURED",
+        "estimated_minutes": 0.04,
+        "duration_target_minutes": 18.0,
+        "target_range": [16.0, 20.0],
+        "normative": False,
+        "measurement_method": "NARRATED_CONTENT_WHITESPACE_WORD_COUNT_DIVIDED_BY_NARRATIVE_PLAN_WPM",
+        "word_count": 4,
+        "wpm_applied": 100,
+        "measured_script_checksum": "a" * 64,
+        "wpm_provenance": "EPISODE_EXPLICIT",
+    }
+    closure["final_script_review"]["duration_telemetry"][missing_field] = None
+
+    with pytest.raises(StorageError, match="FINAL_REVIEW_SCHEMA_INVALID"):
+        store.record_plan013_editorial_closure(
+            handle, closure=closure, workflow_state={}, episode_state={}
+        )
+
+
+def test_plan013_closure_rejects_stale_measured_duration_checksum(tmp_path) -> None:
+    store = VaultEpisodeStore(tmp_path / "vault", "CHANNEL")
+    handle = store.create_episode(
+        HumanInput.create(mode="tema", content="Tema sintético"),
+        handoff={"target_contract": "editorial_intake_handoff"},
+        profile={"ACTIVE_PROFILE_ID": "mas_alla_del_guion", "ACTIVE_PROFILE_VERSION": "1.2.2", "profile_checksum": "a" * 64},
+        run_id="RUN-PLAN013",
+    )
+    closure = _closure(handle.episode_id)
+    closure["final_script_review"]["duration_telemetry"] = {
+        "status": "MEASURED",
+        "estimated_minutes": 0.04,
+        "duration_target_minutes": 18.0,
+        "target_range": [16.0, 20.0],
+        "normative": False,
+        "measurement_method": "NARRATED_CONTENT_WHITESPACE_WORD_COUNT_DIVIDED_BY_NARRATIVE_PLAN_WPM",
+        "word_count": 4,
+        "wpm_applied": 100,
+        "measured_script_checksum": "b" * 64,
+        "wpm_provenance": "EPISODE_EXPLICIT",
+    }
+
+    with pytest.raises(StorageError, match="FINAL_REVIEW_SCHEMA_INVALID"):
+        store.record_plan013_editorial_closure(
+            handle, closure=closure, workflow_state={}, episode_state={}
+        )
+
+
 def test_plan013_closure_rejects_identity_conflict(tmp_path) -> None:
     store = VaultEpisodeStore(tmp_path / "vault", "CHANNEL")
     handle = store.create_episode(

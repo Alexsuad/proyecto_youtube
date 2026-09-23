@@ -24,6 +24,7 @@ from src.core.contract_validation import (
     validate_final_editorial_audit,
 )
 from src.core.editorial_profile_registry import load_active_profile_authority
+from src.core.final_script_review import validate_final_script_review_semantics
 
 
 class StorageError(RuntimeError):
@@ -1188,6 +1189,8 @@ class VaultEpisodeStore:
         if isinstance(final_audit, dict):
             audit_violations.extend(validate_final_editorial_audit(final_audit, check_schema=False))
         review_violations = validate_against_schema(final_review, "final_script_review") if isinstance(final_review, dict) else ["FinalScriptReview must be an object"]
+        if isinstance(final_review, dict):
+            review_violations.extend(validate_final_script_review_semantics(final_review))
         if audit_violations:
             raise StorageError("PLAN013_CLOSURE_FINAL_AUDIT_SCHEMA_INVALID: " + "; ".join(audit_violations))
         if review_violations:

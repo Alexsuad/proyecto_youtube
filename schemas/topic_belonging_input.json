@@ -112,6 +112,14 @@
     "target_language": {
       "type": ["string", "null"],
       "minLength": 1
+    },
+    "wpm_target": {
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
+    "wpm_provenance": {
+      "type": ["string", "null"],
+      "enum": ["EPISODE_EXPLICIT", "SUGGESTED_ACCEPTED", null]
     }
   },
   "$defs": {

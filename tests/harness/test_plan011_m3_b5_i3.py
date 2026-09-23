@@ -36,6 +36,8 @@ def _inputs(tmp_path: Path, episode_id: str = EPISODE, duration_target: int | No
     human_payload.update({
         "duration_target_minutes": duration_target,
         "target_language": "es",
+        "wpm_target": 150,
+        "wpm_provenance": "EPISODE_EXPLICIT",
         "user_instructions": [{"category": "MUST_INCLUDE_VERBATIM", "text": "Conservar esta indicación."}],
     })
     human = _write(tmp_path / "human_input.json", human_payload)
@@ -140,7 +142,7 @@ def _execute_with_inputs(tmp_path: Path, schema: str, inputs: list[InputArtifact
         capability_id="B5_I3_NARRATIVE_ARCHITECTURE", skill_id="skill_mapa_eventos_y_outline", skill_version="1.0.0",
         input_artifacts=inputs, output_schema=schema, execution_mode="SYNTHETIC_TEST", provider="mock",
         mock_output=editorial_only_payload(_cognitive(schema), schema), output_artifact_id=f"{schema.upper()}-M3",
-        episode_id=episode_id, role="NARRATIVE_ARCHITECTURE", config={"wpm_target": 150, **_mission_config()},
+        episode_id=episode_id, role="NARRATIVE_ARCHITECTURE", config={"wpm_target": 150, "wpm_provenance": "EPISODE_EXPLICIT", **_mission_config()},
     )
     return _execute_isolated(request)
 
@@ -154,7 +156,7 @@ def _execute(tmp_path: Path, schema: str, episode_id: str = EPISODE, duration_ta
         input_artifacts=inputs, output_schema=schema, execution_mode="SYNTHETIC_TEST", provider="mock",
         mock_output=output, output_artifact_id=f"{schema.upper()}-M3",
         episode_id=episode_id, role="NARRATIVE_ARCHITECTURE",
-        config={"wpm_target": 150, **_mission_config()},
+        config={"wpm_target": 150, "wpm_provenance": "EPISODE_EXPLICIT", **_mission_config()},
     )
     return _execute_isolated(request)
 
@@ -190,6 +192,34 @@ def test_m2_inputs_preserved_and_cognitive_boundary_isolated(tmp_path: Path) -> 
     assert plan["word_budget_total"] == 2250
     assert plan["lineage"]["generated_by"] == "SOFTWARE"
     assert {item["function"] for item in plan["blocks"]} == {"ADD", "COMPLICATE", "TRANSFORM"}
+
+
+@pytest.mark.parametrize("schema", ["opening_design", "closing_design", "narrative_plan"])
+def test_m3_continues_without_episode_wpm_and_keeps_telemetry_unresolved(tmp_path: Path, schema: str) -> None:
+    inputs = _inputs(tmp_path)
+    human = next(item for item in inputs if item.artifact_kind == "human_input")
+    payload = json.loads(human.path.read_text(encoding="utf-8"))
+    payload.pop("wpm_target")
+    payload.pop("wpm_provenance")
+    human.path.write_text(json.dumps(payload), encoding="utf-8")
+    request = ExecutionRequest(
+        capability_id="B5_I3_NARRATIVE_ARCHITECTURE", skill_id="skill_mapa_eventos_y_outline", skill_version="1.0.0",
+        input_artifacts=inputs, output_schema=schema, execution_mode="SYNTHETIC_TEST", provider="mock",
+        mock_output=editorial_only_payload(_cognitive(schema), schema),
+        output_artifact_id=f"{schema.upper()}-M3", episode_id=EPISODE, role="NARRATIVE_ARCHITECTURE",
+        config={"wpm_target": 150, "wpm_provenance": "EPISODE_EXPLICIT", **_mission_config()},
+    )
+
+    result = _execute_isolated(request)
+
+    assert result.status is ExecutionStatus.SUCCEEDED, result.error
+    output = result.output or {}
+    assert output.get("wpm_target") is None
+    assert output.get("wpm_provenance") is None
+    if schema == "narrative_plan":
+        assert output["word_budget_total"] is None
+    else:
+        assert output["estimated_time"] is None
 
 
 def test_cognitive_output_that_writes_protected_fields_is_rejected(tmp_path: Path) -> None:
@@ -266,14 +296,22 @@ def test_duration_budget_is_deterministic_for_positive_targets(duration: int, ex
 @pytest.mark.parametrize("duration", [0, -1])
 def test_invalid_duration_fails_closed(duration: int) -> None:
     with pytest.raises(ValueError, match="entero positivo"):
-        resolve_narrative_budget(duration)
+        resolve_narrative_budget(duration, wpm_target=150)
 
 
 def test_automatic_duration_remains_unresolved_and_blocks_numeric_plan(tmp_path: Path) -> None:
-    assert resolve_narrative_budget(None) == {"duration_target_minutes": None, "wpm_target": 150, "word_budget_total": None}
+    assert resolve_narrative_budget(None, wpm_target=150) == {"duration_target_minutes": None, "wpm_target": 150, "word_budget_total": None}
     result = _execute(tmp_path, "narrative_plan", duration_target=None)
     assert result.status is ExecutionStatus.FAILED
     assert "STOP_LOCAL_DURATION_UNRESOLVED" in (result.error or "")
+
+
+def test_missing_wpm_keeps_narrative_budget_unresolved_without_fabrication() -> None:
+    assert resolve_narrative_budget(15, wpm_target=None) == {
+        "duration_target_minutes": 15,
+        "wpm_target": None,
+        "word_budget_total": None,
+    }
 
 
 def test_role_prompt_exposes_cognitive_contract_only() -> None:

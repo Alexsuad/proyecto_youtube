@@ -110,6 +110,8 @@ def test_extended_user_input_round_trips_through_handoff_without_losing_exact_in
         ],
         duration_target_minutes=20,
         target_language="español",
+        wpm_target=132,
+        wpm_provenance="EPISODE_EXPLICIT",
     )
     handoff = build_editorial_handoff(human, PROFILE)
     assert human.to_dict()["user_instructions"][0]["text"] == "  Frase original, sin reescribir.  "
@@ -117,8 +119,25 @@ def test_extended_user_input_round_trips_through_handoff_without_losing_exact_in
     assert handoff["field_bindings"]["user_instructions"] == human.to_dict()["user_instructions"]
     assert handoff["field_bindings"]["duration_target_minutes"] == 20
     assert handoff["field_bindings"]["target_language"] == "es"
+    assert handoff["field_bindings"]["wpm_target"] == 132
+    assert handoff["field_bindings"]["wpm_provenance"] == "EPISODE_EXPLICIT"
     assert validate_against_schema(human.to_dict(), "human_episode_input") == []
     assert validate_against_schema(handoff, "editorial_intake_handoff") == []
+
+
+def test_wpm_requires_episode_provenance_and_round_trips_suggested_acceptance() -> None:
+    accepted = HumanInput.create(
+        mode="tema",
+        content="Tema",
+        wpm_target=144,
+        wpm_provenance="SUGGESTED_ACCEPTED",
+    )
+
+    assert HumanInput.from_dict(accepted.to_dict()).wpm_target == 144
+    assert accepted.to_dict()["wpm_provenance"] == "SUGGESTED_ACCEPTED"
+    assert validate_against_schema(accepted.to_dict(), "human_episode_input") == []
+    with pytest.raises(InputValidationError):
+        HumanInput.create(mode="tema", content="Tema", wpm_target=144)
 
 
 @pytest.mark.parametrize("duration", [0, -1, True, "20"])
@@ -413,7 +432,7 @@ def test_workflow_requests_are_consumed_and_decisions_capture_the_full_request(t
 
 
 def test_interactive_and_non_interactive_adapters_share_normalized_fields(monkeypatch) -> None:
-    responses = iter(["1", "Tema", "Pregunta", "", "n", "1", "1", "s"])
+    responses = iter(["1", "Tema", "Pregunta", "", "n", "3", "1", "1", "s"])
     monkeypatch.setattr("builtins.input", lambda _prompt="": next(responses))
     interactive = _interactive_input()
     non_interactive = _non_interactive_input(
@@ -433,7 +452,7 @@ def test_interactive_input_captures_zero_or_more_instructions_custom_duration_an
     responses = iter(
         [
             "1", "Tema", "", "", "s", "4", "  Mantener esta frase exactamente.  ",
-            "n", "6", "27", "4", "Français",
+            "n", "3", "6", "27", "4", "Français",
             "s",
         ]
     )
@@ -455,9 +474,9 @@ def test_interactive_input_captures_zero_or_more_instructions_custom_duration_an
 def test_interactive_input_rejects_missing_custom_duration_or_other_language(
     monkeypatch, duration_option: str, duration_minutes: str, language_option: str, expected_message: str
 ) -> None:
-    responses = iter(["1", "Tema", "", "", "n", duration_option, duration_minutes])
+    responses = iter(["1", "Tema", "", "", "n", "3", duration_option, duration_minutes])
     if language_option == "4":
-        responses = iter(["1", "Tema", "", "", "n", duration_option, language_option, ""])
+        responses = iter(["1", "Tema", "", "", "n", "3", duration_option, language_option, ""])
     monkeypatch.setattr("builtins.input", lambda _prompt="": next(responses))
     with pytest.raises(ValueError, match=expected_message):
         _interactive_input()
@@ -589,7 +608,7 @@ def test_cli_public_entrypoint_uses_product_authority_independently_of_active_mi
     completed = subprocess.run(
         [sys.executable, "-m", "src.cli", "iniciar"],
         cwd=repo,
-        input="1\nTema de entrada\nPregunta concreta\nContexto\nn\n1\n1\ns\n",
+        input="1\nTema de entrada\nPregunta concreta\nContexto\nn\n3\n1\n1\ns\n",
         text=True,
         capture_output=True,
         check=False,

@@ -8,6 +8,8 @@ from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
+from src.core.episode_wpm import normalize_episode_wpm
+
 
 class EntryMode(StrEnum):
     TOPIC_FIRST = "TOPIC_FIRST"
@@ -135,6 +137,8 @@ class HumanInput:
     user_instructions: tuple[UserInstruction, ...] = ()
     duration_target_minutes: int | None = None
     target_language: str | None = None
+    wpm_target: int | None = None
+    wpm_provenance: str | None = None
     research_role: str | None = None
     editorial_intent: str | None = None
     work_intents: tuple[dict[str, str], ...] = ()
@@ -147,6 +151,10 @@ class HumanInput:
     def __post_init__(self) -> None:
         if self.processing_status not in PROCESSING_STATUSES:
             raise InputValidationError("Estado de procesamiento inválido.")
+        try:
+            normalize_episode_wpm(self.wpm_target, self.wpm_provenance)
+        except ValueError as exc:
+            raise InputValidationError(str(exc)) from exc
         if self.research_role is not None and self.research_role not in RESEARCH_ROLES:
             raise InputValidationError("research_role debe ser ANCLA o NORMAL.")
         if self.editorial_intent is not None and self.editorial_intent not in EDITORIAL_INTENTS:
@@ -172,6 +180,8 @@ class HumanInput:
         instructions: list[UserInstruction | dict[str, Any]] | tuple[UserInstruction | dict[str, Any], ...] | None = None,
         duration_target_minutes: int | None = None,
         target_language: str | None = None,
+        wpm_target: int | None = None,
+        wpm_provenance: str | None = None,
         research_role: str | None = None,
         editorial_intent: str | None = None,
         work_intents: list[dict[str, str]] | tuple[dict[str, str], ...] | None = None,
@@ -198,6 +208,10 @@ class HumanInput:
             and (not isinstance(duration_target_minutes, int) or duration_target_minutes <= 0)
         ):
             raise InputValidationError("La duración objetivo debe ser un número entero positivo o null.")
+        try:
+            clean_wpm, clean_wpm_provenance = normalize_episode_wpm(wpm_target, wpm_provenance)
+        except ValueError as exc:
+            raise InputValidationError(str(exc)) from exc
         clean_language = normalize_target_language(target_language)
         clean_research_role = str(research_role).strip().upper() if research_role is not None else None
         clean_editorial_intent = str(editorial_intent).strip().upper() if editorial_intent is not None else None
@@ -248,6 +262,8 @@ class HumanInput:
             user_instructions=clean_instructions,
             duration_target_minutes=duration_target_minutes,
             target_language=clean_language,
+            wpm_target=clean_wpm,
+            wpm_provenance=clean_wpm_provenance,
             research_role=clean_research_role,
             editorial_intent=clean_editorial_intent,
             work_intents=clean_work_intents,
@@ -269,6 +285,8 @@ class HumanInput:
             user_instructions=data.get("user_instructions", data.get("instructions", [])),
             duration_target_minutes=data.get("duration_target_minutes"),
             target_language=data.get("target_language"),
+            wpm_target=data.get("wpm_target"),
+            wpm_provenance=data.get("wpm_provenance"),
             research_role=data.get("research_role"),
             editorial_intent=data.get("editorial_intent"),
             work_intents=data.get("work_intents", []),
@@ -297,6 +315,8 @@ class HumanInput:
             "user_instructions": [item.to_dict() for item in self.user_instructions],
             "duration_target_minutes": self.duration_target_minutes,
             "target_language": self.target_language,
+            "wpm_target": self.wpm_target,
+            "wpm_provenance": self.wpm_provenance,
             "actor_ref": self.actor_ref,
             "provenance": self.provenance,
             "processing_status": self.processing_status,

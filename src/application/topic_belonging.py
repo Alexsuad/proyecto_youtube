@@ -287,7 +287,7 @@ def _validate_enrichment_binding(topic_input: dict[str, Any], handoff: dict[str,
         supplied = bindings.get(handoff_key)
         if supplied not in (None, "", []) and topic_input.get(input_key) != supplied:
             violations.append(f"ENRICHMENT_{input_key.upper()}_MISMATCH")
-    for input_key in ("duration_target_minutes", "target_language"):
+    for input_key in ("duration_target_minutes", "target_language", "wpm_target", "wpm_provenance"):
         if input_key in bindings and topic_input.get(input_key) != bindings.get(input_key):
             violations.append(f"ENRICHMENT_{input_key.upper()}_MISMATCH")
     if topic_input.get("entry_mode") != handoff.get("entry_mode"):
@@ -346,7 +346,7 @@ def _field_ownership(topic_input: dict[str, Any], handoff: dict[str, Any]) -> di
         user_fields.add("central_question")
     if bindings.get("user_instructions") not in (None, "", []):
         user_fields.add("user_instructions")
-    for field in ("duration_target_minutes", "target_language"):
+    for field in ("duration_target_minutes", "target_language", "wpm_target", "wpm_provenance"):
         if field in topic_input and field in bindings:
             user_fields.add(field)
     ai_fields = {
@@ -403,6 +403,8 @@ def _combine_cognitive_proposal(
         "user_instructions": copy.deepcopy(bindings.get("user_instructions", [])),
         "duration_target_minutes": bindings.get("duration_target_minutes"),
         "target_language": bindings.get("target_language"),
+        "wpm_target": bindings.get("wpm_target"),
+        "wpm_provenance": bindings.get("wpm_provenance"),
     }
     for field_name in ("corpus_ref", "narrative_work", "candidate_work_refs"):
         value = bindings.get(field_name)
@@ -468,6 +470,8 @@ def _validate_human_handoff_binding(human_input: dict[str, Any], handoff: dict[s
         ("user_instructions", "user_instructions"),
         ("duration_target_minutes", "duration_target_minutes"),
         ("target_language", "target_language"),
+        ("wpm_target", "wpm_target"),
+        ("wpm_provenance", "wpm_provenance"),
     ):
         if human_input.get(human_key) != bindings.get(handoff_key):
             violations.append(f"HUMAN_INPUT_{handoff_key.upper()}_MISMATCH")

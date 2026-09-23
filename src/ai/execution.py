@@ -112,6 +112,7 @@ EDITORIAL_RUNTIME_FIELDS = {
     "estimated_words",
     "estimated_time",
     "wpm_target",
+    "wpm_provenance",
     "word_budget_total",
     "thesis_binding",
     "script_id",
@@ -805,6 +806,7 @@ def _bind_m3_runtime_fields(
 ) -> dict[str, Any]:
     """Build the final B5-I3 envelope from a cognitive projection."""
     from src.core.duration_envelope import resolve_narrative_budget, validate_narrative_allocation
+    from src.core.episode_wpm import normalize_episode_wpm
 
     bound = copy.deepcopy(output)
     provided_input_kinds = {item.artifact_kind for item in request.input_artifacts}
@@ -869,24 +871,42 @@ def _bind_m3_runtime_fields(
             "evidence_report_id": str(thesis.get("evidence_report_id") or ""),
         }
 
-    resolved = resolve_narrative_budget(
-        human.get("duration_target_minutes"),
-        wpm_target=int(request.config.get("wpm_target") or 150),
-    )
-    wpm = int(resolved["wpm_target"])
+    needs_wpm_binding = request.output_schema in {"opening_design", "closing_design", "narrative_plan"}
+    if needs_wpm_binding:
+        try:
+            wpm, wpm_provenance = normalize_episode_wpm(
+                human.get("wpm_target"),
+                human.get("wpm_provenance"),
+            )
+        except ValueError as exc:
+            raise ValueError(f"STOP_LOCAL_WPM_INVALID: {exc}") from exc
+        resolved = resolve_narrative_budget(
+            human.get("duration_target_minutes"),
+            wpm_target=wpm,
+        )
+    else:
+        wpm = None
+        wpm_provenance = None
+        resolved = None
     if request.output_schema in {"opening_design", "closing_design"}:
         word_budget = bound.get("word_budget")
         if not isinstance(word_budget, int) or word_budget <= 0:
             raise ValueError(f"{request.output_schema} requiere word_budget cognitivo.")
         bound["estimated_words"] = word_budget
-        bound["estimated_time"] = round(word_budget / wpm * 60, 2)
+        bound["estimated_time"] = round(word_budget / wpm * 60, 2) if wpm is not None else None
         bound["wpm_target"] = wpm
+        bound["wpm_provenance"] = wpm_provenance
     elif request.output_schema == "narrative_plan":
-        if resolved["word_budget_total"] is None:
+        assert resolved is not None
+        if wpm is not None and resolved["word_budget_total"] is None:
             raise ValueError("STOP_LOCAL_DURATION_UNRESOLVED: NarrativePlan requiere duración numérica canónica")
-        validate_narrative_allocation(bound.get("blocks"), int(resolved["word_budget_total"]))
-        bound["word_budget_total"] = int(resolved["word_budget_total"])
+        if resolved["word_budget_total"] is not None:
+            validate_narrative_allocation(bound.get("blocks"), int(resolved["word_budget_total"]))
+            bound["word_budget_total"] = int(resolved["word_budget_total"])
+        else:
+            bound["word_budget_total"] = None
         bound["wpm_target"] = wpm
+        bound["wpm_provenance"] = wpm_provenance
     bound["checksum"] = hashlib.sha256(
         canonical_json({key: value for key, value in bound.items() if key != "checksum"})
     ).hexdigest()

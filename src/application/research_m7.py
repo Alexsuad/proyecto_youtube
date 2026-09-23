@@ -2401,6 +2401,8 @@ class ResearchM7SyntheticRunner:
             refined_thesis_checksum=hashlib.sha256(Path(m5["refined_thesis"]["path"]).read_bytes()).hexdigest(),
             duration_target_minutes=state["human_input"].get("duration_target_minutes", 15),
             target_language=state["human_input"].get("target_language") or "es",
+            wpm_target=state["human_input"].get("wpm_target"),
+            wpm_provenance=state["human_input"].get("wpm_provenance"),
         )
         b2_manifest_ref = next(item for item in state["artifacts"] if item["stage"] == "B2")
         b2_manifest = _read(b2_manifest_ref["path"])

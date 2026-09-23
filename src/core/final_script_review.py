@@ -10,6 +10,7 @@ from typing import Any
 from src.ai.manifest import canonical_json
 from src.core.contract_validation import validate_against_schema
 from src.core.editorial_profile_registry import load_active_profile_authority
+from src.core.episode_wpm import WPM_PROVENANCES
 
 
 class FinalScriptReviewError(ValueError):
@@ -55,6 +56,7 @@ def _unresolved_duration_telemetry(duration_target_minutes: float | None) -> dic
         "word_count": None,
         "wpm_applied": None,
         "measured_script_checksum": None,
+        "wpm_provenance": None,
     }
 
 
@@ -88,6 +90,9 @@ def measure_duration_telemetry(
     wpm_target = narrative_plan.get("wpm_target")
     if isinstance(wpm_target, bool) or not isinstance(wpm_target, int) or wpm_target <= 0:
         return unresolved
+    wpm_provenance = narrative_plan.get("wpm_provenance")
+    if wpm_provenance not in WPM_PROVENANCES:
+        return unresolved
     script_checksum = _valid_checksum(edited_script.get("checksum"))
     if script_checksum is None:
         return unresolved
@@ -110,6 +115,7 @@ def measure_duration_telemetry(
         "word_count": word_count,
         "wpm_applied": wpm_target,
         "measured_script_checksum": script_checksum,
+        "wpm_provenance": wpm_provenance,
     }
 
 
@@ -130,6 +136,7 @@ def _normalise_duration_telemetry(
     wpm_applied = _positive_number(source.get("wpm_applied"))
     estimated_minutes = _positive_number(source.get("estimated_minutes"))
     measured_script_checksum = _valid_checksum(source.get("measured_script_checksum"))
+    wpm_provenance = source.get("wpm_provenance")
     if (
         isinstance(word_count, bool)
         or not isinstance(word_count, int)
@@ -138,6 +145,7 @@ def _normalise_duration_telemetry(
         or estimated_minutes is None
         or measured_script_checksum is None
         or measured_script_checksum != script_checksum
+        or wpm_provenance not in WPM_PROVENANCES
     ):
         return unresolved
     expected_range = _target_range(duration_target_minutes)
@@ -155,7 +163,55 @@ def _normalise_duration_telemetry(
         "word_count": word_count,
         "wpm_applied": wpm_applied,
         "measured_script_checksum": measured_script_checksum,
+        "wpm_provenance": wpm_provenance,
     }
+
+
+def validate_final_script_review_semantics(review: Mapping[str, Any]) -> list[str]:
+    """Reject a declared MEASURED telemetry record without real provenance."""
+    violations: list[str] = []
+    if not isinstance(review, Mapping):
+        return ["FinalScriptReview must be an object"]
+    telemetry = review.get("duration_telemetry")
+    if not isinstance(telemetry, Mapping) or telemetry.get("status") != "MEASURED":
+        return violations
+    required = (
+        "wpm_applied",
+        "word_count",
+        "measurement_method",
+        "estimated_minutes",
+        "measured_script_checksum",
+        "wpm_provenance",
+    )
+    missing = [field for field in required if telemetry.get(field) is None]
+    if missing:
+        violations.append("MEASURED duration telemetry missing: " + ", ".join(missing))
+        return violations
+    if telemetry.get("normative") is not False:
+        violations.append("MEASURED duration telemetry must remain non-normative")
+    if telemetry.get("measurement_method") != DURATION_MEASUREMENT_METHOD:
+        violations.append("MEASURED duration telemetry method is invalid")
+    word_count = telemetry.get("word_count")
+    wpm_applied = _positive_number(telemetry.get("wpm_applied"))
+    estimated_minutes = _positive_number(telemetry.get("estimated_minutes"))
+    measured_checksum = _valid_checksum(telemetry.get("measured_script_checksum"))
+    script_checksum = _valid_checksum(review.get("script_checksum"))
+    if isinstance(word_count, bool) or not isinstance(word_count, int) or word_count <= 0:
+        violations.append("MEASURED duration telemetry word_count is invalid")
+    if wpm_applied is None:
+        violations.append("MEASURED duration telemetry wpm_applied is invalid")
+    if estimated_minutes is None:
+        violations.append("MEASURED duration telemetry estimated_minutes is invalid")
+    if telemetry.get("wpm_provenance") not in WPM_PROVENANCES:
+        violations.append("MEASURED duration telemetry wpm_provenance is invalid")
+    if measured_checksum is None or script_checksum is None or measured_checksum != script_checksum:
+        violations.append("MEASURED duration telemetry checksum is stale or invalid")
+    duration_target_minutes = _positive_number(telemetry.get("duration_target_minutes"))
+    if telemetry.get("target_range") != _target_range(duration_target_minutes):
+        violations.append("MEASURED duration telemetry target_range is inconsistent")
+    if not violations and not math.isclose(estimated_minutes, word_count / wpm_applied, rel_tol=1e-9, abs_tol=1e-9):
+        violations.append("MEASURED duration telemetry arithmetic is inconsistent")
+    return violations
 
 
 def build_final_script_review(
@@ -244,4 +300,7 @@ def build_final_script_review(
     violations = validate_against_schema(review, "final_script_review")
     if violations:
         raise FinalScriptReviewError("final_script_review invalid: " + "; ".join(violations))
+    semantic_violations = validate_final_script_review_semantics(review)
+    if semantic_violations:
+        raise FinalScriptReviewError("final_script_review semantic invalid: " + "; ".join(semantic_violations))
     return review

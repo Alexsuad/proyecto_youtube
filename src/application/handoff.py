@@ -25,6 +25,8 @@ def build_editorial_handoff(human_input: HumanInput, profile: dict[str, Any]) ->
         "user_instructions": [item.to_dict() for item in human_input.user_instructions],
         "duration_target_minutes": human_input.duration_target_minutes,
         "target_language": human_input.target_language,
+        "wpm_target": human_input.wpm_target,
+        "wpm_provenance": human_input.wpm_provenance,
     }
     unresolved = [
         "central_question",

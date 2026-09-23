@@ -167,6 +167,25 @@ def _interactive_input() -> HumanInput:
         )
         text = terminal.free_text("Escribe la indicación:")
         instructions.append({"category": category, "text": text})
+    wpm_option = terminal.choose(
+        "Selecciona la autoridad de velocidad de locución del episodio:",
+        [
+            ("suggested", "Aceptar sugerencia de 144 WPM"),
+            ("custom", "Elegir otro WPM"),
+            ("unresolved", "No fijar WPM; dejar medición sin resolver"),
+        ],
+    )
+    if wpm_option == "suggested":
+        wpm_target, wpm_provenance = 144, "SUGGESTED_ACCEPTED"
+    elif wpm_option == "custom":
+        raw_wpm = terminal.free_text("¿Qué WPM debe usar este episodio?")
+        try:
+            wpm_target = int(raw_wpm)
+        except (TypeError, ValueError) as exc:
+            raise InputValidationError("El WPM personalizado requiere un entero positivo.") from exc
+        wpm_provenance = "EPISODE_EXPLICIT"
+    else:
+        wpm_target, wpm_provenance = None, None
     duration_option = terminal.choose(
         "Selecciona la duración objetivo:",
         [
@@ -206,6 +225,7 @@ def _interactive_input() -> HumanInput:
         f"Pregunta inicial: {initial_question or '(sin pregunta inicial)'}\n"
         f"Contexto: {context or '(sin contexto adicional)'}\n"
         f"Indicaciones: {len(instructions)}\n"
+        f"WPM del episodio: {wpm_target or 'sin resolver'}\n"
         f"Duración objetivo: {duration_minutes or 'automática'}\n"
         f"Idioma objetivo: {target_language or 'predeterminado del canal'}"
     )
@@ -218,6 +238,8 @@ def _interactive_input() -> HumanInput:
         context=context,
         works=works,
         user_instructions=instructions,
+        wpm_target=wpm_target,
+        wpm_provenance=wpm_provenance,
         duration_target_minutes=duration_minutes,
         target_language=target_language,
         channel="TERMINAL",
@@ -255,6 +277,14 @@ def _non_interactive_input(args: argparse.Namespace) -> HumanInput:
         else:
             category, text = raw_instruction.split(separator, 1)
         instructions.append({"category": category, "text": text})
+    wpm_target = getattr(args, "wpm", None)
+    accept_suggested_wpm = bool(getattr(args, "accept_suggested_wpm", False))
+    if wpm_target is not None:
+        wpm_provenance = "EPISODE_EXPLICIT"
+    elif accept_suggested_wpm:
+        wpm_target, wpm_provenance = 144, "SUGGESTED_ACCEPTED"
+    else:
+        wpm_provenance = None
     return HumanInput.create(
         mode=mode,
         content=content,
@@ -262,6 +292,8 @@ def _non_interactive_input(args: argparse.Namespace) -> HumanInput:
         context=getattr(args, "contexto", None),
         works=works,
         user_instructions=instructions,
+        wpm_target=wpm_target,
+        wpm_provenance=wpm_provenance,
         duration_target_minutes=duration_minutes,
         target_language=getattr(args, "idioma", None),
         channel="TERMINAL",
@@ -583,6 +615,8 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--indicacion", action="append", help="Indicación como CATEGORIA: texto; puede repetirse")
     start.add_argument("--duracion", help="Duración en minutos, automática o personalizada")
     start.add_argument("--duracion-minutos", type=int)
+    start.add_argument("--wpm", type=int, help="WPM explícito para este episodio")
+    start.add_argument("--accept-suggested-wpm", action="store_true", help="Aceptar el valor sugerido de 144 WPM para este episodio")
     start.add_argument("--idioma", help="Idioma objetivo; omitir para usar el predeterminado")
     start.set_defaults(handler=_start)
     resume = subparsers.add_parser("reanudar", help="Consultar y reanudar un episodio registrado")

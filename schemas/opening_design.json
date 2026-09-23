@@ -18,13 +18,25 @@
     "first_transition": {"type": "string", "minLength": 1},
     "word_budget": {"type": "integer", "minimum": 1},
     "estimated_words": {"type": "integer", "minimum": 1},
-    "estimated_time": {"type": "number", "minimum": 0},
+    "estimated_time": {"type": ["number", "null"], "minimum": 0},
     "risks": {"type": "array", "items": {"type": "string"}},
-    "wpm_target": {"type": "integer", "minimum": 1},
+    "wpm_target": {"type": ["integer", "null"], "minimum": 1},
+    "wpm_provenance": {"type": ["string", "null"], "enum": ["EPISODE_EXPLICIT", "SUGGESTED_ACCEPTED", null]},
     "lineage": {"type": "object"},
     "input_checksums": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}},
     "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
     "checksum": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "created_at": {"type": "string", "format": "date-time"}
-  }
+  },
+  "allOf": [
+    {
+      "if": {"required": ["wpm_target"], "properties": {"wpm_target": {"type": "null"}}},
+      "then": {
+        "properties": {
+          "estimated_time": {"type": "null"},
+          "wpm_provenance": {"type": "null"}
+        }
+      }
+    }
+  ]
 }

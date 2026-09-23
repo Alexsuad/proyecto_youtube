@@ -197,7 +197,7 @@ def test_plan013_integrated_synthetic_e2e_from_human_intake_to_convergent_close(
         block["word_budget"] = 1
     narrative_plan_payload["blocks"][-1]["word_budget"] = 2700 - len(narrative_plan_payload["blocks"]) + 1
     b5_result = execute(ExecutionRequest(
-        capability_id="B5_I3_NARRATIVE_ARCHITECTURE", skill_id="skill_mapa_eventos_y_outline", skill_version="1.0.0", input_artifacts=b5_inputs, output_schema="narrative_plan", execution_mode="SYNTHETIC_TEST", provider="mock", mock_output=narrative_plan_payload, output_artifact_id="PLAN-PLAN013", episode_id=handle.episode_id, role="NARRATIVE_ARCHITECTURE", config={"repository_root": str(tmp_path), "wpm_target": 150},
+        capability_id="B5_I3_NARRATIVE_ARCHITECTURE", skill_id="skill_mapa_eventos_y_outline", skill_version="1.0.0", input_artifacts=b5_inputs, output_schema="narrative_plan", execution_mode="SYNTHETIC_TEST", provider="mock", mock_output=narrative_plan_payload, output_artifact_id="PLAN-PLAN013", episode_id=handle.episode_id, role="NARRATIVE_ARCHITECTURE", config={"repository_root": str(tmp_path), "wpm_target": 150, "wpm_provenance": "EPISODE_EXPLICIT"},
     ))
     assert b5_result.status is ExecutionStatus.SUCCEEDED, b5_result.error
     narrative_plan = b5_result.output

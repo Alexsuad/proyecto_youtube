@@ -24,6 +24,8 @@ def b5_i3_transversal_fixtures(
     refined_thesis_checksum: str,
     duration_target_minutes: int | None = 15,
     target_language: str | None = "es",
+    wpm_target: int | None = None,
+    wpm_provenance: str | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Return schema-shaped non-Research fixtures for the B5-I3 preflight.
 
@@ -48,6 +50,8 @@ def b5_i3_transversal_fixtures(
         "processing_status": "RECEIVED",
         "duration_target_minutes": duration_target_minutes,
         "target_language": target_language,
+        "wpm_target": wpm_target,
+        "wpm_provenance": wpm_provenance,
         "user_instructions": [],
     }
     brief = {
@@ -62,7 +66,8 @@ def b5_i3_transversal_fixtures(
         "angulo_diferencial": "Separar evidencia de obra y realidad externa.",
         "alcance": "Integración técnica Research V2 hacia B5-I3.", "fuera_de_alcance": "Cognición narrativa y producción.",
         "spoilers": "SI_LIMITADOS", "tono": "Riguroso y claro.", "duracion_objetivo": "15 minutos",
-        "ritmo_locucion": "150 palabras por minuto", "nivel_investigacion": "PROFUNDO",
+        "ritmo_locucion": f"{wpm_target} palabras por minuto" if wpm_target else "UNRESOLVED",
+        "nivel_investigacion": "PROFUNDO",
         "fuentes_requeridas": ["fixture S1"], "narrative_materials": [f"Obra {first_work}"],
         "tipo_de_guion_principal": "VIDEOENSAYO_NARRATIVO", "tipo_de_guion_secundario": None,
         "estructura_candidata": "evidencia-reinterpretación", "structure_status": "INITIAL_HYPOTHESIS_REVISABLE_AFTER_RESEARCH",

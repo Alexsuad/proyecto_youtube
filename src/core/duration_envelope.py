@@ -26,14 +26,14 @@ _CAPABILITY_ID = "YT_DURATION_ENVELOPE"
 _GATE_ID = "youtube_adaptation_b5_i2_gate"
 
 
-def resolve_narrative_budget(target_duration: Any, *, wpm_target: int = 150) -> dict[str, int | None]:
+def resolve_narrative_budget(target_duration: Any, *, wpm_target: int | None) -> dict[str, int | None]:
     """Resolve episode arithmetic without deciding its narrative distribution.
 
     ``target_duration`` is user-provided. ``Automatic`` is the existing
     application default, not an opening-duration rule. Block allocations remain
     cognitive and are checked separately by ``validate_narrative_allocation``.
     """
-    if isinstance(wpm_target, bool) or not isinstance(wpm_target, int) or wpm_target <= 0:
+    if wpm_target is not None and (isinstance(wpm_target, bool) or not isinstance(wpm_target, int) or wpm_target <= 0):
         raise ValueError("wpm_target debe ser un entero positivo.")
     if target_duration is None or str(target_duration).strip().lower() in {"", "automatic", "automático", "auto"}:
         minutes: int | None = None
@@ -55,7 +55,7 @@ def resolve_narrative_budget(target_duration: Any, *, wpm_target: int = 150) -> 
     return {
         "duration_target_minutes": minutes,
         "wpm_target": wpm_target,
-        "word_budget_total": minutes * wpm_target if minutes is not None else None,
+        "word_budget_total": minutes * wpm_target if minutes is not None and wpm_target is not None else None,
     }
 
 
